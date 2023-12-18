@@ -9,6 +9,7 @@ public enum NetResult
 {
     Success,
     Timeout,
+    Canceled,
     Closed,
     InvalidAddress,
     NoDataToSend,

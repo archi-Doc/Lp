@@ -42,54 +42,42 @@ internal partial class AckBuffer
 
     public void ProcessSend(NetSender netSender)
     {
-        Connection? connection;
-        Queue<ulong>
-        Queue<(Connection, Queue<ulong>)>? sendQueue = default;
-        lock (this.syncObject)
+        Connection? connection = default;
+        Queue<ulong>? ackQueue = default;
+
+        while (netSender.CanSend)
         {
-            this.connectionQueue.TryPeek(out var connection);
-            if (connection is not null && netSender.CurrentSystemMics > connection.AckMics)
+            lock (this.syncObject)
             {
-                this.connectionQueue.Dequeue();
-                if (connection.AckQueue is not null)
+                if (ackQueue is not null)
                 {
-                    sendQueue ??= new();
-                    sendQueue.Enqueue((connection, connection.AckQueue));
+                    this.freeQueue.Enqueue(ackQueue);
+                    ackQueue = default;
+                }
+
+                this.connectionQueue.TryPeek(out connection);
+                if (connection is not null && netSender.CurrentSystemMics > connection.AckMics)
+                {
+                    this.connectionQueue.Dequeue();
+                    ackQueue = connection.AckQueue;
                     connection.AckMics = 0;
                     connection.AckQueue = default;
                 }
             }
-        }
 
-        if (sendQueue is not null)
-        {
-            while (sendQueue.TryDequeue(out var item))
+            if (connection is null || ackQueue is null)
             {
+                break;
             }
+
+            this.ProcessSend(connection, ackQueue);
         }
     }
 
     private void ProcessSend(Connection connection, Queue<ulong> ackQueue)
     {
-
+        while (ackQueue.TryDequeue(out var ack))
+        {
+        }
     }
 }
-
-/*[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-internal partial class AckBuffer
-{
-    [Link(Name = "ConnectionId", Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    public AckBuffer(Connection connection)
-    {
-        this.Connection = connection;
-        this.AckTime = Mics.GetSystem() + NetConstants.AckDelayMics;
-    }
-
-    public Connection Connection { get; }
-
-    public ulong ConnectionId
-        => this.Connection.ConnectionId;
-
-    [Link(Type = ChainType.Ordered)]
-    public long AckTime { get; set; }
-}*/

@@ -57,6 +57,7 @@ public partial class FlowControl
 
     internal void ProcessSend(NetSender netSender)
     {
+        SendGene? gene;
         lock (this.syncObject)
         {
             var remaining = this.sendCapacityPerRound;
@@ -71,14 +72,15 @@ public partial class FlowControl
                     break;
                 }
 
-                remaining--;
-                var rto = firstNode.Value.Send_NotThreadSafe(netSender);
-                if (rto > 0)
+                gene = firstNode.Value;
+                if (gene.CanSend)
                 {// Resend
+                    remaining--;
+                    var rto = firstNode.Value.Send_NotThreadSafe(netSender);
                     this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));//Limit
                 }
                 else
-                {// Remove
+                {// Cannot send
                     this.waitingForAck.RemoveNode(firstNode);
                 }
             }
@@ -86,15 +88,15 @@ public partial class FlowControl
             // Send queue (ConcurrentQueue)
             while (remaining > 0 && netSender.CanSend)
             {
-                if (!this.waitingToSend.TryDequeue(out var gene))
+                if (!this.waitingToSend.TryDequeue(out gene))
                 {// No send queue
                     return;
                 }
 
-                remaining--;
-                var rto = gene.Send_NotThreadSafe(netSender);
-                if (rto > 0)
-                {// Success
+                if (gene.CanSend)
+                {// Send
+                    remaining--;
+                    var rto = gene.Send_NotThreadSafe(netSender);
                     this.waitingForAck.Add(rto + (rtoSerial++), gene);
                 }
             }

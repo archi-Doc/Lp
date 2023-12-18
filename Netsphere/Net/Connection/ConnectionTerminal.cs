@@ -51,6 +51,7 @@ public class ConnectionTerminal
                 // Console.WriteLine($"Closed: {clientConnection.ToString()}");
                 clientConnection.SendCloseFrame();
                 this.CloseClientConnection(this.clientConnections, clientConnection);
+                clientConnection.CloseTransmission();
             }
 
             // Dispose closed client connections
@@ -72,6 +73,7 @@ public class ConnectionTerminal
                 // Console.WriteLine($"Closed: {serverConnection.ToString()}");
                 serverConnection.SendCloseFrame();
                 this.CloseServerConnection(this.serverConnections, serverConnection);
+                serverConnection.CloseTransmission();
             }
 
             // Dispose closed server connections

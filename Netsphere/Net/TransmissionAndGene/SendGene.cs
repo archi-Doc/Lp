@@ -26,6 +26,10 @@ internal partial class SendGene
 
     #endregion
 
+    public bool CanSend
+        => this.SendTransmission.Mode != NetTransmissionMode.Disposed &&
+        this.SendTransmission.Connection.State == Connection.ConnectionState.Open;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {

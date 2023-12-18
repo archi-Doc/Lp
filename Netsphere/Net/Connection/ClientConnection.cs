@@ -99,10 +99,18 @@ public sealed partial class ClientConnection : Connection
                 return (result, default);
             }
 
-            var response = await responseTcs.Task.ConfigureAwait(false);
-            if (response.IsFailure)
+            NetResponse response;
+            try
             {
-                return (response.Result, default);
+                response = await responseTcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+                if (response.IsFailure)
+                {
+                    return (response.Result, default);
+                }
+            }
+            catch
+            {
+                return (NetResult.Canceled, default);
             }
 
             if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))

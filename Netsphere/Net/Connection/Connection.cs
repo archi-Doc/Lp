@@ -508,7 +508,7 @@ Wait:
 
     /// <inheritdoc/>
     public void Dispose()
-    {
+    {// Close the connection, but defer actual disposal for reuse.
         this.ConnectionTerminal.CloseInternal(this, true);
     }
 
@@ -522,8 +522,7 @@ Wait:
         this.aes0?.Dispose();
         this.aes1?.Dispose();
 
-        // tempcode
-        // this.sendTransmissions.Dispose();
+        this.CloseTransmission();
     }
 
     public override string ToString()
@@ -575,6 +574,29 @@ Wait:
         var result = aes.TryDecryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
         this.ReturnAes(aes);
         return result;
+    }
+
+    internal void CloseTransmission()
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            foreach (var x in this.sendTransmissions)
+            {
+                x.DisposeInternal();
+            }
+
+            this.sendTransmissions.TransmissionIdChain.Clear();
+        }
+
+        lock(this.receiveTransmissions.SyncObject)
+        {
+            foreach (var x in this.receiveTransmissions)
+            {
+                x.DisposeInternal();
+            }
+
+            this.receiveTransmissions.TransmissionIdChain.Clear();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
