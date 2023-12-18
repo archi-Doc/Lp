@@ -80,17 +80,55 @@ internal partial class AckBuffer
     private void ProcessSend(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
     {// AckFrameCode
         ByteArrayPool.Owner? arrayOwner = default;
-        int arrayLength = 0;
-        uint transmissionId = 0;
+        Span<byte> span = default;
+        uint previousTransmissionId = 0;
+        int numberOfPairs = 0;
+        int startGene = -1;
+        int endGene = -1;
 
         while (ackQueue.TryDequeue(out var ack))
         {
-            if (remaining < 16)
+            if (span.Length < AckFrame.Margin)
             {
                 SendPacket();
             }
 
-            arrayOwner = PacketPool.Rent();
+            if (arrayOwner is null)
+            {
+                arrayOwner = PacketPool.Rent();
+                span = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + AckFrame.Length, AckFrame.MaxGeneLength);
+            }
+
+            var transmissionId = (uint)(ack >> 32);
+            var geneSerial = (int)ack;
+
+            if (previousTransmissionId != 0 &&
+                transmissionId == previousTransmissionId)
+            {// Same transmission id
+                if (startGene == -1 && endGene == -1)
+                {// Initial
+                    startGene = geneSerial;
+                    endGene = geneSerial;
+                }
+                else if (endGene == geneSerial - 1)
+                {// Serial genes
+                    endGene = geneSerial;
+                }
+                else
+                {// Not serial
+                    BitConverter.TryWriteBytes(span, startGene);
+                    span = span.Slice(sizeof(int));
+                    BitConverter.TryWriteBytes(span, endGene);
+                    span = span.Slice(sizeof(int));
+                    numberOfPairs++;
+
+                    startGene = -1;
+                    endGene = -1;
+                }
+            }
+            else
+            {// New transmission id
+            }
         }
 
         SendPacket();
@@ -99,9 +137,9 @@ internal partial class AckBuffer
         {
             if (arrayOwner is not null)
             {
-                connection.CreateAckPacket(arrayOwner, ref ackLength);
+                connection.CreateAckPacket(arrayOwner, AckFrame.MaxGeneLength - span.Length, out var packetLength);
                 netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, arrayOwner.ToMemoryOwner());
-                arrayOwner = default;
+                arrayOwner = arrayOwner.Return();
             }
         }
     }

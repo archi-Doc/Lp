@@ -511,6 +511,33 @@ Wait:
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
     }
 
+    internal void CreateAckPacket(ByteArrayPool.Owner owner, int geneLength, out int packetLength)
+    {
+        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
+        var span = owner.ByteArray.AsSpan();
+        var salt = RandomVault.Pseudo.NextUInt32();
+
+        // PacketHeaderCode
+        BitConverter.TryWriteBytes(span, salt); // Salt
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
+        span = span.Slice(sizeof(ulong));
+
+        var source = span;
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
+        span = span.Slice(sizeof(ushort));
+
+        this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + geneLength), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
+        packetLength = PacketHeader.Length + written;
+    }
+
     /// <inheritdoc/>
     public void Dispose()
     {// Close the connection, but defer actual disposal for reuse.
