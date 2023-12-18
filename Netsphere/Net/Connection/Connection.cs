@@ -132,7 +132,7 @@ public abstract class Connection : IDisposable
             {
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
-            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+            while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
             var sendTransmission = new SendTransmission(this, transmissionId);
             sendTransmission.Goshujin = this.sendTransmissions;
@@ -160,7 +160,7 @@ Retry:
             {
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
-            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+            while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
             var sendTransmission = new SendTransmission(this, transmissionId);
             sendTransmission.Goshujin = this.sendTransmissions;
@@ -248,6 +248,11 @@ Wait:
             var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
             this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
         }
+    }
+
+    internal void ReportResend()
+    {
+        this.AddRtt(this.smoothedRtt * 4); // tempcode
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
@@ -588,7 +593,7 @@ Wait:
             this.sendTransmissions.TransmissionIdChain.Clear();
         }
 
-        lock(this.receiveTransmissions.SyncObject)
+        lock (this.receiveTransmissions.SyncObject)
         {
             foreach (var x in this.receiveTransmissions)
             {

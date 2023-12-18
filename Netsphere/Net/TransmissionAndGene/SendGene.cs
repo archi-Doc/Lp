@@ -45,6 +45,7 @@ internal partial class SendGene
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
         this.SentMics = currentMics;
+        Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
         return currentMics + connection.RetransmissionTimeout;
     }
 

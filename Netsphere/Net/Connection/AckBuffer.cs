@@ -1,7 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
@@ -70,14 +73,36 @@ internal partial class AckBuffer
                 break;
             }
 
-            this.ProcessSend(connection, ackQueue);
+            this.ProcessSend(netSender, connection, ackQueue);
         }
     }
 
-    private void ProcessSend(Connection connection, Queue<ulong> ackQueue)
+    private void ProcessSend(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
     {
+        ByteArrayPool.Owner? arrayOwner = default;
+        int arrayLength = 0;
+        uint transmissionId = 0;
+
         while (ackQueue.TryDequeue(out var ack))
         {
+            if (remaining < 16)
+            {
+                SendPacket();
+            }                                                                                                                                                                                                       
+
+            arrayOwner = PacketPool.Rent();
+        }
+
+        SendPacket();
+
+        void SendPacket()
+        {
+            if (arrayOwner is not null)
+            {
+                connection.CreateAckPacket(arrayOwner, ref ackLength);
+                netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, arrayOwner.ToMemoryOwner());
+                arrayOwner = default;
+            }
         }
     }
 }
