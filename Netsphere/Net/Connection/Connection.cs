@@ -448,6 +448,7 @@ Wait:
             return false;
         }
 
+        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
@@ -459,7 +460,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, (ushort)PacketType.EncryptedResponse); // PacketType
+        BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id

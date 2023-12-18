@@ -19,6 +19,8 @@ public class ConnectionTerminal
         this.netTerminal = netTerminal;
         this.packetTerminal = this.netTerminal.PacketTerminal;
         this.netStats = this.netTerminal.NetStats;
+
+        this.logger = this.netTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
     }
 
     public NetBase NetBase { get; }
@@ -26,6 +28,7 @@ public class ConnectionTerminal
     private readonly NetTerminal netTerminal;
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
+    private readonly ILogger logger;
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
@@ -45,6 +48,7 @@ public class ConnectionTerminal
                 clientConnection.ResponseSystemMics + FromOpenToClosedMics < systemCurrentMics)
             {
                 // Console.WriteLine($"Closed: {clientConnection.ToString()}");
+                clientConnection.SendCloseFrame();
                 this.CloseClientConnection(this.clientConnections, clientConnection);
             }
 
@@ -65,6 +69,7 @@ public class ConnectionTerminal
                 serverConnection.ResponseSystemMics + FromOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
             {
                 // Console.WriteLine($"Closed: {serverConnection.ToString()}");
+                serverConnection.SendCloseFrame();
                 this.CloseServerConnection(this.serverConnections, serverConnection);
             }
 
@@ -220,6 +225,8 @@ public class ConnectionTerminal
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)
     {
+        this.logger.TryGet(LogLevel.Information)?.Log("Close frame received.");
+
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
         {
@@ -370,7 +377,7 @@ public class ConnectionTerminal
 
     private void CloseClientConnection(ClientConnection.GoshujinClass g, ClientConnection connection)
     {// lock (g.SyncObject)
-     // ConnectionStateCode
+        // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
@@ -382,7 +389,7 @@ public class ConnectionTerminal
 
     private void CloseServerConnection(ServerConnection.GoshujinClass g, ServerConnection connection)
     {// lock (g.SyncObject)
-     // ConnectionStateCode
+        // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
