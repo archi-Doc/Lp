@@ -73,10 +73,15 @@ public partial class FlowControl
                 }
 
                 gene = firstNode.Value;
-                if (gene.CanSend)
+                var rto = gene.Send_NotThreadSafe(netSender);
+                if (rto > 0)
                 {// Resend
+                    Console.WriteLine("RESEND");//
+                    if (gene.SendTransmission.Connection.ConnectionTerminal.NetTerminal.NetTerminalString == "Alt" && gene.SendTransmission.Connection.EndPoint.EndPoint.Port == 49151)
+                    {
+                    }
+
                     remaining--;
-                    var rto = gene.Send_NotThreadSafe(netSender);
                     this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
 
                     if (this == FlowControl.Default)
@@ -98,10 +103,10 @@ public partial class FlowControl
                     return;
                 }
 
-                if (gene.CanSend)
+                var rto = gene.Send_NotThreadSafe(netSender);
+                if (rto > 0)
                 {// Send
                     remaining--;
-                    var rto = gene.Send_NotThreadSafe(netSender);
                     this.waitingForAck.Add(rto + (rtoSerial++), gene);
                 }
             }

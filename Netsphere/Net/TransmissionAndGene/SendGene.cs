@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using System.Runtime.CompilerServices;
 
 namespace Netsphere.Net;
@@ -34,6 +35,8 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
+        Console.WriteLine($"{this.SendTransmission.Connection.ToString()}, {this.SendTransmission.Connection.EndPoint.EndPoint.Port}");
+
         this.Packet = toBeMoved;
         this.FlowControl.AddSend_LockFree(this); // Lock-free
     }
@@ -41,18 +44,28 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Send_NotThreadSafe(NetSender netSender)
     {
-        // lock (this)
-        var connection = this.SendTransmission.Connection;
-        var currentMics = netSender.CurrentSystemMics;
+        lock (this)
+        {
+            if (!this.CanSend)
+            {
+                return 0;
+            }
 
-        netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
-        this.SentMics = currentMics;
-        Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
-        return currentMics + connection.RetransmissionTimeout;
+            var connection = this.SendTransmission.Connection;
+            var currentMics = netSender.CurrentSystemMics;
+
+            netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
+            this.SentMics = currentMics;
+            // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
+            return currentMics + connection.RetransmissionTimeout;
+        }
     }
 
     public void Dispose()
     {
-        this.Packet = this.Packet.Return();
+        lock (this)
+        {
+            this.Packet = this.Packet.Return();
+        }
     }
 }

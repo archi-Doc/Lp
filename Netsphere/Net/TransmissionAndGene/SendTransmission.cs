@@ -266,7 +266,7 @@ public sealed partial class SendTransmission : IDisposable
     }
 
     internal bool ProcessReceive_Ack(scoped Span<byte> span)
-    {
+    {// lock (Connection.sendTransmissions.SyncObject)
         var completeFlag = false;
 
         lock (this.syncObject)
@@ -288,6 +288,8 @@ public sealed partial class SendTransmission : IDisposable
                 {
                     if (startGene == 0 && endGene == this.totalGene)
                     {
+                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck 0 - {this.totalGene}");
+
                         this.gene0?.Dispose();
                         this.gene0 = null;
                         this.gene1?.Dispose();
@@ -324,6 +326,8 @@ public sealed partial class SendTransmission : IDisposable
             else
             {// Tcs
             }
+
+            this.DisposeInternal();//
         }
 
         return completeFlag;

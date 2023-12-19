@@ -51,7 +51,8 @@ public class ConnectionTerminal
             while (this.clientConnections.OpenListChain.First is { } clientConnection &&
                 clientConnection.ResponseSystemMics + FromOpenToClosedMics < systemCurrentMics)
             {
-                // Console.WriteLine($"Closed: {clientConnection.ToString()}");
+                clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+
                 clientConnection.SendCloseFrame();
                 this.CloseClientConnection(this.clientConnections, clientConnection);
                 clientConnection.CloseTransmission();
@@ -73,7 +74,7 @@ public class ConnectionTerminal
             while (this.serverConnections.OpenListChain.First is { } serverConnection &&
                 serverConnection.ResponseSystemMics + FromOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
             {
-                // Console.WriteLine($"Closed: {serverConnection.ToString()}");
+                serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
                 serverConnection.SendCloseFrame();
                 this.CloseServerConnection(this.serverConnections, serverConnection);
                 serverConnection.CloseTransmission();
@@ -231,8 +232,6 @@ public class ConnectionTerminal
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)
     {
-        this.logger.TryGet(LogLevel.Information)?.Log("Close frame received.");
-
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
         {
@@ -240,6 +239,8 @@ public class ConnectionTerminal
             {
                 if (connection.State == Connection.ConnectionState.Open)
                 {// Open -> Close
+                    connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");
+
                     if (sendCloseFrame)
                     {
                         clientConnection.SendCloseFrame();
@@ -256,6 +257,8 @@ public class ConnectionTerminal
             {
                 if (connection.State == Connection.ConnectionState.Open)
                 {// Open -> Close
+                    connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");
+
                     if (sendCloseFrame)
                     {
                         serverConnection.SendCloseFrame();

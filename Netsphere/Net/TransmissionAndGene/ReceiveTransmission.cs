@@ -98,8 +98,8 @@ public sealed partial class ReceiveTransmission : IDisposable
     internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
-        uint primaryId = 0;
-        ulong secondaryId = 0;
+        uint dataKind = 0;
+        ulong dataId = 0;
         ByteArrayPool.MemoryOwner owner = default;
         lock (this.syncObject)
         {
@@ -150,7 +150,7 @@ public sealed partial class ReceiveTransmission : IDisposable
 
             if (completeFlag)
             {// Complete
-                this.ProcessReceive_GeneComplete(out primaryId, out secondaryId, out owner);
+                this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
             }
         }
 
@@ -161,6 +161,8 @@ public sealed partial class ReceiveTransmission : IDisposable
             {
                 if (this.Connection.Agreement.MaxTransmissions < 10)
                 {// Instant
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Instant Ack 0 - {this.totalGene}");
+
                     Span<byte> ackFrame = stackalloc byte[2 + 6 + 8];
                     var span = ackFrame;
                     BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
@@ -179,12 +181,16 @@ public sealed partial class ReceiveTransmission : IDisposable
                 }
                 else
                 {// Defer
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Ack 0 - {this.totalGene}");
+
                     this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
                 }
             }
         }
         else
         {// Ack (TransmissionId, GenePosition)
+            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Ack {genePosition}");
+
             this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
         }
 
@@ -192,7 +198,7 @@ public sealed partial class ReceiveTransmission : IDisposable
         {// Receive complete
             if (this.InvokeServer)
             {// Server: Connection, NetTransmission, Owner
-                var param = new ServerInvocationParam(this.Connection, this, primaryId, secondaryId, owner);
+                var param = new ServerInvocationParam(this.Connection, this, dataKind, dataId, owner);
                 Console.WriteLine(owner.Span.Length);
             }
             else
@@ -207,22 +213,22 @@ public sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
-    internal void ProcessReceive_GeneComplete(out uint primaryId, out ulong secondaryId, out ByteArrayPool.MemoryOwner toBeMoved)
+    internal void ProcessReceive_GeneComplete(out uint dataKind, out ulong dataId, out ByteArrayPool.MemoryOwner toBeMoved)
     {// lock (this.syncObject)
         if (this.genes is null)
         {// Single send/recv
             if (this.totalGene == 0)
             {
-                primaryId = 0;
-                secondaryId = 0;
+                dataKind = 0;
+                dataId = 0;
                 toBeMoved = default;
             }
             else
             {
                 var span = this.gene0!.Packet.Span;
-                primaryId = BitConverter.ToUInt32(span);
+                dataKind = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
-                secondaryId = BitConverter.ToUInt64(span);
+                dataId = BitConverter.ToUInt64(span);
 
                 var firstPacket = this.gene0!.Packet.Slice(12);
                 var length = firstPacket.Span.Length;
@@ -261,8 +267,8 @@ public sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Multiple send/recv
-            primaryId = 0;
-            secondaryId = 0;
+            dataKind = 0;
+            dataId = 0;
             toBeMoved = default;
         }
     }

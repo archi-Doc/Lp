@@ -40,6 +40,7 @@ public abstract class Connection : IDisposable
     public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
     {
         this.NetBase = connectionTerminal.NetBase;
+        this.Logger = this.NetBase.UnitLogger.GetLogger(this.GetType());
         this.PacketTerminal = packetTerminal;
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
@@ -55,6 +56,8 @@ public abstract class Connection : IDisposable
     public PacketTerminal PacketTerminal { get; }
 
     public ulong ConnectionId { get; }
+
+    public string ConnectionIdText => ((ushort)this.ConnectionId).ToString("x4");
 
     public NetEndPoint EndPoint { get; }
 
@@ -75,6 +78,8 @@ public abstract class Connection : IDisposable
 
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 1ms
+
+    internal ILogger Logger { get; }
 
     internal long ClosedSystemMics { get; set; }
 
@@ -322,7 +327,6 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
-        SendTransmission? transmissionToDispose = null;
         lock (this.sendTransmissions.SyncObject)
         {
             while (span.Length >= 6)
@@ -344,17 +348,10 @@ Wait:
                     continue;
                 }
 
-                if (transmission.ProcessReceive_Ack(span))
-                {// Dispose the complete transmission
-                    transmissionToDispose = transmission;
-                    transmissionToDispose.Goshujin = null;
-                }
-
+                transmission.ProcessReceive_Ack(span);
                 span = span.Slice(length);
             }
         }
-
-        transmissionToDispose?.DisposeInternal();
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
@@ -549,13 +546,18 @@ Wait:
 
     internal void DisposeActual()
     {// lock (this.Goshujin.SyncObject)
+        this.Logger.TryGet(LogLevel.Debug)?.Log($"{this.ConnectionIdText} Dispose actual, SendCloseFrame {this.State == ConnectionState.Open}");
+
         if (this.State == ConnectionState.Open)
         {
             this.SendCloseFrame();
         }
 
-        this.aes0?.Dispose();
-        this.aes1?.Dispose();
+        lock (this.syncAes)
+        {
+            this.aes0?.Dispose();
+            this.aes1?.Dispose();
+        }
 
         this.CloseTransmission();
     }
