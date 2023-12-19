@@ -33,14 +33,15 @@ internal partial class AckBuffer
             var queue = connection.AckQueue;
             if (queue is null)
             {
-                this.freeQueue.TryDequeue(out queue);
+                this.freeQueue.TryDequeue(out queue); // Reuse the queued queue.
                 queue ??= new();
                 this.connectionQueue.Enqueue(connection);
+
                 connection.AckMics = Mics.GetSystem() + NetConstants.AckDelayMics;
                 connection.AckQueue = queue;
             }
 
-            queue.Enqueue((transmissionId << 32) | (uint)geneSerial);
+            queue.Enqueue(((ulong)transmissionId << 32) | (uint)geneSerial);
         }
     }
 
@@ -81,16 +82,17 @@ internal partial class AckBuffer
     private void ProcessSend(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
     {// AckFrameCode
         ByteArrayPool.Owner? owner = default;
-        var position = 0; // remainig = NetControl.MaxPacketLength - 16 - position;
-        var remaining = 0;
+        var position = 0;
+        var transmissionPosition = 0;
+        const int maxLength = NetControl.MaxPacketLength - 16; // remainig = maxLength - position;
         uint previousTransmissionId = 0;
-        int numberOfPairs = 0;
+        ushort numberOfPairs = 0;
         int startGene = -1;
         int endGene = -1;
 
         while (ackQueue.TryDequeue(out var ack))
         {
-            if (remaining < AckFrame.Margin)
+            if ((maxLength - position) < AckFrame.Margin)
             {// Send the packet due to the size approaching the limit.
                 SendPacket();
             }
@@ -98,8 +100,8 @@ internal partial class AckBuffer
             if (owner is null)
             {
                 owner = PacketPool.Rent();
-                position = PacketHeader.Length + AckFrame.Length;
-                remaining = NetControl.MaxPacketLength - 16 - position;
+                transmissionPosition = PacketHeader.Length + AckFrame.Length;
+                position = transmissionPosition + 6;
             }
 
             var transmissionId = (uint)(ack >> 32);
@@ -113,7 +115,7 @@ internal partial class AckBuffer
             }
             else if (transmissionId == previousTransmissionId)
             {// Same transmission id
-                if (startGene == -1 && endGene == -1)
+                if (startGene == -1)
                 {// Initial gene
                     startGene = geneSerial;
                     endGene = geneSerial;
@@ -123,13 +125,12 @@ internal partial class AckBuffer
                     endGene = geneSerial;
                 }
                 else
-                {// Not serial
+                {// Not serial gene
                     var span = owner.ByteArray.AsSpan(position);
                     BitConverter.TryWriteBytes(span, startGene);
                     span = span.Slice(sizeof(int));
                     BitConverter.TryWriteBytes(span, endGene);
                     position += 8;
-                    remaining -= 8;
                     numberOfPairs++;
 
                     startGene = -1;
@@ -138,7 +139,24 @@ internal partial class AckBuffer
             }
             else
             {// Different transmission id
+                var span = owner.ByteArray.AsSpan(position);
+                BitConverter.TryWriteBytes(span, startGene);
+                span = span.Slice(sizeof(int));
+                BitConverter.TryWriteBytes(span, endGene);
+                position += 8;
+                numberOfPairs++;
+
+                span = owner.ByteArray.AsSpan(transmissionPosition);
+                BitConverter.TryWriteBytes(span, previousTransmissionId);
+                span = span.Slice(sizeof(uint));
+                BitConverter.TryWriteBytes(span, numberOfPairs);
+
                 previousTransmissionId = transmissionId;
+                numberOfPairs = 0;
+                transmissionPosition = position;
+                position += 6;
+                startGene = geneSerial;
+                endGene = geneSerial;
             }
         }
 
@@ -150,10 +168,24 @@ internal partial class AckBuffer
             {
                 if (previousTransmissionId != 0)
                 {
+                    var span = owner.ByteArray.AsSpan(position);
+                    BitConverter.TryWriteBytes(span, startGene);
+                    span = span.Slice(sizeof(int));
+                    BitConverter.TryWriteBytes(span, endGene);
+                    position += 8;
+                    numberOfPairs++;
 
+                    span = owner.ByteArray.AsSpan(transmissionPosition);
+                    BitConverter.TryWriteBytes(span, previousTransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, numberOfPairs);
+
+                    previousTransmissionId = 0;
+                    numberOfPairs = 0;
+                    transmissionPosition = 0;
                 }
 
-                connection.CreateAckPacket(owner, length, out var packetLength);
+                connection.CreateAckPacket(owner, position - PacketHeader.Length, out var packetLength);
                 netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
                 owner = owner.Return();
             }

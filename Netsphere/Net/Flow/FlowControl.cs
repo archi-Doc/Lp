@@ -77,7 +77,7 @@ public partial class FlowControl
                 {// Resend
                     remaining--;
                     var rto = gene.Send_NotThreadSafe(netSender);
-                    this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));//Limit
+                    this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
 
                     if (this == FlowControl.Default)
                     {
