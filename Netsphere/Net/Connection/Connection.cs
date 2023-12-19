@@ -320,30 +320,31 @@ Wait:
     }
 
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// { uint TransmissionId, uint GeneSerial } x n
+    {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         SendTransmission? transmissionToDispose = null;
         lock (this.sendTransmissions.SyncObject)
         {
-            SendTransmission? previous = null;
-            while (span.Length >= 8)
+            while (span.Length >= 6)
             {
                 var transmissionId = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
-                var geneSerial = BitConverter.ToInt32(span);
-                span = span.Slice(sizeof(int));
+                var numberOfPairs = BitConverter.ToUInt16(span);
+                span = span.Slice(sizeof(ushort));
 
-                SendTransmission? transmission;
-                if (previous is not null && previous.TransmissionId == transmissionId)
+                var length = numberOfPairs * 8;
+                if (span.Length < length)
                 {
-                    transmission = previous;
+                    return;
                 }
-                else if (!this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+
+                if (!this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                 {
+                    span = span.Slice(length);
                     continue;
                 }
 
-                if (transmission.ProcessReceive_Ack(geneSerial))
+                if (transmission.ProcessReceive_Ack(span))
                 {// Dispose the complete transmission
                     transmissionToDispose = transmission;
                     transmissionToDispose.Goshujin = null;

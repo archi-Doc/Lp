@@ -3,9 +3,7 @@
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using Arc.Collections;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
@@ -42,6 +40,31 @@ internal partial class AckBuffer
             }
 
             queue.Enqueue(((ulong)transmissionId << 32) | (uint)geneSerial);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AddRange(Connection connection, uint transmissionId, int geneStart, int geneEnd)
+    {
+        Debug.Assert((geneEnd - geneStart) <= NetHelper.RamaGenes);
+
+        lock (this.syncObject)
+        {
+            var queue = connection.AckQueue;
+            if (queue is null)
+            {
+                this.freeQueue.TryDequeue(out queue); // Reuse the queued queue.
+                queue ??= new();
+                this.connectionQueue.Enqueue(connection);
+
+                connection.AckMics = Mics.GetSystem() + NetConstants.AckDelayMics;
+                connection.AckQueue = queue;
+            }
+
+            for (var i = geneStart; i < geneEnd; i++)
+            {
+                queue.Enqueue(((ulong)transmissionId << 32) | (uint)i);
+            }
         }
     }
 
@@ -111,18 +134,18 @@ internal partial class AckBuffer
             {// Initial transmission id
                 previousTransmissionId = transmissionId;
                 startGene = geneSerial;
-                endGene = geneSerial;
+                endGene = geneSerial + 1;
             }
             else if (transmissionId == previousTransmissionId)
             {// Same transmission id
                 if (startGene == -1)
                 {// Initial gene
                     startGene = geneSerial;
-                    endGene = geneSerial;
+                    endGene = geneSerial + 1;
                 }
-                else if (endGene == geneSerial - 1)
+                else if (endGene == geneSerial)
                 {// Serial genes
-                    endGene = geneSerial;
+                    endGene = geneSerial + 1;
                 }
                 else
                 {// Not serial gene
@@ -156,7 +179,7 @@ internal partial class AckBuffer
                 transmissionPosition = position;
                 position += 6;
                 startGene = geneSerial;
-                endGene = geneSerial;
+                endGene = geneSerial + 1;
             }
         }
 
@@ -183,6 +206,8 @@ internal partial class AckBuffer
                     previousTransmissionId = 0;
                     numberOfPairs = 0;
                     transmissionPosition = 0;
+                    startGene = -1;
+                    endGene = -1;
                 }
 
                 connection.CreateAckPacket(owner, position - PacketHeader.Length, out var packetLength);

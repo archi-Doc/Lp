@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -44,7 +45,15 @@ public sealed partial class ReceiveTransmission : IDisposable
 
     internal void SetState_Receiving(int totalGene)
     {
-        this.Mode = NetTransmissionMode.Block;
+        if (totalGene <= NetHelper.RamaGenes)
+        {
+            this.Mode = NetTransmissionMode.Rama;
+        }
+        else
+        {
+            this.Mode = NetTransmissionMode.Block;
+        }
+
         this.totalGene = totalGene;
     }
 
@@ -148,51 +157,31 @@ public sealed partial class ReceiveTransmission : IDisposable
         // Send Ack
         if (this.Mode == NetTransmissionMode.Rama)
         {// Fast Ack
-            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
-
-            /*if (completeFlag)
+            if (completeFlag)
             {
-                Span<byte> ackFrame = stackalloc byte[2 + (8 * 3)];
-                var span = ackFrame;
-                BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
-                span = span.Slice(sizeof(ushort));
+                if (this.Connection.Agreement.MaxTransmissions < 10)
+                {// Instant
+                    Span<byte> ackFrame = stackalloc byte[2 + 6 + 8];
+                    var span = ackFrame;
+                    BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
+                    span = span.Slice(sizeof(ushort));
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, (ushort)1); // Number of pairs
+                    span = span.Slice(sizeof(ushort));
+                    BitConverter.TryWriteBytes(span, 0); // StartGene
+                    span = span.Slice(sizeof(int));
+                    BitConverter.TryWriteBytes(span, this.totalGene); // EndGene
+                    span = span.Slice(sizeof(int));
 
-                if (this.totalGene == 1)
-                {
-                    BitConverter.TryWriteBytes(span, this.TransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, 0u);
-                    span = span.Slice(sizeof(uint));
+                    Debug.Assert(span.Length == 0);
+                    this.Connection.SendPriorityFrame(ackFrame);
                 }
-                else if (this.totalGene == 2)
-                {
-                    BitConverter.TryWriteBytes(span, this.TransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, 0u);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, this.TransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, 1u);
-                    span = span.Slice(sizeof(uint));
+                else
+                {// Defer
+                    this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
                 }
-                else if (this.totalGene == 3)
-                {
-                    BitConverter.TryWriteBytes(span, this.TransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, 0u);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, this.TransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, 1u);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, this.TransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, 2u);
-                    span = span.Slice(sizeof(uint));
-                }
-
-                this.Connection.SendPriorityFrame(ackFrame.Slice(0, 2 + (8 * (int)this.totalGene)));
-            }*/
+            }
         }
         else
         {// Ack (TransmissionId, GenePosition)

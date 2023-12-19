@@ -265,6 +265,70 @@ public sealed partial class SendTransmission : IDisposable
         return completeFlag;
     }
 
+    internal bool ProcessReceive_Ack(scoped Span<byte> span)
+    {
+        var completeFlag = false;
+
+        lock (this.syncObject)
+        {
+            while (span.Length >= 8)
+            {
+                var startGene = BitConverter.ToInt32(span);
+                span = span.Slice(sizeof(int));
+                var endGene = BitConverter.ToInt32(span);
+                span = span.Slice(sizeof(int));
+
+                if (startGene < 0 || startGene >= this.totalGene ||
+                    endGene < 0 || endGene > this.totalGene)
+                {
+                    continue;
+                }
+
+                if (this.Mode == NetTransmissionMode.Rama)
+                {
+                    if (endGene == this.totalGene)
+                    {
+                        this.gene0?.Dispose();
+                        this.gene0 = null;
+                        this.gene1?.Dispose();
+                        this.gene1 = null;
+                        this.gene2?.Dispose();
+                        this.gene2 = null;
+
+                        completeFlag = true;
+                        break;
+                    }
+                }
+                else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
+                {
+                    for (var i = startGene; i < endGene; i++)
+                    {
+                        if (this.genes.GeneSerialListChain.Get(i) is { } gene)
+                        {
+                            this.genes.GeneSerialListChain.Remove(gene);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (completeFlag)
+        {
+            if (this.tcs is null)
+            {// Receive
+            }
+            else
+            {// Tcs
+            }
+        }
+
+        return completeFlag;
+    }
+
     private void CreateFirstPacket(ushort transmissionMode, int totalGene, uint dataKind, ulong dataId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
