@@ -16,19 +16,22 @@ public class ConnectionTerminal
     public ConnectionTerminal(NetTerminal netTerminal)
     {
         this.NetBase = netTerminal.NetBase;
-        this.AckBuffer = new();
-        this.netTerminal = netTerminal;
-        this.packetTerminal = this.netTerminal.PacketTerminal;
-        this.netStats = this.netTerminal.NetStats;
+        this.NetTerminal = netTerminal;
+        this.AckBuffer = new(this);
+        this.packetTerminal = this.NetTerminal.PacketTerminal;
+        this.netStats = this.NetTerminal.NetStats;
 
-        this.logger = this.netTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
+        this.logger = this.NetTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
     }
 
     public NetBase NetBase { get; }
 
+    internal UnitLogger UnitLogger => this.NetTerminal.UnitLogger;
+
+    internal NetTerminal NetTerminal { get; }
+
     internal AckBuffer AckBuffer { get; }
 
-    private readonly NetTerminal netTerminal;
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
     private readonly ILogger logger;
@@ -127,7 +130,7 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new PacketConnect(0, this.netTerminal.NetBase.NodePublicKey);
+        var packet = new PacketConnect(0, this.NetTerminal.NetBase.NodePublicKey);
         var t = await this.packetTerminal.SendAndReceiveAsync<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
@@ -155,7 +158,7 @@ public class ConnectionTerminal
     internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.netTerminal.NetBase.NodePrivateKey, serverPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NetBase.NodePrivateKey, serverPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -163,7 +166,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         return connection;
@@ -172,7 +175,7 @@ public class ConnectionTerminal
     internal bool PrepareServerSide(NetEndPoint endPoint, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.netTerminal.NetBase.NodePrivateKey, p.ClientPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NetBase.NodePrivateKey, p.ClientPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -180,7 +183,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         lock (this.serverConnections.SyncObject)

@@ -349,6 +349,8 @@ Wait:
                     transmissionToDispose = transmission;
                     transmissionToDispose.Goshujin = null;
                 }
+
+                span = span.Slice(length);
             }
         }
 

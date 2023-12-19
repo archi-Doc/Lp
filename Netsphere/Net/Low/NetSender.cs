@@ -7,7 +7,7 @@ using Netsphere.Misc;
 namespace Netsphere.Net;
 
 internal class NetSender
-{// LOG_NETSENDER
+{// LOG_LOWLEVEL_NET
     private readonly struct Item
     {
         public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
@@ -69,8 +69,8 @@ internal class NetSender
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {
-#if LOG_NETSENDER
-        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} To {endPoint.ToString()}, {toBeShared.Span.Length} bytes");
+#if LOG_LOWLEVEL_NET
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeShared.Span.Length} bytes");
 #endif
 
         this.SendCount++;

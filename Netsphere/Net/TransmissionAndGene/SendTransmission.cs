@@ -317,7 +317,7 @@ public sealed partial class SendTransmission : IDisposable
         }
 
         if (completeFlag)
-        {
+        {// Send transmission complete
             if (this.tcs is null)
             {// Receive
             }

@@ -11,11 +11,16 @@ internal partial class AckBuffer
 {
     private readonly record struct ConnectionAndAckQueue(Connection connection, Queue<long> queue);
 
-    public AckBuffer()
+    public AckBuffer(ConnectionTerminal connectionTerminal)
     {
+        this.connectionTerminal = connectionTerminal;
+        this.logger = connectionTerminal.UnitLogger.GetLogger<AckBuffer>();
     }
 
     #region FieldAndProperty
+
+    private readonly ConnectionTerminal connectionTerminal;
+    private readonly ILogger logger;
 
     private readonly object syncObject = new();
     private readonly Queue<Queue<ulong>> freeQueue = new();
@@ -26,6 +31,10 @@ internal partial class AckBuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(Connection connection, uint transmissionId, int geneSerial)
     {
+#if LOG_LOWLEVEL_NET
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {transmissionId} {geneSerial}");
+#endif
+
         lock (this.syncObject)
         {
             var queue = connection.AckQueue;
@@ -46,6 +55,10 @@ internal partial class AckBuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddRange(Connection connection, uint transmissionId, int geneStart, int geneEnd)
     {
+#if LOG_LOWLEVEL_NET
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {transmissionId} {geneStart}-{geneEnd}");
+#endif
+
         Debug.Assert((geneEnd - geneStart) <= NetHelper.RamaGenes);
 
         lock (this.syncObject)

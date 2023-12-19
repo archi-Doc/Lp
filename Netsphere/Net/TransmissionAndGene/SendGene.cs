@@ -41,7 +41,7 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Send_NotThreadSafe(NetSender netSender)
     {
-        lock (this)
+        // lock (this)
         var connection = this.SendTransmission.Connection;
         var currentMics = netSender.CurrentSystemMics;
 
