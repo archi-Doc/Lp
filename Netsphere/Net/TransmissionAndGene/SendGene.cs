@@ -28,7 +28,8 @@ internal partial class SendGene
 
     public bool CanSend
         => this.SendTransmission.Mode != NetTransmissionMode.Disposed &&
-        this.SendTransmission.Connection.State == Connection.ConnectionState.Open;
+        this.SendTransmission.Connection.State == Connection.ConnectionState.Open &&
+        !this.Packet.IsEmpty;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
@@ -40,6 +41,7 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Send_NotThreadSafe(NetSender netSender)
     {
+        lock (this)
         var connection = this.SendTransmission.Connection;
         var currentMics = netSender.CurrentSystemMics;
 

@@ -286,7 +286,7 @@ public sealed partial class SendTransmission : IDisposable
 
                 if (this.Mode == NetTransmissionMode.Rama)
                 {
-                    if (endGene == this.totalGene)
+                    if (startGene == 0 && endGene == this.totalGene)
                     {
                         this.gene0?.Dispose();
                         this.gene0 = null;
