@@ -29,7 +29,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
     private readonly object syncObject = new();
     private int totalGene;
     private uint maxReceived;
-    private TaskCompletionSource<NetResponse>? tcs;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
     private ReceiveGene? gene2; // Gene 2
@@ -40,33 +39,19 @@ internal sealed partial class ReceiveTransmission : IDisposable
     public void Dispose()
     {
         this.Connection.RemoveTransmission(this);
-        this.DisposeInternal();
+        this.DisposeTransmission();
     }
 
-    internal void SetState_Receiving(int totalGene)
+    internal void DisposeTransmission()
     {
-        if (totalGene <= NetHelper.RamaGenes)
+        lock (this.syncObject)
         {
-            this.Mode = NetTransmissionMode.Rama;
+            this.DisposeInternal();
         }
-        else
-        {
-            this.Mode = NetTransmissionMode.Block;
-        }
-
-        this.totalGene = totalGene;
-    }
-
-    internal void SetState_ReceivingStream(int totalGene)
-    {
-        this.Mode = NetTransmissionMode.Stream;
-        this.totalGene = totalGene;
     }
 
     internal void DisposeInternal()
     {
-        TaskCompletionSource<NetResponse>? tcs;
-
         lock (this.syncObject)
         {
             if (this.Mode == NetTransmissionMode.Disposed)
@@ -87,12 +72,27 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
                 this.genes = default; // this.genes.Clear();
             }
+        }
+    }
 
-            tcs = this.tcs;
-            this.tcs = default;
+    internal void SetState_Receiving(int totalGene)
+    {
+        if (totalGene <= NetHelper.RamaGenes)
+        {
+            this.Mode = NetTransmissionMode.Rama;
+        }
+        else
+        {
+            this.Mode = NetTransmissionMode.Block;
         }
 
-        tcs?.TrySetResult(new(NetResult.Closed));
+        this.totalGene = totalGene;
+    }
+
+    internal void SetState_ReceivingStream(int totalGene)
+    {
+        this.Mode = NetTransmissionMode.Stream;
+        this.totalGene = totalGene;
     }
 
     internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
@@ -205,10 +205,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
             {// Client
                 this.Dispose();
 
-                if (this.tcs is not null)
+                /*if (this.tcs is not null)
                 {
                     this.tcs.SetResult(new(NetResult.Success, owner, 0));
-                }
+                }*/
             }
         }
     }
