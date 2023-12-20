@@ -9,8 +9,6 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public partial class FlowControl
 {
-    public static readonly FlowControl Default = new(NetConstants.SendCapacityPerRound);
-
     public FlowControl(Connection connection)
     {
         this.Connection = connection;
@@ -20,11 +18,14 @@ public partial class FlowControl
     public FlowControl(int sendCapacityPerRound)
     {
         this.sendCapacityPerRound = sendCapacityPerRound;
+        this.IsShared = true;
     }
 
     #region FieldAndProperty
 
     public Connection? Connection { get; private set; }
+
+    public bool IsShared { get; private set; }
 
     internal bool MarkedForDeletion { get; set; }
 
@@ -76,7 +77,7 @@ public partial class FlowControl
                 var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend
-                    Console.WriteLine("RESEND");//
+                    // Console.WriteLine("RESEND");
                     if (gene.SendTransmission.Connection.ConnectionTerminal.NetTerminal.NetTerminalString == "Alt" && gene.SendTransmission.Connection.EndPoint.EndPoint.Port == 49151)
                     {
                     }
@@ -84,7 +85,7 @@ public partial class FlowControl
                     remaining--;
                     this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
 
-                    if (this == FlowControl.Default)
+                    if (this.IsShared)
                     {
                         gene.SendTransmission.Connection.ReportResend();
                     }

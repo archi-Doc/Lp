@@ -35,8 +35,6 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
-        Console.WriteLine($"{this.SendTransmission.Connection.ToString()}, {this.SendTransmission.Connection.EndPoint.EndPoint.Port}");
-
         this.Packet = toBeMoved;
         this.FlowControl.AddSend_LockFree(this); // Lock-free
     }

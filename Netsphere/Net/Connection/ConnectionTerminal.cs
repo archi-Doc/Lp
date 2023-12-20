@@ -32,6 +32,8 @@ public class ConnectionTerminal
 
     internal AckBuffer AckBuffer { get; }
 
+    internal FlowControl SharedFlowControl { get; } = new(NetConstants.SendCapacityPerRound);
+
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
     private readonly ILogger logger;
@@ -328,7 +330,7 @@ public class ConnectionTerminal
         }
 
         // Send
-        FlowControl.Default.ProcessSend(netSender);
+        this.SharedFlowControl.ProcessSend(netSender);
         while (netSender.FlowControlQueue.TryDequeue(out var x))
         {
             x.ProcessSend(netSender);

@@ -57,13 +57,15 @@ public abstract class Connection : IDisposable
 
     public ulong ConnectionId { get; }
 
-    public string ConnectionIdText => ((ushort)this.ConnectionId).ToString("x4");
+    public string ConnectionIdText
+        => ((ushort)this.ConnectionId).ToString("x4");
 
     public NetEndPoint EndPoint { get; }
 
     public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
 
-    public FlowControl FlowControl => this.flowControl ?? FlowControl.Default;
+    public FlowControl FlowControl
+        => this.flowControl ?? this.ConnectionTerminal.SharedFlowControl;
 
     public abstract ConnectionState State { get; }
 
