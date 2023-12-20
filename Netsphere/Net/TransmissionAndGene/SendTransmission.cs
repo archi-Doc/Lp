@@ -42,8 +42,6 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
     private readonly object syncObject = new();
     private int totalGene;
     private TaskCompletionSource<NetResult>? sentTcs;
-    private TaskCompletionSource<NetResponse>? receivedTcs;
-    private ReceiveStream? receiveStream;
     private SendGene? gene0; // Gene 0
     private SendGene? gene1; // Gene 1
     private SendGene? gene2; // Gene 2
@@ -91,21 +89,9 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
             this.sentTcs.SetResult(NetResult.Closed);
             this.sentTcs = null;
         }
-
-        if (this.receivedTcs is not null)
-        {
-            this.receivedTcs.SetResult(new(NetResult.Closed));
-            this.receivedTcs = null;
-        }
-
-        if (this.receiveStream is not null)
-        {
-            this.receiveStream?.Dispose();
-            this.receiveStream = null;
-        }
     }
 
-    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
 
@@ -114,8 +100,6 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
             Debug.Assert(this.Mode == NetTransmissionMode.Initial);
 
             this.sentTcs = sentTcs;
-            this.receivedTcs = receivedTcs;
-            this.receiveStream = receiveStream;
             this.totalGene = info.NumberOfGenes;
 
             var span = block.Span;
@@ -286,10 +270,6 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
                 {
                     this.sentTcs.SetResult(NetResult.Success);
                     this.sentTcs = null;
-                }
-
-                if (this.receivedTcs is not null || this.receiveStream is not null)
-                {
                 }
 
                 // Remove from sendTransmissions and dispose.

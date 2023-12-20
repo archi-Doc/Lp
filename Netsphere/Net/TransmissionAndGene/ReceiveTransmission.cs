@@ -8,18 +8,17 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class ReceiveTransmission : IDisposable
 {
-    public ReceiveTransmission(Connection connection, uint transmissionId, bool invokeServer)
+    public ReceiveTransmission(Connection connection, uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
     {
         this.Connection = connection;
         this.TransmissionId = transmissionId;
-        this.InvokeServer = invokeServer;
+        this.receivedTcs = receivedTcs;
+        this.receiveStream = receiveStream;
     }
 
     #region FieldAndProperty
 
     public Connection Connection { get; }
-
-    public bool InvokeServer { get; }
 
     [Link(Primary = true, Type = ChainType.Unordered)]
     public uint TransmissionId { get; }
@@ -28,6 +27,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     private readonly object syncObject = new();
     private int totalGene;
+    private TaskCompletionSource<NetResponse>? receivedTcs;
+    private ReceiveStream? receiveStream;
     private uint maxReceived;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
@@ -52,26 +53,35 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     internal void DisposeInternal()
     {
-        lock (this.syncObject)
+        if (this.Mode == NetTransmissionMode.Disposed)
         {
-            if (this.Mode == NetTransmissionMode.Disposed)
+            return;
+        }
+
+        this.Mode = NetTransmissionMode.Disposed;
+        this.gene0?.Dispose();
+        this.gene1?.Dispose();
+        this.gene2?.Dispose();
+        if (this.genes is not null)
+        {
+            foreach (var x in this.genes)
             {
-                return;
+                x.Dispose();
             }
 
-            this.Mode = NetTransmissionMode.Disposed;
-            this.gene0?.Dispose();
-            this.gene1?.Dispose();
-            this.gene2?.Dispose();
-            if (this.genes is not null)
-            {
-                foreach (var x in this.genes)
-                {
-                    x.Dispose();
-                }
+            this.genes = default; // this.genes.Clear();
+        }
 
-                this.genes = default; // this.genes.Clear();
-            }
+        if (this.receivedTcs is not null)
+        {
+            this.receivedTcs.SetResult(new(NetResult.Closed));
+            this.receivedTcs = null;
+        }
+
+        if (this.receiveStream is not null)
+        {
+            this.receiveStream?.Dispose();
+            this.receiveStream = null;
         }
     }
 
@@ -98,6 +108,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
     internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
+        TaskCompletionSource<NetResponse>? receivedTcs = default;
+        ReceiveStream? receiveStream = default;
         uint dataKind = 0;
         ulong dataId = 0;
         ByteArrayPool.MemoryOwner owner = default;
@@ -151,6 +163,14 @@ internal sealed partial class ReceiveTransmission : IDisposable
             if (completeFlag)
             {// Complete
                 this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
+
+                receivedTcs = this.receivedTcs;
+                this.receivedTcs = default;
+                receiveStream = this.receiveStream;
+                this.receiveStream = default;
+
+                this.Goshujin = null;
+                this.DisposeInternal();
             }
         }
 
@@ -196,20 +216,13 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
         if (completeFlag)
         {// Receive complete
-            if (this.InvokeServer)
+            if (this.Connection.IsServer)
             {// Server: Connection, NetTransmission, Owner
                 var param = new ServerInvocationParam(this.Connection, dataKind, dataId, owner, default!, default);
                 Console.WriteLine(owner.Span.Length);
             }
-            else
-            {// Client
-                this.Dispose();
 
-                /*if (this.tcs is not null)
-                {
-                    this.tcs.SetResult(new(NetResult.Success, owner, 0));
-                }*/
-            }
+            receivedTcs?.SetResult(new(NetResult.Success, owner, 0));
         }
     }
 

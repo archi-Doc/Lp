@@ -37,6 +37,10 @@ public sealed partial class ServerConnection : Connection
         }
     }
 
+    public override bool IsClient => false;
+
+    public override bool IsServer => true;
+
     /*public NetResult SendAndForget<TSend, TReceive>(TSend packet)
         where TSend : ITinyhandSerialize<TSend>
     {

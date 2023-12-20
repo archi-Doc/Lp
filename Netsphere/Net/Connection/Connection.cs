@@ -69,6 +69,10 @@ public abstract class Connection : IDisposable
 
     public abstract ConnectionState State { get; }
 
+    public abstract bool IsClient { get; }
+
+    public abstract bool IsServer { get; }
+
     public bool IsOpen
         => this.State == ConnectionState.Open;
 
@@ -125,7 +129,7 @@ public abstract class Connection : IDisposable
     public void Close()
         => this.Dispose();
 
-    internal SendTransmission? TryCreateTransmission()
+    internal SendTransmission? TryCreateSendTransmission()
     {
         lock (this.sendTransmissions.SyncObject)
         {
@@ -147,7 +151,7 @@ public abstract class Connection : IDisposable
         }
     }
 
-    internal async ValueTask<SendTransmission?> CreateTransmission()
+    internal async ValueTask<SendTransmission?> CreateSendTransmission()
     {
 Retry:
         if (this.NetBase.CancellationToken.IsCancellationRequested)
@@ -186,7 +190,7 @@ Wait:
         goto Retry;
     }
 
-    internal ReceiveTransmission CreateReceiveTransmission(uint transmissionId)
+    internal ReceiveTransmission CreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
     {
         lock (this.receiveTransmissions.SyncObject)
         {
@@ -195,7 +199,7 @@ Wait:
                 return receiveTransmission;
             }
 
-            receiveTransmission = new ReceiveTransmission(this, transmissionId, false);
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
         }
@@ -397,30 +401,40 @@ Wait:
         ReceiveTransmission? transmission;
         lock (this.receiveTransmissions.SyncObject)
         {
-            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
-            {// The same TransmissionId already exists.
-                return;
-            }
-
-            // New transmission
-            if (this.receiveTransmissions.Count >= this.Agreement.MaxTransmissions)
-            {// Maximum number reached.
-                return;
-            }
-
-            if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
-            {// Block mode
-                transmission = new(this, transmissionId, true);
-                transmission.SetState_Receiving(totalGenes);
-            }
-            else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
-            {// Stream mode
-                transmission = new(this, transmissionId, true);
-                transmission.SetState_ReceivingStream(totalGenes);
+            if (this.IsClient)
+            {// Client
+                if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+                {// On the client side, it's necessary to create ReceiveTransmission in advance.
+                    return;
+                }
             }
             else
-            {
-                return;
+            {// Server
+                if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+                {// The same TransmissionId already exists.
+                    return;
+                }
+
+                // New transmission
+                if (this.receiveTransmissions.Count >= this.Agreement.MaxTransmissions)
+                {// Maximum number reached.
+                    return;
+                }
+
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+                {// Block mode
+                    transmission = new(this, transmissionId, default, default);
+                    transmission.SetState_Receiving(totalGenes);
+                }
+                else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
+                {// Stream mode
+                    transmission = new(this, transmissionId, default, default);
+                    transmission.SetState_ReceivingStream(totalGenes);
+                }
+                else
+                {
+                    return;
+                }
             }
 
             transmission.Goshujin = this.receiveTransmissions;
