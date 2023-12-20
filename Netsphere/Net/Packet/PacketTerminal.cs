@@ -112,6 +112,10 @@ public sealed partial class PacketTerminal
         CreatePacket(0, packet, out var owner);
         this.AddSendPacket(endPoint.EndPoint, owner, responseTcs);
 
+#if LOG_LOWLEVEL_NET
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+#endif
+
         try
         {
             var response = await responseTcs.Task.WaitAsync(this.netTerminal.ResponseTimeout, this.netTerminal.CancellationToken).ConfigureAwait(false);
@@ -158,20 +162,20 @@ public sealed partial class PacketTerminal
 
                 if (item.ResponseTcs is not null)
                 {// WaitingToSend -> WaitingForResponse
-                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                     item.SentMics = netSender.CurrentSystemMics;
                     this.items.WaitingToSendListChain.Remove(item);
                     this.items.WaitingForResponseListChain.AddLast(item);
                 }
                 else
                 {// WaitingToSend -> Remove (without response)
-                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                     item.Remove();
                 }
             }
 
             while (this.items.WaitingForResponseListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > this.InitialResendTimeoutMics)
-            {// Sent list
+            {// Waiting for response list
                 if (!netSender.CanSend)
                 {
                     return;
@@ -192,7 +196,7 @@ public sealed partial class PacketTerminal
                 BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
                 BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
 
-                netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                 item.SentMics = netSender.CurrentSystemMics;
                 item.ResentCount++;
                 this.items.WaitingForResponseListChain.AddLast(item);
@@ -235,11 +239,12 @@ public sealed partial class PacketTerminal
             {
                 if (packetType == PacketType.Ping)
                 {// PacketPing
-                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PacketPingResponse");
-
                     var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
+#if LOG_LOWLEVEL_NET
+                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
+#endif
                     return;
                 }
                 else if (packetType == PacketType.GetInformation)
@@ -264,7 +269,9 @@ public sealed partial class PacketTerminal
 
             if (item is not null)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString}, Received {toBeShared.Span.Length}");
+#if LOG_LOWLEVEL_NET
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} received {toBeShared.Span.Length} {packetType.ToString()}");
+#endif
 
                 if (item.ResponseTcs is not null)
                 {

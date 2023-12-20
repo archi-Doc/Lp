@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -18,23 +16,32 @@ public class ConnectionTerminal
     public ConnectionTerminal(NetTerminal netTerminal)
     {
         this.NetBase = netTerminal.NetBase;
-        this.netTerminal = netTerminal;
-        this.packetTerminal = this.netTerminal.PacketTerminal;
-        this.netStats = this.netTerminal.NetStats;
+        this.NetTerminal = netTerminal;
+        this.AckBuffer = new(this);
+        this.packetTerminal = this.NetTerminal.PacketTerminal;
+        this.netStats = this.NetTerminal.NetStats;
+
+        this.logger = this.NetTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
     }
 
     public NetBase NetBase { get; }
 
-    private readonly NetTerminal netTerminal;
+    internal UnitLogger UnitLogger => this.NetTerminal.UnitLogger;
+
+    internal NetTerminal NetTerminal { get; }
+
+    internal AckBuffer AckBuffer { get; }
+
+    internal FlowControl SharedFlowControl { get; } = new(NetConstants.SendCapacityPerRound);
+
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
+    private readonly ILogger logger;
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    private readonly object syncQueue = new();
-    private readonly Queue<NetTransmission> sendQueue = new();
-    private readonly Queue<NetTransmission> resendQueue = new();
+    private readonly FlowControl.GoshujinClass flowControls = new();
 
     public void Clean()
     {
@@ -46,8 +53,11 @@ public class ConnectionTerminal
             while (this.clientConnections.OpenListChain.First is { } clientConnection &&
                 clientConnection.ResponseSystemMics + FromOpenToClosedMics < systemCurrentMics)
             {
-                // Console.WriteLine($"Closed: {clientConnection.ToString()}");
+                clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+
+                clientConnection.SendCloseFrame();
                 this.CloseClientConnection(this.clientConnections, clientConnection);
+                clientConnection.CloseTransmission();
             }
 
             // Dispose closed client connections
@@ -66,8 +76,10 @@ public class ConnectionTerminal
             while (this.serverConnections.OpenListChain.First is { } serverConnection &&
                 serverConnection.ResponseSystemMics + FromOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
             {
-                // Console.WriteLine($"Closed: {serverConnection.ToString()}");
+                serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
+                serverConnection.SendCloseFrame();
                 this.CloseServerConnection(this.serverConnections, serverConnection);
+                serverConnection.CloseTransmission();
             }
 
             // Dispose closed server connections
@@ -91,16 +103,17 @@ public class ConnectionTerminal
         var systemMics = Mics.GetSystem();
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == Connection.ConnectMode.ReuseOpen)
+            if (mode == Connection.ConnectMode.OnlyConnected)
             {// Attempt to reuse connections that have already been created and are open.
                 if (this.clientConnections.OpenEndPointChain.TryGetValue(endPoint, out var connection))
                 {
                     return connection;
                 }
+
+                return null;
             }
 
-            if (mode == Connection.ConnectMode.ReuseOpen ||
-                mode == Connection.ConnectMode.ReuseClosed)
+            if (mode == Connection.ConnectMode.ReuseClosed)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -117,12 +130,10 @@ public class ConnectionTerminal
                     }
                 }
             }
-
-            var clientConnection = new ClientConnection(this.packetTerminal, this, 9, endPoint, agreement);
         }
 
         // Create a new connection
-        var packet = new PacketConnect(0, this.netTerminal.NetBase.NodePublicKey);
+        var packet = new PacketConnect(0, this.NetTerminal.NetBase.NodePublicKey);
         var t = await this.packetTerminal.SendAndReceiveAsync<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
@@ -150,7 +161,7 @@ public class ConnectionTerminal
     internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.netTerminal.NetBase.NodePrivateKey, serverPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NetBase.NodePrivateKey, serverPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -158,7 +169,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         return connection;
@@ -167,7 +178,7 @@ public class ConnectionTerminal
     internal bool PrepareServerSide(NetEndPoint endPoint, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.netTerminal.NetBase.NodePrivateKey, p.ClientPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NetBase.NodePrivateKey, p.ClientPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -175,7 +186,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         lock (this.serverConnections.SyncObject)
@@ -230,6 +241,8 @@ public class ConnectionTerminal
             {
                 if (connection.State == Connection.ConnectionState.Open)
                 {// Open -> Close
+                    connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");
+
                     if (sendCloseFrame)
                     {
                         clientConnection.SendCloseFrame();
@@ -246,6 +259,8 @@ public class ConnectionTerminal
             {
                 if (connection.State == Connection.ConnectionState.Open)
                 {// Open -> Close
+                    connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");
+
                     if (sendCloseFrame)
                     {
                         serverConnection.SendCloseFrame();
@@ -254,6 +269,71 @@ public class ConnectionTerminal
                     this.CloseServerConnection(g2, serverConnection);
                 }
             }
+        }
+    }
+
+    internal void CreateFlowControl(Connection connection)
+    {
+        lock (this.flowControls.SyncObject)
+        {
+            if (connection.flowControl is null)
+            {
+                connection.flowControl = new(connection);
+                connection.flowControl.Goshujin = this.flowControls;
+            }
+        }
+    }
+
+    internal void ProcessSend(NetSender netSender)
+    {
+        var count = 0;
+        lock (this.flowControls.SyncObject)
+        {
+            var current = this.flowControls.ListChain.First;
+            while (current is not null)
+            {
+                var next = current.ListLink.Next;
+
+                if (current.Connection is { } connection)
+                {
+                    if (connection.State == Connection.ConnectionState.Closed ||
+                        connection.State == Connection.ConnectionState.Disposed)
+                    {// Connection closed
+                        current.Goshujin = null;
+                        current.Clear();
+                        current = next;
+                        continue;
+                    }
+                }
+
+                if (current.IsEmpty)
+                {// Empty
+                    if (current.MarkedForDeletion)
+                    {// Delete
+                        current.Goshujin = null;
+                        current.Clear();
+                    }
+                    else
+                    {// To prevent immediate deletion after creation, just set the deletion flag.
+                        current.MarkedForDeletion = true;
+                    }
+                }
+                else
+                {// Not empty
+                    current.MarkedForDeletion = false;
+                    count++;
+                    netSender.FlowControlQueue.Enqueue(current);
+                }
+
+                current = next;
+            }
+        }
+
+        // Send
+        this.SharedFlowControl.ProcessSend(netSender);
+        while (netSender.FlowControlQueue.TryDequeue(out var x))
+        {
+            x.ProcessSend(netSender);
         }
     }
 
@@ -292,65 +372,9 @@ public class ConnectionTerminal
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void RegisterSend(NetTransmission transmission)
-    {
-        lock (this.syncQueue)
-        {
-            this.sendQueue.Enqueue(transmission);
-        }
-    }
-
-    internal void ProcessSend(NetSender netSender)
-    {
-        lock (this.syncQueue)
-        {
-            // Send queue
-            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.BlockThreshold)
-            {
-                if (!this.sendQueue.TryDequeue(out var transmission))
-                {// No send queue
-                    return;
-                }
-
-                if (transmission.SendInternal(netSender, out _))
-                {// Success
-                    this.resendQueue.Enqueue(transmission);
-                }
-            }
-
-            // Resend queue
-            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.BlockThreshold)
-            {
-                if (!this.resendQueue.TryPeek(out var transmission))
-                {// No resend queue
-                    break;
-                }
-
-                var sentMics = transmission.GetLargestSentMics();
-                if (netSender.CurrentSystemMics < sentMics + NetGene.ResendMics)
-                {// Wait until ResendMics elapses.
-                    break;
-                }
-
-                transmission = this.resendQueue.Dequeue();
-                if (transmission.SendInternal(netSender, out var sentCount) &&
-                    sentCount > 0)
-                {// Resend
-                    this.resendQueue.Enqueue(transmission);
-                }
-
-                /*if (!transmission.CheckResend(netSender))
-                {
-                    break;
-                }*/
-            }
-        }
-    }
-
     private void CloseClientConnection(ClientConnection.GoshujinClass g, ClientConnection connection)
     {// lock (g.SyncObject)
-     // ConnectionStateCode
+        // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
@@ -362,7 +386,7 @@ public class ConnectionTerminal
 
     private void CloseServerConnection(ServerConnection.GoshujinClass g, ServerConnection connection)
     {// lock (g.SyncObject)
-     // ConnectionStateCode
+        // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;

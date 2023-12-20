@@ -10,13 +10,15 @@ public class NetBase : UnitBase, IUnitPreparable
     public NetBase(UnitContext context, UnitLogger logger)
         : base(context)
     {
-        this.logger = logger;
+        this.UnitLogger = logger;
         this.ServerOptions = new();
     }
 
     #region FieldAndProperty
 
     public ThreadCoreBase Core => ThreadCore.Root;
+
+    public UnitLogger UnitLogger { get; }
 
     public CancellationToken CancellationToken => this.Core.CancellationToken;
 
@@ -33,8 +35,6 @@ public class NetBase : UnitBase, IUnitPreparable
     public ServerOptions ServerOptions { get; set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
-
-    private UnitLogger logger;
 
     public class LogFlag
     {
@@ -60,8 +60,8 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NetsphereOptions.Port = RandomVault.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
             if (showWarning)
             {
-                this.logger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
-                this.logger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetsphereOptions.Port}");
+                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
+                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetsphereOptions.Port}");
             }
         }
 

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
-public class FlowControl
+public class FlowControlObsolete
 {
     public static readonly double InitialSendCapacityPerRound = 1; // 1 = 5 MBits/sec.
     public static readonly long InitialWindowMics = Mics.FromMilliseconds(300);
@@ -25,13 +25,13 @@ public class FlowControl
 
     private class Window
     {
-        public Window(FlowControl flowControl, long startMics, long durationMics)
+        public Window(FlowControlObsolete flowControl, long startMics, long durationMics)
         {
             this.FlowControl = flowControl;
             this.Reset(startMics, durationMics);
         }
 
-        public FlowControl FlowControl { get; }
+        public FlowControlObsolete FlowControl { get; }
 
         public bool IsValid => this.StartMics != 0;
 
@@ -104,7 +104,7 @@ public class FlowControl
         public override string ToString() => $"{this.StartMics / 1_000_000d,0:F3} - {this.EndMics / 1_000_000d,0:F3} ({this.DurationMics / 1_000,0:F0} ms)";
     }
 
-    public FlowControl(NetTerminalObsolete netTerminal)
+    public FlowControlObsolete(NetTerminalObsolete netTerminal)
     {
         this.NetBase = netTerminal.Terminal.NetBase;
         this.NetTerminalObsolete = netTerminal;

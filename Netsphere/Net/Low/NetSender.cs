@@ -7,13 +7,13 @@ using Netsphere.Misc;
 namespace Netsphere.Net;
 
 internal class NetSender
-{// LOG_NETSENDER
+{// LOG_LOWLEVEL_NET
     private readonly struct Item
     {
-        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
         {
             this.EndPoint = endPoint;
-            this.MemoryOwner = toBeShared.IncrementAndShare();
+            this.MemoryOwner = toBeMoved;
         }
 
         public readonly IPEndPoint EndPoint;
@@ -67,16 +67,16 @@ internal class NetSender
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
     {
-#if LOG_NETSENDER
-        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} To {endPoint.ToString()}, {toBeShared.Span.Length} bytes");
+#if LOG_LOWLEVEL_NET
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");
 #endif
 
         this.SendCount++;
         if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {
-            this.itemsIpv4.Enqueue(new(endPoint, toBeShared));
+            this.itemsIpv4.Enqueue(new(endPoint, toBeMoved));
             /*if (this.netTerminal.netSocketIpv4.UnsafeUdpClient is { } client)
             {
                 client.Send(data, endPoint);
@@ -84,7 +84,7 @@ internal class NetSender
         }
         else
         {
-            this.itemsIpv6.Enqueue(new(endPoint, toBeShared));
+            this.itemsIpv6.Enqueue(new(endPoint, toBeMoved));
             /*if (this.netTerminal.netSocketIpv6.UnsafeUdpClient is { } client)
             {
                 client.Send(data, endPoint);
@@ -128,6 +128,8 @@ internal class NetSender
         this.deliveryFailureRatio = ratio;
     }
 
+    #region FieldAndProperty
+
     public bool CanSend => this.SendCapacity > this.SendCount;
 
     public long CurrentSystemMics => this.currentSystemMics;
@@ -135,6 +137,8 @@ internal class NetSender
     public int SendCapacity { get; private set; }
 
     public int SendCount { get; private set; }
+
+    public Queue<FlowControl> FlowControlQueue { get; } = new();
 
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
@@ -148,6 +152,8 @@ internal class NetSender
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
     private double deliveryFailureRatio = 0;
+
+    #endregion
 
     /*internal void SendImmediately(IPEndPoint endPoint, Span<byte> data)
     {

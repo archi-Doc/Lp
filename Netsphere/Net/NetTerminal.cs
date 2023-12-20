@@ -134,14 +134,19 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        // 2nd: Genes (NetTransmission)
-        this.ConnectionTerminal.ProcessSend(netSender);
+        // 2nd: Ack
+        this.ConnectionTerminal.AckBuffer.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;
         }
 
-        // 3rd: Flow terminal
+        // 3rd: Genes (NetTransmission)
+        this.ConnectionTerminal.ProcessSend(netSender);
+        if (!netSender.CanSend)
+        {
+            return;
+        }
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)

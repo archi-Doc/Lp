@@ -42,11 +42,11 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        for (var i = 0; i < 10; i++)
+        /*for (var i = 0; i < 10; i++)
         {
             p = new PacketPing("test56789");
             result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
-        }
+        }*/
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
 
@@ -67,10 +67,46 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
-                // var p2 = new PacketPing();
-                // var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
+                var p2 = new PacketPing();
+                var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
 
-                /*var transmission = await connection.GetTransmission();
+                using (var stream = await connection.SendStream(1000))
+                {
+                    if (stream is not null)
+                    {
+                        var result2 = await stream.SendAsync([]);
+                        stream.Dispose();
+                    }
+                }
+
+                using (var stream = await connection.ReceiveStream(1000))
+                {
+                    if (stream is not null)
+                    {
+                        var result2 = await stream.SendAsync([]);
+                        stream.Dispose();
+                    }
+                }
+
+                using (var stream = await connection.SendAndReceiveStream(p2))
+                {
+                    if (stream is not null)
+                    {
+                        var result2 = await stream.ReceiveAsync([]);
+                        stream.Dispose();
+                    }
+                }
+
+                /*using (var stream = await connection.CreateStream(1000))
+                {
+                    if (stream is not null)
+                    {
+                        var result2 = await stream.SendAsync([]);
+                        stream.Dispose();
+                    }
+                }*/
+
+                /*var transmission = await connection.CreateTransmission();
                 if (transmission is not null)
                 {
                     transmission.SendAndForget();

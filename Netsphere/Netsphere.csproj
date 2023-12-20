@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants);TRACE;LOG_NETSENDER</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRACE;LOG_LOWLEVEL_NET</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -23,11 +23,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arc.Collections" Version="1.10.3" />
+    <PackageReference Include="Arc.Collections" Version="1.10.4" />
     <PackageReference Include="Arc.CrossChannel" Version="1.2.0" />
     <PackageReference Include="Arc.Threading" Version="0.27.0" />
     <PackageReference Include="Arc.Crypto" Version="1.22.1" />
-    <PackageReference Include="Arc.Unit" Version="0.8.1" />
+    <PackageReference Include="Arc.Unit" Version="0.9.0" />
     <PackageReference Include="BigMachines" Version="0.28.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.20.0" />

@@ -9,6 +9,7 @@ public enum NetResult
 {
     Success,
     Timeout,
+    Canceled,
     Closed,
     InvalidAddress,
     NoDataToSend,
@@ -21,6 +22,7 @@ public enum NetResult
     DeserializationError,
     PacketSizeLimit,
     BlockSizeLimit,
+    StreamSizeLimit,
     ReserveError,
     NoNetService,
     NoCallContext,
@@ -28,4 +30,5 @@ public enum NetResult
     NotAuthorized,
     TransmissionConsumed,
     NoTransmission,
+    InvalidTransmissionState,
 }
