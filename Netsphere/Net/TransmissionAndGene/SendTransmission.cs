@@ -204,67 +204,6 @@ public sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal bool ProcessReceive_Ack(int genePosition)
-    {
-        var completeFlag = false;
-        lock (this.syncObject)
-        {
-            if (this.Mode == NetTransmissionMode.Rama)
-            {// Single send/recv
-                if (genePosition == 0 && this.gene0 is not null)
-                {
-                    this.gene0.Dispose();
-                    this.gene0 = null;
-                }
-                else if (genePosition == 1 && this.gene1 is not null)
-                {
-                    this.gene1.Dispose();
-                    this.gene1 = null;
-                }
-                else if (genePosition == 2 && this.gene2 is not null)
-                {
-                    this.gene2.Dispose();
-                    this.gene2 = null;
-                }
-
-                if (this.totalGene == 0)
-                {
-                    completeFlag = true;
-                }
-                else
-                {
-                    completeFlag =
-                        this.gene0 == null &&
-                        this.gene1 == null &&
-                        this.gene2 == null;
-                }
-            }
-            else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
-            {// Multiple send/recv
-                if (this.genes.GeneSerialListChain.Get(genePosition) is { } gene)
-                {
-                    this.genes.GeneSerialListChain.Remove(gene);
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            if (completeFlag)
-            {
-                if (this.tcs is null)
-                {// Receive
-                }
-                else
-                {// Tcs
-                }
-            }
-        }
-
-        return completeFlag;
-    }
-
     internal bool ProcessReceive_Ack(scoped Span<byte> span)
     {// lock (Connection.sendTransmissions.SyncObject)
         var completeFlag = false;
@@ -314,6 +253,10 @@ public sealed partial class SendTransmission : IDisposable
                             return false;
                         }
                     }
+                }
+                else
+                {
+                    return false;
                 }
             }
         }
