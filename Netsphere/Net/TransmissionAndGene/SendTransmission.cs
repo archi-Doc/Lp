@@ -15,7 +15,7 @@ public enum NetTransmissionMode
 }
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class SendTransmission : IDisposable
+internal sealed partial class SendTransmission : IDisposable, ISendTransmission
 {
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
@@ -54,52 +54,55 @@ public sealed partial class SendTransmission : IDisposable
     public void Dispose()
     {
         this.Connection.RemoveTransmission(this);
-        this.DisposeInternal();
+        this.DisposeTransmission();
     }
 
-    internal void DisposeInternal()
+    internal void DisposeTransmission()
     {
         lock (this.syncObject)
         {
-            if (this.Mode == NetTransmissionMode.Disposed)
-            {
-                return;
-            }
+            this.DisposeInternal();
+        }
+    }
 
-            this.Mode = NetTransmissionMode.Disposed;
-            this.gene0?.Dispose();
-            this.gene1?.Dispose();
-            this.gene2?.Dispose();
-            if (this.genes is not null)
-            {
-                foreach (var x in this.genes)
-                {
-                    x.Dispose();
-                }
-
-                this.genes = default; // this.genes.Clear();
-            }
-
-            if (this.sentTcs is not null)
-            {
-                this.sentTcs.SetResult(NetResult.Closed);
-                this.sentTcs = null;
-            }
-
-            if (this.receivedTcs is not null)
-            {
-                this.receivedTcs.SetResult(new(NetResult.Closed));
-                this.receivedTcs = null;
-            }
-
-            if (this.receiveStream is not null)
-            {
-                this.receiveStream?.Dispose();
-                this.receiveStream = null;
-            }
+    internal void DisposeInternal()
+    {// lock (this.syncObject)
+        if (this.Mode == NetTransmissionMode.Disposed)
+        {
+            return;
         }
 
-        // tcs?.TrySetResult(new(NetResult.Closed));
+        this.Mode = NetTransmissionMode.Disposed;
+        this.gene0?.Dispose();
+        this.gene1?.Dispose();
+        this.gene2?.Dispose();
+        if (this.genes is not null)
+        {
+            foreach (var x in this.genes)
+            {
+                x.Dispose();
+            }
+
+            this.genes = default; // this.genes.Clear();
+        }
+
+        if (this.sentTcs is not null)
+        {
+            this.sentTcs.SetResult(NetResult.Closed);
+            this.sentTcs = null;
+        }
+
+        if (this.receivedTcs is not null)
+        {
+            this.receivedTcs.SetResult(new(NetResult.Closed));
+            this.receivedTcs = null;
+        }
+
+        if (this.receiveStream is not null)
+        {
+            this.receiveStream?.Dispose();
+            this.receiveStream = null;
+        }
     }
 
     internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
@@ -287,14 +290,12 @@ public sealed partial class SendTransmission : IDisposable
 
                 if (this.receivedTcs is not null || this.receiveStream is not null)
                 {
-
                 }
-            }
-        }
 
-        if (completeFlag)
-        {// Dispose send transmission.
-            this.Dispose();
+                // Remove from sendTransmissions and dispose.
+                this.Goshujin = null;
+                this.DisposeInternal();
+            }
         }
 
         return completeFlag;

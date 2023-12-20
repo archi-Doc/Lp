@@ -6,7 +6,7 @@ using Netsphere.Packet;
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class ReceiveTransmission : IDisposable
+internal sealed partial class ReceiveTransmission : IDisposable
 {
     public ReceiveTransmission(Connection connection, uint transmissionId, bool invokeServer)
     {
@@ -198,7 +198,7 @@ public sealed partial class ReceiveTransmission : IDisposable
         {// Receive complete
             if (this.InvokeServer)
             {// Server: Connection, NetTransmission, Owner
-                var param = new ServerInvocationParam(this.Connection, this, dataKind, dataId, owner);
+                var param = new ServerInvocationParam(this.Connection, dataKind, dataId, owner, default!, default);
                 Console.WriteLine(owner.Span.Length);
             }
             else

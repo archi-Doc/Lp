@@ -621,7 +621,7 @@ Wait:
         {
             foreach (var x in this.sendTransmissions)
             {
-                x.DisposeInternal();
+                x.DisposeTransmission();
             }
 
             this.sendTransmissions.TransmissionIdChain.Clear();
