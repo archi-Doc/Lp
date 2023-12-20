@@ -10,10 +10,10 @@ internal class NetSender
 {// LOG_LOWLEVEL_NET
     private readonly struct Item
     {
-        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
         {
             this.EndPoint = endPoint;
-            this.MemoryOwner = toBeShared.IncrementAndShare();
+            this.MemoryOwner = toBeMoved;
         }
 
         public readonly IPEndPoint EndPoint;
@@ -67,16 +67,16 @@ internal class NetSender
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
     {
 #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeShared.Span.Length} bytes");
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");
 #endif
 
         this.SendCount++;
         if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {
-            this.itemsIpv4.Enqueue(new(endPoint, toBeShared));
+            this.itemsIpv4.Enqueue(new(endPoint, toBeMoved));
             /*if (this.netTerminal.netSocketIpv4.UnsafeUdpClient is { } client)
             {
                 client.Send(data, endPoint);
@@ -84,7 +84,7 @@ internal class NetSender
         }
         else
         {
-            this.itemsIpv6.Enqueue(new(endPoint, toBeShared));
+            this.itemsIpv6.Enqueue(new(endPoint, toBeMoved));
             /*if (this.netTerminal.netSocketIpv6.UnsafeUdpClient is { } client)
             {
                 client.Send(data, endPoint);

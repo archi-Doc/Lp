@@ -29,8 +29,7 @@ internal partial class SendGene
 
     public bool CanSend
         => this.SendTransmission.Mode != NetTransmissionMode.Disposed &&
-        this.SendTransmission.Connection.State == Connection.ConnectionState.Open &&
-        !this.Packet.IsEmpty;
+        this.SendTransmission.Connection.State == Connection.ConnectionState.Open;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
@@ -42,28 +41,26 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Send_NotThreadSafe(NetSender netSender)
     {
-        lock (this)
+        if (!this.CanSend)
         {
-            if (!this.CanSend)
-            {
-                return 0;
-            }
-
-            var connection = this.SendTransmission.Connection;
-            var currentMics = netSender.CurrentSystemMics;
-
-            netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
-            this.SentMics = currentMics;
-            // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
-            return currentMics + connection.RetransmissionTimeout;
+            return 0;
         }
+        else if (!this.Packet.TryIncrement())
+        {// MemoryOwner has been returned to the pool (Disposed).
+            return 0;
+        }
+
+        var connection = this.SendTransmission.Connection;
+        var currentMics = netSender.CurrentSystemMics;
+
+        netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
+        this.SentMics = currentMics;
+        // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
+        return currentMics + connection.RetransmissionTimeout;
     }
 
     public void Dispose()
     {
-        lock (this)
-        {
-            this.Packet = this.Packet.Return();
-        }
+        this.Packet.Return();
     }
 }

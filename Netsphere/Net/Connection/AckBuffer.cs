@@ -225,7 +225,7 @@ internal partial class AckBuffer
 
                 connection.CreateAckPacket(owner, position - PacketHeader.Length, out var packetLength);
                 netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
-                owner = owner.Return();
+                // owner = owner.Return(); // Moved
             }
         }
     }

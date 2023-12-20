@@ -162,14 +162,14 @@ public sealed partial class PacketTerminal
 
                 if (item.ResponseTcs is not null)
                 {// WaitingToSend -> WaitingForResponse
-                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                     item.SentMics = netSender.CurrentSystemMics;
                     this.items.WaitingToSendListChain.Remove(item);
                     this.items.WaitingForResponseListChain.AddLast(item);
                 }
                 else
                 {// WaitingToSend -> Remove (without response)
-                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                     item.Remove();
                 }
             }
@@ -196,7 +196,7 @@ public sealed partial class PacketTerminal
                 BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
                 BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
 
-                netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                 item.SentMics = netSender.CurrentSystemMics;
                 item.ResentCount++;
                 this.items.WaitingForResponseListChain.AddLast(item);
