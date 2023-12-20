@@ -186,6 +186,21 @@ Wait:
         goto Retry;
     }
 
+    internal ReceiveTransmission CreateReceiveTransmission(uint transmissionId)
+    {
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
+            {
+                return receiveTransmission;
+            }
+
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, false);
+            receiveTransmission.Goshujin = this.receiveTransmissions;
+            return receiveTransmission;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool RemoveTransmission(SendTransmission transmission)
     {

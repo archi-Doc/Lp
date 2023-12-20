@@ -18,10 +18,10 @@ public enum NetTransmissionMode
 internal sealed partial class SendTransmission : IDisposable, ISendTransmission
 {
     /* State transitions
-     *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
-     *  SendAsync                   (Client) : Initial -> Sending -> tcs / Disposed
-     *  (Server) : Initial -> Receiving -> (Invoke) -> Disposed
-     *  (Server) : Initial -> Receiving -> (Invoke) -> Sending -> tcs / Disposed
+     *  SendAndReceiveAsync (Client) : Initial -> Send/Receive Ack -> Receive -> Disposed
+     *  SendAsync                   (Client) : Initial -> Send/Receive Ack -> tcs / Disposed
+     *  (Server) : Initial -> Receive -> (Invoke) -> Disposed
+     *  (Server) : Initial -> Receive -> (Invoke) -> Send/Receive Ack -> tcs / Disposed
      */
 
     public SendTransmission(Connection connection, uint transmissionId)
