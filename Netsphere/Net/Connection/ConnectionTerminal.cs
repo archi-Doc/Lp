@@ -103,8 +103,8 @@ public class ConnectionTerminal
         var systemMics = Mics.GetSystem();
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == Connection.ConnectMode.OnlyConnected)
-            {// Attempt to reuse connections that have already been created and are open.
+            if (mode == Connection.ConnectMode.Shared)
+            {// Attempt to share connections that have already been created and are open.
                 if (this.clientConnections.OpenEndPointChain.TryGetValue(endPoint, out var connection))
                 {
                     return connection;

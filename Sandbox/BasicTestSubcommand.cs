@@ -67,33 +67,27 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
+                // Send Block*Stream, Receive Non*Block*Stream
+                // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 var p2 = new PacketPing();
-                var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
+                var response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
 
-                using (var stream = await connection.SendStream(1000))
+                /*using (var stream = await connection.SendStream(1000))
                 {
                     if (stream is not null)
                     {
-                        var result2 = await stream.SendAsync([]);
+                        var result2 = await stream.Send([]);
                         stream.Dispose();
                     }
-                }
+                }*/
 
-                using (var stream = await connection.ReceiveStream(1000))
+                using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
-                    if (stream is not null)
+                    if (result2.Stream is { } stream)
                     {
-                        var result2 = await stream.SendAsync([]);
-                        stream.Dispose();
-                    }
-                }
+                        var result3 = await stream.Receive();
 
-                using (var stream = await connection.SendAndReceiveStream(p2))
-                {
-                    if (stream is not null)
-                    {
-                        var result2 = await stream.ReceiveAsync([]);
-                        stream.Dispose();
+                        result3.Return();
                     }
                 }
 

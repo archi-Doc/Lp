@@ -25,7 +25,7 @@ public abstract class Connection : IDisposable
     public enum ConnectMode
     {
         ReuseClosed,
-        OnlyConnected,
+        Shared,
         NoReuse,
     }
 

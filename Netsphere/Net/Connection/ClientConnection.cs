@@ -39,7 +39,7 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<NetResult> SendAsync<TSend>(TSend packet)
+    public async Task<NetResult> Send<TSend>(TSend packet)
         where TSend : ITinyhandSerialize<TSend>
     {
         if (!BlockService.TrySerialize(packet, out var owner))
@@ -72,7 +72,7 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet, ulong dataId = 0)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceive<TSend, TReceive>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
         where TReceive : ITinyhandSerialize<TReceive>
     {
@@ -83,7 +83,7 @@ public sealed partial class ClientConnection : Connection
 
         if (this.NetBase.CancellationToken.IsCancellationRequested)
         {
-            return default;
+            return (NetResult.Canceled, default);
         }
 
         using (var transmission = await this.CreateTransmission().ConfigureAwait(false))
@@ -122,6 +122,38 @@ public sealed partial class ClientConnection : Connection
 
             response.Return();
             return (NetResult.Success, receive);
+        }
+    }
+
+    public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
+        where TSend : ITinyhandSerialize<TSend>
+    {
+        if (!BlockService.TrySerialize(packet, out var owner))
+        {
+            return new(NetResult.SerializationError);
+        }
+
+        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        {
+            return new(NetResult.Canceled);
+        }
+
+        using (var transmission = await this.CreateTransmission().ConfigureAwait(false))
+        {
+            if (transmission is null)
+            {
+                return new(NetResult.NoTransmission);
+            }
+
+            var stream = new ReceiveStream();
+            var result = transmission.SendBlock(0, dataId, owner, stream, true);
+            if (result != NetResult.Success)
+            {
+                // stream.Dispose();
+                return new(result);
+            }
+
+            return new(NetResult.Success, stream);
         }
     }
 
