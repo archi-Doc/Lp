@@ -78,10 +78,6 @@ public partial class FlowControl
                 if (rto > 0)
                 {// Resend
                     // Console.WriteLine("RESEND");
-                    if (gene.SendTransmission.Connection.ConnectionTerminal.NetTerminal.NetTerminalString == "Alt" && gene.SendTransmission.Connection.EndPoint.EndPoint.Port == 49151)
-                    {
-                    }
-
                     remaining--;
                     this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
 

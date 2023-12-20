@@ -41,7 +41,9 @@ public sealed partial class SendTransmission : IDisposable
 
     private readonly object syncObject = new();
     private int totalGene;
-    private TaskCompletionSource<NetResponse>? tcs;
+    private TaskCompletionSource<NetResult>? sentTcs;
+    private TaskCompletionSource<NetResponse>? receivedTcs;
+    private ReceiveStream? receiveStream;
     private SendGene? gene0; // Gene 0
     private SendGene? gene1; // Gene 1
     private SendGene? gene2; // Gene 2
@@ -57,8 +59,6 @@ public sealed partial class SendTransmission : IDisposable
 
     internal void DisposeInternal()
     {
-        TaskCompletionSource<NetResponse>? tcs = default;
-
         lock (this.syncObject)
         {
             if (this.Mode == NetTransmissionMode.Disposed)
@@ -80,14 +80,29 @@ public sealed partial class SendTransmission : IDisposable
                 this.genes = default; // this.genes.Clear();
             }
 
-            tcs = this.tcs;
-            this.tcs = default;
+            if (this.sentTcs is not null)
+            {
+                this.sentTcs.SetResult(NetResult.Closed);
+                this.sentTcs = null;
+            }
+
+            if (this.receivedTcs is not null)
+            {
+                this.receivedTcs.SetResult(new(NetResult.Closed));
+                this.receivedTcs = null;
+            }
+
+            if (this.receiveStream is not null)
+            {
+                this.receiveStream?.Dispose();
+                this.receiveStream = null;
+            }
         }
 
-        tcs?.TrySetResult(new(NetResult.Closed));
+        // tcs?.TrySetResult(new(NetResult.Closed));
     }
 
-    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResponse> tcs, bool requiresResponse)
+    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
 
@@ -95,7 +110,9 @@ public sealed partial class SendTransmission : IDisposable
         {
             Debug.Assert(this.Mode == NetTransmissionMode.Initial);
 
-            this.tcs = tcs;
+            this.sentTcs = sentTcs;
+            this.receivedTcs = receivedTcs;
+            this.receiveStream = receiveStream;
             this.totalGene = info.NumberOfGenes;
 
             var span = block.Span;
@@ -259,18 +276,25 @@ public sealed partial class SendTransmission : IDisposable
                     return false;
                 }
             }
+
+            if (completeFlag)
+            {// Send transmission complete
+                if (this.sentTcs is not null)
+                {
+                    this.sentTcs.SetResult(NetResult.Success);
+                    this.sentTcs = null;
+                }
+
+                if (this.receivedTcs is not null || this.receiveStream is not null)
+                {
+
+                }
+            }
         }
 
         if (completeFlag)
-        {// Send transmission complete
-            if (this.tcs is null)
-            {// Receive
-            }
-            else
-            {// Tcs
-            }
-
-            this.DisposeInternal();//
+        {// Dispose send transmission.
+            this.Dispose();
         }
 
         return completeFlag;

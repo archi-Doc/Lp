@@ -59,16 +59,15 @@ public sealed partial class ClientConnection : Connection
                 return NetResult.NoTransmission;
             }
 
-            var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var result = transmission.SendBlock(0, 0, owner, responseTcs, false);
+            var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = transmission.SendBlock(0, 0, owner, tcs, default, default);
             if (result != NetResult.Success)
             {
                 return result;
             }
 
-            var response = await responseTcs.Task.ConfigureAwait(false);
-            response.Return();
-            return response.Result;
+            result = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+            return result;
         }
     }
 
@@ -93,8 +92,8 @@ public sealed partial class ClientConnection : Connection
                 return (NetResult.NoTransmission, default);
             }
 
-            var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var result = transmission.SendBlock(0, dataId, owner, responseTcs, true);
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = transmission.SendBlock(0, dataId, owner, default, tcs, default);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -103,7 +102,7 @@ public sealed partial class ClientConnection : Connection
             NetResponse response;
             try
             {
-                response = await responseTcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+                response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
                 if (response.IsFailure)
                 {
                     return (response.Result, default);
@@ -146,7 +145,7 @@ public sealed partial class ClientConnection : Connection
             }
 
             var stream = new ReceiveStream();
-            var result = transmission.SendBlock(0, dataId, owner, stream, true);
+            var result = transmission.SendBlock(0, dataId, owner, default, default, stream);
             if (result != NetResult.Success)
             {
                 // stream.Dispose();
