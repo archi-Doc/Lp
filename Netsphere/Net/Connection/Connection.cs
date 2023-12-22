@@ -562,7 +562,7 @@ Wait:
         span = span.Slice(sizeof(ulong));
 
         var source = span;
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack); // Frame type
         span = span.Slice(sizeof(ushort));
 
         this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + geneLength), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
