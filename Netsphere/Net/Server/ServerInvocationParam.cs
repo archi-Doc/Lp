@@ -4,6 +4,10 @@ using Netsphere.Net;
 
 namespace Netsphere;
 
+public interface ISendTransmission
+{
+}
+
 /// <summary>
 /// Represents a server invocation.
 /// </summary>

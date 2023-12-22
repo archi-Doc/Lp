@@ -151,6 +151,25 @@ public abstract class Connection : IDisposable
         }
     }
 
+    internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
+            {
+                return default;
+            }
+            else if (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId))
+            {
+                return default;
+            }
+
+            var sendTransmission = new SendTransmission(this, transmissionId);
+            sendTransmission.Goshujin = this.sendTransmissions;
+            return sendTransmission;
+        }
+    }
+
     internal async ValueTask<SendTransmission?> CreateSendTransmission()
     {
 Retry:

@@ -3,6 +3,7 @@
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
+using Netsphere.Server;
 using Netsphere.Stats;
 
 namespace Netsphere;
@@ -369,6 +370,18 @@ public class ConnectionTerminal
             {
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
+        }
+    }
+
+    internal void InvokeServer(TransmissionContext transmissionContext)
+    {
+        if (transmissionContext.DataKind == 0)
+        {// Block
+            transmissionContext.SendAndForget(new PacketPing());
+        }
+        else if (transmissionContext.DataKind == 1)
+        {// RPC
+
         }
     }
 

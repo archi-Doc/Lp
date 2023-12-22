@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
 using Netsphere.Packet;
 using Netsphere.Server;
 
@@ -17,7 +16,7 @@ public sealed partial class ServerConnection : Connection
     public ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint)
     {
-        this.ConnectionContext = new();
+        this.ConnectionContext = new(default!, this);
     }
 
     public override ConnectionState State
@@ -44,27 +43,4 @@ public sealed partial class ServerConnection : Connection
     public override bool IsServer => true;
 
     public ConnectionContext ConnectionContext { get; }
-
-    /*public NetResult SendAndForget<TSend, TReceive>(TSend packet)
-        where TSend : ITinyhandSerialize<TSend>
-    {
-        if (!BlockService.TrySerialize(packet, out var owner))
-        {
-            return NetResult.SerializationError;
-        }
-
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
-        {
-            return default;
-        }
-
-        var transmission = this.TryCreateTransmission();
-        if (transmission is null)
-        {
-            return NetResult.NoTransmission;
-        }
-
-        var result = transmission.SendBlock(0, 0, owner, default);
-        return result;
-    }*/
 }
