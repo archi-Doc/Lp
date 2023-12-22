@@ -4,10 +4,19 @@ namespace Netsphere.Server;
 
 public class TransmissionContext
 {
-    public TransmissionContext(ServerContext serverContext)
+    public TransmissionContext(ConnectionContext connectionContext, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner? owner)
     {
-        this.ServerContext = serverContext;
+        this.ConnectionContext = connectionContext;
+        this.DataKind = dataKind;
+        this.DataId = dataId;
+        this.Owner = owner;
     }
 
-    public ServerContext ServerContext { get; }
+    public ConnectionContext ConnectionContext { get; }
+
+    public uint DataKind { get; }
+
+    public ulong DataId { get; }
+
+    public ByteArrayPool.MemoryOwner? Owner { get; set; }
 }

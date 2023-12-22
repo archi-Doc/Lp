@@ -2,6 +2,7 @@
 
 using Netsphere.Block;
 using Netsphere.Packet;
+using Netsphere.Server;
 
 namespace Netsphere;
 
@@ -16,6 +17,7 @@ public sealed partial class ServerConnection : Connection
     public ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint)
     {
+        this.ConnectionContext = new();
     }
 
     public override ConnectionState State
@@ -40,6 +42,8 @@ public sealed partial class ServerConnection : Connection
     public override bool IsClient => false;
 
     public override bool IsServer => true;
+
+    public ConnectionContext ConnectionContext { get; }
 
     /*public NetResult SendAndForget<TSend, TReceive>(TSend packet)
         where TSend : ITinyhandSerialize<TSend>

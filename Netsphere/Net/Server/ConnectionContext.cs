@@ -2,13 +2,13 @@
 
 namespace Netsphere.Server;
 
-public class ServerContext
+public class ConnectionContext
 {
-    public ServerContext()
+    public ConnectionContext()
     {
     }
 
     public IServiceProvider ServiceProvider { get; internal set; } = default!;
 
-    public ServerTerminal Terminal { get; internal set; } = default!;
+    public ServerConnection Connection { get; internal set; } = default!;
 }

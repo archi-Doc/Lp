@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Netsphere.Packet;
+using Netsphere.Server;
 
 namespace Netsphere.Net;
 
@@ -216,9 +217,9 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
         if (completeFlag)
         {// Receive complete
-            if (this.Connection.IsServer)
+            if (this.Connection is ServerConnection serverConnection)
             {// Server: Connection, NetTransmission, Owner
-                var param = new ServerInvocationParam(this.Connection, dataKind, dataId, owner, default!, default);
+                var transmissionContext = new TransmissionContext(serverConnection.ConnectionContext, dataKind, dataId, owner);
                 Console.WriteLine(owner.Span.Length);
             }
 
