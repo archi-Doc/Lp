@@ -9,6 +9,7 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class ReceiveTransmission : IDisposable
 {
+    [Link(Name = "DisposedList", Type = ChainType.QueueList, AutoLink = false)]
     public ReceiveTransmission(Connection connection, uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
     {
         this.Connection = connection;
@@ -25,6 +26,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
     public uint TransmissionId { get; }
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
+
+    internal long DisposedMics { get; set; }
 
     private readonly object syncObject = new();
     private int totalGene;

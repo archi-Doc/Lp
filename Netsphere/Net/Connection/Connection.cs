@@ -213,6 +213,19 @@ Wait:
     {
         lock (this.receiveTransmissions.SyncObject)
         {
+            // Release receive transmissions that have elapsed a certain time after being disposed
+            var currentMics = Mics.GetSystem();
+            while (this.receiveTransmissions.DisposedListChain.TryPeek(out var transmission))
+            {
+                if (currentMics - transmission.DisposedMics < NetConstants.ReceiveTransmissionDisposalDelayMics)
+                {
+                    break;
+                }
+
+                this.receiveTransmissions.DisposedListChain.Dequeue();
+                transmission.Goshujin = null;
+            }
+
             if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
             {
                 return default;
@@ -248,7 +261,9 @@ Wait:
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
-                transmission.Goshujin = null;
+                transmission.DisposedMics = Mics.GetSystem();
+                this.receiveTransmissions.DisposedListChain.Enqueue(transmission);
+                // transmission.Goshujin = null; // Delay the release to return ACK even after the receive transmission has ended.
                 return true;
             }
             else
@@ -439,7 +454,9 @@ Wait:
                 }
 
                 // New transmission
-                if (this.receiveTransmissions.Count >= this.Agreement.MaxTransmissions)
+                var count = this.receiveTransmissions.Count - this.receiveTransmissions.DisposedListChain.Count; // Active transmissions
+                Console.WriteLine($"{count}/{this.receiveTransmissions.Count}");
+                if (count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
                     return;
                 }
