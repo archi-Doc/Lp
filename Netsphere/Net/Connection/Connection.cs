@@ -395,7 +395,7 @@ Wait:
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
         {
@@ -421,7 +421,7 @@ Wait:
         lock (this.receiveTransmissions.SyncObject)
         {
             if (this.IsClient)
-            {// Client
+            {// Client side
                 if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// On the client side, it's necessary to create ReceiveTransmission in advance.
                     return;
@@ -430,7 +430,7 @@ Wait:
                 transmission.SetState_Receiving(totalGenes);
             }
             else
-            {// Server
+            {// Server side
                 if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// The same TransmissionId already exists.
                     return;
@@ -465,7 +465,7 @@ Wait:
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// uint TransmissionId, uint GenePosition
+    {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
         {
