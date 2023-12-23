@@ -109,8 +109,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
     internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
-        TaskCompletionSource<NetResponse>? receivedTcs = default;
-        ReceiveStream? receiveStream = default;
         uint dataKind = 0;
         ulong dataId = 0;
         ByteArrayPool.MemoryOwner owner = default;
@@ -164,14 +162,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
             if (completeFlag)
             {// Complete
                 this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
-
-                receivedTcs = this.receivedTcs;
-                this.receivedTcs = default;
-                receiveStream = this.receiveStream;
-                this.receiveStream = default;
-
-                this.Goshujin = null;
-                this.DisposeInternal();
             }
         }
 
@@ -182,7 +172,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
             {
                 if (this.Connection.Agreement.MaxTransmissions < 10)
                 {// Instant
-                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Instant Ack 0 - {this.totalGene}");
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack 0 - {this.totalGene}");
 
                     Span<byte> ackFrame = stackalloc byte[2 + 6 + 8];
                     var span = ackFrame;
@@ -202,7 +192,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 }
                 else
                 {// Defer
-                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Ack 0 - {this.totalGene}");
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
                     this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
                 }
@@ -210,13 +200,27 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Ack {genePosition}");
+            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {genePosition}");
 
             this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
         }
 
         if (completeFlag)
         {// Receive complete
+            TaskCompletionSource<NetResponse>? receivedTcs;
+            ReceiveStream? receiveStream;
+
+            lock (this.syncObject)
+            {
+                receivedTcs = this.receivedTcs;
+                this.receivedTcs = default;
+                receiveStream = this.receiveStream;
+                this.receiveStream = default;
+
+                this.Goshujin = null;
+                this.DisposeInternal();
+            }
+
             if (this.Connection is ServerConnection serverConnection)
             {// Server: Connection, NetTransmission, Owner
                 var transmissionContext = new TransmissionContext(serverConnection.ConnectionContext, this.TransmissionId, dataKind, dataId, owner);

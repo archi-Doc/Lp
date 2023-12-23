@@ -377,11 +377,10 @@ public class ConnectionTerminal
     {
         if (transmissionContext.DataKind == 0)
         {// Block
-            transmissionContext.SendAndForget(new PacketPing());
+            transmissionContext.SendAndForget(new PacketPingResponse(NetAddress.Alternative, "Alternativ"));
         }
         else if (transmissionContext.DataKind == 1)
         {// RPC
-
         }
     }
 

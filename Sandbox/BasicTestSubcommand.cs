@@ -71,6 +71,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 var p2 = new PacketPing();
                 var response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
+                if (response.Value is { } packetResponse)
+                {
+                    Console.WriteLine(packetResponse.ToString());
+                }
 
                 /*using (var stream = await connection.SendStream(1000))
                 {

@@ -426,6 +426,8 @@ Wait:
                 {// On the client side, it's necessary to create ReceiveTransmission in advance.
                     return;
                 }
+
+                transmission.SetState_Receiving(totalGenes);
             }
             else
             {// Server
@@ -535,6 +537,7 @@ Wait:
     {
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
+        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
@@ -546,7 +549,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, (ushort)PacketType.Encrypted); // PacketType
+        BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
