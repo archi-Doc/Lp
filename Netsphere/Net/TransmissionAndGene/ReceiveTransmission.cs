@@ -217,9 +217,11 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 receiveStream = this.receiveStream;
                 this.receiveStream = default;
 
-                this.Goshujin = null;
+                // this.Goshujin = null; // -> this.Connection.RemoveTransmission(this);
                 this.DisposeInternal();
             }
+
+            this.Connection.RemoveTransmission(this);
 
             if (this.Connection is ServerConnection serverConnection)
             {// InvokeServer: Connection, NetTransmission, Owner

@@ -106,8 +106,13 @@ public sealed partial class ClientConnection : Connection
 
             NetResponse response;
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var receiveTransmission = this.CreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
+            using (var receiveTransmission = this.TryCreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
             {
+                if (receiveTransmission is null)
+                {
+                    return (NetResult.NoTransmission, default);
+                }
+
                 try
                 {
                     response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);

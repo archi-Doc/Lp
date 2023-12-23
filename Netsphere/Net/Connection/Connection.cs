@@ -209,13 +209,13 @@ Wait:
         goto Retry;
     }
 
-    internal ReceiveTransmission CreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
     {
         lock (this.receiveTransmissions.SyncObject)
         {
             if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
             {
-                return receiveTransmission;
+                return default;
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
@@ -424,6 +424,7 @@ Wait:
             {// Client side
                 if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// On the client side, it's necessary to create ReceiveTransmission in advance.
+                    // The case that the ACK has not arrived after the receive transmission was disposed.
                     return;
                 }
 
@@ -433,6 +434,7 @@ Wait:
             {// Server side
                 if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// The same TransmissionId already exists.
+                    this.ConnectionTerminal.AckBuffer.Add(this, transmissionId, 0); // Resend the ACK in case it was not received.
                     return;
                 }
 
