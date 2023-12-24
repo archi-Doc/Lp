@@ -94,53 +94,51 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.SerializationError, default);
         }
 
-        using (var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
+        var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false);
+        if (sendTransmission is null)
         {
-            if (sendTransmission is null)
+            owner.Return();
+            return (NetResult.NoTransmission, default);
+        }
+
+        var result = sendTransmission.SendBlock(0, dataId, owner, default); // 
+        owner.Return();
+        if (result != NetResult.Success)
+        {
+            return (result, default);
+        }
+
+        NetResponse response;
+        var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using (var receiveTransmission = this.TryCreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
+        {
+            if (receiveTransmission is null)
             {
-                owner.Return();
                 return (NetResult.NoTransmission, default);
             }
 
-            var result = sendTransmission.SendBlock(0, dataId, owner, default);
-            owner.Return();
-            if (result != NetResult.Success)
+            try
             {
-                return (result, default);
-            }
-
-            NetResponse response;
-            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var receiveTransmission = this.TryCreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
-            {
-                if (receiveTransmission is null)
+                response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+                if (response.IsFailure)
                 {
-                    return (NetResult.NoTransmission, default);
-                }
-
-                try
-                {
-                    response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
-                    if (response.IsFailure)
-                    {
-                        return (response.Result, default);
-                    }
-                }
-                catch
-                {
-                    return (NetResult.Canceled, default);
+                    return (response.Result, default);
                 }
             }
-
-            if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+            catch
             {
-                response.Return();
-                return (NetResult.DeserializationError, default);
+                return (NetResult.Canceled, default);
             }
-
-            response.Return();
-            return (NetResult.Success, receive);
         }
+
+        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        {
+            response.Return();
+            return (NetResult.DeserializationError, default);
+        }
+
+        response.Return();
+        return (NetResult.Success, receive);
     }
 
     public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
