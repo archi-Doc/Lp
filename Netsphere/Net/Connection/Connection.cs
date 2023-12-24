@@ -129,7 +129,7 @@ public abstract class Connection : IDisposable
     public void Close()
         => this.Dispose();
 
-    internal SendTransmission? TryCreateSendTransmission()
+    /*internal SendTransmission? TryCreateSendTransmission()
     {
         lock (this.sendTransmissions.SyncObject)
         {
@@ -149,12 +149,17 @@ public abstract class Connection : IDisposable
             sendTransmission.Goshujin = this.sendTransmissions;
             return sendTransmission;
         }
-    }
+    }*/
 
     internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
     {
         lock (this.sendTransmissions.SyncObject)
         {
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
             if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 return default;
@@ -170,7 +175,7 @@ public abstract class Connection : IDisposable
         }
     }
 
-    internal async ValueTask<SendTransmission?> CreateSendTransmission()
+    internal async ValueTask<SendTransmission?> TryCreateSendTransmission()
     {
 Retry:
         if (this.NetBase.CancellationToken.IsCancellationRequested)
@@ -180,6 +185,11 @@ Retry:
 
         lock (this.sendTransmissions.SyncObject)
         {
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
             if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
@@ -222,8 +232,12 @@ Wait:
                     break;
                 }
 
-                this.receiveTransmissions.DisposedListChain.Dequeue();
                 transmission.Goshujin = null;
+            }
+
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
             }
 
             if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
@@ -362,6 +376,8 @@ Wait:
                 return;
             }
 
+            this.ResponseSystemMics = this.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
+
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Ack)
@@ -439,7 +455,6 @@ Wait:
             {// Client side
                 if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// On the client side, it's necessary to create ReceiveTransmission in advance.
-                    // The case that the ACK has not arrived after the receive transmission was disposed.
                     return;
                 }
 
@@ -455,7 +470,6 @@ Wait:
 
                 // New transmission
                 var count = this.receiveTransmissions.Count - this.receiveTransmissions.DisposedListChain.Count; // Active transmissions
-                Console.WriteLine($"{count}/{this.receiveTransmissions.Count}");
                 if (count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
                     return;
@@ -475,9 +489,9 @@ Wait:
                 {
                     return;
                 }
-            }
 
-            transmission.Goshujin = this.receiveTransmissions;
+                transmission.Goshujin = this.receiveTransmissions;
+            }
         }
 
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode

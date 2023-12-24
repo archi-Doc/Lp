@@ -56,7 +56,7 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
-        using (var transmission = await this.CreateSendTransmission().ConfigureAwait(false))
+        using (var transmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
         {
             if (transmission is null)
             {
@@ -79,6 +79,11 @@ public sealed partial class ClientConnection : Connection
         where TSend : ITinyhandSerialize<TSend>
         where TReceive : ITinyhandSerialize<TReceive>
     {
+        if (this.IsClosedOrDisposed)
+        {
+            return (NetResult.Closed, default);
+        }
+
         if (this.NetBase.CancellationToken.IsCancellationRequested)
         {
             return (NetResult.Canceled, default);
@@ -89,7 +94,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.SerializationError, default);
         }
 
-        using (var sendTransmission = await this.CreateSendTransmission().ConfigureAwait(false))
+        using (var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
         {
             if (sendTransmission is null)
             {
@@ -151,7 +156,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.SerializationError);
         }
 
-        using (var sendTransmission = await this.CreateSendTransmission().ConfigureAwait(false))
+        using (var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
         {
             if (sendTransmission is null)
             {
@@ -184,7 +189,7 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
-        var transmission = await this.CreateSendTransmission().ConfigureAwait(false);
+        var transmission = await this.TryCreateSendTransmission().ConfigureAwait(false);
         if (transmission is null)
         {
             return default;

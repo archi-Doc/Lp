@@ -76,7 +76,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     Console.WriteLine(response.Value.ToString());
                 }
 
-                for (var i = 0; i < 10; i++)
+                /*for (var i = 0; i < 10; i++)
                 {
                     await Task.Delay(1000);
                     response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
@@ -84,7 +84,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     {
                         Console.WriteLine(response.Value.ToString());
                     }
-                }
+                }*/
 
                 /*using (var stream = await connection.SendStream(1000))
                 {

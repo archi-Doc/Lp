@@ -65,6 +65,7 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
 
     internal void DisposeInternal()
     {// lock (this.syncObject)
+        Console.WriteLine($"{this.Connection.IsServer} {this.Mode.ToString()}");//
         if (this.Mode == NetTransmissionMode.Disposed)
         {
             return;
@@ -97,7 +98,11 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
 
         lock (this.syncObject)
         {
-            Debug.Assert(this.Mode == NetTransmissionMode.Initial);
+            if (this.Connection.IsClosedOrDisposed ||
+                this.Mode != NetTransmissionMode.Initial)
+            {
+                return NetResult.Closed;
+            }
 
             this.sentTcs = sentTcs;
             this.totalGene = info.NumberOfGenes;

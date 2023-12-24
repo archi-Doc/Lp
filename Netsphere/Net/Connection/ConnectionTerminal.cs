@@ -376,7 +376,7 @@ public class ConnectionTerminal
     internal void InvokeServer(TransmissionContext transmissionContext)
     {
         if (transmissionContext.DataKind == 0)
-        {// Block
+        {// Block (Responder)
             transmissionContext.SendAndForget(new PacketPingResponse(NetAddress.Alternative, "Alternativ"));
         }
         else if (transmissionContext.DataKind == 1)

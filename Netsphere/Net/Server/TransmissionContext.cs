@@ -33,6 +33,11 @@ public class TransmissionContext
     public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
     {
+        if (this.Connection.IsClosedOrDisposed)
+        {
+            return NetResult.Closed;
+        }
+
         if (this.Connection.NetBase.CancellationToken.IsCancellationRequested)
         {
             return default;

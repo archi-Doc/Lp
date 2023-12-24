@@ -90,7 +90,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void SetState_Receiving(int totalGene)
-    {
+    {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         if (totalGene <= NetHelper.RamaGenes)
         {
             this.Mode = NetTransmissionMode.Rama;
@@ -104,7 +104,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void SetState_ReceivingStream(int totalGene)
-    {
+    {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
         this.totalGene = totalGene;
     }
@@ -117,6 +117,12 @@ internal sealed partial class ReceiveTransmission : IDisposable
         ByteArrayPool.MemoryOwner owner = default;
         lock (this.syncObject)
         {
+            if (this.Mode == NetTransmissionMode.Disposed)
+            {// The case that the ACK has not arrived after the receive transmission was disposed.
+                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
+                return;
+            }
+
             if (this.Mode == NetTransmissionMode.Rama)
             {// Single send/recv
                 if (genePosition == 0)
