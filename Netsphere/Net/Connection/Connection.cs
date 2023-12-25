@@ -95,8 +95,6 @@ public abstract class Connection : IDisposable
     internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
-    private readonly AsyncPulseEvent transmissionsPulse = new();
-
     private Embryo embryo;
 
     // lock (this.syncAes)
@@ -210,7 +208,7 @@ Retry:
 Wait:
         try
         {// tempcode
-            await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
+            //await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -224,10 +222,10 @@ Wait:
         lock (this.receiveTransmissions.SyncObject)
         {
             // Release receive transmissions that have elapsed a certain time after being disposed
-            var currentMics = Mics.GetSystem();
+            var currentMics = Mics.GetSystem();//
             while (this.receiveTransmissions.DisposedListChain.TryPeek(out var transmission))
             {
-                if (currentMics - transmission.DisposedMics < NetConstants.ReceiveTransmissionDisposalDelayMics)
+                if (currentMics - transmission.DisposedMics < NetConstants.TransmissionTimeoutMics)
                 {
                     break;
                 }
@@ -653,11 +651,11 @@ Wait:
         var connectionString = "Connection";
         if (this is ServerConnection)
         {
-            connectionString = "ServerConnection";
+            connectionString = "Server";
         }
         else if (this is ClientConnection)
         {
-            connectionString = "ClientConnection";
+            connectionString = "Client";
         }
 
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}";

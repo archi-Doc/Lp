@@ -94,40 +94,42 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.SerializationError, default);
         }
 
-        var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false);
-        if (sendTransmission is null)
-        {
-            owner.Return();
-            return (NetResult.NoTransmission, default);
-        }
-
-        var result = sendTransmission.SendBlock(0, dataId, owner, default); // 
-        owner.Return();
-        if (result != NetResult.Success)
-        {
-            return (result, default);
-        }
-
         NetResponse response;
-        var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        using (var receiveTransmission = this.TryCreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
+        using (var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
         {
-            if (receiveTransmission is null)
+            if (sendTransmission is null)
             {
+                owner.Return();
                 return (NetResult.NoTransmission, default);
             }
 
-            try
+            var result = sendTransmission.SendBlock(0, dataId, owner, default);
+            owner.Return();
+            if (result != NetResult.Success)
             {
-                response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
-                if (response.IsFailure)
-                {
-                    return (response.Result, default);
-                }
+                return (result, default);
             }
-            catch
+
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var receiveTransmission = this.TryCreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
             {
-                return (NetResult.Canceled, default);
+                if (receiveTransmission is null)
+                {
+                    return (NetResult.NoTransmission, default);
+                }
+
+                try
+                {
+                    response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+                    if (response.IsFailure)
+                    {
+                        return (response.Result, default);
+                    }
+                }
+                catch
+                {
+                    return (NetResult.Canceled, default);
+                }
             }
         }
 

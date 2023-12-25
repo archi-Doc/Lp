@@ -5,7 +5,8 @@ namespace Netsphere;
 internal static class NetConstants
 {
     public const int AckDelayMics = 10_000; // 10ms
-    public const int ReceiveTransmissionDisposalDelayMics = 5_000_000; // 5s
+    public const int TransmissionTimeoutMics = 5_000_000; // 5s
+
     public const int SendIntervalMilliseconds = 1;
     public const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
     public const int SendCapacityPerRound = 50;

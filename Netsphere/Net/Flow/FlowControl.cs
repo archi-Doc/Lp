@@ -74,6 +74,7 @@ public partial class FlowControl
                 }
 
                 gene = firstNode.Value;
+                gene.SendTransmission.CheckLatestAckMics(netSender.CurrentSystemMics);
                 var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend

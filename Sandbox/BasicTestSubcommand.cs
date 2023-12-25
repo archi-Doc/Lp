@@ -95,7 +95,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     }
                 }*/
 
-                using (var result2 = await connection.SendAndReceiveStream(p2))
+                /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
                     if (result2.Stream is { } stream)
                     {
@@ -103,7 +103,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                         result3.Return();
                     }
-                }
+                }*/
 
                 /*using (var stream = await connection.CreateStream(1000))
                 {

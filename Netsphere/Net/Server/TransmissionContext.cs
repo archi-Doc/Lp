@@ -57,6 +57,6 @@ public class TransmissionContext
 
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
-        return result;
+        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 }

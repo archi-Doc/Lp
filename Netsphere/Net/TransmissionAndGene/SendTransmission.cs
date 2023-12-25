@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -37,6 +38,9 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
     [Link(Primary = true, Type = ChainType.Unordered)]
     public uint TransmissionId { get; }
 
+    public string TransmissionIdText
+        => ((ushort)this.TransmissionId).ToString("x4");
+
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
@@ -47,12 +51,23 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
     private SendGene? gene2; // Gene 2
     private SendGene.GoshujinClass? genes; // Multiple genes
 
+    private long latestAckMics;
+
     #endregion
 
     public void Dispose()
     {
         this.Connection.RemoveTransmission(this);
         this.DisposeTransmission();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void CheckLatestAckMics(long currentMics)
+    {
+        if (currentMics - this.latestAckMics > NetConstants.TransmissionTimeoutMics)
+        {
+            this.Dispose();
+        }
     }
 
     internal void DisposeTransmission()
@@ -65,7 +80,7 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
 
     internal void DisposeInternal()
     {// lock (this.syncObject)
-        Console.WriteLine($"{this.Connection.IsServer} {this.Mode.ToString()}");//
+        Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()}");//
         if (this.Mode == NetTransmissionMode.Disposed)
         {
             return;
@@ -104,6 +119,7 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
                 return NetResult.Closed;
             }
 
+            this.latestAckMics = Mics.GetSystem();
             this.sentTcs = sentTcs;
             this.totalGene = info.NumberOfGenes;
 
@@ -231,6 +247,8 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
                 {
                     continue;
                 }
+
+                this.latestAckMics = this.Connection.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
 
                 if (this.Mode == NetTransmissionMode.Rama)
                 {
