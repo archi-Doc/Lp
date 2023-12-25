@@ -207,8 +207,9 @@ Retry:
 
 Wait:
         try
-        {// tempcode
-            //await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.CancellationToken).ConfigureAwait(false);
+        {
+            Task.Delay(100, this.CancellationToken).WaitAsync(TimeSpan.FromSeconds(1), this.CancellationToken)
+            await Task.Delay(100, this.CancellationToken).ConfigureAwait(false);
         }
         catch
         {
