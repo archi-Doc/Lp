@@ -76,15 +76,23 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     Console.WriteLine(response.Value.ToString());
                 }
 
-                /*for (var i = 0; i < 10; i++)
+                var tasks = new List<Task>();
+                var count = 0;
+                for (var i = 0; i < 10; i++)
                 {
-                    await Task.Delay(1000);
-                    response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
-                    if (response.Value is not null)
+                    tasks.Add(Task.Run(async () =>
                     {
-                        Console.WriteLine(response.Value.ToString());
-                    }
-                }*/
+                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
+                        if (r.Value is not null)
+                        {
+                            Interlocked.Increment(ref count);
+                        }
+                    }));
+                    
+                }
+
+                await Task.WhenAll(tasks);
+                Console.WriteLine(count);
 
                 /*using (var stream = await connection.SendStream(1000))
                 {

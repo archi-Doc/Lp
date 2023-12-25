@@ -75,23 +75,23 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceive<TSend, TReceive>(TSend packet, ulong dataId = 0)
+    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
         where TReceive : ITinyhandSerialize<TReceive>
     {
         if (this.IsClosedOrDisposed)
         {
-            return (NetResult.Closed, default);
+            return new(NetResult.Closed);
         }
 
         if (this.NetBase.CancellationToken.IsCancellationRequested)
         {
-            return (NetResult.Canceled, default);
+            return new(NetResult.Canceled);
         }
 
         if (!BlockService.TrySerialize(packet, out var owner))
         {
-            return (NetResult.SerializationError, default);
+            return new(NetResult.SerializationError);
         }
 
         NetResponse response;
@@ -100,14 +100,14 @@ public sealed partial class ClientConnection : Connection
             if (sendTransmission is null)
             {
                 owner.Return();
-                return (NetResult.NoTransmission, default);
+                return new(NetResult.NoTransmission);
             }
 
             var result = sendTransmission.SendBlock(0, dataId, owner, default);
             owner.Return();
             if (result != NetResult.Success)
             {
-                return (result, default);
+                return new(result);
             }
 
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -115,7 +115,7 @@ public sealed partial class ClientConnection : Connection
             {
                 if (receiveTransmission is null)
                 {
-                    return (NetResult.NoTransmission, default);
+                    return new(NetResult.NoTransmission);
                 }
 
                 try
@@ -123,12 +123,12 @@ public sealed partial class ClientConnection : Connection
                     response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
-                        return (response.Result, default);
+                        return new(response.Result);
                     }
                 }
                 catch
                 {
-                    return (NetResult.Canceled, default);
+                    return new(NetResult.Canceled);
                 }
             }
         }
@@ -136,11 +136,11 @@ public sealed partial class ClientConnection : Connection
         if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
         {
             response.Return();
-            return (NetResult.DeserializationError, default);
+            return new(NetResult.DeserializationError);
         }
 
         response.Return();
-        return (NetResult.Success, receive);
+        return new(NetResult.Success, receive);
     }
 
     public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
