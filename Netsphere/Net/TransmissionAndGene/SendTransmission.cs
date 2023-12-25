@@ -80,7 +80,7 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
 
     internal void DisposeInternal()
     {// lock (this.syncObject)
-        Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()}");//
+        // Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()}");
         if (this.Mode == NetTransmissionMode.Disposed)
         {
             return;

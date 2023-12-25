@@ -173,10 +173,11 @@ public abstract class Connection : IDisposable
         }
     }
 
-    internal async ValueTask<SendTransmission?> TryCreateSendTransmission()
+    internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout)
     {
 Retry:
-        if (this.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested ||
+            timeout < TimeSpan.Zero)
         {
             return default;
         }
@@ -202,19 +203,20 @@ Retry:
 
             var sendTransmission = new SendTransmission(this, transmissionId);
             sendTransmission.Goshujin = this.sendTransmissions;
-            return sendTransmission;
+            return new(sendTransmission, timeout);
         }
 
 Wait:
         try
         {
-            Task.Delay(100, this.CancellationToken).WaitAsync(TimeSpan.FromSeconds(1), this.CancellationToken)
-            await Task.Delay(100, this.CancellationToken).ConfigureAwait(false);
+            await Task.Delay(NetConstants.CreateTransmissionDelay, this.CancellationToken).ConfigureAwait(false);
         }
         catch
-        {
+        {// Cancelled
+            return default;
         }
 
+        timeout -= NetConstants.CreateTransmissionDelay;
         goto Retry;
     }
 

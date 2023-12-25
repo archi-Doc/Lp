@@ -56,15 +56,16 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
-        using (var transmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
         {
-            if (transmission is null)
+            if (transmissionAndTimeout.Transmission is null)
             {
                 return NetResult.NoTransmission;
             }
 
             var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var result = transmission.SendBlock(0, 0, owner, tcs);
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, 0, owner, tcs);
             if (result != NetResult.Success)
             {
                 return result;
@@ -72,7 +73,11 @@ public sealed partial class ClientConnection : Connection
 
             try
             {
-                result = await tcs.Task.WaitAsync(this.CancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                return NetResult.Timeout;
             }
             catch
             {
@@ -103,15 +108,16 @@ public sealed partial class ClientConnection : Connection
         }
 
         NetResponse response;
-        using (var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
         {
-            if (sendTransmission is null)
+            if (transmissionAndTimeout.Transmission is null)
             {
                 owner.Return();
                 return new(NetResult.NoTransmission);
             }
 
-            var result = sendTransmission.SendBlock(0, dataId, owner, default);
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, default);
             owner.Return();
             if (result != NetResult.Success)
             {
@@ -119,7 +125,7 @@ public sealed partial class ClientConnection : Connection
             }
 
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var receiveTransmission = this.TryCreateReceiveTransmission(sendTransmission.TransmissionId, tcs, default))
+            using (var receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs, default))
             {
                 if (receiveTransmission is null)
                 {
@@ -128,11 +134,15 @@ public sealed partial class ClientConnection : Connection
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(this.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);
                     }
+                }
+                catch (TimeoutException)
+                {
+                    return new(NetResult.Timeout);
                 }
                 catch
                 {
@@ -164,15 +174,16 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.SerializationError);
         }
 
-        using (var sendTransmission = await this.TryCreateSendTransmission().ConfigureAwait(false))
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
         {
-            if (sendTransmission is null)
+            if (transmissionAndTimeout.Transmission is null)
             {
                 owner.Return();
                 return new(NetResult.NoTransmission);
             }
 
-            var result = sendTransmission.SendBlock(0, dataId, owner, default);
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, default);
             owner.Return();
             if (result != NetResult.Success)
             {
@@ -186,7 +197,7 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<NetStream?> CreateStream(long size)
+    /*public async Task<NetStream?> CreateStream(long size)
     {
         if (this.CancellationToken.IsCancellationRequested)
         {
@@ -197,20 +208,21 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
-        var transmission = await this.TryCreateSendTransmission().ConfigureAwait(false);
-        if (transmission is null)
+        var timeout = this.NetBase.DefaultSendTimeout;
+        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
+        if (transmissionAndTimeout.Transmission is null)
         {
             return default;
         }
 
-        var result = transmission.SendStream(0, 0, size, false);
+        var result = transmissionAndTimeout.Transmission.SendStream(0, 0, size, false);
         if (result != NetResult.Success)
         {
-            transmission.Dispose();
+            transmissionAndTimeout.Dispose();
             return default;
         }
 
         return default;
         // return transmission;
-    }
+    }*/
 }
