@@ -52,7 +52,7 @@ public class ConnectionTerminal
         {
             // Close unused client connections
             while (this.clientConnections.OpenListChain.First is { } clientConnection &&
-                clientConnection.ResponseSystemMics + FromOpenToClosedMics < systemCurrentMics)
+                clientConnection.responseSystemMics + FromOpenToClosedMics < systemCurrentMics)
             {
                 clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
 
@@ -63,7 +63,7 @@ public class ConnectionTerminal
 
             // Dispose closed client connections
             while (this.clientConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + FromClosedToDisposalMics < systemCurrentMics)
+                connection.closedSystemMics + FromClosedToDisposalMics < systemCurrentMics)
             {
                 // Console.WriteLine($"Disposed: {connection.ToString()}");
                 connection.Goshujin = null;
@@ -75,7 +75,7 @@ public class ConnectionTerminal
         {
             // Close unused server connections
             while (this.serverConnections.OpenListChain.First is { } serverConnection &&
-                serverConnection.ResponseSystemMics + FromOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
+                serverConnection.responseSystemMics + FromOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
             {
                 serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
                 serverConnection.SendCloseFrame();
@@ -85,7 +85,7 @@ public class ConnectionTerminal
 
             // Dispose closed server connections
             while (this.serverConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + FromClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
+                connection.closedSystemMics + FromClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
             {
                 // Console.WriteLine($"Disposed: {connection.ToString()}");
                 connection.Goshujin = null;
@@ -118,15 +118,15 @@ public class ConnectionTerminal
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
                 {
-                    if ((connection.ClosedSystemMics + FromClosedToDisposalMics) > systemMics)
+                    if ((connection.closedSystemMics + FromClosedToDisposalMics) > systemMics)
                     {// ConnectionStateCode
                         this.clientConnections.ClosedListChain.Remove(connection);
                         this.clientConnections.ClosedEndPointChain.Remove(connection);
-                        connection.ClosedSystemMics = 0;
+                        connection.closedSystemMics = 0;
 
                         this.clientConnections.OpenListChain.AddLast(connection);
                         this.clientConnections.OpenEndPointChain.Add(endPoint, connection);
-                        connection.ResponseSystemMics = Mics.GetSystem();
+                        connection.responseSystemMics = Mics.GetSystem();
                         return connection;
                     }
                 }
@@ -153,7 +153,7 @@ public class ConnectionTerminal
             newConnection.Goshujin = this.clientConnections;
             this.clientConnections.OpenListChain.AddLast(newConnection);
             this.clientConnections.OpenEndPointChain.Add(newConnection.EndPoint, newConnection);
-            newConnection.ResponseSystemMics = Mics.GetSystem();
+            newConnection.responseSystemMics = Mics.GetSystem();
         }
 
         return newConnection;
@@ -195,7 +195,7 @@ public class ConnectionTerminal
             connection.Goshujin = this.serverConnections;
             this.serverConnections.OpenListChain.AddLast(connection);
             this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
-            connection.ResponseSystemMics = Mics.GetSystem();
+            connection.responseSystemMics = Mics.GetSystem();
         }
 
         return true;
@@ -389,11 +389,11 @@ public class ConnectionTerminal
         // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
-        connection.ResponseSystemMics = 0;
+        connection.responseSystemMics = 0;
 
         g.ClosedEndPointChain.Add(connection.EndPoint, connection);
         g.ClosedListChain.AddLast(connection);
-        connection.ClosedSystemMics = Mics.GetSystem();
+        connection.closedSystemMics = Mics.GetSystem();
     }
 
     private void CloseServerConnection(ServerConnection.GoshujinClass g, ServerConnection connection)
@@ -401,10 +401,10 @@ public class ConnectionTerminal
         // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
-        connection.ResponseSystemMics = 0;
+        connection.responseSystemMics = 0;
 
         g.ClosedEndPointChain.Add(connection.EndPoint, connection);
         g.ClosedListChain.AddLast(connection);
-        connection.ClosedSystemMics = Mics.GetSystem();
+        connection.closedSystemMics = Mics.GetSystem();
     }
 }

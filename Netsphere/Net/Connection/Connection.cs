@@ -49,6 +49,8 @@ public abstract class Connection : IDisposable
 
     #region FieldAndProperty
 
+    public CancellationToken CancellationToken => this.NetBase.CancellationToken;
+
     public NetBase NetBase { get; }
 
     public ConnectionTerminal ConnectionTerminal { get; }
@@ -87,11 +89,9 @@ public abstract class Connection : IDisposable
 
     internal ILogger Logger { get; }
 
-    internal long ClosedSystemMics { get; set; }
-
-    internal long ResponseSystemMics { get; set; }
-
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+    internal long closedSystemMics;
+    internal long responseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
@@ -176,7 +176,7 @@ public abstract class Connection : IDisposable
     internal async ValueTask<SendTransmission?> TryCreateSendTransmission()
     {
 Retry:
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested)
         {
             return default;
         }
@@ -208,7 +208,7 @@ Retry:
 Wait:
         try
         {// tempcode
-            //await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
+            //await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.CancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -374,7 +374,7 @@ Wait:
                 return;
             }
 
-            this.ResponseSystemMics = this.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
+            this.responseSystemMics = this.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType

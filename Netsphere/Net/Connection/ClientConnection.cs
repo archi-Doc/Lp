@@ -51,7 +51,7 @@ public sealed partial class ClientConnection : Connection
             return NetResult.SerializationError;
         }
 
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested)
         {
             return default;
         }
@@ -70,7 +70,15 @@ public sealed partial class ClientConnection : Connection
                 return result;
             }
 
-            result = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+            try
+            {
+                result = await tcs.Task.WaitAsync(this.CancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                return NetResult.Canceled;
+            }
+
             return result;
         }
     }
@@ -84,7 +92,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Closed);
         }
 
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested)
         {
             return new(NetResult.Canceled);
         }
@@ -120,7 +128,7 @@ public sealed partial class ClientConnection : Connection
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(this.ConnectionTerminal.NetBase.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(this.CancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);
@@ -146,7 +154,7 @@ public sealed partial class ClientConnection : Connection
     public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
     {
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested)
         {
             return new(NetResult.Canceled);
         }
@@ -180,7 +188,7 @@ public sealed partial class ClientConnection : Connection
 
     public async Task<NetStream?> CreateStream(long size)
     {
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested)
         {
             return default;
         }

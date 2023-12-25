@@ -38,7 +38,7 @@ public class TransmissionContext
             return NetResult.Closed;
         }
 
-        if (this.Connection.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.Connection.CancellationToken.IsCancellationRequested)
         {
             return default;
         }
