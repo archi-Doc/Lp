@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Arc.Collections;
 using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -103,7 +104,11 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
-    private ReceiveTransmission.GoshujinClass receiveTransmissions = new(); // lock (this.receiveTransmissions.SyncObject)
+
+    // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
+    private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
+    private UnorderedLinkedList<ReceiveTransmission> receiveReceivedList = new();
+    private UnorderedLinkedList<ReceiveTransmission> receiveDisposedList = new();
 
     // RTT
     private int minRtt; // Minimum rtt (mics)
@@ -226,7 +231,34 @@ Wait:
         {
             // Release receive transmissions that have elapsed a certain time after being disposed
             var currentMics = Mics.GetSystem();//
-            while (this.receiveTransmissions.DisposedListChain.TryPeek(out var transmission))
+
+            while (this.receiveDisposedList.First is { } node)
+            {
+                var transmission = node.Value;
+                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionTimeoutMics)
+                {
+                    break;
+                }
+
+                this.receiveDisposedList.RemoveFirst();
+                transmission.ReceivedDisposedNode = null;
+                transmission.Goshujin = null;
+            }
+
+            while (this.receiveReceivedList.First is { } node)
+            {
+                var transmission = node.Value;
+                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionTimeoutMics)
+                {
+                    break;
+                }
+
+                this.receiveDisposedList.RemoveFirst();
+                transmission.ReceivedDisposedNode = null;
+                transmission.Goshujin = null;
+            }
+
+            /*while (this.receiveTransmissions.DisposedListChain.TryPeek(out var transmission))
             {
                 if (currentMics - transmission.DisposedMics < NetConstants.TransmissionTimeoutMics)
                 {
@@ -234,7 +266,7 @@ Wait:
                 }
 
                 transmission.Goshujin = null;
-            }
+            }*/
 
             if (this.IsClosedOrDisposed)
             {
@@ -247,6 +279,7 @@ Wait:
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
+            receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);//
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
         }
@@ -276,8 +309,17 @@ Wait:
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
-                transmission.DisposedMics = Mics.GetSystem();
-                this.receiveTransmissions.DisposedListChain.Enqueue(transmission);
+                transmission.ReceivedDisposedMics = Mics.GetSystem();
+                if (transmission.ReceivedDisposedNode is { } node)
+                {// ReceivedList -> DisposedList
+                    node.List.Remove(node);
+                    this.receiveDisposedList.AddLast(node);
+                }
+                else
+                {// -> DisposedList
+                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                }
+
                 // transmission.Goshujin = null; // Delay the release to return ACK even after the receive transmission has ended.
                 return true;
             }
@@ -470,8 +512,7 @@ Wait:
                 }
 
                 // New transmission
-                var count = this.receiveTransmissions.Count - this.receiveTransmissions.DisposedListChain.Count; // Active transmissions
-                if (count >= this.Agreement.MaxTransmissions)
+                if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
                     return;
                 }
@@ -492,6 +533,8 @@ Wait:
                 }
 
                 transmission.Goshujin = this.receiveTransmissions;
+                transmission.ReceivedDisposedMics = currentSystemMics;
+                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
             }
         }
 
@@ -521,6 +564,15 @@ Wait:
             if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
             {// No transmission
                 return;
+            }
+
+            // ReceiveTransmissionsCode
+            if (transmission.ReceivedDisposedNode is { } node &&
+                node.List == this.receiveReceivedList)
+            {
+                transmission.ReceivedDisposedMics = currentSystemMics;
+                node.List.Remove(node);
+                node.List.AddLast(node);
             }
         }
 
@@ -719,7 +771,10 @@ Wait:
                 x.DisposeTransmission();
             }
 
+            // ReceiveTransmissionsCode
             this.receiveTransmissions.TransmissionIdChain.Clear();
+            this.receiveReceivedList.Clear();
+            this.receiveDisposedList.Clear();
         }
     }
 
