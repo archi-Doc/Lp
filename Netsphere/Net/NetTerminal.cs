@@ -151,7 +151,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
     {
-        var currentSystemMics = this.NetSender.CurrentSystemMics;
+        var currentSystemMics = Mics.FastSystem;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
 

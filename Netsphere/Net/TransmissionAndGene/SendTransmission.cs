@@ -248,7 +248,7 @@ internal sealed partial class SendTransmission : IDisposable, ISendTransmission
                     continue;
                 }
 
-                this.latestAckMics = this.Connection.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
+                this.latestAckMics = Mics.FastSystem;
 
                 if (this.Mode == NetTransmissionMode.Rama)
                 {

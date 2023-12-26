@@ -232,7 +232,7 @@ Wait:
             Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
 
             // Release receive transmissions that have elapsed a certain time after being disposed.
-            var currentMics = this.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
+            var currentMics = Mics.FastSystem;
             while (this.receiveDisposedList.First is { } node)
             {
                 var transmission = node.Value;
@@ -420,7 +420,7 @@ Wait:
                 return;
             }
 
-            this.responseSystemMics = this.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
+            this.responseSystemMics = Mics.FastSystem;
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType

@@ -18,5 +18,4 @@ internal static class NetConstants
     public static readonly double MicsPerRoundRev = 1d / MicsPerRound;
     public static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
     public static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
-    
 }

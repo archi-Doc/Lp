@@ -163,7 +163,7 @@ public sealed partial class PacketTerminal
                 if (item.ResponseTcs is not null)
                 {// WaitingToSend -> WaitingForResponse
                     netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
-                    item.SentMics = netSender.CurrentSystemMics;
+                    item.SentMics = Mics.FastSystem;
                     this.items.WaitingToSendListChain.Remove(item);
                     this.items.WaitingForResponseListChain.AddLast(item);
                 }
@@ -174,7 +174,7 @@ public sealed partial class PacketTerminal
                 }
             }
 
-            while (this.items.WaitingForResponseListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > this.InitialResendTimeoutMics)
+            while (this.items.WaitingForResponseListChain.First is { } item && (Mics.FastSystem - item.SentMics) > this.InitialResendTimeoutMics)
             {// Waiting for response list
                 if (!netSender.CanSend)
                 {
@@ -197,7 +197,7 @@ public sealed partial class PacketTerminal
                 BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
-                item.SentMics = netSender.CurrentSystemMics;
+                item.SentMics = Mics.FastSystem;
                 item.ResentCount++;
                 this.items.WaitingForResponseListChain.AddLast(item);
             }

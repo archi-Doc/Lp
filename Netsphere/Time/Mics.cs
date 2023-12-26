@@ -20,11 +20,13 @@ public static class Mics
     public const double MicsPerNanosecond = 0.001d;
     public static readonly double TimestampToMics;
     private static readonly long FixedMics; // Fixed mics at application startup.
+    private static long fastSystemMics;
 
     static Mics()
     {
         TimestampToMics = 1_000_000d / Stopwatch.Frequency;
         FixedMics = GetUtcNow() - (long)(Stopwatch.GetTimestamp() * TimestampToMics);
+        fastSystemMics = GetSystem();
     }
 
     /// <summary>
@@ -33,6 +35,13 @@ public static class Mics
     /// <returns><see cref="Mics"/> (microseconds).</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetSystem() => (long)(Stopwatch.GetTimestamp() * TimestampToMics);
+
+    /// <summary>
+    /// Gets the buffered <see cref="Mics"/> (microseconds) since system startup (Stopwatch.GetTimestamp()).
+    /// </summary>
+    public static long FastSystem => fastSystemMics;
+
+    public static long UpdateFastSystem() => fastSystemMics = GetSystem();
 
     /// <summary>
     /// Gets the <see cref="Mics"/> (microseconds) since LP has started.<br/>
