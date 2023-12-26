@@ -69,12 +69,12 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 // Send Block*Stream, Receive Non*Block*Stream
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
-                var p2 = new PacketPing();
+                /*var p2 = new PacketPing();
                 var response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
                 if (response.Value is not null)
                 {
                     Console.WriteLine(response.Value.ToString());
-                }
+                }*/
 
                 var tasks = new List<Task>();
                 var count = 0;
@@ -82,7 +82,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 {
                     tasks.Add(Task.Run(async () =>
                     {
-                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
+                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
                         if (r.Value is not null)
                         {
                             Interlocked.Increment(ref count);
