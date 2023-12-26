@@ -12,14 +12,33 @@ public class ConnectionContext
         this.ServerConnection = serverConnection;
     }
 
+    public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    {
+        return false;
+    }
+
     public void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            transmissionContext.SendAndForget(new PacketPingResponse(NetAddress.Alternative, "Alternativ"));
+            if (transmissionContext.Connection.ConnectionTerminal.NetTerminal.TryGetResponder(transmissionContext.DataId, out var responder))
+            {
+                responder.Respond(transmissionContext);
+            }
+            else
+            {
+                transmissionContext.Return();
+            }
         }
         else if (transmissionContext.DataKind == 1)
         {// RPC
+        }
+        else
+        {
+            if (!this.InvokeCustom(transmissionContext))
+            {
+                transmissionContext.Return();
+            }
         }
     }
 

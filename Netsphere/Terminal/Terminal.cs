@@ -205,10 +205,10 @@ public class Terminal : UnitBase, IUnitExecutable
         this.invokeServerDelegate = @delegate;
     }
 
-    public bool AddResponder(INetResponder responder)
+    public bool AddResponder(INetResponderObsolete responder)
         => this.responders.TryAdd(responder.GetDataId(), responder);
 
-    public bool TryGetResponder(ulong id, [MaybeNullWhen(false)] out INetResponder responder)
+    public bool TryGetResponder(ulong id, [MaybeNullWhen(false)] out INetResponderObsolete responder)
         => this.responders.TryGetValue(id, out responder);
 
     public ThreadCoreBase? Core { get; private set; }
@@ -616,5 +616,5 @@ public class Terminal : UnitBase, IUnitExecutable
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
     private ConcurrentQueue<RawSend> rawSends = new();
     private long lastCleanedMics; // The last mics Terminal.CleanNetTerminal() was called.
-    private ConcurrentDictionary<ulong, INetResponder> responders = new();
+    private ConcurrentDictionary<ulong, INetResponderObsolete> responders = new();
 }

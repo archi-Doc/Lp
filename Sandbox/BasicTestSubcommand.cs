@@ -5,6 +5,7 @@ using System.Net;
 using Arc.Unit;
 using LP.T3CS;
 using Netsphere;
+using Netsphere.Block;
 using Netsphere.Packet;
 using SimpleCommandLine;
 
@@ -56,6 +57,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        netTerminal.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+        this.NetControl.Alternative.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+
         netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))
         {
@@ -82,7 +86,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 {
                     tasks.Add(Task.Run(async () =>
                     {
-                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
+                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing(), BlockService.GetPacketId<PacketPing, PacketPingResponse>());
                         if (r.Value is not null)
                         {
                             Interlocked.Increment(ref count);

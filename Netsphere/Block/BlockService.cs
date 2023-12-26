@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Packet;
 
 namespace Netsphere.Block;
 
@@ -15,6 +16,11 @@ public static class BlockService
     public static uint GetId<T>() => IdCache<T>.Id;
 
     public static ulong GetId<TSend, TReceive>() => (ulong)IdCache<TSend>.Id | ((ulong)IdCache<TReceive>.Id << 32);
+
+    public static ulong GetPacketId<TSend, TReceive>()
+        where TSend : IPacket
+        where TReceive : IPacket
+        => (ulong)TSend.PacketType | ((ulong)TSend.PacketType << 32);
 
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {// checked
