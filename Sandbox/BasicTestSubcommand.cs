@@ -88,7 +88,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                             Interlocked.Increment(ref count);
                         }
                     }));
-                    
+
                 }
 
                 await Task.WhenAll(tasks);

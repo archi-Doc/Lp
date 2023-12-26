@@ -163,11 +163,13 @@ public abstract class Connection : IDisposable
                 return default;
             }
 
+            /* To maintain consistency with the number of SendTransmission on the client side, limit the number of ReceiveTransmission in ProcessReceive_FirstGene().
             if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 return default;
-            }
-            else if (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId))
+            }*/
+
+            if (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId))
             {
                 return default;
             }
