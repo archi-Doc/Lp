@@ -755,6 +755,7 @@ Wait:
             foreach (var x in this.sendTransmissions)
             {
                 x.DisposeTransmission();
+                x.Goshujin = null;
             }
 
             // Since it's within a lock statement, manually clear it.
@@ -766,6 +767,13 @@ Wait:
             foreach (var x in this.receiveTransmissions)
             {
                 x.DisposeTransmission();
+
+                if (x.ReceivedDisposedNode is { } node)
+                {
+                    node.List.Remove(node);
+                }
+
+                x.Goshujin = null;
             }
 
             // Since it's within a lock statement, manually clear it.

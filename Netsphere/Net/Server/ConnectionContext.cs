@@ -13,20 +13,13 @@ public class ConnectionContext
     }
 
     public void InvokeSync(TransmissionContext transmissionContext)
-    {
-        try
-        {
-            if (transmissionContext.DataKind == 0)
-            {// Block (Responder)
-                transmissionContext.SendAndForget(new PacketPingResponse(NetAddress.Alternative, "Alternativ"));
-            }
-            else if (transmissionContext.DataKind == 1)
-            {// RPC
-            }
+    {// transmissionContext.Return();
+        if (transmissionContext.DataKind == 0)
+        {// Block (Responder)
+            transmissionContext.SendAndForget(new PacketPingResponse(NetAddress.Alternative, "Alternativ"));
         }
-        finally
-        {
-            transmissionContext.Return();
+        else if (transmissionContext.DataKind == 1)
+        {// RPC
         }
     }
 
