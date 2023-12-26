@@ -229,13 +229,14 @@ Wait:
     {
         lock (this.receiveTransmissions.SyncObject)
         {
-            // Release receive transmissions that have elapsed a certain time after being disposed
-            var currentMics = Mics.GetSystem();//
+            Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
 
+            // Release receive transmissions that have elapsed a certain time after being disposed.
+            var currentMics = this.ConnectionTerminal.NetTerminal.NetSender.CurrentSystemMics;
             while (this.receiveDisposedList.First is { } node)
             {
                 var transmission = node.Value;
-                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionTimeoutMics)
+                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionDisposalMics)
                 {
                     break;
                 }
@@ -761,6 +762,7 @@ Wait:
                 x.DisposeTransmission();
             }
 
+            // Since it's within a lock statement, manually clear it.
             this.sendTransmissions.TransmissionIdChain.Clear();
         }
 
@@ -771,6 +773,7 @@ Wait:
                 x.DisposeTransmission();
             }
 
+            // Since it's within a lock statement, manually clear it.
             // ReceiveTransmissionsCode
             this.receiveTransmissions.TransmissionIdChain.Clear();
             this.receiveReceivedList.Clear();

@@ -21,10 +21,11 @@ internal class NetSender
         public readonly ByteArrayPool.MemoryOwner MemoryOwner;
     }
 
-    public NetSender(NetTerminal netTerminal, ILogger<NetSender> logger)
+    public NetSender(NetTerminal netTerminal, NetBase netBase, ILogger<NetSender> logger)
     {
         this.UpdateSystemMics();
         this.netTerminal = netTerminal;
+        this.netBase = netBase;
         this.logger = logger;
         this.netSocketIpv4 = new(this.netTerminal);
         this.netSocketIpv6 = new(this.netTerminal);
@@ -93,7 +94,10 @@ internal class NetSender
     }
 
     public long UpdateSystemMics()
-        => this.currentSystemMics = Mics.GetSystem();
+    {
+        this.currentSystemMics = Mics.GetSystem();
+        return this.currentSystemMics;
+    }
 
     public bool Start(ThreadCoreBase parent)
     {
@@ -141,6 +145,7 @@ internal class NetSender
     public Queue<FlowControl> FlowControlQueue { get; } = new();
 
     private readonly NetTerminal netTerminal;
+    private readonly NetBase netBase;
     private readonly ILogger logger;
     private readonly NetSocket netSocketIpv4;
     private readonly NetSocket netSocketIpv6;

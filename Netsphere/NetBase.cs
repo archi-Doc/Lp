@@ -34,6 +34,8 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public ServerOptions ServerOptions { get; set; }
 
+    public long CurrentSystemMics { get; private set; }
+
     public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
@@ -74,6 +76,12 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NodePrivateKey = NodePrivateKey.Create();
             this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
         }
+    }
+
+    public long UpdateSystemMics()
+    {
+        this.CurrentSystemMics = Mics.GetSystem();
+        return this.CurrentSystemMics;
     }
 
     public void SetParameter(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)

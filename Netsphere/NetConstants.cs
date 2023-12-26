@@ -8,6 +8,7 @@ internal static class NetConstants
     public const long ConnectionOpenToClosedMics = 5_000_000; // 5s
     public const long ConnectionClosedToDisposalMics = 10_000_000; // 10s
     public const int TransmissionTimeoutMics = 5_000_000; // 5s
+    public const int TransmissionDisposalMics = 5_000_000; // 5s
 
     public const int SendIntervalMilliseconds = 1;
     public const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;

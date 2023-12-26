@@ -22,7 +22,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetBase = netBase;
         this.NetStats = netStats;
 
-        this.NetSender = new(this, unitLogger.GetLogger<NetSender>());
+        this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(this);
         this.netCleaner = new(this);
