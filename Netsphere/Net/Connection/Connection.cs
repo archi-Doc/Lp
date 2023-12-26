@@ -241,11 +241,12 @@ Wait:
                     break;
                 }
 
-                this.receiveDisposedList.RemoveFirst();
+                node.List.Remove(node);
                 transmission.ReceivedDisposedNode = null;
                 transmission.Goshujin = null;
             }
 
+            // Release receive transmissions that have elapsed a certain time since the last data reception.
             while (this.receiveReceivedList.First is { } node)
             {
                 var transmission = node.Value;
@@ -254,20 +255,11 @@ Wait:
                     break;
                 }
 
-                this.receiveDisposedList.RemoveFirst();
+                node.List.Remove(node);
+                transmission.DisposeTransmission();
                 transmission.ReceivedDisposedNode = null;
                 transmission.Goshujin = null;
             }
-
-            /*while (this.receiveTransmissions.DisposedListChain.TryPeek(out var transmission))
-            {
-                if (currentMics - transmission.DisposedMics < NetConstants.TransmissionTimeoutMics)
-                {
-                    break;
-                }
-
-                transmission.Goshujin = null;
-            }*/
 
             if (this.IsClosedOrDisposed)
             {
@@ -280,7 +272,8 @@ Wait:
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
-            receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);//
+            receiveTransmission.ReceivedDisposedMics = currentMics;
+            receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
         }
@@ -310,11 +303,11 @@ Wait:
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
-                transmission.ReceivedDisposedMics = Mics.GetSystem();
+                transmission.ReceivedDisposedMics = Mics.FastSystem; // Disposed mics
                 if (transmission.ReceivedDisposedNode is { } node)
                 {// ReceivedList -> DisposedList
                     node.List.Remove(node);
-                    this.receiveDisposedList.AddLast(node);
+                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
                 }
                 else
                 {// -> DisposedList
@@ -426,20 +419,20 @@ Wait:
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Ack)
             {// Ack
-                this.ProcessReceive_Ack(endPoint, owner, currentSystemMics);
+                this.ProcessReceive_Ack(endPoint, owner);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.ProcessReceive_FirstGene(endPoint, owner, currentSystemMics);
+                this.ProcessReceive_FirstGene(endPoint, owner);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.ProcessReceive_FollowingGene(endPoint, owner, currentSystemMics);
+                this.ProcessReceive_FollowingGene(endPoint, owner);
             }
         }
     }
 
-    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
@@ -469,7 +462,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
@@ -534,7 +527,7 @@ Wait:
                 }
 
                 transmission.Goshujin = this.receiveTransmissions;
-                transmission.ReceivedDisposedMics = currentSystemMics;
+                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
                 transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
             }
         }
@@ -542,7 +535,7 @@ Wait:
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
     }
 
-    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
@@ -571,7 +564,7 @@ Wait:
             if (transmission.ReceivedDisposedNode is { } node &&
                 node.List == this.receiveReceivedList)
             {
-                transmission.ReceivedDisposedMics = currentSystemMics;
+                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
                 node.List.Remove(node);
                 node.List.AddLast(node);
             }
