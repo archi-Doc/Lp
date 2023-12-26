@@ -239,11 +239,13 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             if (this.Connection is ServerConnection serverConnection)
             {// InvokeServer: Connection, NetTransmission, Owner
-                var transmissionContext = new TransmissionContext(serverConnection.ConnectionContext, this.TransmissionId, dataKind, dataId, owner);
-                this.Connection.ConnectionTerminal.InvokeServer(transmissionContext);
+                var connectionContext = serverConnection.ConnectionContext;
+                var transmissionContext = new TransmissionContext(connectionContext, this.TransmissionId, dataKind, dataId, owner.IncrementAndShareReadOnly());
+                connectionContext.InvokeSync(transmissionContext);
             }
 
-            receivedTcs?.SetResult(new(NetResult.Success, owner, 0));
+            receivedTcs?.SetResult(new(NetResult.Success, owner.IncrementAndShareReadOnly(), 0));
+            owner.Return();
         }
     }
 

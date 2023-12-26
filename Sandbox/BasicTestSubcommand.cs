@@ -78,7 +78,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 var tasks = new List<Task>();
                 var count = 0;
-                for (var i = 0; i < 100; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     tasks.Add(Task.Run(async () =>
                     {

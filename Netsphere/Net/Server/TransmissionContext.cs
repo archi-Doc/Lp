@@ -4,15 +4,15 @@ using Netsphere.Block;
 
 namespace Netsphere.Server;
 
-public class TransmissionContext
+public sealed class TransmissionContext
 {
-    public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner? owner)
+    public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.ReadOnlyMemoryOwner toBeShared)
     {
         this.ConnectionContext = connectionContext;
         this.TransmissionId = transmissionId;
         this.DataKind = dataKind;
         this.DataId = dataId;
-        this.Owner = owner;
+        this.Owner = toBeShared;
     }
 
     public ConnectionContext ConnectionContext { get; }
@@ -25,10 +25,10 @@ public class TransmissionContext
 
     public ulong DataId { get; }
 
-    public ByteArrayPool.MemoryOwner? Owner { get; set; }
+    public ByteArrayPool.ReadOnlyMemoryOwner Owner { get; set; }
 
     public void Return()
-        => this.Owner = this.Owner?.Return();
+        => this.Owner = this.Owner.Return();
 
     public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
