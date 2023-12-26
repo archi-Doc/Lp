@@ -16,7 +16,7 @@ public enum NetTransmissionMode
 }
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-internal sealed partial class SendTransmission : IDisposable, ISendTransmission
+internal sealed partial class SendTransmission : IDisposable
 {
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Send/Receive Ack -> Receive -> Disposed
