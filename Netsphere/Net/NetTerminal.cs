@@ -1,8 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
+using Netsphere.Server;
 using Netsphere.Stats;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -22,7 +25,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetBase = netBase;
         this.NetStats = netStats;
 
-        this.NetSender = new(this, unitLogger.GetLogger<NetSender>());
+        this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(this);
         this.netCleaner = new(this);
@@ -151,7 +154,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
     {
-        var currentSystemMics = this.NetSender.CurrentSystemMics;
+        var currentSystemMics = Mics.FastSystem;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Arc.Collections;
 using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -25,7 +26,7 @@ public abstract class Connection : IDisposable
     public enum ConnectMode
     {
         ReuseClosed,
-        OnlyConnected,
+        Shared,
         NoReuse,
     }
 
@@ -49,6 +50,8 @@ public abstract class Connection : IDisposable
 
     #region FieldAndProperty
 
+    public CancellationToken CancellationToken => this.NetBase.CancellationToken;
+
     public NetBase NetBase { get; }
 
     public ConnectionTerminal ConnectionTerminal { get; }
@@ -69,6 +72,10 @@ public abstract class Connection : IDisposable
 
     public abstract ConnectionState State { get; }
 
+    public abstract bool IsClient { get; }
+
+    public abstract bool IsServer { get; }
+
     public bool IsOpen
         => this.State == ConnectionState.Open;
 
@@ -83,15 +90,11 @@ public abstract class Connection : IDisposable
 
     internal ILogger Logger { get; }
 
-    internal long ClosedSystemMics { get; set; }
-
-    internal long ResponseSystemMics { get; set; }
-
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+    internal long closedSystemMics;
+    internal long responseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
-
-    private readonly AsyncPulseEvent transmissionsPulse = new();
 
     private Embryo embryo;
 
@@ -101,7 +104,11 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
-    private ReceiveTransmission.GoshujinClass receiveTransmissions = new(); // lock (this.receiveTransmissions.SyncObject)
+
+    // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
+    private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
+    private UnorderedLinkedList<ReceiveTransmission> receiveReceivedList = new();
+    private UnorderedLinkedList<ReceiveTransmission> receiveDisposedList = new();
 
     // RTT
     private int minRtt; // Minimum rtt (mics)
@@ -125,7 +132,7 @@ public abstract class Connection : IDisposable
     public void Close()
         => this.Dispose();
 
-    internal SendTransmission? TryCreateTransmission()
+    /*internal SendTransmission? TryCreateSendTransmission()
     {
         lock (this.sendTransmissions.SyncObject)
         {
@@ -145,18 +152,50 @@ public abstract class Connection : IDisposable
             sendTransmission.Goshujin = this.sendTransmissions;
             return sendTransmission;
         }
+    }*/
+
+    internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
+            /* To maintain consistency with the number of SendTransmission on the client side, limit the number of ReceiveTransmission in ProcessReceive_FirstGene().
+            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
+            {
+                return default;
+            }*/
+
+            if (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId))
+            {
+                return default;
+            }
+
+            var sendTransmission = new SendTransmission(this, transmissionId);
+            sendTransmission.Goshujin = this.sendTransmissions;
+            return sendTransmission;
+        }
     }
 
-    internal async ValueTask<SendTransmission?> CreateTransmission()
+    internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout)
     {
 Retry:
-        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        if (this.CancellationToken.IsCancellationRequested ||
+            timeout < TimeSpan.Zero)
         {
             return default;
         }
 
         lock (this.sendTransmissions.SyncObject)
         {
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
             if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
@@ -171,19 +210,75 @@ Retry:
 
             var sendTransmission = new SendTransmission(this, transmissionId);
             sendTransmission.Goshujin = this.sendTransmissions;
-            return sendTransmission;
+            return new(sendTransmission, timeout);
         }
 
 Wait:
         try
-        {// tempcode
-            await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
+        {
+            await Task.Delay(NetConstants.CreateTransmissionDelay, this.CancellationToken).ConfigureAwait(false);
         }
         catch
-        {
+        {// Cancelled
+            return default;
         }
 
+        timeout -= NetConstants.CreateTransmissionDelay;
         goto Retry;
+    }
+
+    internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    {
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
+
+            // Release receive transmissions that have elapsed a certain time after being disposed.
+            var currentMics = Mics.FastSystem;
+            while (this.receiveDisposedList.First is { } node)
+            {
+                var transmission = node.Value;
+                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionDisposalMics)
+                {
+                    break;
+                }
+
+                node.List.Remove(node);
+                transmission.ReceivedDisposedNode = null;
+                transmission.Goshujin = null;
+            }
+
+            // Release receive transmissions that have elapsed a certain time since the last data reception.
+            while (this.receiveReceivedList.First is { } node)
+            {
+                var transmission = node.Value;
+                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionTimeoutMics)
+                {
+                    break;
+                }
+
+                node.List.Remove(node);
+                transmission.DisposeTransmission();
+                transmission.ReceivedDisposedNode = null;
+                transmission.Goshujin = null;
+            }
+
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
+            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
+            {
+                return default;
+            }
+
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
+            receiveTransmission.ReceivedDisposedMics = currentMics;
+            receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+            receiveTransmission.Goshujin = this.receiveTransmissions;
+            return receiveTransmission;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,7 +305,18 @@ Wait:
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
-                transmission.Goshujin = null;
+                transmission.ReceivedDisposedMics = Mics.FastSystem; // Disposed mics
+                if (transmission.ReceivedDisposedNode is { } node)
+                {// ReceivedList -> DisposedList
+                    node.List.Remove(node);
+                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                }
+                else
+                {// -> DisposedList
+                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                }
+
+                // transmission.Goshujin = null; // Delay the release to return ACK even after the receive transmission has ended.
                 return true;
             }
             else
@@ -309,24 +415,26 @@ Wait:
                 return;
             }
 
+            this.responseSystemMics = Mics.FastSystem;
+
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Ack)
             {// Ack
-                this.ProcessReceive_Ack(endPoint, owner, currentSystemMics);
+                this.ProcessReceive_Ack(endPoint, owner);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.ProcessReceive_FirstGene(endPoint, owner, currentSystemMics);
+                this.ProcessReceive_FirstGene(endPoint, owner);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.ProcessReceive_FollowingGene(endPoint, owner, currentSystemMics);
+                this.ProcessReceive_FollowingGene(endPoint, owner);
             }
         }
     }
 
-    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
@@ -356,8 +464,8 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
         {
@@ -382,40 +490,55 @@ Wait:
         ReceiveTransmission? transmission;
         lock (this.receiveTransmissions.SyncObject)
         {
-            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
-            {// The same TransmissionId already exists.
-                return;
-            }
+            if (this.IsClient)
+            {// Client side
+                if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+                {// On the client side, it's necessary to create ReceiveTransmission in advance.
+                    return;
+                }
 
-            // New transmission
-            if (this.receiveTransmissions.Count >= this.Agreement.MaxTransmissions)
-            {// Maximum number reached.
-                return;
-            }
-
-            if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
-            {// Block mode
-                transmission = new(this, transmissionId, true);
                 transmission.SetState_Receiving(totalGenes);
             }
-            else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
-            {// Stream mode
-                transmission = new(this, transmissionId, true);
-                transmission.SetState_ReceivingStream(totalGenes);
-            }
             else
-            {
-                return;
-            }
+            {// Server side
+                if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+                {// The same TransmissionId already exists.
+                    this.ConnectionTerminal.AckBuffer.Add(this, transmissionId, 0); // Resend the ACK in case it was not received.
+                    return;
+                }
 
-            transmission.Goshujin = this.receiveTransmissions;
+                // New transmission
+                if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
+                {// Maximum number reached.
+                    return;
+                }
+
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+                {// Block mode
+                    transmission = new(this, transmissionId, default, default);
+                    transmission.SetState_Receiving(totalGenes);
+                }
+                else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
+                {// Stream mode
+                    transmission = new(this, transmissionId, default, default);
+                    transmission.SetState_ReceivingStream(totalGenes);
+                }
+                else
+                {
+                    return;
+                }
+
+                transmission.Goshujin = this.receiveTransmissions;
+                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
+                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
+            }
         }
 
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
     }
 
-    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// uint TransmissionId, uint GenePosition
+    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
         {
@@ -437,6 +560,15 @@ Wait:
             if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
             {// No transmission
                 return;
+            }
+
+            // ReceiveTransmissionsCode
+            if (transmission.ReceivedDisposedNode is { } node &&
+                node.List == this.receiveReceivedList)
+            {
+                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
+                node.List.Remove(node);
+                node.List.AddLast(node);
             }
         }
 
@@ -487,6 +619,7 @@ Wait:
     {
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
+        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
@@ -498,7 +631,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, (ushort)PacketType.Encrypted); // PacketType
+        BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
@@ -533,7 +666,7 @@ Wait:
         span = span.Slice(sizeof(ulong));
 
         var source = span;
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack); // Frame type
         span = span.Slice(sizeof(ushort));
 
         this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + geneLength), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
@@ -569,11 +702,11 @@ Wait:
         var connectionString = "Connection";
         if (this is ServerConnection)
         {
-            connectionString = "ServerConnection";
+            connectionString = "Server";
         }
         else if (this is ClientConnection)
         {
-            connectionString = "ClientConnection";
+            connectionString = "Client";
         }
 
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}";
@@ -621,9 +754,11 @@ Wait:
         {
             foreach (var x in this.sendTransmissions)
             {
-                x.DisposeInternal();
+                x.DisposeTransmission();
+                x.Goshujin = null;
             }
 
+            // Since it's within a lock statement, manually clear it.
             this.sendTransmissions.TransmissionIdChain.Clear();
         }
 
@@ -631,10 +766,21 @@ Wait:
         {
             foreach (var x in this.receiveTransmissions)
             {
-                x.DisposeInternal();
+                x.DisposeTransmission();
+
+                if (x.ReceivedDisposedNode is { } node)
+                {
+                    node.List.Remove(node);
+                }
+
+                x.Goshujin = null;
             }
 
+            // Since it's within a lock statement, manually clear it.
+            // ReceiveTransmissionsCode
             this.receiveTransmissions.TransmissionIdChain.Clear();
+            this.receiveReceivedList.Clear();
+            this.receiveDisposedList.Clear();
         }
     }
 

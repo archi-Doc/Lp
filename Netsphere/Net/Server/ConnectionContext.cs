@@ -1,0 +1,48 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using Netsphere.Packet;
+
+namespace Netsphere.Server;
+
+public class ConnectionContext
+{
+    public ConnectionContext(IServiceProvider serviceProvider, ServerConnection serverConnection)
+    {
+        this.ServiceProvider = serviceProvider;
+        this.ServerConnection = serverConnection;
+    }
+
+    public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    {
+        return false;
+    }
+
+    public void InvokeSync(TransmissionContext transmissionContext)
+    {// transmissionContext.Return();
+        if (transmissionContext.DataKind == 0)
+        {// Block (Responder)
+            if (transmissionContext.Connection.ConnectionTerminal.NetTerminal.TryGetResponder(transmissionContext.DataId, out var responder))
+            {
+                responder.Respond(transmissionContext);
+            }
+            else
+            {
+                transmissionContext.Return();
+            }
+        }
+        else if (transmissionContext.DataKind == 1)
+        {// RPC
+        }
+        else
+        {
+            if (!this.InvokeCustom(transmissionContext))
+            {
+                transmissionContext.Return();
+            }
+        }
+    }
+
+    public IServiceProvider ServiceProvider { get; internal set; } = default!;
+
+    public ServerConnection ServerConnection { get; internal set; } = default!;
+}

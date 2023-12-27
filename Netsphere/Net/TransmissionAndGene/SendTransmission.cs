@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -15,13 +16,13 @@ public enum NetTransmissionMode
 }
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class SendTransmission : IDisposable
+internal sealed partial class SendTransmission : IDisposable
 {
     /* State transitions
-     *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
-     *  SendAsync                   (Client) : Initial -> Sending -> tcs / Disposed
-     *  (Server) : Initial -> Receiving -> (Invoke) -> Disposed
-     *  (Server) : Initial -> Receiving -> (Invoke) -> Sending -> tcs / Disposed
+     *  SendAndReceiveAsync (Client) : Initial -> Send/Receive Ack -> Receive -> Disposed
+     *  SendAsync                   (Client) : Initial -> Send/Receive Ack -> tcs / Disposed
+     *  (Server) : Initial -> Receive -> (Invoke) -> Disposed
+     *  (Server) : Initial -> Receive -> (Invoke) -> Send/Receive Ack -> tcs / Disposed
      */
 
     public SendTransmission(Connection connection, uint transmissionId)
@@ -37,65 +38,89 @@ public sealed partial class SendTransmission : IDisposable
     [Link(Primary = true, Type = ChainType.Unordered)]
     public uint TransmissionId { get; }
 
+    public string TransmissionIdText
+        => ((ushort)this.TransmissionId).ToString("x4");
+
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
     private int totalGene;
-    private TaskCompletionSource<NetResponse>? tcs;
+    private TaskCompletionSource<NetResult>? sentTcs;
     private SendGene? gene0; // Gene 0
     private SendGene? gene1; // Gene 1
     private SendGene? gene2; // Gene 2
     private SendGene.GoshujinClass? genes; // Multiple genes
+
+    private long latestAckMics;
 
     #endregion
 
     public void Dispose()
     {
         this.Connection.RemoveTransmission(this);
-        this.DisposeInternal();
+        this.DisposeTransmission();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void CheckLatestAckMics(long currentMics)
+    {
+        if (currentMics - this.latestAckMics > NetConstants.TransmissionTimeoutMics)
+        {
+            this.Dispose();
+        }
+    }
+
+    internal void DisposeTransmission()
+    {
+        lock (this.syncObject)
+        {
+            this.DisposeInternal();
+        }
     }
 
     internal void DisposeInternal()
-    {
-        TaskCompletionSource<NetResponse>? tcs = default;
-
-        lock (this.syncObject)
+    {// lock (this.syncObject)
+        // Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()}");
+        if (this.Mode == NetTransmissionMode.Disposed)
         {
-            if (this.Mode == NetTransmissionMode.Disposed)
-            {
-                return;
-            }
-
-            this.Mode = NetTransmissionMode.Disposed;
-            this.gene0?.Dispose();
-            this.gene1?.Dispose();
-            this.gene2?.Dispose();
-            if (this.genes is not null)
-            {
-                foreach (var x in this.genes)
-                {
-                    x.Dispose();
-                }
-
-                this.genes = default; // this.genes.Clear();
-            }
-
-            tcs = this.tcs;
-            this.tcs = default;
+            return;
         }
 
-        tcs?.TrySetResult(new(NetResult.Closed));
+        this.Mode = NetTransmissionMode.Disposed;
+        this.gene0?.Dispose();
+        this.gene1?.Dispose();
+        this.gene2?.Dispose();
+        if (this.genes is not null)
+        {
+            foreach (var x in this.genes)
+            {
+                x.Dispose();
+            }
+
+            this.genes = default; // this.genes.Clear();
+        }
+
+        if (this.sentTcs is not null)
+        {
+            this.sentTcs.SetResult(NetResult.Closed);
+            this.sentTcs = null;
+        }
     }
 
-    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResponse> tcs, bool requiresResponse)
+    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
 
         lock (this.syncObject)
         {
-            Debug.Assert(this.Mode == NetTransmissionMode.Initial);
+            if (this.Connection.IsClosedOrDisposed ||
+                this.Mode != NetTransmissionMode.Initial)
+            {
+                return NetResult.Closed;
+            }
 
-            this.tcs = tcs;
+            this.latestAckMics = Mics.GetSystem();
+            this.sentTcs = sentTcs;
             this.totalGene = info.NumberOfGenes;
 
             var span = block.Span;
@@ -223,6 +248,8 @@ public sealed partial class SendTransmission : IDisposable
                     continue;
                 }
 
+                this.latestAckMics = Mics.FastSystem;
+
                 if (this.Mode == NetTransmissionMode.Rama)
                 {
                     if (startGene == 0 && endGene == this.totalGene)
@@ -259,18 +286,19 @@ public sealed partial class SendTransmission : IDisposable
                     return false;
                 }
             }
-        }
 
-        if (completeFlag)
-        {// Send transmission complete
-            if (this.tcs is null)
-            {// Receive
-            }
-            else
-            {// Tcs
-            }
+            if (completeFlag)
+            {// Send transmission complete
+                if (this.sentTcs is not null)
+                {
+                    this.sentTcs.SetResult(NetResult.Success);
+                    this.sentTcs = null;
+                }
 
-            this.DisposeInternal();//
+                // Remove from sendTransmissions and dispose.
+                this.Goshujin = null;
+                this.DisposeInternal();
+            }
         }
 
         return completeFlag;

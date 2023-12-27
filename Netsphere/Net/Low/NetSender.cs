@@ -21,10 +21,10 @@ internal class NetSender
         public readonly ByteArrayPool.MemoryOwner MemoryOwner;
     }
 
-    public NetSender(NetTerminal netTerminal, ILogger<NetSender> logger)
+    public NetSender(NetTerminal netTerminal, NetBase netBase, ILogger<NetSender> logger)
     {
-        this.UpdateSystemMics();
         this.netTerminal = netTerminal;
+        this.netBase = netBase;
         this.logger = logger;
         this.netSocketIpv4 = new(this.netTerminal);
         this.netSocketIpv6 = new(this.netTerminal);
@@ -92,9 +92,6 @@ internal class NetSender
         }
     }
 
-    public long UpdateSystemMics()
-        => this.currentSystemMics = Mics.GetSystem();
-
     public bool Start(ThreadCoreBase parent)
     {
         var port = this.netTerminal.Port;
@@ -132,8 +129,6 @@ internal class NetSender
 
     public bool CanSend => this.SendCapacity > this.SendCount;
 
-    public long CurrentSystemMics => this.currentSystemMics;
-
     public int SendCapacity { get; private set; }
 
     public int SendCount { get; private set; }
@@ -141,6 +136,7 @@ internal class NetSender
     public Queue<FlowControl> FlowControlQueue { get; } = new();
 
     private readonly NetTerminal netTerminal;
+    private readonly NetBase netBase;
     private readonly ILogger logger;
     private readonly NetSocket netSocketIpv4;
     private readonly NetSocket netSocketIpv6;
@@ -148,7 +144,6 @@ internal class NetSender
 
     private object syncObject = new();
     private long previousSystemMics;
-    private long currentSystemMics;
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
     private double deliveryFailureRatio = 0;
@@ -176,7 +171,7 @@ internal class NetSender
     private void Process()
     {// Invoked by multiple threads(SendCore or MultimediaTimer).
         // Check interval.
-        var currentSystemMics = this.UpdateSystemMics();
+        var currentSystemMics = Mics.UpdateFastSystem();
         var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
         if (currentSystemMics < (this.previousSystemMics + interval))
         {

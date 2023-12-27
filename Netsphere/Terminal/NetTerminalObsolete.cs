@@ -251,7 +251,7 @@ public partial class NetTerminalObsolete : IDisposable
             this.FlowControl.ReturnSendCapacity(sendCapacity);
 
             // Send Ack
-            if ((currentMics - this.lastSendingAckMics) > Mics.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
+            if ((currentMics - this.lastSendingAckMics) > Mics.FromMilliseconds(10))
             {
                 this.lastSendingAckMics = currentMics;
 

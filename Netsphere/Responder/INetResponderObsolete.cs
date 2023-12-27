@@ -4,7 +4,7 @@ using Netsphere.Block;
 
 namespace Netsphere.Responder;
 
-public abstract class NetResponder<TSend, TReceive> : INetResponder
+public abstract class NetResponderObsolete<TSend, TReceive> : INetResponderObsolete
 {
     public ulong GetDataId() => BlockService.GetId<TSend, TReceive>();
 
@@ -29,7 +29,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
     }
 }
 
-public interface INetResponder
+public interface INetResponderObsolete
 {
     public ulong GetDataId();
 

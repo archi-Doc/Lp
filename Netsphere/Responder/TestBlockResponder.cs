@@ -4,9 +4,9 @@ using Netsphere.Block;
 
 namespace Netsphere.Responder;
 
-internal class TestBlockResponder : NetResponder<TestBlock, TestBlock>
+internal class TestBlockResponder : NetResponderObsolete<TestBlock, TestBlock>
 {
-    public static readonly NetResponder<TestBlock, TestBlock> Instance = new TestBlockResponder();
+    public static readonly NetResponderObsolete<TestBlock, TestBlock> Instance = new TestBlockResponder();
 
     public override TestBlock? Respond(TestBlock value)
     {

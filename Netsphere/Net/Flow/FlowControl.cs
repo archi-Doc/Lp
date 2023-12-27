@@ -68,20 +68,17 @@ public partial class FlowControl
             {// Retransmission
                 var firstNode = this.waitingForAck.First;
                 if (firstNode is null ||
-                    firstNode.Key > netSender.CurrentSystemMics)
+                    firstNode.Key > Mics.FastSystem)
                 {
                     break;
                 }
 
                 gene = firstNode.Value;
+                gene.SendTransmission.CheckLatestAckMics(Mics.FastSystem);
                 var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend
                     // Console.WriteLine("RESEND");
-                    if (gene.SendTransmission.Connection.ConnectionTerminal.NetTerminal.NetTerminalString == "Alt" && gene.SendTransmission.Connection.EndPoint.EndPoint.Port == 49151)
-                    {
-                    }
-
                     remaining--;
                     this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
 

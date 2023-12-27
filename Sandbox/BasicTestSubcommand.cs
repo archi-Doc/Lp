@@ -5,6 +5,7 @@ using System.Net;
 using Arc.Unit;
 using LP.T3CS;
 using Netsphere;
+using Netsphere.Block;
 using Netsphere.Packet;
 using SimpleCommandLine;
 
@@ -56,6 +57,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+
         netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))
         {
@@ -67,35 +70,51 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
-                var p2 = new PacketPing();
-                var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
+                // Send Block*Stream, Receive Non*Block*Stream
+                // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
+                /*var p2 = new PacketPing();
+                var response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
+                if (response.Value is not null)
+                {
+                    Console.WriteLine(response.Value.ToString());
+                }*/
 
-                using (var stream = await connection.SendStream(1000))
+                var tasks = new List<Task>();
+                var count = 0;
+                for (var i = 0; i < 10; i++)
+                {
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing(), BlockService.GetPacketId<PacketPing, PacketPingResponse>());
+                        if (r.Value is not null)
+                        {
+                            Interlocked.Increment(ref count);
+                        }
+                    }));
+
+                }
+
+                await Task.WhenAll(tasks);
+                Console.WriteLine(count);
+
+                /*using (var stream = await connection.SendStream(1000))
                 {
                     if (stream is not null)
                     {
-                        var result2 = await stream.SendAsync([]);
+                        var result2 = await stream.Send([]);
                         stream.Dispose();
                     }
-                }
+                }*/
 
-                using (var stream = await connection.ReceiveStream(1000))
+                /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
-                    if (stream is not null)
+                    if (result2.Stream is { } stream)
                     {
-                        var result2 = await stream.SendAsync([]);
-                        stream.Dispose();
-                    }
-                }
+                        var result3 = await stream.Receive();
 
-                using (var stream = await connection.SendAndReceiveStream(p2))
-                {
-                    if (stream is not null)
-                    {
-                        var result2 = await stream.ReceiveAsync([]);
-                        stream.Dispose();
+                        result3.Return();
                     }
-                }
+                }*/
 
                 /*using (var stream = await connection.CreateStream(1000))
                 {

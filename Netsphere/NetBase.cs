@@ -34,6 +34,8 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public ServerOptions ServerOptions { get; set; }
 
+    public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
+
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     public class LogFlag

@@ -97,7 +97,7 @@ internal partial class AckBuffer
                 }
 
                 this.connectionQueue.TryPeek(out connection);
-                if (connection is not null && netSender.CurrentSystemMics > connection.AckMics)
+                if (connection is not null && Mics.FastSystem > connection.AckMics)
                 {
                     this.connectionQueue.Dequeue();
                     ackQueue = connection.AckQueue;

@@ -51,7 +51,7 @@ internal partial class SendGene
         }
 
         var connection = this.SendTransmission.Connection;
-        var currentMics = netSender.CurrentSystemMics;
+        var currentMics = Mics.FastSystem;
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
         this.SentMics = currentMics;
