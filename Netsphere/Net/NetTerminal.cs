@@ -16,9 +16,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const double DefaultResponseTimeoutInSeconds = 2d;
 
-    public NetTerminal(bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    internal NetTerminal(NetControl netControl, bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(unitContext)
     {
+        this.NetControl = netControl;
         this.IsAlternative = isAlternative;
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
@@ -37,6 +38,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public CancellationToken CancellationToken
         => ThreadCore.Root.CancellationToken;
+
+    internal NetControl NetControl { get; }
 
     public NetBase NetBase { get; }
 

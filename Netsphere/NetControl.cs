@@ -100,11 +100,11 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetBase = netBase;
         this.NetStats = netStats;
 
-        this.NetTerminal = new(false, context, unitLogger, netBase, netStats);
+        this.NetTerminal = new(this, false, context, unitLogger, netBase, netStats);
         this.TerminalObsolete = new(context, unitLogger, netBase, netStats);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
-            this.Alternative = new(true, context, unitLogger, netBase, netStats);
+            this.Alternative = new(this, true, context, unitLogger, netBase, netStats);
             this.AlternativeObsolete = new(context, unitLogger, netBase, netStats);
         }
     }

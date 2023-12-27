@@ -9,6 +9,7 @@ public class ConnectionContext
     public ConnectionContext(IServiceProvider serviceProvider, ServerConnection serverConnection)
     {
         this.ServiceProvider = serviceProvider;
+        this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
     }
 
@@ -21,7 +22,7 @@ public class ConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.Connection.ConnectionTerminal.NetTerminal.TryGetResponder(transmissionContext.DataId, out var responder))
+            if (this.NetTerminal.NetControl.TryGetResponder(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }
@@ -42,7 +43,9 @@ public class ConnectionContext
         }
     }
 
-    public IServiceProvider ServiceProvider { get; internal set; } = default!;
+    public IServiceProvider ServiceProvider { get; }
 
-    public ServerConnection ServerConnection { get; internal set; } = default!;
+    public NetTerminal NetTerminal { get; }
+
+    public ServerConnection ServerConnection { get; }
 }
