@@ -57,8 +57,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        netTerminal.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
-        this.NetControl.Alternative.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
 
         netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))

@@ -10,12 +10,15 @@ global using Arc.Unit;
 global using BigMachines;
 global using Tinyhand;
 global using ValueLink;
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Misc;
 using Netsphere.Responder;
+using Netsphere.Server;
 using Netsphere.Stats;
 
 namespace Netsphere;
@@ -106,6 +109,31 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
+    #region FieldAndProperty
+
+    public Func<ServerContext> NewServerContext { get; private set; }
+
+    public Func<CallContext> NewCallContext { get; private set; }
+
+    public NetBase NetBase { get; }
+
+    public NetStats NetStats { get; }
+
+    public NetTerminal NetTerminal { get; }
+
+    public NetTerminal? Alternative { get; }
+
+    public Terminal TerminalObsolete { get; }
+
+    public Terminal? AlternativeObsolete { get; }
+
+    internal IServiceProvider ServiceProvider { get; }
+
+    private UnitLogger unitLogger;
+    private ConcurrentDictionary<ulong, INetResponder> responders = new();
+
+    #endregion
+
     public void Prepare(UnitMessage.Prepare message)
     {
         // Terminals
@@ -119,6 +147,13 @@ public class NetControl : UnitBase, IUnitPreparable
         // Responders
         DefaultResponder.Register(this.TerminalObsolete);
     }
+
+    public void RegisterResponder<TResponder>(TResponder responder)
+    where TResponder : INetResponder
+    => this.responders.TryAdd(responder.DataId, responder);
+
+    public bool TryGetResponder(ulong dataId, [MaybeNullWhen(false)] out INetResponder responder)
+        => this.responders.TryGetValue(dataId, out responder);
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
     {
@@ -148,26 +183,6 @@ public class NetControl : UnitBase, IUnitPreparable
             }
         }
     }
-
-    public Func<ServerContext> NewServerContext { get; private set; }
-
-    public Func<CallContext> NewCallContext { get; private set; }
-
-    public NetBase NetBase { get; }
-
-    public NetStats NetStats { get; }
-
-    public NetTerminal NetTerminal { get; }
-
-    public NetTerminal? Alternative { get; }
-
-    public Terminal TerminalObsolete { get; }
-
-    public Terminal? AlternativeObsolete { get; }
-
-    internal IServiceProvider ServiceProvider { get; }
-
-    private UnitLogger unitLogger;
 
     private void Dump(ILog logger)
     {

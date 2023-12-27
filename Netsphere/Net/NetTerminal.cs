@@ -62,7 +62,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     private readonly NetCleaner netCleaner;
 
     private NodePrivateKey nodePrivateKey = default!;
-    private ConcurrentDictionary<ulong, INetResponder> responders = new();
 
     #endregion
 
@@ -94,13 +93,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
         => this.ConnectionTerminal.TryConnect(node, mode);
-
-    public void RegisterResponder<TResponder>(TResponder responder)
-        where TResponder : INetResponder
-        => this.responders.TryAdd(responder.DataId, responder);
-
-    public bool TryGetResponder(ulong dataId, [MaybeNullWhen(false)] out INetResponder responder)
-        => this.responders.TryGetValue(dataId, out responder);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
