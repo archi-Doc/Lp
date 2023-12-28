@@ -6,7 +6,7 @@ namespace Netsphere.Server;
 
 public sealed class TransmissionContext
 {
-    public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.ReadOnlyMemoryOwner toBeShared)
+    public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
         this.ConnectionContext = connectionContext;
         this.TransmissionId = transmissionId;
@@ -25,7 +25,7 @@ public sealed class TransmissionContext
 
     public ulong DataId { get; }
 
-    public ByteArrayPool.ReadOnlyMemoryOwner Owner { get; set; }
+    public ByteArrayPool.MemoryOwner Owner { get; set; }
 
     public void Return()
         => this.Owner = this.Owner.Return();

@@ -112,12 +112,12 @@ public class NetService
                 var result = NetResult.Success; // context.Result
                 if (result == NetResult.Success)
                 {// Success
-                    await transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
-                    await operation.SendServiceAsync((ulong)result, context.RentData).ConfigureAwait(false);
+                    transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
                 }
                 else
                 {// Failure
-                    await operation.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+
+                    transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
                 }
             }
             catch
