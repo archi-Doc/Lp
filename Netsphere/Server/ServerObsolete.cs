@@ -10,7 +10,7 @@ public class ServerObsolete
     {// InvokeServer()
         this.NetBase = netBase;
         this.NetControl = netControl;
-        this.NetService = new NetService(this.NetControl.ServiceProvider);
+        this.NetService = new NetServiceObsolete(this.NetControl.ServiceProvider);
 
         this.ServerContext = this.NetControl.NewServerContext();
         this.ServerContext.ServiceProvider = this.NetControl.ServiceProvider;
@@ -32,13 +32,7 @@ public class ServerObsolete
             {
                 if (received.Result == NetResult.Success)
                 {// Success
-                    if (received.PacketId == PacketIdObsolete.Data &&
-                       this.Terminal.TryGetResponder(received.DataId, out var responder) &&
-                        responder.Respond(operation!, received))
-                    {// Responder
-                        continue;
-                    }
-                    else if (received.PacketId == PacketIdObsolete.Rpc)
+                    if (received.PacketId == PacketIdObsolete.Rpc)
                     {// RPC
                         var op = operation!;
                         operation = null;
@@ -84,7 +78,7 @@ public class ServerObsolete
 
     public NetControl NetControl { get; }
 
-    public NetService NetService { get; }
+    public NetServiceObsolete NetService { get; }
 
     public Terminal Terminal { get; private set; } = default!;
 

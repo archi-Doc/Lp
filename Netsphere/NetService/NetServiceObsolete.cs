@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
-public class NetService
+public class NetServiceObsolete
 {
     public delegate Task ServiceDelegate(object instance, CallContext context);
 
@@ -54,14 +54,9 @@ public class NetService
             serviceMethod.ServerInstance = serverInstance;
             return serviceMethod;
         }
-
-        public NetTask<ByteArrayPool.MemoryOwner> FilterAndProcess(object instance, ByteArrayPool.MemoryOwner received)
-        {
-            return default;
-        }
     }
 
-    public NetService(IServiceProvider serviceProvider)
+    public NetServiceObsolete(IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
     }
@@ -75,7 +70,7 @@ public class NetService
             {
                 // Get ServiceInfo.
                 var serviceId = (uint)(rent.DataId >> 32);
-                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
+                if (!StaticNetServiceObsolete.TryGetServiceInfo(serviceId, out var serviceInfo))
                 {
                     goto SendNoNetService;
                 }

@@ -33,6 +33,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
@@ -56,8 +58,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             return;
         }
-
-        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
 
         netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))
@@ -85,7 +85,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 {
                     tasks.Add(Task.Run(async () =>
                     {
-                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing(), BlockService.GetPacketId<PacketPing, PacketPingResponse>());
+                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
                         if (r.Value is not null)
                         {
                             Interlocked.Increment(ref count);

@@ -150,7 +150,7 @@ public class ClientTerminal : NetTerminalObsolete
     public TService GetService<TService>()
         where TService : INetService
     {
-        return StaticNetService.CreateClient<TService>(this);
+        return StaticNetServiceObsolete.CreateClient<TService>(this);
     }
 
     internal ClientOperation CreateOperation() => new ClientOperation(this);

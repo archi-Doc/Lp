@@ -102,6 +102,8 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled);
         }
 
+        dataId = dataId != 0 ? dataId : BlockService.GetId<TSend, TReceive>();
+
         if (!BlockService.TrySerialize(packet, out var owner))
         {
             return new(NetResult.SerializationError);
