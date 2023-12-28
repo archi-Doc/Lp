@@ -10,7 +10,7 @@ public class ServerObsolete
     {// InvokeServer()
         this.NetBase = netBase;
         this.NetControl = netControl;
-        this.NetService = new NetService(this.NetControl.ServiceProvider);
+        this.NetService = new NetServiceObsolete(this.NetControl.ServiceProvider);
 
         this.ServerContext = this.NetControl.NewServerContext();
         this.ServerContext.ServiceProvider = this.NetControl.ServiceProvider;
@@ -78,7 +78,7 @@ public class ServerObsolete
 
     public NetControl NetControl { get; }
 
-    public NetService NetService { get; }
+    public NetServiceObsolete NetService { get; }
 
     public Terminal Terminal { get; private set; } = default!;
 

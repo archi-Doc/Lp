@@ -166,7 +166,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                 foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                 {
-                    ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                    ssb.AppendLine($"StaticNetServiceObsolete.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
                 }
             }
 
@@ -223,7 +223,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
                     {
                         foreach (var z in y.ServiceInterfaces)
                         {
-                            ssb.AppendLine($"StaticNetService.SetServiceInfo({y.ClassName}.ServiceInfo_{z.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
+                            ssb.AppendLine($"StaticNetServiceObsolete.SetServiceInfo({y.ClassName}.ServiceInfo_{z.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
                         }
                     }
                 }
@@ -290,7 +290,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                     foreach (var y in x.Value.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                     {
-                        ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                        ssb.AppendLine($"StaticNetServiceObsolete.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
                     }
                 }
 

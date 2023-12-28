@@ -30,6 +30,30 @@ public sealed class TransmissionContext
     public void Return()
         => this.Owner = this.Owner.Return();
 
+    public NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeMoved, ulong dataId = 0)
+    {
+        if (this.Connection.IsClosedOrDisposed)
+        {
+            return NetResult.Closed;
+        }
+
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        if (transmission is null)
+        {
+            toBeMoved.Return();
+            return NetResult.NoTransmission;
+        }
+
+        var result = transmission.SendBlock(0, dataId, toBeMoved, default);
+        toBeMoved.Return();
+        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
+    }
+
     public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
     {
