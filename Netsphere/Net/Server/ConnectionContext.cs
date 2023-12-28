@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Packet;
-
 namespace Netsphere.Server;
 
 public class ConnectionContext
@@ -29,17 +27,16 @@ public class ConnectionContext
             else
             {
                 transmissionContext.Return();
+                return;
             }
         }
         else if (transmissionContext.DataKind == 1)
         {// RPC
         }
-        else
+
+        if (!this.InvokeCustom(transmissionContext))
         {
-            if (!this.InvokeCustom(transmissionContext))
-            {
-                transmissionContext.Return();
-            }
+            transmissionContext.Return();
         }
     }
 

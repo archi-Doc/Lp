@@ -1,13 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Block;
+
 namespace Netsphere.Packet;
 
 [TinyhandObject]
-public sealed partial class PacketPing : IPacket
+public sealed partial class PacketPing : IPacket, IBlock
 {
     public const int MaxMessageLength = 32;
 
     public static PacketType PacketType => PacketType.Ping;
+
+    public uint BlockId => (uint)PacketType;
 
     public PacketPing()
     {
@@ -26,9 +30,11 @@ public sealed partial class PacketPing : IPacket
 }
 
 [TinyhandObject]
-public sealed partial class PacketPingResponse : IPacket
+public sealed partial class PacketPingResponse : IPacket, IBlock
 {
     public static PacketType PacketType => PacketType.PingResponse;
+
+    public uint BlockId => (uint)PacketType;
 
     public PacketPingResponse()
     {

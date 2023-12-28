@@ -143,9 +143,6 @@ public class NetControl : UnitBase, IUnitPreparable
             this.AlternativeObsolete.Initialize(true, NodePrivateKey.AlternativePrivateKey);
             this.AlternativeObsolete.Port = NetAddress.Alternative.Port;
         }
-
-        // Responders
-        DefaultResponder.Register(this.TerminalObsolete);
     }
 
     public void RegisterResponder<TResponder>(TResponder responder)

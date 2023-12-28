@@ -17,13 +17,8 @@ public static class BlockService
 
     public static ulong GetId<TSend, TReceive>() => (ulong)IdCache<TSend>.Id | ((ulong)IdCache<TReceive>.Id << 32);
 
-    public static ulong GetPacketId<TSend, TReceive>()
-        where TSend : IPacket
-        where TReceive : IPacket
-        => (ulong)TSend.PacketType | ((ulong)TSend.PacketType << 32);
-
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
-    {// checked
+    {
         var arrayOwner = ByteArrayPool.Default.Rent(StandardBlockSize);
         try
         {
