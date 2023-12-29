@@ -1,9 +1,54 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+
 namespace Netsphere.Server;
 
 public class ConnectionContext
 {
+    public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
+
+    public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
+
+    public delegate object CreateBackendDelegate(ConnectionContext connectionContext);
+
+    public class ServiceInfo
+    {
+        public ServiceInfo(uint serviceId, CreateBackendDelegate createBackend)
+        {
+            this.ServiceId = serviceId;
+            this.CreateBackend = createBackend;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddMethod(ServiceMethod serviceMethod) => this.serviceMethods.TryAdd(serviceMethod.Id, serviceMethod);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetMethod(ulong id, [MaybeNullWhen(false)] out ServiceMethod serviceMethod) => this.serviceMethods.TryGetValue(id, out serviceMethod);
+
+        public uint ServiceId { get; }
+
+        public CreateBackendDelegate CreateBackend { get; }
+
+        private Dictionary<ulong, ServiceMethod> serviceMethods = new();
+    }
+
+    public record class ServiceMethod
+    {
+        public ServiceMethod(ulong id, ServiceDelegate process)
+        {
+            this.Id = id;
+            this.Invoke = process;
+        }
+
+        public ulong Id { get; }
+
+        public object? ServerInstance { get; init; }
+
+        public ServiceDelegate Invoke { get; }
+    }
+
     public ConnectionContext(IServiceProvider serviceProvider, ServerConnection serverConnection)
     {
         this.ServiceProvider = serviceProvider;
@@ -11,12 +56,28 @@ public class ConnectionContext
         this.ServerConnection = serverConnection;
     }
 
+    #region FieldAndProperty
+
+    public IServiceProvider ServiceProvider { get; }
+
+    public NetTerminal NetTerminal { get; }
+
+    public ServerConnection ServerConnection { get; }
+
+    public Func<CallContext> NewCallContext { get; internal set; } = default!;
+
+    private object syncObject = new();
+    private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
+    private Dictionary<uint, object> idToInstance = new();
+
+    #endregion
+
     public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
         return false;
     }
 
-    public void InvokeSync(TransmissionContext transmissionContext)
+    public async void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
@@ -32,6 +93,7 @@ public class ConnectionContext
         }
         else if (transmissionContext.DataKind == 1)
         {// RPC
+            await this.InvokeRPC(transmissionContext);
         }
 
         if (!this.InvokeCustom(transmissionContext))
@@ -40,9 +102,85 @@ public class ConnectionContext
         }
     }
 
-    public IServiceProvider ServiceProvider { get; }
+    public async Task InvokeRPC(TransmissionContext transmissionContext)
+    {// Thread-safe
+        ServiceMethod? serviceMethod;
+        lock (this.syncObject)
+        {
+            if (!this.idToServiceMethod.TryGetValue(transmissionContext.DataId, out serviceMethod))
+            {
+                // Get ServiceInfo.
+                var serviceId = (uint)(transmissionContext.DataId >> 32);
+                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
+                {
+                    goto SendNoNetService;
+                }
 
-    public NetTerminal NetTerminal { get; }
+                // Get ServiceMethod.
+                if (!serviceInfo.TryGetMethod(transmissionContext.DataId, out serviceMethod))
+                {
+                    goto SendNoNetService;
+                }
 
-    public ServerConnection ServerConnection { get; }
+                // Get Backend instance.
+                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
+                {
+                    try
+                    {
+                        backendInstance = serviceInfo.CreateBackend(this);
+                    }
+                    catch
+                    {
+                        goto SendNoNetService;
+                    }
+
+                    this.idToInstance.TryAdd(serviceId, backendInstance);
+                }
+
+                serviceMethod = serviceMethod with { ServerInstance = backendInstance, };
+                this.idToServiceMethod.TryAdd(transmissionContext.DataId, serviceMethod);
+            }
+        }
+
+        // context.Initialize(this.ConnectionContext, rent.Received.IncrementAndShare(), rent.DataId);
+        // CallContext.CurrentCallContext.Value = context;
+        try
+        {
+            await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
+            try
+            {
+                var result = NetResult.Success; // context.Result
+                if (result == NetResult.Success)
+                {// Success
+                    transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                }
+                else
+                {// Failure
+                    transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                }
+            }
+            catch
+            {
+            }
+        }
+        catch (NetException netException)
+        {// NetException
+            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)netException.Result);
+        }
+        catch
+        {// Unknown exception
+            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownException);
+        }
+        finally
+        {
+            transmissionContext.Return();
+        }
+
+        return;
+
+SendNoNetService:
+        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
+        transmissionContext.Return();
+        return;
+    }
 }

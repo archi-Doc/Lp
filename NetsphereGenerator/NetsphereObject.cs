@@ -829,14 +829,14 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     internal void GenerateBackend_ServiceInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
     {
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
-        using (var scopeMethod = ssb.ScopeBrace($"public static NetService.ServiceInfo ServiceInfo_{serviceIdString}()"))
+        using (var scopeMethod = ssb.ScopeBrace($"public static NetServiceObsolete.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            ssb.AppendLine($"var si = new NetService.ServiceInfo(0x{serviceIdString}u, static (x, y) => new {this.ClassName}(x, y));");
+            ssb.AppendLine($"var si = new NetServiceObsolete.ServiceInfo(0x{serviceIdString}u, static (x, y) => new {this.ClassName}(x, y));");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)
                 {
-                    ssb.AppendLine($"si.AddMethod(new NetService.ServiceMethod({x.IdString}, {x.MethodString}));");
+                    ssb.AppendLine($"si.AddMethod(new NetServiceObsolete.ServiceMethod({x.IdString}, {x.MethodString}));");
                 }
             }
 
