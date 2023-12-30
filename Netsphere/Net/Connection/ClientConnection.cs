@@ -170,10 +170,7 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, receive);
     }
 
-    public Task<(NetResult Result, ulong DataId, ByteArrayPool.ReadOnlyMemoryOwner Value)> SendAndReceiveService(ByteArrayPool.MemoryOwner data, ulong dataId)
-        => this.SendAndReceiveService(data.AsReadOnly(), dataId);
-
-    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.ReadOnlyMemoryOwner Value)> SendAndReceiveService(ByteArrayPool.ReadOnlyMemoryOwner data, ulong dataId)
+    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> SendAndReceiveService(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
         if (this.IsClosedOrDisposed)
         {

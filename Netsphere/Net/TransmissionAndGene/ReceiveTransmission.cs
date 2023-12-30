@@ -244,7 +244,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 connectionContext.InvokeSync(transmissionContext);
             }
 
-            receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShareReadOnly(), 0));
+            receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
             owner.Return();
         }
     }

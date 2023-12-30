@@ -9,13 +9,15 @@ namespace Netsphere.Generator;
 public class ServiceMethod
 {
     public const string ByteArrayName = "byte[]";
-    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
+    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
+    public const string ReadOnlyMemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
 
     public enum Type
     {
         Other,
         ByteArray,
         MemoryOwner,
+        ReadOnlyMemoryOwner,
     }
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
@@ -215,6 +217,7 @@ public class ServiceMethod
     {
         ByteArrayName => Type.ByteArray,
         MemoryOwnerName => Type.MemoryOwner,
+        ReadOnlyMemoryOwnerName => Type.ReadOnlyMemoryOwner,
         _ => Type.Other,
     };
 
