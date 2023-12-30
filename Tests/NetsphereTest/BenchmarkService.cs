@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Netsphere.Server;
 using NetsphereTest;
 
 namespace LP.NetServices;
@@ -184,7 +185,7 @@ public class TestFilterB : TestFilter
 
 public class TestFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
         await invoker(context);
     }
@@ -192,7 +193,7 @@ public class TestFilter : IServiceFilter
 
 public class NullFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> next)
     {
         context.Result = NetResult.NoNetService;
     }
@@ -200,7 +201,7 @@ public class NullFilter : IServiceFilter
 
 public class TestFilter2 : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> next)
     {
         await next(context);
     }

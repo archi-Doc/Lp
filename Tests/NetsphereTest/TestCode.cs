@@ -1,4 +1,6 @@
-﻿namespace NetsphereTest;
+﻿using Netsphere.Server;
+
+namespace NetsphereTest;
 
 public class TestServerContext : ServerContext
 {
@@ -48,9 +50,9 @@ public class CustomService : ICustomService, ICustomService2
 
 public class CustomFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
-        if (context is not TestCallContext testContext)
+        if (context is not TransmissionContext testContext)
         {
             throw new NetException(NetResult.NoCallContext);
         }

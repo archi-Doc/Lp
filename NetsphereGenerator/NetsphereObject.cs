@@ -817,8 +817,14 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {// Other
-            using (var scopeSerialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TrySerialize(result, out context.Owner))"))
+            using (var scopeSerialize = ssb.ScopeBrace($"if (Netsphere.Block.BlockService.TrySerialize(result, out var owner2))"))
             {
+                ssb.AppendLine("context.Owner = owner2;");
+            }
+
+            using (var scopeElse = ssb.ScopeBrace("else"))
+            {
+                ssb.AppendLine("context.Owner = default;");
                 ssb.AppendLine("context.Result = NetResult.SerializationError;");
             }
         }

@@ -9,7 +9,7 @@ namespace Netsphere.Generator;
 public class ServiceMethod
 {
     public const string ByteArrayName = "byte[]";
-    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
+    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
 
     public enum Type
     {
