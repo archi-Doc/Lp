@@ -507,7 +507,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
 
                 ssb.AppendLine();
-                ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveServiceAsync(owner, {method.IdString}).ConfigureAwait(false);");
+                ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveService(owner, {method.IdString}).ConfigureAwait(false);");
                 ssb.AppendLine("owner.Return();");
                 using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
                 {
@@ -802,22 +802,22 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine("var result = NetResult.Success;");
         }*/
 
-        ssb.AppendLine("context.RentData.Return();");
+        ssb.AppendLine("context.Owner.Return();");
         if (method.ReturnObject == null)
         {// NetTask
-            ssb.AppendLine($"context.RentData = {ServiceMethod.MemoryOwnerName}.Empty;");
+            ssb.AppendLine($"context.Owner = {ServiceMethod.MemoryOwnerName}.Empty;");
         }
         else if (method.ReturnType == ServiceMethod.Type.ByteArray)
         {// byte[] result;
-            ssb.AppendLine($"context.RentData = result != null ? new {ServiceMethod.MemoryOwnerName}(result) : default;");
+            ssb.AppendLine($"context.Owner = result != null ? new {ServiceMethod.MemoryOwnerName}(result) : default;");
         }
         else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
         {// new ByteArrayPool.MemoryOwner result;
-            ssb.AppendLine("context.RentData = result;");
+            ssb.AppendLine("context.Owner = result;");
         }
         else
         {// Other
-            using (var scopeSerialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TrySerialize(result, out context.RentData))"))
+            using (var scopeSerialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TrySerialize(result, out context.Owner))"))
             {
                 ssb.AppendLine("context.Result = NetResult.SerializationError;");
             }
@@ -831,7 +831,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
         using (var scopeMethod = ssb.ScopeBrace($"public static ConnectionContext.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            ssb.AppendLine($"var si = new ConnectionContext.ServiceInfo(0x{serviceIdString}u, static (x, y) => new {this.ClassName}(x, y));");
+            ssb.AppendLine($"var si = new ConnectionContext.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x));");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)
