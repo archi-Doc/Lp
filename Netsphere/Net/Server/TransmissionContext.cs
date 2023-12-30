@@ -2,10 +2,16 @@
 
 using Netsphere.Block;
 
+#pragma warning disable SA1401
+
 namespace Netsphere.Server;
 
 public sealed class TransmissionContext
 {
+    public static TransmissionContext Current => AsyncLocal.Value!;
+
+    internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
+
     public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
         this.ConnectionContext = connectionContext;

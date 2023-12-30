@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace Netsphere.Server;
 
@@ -21,10 +20,8 @@ public class ConnectionContext
             this.CreateBackend = createBackend;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddMethod(ServiceMethod serviceMethod) => this.serviceMethods.TryAdd(serviceMethod.Id, serviceMethod);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetMethod(ulong id, [MaybeNullWhen(false)] out ServiceMethod serviceMethod) => this.serviceMethods.TryGetValue(id, out serviceMethod);
 
         public uint ServiceId { get; }
@@ -77,7 +74,7 @@ public class ConnectionContext
         return false;
     }
 
-    public async void InvokeSync(TransmissionContext transmissionContext)
+    public void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
@@ -93,7 +90,8 @@ public class ConnectionContext
         }
         else if (transmissionContext.DataKind == 1)
         {// RPC
-            await this.InvokeRPC(transmissionContext);
+            Task.Run(() => this.InvokeRPC(transmissionContext));
+            return;
         }
 
         if (!this.InvokeCustom(transmissionContext))
@@ -142,8 +140,7 @@ public class ConnectionContext
             }
         }
 
-        // context.Initialize(this.ConnectionContext, rent.Received.IncrementAndShare(), rent.DataId);
-        // CallContext.CurrentCallContext.Value = context;
+        TransmissionContext.AsyncLocal.Value = transmissionContext;
         try
         {
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
