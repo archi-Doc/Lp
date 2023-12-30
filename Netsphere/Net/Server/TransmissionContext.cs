@@ -33,6 +33,8 @@ public sealed class TransmissionContext
 
     public ByteArrayPool.MemoryOwner Owner { get; set; }
 
+    public NetResult Result { get; set; }
+
     public void Return()
         => this.Owner = this.Owner.Return();
 

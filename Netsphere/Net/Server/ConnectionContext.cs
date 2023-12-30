@@ -46,7 +46,7 @@ public class ConnectionContext
         public ServiceDelegate Invoke { get; }
     }
 
-    public ConnectionContext(IServiceProvider serviceProvider, ServerConnection serverConnection)
+    public ConnectionContext(IServiceProvider? serviceProvider, ServerConnection serverConnection)
     {
         this.ServiceProvider = serviceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
@@ -55,7 +55,7 @@ public class ConnectionContext
 
     #region FieldAndProperty
 
-    public IServiceProvider ServiceProvider { get; }
+    public IServiceProvider? ServiceProvider { get; }
 
     public NetTerminal NetTerminal { get; }
 

@@ -16,7 +16,7 @@ public sealed partial class ServerConnection : Connection
     public ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint)
     {
-        this.ConnectionContext = new(default!, this);
+        this.ConnectionContext = new(default, this);
     }
 
     public override ConnectionState State
