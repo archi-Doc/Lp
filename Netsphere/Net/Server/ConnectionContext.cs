@@ -8,7 +8,7 @@ public class ConnectionContext
 {
     public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
 
-    public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
+    public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
 
     public delegate object CreateBackendDelegate(ConnectionContext connectionContext);
 

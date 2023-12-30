@@ -24,11 +24,11 @@ public static class StaticNetService
         return idToInfo.TryGetValue(id, out info);
     }
 
-    public static TService CreateClient<TService>(ClientTerminal clientTerminal)
+    public static TService CreateClient<TService>(ClientConnection clientConnection)
         where TService : INetService
     {
         var create = DelegateCache<TService>.Create;
-        if (create != null && create(clientTerminal) is TService service)
+        if (create != null && create(clientConnection) is TService service)
         {
             return service;
         }
