@@ -3,6 +3,7 @@
 using System.Net;
 using Netsphere;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 using Xunit;
 
 namespace xUnitTest.NetsphereTest;
@@ -18,12 +19,20 @@ public class NodeTest
     [Fact]
     public async Task Test1()
     {
+        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+
+        var p = new PacketPing("test56789");
+        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
+        result.Result.Is(NetResult.Success);
+
         using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))
         {
             if (connection is null)
             {
                 return;
             }
+
+            var rr = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
 
             var basicService = connection.GetService<IBasicService>();
             var task = await basicService.SendInt(1).ResponseAsync;
