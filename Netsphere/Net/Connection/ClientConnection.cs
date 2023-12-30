@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using System.Net.Sockets;
 using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -42,6 +43,12 @@ public sealed partial class ClientConnection : Connection
     public override bool IsClient => true;
 
     public override bool IsServer => false;
+
+    public TService GetService<TService>()
+        where TService : INetService
+    {
+        return StaticNetService.CreateClient<TService>(this);
+    }
 
     public async Task<NetResult> Send<TSend>(TSend packet)
         where TSend : ITinyhandSerialize<TSend>
@@ -161,6 +168,63 @@ public sealed partial class ClientConnection : Connection
 
         response.Return();
         return new(NetResult.Success, receive);
+    }
+
+    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.ReadOnlyMemoryOwner Value)> SendAndReceiveService(ByteArrayPool.MemoryOwner data, ulong dataId)
+    {
+        if (this.IsClosedOrDisposed)
+        {
+            return new(NetResult.Closed, 0, default);
+        }
+
+        if (this.CancellationToken.IsCancellationRequested)
+        {
+            return new(NetResult.Canceled, 0, default);
+        }
+
+        NetResponse response;
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        {
+            if (transmissionAndTimeout.Transmission is null)
+            {
+                return new(NetResult.NoTransmission, 0, default);
+            }
+
+            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
+            if (result != NetResult.Success)
+            {
+                return new(result, 0, default);
+            }
+
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs, default))
+            {
+                if (receiveTransmission is null)
+                {
+                    return new(NetResult.NoTransmission, 0, default);
+                }
+
+                try
+                {
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                    if (response.IsFailure)
+                    {
+                        return new(response.Result, 0, default);
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    return new(NetResult.Timeout, 0, default);
+                }
+                catch
+                {
+                    return new(NetResult.Canceled, 0, default);
+                }
+            }
+        }
+
+        return new(NetResult.Success, response.DataId, response.Received);
     }
 
     public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)

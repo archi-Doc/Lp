@@ -69,7 +69,7 @@ public class ServiceFilterGroup
         return items;
     }
 
-    public static void GenerateInitialize(ScopingStringBuilder ssb, string objectName, string context, Item[]? items)
+    public static void GenerateInitialize(ScopingStringBuilder ssb, string objectName, string serviceProvider, Item[]? items)
     {
         if (items == null)
         {
@@ -98,7 +98,7 @@ public class ServiceFilterGroup
             }
             else
             {
-                ssb.AppendLine($"{objectName}.{x.Identifier} ??= {context}.ServiceProvider.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
+                ssb.AppendLine($"{objectName}.{x.Identifier} ??= {serviceProvider}.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
             }
 
             using (var scopeNull = ssb.ScopeBrace($"if ({objectName}.{x.Identifier} == null)"))

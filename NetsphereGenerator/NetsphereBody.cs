@@ -20,8 +20,8 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string BackendClassName = "Backend_";
     public const string ArgumentName = "a";
     public const string NetResultFullName = "Netsphere.NetResult";
-    public const string NetServiceBaseFullName = "Netsphere.NetServiceBase";
-    public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServerContext>";
+    // public const string NetServiceBaseFullName = "Netsphere.NetServiceBase";
+    // public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServerContext>";
     public const string ServiceFilterSyncFullName = "Netsphere.IServiceFilterSync";
     public const string ServiceFilterSyncFullName2 = "Netsphere.IServiceFilterSync<TCallContext>";
     public const string ServiceFilterAsyncFullName = "Netsphere.IServiceFilter";
@@ -166,7 +166,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                 foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                 {
-                    ssb.AppendLine($"StaticNetServiceObsolete.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                    ssb.AppendLine($"ClientTerminalStaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
                 }
             }
 
@@ -223,7 +223,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
                     {
                         foreach (var z in y.ServiceInterfaces)
                         {
-                            ssb.AppendLine($"StaticNetServiceObsolete.SetServiceInfo({y.ClassName}.ServiceInfo_{z.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
+                            ssb.AppendLine($"StaticNetService.SetServiceInfo({y.ClassName}.ServiceInfo_{z.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
                         }
                     }
                 }
@@ -290,7 +290,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                     foreach (var y in x.Value.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                     {
-                        ssb.AppendLine($"StaticNetServiceObsolete.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                        ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
                     }
                 }
 
@@ -329,6 +329,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ssb.AddUsing("System.Runtime.CompilerServices");
         ssb.AddUsing("Arc.Unit");
         ssb.AddUsing("Netsphere");
+        ssb.AddUsing("Netsphere.Server");
 
         ssb.AppendLine("#nullable enable", false);
         ssb.AppendLine("#pragma warning disable CS1591", false);

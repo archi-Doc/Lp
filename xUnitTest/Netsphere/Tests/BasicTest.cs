@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Netsphere;
+using Netsphere.Crypto;
 using Xunit;
 
 namespace xUnitTest.NetsphereTest;
@@ -16,16 +18,14 @@ public class NodeTest
     [Fact]
     public async Task Test1()
     {
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
+        using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))
         {
-            if (terminal is null)
+            if (connection is null)
             {
                 return;
             }
 
-            terminal.SetMaximumResponseTime(NetFixture.MaximumResponseTime);
-
-            var basicService = terminal.GetService<IBasicService>();
+            var basicService = connection.GetService<IBasicService>();
             var task = await basicService.SendInt(1).ResponseAsync;
             task.Result.Is(NetResult.Success);
 

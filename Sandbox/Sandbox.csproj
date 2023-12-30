@@ -10,4 +10,9 @@
     <ProjectReference Include="..\LP\LP.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
+    <ProjectReference Include="..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
 </Project>

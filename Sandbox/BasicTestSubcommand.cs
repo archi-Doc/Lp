@@ -64,6 +64,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
+                var service = connection.GetService<TestService>();
+                var result2 = await service.Pingpong([0, 1, 2]);
                 /*var service = connection.GetService<ISomeService>();
                 service.Engage();
                 service.Send();

@@ -9,9 +9,10 @@ namespace Netsphere;
 /// </summary>
 public readonly record struct NetResponse
 {
-    public NetResponse(NetResult result, ByteArrayPool.ReadOnlyMemoryOwner received, int elapsedMics)
+    public NetResponse(NetResult result, ulong dataId, ByteArrayPool.ReadOnlyMemoryOwner received, int elapsedMics)
     {
         this.Result = result;
+        this.DataId = dataId;
         this.Received = received;
         this.ElapsedMics = elapsedMics;
     }
@@ -28,6 +29,7 @@ public readonly record struct NetResponse
     public void Return() => this.Received.Return();
 
     public readonly NetResult Result;
+    public readonly ulong DataId;
     public readonly ByteArrayPool.ReadOnlyMemoryOwner Received;
     public readonly int ElapsedMics;
 }
