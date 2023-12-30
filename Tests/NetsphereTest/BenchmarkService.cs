@@ -30,7 +30,7 @@ public class RemoteBenchBroker
         }
     }
 
-    public async Task Process(Terminal terminal, NetNode node)
+    public async Task Process(NetTerminal terminal, NetNode node)
     {
         var data = new byte[100];
         int successCount = 0;
@@ -52,7 +52,7 @@ public class RemoteBenchBroker
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = terminal.TryCreate(node))
+                    using (var t = await terminal.TryConnect(node))
                     {
                         if (t is null)
                         {
@@ -95,7 +95,7 @@ public class RemoteBenchBroker
             AverageLatency = (int)(totalLatency / (successCount + failureCount)),
         };
 
-        using (var t = terminal.TryCreate(node))
+        using (var t = await terminal.TryConnect(node))
         {
             if (t is null)
             {

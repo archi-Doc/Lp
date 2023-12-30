@@ -72,8 +72,6 @@ public class ServerObsolete
         this.NetTerminalObsolete.Logger?.Log($"Server offline.");
     }
 
-    public ThreadCoreBase? Core => this.NetControl.TerminalObsolete.Core;
-
     public NetBase NetBase { get; }
 
     public NetControl NetControl { get; }

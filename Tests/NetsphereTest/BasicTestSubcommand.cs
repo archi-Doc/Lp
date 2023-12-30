@@ -17,16 +17,22 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!NetAddress.TryParse(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
         {
             return;
         }
 
-        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
+        var node = await this.NetControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        if (node is null)
+        {
+            return;
+        }
+
+        this.logger.TryGet()?.Log($"SendData: {address.ToString()}");
         this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
+        using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
         {
             if (terminal is null)
             {
@@ -34,8 +40,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             // terminal.SetMaximumResponseTime(1_000_000);
-            var t = await terminal.SendAndReceiveAsync<PacketPunchObsolete, PacketPunchResponseObsolete>(new PacketPunchObsolete());
-            this.logger.TryGet()?.Log($"{t.ToString()}");
 
             var sw = Stopwatch.StartNew();
             /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);

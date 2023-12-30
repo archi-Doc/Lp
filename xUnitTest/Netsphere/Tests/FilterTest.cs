@@ -16,14 +16,12 @@ public class FilterTest
     [Fact]
     public async Task Test1()
     {
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
+        using (var terminal = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))
         {
             if (terminal is null)
             {
                 return;
             }
-
-            terminal.SetMaximumResponseTime(NetFixture.MaximumResponseTime);
 
             var service = terminal.GetService<IFilterTestService>();
             var task = await service.NoFilter(1).ResponseAsync;

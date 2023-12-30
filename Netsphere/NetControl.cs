@@ -101,11 +101,9 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetStats = netStats;
 
         this.NetTerminal = new(this, false, context, unitLogger, netBase, netStats);
-        this.TerminalObsolete = new(context, unitLogger, netBase, netStats);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
             this.Alternative = new(this, true, context, unitLogger, netBase, netStats);
-            this.AlternativeObsolete = new(context, unitLogger, netBase, netStats);
         }
     }
 
@@ -123,10 +121,6 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetTerminal? Alternative { get; }
 
-    public Terminal TerminalObsolete { get; }
-
-    public Terminal? AlternativeObsolete { get; }
-
     internal IServiceProvider ServiceProvider { get; }
 
     private UnitLogger unitLogger;
@@ -136,13 +130,6 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public void Prepare(UnitMessage.Prepare message)
     {
-        // Terminals
-        this.TerminalObsolete.Initialize(false, this.NetBase.NodePrivateKey);
-        if (this.AlternativeObsolete != null)
-        {
-            this.AlternativeObsolete.Initialize(true, NodePrivateKey.AlternativePrivateKey);
-            this.AlternativeObsolete.Port = NetAddress.Alternative.Port;
-        }
     }
 
     public void RegisterResponder<TResponder>(TResponder responder)
@@ -163,9 +150,6 @@ public class NetControl : UnitBase, IUnitPreparable
         {
             this.NewCallContext = newCallContext;
         }
-
-        this.TerminalObsolete.SetInvokeServerDelegate(InvokeServer);
-        this.AlternativeObsolete?.SetInvokeServerDelegate(InvokeServer);
 
         async Task InvokeServer(ServerTerminal terminal)
         {
