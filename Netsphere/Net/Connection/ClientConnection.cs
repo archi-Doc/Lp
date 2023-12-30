@@ -224,7 +224,7 @@ public sealed partial class ClientConnection : Connection
             }
         }
 
-        return new(NetResult.Success, 0, response.Received);
+        return new(NetResult.Success, response.DataId, response.Received);
     }
 
     public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
