@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Netsphere;
+using Netsphere.Crypto;
 using Xunit;
 
 namespace xUnitTest.NetsphereTest;
@@ -16,6 +18,7 @@ public class NodeTest
     [Fact]
     public async Task Test1()
     {
+        var netNode = new NetNode(new NetAddress(IPAddress.Loopback, 50000), NodePrivateKey.AlternativePrivateKey.ToPublicKey());
         using (var terminal = this.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
         {
             if (terminal is null)
