@@ -51,7 +51,6 @@ public sealed partial class ClientConnection : Connection
     }
 
     public async Task<NetResult> Send<TSend>(TSend packet)
-        where TSend : ITinyhandSerialize<TSend>
     {
         if (!BlockService.TrySerialize(packet, out var owner))
         {
@@ -96,8 +95,6 @@ public sealed partial class ClientConnection : Connection
     }
 
     public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend packet, ulong dataId = 0)
-        where TSend : ITinyhandSerialize<TSend>
-        where TReceive : ITinyhandSerialize<TReceive>
     {
         if (this.IsClosedOrDisposed)
         {
