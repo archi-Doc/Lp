@@ -99,8 +99,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await Task.WhenAll(tasks);
                 Console.WriteLine(count);
 
-                await Task.Delay(2000);
-
                 /*using (var stream = await connection.SendStream(1000))
                 {
                     if (stream is not null)
