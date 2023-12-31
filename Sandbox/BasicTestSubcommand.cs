@@ -138,29 +138,39 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
         }
 
-        // await Task.Delay(1000000000);
-
-        /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
-        {
-            return;
+        using (var connection = await netTerminal.TryConnect(netNode))
+        {// Reuse connection
+            if (connection is not null)
+            {
+                var service = connection.GetService<TestService>();
+                var result2 = await service.Pingpong([0, 1, 2]);
+                Console.WriteLine(result2?.Length.ToString());
+            }
         }
 
-        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
-        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
+                // await Task.Delay(1000000000);
 
-        // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
-        {
-            if (terminal is null)
-            {
-                return;
+                /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
+                {
+                    return;
+                }
+
+                this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
+                this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
+
+                // var nodeInformation = NodeInformation.Alternative;
+                using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
+                {
+                    if (terminal is null)
+                    {
+                        return;
+                    }
+
+                    // terminal.SetMaximumResponseTime(1_000_000);
+                    var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+                    this.logger.TryGet()?.Log($"{t.ToString()}");
+                }*/
             }
-
-            // terminal.SetMaximumResponseTime(1_000_000);
-            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
-            this.logger.TryGet()?.Log($"{t.ToString()}");
-        }*/
-    }
 
     public NetControl NetControl { get; set; }
 

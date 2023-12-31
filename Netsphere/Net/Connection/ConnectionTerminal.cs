@@ -347,6 +347,17 @@ public class ConnectionTerminal
             lock (this.serverConnections.SyncObject)
             {
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
+
+                if (connection?.State == Connection.ConnectionState.Closed)
+                {// Reopen
+                    this.serverConnections.ClosedListChain.Remove(connection);
+                    this.serverConnections.ClosedEndPointChain.Remove(connection);
+                    connection.closedSystemMics = 0;
+
+                    this.serverConnections.OpenListChain.AddLast(connection);
+                    this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
+                    connection.responseSystemMics = Mics.GetSystem();
+                }
             }
 
             if (connection is not null &&
