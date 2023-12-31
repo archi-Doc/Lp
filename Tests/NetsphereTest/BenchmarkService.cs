@@ -118,8 +118,8 @@ public class RemoteBenchBroker
     private int concurrent;
 }
 
-[NetServiceFilter(typeof(TestFilter), Order = 1)]
-[NetServiceFilter(typeof(TestFilterB), Order = 1)]
+[NetServiceFilter<TestFilter>(Order = 1)]
+[NetServiceFilter<TestFilterB>(Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
 {

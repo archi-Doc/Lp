@@ -31,16 +31,16 @@ public interface ICustomService2 : INetService
 }
 
 [NetServiceObject]
-[NetServiceFilter(typeof(CustomFilter), Order = 0)]
+[NetServiceFilter<CustomFilter>(Order = 0)]
 public class CustomService : ICustomService, ICustomService2
 {
-    [NetServiceFilter(typeof(CustomFilter), Arguments = new object[] { 1, 2, new string?[] { "te" }, 3 })]
+    [NetServiceFilter<CustomFilter>(Arguments = new object[] { 1, 2, new string?[] { "te" }, 3 })]
     async NetTask ICustomService.Test()
     {
         var serverContext = TestCallContext.Current;
     }
 
-    [NetServiceFilter(typeof(CustomFilter), Arguments = new object[] { 9, })]
+    [NetServiceFilter<CustomFilter>(Arguments = new object[] { 9, })]
 
     public async NetTask Test()
     {

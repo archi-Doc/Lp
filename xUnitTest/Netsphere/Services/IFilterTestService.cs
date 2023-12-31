@@ -25,20 +25,20 @@ public class FilterTestServiceImpl : IFilterTestService
 {
     public async NetTask<int> NoFilter(int x) => x;
 
-    [NetServiceFilter(typeof(IncrementIntFilter))]
+    [NetServiceFilter<IncrementIntFilter>]
     public async NetTask<int> Increment(int x) => x;
 
-    [NetServiceFilter(typeof(MultiplyIntFilter))]
+    [NetServiceFilter<MultiplyIntFilter>]
     public async NetTask<int> Multiply2(int x) => x;
 
-    [NetServiceFilter(typeof(MultiplyIntFilter), Arguments = new object[] { 3, })]
+    [NetServiceFilter<MultiplyIntFilter>(Arguments = new object[] { 3, })]
     public async NetTask<int> Multiply3(int x) => x;
 
-    [NetServiceFilter(typeof(IncrementIntFilter))]
-    [NetServiceFilter(typeof(MultiplyIntFilter))]
+    [NetServiceFilter<IncrementIntFilter>]
+    [NetServiceFilter<MultiplyIntFilter>]
     public async NetTask<int> IncrementAndMultiply2(int x) => x;
 
-    [NetServiceFilter(typeof(IncrementIntFilter), Order = 1)]
-    [NetServiceFilter(typeof(MultiplyIntFilter), Order = 0)]
+    [NetServiceFilter<IncrementIntFilter>(Order = 1)]
+    [NetServiceFilter<MultiplyIntFilter>(Order = 0)]
     public async NetTask<int> Multiply2AndIncrement(int x) => x;
 }

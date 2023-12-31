@@ -10,13 +10,12 @@ public class NetServiceFilterAttributeMock : Attribute
     public static readonly string SimpleName = "NetServiceFilter";
     public static readonly string StandardName = SimpleName + "Attribute";
     public static readonly string FullName = "Netsphere." + StandardName;
+    public static readonly string StartName = FullName + "<";
 
     public NetServiceFilterAttributeMock(Location location)
     {
         this.Location = location;
     }
-
-    public ISymbol? FilterType { get; private set; }
 
     public int Order { get; set; } = int.MaxValue;
 
@@ -24,18 +23,12 @@ public class NetServiceFilterAttributeMock : Attribute
 
     public Location Location { get; set; } = Location.None;
 
+    public ISymbol? FilterType { get; set; }
+
     public static NetServiceFilterAttributeMock FromArray(object?[] constructorArguments, KeyValuePair<string, object?>[] namedArguments, Location location)
     {
         var attribute = new NetServiceFilterAttributeMock(location);
         object? val;
-        if (constructorArguments.Length > 0)
-        {
-            val = constructorArguments[0];
-            if (val is ISymbol subType)
-            {
-                attribute.FilterType = subType;
-            }
-        }
 
         val = AttributeHelper.GetValue(-1, nameof(Order), constructorArguments, namedArguments);
         if (val != null)

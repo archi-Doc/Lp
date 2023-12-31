@@ -5,7 +5,7 @@ using Netsphere;
 namespace LP.NetServices;
 
 [NetServiceObject]
-[NetServiceFilter(typeof(TestOnlyFilter))]
+[NetServiceFilter<TestOnlyFilter>]
 internal class BenchmarkServiceImpl : IBenchmarkService
 {
     public BenchmarkServiceImpl(ILogger<IBenchmarkService> logger, RemoteBenchBroker remoteBenchBroker)
