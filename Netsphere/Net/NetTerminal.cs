@@ -45,6 +45,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
 
+    public NodePublicKey NodePublicKey { get; private set; }
+
     public NetStats NetStats { get; }
 
     public PacketTerminal PacketTerminal { get; }
@@ -55,6 +57,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public TimeSpan ResponseTimeout { get; set; }
 
+    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
+
     internal NetSender NetSender { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
@@ -63,8 +67,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     private readonly ILogger logger;
     private readonly NetCleaner netCleaner;
-
-    private NodePrivateKey nodePrivateKey = default!;
 
     #endregion
 
@@ -106,16 +108,15 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (!this.IsAlternative)
         {
-            this.nodePrivateKey = this.NetBase.NodePrivateKey;
+            this.NodePrivateKey = this.NetBase.NodePrivateKey;
         }
         else
         {
-            this.nodePrivateKey = NodePrivateKey.AlternativePrivateKey;
+            this.NodePrivateKey = NodePrivateKey.AlternativePrivateKey;
             this.Port = NetAddress.Alternative.Port;
         }
 
-        // Responders
-        // DefaultResponder.Register(this.Terminal);
+        this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
     }
 
     async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)

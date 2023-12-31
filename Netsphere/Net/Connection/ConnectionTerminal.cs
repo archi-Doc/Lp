@@ -132,7 +132,7 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new PacketConnect(0, this.NetTerminal.NetBase.NodePublicKey);
+        var packet = new PacketConnect(0, this.NetTerminal.NodePublicKey);
         var t = await this.packetTerminal.SendAndReceiveAsync<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
@@ -160,7 +160,7 @@ public class ConnectionTerminal
     internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NetBase.NodePrivateKey, serverPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -177,7 +177,7 @@ public class ConnectionTerminal
     internal bool PrepareServerSide(NetEndPoint endPoint, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NetBase.NodePrivateKey, p.ClientPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, p.ClientPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {

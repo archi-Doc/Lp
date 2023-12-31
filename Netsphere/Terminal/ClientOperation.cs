@@ -42,7 +42,7 @@ internal class ClientOperation : NetOperation
             }
 
             // Encrypt
-            var p = new PacketEncryptObsolete(this.Terminal.NetBase.NodePublicKey); // tempcode
+            var p = new PacketEncryptObsolete(default!); // tempcode
             var response = await this.SendPacketAndReceiveAsync<PacketEncryptObsolete, PacketEncryptResponseObsolete>(p).ConfigureAwait(false);
             if (response.Result != NetResult.Success)
             {

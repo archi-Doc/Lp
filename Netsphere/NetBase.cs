@@ -30,11 +30,11 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
-    public NodePublicKey NodePublicKey { get; private set; } = default!;
-
     public ServerOptions ServerOptions { get; set; }
 
     public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
+
+    public NodePublicKey NodePublicKey { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -92,14 +92,14 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         try
         {
-            this.NodePublicKey = privateKey.ToPublicKey();
             this.NodePrivateKey = privateKey;
+            this.NodePublicKey = privateKey.ToPublicKey();
             return true;
         }
         catch
         {
-            this.NodePublicKey = default!;
             this.NodePrivateKey = default!;
+            this.NodePublicKey = default!;
             return false;
         }
     }

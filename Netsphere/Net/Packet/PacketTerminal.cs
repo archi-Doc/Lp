@@ -249,7 +249,7 @@ public sealed partial class PacketTerminal
                 }
                 else if (packetType == PacketType.GetInformation)
                 {// PacketGetInformation
-                    var packet = new PacketGetInformationResponse(this.netBase.NodePublicKey);
+                    var packet = new PacketGetInformationResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
                     return;
