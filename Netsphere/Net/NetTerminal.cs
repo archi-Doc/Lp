@@ -122,7 +122,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)
     {
         var core = message.ParentCore;
-        this.NetSender.Start(core);
+        await this.NetSender.StartAsync(core);
         this.netCleaner.Start(core);
     }
 

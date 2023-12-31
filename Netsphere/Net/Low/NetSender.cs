@@ -8,6 +8,9 @@ namespace Netsphere.Net;
 
 internal class NetSender
 {// LOG_LOWLEVEL_NET
+    private const int RetryLimit = 3;
+    private const int RetryIntervalInMilliseconds = 500;
+
     private readonly struct Item
     {
         public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
@@ -92,20 +95,49 @@ internal class NetSender
         }
     }
 
-    public bool Start(ThreadCoreBase parent)
+    public async Task<bool> StartAsync(ThreadCoreBase parent)
     {
         var port = this.netTerminal.Port;
+        int retry;
 
-        if (!this.netSocketIpv4.Start(parent, port, false))
+        retry = 0;
+        while (true)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
-            throw new PanicException();
+            if (this.netSocketIpv4.Start(parent, port, false))
+            {
+                break;
+            }
+
+            if (retry++ >= RetryLimit)
+            {
+                this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port number {port}.");
+                throw new PanicException();
+            }
+            else
+            {
+                this.logger.TryGet(LogLevel.Warning)?.Log($"Retry creating a UDP socket with port number {port}.");
+                await Task.Delay(RetryIntervalInMilliseconds);
+            }
         }
 
-        if (!this.netSocketIpv6.Start(parent, port, true))
+        retry = 0;
+        while (true)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
-            throw new PanicException();
+            if (this.netSocketIpv6.Start(parent, port, true))
+            {
+                break;
+            }
+
+            if (retry++ >= RetryLimit)
+            {
+                this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port number {port}.");
+                throw new PanicException();
+            }
+            else
+            {
+                this.logger.TryGet(LogLevel.Warning)?.Log($"Retry creating a UDP socket with port number {port}.");
+                await Task.Delay(RetryIntervalInMilliseconds);
+            }
         }
 
         this.sendCore ??= new SendCore(parent, this);
