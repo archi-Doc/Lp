@@ -200,7 +200,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                     {// this.maxReceivedPosition > dataPosition
                     }
 
-                    if (this.maxReceivedPosition > this.totalGene)
+                    if (this.maxReceivedPosition >= this.totalGene)
                     {
                         completeFlag = true;
                     }
@@ -337,9 +337,55 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Multiple send/recv
-            dataKind = 0;
-            dataId = 0;
-            toBeMoved = default;
+            // First
+            var firstGene = this.genes.DataPositionListChain.Get(0);
+            if (firstGene is null)
+            {
+                goto Abort;
+            }
+
+            var span = firstGene.Packet.Span;
+            dataKind = BitConverter.ToUInt32(span);
+            span = span.Slice(sizeof(uint));
+            dataId = BitConverter.ToUInt64(span);
+
+            var firstSpan = firstGene.Packet.Slice(12).Span;
+            var length = firstSpan.Length;
+
+            // Last
+            var lastGene = this.genes.DataPositionListChain.Get(this.totalGene - 1);
+            if (lastGene is null)
+            {
+                goto Abort;
+            }
+
+            length += (FollowingGeneFrame.MaxGeneLength * (this.totalGene - 2)) + lastGene.Packet.Span.Length;
+            toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+            span = toBeMoved.Span;
+
+            firstSpan.CopyTo(span);
+            span = span.Slice(firstSpan.Length);
+            for (var i = 1; i < this.totalGene; i++)
+            {
+                var gene = this.genes.DataPositionListChain.Get(i);
+                if (gene is null)
+                {
+                    toBeMoved.Return();
+                    goto Abort;
+                }
+
+                var src = gene.Packet.Span;
+                src.CopyTo(span);
+                span = span.Slice(src.Length);
+            }
+
+            Debug.Assert(span.Length == 0);
+            return;
         }
+
+Abort:
+        dataKind = 0;
+        dataId = 0;
+        toBeMoved = default;
     }
 }
