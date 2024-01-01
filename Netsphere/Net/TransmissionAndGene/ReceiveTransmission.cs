@@ -169,7 +169,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         this.gene2?.IsReceived == true;
                 }
             }
-            else if (geneSerial < this.totalGene)
+            else if (this.Mode == NetTransmissionMode.Block)
             {// Multiple send/recv
             }
 

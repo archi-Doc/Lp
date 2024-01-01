@@ -280,6 +280,8 @@ public class ConnectionTerminal
                 connection.flowControl = new(connection);
                 connection.flowControl.Goshujin = this.flowControls;
             }
+
+            connection.flowControl.ResetDeletionMics();
         }
     }
 
@@ -307,19 +309,20 @@ public class ConnectionTerminal
 
                 if (current.IsEmpty)
                 {// Empty
-                    if (current.MarkedForDeletion)
+                    if (current.DeletionMics != 0 &&
+                        current.DeletionMics < Mics.FastSystem)
                     {// Delete
                         current.Goshujin = null;
                         current.Clear();
                     }
                     else
                     {// To prevent immediate deletion after creation, just set the deletion flag.
-                        current.MarkedForDeletion = true;
+                        current.SetDeletionMics(Mics.FastSystem + NetConstants.FlowControlDisposalMics);
                     }
                 }
                 else
                 {// Not empty
-                    current.MarkedForDeletion = false;
+                    current.ResetDeletionMics();
                     count++;
                     netSender.FlowControlQueue.Enqueue(current);
                 }

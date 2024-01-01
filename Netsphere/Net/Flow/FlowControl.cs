@@ -27,18 +27,23 @@ public partial class FlowControl
 
     public bool IsShared { get; private set; }
 
-    internal bool MarkedForDeletion { get; set; }
+    public long DeletionMics { get; private set; }
 
     private readonly int sendCapacityPerRound;
 
     private readonly object syncObject = new();
     private readonly ConcurrentQueue<SendGene> waitingToSend = new();
     private readonly OrderedMultiMap<long, SendGene> waitingForAck = new();
-    // private readonly SortedDictionary<long, NetGene> waitingForAck = new();
 
     public bool IsEmpty => this.waitingToSend.IsEmpty && this.waitingForAck.Count == 0;
 
     #endregion
+
+    public void ResetDeletionMics()
+        => this.DeletionMics = 0;
+
+    public void SetDeletionMics(long mics)
+        => this.DeletionMics = mics;
 
     public void Clear()
     {
