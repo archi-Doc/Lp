@@ -114,7 +114,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = totalGene;
     }
 
-    internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(int geneSerial, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
         uint dataKind = 0;
@@ -124,23 +124,23 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
-                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
+                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
                 return;
             }
 
             if (this.Mode == NetTransmissionMode.Rama)
             {// Single send/recv
-                if (genePosition == 0)
+                if (geneSerial == 0)
                 {
                     this.gene0 ??= new(this);
                     this.gene0.SetRecv(toBeShared);
                 }
-                else if (genePosition == 1)
+                else if (geneSerial == 1)
                 {
                     this.gene1 ??= new(this);
                     this.gene1.SetRecv(toBeShared);
                 }
-                else if (genePosition == 2)
+                else if (geneSerial == 2)
                 {
                     this.gene2 ??= new(this);
                     this.gene2.SetRecv(toBeShared);
@@ -169,7 +169,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         this.gene2?.IsReceived == true;
                 }
             }
-            else if (genePosition < this.totalGene)
+            else if (geneSerial < this.totalGene)
             {// Multiple send/recv
             }
 
@@ -214,9 +214,9 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {genePosition}");
+            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
 
-            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
+            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
         }
 
         if (completeFlag)

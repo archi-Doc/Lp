@@ -63,6 +63,11 @@ public partial class FlowControl
         {
             var remaining = this.sendCapacityPerRound;
 
+            if (remaining == 0)
+            {
+                remaining = 1; // tempcode
+            }
+
             int rtoSerial = 0; // Increment RTO to create a small difference.
             while (remaining > 0 && netSender.CanSend)
             {// Retransmission

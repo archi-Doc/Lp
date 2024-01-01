@@ -310,6 +310,7 @@ Wait:
                 {// ReceivedList -> DisposedList
                     node.List.Remove(node);
                     transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                    Debug.Assert(transmission.ReceivedDisposedNode.List != null);
                 }
                 else
                 {// -> DisposedList
@@ -534,25 +535,27 @@ Wait:
             }
         }
 
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
+        transmission.ProcessReceive_Gene(0, 0, toBeShared.Slice(14)); // FirstGeneFrameCode
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// Following gene
         var span = toBeShared.Span;
-        if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
+        if (span.Length < FollowingGeneFrame.LengthExcludingFrameType)
         {
             return;
         }
 
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        var genePosition = BitConverter.ToInt32(span);
+        var geneSerial = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int));
-        if (genePosition == 0)
+        if (geneSerial == 0)
         {
             return;
         }
+
+        var dataPosition = BitConverter.ToInt32(span);
 
         ReceiveTransmission? transmission;
         lock (this.receiveTransmissions.SyncObject)
@@ -567,12 +570,13 @@ Wait:
                 node.List == this.receiveReceivedList)
             {
                 transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
-                node.List.Remove(node);
-                node.List.AddLast(node);
+                this.receiveReceivedList.Remove(node);
+                // this.receiveReceivedList.AddLast(node); // The node has been disposed and therefore cannot be reused.
+                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
             }
         }
 
-        transmission.ProcessReceive_Gene(genePosition, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType));
+        transmission.ProcessReceive_Gene(geneSerial, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
@@ -771,6 +775,7 @@ Wait:
                 if (x.ReceivedDisposedNode is { } node)
                 {
                     node.List.Remove(node);
+                    x.ReceivedDisposedNode = null;
                 }
 
                 x.Goshujin = null;
