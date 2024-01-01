@@ -59,6 +59,12 @@ internal partial class SendGene
         return currentMics + connection.RetransmissionTimeout;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetComplete()
+    {
+        this.FlowControl.AddSend_LockFree(this); // Lock-free
+    }
+
     public void Dispose()
     {
         this.Packet.Return();

@@ -274,12 +274,16 @@ internal sealed partial class SendTransmission : IDisposable
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
                             this.genes.GeneSerialListChain.Remove(gene);
+                            gene.Goshujin = null;
+                            gene.Dispose();
                         }
                         else
                         {
                             return false;
                         }
                     }
+
+                    completeFlag = this.genes.GeneSerialListChain.Count == 0;
                 }
                 else
                 {
