@@ -38,7 +38,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     private int totalGene;
     private TaskCompletionSource<NetResponse>? receivedTcs;
     private ReceiveStream? receiveStream;
-    private uint maxReceived;
+    private int maxReceivedPosition;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
     private ReceiveGene? gene2; // Gene 2
@@ -103,6 +103,15 @@ internal sealed partial class ReceiveTransmission : IDisposable
         else
         {
             this.Mode = NetTransmissionMode.Block;
+
+            this.genes = new();
+            this.genes.DataPositionListChain.Resize(totalGene);
+            for (var i = 0; i < totalGene; i++)
+            {
+                var gene = new ReceiveGene(this);
+                gene.Goshujin = this.genes;
+                this.genes.DataPositionListChain.Add(gene);
+            }
         }
 
         this.totalGene = totalGene;
@@ -169,8 +178,33 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         this.gene2?.IsReceived == true;
                 }
             }
-            else if (this.Mode == NetTransmissionMode.Block)
+            else if (this.Mode == NetTransmissionMode.Block &&
+                this.genes is not null)
             {// Multiple send/recv
+                var chain = this.genes.DataPositionListChain;
+                if (chain.Get(dataPosition) is { } gene)
+                {
+                    gene.SetRecv(toBeShared);
+                    if (this.maxReceivedPosition == dataPosition)
+                    {
+                        this.maxReceivedPosition = dataPosition + 1;
+                    }
+                    else if (this.maxReceivedPosition < dataPosition)
+                    {
+                        while (chain.Get(this.maxReceivedPosition) is { } g && g.IsReceived)
+                        {
+                            this.maxReceivedPosition++;
+                        }
+                    }
+                    else
+                    {// this.maxReceivedPosition > dataPosition
+                    }
+
+                    if (this.maxReceivedPosition > this.totalGene)
+                    {
+                        completeFlag = true;
+                    }
+                }
             }
 
             if (completeFlag)
