@@ -34,6 +34,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+        this.NetControl.RegisterResponder(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -64,13 +65,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                var service = connection.GetService<TestService>();
-                var result2 = await service.Pingpong([0, 1, 2]);
-                /*var service = connection.GetService<ISomeService>();
-                service.Engage();
-                service.Send();
-                service.EngageAndSend();
-                service.Send(new(Proof, proof));*/
+                // var service = connection.GetService<TestService>();
+                // var result2 = await service.Pingpong([0, 1, 2]);
 
                 // Send Block*Stream, Receive Non*Block*Stream
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
@@ -80,6 +76,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 {
                     Console.WriteLine(response.Value.ToString());
                 }*/
+
+                for (var i = 0; i < 3_000; i += 1_000)
+                {
+                    var testBlock = TestBlock.Create(i);
+                    var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
+                    Debug.Assert(testBlock.Equals(r.Value));
+                }
 
                 var tasks = new List<Task>();
                 var count = 0;
@@ -93,7 +96,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                             Interlocked.Increment(ref count);
                         }
                     }));
-
                 }
 
                 await Task.WhenAll(tasks);
