@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
+
+#pragma warning disable SA1401 // Fields should be private
 
 namespace Netsphere.Net;
 
@@ -23,7 +25,9 @@ internal partial class SendGene
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
-    public long SentMics { get; private set; }
+    // public long SentMics { get; private set; }
+
+    internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.FlowControl.syncObject)
 
     #endregion
 
@@ -54,19 +58,23 @@ internal partial class SendGene
         var currentMics = Mics.FastSystem;
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
-        this.SentMics = currentMics;
+        // this.SentMics = currentMics;
         // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
         return currentMics + connection.RetransmissionTimeout;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetComplete()
-    {
-        this.FlowControl.AddSend_LockFree(this); // Lock-free
-    }
-
     public void Dispose()
     {
+        this.FlowControl.Remove_InFlight(this);
+        this.Goshujin = null;
+        this.Packet.Return();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Dispose2()
+    {
+        this.FlowControl.Remove_InFlight(this);
         this.Packet.Return();
     }
 }

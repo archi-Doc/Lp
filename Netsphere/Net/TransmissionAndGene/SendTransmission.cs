@@ -94,7 +94,7 @@ internal sealed partial class SendTransmission : IDisposable
         {
             foreach (var x in this.genes)
             {
-                x.Dispose();
+                x.Dispose2();
             }
 
             this.genes = default; // this.genes.Clear();
@@ -273,9 +273,7 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
-                            this.genes.GeneSerialListChain.Remove(gene);
-                            gene.Goshujin = null;
-                            gene.Dispose();
+                            gene.Dispose(); // this.genes.GeneSerialListChain.Remove(gene);
                         }
                         else
                         {

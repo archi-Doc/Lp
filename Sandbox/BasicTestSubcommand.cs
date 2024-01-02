@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Net;
 using Arc.Unit;
-using LP.T3CS;
 using Netsphere;
 using Netsphere.Block;
 using Netsphere.Packet;
@@ -46,12 +44,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        /*for (var i = 0; i < 10; i++)
-        {
-            p = new PacketPing("test56789");
-            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
-        }*/
-
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
 
         var netNode = await netTerminal.UnsafeGetNetNodeAsync(netAddress);
@@ -65,9 +57,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                // var service = connection.GetService<TestService>();
-                // var result2 = await service.Pingpong([0, 1, 2]);
-
                 // Send Block*Stream, Receive Non*Block*Stream
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 /*var p2 = new PacketPing();
@@ -76,8 +65,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 {
                     Console.WriteLine(response.Value.ToString());
                 }*/
-
-                await Console.Out.WriteLineAsync();
 
                 for (var i = 0; i < 16_000; i += 1_000)
                 {

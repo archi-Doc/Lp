@@ -29,13 +29,16 @@ public partial class FlowControl
 
     public long DeletionMics { get; private set; }
 
+    public int NumberOfGenesInFlight
+        => this.genesInFlight.Count;
+
     private readonly int sendCapacityPerRound;
 
     private readonly object syncObject = new();
     private readonly ConcurrentQueue<SendGene> waitingToSend = new();
-    private readonly OrderedMultiMap<long, SendGene> waitingForAck = new();
+    private readonly OrderedMultiMap<long, SendGene> genesInFlight = new();
 
-    public bool IsEmpty => this.waitingToSend.IsEmpty && this.waitingForAck.Count == 0;
+    public bool IsEmpty => this.waitingToSend.IsEmpty && this.genesInFlight.Count == 0;
 
     #endregion
 
@@ -51,7 +54,17 @@ public partial class FlowControl
         {
             this.Connection = default;
             this.waitingToSend.Clear();
-            this.waitingForAck.Clear();
+
+            foreach (var x in this.genesInFlight.Values)
+            {
+                if (x.Node is { } node)
+                {
+                    // this.genesInFlight.RemoveNode(node); // Cannot modify the collection.
+                    x.Node = default;
+                }
+            }
+
+            this.genesInFlight.Clear();
         }
     }
 
@@ -59,6 +72,19 @@ public partial class FlowControl
     internal void AddSend_LockFree(SendGene gene)
     {
         this.waitingToSend.Enqueue(gene);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Remove_InFlight(SendGene gene)
+    {
+        lock (this.syncObject)
+        {
+            if (gene.Node is { } node)
+            {
+                this.genesInFlight.RemoveNode(node);
+                gene.Node = default;
+            }
+        }
     }
 
     internal void ProcessSend(NetSender netSender)
@@ -73,10 +99,10 @@ public partial class FlowControl
                 remaining = 1; // tempcode
             }
 
-            int rtoSerial = 0; // Increment RTO to create a small difference.
+            int rtoIncrement = 0; // Increment RTO to create a small difference.
             while (remaining > 0 && netSender.CanSend)
             {// Retransmission
-                var firstNode = this.waitingForAck.First;
+                var firstNode = this.genesInFlight.First;
                 if (firstNode is null ||
                     firstNode.Key > Mics.FastSystem)
                 {
@@ -90,7 +116,7 @@ public partial class FlowControl
                 {// Resend
                     // Console.WriteLine("RESEND");
                     remaining--;
-                    this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
+                    this.genesInFlight.SetNodeKey(firstNode, rto + (rtoIncrement++));
 
                     if (this.IsShared)
                     {
@@ -99,7 +125,7 @@ public partial class FlowControl
                 }
                 else
                 {// Cannot send
-                    this.waitingForAck.RemoveNode(firstNode);
+                    this.genesInFlight.RemoveNode(firstNode);
                 }
             }
 
@@ -115,7 +141,10 @@ public partial class FlowControl
                 if (rto > 0)
                 {// Send
                     remaining--;
-                    this.waitingForAck.Add(rto + (rtoSerial++), gene);
+                    (gene.Node, _) = this.genesInFlight.Add(rto + (rtoIncrement++), gene);
+                }
+                else
+                {// Cannot send
                 }
             }
         }
