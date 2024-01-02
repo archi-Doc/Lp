@@ -25,7 +25,7 @@ internal partial class SendGene
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
-    // public long SentMics { get; private set; }
+    public long SentMics { get; private set; }
 
     internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.FlowControl.syncObject)
 
@@ -58,7 +58,7 @@ internal partial class SendGene
         var currentMics = Mics.FastSystem;
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
-        // this.SentMics = currentMics;
+        this.SentMics = currentMics;
         // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
         return currentMics + connection.RetransmissionTimeout;
     }

@@ -55,11 +55,11 @@ public sealed partial class PacketTerminal
         this.netTerminal = netTerminal;
         this.logger = logger;
 
-        this.InitialResendTimeoutMics = Mics.FromMilliseconds(500);
+        this.RetransmissionTimeoutMics = NetConstants.DefaultRetransmissionTimeoutMics;
         this.MaxResendCount = 2;
     }
 
-    public long InitialResendTimeoutMics { get; set; }
+    public long RetransmissionTimeoutMics { get; set; }
 
     public int MaxResendCount { get; set; }
 
@@ -174,7 +174,7 @@ public sealed partial class PacketTerminal
                 }
             }
 
-            while (this.items.WaitingForResponseListChain.First is { } item && (Mics.FastSystem - item.SentMics) > this.InitialResendTimeoutMics)
+            while (this.items.WaitingForResponseListChain.First is { } item && (Mics.FastSystem - item.SentMics) > this.RetransmissionTimeoutMics)
             {// Waiting for response list
                 if (!netSender.CanSend)
                 {

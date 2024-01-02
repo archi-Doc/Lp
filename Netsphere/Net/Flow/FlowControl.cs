@@ -36,7 +36,7 @@ public partial class FlowControl
 
     private readonly object syncObject = new();
     private readonly ConcurrentQueue<SendGene> waitingToSend = new();
-    private readonly OrderedMultiMap<long, SendGene> genesInFlight = new();
+    private readonly OrderedMultiMap<long, SendGene> genesInFlight = new(); // Retransmission mics, gene
 
     public bool IsEmpty => this.waitingToSend.IsEmpty && this.genesInFlight.Count == 0;
 
@@ -99,7 +99,7 @@ public partial class FlowControl
                 remaining = 1; // tempcode
             }
 
-            int rtoIncrement = 0; // Increment RTO to create a small difference.
+            int addition = 0; // Increment RTO to create a small difference.
             while (remaining > 0 && netSender.CanSend)
             {// Retransmission
                 var firstNode = this.genesInFlight.First;
@@ -116,7 +116,7 @@ public partial class FlowControl
                 {// Resend
                     // Console.WriteLine("RESEND");
                     remaining--;
-                    this.genesInFlight.SetNodeKey(firstNode, rto + (rtoIncrement++));
+                    this.genesInFlight.SetNodeKey(firstNode, rto + (addition++));
 
                     if (this.IsShared)
                     {
@@ -141,7 +141,7 @@ public partial class FlowControl
                 if (rto > 0)
                 {// Send
                     remaining--;
-                    (gene.Node, _) = this.genesInFlight.Add(rto + (rtoIncrement++), gene);
+                    (gene.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
                 }
                 else
                 {// Cannot send
