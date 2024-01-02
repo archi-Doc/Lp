@@ -25,6 +25,9 @@ internal partial class SendGene
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
+    public int GeneSerial
+        => this.GeneSerialListLink.Position;
+
     public long SentMics { get; private set; }
 
     internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.FlowControl.syncObject)
@@ -77,4 +80,7 @@ internal partial class SendGene
         this.FlowControl.Remove_InFlight(this);
         this.Packet.Return();
     }
+
+    public override string ToString()
+        => $"Send gene {this.GeneSerial}";
 }

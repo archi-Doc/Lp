@@ -186,19 +186,12 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 if (chain.Get(dataPosition) is { } gene)
                 {
                     gene.SetRecv(toBeShared);
-                    if (this.maxReceivedPosition == dataPosition)
-                    {
-                        this.maxReceivedPosition = dataPosition + 1;
-                    }
-                    else if (this.maxReceivedPosition < dataPosition)
+                    if (this.maxReceivedPosition <= dataPosition)
                     {
                         while (chain.Get(this.maxReceivedPosition) is { } g && g.IsReceived)
                         {
                             this.maxReceivedPosition++;
                         }
-                    }
-                    else
-                    {// this.maxReceivedPosition > dataPosition
                     }
 
                     if (this.maxReceivedPosition >= this.totalGene)
@@ -241,7 +234,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 }
                 else
                 {// Defer
-                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
+                    // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
                     this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
                 }
@@ -249,7 +242,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
+            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
 
             this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
         }

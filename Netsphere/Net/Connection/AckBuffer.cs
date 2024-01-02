@@ -128,6 +128,7 @@ internal partial class AckBuffer
 
         while (ackQueue.TryDequeue(out var ack))
         {
+Loop:
             if ((maxLength - position) < AckFrame.Margin)
             {// Send the packet due to the size approaching the limit.
                 SendPacket();
@@ -171,6 +172,8 @@ internal partial class AckBuffer
 
                     startGene = -1;
                     endGene = -1;
+
+                    goto Loop;
                 }
             }
             else
@@ -193,6 +196,8 @@ internal partial class AckBuffer
                 position += 6;
                 startGene = geneSerial;
                 endGene = geneSerial + 1;
+
+                goto Loop;
             }
         }
 

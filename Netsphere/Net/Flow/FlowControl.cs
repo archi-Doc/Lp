@@ -114,14 +114,11 @@ public partial class FlowControl
                 var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend
-                    // Console.WriteLine("RESEND");
+                    Console.WriteLine($"RESEND:{gene.GeneSerial}, RTO:{(rto - Mics.FastSystem) / 1_000}ms");
                     remaining--;
                     this.genesInFlight.SetNodeKey(firstNode, rto + (addition++));
 
-                    if (this.IsShared)
-                    {
-                        gene.SendTransmission.Connection.ReportResend();
-                    }
+                    gene.SendTransmission.Connection.ReportResend();
                 }
                 else
                 {// Cannot send
@@ -142,6 +139,7 @@ public partial class FlowControl
                 {// Send
                     remaining--;
                     (gene.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
+                    gene.SendTransmission.Connection.IncrementSentCount();
                 }
                 else
                 {// Cannot send

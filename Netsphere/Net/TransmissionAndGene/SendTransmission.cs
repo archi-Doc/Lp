@@ -110,6 +110,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
+        // Console.WriteLine($"Genes: {info.NumberOfGenes}");
 
         lock (this.syncObject)
         {
@@ -269,15 +270,13 @@ internal sealed partial class SendTransmission : IDisposable
                 }
                 else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
                 {
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
                     for (var i = startGene; i < endGene; i++)
                     {
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
+                            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Dispose send gene {gene.GeneSerial}");
                             gene.Dispose(); // this.genes.GeneSerialListChain.Remove(gene);
-                        }
-                        else
-                        {
-                            return false;
                         }
                     }
 

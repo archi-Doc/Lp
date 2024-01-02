@@ -88,6 +88,21 @@ public abstract class Connection : IDisposable
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 1ms
 
+    public int SentCount
+        => this.sentCount;
+
+    public int ResendCount
+        => this.resendCount;
+
+    public double DeliveryRatio
+    {
+        get
+        {
+            var total = this.sentCount + this.resendCount;
+            return total == 0 ? 1.0d : (this.sentCount / (double)total);
+        }
+    }
+
     internal ILogger Logger { get; }
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
@@ -114,6 +129,8 @@ public abstract class Connection : IDisposable
     private int minRtt; // Minimum rtt (mics)
     private int smoothedRtt; // Smoothed rtt (mics)
     private int rttvar; // Rtt variation (mics)
+    private int sentCount;
+    private int resendCount;
 
     // Ack
     internal long AckMics; // lock(AckBuffer.syncObject)
@@ -372,9 +389,17 @@ Wait:
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReportResend()
     {
-        this.AddRtt(this.smoothedRtt * 4); // tempcode
+        this.resendCount++;
+        // this.AddRtt(this.smoothedRtt * 2); // tempcode
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void IncrementSentCount()
+    {
+        this.sentCount++;
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
@@ -721,7 +746,7 @@ Wait:
             connectionString = "Client";
         }
 
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}";
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SentCount}/{this.SentCount + this.ResendCount})";
     }
 
     internal bool TryEncryptCbc(uint salt, Span<byte> source, Span<byte> destination, out int written)

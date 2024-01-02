@@ -49,6 +49,7 @@ public class Program
                 // Command
                 context.AddCommand(typeof(SandboxSubcommand));
                 context.AddCommand(typeof(BasicTestSubcommand));
+                context.AddCommand(typeof(BlockTestSubcommand));
 
                 context.AddLoggerResolver(context =>
                 {
