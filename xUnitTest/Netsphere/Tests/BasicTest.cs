@@ -32,7 +32,7 @@ public class NodeTest
                 return;
             }
 
-            var rr = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
+            //var rr = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
 
             var basicService = connection.GetService<IBasicService>();
             var task = await basicService.SendInt(1).ResponseAsync;

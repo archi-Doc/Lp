@@ -77,7 +77,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     Console.WriteLine(response.Value.ToString());
                 }*/
 
-                for (var i = 5_000; i < 6_000; i += 1_000)
+                await Console.Out.WriteLineAsync();
+
+                for (var i = 0; i < 16_000; i += 1_000)
                 {
                     var testBlock = TestBlock.Create(i);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);

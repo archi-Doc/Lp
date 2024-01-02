@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Packet;
@@ -271,15 +272,18 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             this.Connection.RemoveTransmission(this);
 
-            if (this.Connection is ServerConnection serverConnection)
-            {// InvokeServer: Connection, NetTransmission, Owner
-                var connectionContext = serverConnection.ConnectionContext;
-                var transmissionContext = new TransmissionContext(connectionContext, this.TransmissionId, dataKind, dataId, owner.IncrementAndShare());
-                connectionContext.InvokeSync(transmissionContext);
-            }
+            if (owner.IsRent)
+            {
+                if (this.Connection is ServerConnection serverConnection)
+                {// InvokeServer: Connection, NetTransmission, Owner
+                    var connectionContext = serverConnection.ConnectionContext;
+                    var transmissionContext = new TransmissionContext(connectionContext, this.TransmissionId, dataKind, dataId, owner.IncrementAndShare());
+                    connectionContext.InvokeSync(transmissionContext);
+                }
 
-            receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
-            owner.Return();
+                receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
+                owner.Return();
+            }
         }
     }
 
@@ -334,6 +338,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
                     toBeMoved = default;
                 }
             }
+
+            return;
         }
         else
         {// Multiple send/recv

@@ -129,6 +129,14 @@ public abstract class Connection : IDisposable
         }
     }
 
+    public void ResetFlowControl()
+    {
+        if (this.flowControl is not null)
+        {
+            this.ConnectionTerminal.RemoveFlowControl(this);
+        }
+    }
+
     public void Close()
         => this.Dispose();
 

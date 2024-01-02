@@ -248,6 +248,7 @@ public class ConnectionTerminal
                     }
 
                     this.CloseClientConnection(g, clientConnection);
+                    // connection.ResetFlowControl(); // -> ProcessSend()
                 }
             }
         }
@@ -266,6 +267,7 @@ public class ConnectionTerminal
                     }
 
                     this.CloseServerConnection(g2, serverConnection);
+                    // connection.ResetFlowControl(); // -> ProcessSend()
                 }
             }
         }
@@ -285,6 +287,17 @@ public class ConnectionTerminal
         }
     }
 
+    internal void RemoveFlowControl(Connection connection)
+    {
+        lock (this.flowControls.SyncObject)
+        {
+            if (connection.flowControl is not null)
+            {
+                connection.flowControl = default;
+            }
+        }
+    }
+
     internal void ProcessSend(NetSender netSender)
     {
         var count = 0;
@@ -300,6 +313,11 @@ public class ConnectionTerminal
                     if (connection.State == Connection.ConnectionState.Closed ||
                         connection.State == Connection.ConnectionState.Disposed)
                     {// Connection closed
+                        if (current.Connection is { } con)
+                        {
+                            con.flowControl = default;
+                        }
+
                         current.Goshujin = null;
                         current.Clear();
                         current = next;
@@ -312,6 +330,11 @@ public class ConnectionTerminal
                     if (current.DeletionMics != 0 &&
                         current.DeletionMics < Mics.FastSystem)
                     {// Delete
+                        if (current.Connection is { } con)
+                        {
+                            con.flowControl = default;
+                        }
+
                         current.Goshujin = null;
                         current.Clear();
                     }

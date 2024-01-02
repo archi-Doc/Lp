@@ -146,7 +146,7 @@ public class ConnectionContext
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                var result = NetResult.Success; // context.Result
+                var result = transmissionContext.Result;
                 if (result == NetResult.Success)
                 {// Success
                     transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
