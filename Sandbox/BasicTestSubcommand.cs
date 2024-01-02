@@ -33,7 +33,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+        this.NetControl.RegisterResponder(Netsphere.Responder.MemoryResponder.Instance);
         this.NetControl.RegisterResponder(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
@@ -88,12 +88,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 var tasks = new List<Task>();
                 var count = 0;
+                var array = new byte[] { 0, 1, 2, };
                 for (var i = 0; i < 10; i++)
                 {
                     tasks.Add(Task.Run(async () =>
                     {
-                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
-                        if (r.Value is not null)
+                        var r = await connection.SendAndReceive<Memory<byte>, Memory<byte>>(array);
+                        if (r.Value.Span.SequenceEqual(array))
                         {
                             Interlocked.Increment(ref count);
                         }
@@ -152,29 +153,29 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
         }
 
-                // await Task.Delay(1000000000);
+        // await Task.Delay(1000000000);
 
-                /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
-                {
-                    return;
-                }
+        /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
+        {
+            return;
+        }
 
-                this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
-                this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
+        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
+        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
-                // var nodeInformation = NodeInformation.Alternative;
-                using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
-                {
-                    if (terminal is null)
-                    {
-                        return;
-                    }
-
-                    // terminal.SetMaximumResponseTime(1_000_000);
-                    var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
-                    this.logger.TryGet()?.Log($"{t.ToString()}");
-                }*/
+        // var nodeInformation = NodeInformation.Alternative;
+        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
+        {
+            if (terminal is null)
+            {
+                return;
             }
+
+            // terminal.SetMaximumResponseTime(1_000_000);
+            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+            this.logger.TryGet()?.Log($"{t.ToString()}");
+        }*/
+    }
 
     public NetControl NetControl { get; set; }
 

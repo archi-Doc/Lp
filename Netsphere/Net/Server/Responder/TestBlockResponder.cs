@@ -10,7 +10,5 @@ public class TestBlockResponder : SyncResponder<TestBlock, TestBlock>
     public static readonly INetResponder Instance = new TestBlockResponder();
 
     public override TestBlock? RespondSync(TestBlock value)
-    {
-        return value;
-    }
+        => value;
 }

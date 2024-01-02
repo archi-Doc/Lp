@@ -61,7 +61,6 @@ public sealed class TransmissionContext
     }
 
     public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
-        where TSend : ITinyhandSerialize<TSend>
     {
         if (this.Connection.IsClosedOrDisposed)
         {
