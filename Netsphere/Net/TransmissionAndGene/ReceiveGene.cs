@@ -19,8 +19,7 @@ internal partial class ReceiveGene
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
-    public bool IsReceived
-        => !this.Packet.IsEmpty;
+    public bool IsReceived => !this.Packet.IsEmpty;
 
     #endregion
 

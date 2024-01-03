@@ -530,6 +530,10 @@ Wait:
                 {// On the client side, it's necessary to create ReceiveTransmission in advance.
                     return;
                 }
+                else if (transmission.Mode != NetTransmissionMode.Initial)
+                {// Processing the first packet is limited to the initial state, as the state gets cleared.
+                    return;
+                }
 
                 transmission.SetState_Receiving(totalGenes);
             }

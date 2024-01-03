@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Text;
 using Arc.Collections;
 using Netsphere.Packet;
 using Netsphere.Server;
@@ -125,7 +126,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void ProcessReceive_Gene(int geneSerial, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
-    {
+    {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
@@ -135,6 +136,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
                 this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
+                return;
+            }
+            else if (this.Mode == NetTransmissionMode.Initial)
+            {// The packet must be discarded since the first packet has not been received and the receiving mode is unknown.
                 return;
             }
 
@@ -199,6 +204,24 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         completeFlag = true;
                     }
                 }
+
+                /*if (this.Connection.IsClient)
+                {
+                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log($"JJJ{dataPosition:00} - {this.maxReceivedPosition} - {this.genes.All(x => x.IsReceived)}");
+                    var sb = new StringBuilder();
+                    foreach (var x in this.genes)
+                    {
+                        if (x.IsReceived)
+                        {
+                            sb.Append("1");
+                        }
+                        else
+                        {
+                            sb.Append("0");
+                        }
+                    }
+                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log(sb.ToString());
+                }*/
             }
 
             if (completeFlag)
@@ -243,7 +266,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
         else
         {// Ack (TransmissionId, GenePosition)
             // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
-
             this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
         }
 
