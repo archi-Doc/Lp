@@ -392,14 +392,14 @@ Wait:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReportResend()
     {
-        this.resendCount++;
+        this.resendCount++; // Not thread-safe, though it doesn't matter.
         // this.AddRtt(this.smoothedRtt * 2); // tempcode
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void IncrementSentCount()
     {
-        this.sentCount++;
+        this.sentCount++; // Not thread-safe, though it doesn't matter.
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)

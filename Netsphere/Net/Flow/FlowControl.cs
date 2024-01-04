@@ -38,7 +38,8 @@ public partial class FlowControl
     private readonly ConcurrentQueue<SendGene> waitingToSend = new();
     private readonly OrderedMultiMap<long, SendGene> genesInFlight = new(); // Retransmission mics, gene
 
-    public bool IsEmpty => this.waitingToSend.IsEmpty && this.genesInFlight.Count == 0;
+    public bool IsEmpty
+        => this.waitingToSend.IsEmpty && this.genesInFlight.Count == 0;
 
     #endregion
 
