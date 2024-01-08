@@ -67,9 +67,6 @@ public abstract class Connection : IDisposable
 
     public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
 
-    public FlowControl FlowControl
-        => this.flowControl ?? this.ConnectionTerminal.SharedFlowControl;
-
     public abstract ConnectionState State { get; }
 
     public abstract bool IsClient { get; }
@@ -109,6 +106,7 @@ public abstract class Connection : IDisposable
     internal long closedSystemMics;
     internal long responseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
+    internal UnorderedLinkedList<Connection>.Node? sendNode; // lock (ConnectionTerminal.SyncSend)
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     private Embryo embryo;
@@ -119,6 +117,7 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
+    private UnorderedLinkedList<SendTransmission> sendList = new(); // lock (this.ConnectionTerminal.SyncSend)
 
     // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
@@ -151,6 +150,24 @@ public abstract class Connection : IDisposable
         if (this.flowControl is not null)
         {
             this.ConnectionTerminal.RemoveFlowControl(this);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void AddSend(SendTransmission transmission)
+    {
+        var list = this.ConnectionTerminal.SendList;
+        lock (this.ConnectionTerminal.SyncSend)
+        {
+            if (this.sendNode is null)
+            {
+                this.sendNode = list.AddLast(this);
+            }
+
+            if (transmission.SendNode is null)
+            {
+                transmission.SendNode = this.sendList.AddLast(transmission);
+            }
         }
     }
 
@@ -415,6 +432,39 @@ Wait:
     internal void SendCloseFrame() // Close
         => this.SendPriorityFrame([]);
 
+    internal bool ProcessSend(NetSender netSender)
+    {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
+        if (this.State == ConnectionState.Closed ||
+            this.State == ConnectionState.Disposed)
+        {// Connection closed
+            return false;
+        }
+
+        while (this.sendList.First is { } node)
+        {
+            if (!netSender.CanSend)
+            {
+                return true;
+            }
+
+            var transmission = node.Value;
+            Debug.Assert(transmission.SendNode == node);
+
+            var result = transmission.ProcessSend(netSender, this.flowControl);
+            if (result)
+            {// Remaining
+                this.sendList.MoveToLast(node);
+            }
+            else
+            {// No transmission to send.
+                this.sendList.Remove(node);
+                transmission.SendNode = default;
+            }
+        }
+
+        return this.sendList.Count > 0;
+    }
+
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// endPoint: Checked
         if (this.State == ConnectionState.Disposed)
@@ -607,9 +657,10 @@ Wait:
                 node.List == this.receiveReceivedList)
             {
                 transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
-                this.receiveReceivedList.Remove(node);
+                this.receiveReceivedList.MoveToLast(node);//check
+                /*this.receiveReceivedList.Remove(node);
                 // this.receiveReceivedList.AddLast(node); // The node has been disposed and therefore cannot be reused.
-                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
+                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);*/
             }
         }
 

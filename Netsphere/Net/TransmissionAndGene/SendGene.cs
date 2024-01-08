@@ -14,21 +14,21 @@ internal partial class SendGene
     public SendGene(SendTransmission sendTransmission)
     {
         this.SendTransmission = sendTransmission;
-        this.FlowControl = sendTransmission.Connection.FlowControl; // Keep FlowControl instance as a member variable, since it may be subject to change.
     }
 
     #region FieldAndProperty
 
     public SendTransmission SendTransmission { get; }
 
-    public FlowControl FlowControl { get; }
-
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
+
+    public long SentMics { get; private set; }
+
+    public bool IsSent
+        => this.SentMics != 0;
 
     public int GeneSerial
         => this.GeneSerialListLink.Position;
-
-    public long SentMics { get; private set; }
 
     internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.FlowControl.syncObject)
 
@@ -42,7 +42,6 @@ internal partial class SendGene
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
         this.Packet = toBeMoved;
-        this.FlowControl.AddSend_LockFree(this); // Lock-free
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -69,7 +68,6 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
-        this.FlowControl.Remove_InFlight(this);
         this.Goshujin = null;
         this.Packet.Return();
     }
@@ -77,7 +75,6 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose2()
     {
-        this.FlowControl.Remove_InFlight(this);
         this.Packet.Return();
     }
 

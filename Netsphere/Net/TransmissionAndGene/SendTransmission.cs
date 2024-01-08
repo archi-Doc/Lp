@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -42,6 +43,8 @@ internal sealed partial class SendTransmission : IDisposable
         => ((ushort)this.TransmissionId).ToString("x4");
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
+
+    internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.waitingToSend)
 
     private readonly object syncObject = new();
     private int totalGene;
@@ -104,6 +107,44 @@ internal sealed partial class SendTransmission : IDisposable
         {
             this.sentTcs.SetResult(NetResult.Closed);
             this.sentTcs = null;
+        }
+    }
+
+    internal bool ProcessSend(NetSender netSender, FlowControl? flowControl)
+    {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
+        lock (this.syncObject)
+        {
+            if (this.Mode == NetTransmissionMode.Rama)
+            {
+                if (flowControl is null)
+                {
+                    if (this.gene0?.IsSent == false)
+                    {
+                        var rto = this.gene0.Send_NotThreadSafe(netSender);
+                        if (rto > 0)
+                        {// Send
+                            (this.gene0.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
+                            this.Connection.IncrementSentCount();
+                        }
+                        else
+                        {// Cannot send
+                            return false;
+                        }
+                    }
+                }
+            }
+            else if (this.Mode == NetTransmissionMode.Block)
+            {
+                Debug.Assert(flowControl != null);
+            }
+            else if (this.Mode == NetTransmissionMode.Stream)
+            {
+                Debug.Assert(flowControl != null);
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 
@@ -206,6 +247,8 @@ internal sealed partial class SendTransmission : IDisposable
                 Debug.Assert(span.Length == 0);
             }
         }
+
+        this.Connection.AddSend(this);
 
         return NetResult.Success;
     }

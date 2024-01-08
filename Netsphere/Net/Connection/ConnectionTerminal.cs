@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -31,12 +34,17 @@ public class ConnectionTerminal
 
     internal AckBuffer AckBuffer { get; }
 
+    internal object SyncSend { get; } = new();
+
+    internal UnorderedLinkedList<Connection> SendList { get; } = new(); // lock (this.SyncSend)
+
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
     private readonly ILogger logger;
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
+
 
     private readonly FlowControl.GoshujinClass flowControls = new();
 
@@ -298,6 +306,31 @@ public class ConnectionTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
+        lock (this.SyncSend)
+        {
+            while (this.SendList.First is { } node)
+            {
+                if (!netSender.CanSend)
+                {
+                    return;
+                }
+
+                var connection = node.Value;
+                Debug.Assert(connection.sendNode == node);
+
+                var result = connection.ProcessSend(netSender);
+                if (result)
+                {// Remaining
+                    this.SendList.MoveToLast(node);
+                }
+                else
+                {// No transmission to send.
+                    this.SendList.Remove(node);
+                    connection.sendNode = default;
+                }
+            }
+        }
+
         var count = 0;
         lock (this.flowControls.SyncObject)
         {
@@ -408,7 +441,7 @@ public class ConnectionTerminal
 
     private void CloseClientConnection(ClientConnection.GoshujinClass g, ClientConnection connection)
     {// lock (g.SyncObject)
-        // ConnectionStateCode
+     // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.responseSystemMics = 0;
@@ -420,7 +453,7 @@ public class ConnectionTerminal
 
     private void CloseServerConnection(ServerConnection.GoshujinClass g, ServerConnection connection)
     {// lock (g.SyncObject)
-        // ConnectionStateCode
+     // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.responseSystemMics = 0;
