@@ -231,7 +231,7 @@ internal class NetSender
 
     private void Prepare()
     {
-        this.SendCapacity = 50;
+        this.SendCapacity = NetConstants.SendCapacityPerRound;
         this.SendCount = 0;
     }
 

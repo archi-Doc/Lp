@@ -31,8 +31,6 @@ public class ConnectionTerminal
 
     internal AckBuffer AckBuffer { get; }
 
-    internal FlowControl SharedFlowControl { get; } = new(NetConstants.SendCapacityPerRound);
-
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
     private readonly ILogger logger;
