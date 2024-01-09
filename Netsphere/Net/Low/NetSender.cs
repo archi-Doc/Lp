@@ -219,7 +219,7 @@ internal class NetSender
         {
             this.Prepare();
             this.netTerminal.ProcessSend(this);
-            this.Flush();
+            this.Send();
 
             this.previousSystemMics = currentSystemMics;
         }
@@ -235,16 +235,18 @@ internal class NetSender
         this.SendCount = 0;
     }
 
-    private void Flush()
+    private void Send()
     {
         if (this.netSocketIpv4.UnsafeUdpClient is { } ipv4)
         {
             while (this.itemsIpv4.TryDequeue(out var item))
             {
+#if DEBUG
                 if (this.deliveryFailureRatio != 0 && RandomVault.Pseudo.NextDouble() < this.deliveryFailureRatio)
                 {
                     continue;
                 }
+#endif
 
                 ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();
@@ -259,10 +261,12 @@ internal class NetSender
         {
             while (this.itemsIpv6.TryDequeue(out var item))
             {
+#if DEBUG
                 if (this.deliveryFailureRatio != 0 && RandomVault.Pseudo.NextDouble() < this.deliveryFailureRatio)
                 {
                     continue;
                 }
+#endif
 
                 ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();

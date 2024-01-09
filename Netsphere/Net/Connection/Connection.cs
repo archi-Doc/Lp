@@ -102,11 +102,9 @@ public abstract class Connection : IDisposable
 
     internal ILogger Logger { get; }
 
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-    internal long closedSystemMics;
-    internal long responseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
+    internal long ClosedSystemMics;
+    internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.flowControls.SyncObject
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     private Embryo embryo;
 
@@ -117,6 +115,7 @@ public abstract class Connection : IDisposable
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
     private UnorderedLinkedList<SendTransmission> sendList = new(); // lock (this.ConnectionTerminal.SyncSend)
+    private UnorderedLinkedList<Connection>.Node? congestionSendNode; // lock (this.ConnectionTerminal.SyncSend)
 
     // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
@@ -136,19 +135,25 @@ public abstract class Connection : IDisposable
 
     #endregion
 
-    public void CreateFlowControl()
+    internal ICongestionControl GetCongestionControl()
     {
-        if (this.flowControl is null)
-        {
-            this.ConnectionTerminal.CreateFlowControl(this);
-        }
+        return this.CongestionControl is null ? this.ConnectionTerminal.NoCongestionControl : this.CongestionControl;
     }
 
-    public void ResetFlowControl()
+    internal void CreateCongestionControl()
     {
-        if (this.flowControl is not null)
+        while (true)
         {
-            this.ConnectionTerminal.RemoveFlowControl(this);
+            if (this.CongestionControl is not null)
+            {
+                return;
+            }
+
+            var congestionControl = new NoCongestionControl();
+            if (Interlocked.CompareExchange(ref this.CongestionControl, congestionControl, null) == null)
+            {
+                return;
+            }
         }
     }
 
@@ -158,9 +163,9 @@ public abstract class Connection : IDisposable
         var list = this.ConnectionTerminal.SendList;
         lock (this.ConnectionTerminal.SyncSend)
         {
-            if (this.sendNode is null)
+            if (this.congestionSendNode is null)
             {
-                this.sendNode = list.AddLast(this);
+                this.congestionSendNode = list.AddLast(this);
             }
 
             if (transmission.SendNode is null)
@@ -444,7 +449,7 @@ Wait:
             var transmission = node.Value;
             Debug.Assert(transmission.SendNode == node);
 
-            //Congestion control
+            // Congestion control
 
             var result = transmission.ProcessSend(netSender, this.flowControl);
             if (result == ProcessSendResult.Complete)
@@ -463,7 +468,7 @@ Wait:
 
         if ()
 
-        return this.sendList.Count > 0;
+            return this.sendList.Count > 0;
     }
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
@@ -500,7 +505,7 @@ Wait:
                 return;
             }
 
-            this.responseSystemMics = Mics.FastSystem;
+            this.ResponseSystemMics = Mics.FastSystem;
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType

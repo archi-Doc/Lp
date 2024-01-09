@@ -80,9 +80,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public void SetDeliveryFailureRatio(double ratio)
     {
-#if DEBUG
         this.NetSender.SetDeliveryFailureRatio(ratio);
-#endif
     }
 
     public async Task<NetNode?> UnsafeGetNetNodeAsync(NetAddress address)
@@ -134,26 +132,22 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal void ProcessSend(NetSender netSender)
     {
-        // 1st: Packets
+        // 1st: PacketTerminal (Packets: Connect, Ack, Loss, ...)
         this.PacketTerminal.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;
         }
 
-        // 2nd: Ack
+        // 2nd: AckBuffer (Ack)
         this.ConnectionTerminal.AckBuffer.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;
         }
 
-        // 3rd: Genes (NetTransmission)
+        // 3rd: ConnectionTerminal (SendTransmission/SendGene)
         this.ConnectionTerminal.ProcessSend(netSender);
-        if (!netSender.CanSend)
-        {
-            return;
-        }
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
