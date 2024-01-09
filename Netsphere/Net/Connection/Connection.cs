@@ -106,7 +106,6 @@ public abstract class Connection : IDisposable
     internal long closedSystemMics;
     internal long responseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
-    internal UnorderedLinkedList<Connection>.Node? sendNode; // lock (ConnectionTerminal.SyncSend)
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     private Embryo embryo;
@@ -432,35 +431,37 @@ Wait:
     internal void SendCloseFrame() // Close
         => this.SendPriorityFrame([]);
 
-    internal bool ProcessSend(NetSender netSender)
+    internal ProcessSendResult ProcessSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
         if (this.State == ConnectionState.Closed ||
             this.State == ConnectionState.Disposed)
         {// Connection closed
-            return false;
+            return ProcessSendResult.Complete;
         }
 
         while (this.sendList.First is { } node)
         {
-            if (!netSender.CanSend)
-            {
-                return true;
-            }
-
             var transmission = node.Value;
             Debug.Assert(transmission.SendNode == node);
 
+            //Congestion control
+
             var result = transmission.ProcessSend(netSender, this.flowControl);
-            if (result)
-            {// Remaining
-                this.sendList.MoveToLast(node);
-            }
-            else
+            if (result == ProcessSendResult.Complete)
             {// No transmission to send.
                 this.sendList.Remove(node);
                 transmission.SendNode = default;
             }
+            else if (result == ProcessSendResult.Remaining)
+            {// Remaining
+                this.sendList.MoveToLast(node);
+            }
+            else
+            {
+            }
         }
+
+        if ()
 
         return this.sendList.Count > 0;
     }

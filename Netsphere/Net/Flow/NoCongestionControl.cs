@@ -5,7 +5,7 @@ using Arc.Collections;
 
 namespace Netsphere.Net;
 
-internal class NoCongestionControl
+internal class NoCongestionControl : ICongestionControl
 {
     public NoCongestionControl()
     {
@@ -65,5 +65,22 @@ internal class NoCongestionControl
                 }
             }
         }
+    }
+
+    void ICongestionControl.TrySend(SendGene gene, NetSender netSender)
+    {
+        if (!gene.IsSent)
+        {
+            gene.Send_NotThreadSafe(netSender);
+        }
+    }
+
+    void ICongestionControl.Report()
+    {
+    }
+
+    ProcessSendResult ICongestionControl.ProcessResend(NetSender netSender)
+    {
+        return ProcessSendResult.Complete;
     }
 }

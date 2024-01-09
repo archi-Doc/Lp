@@ -2,12 +2,12 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using Netsphere.Server;
 using Netsphere.Stats;
+
+#pragma warning disable SA1401 // Fields should be private
 
 namespace Netsphere;
 
@@ -34,9 +34,9 @@ public class ConnectionTerminal
 
     internal AckBuffer AckBuffer { get; }
 
-    internal object SyncSend { get; } = new();
-
-    internal UnorderedLinkedList<Connection> SendList { get; } = new(); // lock (this.SyncSend)
+    internal readonly object SyncSend = new();
+    internal Queue<Connection> SendQueue = new(); // lock (this.SyncSend)
+    internal Queue<Connection> CongestionQueue = new(); // lock (this.SyncSend)
 
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
@@ -308,25 +308,24 @@ public class ConnectionTerminal
     {
         lock (this.SyncSend)
         {
-            while (this.SendList.First is { } node)
+            while (this.SendQueue.TryDequeue(out var connection))
             {
+                var result = connection.ProcessSend(netSender);
+                if (result == ProcessSendResult.Complete)
+                {// No transmission to send.
+                }
+                else if (result == ProcessSendResult.Remaining)
+                { // Remaining
+                    this.SendQueue.Enqueue(connection);
+                }
+                else
+                {// Congestion
+                    this.CongestionQueue.Enqueue(connection);
+                }
+
                 if (!netSender.CanSend)
                 {
                     return;
-                }
-
-                var connection = node.Value;
-                Debug.Assert(connection.sendNode == node);
-
-                var result = connection.ProcessSend(netSender);
-                if (result)
-                {// Remaining
-                    this.SendList.MoveToLast(node);
-                }
-                else
-                {// No transmission to send.
-                    this.SendList.Remove(node);
-                    connection.sendNode = default;
                 }
             }
         }

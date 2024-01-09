@@ -110,7 +110,7 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal bool ProcessSend(NetSender netSender, FlowControl? flowControl)
+    internal ProcessSendResult ProcessSend(NetSender netSender, FlowControl? flowControl)
     {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
         lock (this.syncObject)
         {
