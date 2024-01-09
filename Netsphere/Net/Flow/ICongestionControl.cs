@@ -11,6 +11,8 @@ internal enum ProcessSendResult
 
 internal interface ICongestionControl
 {
+    bool IsCongested { get; }
+
     void Send(SendGene gene);
 
     void Report();

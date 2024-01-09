@@ -105,7 +105,7 @@ public abstract class Connection : IDisposable
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
     internal long closedSystemMics;
     internal long responseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
-    internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
+    internal ICongestionControl? CongestionControl; // ConnectionTerminal.flowControls.SyncObject
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     private Embryo embryo;

@@ -36,7 +36,7 @@ public class ConnectionTerminal
     internal AckBuffer AckBuffer { get; }
 
     internal readonly object SyncSend = new();
-    internal Queue<Connection> SendQueue = new(); // lock (this.SyncSend)
+    internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
     internal UnorderedLinkedList<Connection> CongestionList = new(); // lock (this.SyncSend)
 
     private readonly PacketTerminal packetTerminal;
@@ -309,7 +309,29 @@ public class ConnectionTerminal
     {
         lock (this.SyncSend)
         {
-            while (this.CongestionQueue.TryDequeue(out var connection))
+            // CongestionList: Move to SendList when congestion is resolved.
+            var currentNode = this.CongestionList.First;
+            while (currentNode is not null)
+            {
+                var nextNode = currentNode.Next;
+                var connection = currentNode.Value;
+                if (connection.CongestionControl is null ||
+                    !connection.CongestionControl.IsCongested)
+                {// No congestion control or not congested
+                    this.CongestionList.Remove(currentNode);
+                    this.SendList.AddFirst(currentNode);
+                }
+
+                currentNode = nextNode;
+            }
+
+            // SendList
+            currentNode = this.SendList.First;
+            while (currentNode is not null)
+            {
+            }
+
+                while (this.CongestionQueue.TryDequeue(out var connection))
             {
                 var result = connection.ProcessSend(netSender);
                 if (result == ProcessSendResult.Complete)
