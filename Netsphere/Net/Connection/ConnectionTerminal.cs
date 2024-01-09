@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -36,7 +37,7 @@ public class ConnectionTerminal
 
     internal readonly object SyncSend = new();
     internal Queue<Connection> SendQueue = new(); // lock (this.SyncSend)
-    internal Queue<Connection> CongestionQueue = new(); // lock (this.SyncSend)
+    internal UnorderedLinkedList<Connection> CongestionList = new(); // lock (this.SyncSend)
 
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
@@ -308,6 +309,27 @@ public class ConnectionTerminal
     {
         lock (this.SyncSend)
         {
+            while (this.CongestionQueue.TryDequeue(out var connection))
+            {
+                var result = connection.ProcessSend(netSender);
+                if (result == ProcessSendResult.Complete)
+                {// No transmission to send.
+                }
+                else if (result == ProcessSendResult.Remaining)
+                { // Remaining
+                    this.SendQueue.Enqueue(connection);
+                }
+                else
+                {// Congestion
+                    this.CongestionQueue.Enqueue(connection);
+                }
+
+                if (!netSender.CanSend)
+                {
+                    return;
+                }
+            }
+
             while (this.SendQueue.TryDequeue(out var connection))
             {
                 var result = connection.ProcessSend(netSender);
