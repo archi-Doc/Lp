@@ -104,7 +104,8 @@ public abstract class Connection : IDisposable
 
     internal long ClosedSystemMics;
     internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
-    internal ICongestionControl? CongestionControl; // ConnectionTerminal.flowControls.SyncObject
+    internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
+    internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
 
     private Embryo embryo;
 
@@ -115,7 +116,6 @@ public abstract class Connection : IDisposable
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
     private UnorderedLinkedList<SendTransmission> sendList = new(); // lock (this.ConnectionTerminal.SyncSend)
-    private UnorderedLinkedList<Connection>.Node? congestionSendNode; // lock (this.ConnectionTerminal.SyncSend)
 
     // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
@@ -163,9 +163,9 @@ public abstract class Connection : IDisposable
         var list = this.ConnectionTerminal.SendList;
         lock (this.ConnectionTerminal.SyncSend)
         {
-            if (this.congestionSendNode is null)
+            if (this.SendNode is null)
             {
-                this.congestionSendNode = list.AddLast(this);
+                this.SendNode = list.AddLast(this);
             }
 
             if (transmission.SendNode is null)

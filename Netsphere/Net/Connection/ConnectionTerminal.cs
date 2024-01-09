@@ -39,7 +39,7 @@ public class ConnectionTerminal
 
     internal readonly object SyncSend = new();
     internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
-    internal UnorderedLinkedList<Connection> CongestionList = new(); // lock (this.SyncSend)
+    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new(); // lock (this.SyncSend)
 
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
@@ -47,9 +47,6 @@ public class ConnectionTerminal
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
-
-
-    private readonly FlowControl.GoshujinClass flowControls = new();
 
     public void Clean()
     {
@@ -282,37 +279,35 @@ public class ConnectionTerminal
         }
     }
 
-    internal void CreateFlowControl(Connection connection)
-    {
-        lock (this.flowControls.SyncObject)
-        {
-            if (connection.flowControl is null)
-            {
-                connection.flowControl = new(connection);
-                connection.flowControl.Goshujin = this.flowControls;
-            }
-
-            connection.flowControl.ResetDeletionMics();
-        }
-    }
-
-    internal void RemoveFlowControl(Connection connection)
-    {
-        lock (this.flowControls.SyncObject)
-        {
-            if (connection.flowControl is not null)
-            {
-                connection.flowControl = default;
-            }
-        }
-    }
-
     internal void ProcessSend(NetSender netSender)
     {
         lock (this.SyncSend)
         {
+            // CongestionControl
+            while (this.CongestionControlList.First is { } node)
+            {
+                if (!netSender.CanSend)
+                {
+                    return;
+                }
+
+                var congestionControl = node.Value;
+                if (congestionControl.ProcessResend(netSender))
+                {
+
+                }
+
+                var connection = currentNode.Value.Connection;
+                if (connection.CongestionControl is null ||
+                    !connection.CongestionControl.IsCongested)
+                {// No congestion control or not congested
+                    this.CongestionList.Remove(currentNode);
+                    this.SendList.AddFirst(currentNode);
+                }
+            }
+
             // CongestionList: Move to SendList when congestion is resolved.
-            var currentNode = this.CongestionList.Last; // To maintain order in SendList, process from the last node.
+            /*var currentNode = this.CongestionList.Last; // To maintain order in SendList, process from the last node.
             while (currentNode is not null)
             {
                 var previousNode = currentNode.Previous;
@@ -326,7 +321,7 @@ public class ConnectionTerminal
                 }
 
                 currentNode = previousNode;
-            }
+            }*/
 
             // SendList
             while (this.SendList.First is { } node)
@@ -340,6 +335,8 @@ public class ConnectionTerminal
                 var result = connection.ProcessSend(netSender);
                 if (result == ProcessSendResult.Complete)
                 {// No transmission to send.
+                    this.SendList.Remove(node);
+                    connection.SendNode = null;
                 }
                 else if (result == ProcessSendResult.Remaining)
                 { // Remaining
@@ -351,67 +348,6 @@ public class ConnectionTerminal
                     this.CongestionList.AddFirst(node);
                 }
             }
-        }
-
-        var count = 0;
-        lock (this.flowControls.SyncObject)
-        {
-            var current = this.flowControls.ListChain.First;
-            while (current is not null)
-            {
-                var next = current.ListLink.Next;
-
-                if (current.Connection is { } connection)
-                {
-                    if (connection.State == Connection.ConnectionState.Closed ||
-                        connection.State == Connection.ConnectionState.Disposed)
-                    {// Connection closed
-                        if (current.Connection is { } con)
-                        {
-                            con.flowControl = default;
-                        }
-
-                        current.Goshujin = null;
-                        current.Clear();
-                        current = next;
-                        continue;
-                    }
-                }
-
-                if (current.IsEmpty)
-                {// Empty
-                    if (current.DeletionMics != 0 &&
-                        current.DeletionMics < Mics.FastSystem)
-                    {// Delete
-                        if (current.Connection is { } con)
-                        {
-                            con.flowControl = default;
-                        }
-
-                        current.Goshujin = null;
-                        current.Clear();
-                    }
-                    else
-                    {// To prevent immediate deletion after creation, just set the deletion flag.
-                        current.SetDeletionMics(Mics.FastSystem + NetConstants.FlowControlDisposalMics);
-                    }
-                }
-                else
-                {// Not empty
-                    current.ResetDeletionMics();
-                    count++;
-                    netSender.FlowControlQueue.Enqueue(current);
-                }
-
-                current = next;
-            }
-        }
-
-        // Send
-        this.SharedFlowControl.ProcessSend(netSender);
-        while (netSender.FlowControlQueue.TryDequeue(out var x))
-        {
-            x.ProcessSend(netSender);
         }
     }
 

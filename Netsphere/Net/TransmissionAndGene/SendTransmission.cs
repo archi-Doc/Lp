@@ -44,7 +44,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
-    internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.waitingToSend)
+    internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
 
     private readonly object syncObject = new();
     private int totalGene;
