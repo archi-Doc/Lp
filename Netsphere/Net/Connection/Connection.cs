@@ -436,10 +436,9 @@ Wait:
     internal void SendCloseFrame() // Close
         => this.SendPriorityFrame([]);
 
-    internal ProcessSendResult ProcessSend(NetSender netSender)
+    internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
-        if (this.State == ConnectionState.Closed ||
-            this.State == ConnectionState.Disposed)
+        if (this.IsClosedOrDisposed)
         {// Connection closed
             return ProcessSendResult.Complete;
         }
@@ -451,7 +450,7 @@ Wait:
 
             // Congestion control
 
-            var result = transmission.ProcessSend(netSender, this.flowControl);
+            var result = transmission.ProcessSingleSend(netSender, this.flowControl);
             if (result == ProcessSendResult.Complete)
             {// No transmission to send.
                 this.sendList.Remove(node);

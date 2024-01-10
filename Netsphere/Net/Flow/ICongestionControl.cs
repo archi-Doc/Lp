@@ -19,5 +19,5 @@ internal interface ICongestionControl
 
     void Report();
 
-    ProcessSendResult ProcessResend(NetSender netSender);
+    void ProcessResend(NetSender netSender);
 }

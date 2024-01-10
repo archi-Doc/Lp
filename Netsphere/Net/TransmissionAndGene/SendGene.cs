@@ -73,7 +73,7 @@ internal partial class SendGene
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Dispose2()
+    public void DisposeMemory()
     {
         this.Packet.Return();
     }

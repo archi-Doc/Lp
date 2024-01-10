@@ -97,7 +97,7 @@ internal sealed partial class SendTransmission : IDisposable
         {
             foreach (var x in this.genes)
             {
-                x.Dispose2();
+                x.DisposeMemory();
             }
 
             this.genes = default; // this.genes.Clear();
@@ -110,7 +110,7 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal ProcessSendResult ProcessSend(NetSender netSender, FlowControl? flowControl)
+    internal ProcessSendResult ProcessSingleSend(NetSender netSender, FlowControl? flowControl)
     {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
         lock (this.syncObject)
         {

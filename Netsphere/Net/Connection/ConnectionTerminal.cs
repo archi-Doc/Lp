@@ -39,6 +39,7 @@ public class ConnectionTerminal
 
     internal readonly object SyncSend = new();
     internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
+    internal UnorderedLinkedList<Connection> CongestionList = new(); // lock (this.SyncSend)
     internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new(); // lock (this.SyncSend)
 
     private readonly PacketTerminal packetTerminal;
@@ -284,30 +285,22 @@ public class ConnectionTerminal
         lock (this.SyncSend)
         {
             // CongestionControl
-            while (this.CongestionControlList.First is { } node)
+            var congestionControlNode = this.CongestionControlList.First;
+            while (congestionControlNode is not null)
             {
                 if (!netSender.CanSend)
                 {
                     return;
                 }
 
-                var congestionControl = node.Value;
-                if (congestionControl.ProcessResend(netSender))
-                {
+                var congestionControl = congestionControlNode.Value;
+                congestionControl.ProcessResend(netSender);
 
-                }
-
-                var connection = currentNode.Value.Connection;
-                if (connection.CongestionControl is null ||
-                    !connection.CongestionControl.IsCongested)
-                {// No congestion control or not congested
-                    this.CongestionList.Remove(currentNode);
-                    this.SendList.AddFirst(currentNode);
-                }
+                congestionControlNode = congestionControlNode.Next;
             }
 
             // CongestionList: Move to SendList when congestion is resolved.
-            /*var currentNode = this.CongestionList.Last; // To maintain order in SendList, process from the last node.
+            var currentNode = this.CongestionList.Last; // To maintain order in SendList, process from the last node.
             while (currentNode is not null)
             {
                 var previousNode = currentNode.Previous;
@@ -321,7 +314,7 @@ public class ConnectionTerminal
                 }
 
                 currentNode = previousNode;
-            }*/
+            }
 
             // SendList
             while (this.SendList.First is { } node)
@@ -332,7 +325,7 @@ public class ConnectionTerminal
                 }
 
                 var connection = node.Value;
-                var result = connection.ProcessSend(netSender);
+                var result = connection.ProcessSingleSend(netSender);
                 if (result == ProcessSendResult.Complete)
                 {// No transmission to send.
                     this.SendList.Remove(node);
