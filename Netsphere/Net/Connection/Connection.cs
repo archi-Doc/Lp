@@ -85,7 +85,7 @@ public abstract class Connection : IDisposable
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 1ms
 
-    public int SentCount
+    public int SendCount
         => this.sendCount;
 
     public int ResendCount
@@ -812,7 +812,7 @@ Wait:
             connectionString = "Client";
         }
 
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SentCount}/{this.SentCount + this.ResendCount})";
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     internal bool TryEncryptCbc(uint salt, Span<byte> source, Span<byte> destination, out int written)

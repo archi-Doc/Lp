@@ -52,11 +52,14 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
+        // netTerminal.PacketTerminal.MaxResendCount = 0;
+        netTerminal.SetDeliveryFailureRatio(0.0);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
             {
+                var success = 0;
+
                 // Send Block*Stream, Receive Non*Block*Stream
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 /*var p2 = new PacketPing();
@@ -66,14 +69,27 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     Console.WriteLine(response.Value.ToString());
                 }*/
 
-                for (var i = 0; i < 16_000; i += 1_000)
+                for (var i = 0; i < 20; i++)
+                {
+                    var testBlock = TestBlock.Create(10);
+                    var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
+                    if (testBlock.Equals(r.Value))
+                    {
+                        success++;
+                    }
+                }
+
+                for (var i = 0; i < 20_000; i += 1_000)
                 {
                     var testBlock = TestBlock.Create(i);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
-                    Debug.Assert(testBlock.Equals(r.Value));
+                    if (testBlock.Equals(r.Value))
+                    {
+                        success++;
+                    }
                 }
 
-                var tasks = new List<Task>();
+                /*var tasks = new List<Task>();
                 var count = 0;
                 var array = new byte[] { 0, 1, 2, };
                 for (var i = 0; i < 10; i++)
@@ -89,7 +105,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 }
 
                 await Task.WhenAll(tasks);
-                Console.WriteLine(count);
+                Console.WriteLine(count);*/
 
                 /*using (var stream = await connection.SendStream(1000))
                 {
@@ -127,6 +143,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
+
+                Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
             }
         }
 

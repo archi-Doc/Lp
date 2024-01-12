@@ -55,6 +55,7 @@ internal sealed partial class SendTransmission : IDisposable
     private SendGene? gene1; // Gene 1
     private SendGene? gene2; // Gene 2
     private SendGene.GoshujinClass? genes; // Multiple genes
+    private int sendIndex;
 
     private long latestAckMics;
 
@@ -141,8 +142,20 @@ internal sealed partial class SendTransmission : IDisposable
 
                 return ProcessSendResult.Complete;
             }
-            else if (this.Mode == NetTransmissionMode.Block)
+            else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
             {
+                while (this.sendIndex < this.totalGene)
+                {
+                    if (this.genes.GeneSerialListChain.Get(this.sendIndex++) is { } gene)
+                    {
+                        if (!gene.IsSent)
+                        {
+                            gene.Send_NotThreadSafe(netSender, 0);
+                            return this.sendIndex >= this.totalGene ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+                        }
+                    }
+                }
+
                 return ProcessSendResult.Complete;
             }
             else if (this.Mode == NetTransmissionMode.Stream)

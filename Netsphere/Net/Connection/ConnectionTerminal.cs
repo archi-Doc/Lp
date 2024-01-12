@@ -23,6 +23,7 @@ public class ConnectionTerminal
         this.AckBuffer = new(this);
         this.packetTerminal = this.NetTerminal.PacketTerminal;
         this.netStats = this.NetTerminal.NetStats;
+        this.CongestionControlList.AddFirst(this.NoCongestionControl);
 
         this.logger = this.NetTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
     }
@@ -289,7 +290,7 @@ public class ConnectionTerminal
             var congestionControlNode = this.CongestionControlList.First;
             while (congestionControlNode is not null)
             {
-                if (congestionControlNode.Value.Process(netSender))
+                if (!congestionControlNode.Value.Process(netSender))
                 {
                     this.CongestionControlList.Remove(congestionControlNode);
                 }

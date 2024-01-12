@@ -13,6 +13,8 @@ internal interface ICongestionControl
 {
     // Connection Connection { get; }
 
+    int NumberOfGenesInFlight { get; }
+
     bool IsCongested { get; }
 
     /// <summary>
