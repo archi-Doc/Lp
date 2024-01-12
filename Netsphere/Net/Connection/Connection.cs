@@ -149,9 +149,14 @@ public abstract class Connection : IDisposable
                 return;
             }
 
-            var congestionControl = new NoCongestionControl();
+            var congestionControl = new NoCongestionControl(); //tempcode
             if (Interlocked.CompareExchange(ref this.CongestionControl, congestionControl, null) == null)
             {
+                lock (this.ConnectionTerminal.CongestionControlList)
+                {
+                    this.ConnectionTerminal.CongestionControlList.AddLast(congestionControl);
+                }
+
                 return;
             }
         }

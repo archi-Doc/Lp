@@ -16,6 +16,12 @@ internal class NoCongestionControl : ICongestionControl
     public int NumberOfGenesInFlight
         => this.genesInFlight.Count;
 
+    Connection ICongestionControl.Connection
+        => throw new NotImplementedException();
+
+    bool ICongestionControl.IsCongested
+        => false;
+
     private readonly object syncObject = new();
     private readonly OrderedMultiMap<long, SendGene> genesInFlight = new(); // Retransmission mics, gene
 
@@ -36,6 +42,25 @@ internal class NoCongestionControl : ICongestionControl
 
     internal void ProcessSend(NetSender netSender)
     {
+    }
+
+    void ICongestionControl.TrySend(SendGene gene, NetSender netSender)
+    {
+        if (!gene.IsSent)
+        {
+            gene.Send_NotThreadSafe(netSender);
+        }
+    }
+
+    void ICongestionControl.Report()
+    {
+    }
+
+    bool ICongestionControl.Process(NetSender netSender)
+    {// lock (ConnectionTerminal.CongestionControlList)
+        // CongestionControl
+
+        // Resend
         SendGene? gene;
         lock (this.syncObject)
         {
@@ -54,7 +79,7 @@ internal class NoCongestionControl : ICongestionControl
                 var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend
-                    Console.WriteLine($"RESEND:{gene.GeneSerial}, RTO:{(rto - Mics.FastSystem) / 1_000}ms");
+                    // Console.WriteLine($"RESEND:{gene.GeneSerial}, RTO:{(rto - Mics.FastSystem) / 1_000}ms");
                     this.genesInFlight.SetNodeKey(firstNode, rto + (addition++));
 
                     gene.SendTransmission.Connection.ReportResend();
@@ -62,25 +87,16 @@ internal class NoCongestionControl : ICongestionControl
                 else
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
+                    gene.Node = default;
                 }
             }
         }
+
+        return true;
     }
 
-    void ICongestionControl.TrySend(SendGene gene, NetSender netSender)
+    void ICongestionControl.Send(SendGene gene)
     {
-        if (!gene.IsSent)
-        {
-            gene.Send_NotThreadSafe(netSender);
-        }
-    }
-
-    void ICongestionControl.Report()
-    {
-    }
-
-    ProcessSendResult ICongestionControl.ProcessResend(NetSender netSender)
-    {
-        return ProcessSendResult.Complete;
+        throw new NotImplementedException();
     }
 }

@@ -39,8 +39,9 @@ public class ConnectionTerminal
 
     internal readonly object SyncSend = new();
     internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
-    internal UnorderedLinkedList<Connection> CongestionList = new(); // lock (this.SyncSend)
-    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new(); // lock (this.SyncSend)
+    internal UnorderedLinkedList<Connection> CongestedList = new(); // lock (this.SyncSend)
+
+    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new(); // lock (this.CongestionControlList)
 
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
@@ -282,25 +283,25 @@ public class ConnectionTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        lock (this.SyncSend)
+        // CongestionControl
+        lock (this.CongestionControlList)
         {
-            // CongestionControl
             var congestionControlNode = this.CongestionControlList.First;
             while (congestionControlNode is not null)
             {
-                if (!netSender.CanSend)
+                if (congestionControlNode.Value.Process(netSender))
                 {
-                    return;
+                    this.CongestionControlList.Remove(congestionControlNode);
                 }
-
-                var congestionControl = congestionControlNode.Value;
-                congestionControl.ProcessResend(netSender);
 
                 congestionControlNode = congestionControlNode.Next;
             }
+        }
 
+        lock (this.SyncSend)
+        {
             // CongestionList: Move to SendList when congestion is resolved.
-            var currentNode = this.CongestionList.Last; // To maintain order in SendList, process from the last node.
+            var currentNode = this.CongestedList.Last; // To maintain order in SendList, process from the last node.
             while (currentNode is not null)
             {
                 var previousNode = currentNode.Previous;
@@ -309,7 +310,7 @@ public class ConnectionTerminal
                 if (connection.CongestionControl is null ||
                     !connection.CongestionControl.IsCongested)
                 {// No congestion control or not congested
-                    this.CongestionList.Remove(currentNode);
+                    this.CongestedList.Remove(currentNode);
                     this.SendList.AddFirst(currentNode);
                 }
 
@@ -338,7 +339,7 @@ public class ConnectionTerminal
                 else
                 {// Congestion
                     this.SendList.Remove(node);
-                    this.CongestionList.AddFirst(node);
+                    this.CongestedList.AddFirst(node);
                 }
             }
         }
