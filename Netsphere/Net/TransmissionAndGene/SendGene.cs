@@ -33,7 +33,7 @@ internal partial class SendGene
     public int GeneSerial
         => this.GeneSerialListLink.Position;
 
-    internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.CongestionControl.syncObject)
+    internal object? Node; // lock (this.CongestionControl.syncObject)
 
     #endregion
 

@@ -31,7 +31,7 @@ internal class NoCongestionControl : ICongestionControl
     {
         lock (this.syncObject)
         {
-            if (sendGene.Node is { } node)
+            if (sendGene.Node is OrderedMultiMap<long, SendGene>.Node node)
             {
                 this.genesInFlight.SetNodeKey(node, rto);
             }
@@ -47,7 +47,7 @@ internal class NoCongestionControl : ICongestionControl
     {
         lock (this.syncObject)
         {
-            if (sendGene.Node is { } node)
+            if (sendGene.Node is OrderedMultiMap<long, SendGene>.Node node)
             {
                 this.genesInFlight.RemoveNode(node);
                 sendGene.Node = default;

@@ -44,7 +44,9 @@ internal sealed partial class SendTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
+#pragma warning disable SA1401 // Fields should be private
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
+#pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();
     private int totalGene;

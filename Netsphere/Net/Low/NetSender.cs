@@ -165,8 +165,6 @@ internal class NetSender
 
     public int SendCount { get; private set; }
 
-    public Queue<FlowControl> FlowControlQueue { get; } = new();
-
     private readonly NetTerminal netTerminal;
     private readonly NetBase netBase;
     private readonly ILogger logger;
