@@ -110,36 +110,31 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal ProcessSendResult ProcessSingleSend(NetSender netSender, FlowControl? flowControl)
+    internal ProcessSendResult ProcessSingleSend(NetSender netSender, ICongestionControl congestionControl)
     {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
         lock (this.syncObject)
         {
             if (this.Mode == NetTransmissionMode.Rama)
             {
-                if (flowControl is null)
+                if (this.gene0?.IsSent == false)
                 {
-                    if (this.gene0?.IsSent == false)
-                    {
-                        var rto = this.gene0.Send_NotThreadSafe(netSender);
-                        if (rto > 0)
-                        {// Send
-                            (this.gene0.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
-                            this.Connection.IncrementSentCount();
-                        }
-                        else
-                        {// Cannot send
-                            return false;
-                        }
+                    var rto = this.gene0.Send_NotThreadSafe(netSender);
+                    if (rto > 0)
+                    {// Send
+                        (this.gene0.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
+                        this.Connection.IncrementSentCount();
+                    }
+                    else
+                    {// Cannot send
+                        return false;
                     }
                 }
             }
             else if (this.Mode == NetTransmissionMode.Block)
             {
-                Debug.Assert(flowControl != null);
             }
             else if (this.Mode == NetTransmissionMode.Stream)
             {
-                Debug.Assert(flowControl != null);
             }
             else
             {
@@ -274,7 +269,7 @@ internal sealed partial class SendTransmission : IDisposable
     }
 
     internal bool ProcessReceive_Ack(scoped Span<byte> span)
-    {// lock (Connection.sendTransmissions.SyncObject)
+    {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
 
         lock (this.syncObject)

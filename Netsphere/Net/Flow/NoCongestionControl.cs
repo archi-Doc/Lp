@@ -16,8 +16,7 @@ internal class NoCongestionControl : ICongestionControl
     public int NumberOfGenesInFlight
         => this.genesInFlight.Count;
 
-    Connection ICongestionControl.Connection
-        => throw new NotImplementedException();
+    // Connection ICongestionControl.Connection => throw new NotImplementedException();
 
     public bool IsCongested
         => false;
@@ -40,18 +39,6 @@ internal class NoCongestionControl : ICongestionControl
         }
     }
 
-    internal void ProcessSend(NetSender netSender)
-    {
-    }
-
-    void ICongestionControl.TrySend(SendGene gene, NetSender netSender)
-    {
-        if (!gene.IsSent)
-        {
-            gene.Send_NotThreadSafe(netSender);
-        }
-    }
-
     void ICongestionControl.Report()
     {
     }
@@ -64,7 +51,7 @@ internal class NoCongestionControl : ICongestionControl
         SendGene? gene;
         lock (this.syncObject)
         {
-            int addition = 0; // Increment RTO to create a small difference.
+            int addition = 0; // Increment rto (retransmission timeout) to create a small difference.
             while (netSender.CanSend)
             {// Retransmission
                 var firstNode = this.genesInFlight.First;
@@ -92,6 +79,6 @@ internal class NoCongestionControl : ICongestionControl
             }
         }
 
-        return true;
+        return true; // Do not dispose NoCongestionControl as it is shared across the connections.
     }
 }

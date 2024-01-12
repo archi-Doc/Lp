@@ -135,6 +135,7 @@ public abstract class Connection : IDisposable
 
     #endregion
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ICongestionControl GetCongestionControl()
     {
         return this.CongestionControl is null ? this.ConnectionTerminal.NoCongestionControl : this.CongestionControl;
@@ -442,37 +443,37 @@ Wait:
         => this.SendPriorityFrame([]);
 
     internal ProcessSendResult ProcessSingleSend(NetSender netSender)
-    {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
+    {// lock (this.ConnectionTerminal.SyncSend)
         if (this.IsClosedOrDisposed)
         {// Connection closed
             return ProcessSendResult.Complete;
         }
 
-        while (this.sendList.First is { } node)
-        {
-            var transmission = node.Value;
-            Debug.Assert(transmission.SendNode == node);
-
-            // Congestion control
-
-            var result = transmission.ProcessSingleSend(netSender, this.flowControl);
-            if (result == ProcessSendResult.Complete)
-            {// No transmission to send.
-                this.sendList.Remove(node);
-                transmission.SendNode = default;
-            }
-            else if (result == ProcessSendResult.Remaining)
-            {// Remaining
-                this.sendList.MoveToLast(node);
-            }
-            else
-            {
-            }
+        var node = this.sendList.First;
+        if (node is null)
+        {// No transmission to send.
+            return ProcessSendResult.Complete;
         }
 
-        if ()
+        var transmission = node.Value;
+        Debug.Assert(transmission.SendNode == node);
 
-            return this.sendList.Count > 0;
+        var result = transmission.ProcessSingleSend(netSender, this.GetCongestionControl());
+        if (result == ProcessSendResult.Complete)
+        {// Delete the node if there is no gene to send.
+            this.sendList.Remove(node);
+            transmission.SendNode = default;
+        }
+        else if (result == ProcessSendResult.Remaining)
+        {// If there are remaining genes, move it to the end.
+            this.sendList.MoveToLast(node);
+        }
+        else
+        {// If in a congested state, return ProcessSendResult.Congestion.
+            return ProcessSendResult.Congested;
+        }
+
+        return this.sendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)

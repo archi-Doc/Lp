@@ -67,7 +67,7 @@ internal partial class SendGene
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
-    {
+    {// lock (SendTransmissions.syncObject)
         this.Goshujin = null;
         this.Packet.Return();
     }
