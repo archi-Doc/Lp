@@ -78,7 +78,7 @@ internal class NoCongestionControl : ICongestionControl
                 }
 
                 gene = firstNode.Value;
-                gene.SendTransmission.CheckLatestAckMics(Mics.FastSystem);
+                //gene.SendTransmission.CheckLatestAckMics(Mics.FastSystem);
                 gene.Send_NotThreadSafe(netSender, addition++);
 
                 /*var rto = gene.Send_NotThreadSafe(netSender);
