@@ -86,7 +86,7 @@ public abstract class Connection : IDisposable
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 1ms
 
     public int SentCount
-        => this.sentCount;
+        => this.sendCount;
 
     public int ResendCount
         => this.resendCount;
@@ -95,8 +95,8 @@ public abstract class Connection : IDisposable
     {
         get
         {
-            var total = this.sentCount + this.resendCount;
-            return total == 0 ? 1.0d : (this.sentCount / (double)total);
+            var total = this.sendCount + this.resendCount;
+            return total == 0 ? 1.0d : (this.sendCount / (double)total);
         }
     }
 
@@ -126,7 +126,7 @@ public abstract class Connection : IDisposable
     private int minRtt; // Minimum rtt (mics)
     private int smoothedRtt; // Smoothed rtt (mics)
     private int rttvar; // Rtt variation (mics)
-    private int sentCount;
+    private int sendCount;
     private int resendCount;
 
     // Ack
@@ -417,16 +417,16 @@ Wait:
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ReportResend()
+    internal void IncrementResendCount()
     {
         this.resendCount++; // Not thread-safe, though it doesn't matter.
         // this.AddRtt(this.smoothedRtt * 2); // tempcode
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void IncrementSentCount()
+    internal void IncrementSendCount()
     {
-        this.sentCount++; // Not thread-safe, though it doesn't matter.
+        this.sendCount++; // Not thread-safe, though it doesn't matter.
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
@@ -668,7 +668,7 @@ Wait:
                 node.List == this.receiveReceivedList)
             {
                 transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
-                this.receiveReceivedList.MoveToLast(node);//check
+                this.receiveReceivedList.MoveToLast(node);
                 /*this.receiveReceivedList.Remove(node);
                 // this.receiveReceivedList.AddLast(node); // The node has been disposed and therefore cannot be reused.
                 transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);*/

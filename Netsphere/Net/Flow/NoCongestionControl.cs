@@ -27,14 +27,30 @@ internal class NoCongestionControl : ICongestionControl
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Remove_InFlight(SendGene gene)
+    void ICongestionControl.AddInFlight(SendGene sendGene, long rto)
     {
         lock (this.syncObject)
         {
-            if (gene.Node is { } node)
+            if (sendGene.Node is { } node)
+            {
+                this.genesInFlight.SetNodeKey(node, rto);
+            }
+            else
+            {
+                (sendGene.Node, _) = this.genesInFlight.Add(rto, sendGene);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void ICongestionControl.RemoveInFlight(SendGene sendGene)
+    {
+        lock (this.syncObject)
+        {
+            if (sendGene.Node is { } node)
             {
                 this.genesInFlight.RemoveNode(node);
-                gene.Node = default;
+                sendGene.Node = default;
             }
         }
     }
@@ -63,19 +79,21 @@ internal class NoCongestionControl : ICongestionControl
 
                 gene = firstNode.Value;
                 gene.SendTransmission.CheckLatestAckMics(Mics.FastSystem);
-                var rto = gene.Send_NotThreadSafe(netSender);
+                gene.Send_NotThreadSafe(netSender, addition++);
+
+                /*var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend
                     // Console.WriteLine($"RESEND:{gene.GeneSerial}, RTO:{(rto - Mics.FastSystem) / 1_000}ms");
                     this.genesInFlight.SetNodeKey(firstNode, rto + (addition++));
 
-                    gene.SendTransmission.Connection.ReportResend();
+                    gene.SendTransmission.Connection.IncrementResendCount();
                 }
                 else
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
                     gene.Node = default;
-                }
+                }*/
             }
         }
 

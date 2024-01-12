@@ -14,11 +14,14 @@ internal partial class SendGene
     public SendGene(SendTransmission sendTransmission)
     {
         this.SendTransmission = sendTransmission;
+        this.CongestionControl = sendTransmission.Connection.GetCongestionControl(); // Keep a CongestionContro instance as a member variable, since it may be subject to change.
     }
 
     #region FieldAndProperty
 
     public SendTransmission SendTransmission { get; }
+
+    public ICongestionControl CongestionControl { get; }
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
@@ -30,7 +33,7 @@ internal partial class SendGene
     public int GeneSerial
         => this.GeneSerialListLink.Position;
 
-    internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.FlowControl.syncObject)
+    internal OrderedMultiMap<long, SendGene>.Node? Node; // lock (this.CongestionControl.syncObject)
 
     #endregion
 
@@ -44,7 +47,7 @@ internal partial class SendGene
         this.Packet = toBeMoved;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Send_NotThreadSafe(NetSender netSender)
     {
         if (!this.CanSend)
@@ -63,11 +66,37 @@ internal partial class SendGene
         this.SentMics = currentMics;
         // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
         return currentMics + connection.RetransmissionTimeout;
+    }*/
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Send_NotThreadSafe(NetSender netSender, int additional)
+    {
+        if (!this.CanSend || !this.Packet.TryIncrement())
+        {// MemoryOwner has been returned to the pool (Disposed).
+            return;
+        }
+
+        var connection = this.SendTransmission.Connection;
+        var currentMics = Mics.FastSystem;
+        if (this.IsSent)
+        {
+            connection.IncrementResendCount();
+        }
+        else
+        {
+            connection.IncrementSendCount();
+        }
+
+        netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
+        this.SentMics = currentMics;
+
+        this.CongestionControl.AddInFlight(this, currentMics + connection.RetransmissionTimeout + additional);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {// lock (SendTransmissions.syncObject)
+        this.CongestionControl.RemoveInFlight(this);
         this.Goshujin = null;
         this.Packet.Return();
     }

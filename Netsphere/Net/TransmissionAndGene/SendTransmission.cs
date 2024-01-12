@@ -111,34 +111,45 @@ internal sealed partial class SendTransmission : IDisposable
     }
 
     internal ProcessSendResult ProcessSingleSend(NetSender netSender, ICongestionControl congestionControl)
-    {// lock (this.ConnectionTerminal.SyncSend). true: remaining genes
+    {// lock (this.ConnectionTerminal.SyncSend)
         lock (this.syncObject)
         {
             if (this.Mode == NetTransmissionMode.Rama)
             {
                 if (this.gene0?.IsSent == false)
                 {
-                    var rto = this.gene0.Send_NotThreadSafe(netSender);
+                    this.gene0.Send_NotThreadSafe(netSender, 0);
+                    /*var rto = this.gene0.Send_NotThreadSafe(netSender);
                     if (rto > 0)
                     {// Send
-                        (this.gene0.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
+                        this.gene0.CongestionControl.AddInFlight(this.gene0, rto);
                         this.Connection.IncrementSentCount();
-                    }
-                    else
-                    {// Cannot send
-                        return false;
-                    }
+                    }*/
                 }
+
+                if (this.gene1?.IsSent == false)
+                {
+                    this.gene1.Send_NotThreadSafe(netSender, 1);
+                }
+
+                if (this.gene2?.IsSent == false)
+                {
+                    this.gene2.Send_NotThreadSafe(netSender, 2);
+                }
+
+                return ProcessSendResult.Complete;
             }
             else if (this.Mode == NetTransmissionMode.Block)
             {
+                return ProcessSendResult.Complete;
             }
             else if (this.Mode == NetTransmissionMode.Stream)
             {
+                return ProcessSendResult.Complete;
             }
             else
             {
-                return false;
+                return ProcessSendResult.Complete;
             }
         }
     }
@@ -215,7 +226,7 @@ internal sealed partial class SendTransmission : IDisposable
                 }
 
                 this.Mode = NetTransmissionMode.Block;
-                this.Connection.CreateFlowControl();
+                this.Connection.CreateCongestionControl();
 
                 this.genes = new();
                 this.genes.GeneSerialListChain.Resize((int)info.NumberOfGenes);

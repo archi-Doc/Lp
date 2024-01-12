@@ -119,7 +119,7 @@ public partial class FlowControl
                     remaining--;
                     this.genesInFlight.SetNodeKey(firstNode, rto + (addition++));
 
-                    gene.SendTransmission.Connection.ReportResend();
+                    gene.SendTransmission.Connection.IncrementResendCount();
                 }
                 else
                 {// Cannot send
@@ -140,7 +140,7 @@ public partial class FlowControl
                 {// Send
                     remaining--;
                     (gene.Node, _) = this.genesInFlight.Add(rto + (addition++), gene);
-                    gene.SendTransmission.Connection.IncrementSentCount();
+                    gene.SendTransmission.Connection.IncrementSendCount();
                 }
                 else
                 {// Cannot send

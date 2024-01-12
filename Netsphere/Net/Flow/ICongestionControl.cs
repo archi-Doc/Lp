@@ -24,4 +24,8 @@ internal interface ICongestionControl
     bool Process(NetSender netSender);
 
     void Report();
+
+    void AddInFlight(SendGene sendGene, long rto);
+
+    void RemoveInFlight(SendGene sendGene);
 }
