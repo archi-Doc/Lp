@@ -300,7 +300,7 @@ public class ConnectionTerminal
 
         lock (this.SyncSend)
         {
-            // CongestionList: Move to SendList when congestion is resolved.
+            // CongestedList: Move to SendList when congestion is resolved.
             var currentNode = this.CongestedList.Last; // To maintain order in SendList, process from the last node.
             while (currentNode is not null)
             {
@@ -317,7 +317,7 @@ public class ConnectionTerminal
                 currentNode = previousNode;
             }
 
-            // SendList
+            // SendList: For fairness, send packets one at a time
             while (this.SendList.First is { } node)
             {
                 if (!netSender.CanSend)
@@ -328,16 +328,16 @@ public class ConnectionTerminal
                 var connection = node.Value;
                 var result = connection.ProcessSingleSend(netSender);
                 if (result == ProcessSendResult.Complete)
-                {// No transmission to send.
+                {// Delete the node if there is no transmission to send.
                     this.SendList.Remove(node);
                     connection.SendNode = null;
                 }
                 else if (result == ProcessSendResult.Remaining)
-                { // Remaining
+                {// If there are remaining packets, move it to the end.
                     this.SendList.MoveToLast(node);
                 }
                 else
-                {// Congestion
+                {// If in a congested state, move it to the CongestedList.
                     this.SendList.Remove(node);
                     this.CongestedList.AddFirst(node);
                 }

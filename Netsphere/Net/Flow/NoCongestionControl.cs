@@ -19,7 +19,7 @@ internal class NoCongestionControl : ICongestionControl
     Connection ICongestionControl.Connection
         => throw new NotImplementedException();
 
-    bool ICongestionControl.IsCongested
+    public bool IsCongested
         => false;
 
     private readonly object syncObject = new();
@@ -93,10 +93,5 @@ internal class NoCongestionControl : ICongestionControl
         }
 
         return true;
-    }
-
-    void ICongestionControl.Send(SendGene gene)
-    {
-        throw new NotImplementedException();
     }
 }

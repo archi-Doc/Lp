@@ -17,7 +17,5 @@ internal interface ICongestionControl
 
     bool Process(NetSender netSender);
 
-    void Send(SendGene gene);
-
     void Report();
 }
