@@ -20,8 +20,8 @@ public class SandboxSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.NetControl.RegisterResponder(Netsphere.Responder.MemoryResponder.Instance);
-        this.NetControl.RegisterResponder(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.NetResponder.Register(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;

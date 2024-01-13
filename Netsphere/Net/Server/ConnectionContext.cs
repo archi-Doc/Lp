@@ -76,7 +76,7 @@ public class ConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (this.NetTerminal.NetControl.TryGetResponder(transmissionContext.DataId, out var responder))
+            if (this.NetTerminal.NetResponder.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }

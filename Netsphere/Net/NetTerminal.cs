@@ -5,8 +5,6 @@ using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
-#pragma warning disable SA1202 // Elements should be ordered by access
-
 namespace Netsphere;
 
 public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
@@ -40,6 +38,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public NodePublicKey NodePublicKey { get; private set; }
 
     public NetStats NetStats { get; }
+
+    public NetResponder NetResponder { get; private set; } = default!;
 
     public PacketTerminal PacketTerminal { get; }
 
@@ -121,8 +121,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.netCleaner.Stop();
     }
 
-    internal void SetAlternative(bool isAlternative)
-        => this.IsAlternative = isAlternative;
+    internal void Initialize(NetResponder netResponder, bool isAlternative)
+    {
+        this.NetResponder = netResponder;
+        this.IsAlternative = isAlternative;
+    }
 
     internal void ProcessSend(NetSender netSender)
     {
