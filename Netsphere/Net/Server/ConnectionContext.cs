@@ -61,8 +61,6 @@ public class ConnectionContext
 
     public ServerConnection ServerConnection { get; }
 
-    public Func<CallContext> NewCallContext { get; internal set; } = default!;
-
     private object syncObject = new();
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
     private Dictionary<uint, object> idToInstance = new();
@@ -146,7 +144,7 @@ public class ConnectionContext
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                var result = NetResult.Success; // context.Result
+                var result = transmissionContext.Result;
                 if (result == NetResult.Success)
                 {// Success
                     transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);

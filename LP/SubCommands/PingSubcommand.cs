@@ -42,7 +42,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     {
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
-        var sw = Stopwatch.StartNew();
+        /*var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(address))
         {
             if (terminal is null)
@@ -62,7 +62,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             {
                 this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
             }
-        }
+        }*/
     }
 
     public Control Control { get; set; }

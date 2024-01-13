@@ -22,7 +22,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetControl = netControl;
         this.IsAlternative = isAlternative;
         this.UnitLogger = unitLogger;
-        this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
         this.NetStats = netStats;
 
@@ -45,6 +44,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
 
+    public NodePublicKey NodePublicKey { get; private set; }
+
     public NetStats NetStats { get; }
 
     public PacketTerminal PacketTerminal { get; }
@@ -55,16 +56,15 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public TimeSpan ResponseTimeout { get; set; }
 
+    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
+
     internal NetSender NetSender { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
-    private readonly ILogger logger;
     private readonly NetCleaner netCleaner;
-
-    private NodePrivateKey nodePrivateKey = default!;
 
     #endregion
 
@@ -78,9 +78,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public void SetDeliveryFailureRatio(double ratio)
     {
-#if DEBUG
         this.NetSender.SetDeliveryFailureRatio(ratio);
-#endif
     }
 
     public async Task<NetNode?> UnsafeGetNetNodeAsync(NetAddress address)
@@ -106,22 +104,21 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (!this.IsAlternative)
         {
-            this.nodePrivateKey = this.NetBase.NodePrivateKey;
+            this.NodePrivateKey = this.NetBase.NodePrivateKey;
         }
         else
         {
-            this.nodePrivateKey = NodePrivateKey.AlternativePrivateKey;
+            this.NodePrivateKey = NodePrivateKey.AlternativePrivateKey;
             this.Port = NetAddress.Alternative.Port;
         }
 
-        // Responders
-        // DefaultResponder.Register(this.Terminal);
+        this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
     }
 
     async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)
     {
         var core = message.ParentCore;
-        this.NetSender.Start(core);
+        await this.NetSender.StartAsync(core);
         this.netCleaner.Start(core);
     }
 
@@ -133,26 +130,22 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal void ProcessSend(NetSender netSender)
     {
-        // 1st: Packets
+        // 1st: PacketTerminal (Packets: Connect, Ack, Loss, ...)
         this.PacketTerminal.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;
         }
 
-        // 2nd: Ack
+        // 2nd: AckBuffer (Ack)
         this.ConnectionTerminal.AckBuffer.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;
         }
 
-        // 3rd: Genes (NetTransmission)
+        // 3rd: ConnectionTerminal (SendTransmission/SendGene)
         this.ConnectionTerminal.ProcessSend(netSender);
-        if (!netSender.CanSend)
-        {
-            return;
-        }
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)

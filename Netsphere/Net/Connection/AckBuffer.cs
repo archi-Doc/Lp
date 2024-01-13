@@ -111,11 +111,11 @@ internal partial class AckBuffer
                 break;
             }
 
-            this.ProcessSend(netSender, connection, ackQueue);
+            this.ProcessAck(netSender, connection, ackQueue);
         }
     }
 
-    private void ProcessSend(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
+    private void ProcessAck(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
     {// AckFrameCode
         ByteArrayPool.Owner? owner = default;
         var position = 0;
@@ -143,6 +143,8 @@ internal partial class AckBuffer
             var transmissionId = (uint)(ack >> 32);
             var geneSerial = (int)ack;
 
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"ProcessAck: {transmissionId}, {geneSerial}");
+
             if (previousTransmissionId == 0)
             {// Initial transmission id
                 previousTransmissionId = transmissionId;
@@ -169,12 +171,14 @@ internal partial class AckBuffer
                     position += 8;
                     numberOfPairs++;
 
-                    startGene = -1;
-                    endGene = -1;
+                    startGene = geneSerial;
+                    endGene = geneSerial + 1;
                 }
             }
             else
             {// Different transmission id
+                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+
                 var span = owner.ByteArray.AsSpan(position);
                 BitConverter.TryWriteBytes(span, startGene);
                 span = span.Slice(sizeof(int));
@@ -191,6 +195,7 @@ internal partial class AckBuffer
                 numberOfPairs = 0;
                 transmissionPosition = position;
                 position += 6;
+
                 startGene = geneSerial;
                 endGene = geneSerial + 1;
             }
@@ -202,6 +207,8 @@ internal partial class AckBuffer
         {
             if (owner is not null)
             {
+                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+
                 if (previousTransmissionId != 0)
                 {
                     var span = owner.ByteArray.AsSpan(position);

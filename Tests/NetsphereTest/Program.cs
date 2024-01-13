@@ -201,7 +201,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
-        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        var param = new NetControl.Unit.Param(true, "test", options, true);
         await unit.RunStandalone(param);
 
 RunAsync:

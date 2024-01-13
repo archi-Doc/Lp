@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -43,6 +44,10 @@ internal sealed partial class SendTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
+#pragma warning disable SA1401 // Fields should be private
+    internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
+#pragma warning restore SA1401 // Fields should be private
+
     private readonly object syncObject = new();
     private int totalGene;
     private TaskCompletionSource<NetResult>? sentTcs;
@@ -50,8 +55,7 @@ internal sealed partial class SendTransmission : IDisposable
     private SendGene? gene1; // Gene 1
     private SendGene? gene2; // Gene 2
     private SendGene.GoshujinClass? genes; // Multiple genes
-
-    private long latestAckMics;
+    private int sendIndex;
 
     #endregion
 
@@ -59,15 +63,6 @@ internal sealed partial class SendTransmission : IDisposable
     {
         this.Connection.RemoveTransmission(this);
         this.DisposeTransmission();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void CheckLatestAckMics(long currentMics)
-    {
-        if (currentMics - this.latestAckMics > NetConstants.TransmissionTimeoutMics)
-        {
-            this.Dispose();
-        }
     }
 
     internal void DisposeTransmission()
@@ -94,7 +89,7 @@ internal sealed partial class SendTransmission : IDisposable
         {
             foreach (var x in this.genes)
             {
-                x.Dispose();
+                x.DisposeMemory();
             }
 
             this.genes = default; // this.genes.Clear();
@@ -107,9 +102,73 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
+    internal ProcessSendResult ProcessSingleSend(NetSender netSender)
+    {// lock (this.ConnectionTerminal.SyncSend)
+        lock (this.syncObject)
+        {
+            if (this.Mode == NetTransmissionMode.Rama)
+            {
+                if (this.gene0?.IsSent == false)
+                {
+                    if (!this.gene0.Send_NotThreadSafe(netSender, 0))
+                    {// Cannot send
+                        return ProcessSendResult.Complete;
+                    }
+                }
+
+                if (this.gene1?.IsSent == false)
+                {
+                    if (!this.gene1.Send_NotThreadSafe(netSender, 1))
+                    {// Cannot send
+                        return ProcessSendResult.Complete;
+                    }
+                }
+
+                if (this.gene2?.IsSent == false)
+                {
+                    if (!this.gene2.Send_NotThreadSafe(netSender, 2))
+                    {// Cannot send
+                        return ProcessSendResult.Complete;
+                    }
+                }
+
+                return ProcessSendResult.Complete;
+            }
+            else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
+            {
+                while (this.sendIndex < this.totalGene)
+                {
+                    if (this.genes.GeneSerialListChain.Get(this.sendIndex++) is { } gene)
+                    {
+                        if (!gene.IsSent)
+                        {
+                            if (!gene.Send_NotThreadSafe(netSender, 0))
+                            {// Cannot send
+                                return ProcessSendResult.Complete;
+                            }
+
+                            return this.sendIndex >= this.totalGene ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+                        }
+                    }
+                }
+
+                return ProcessSendResult.Complete;
+            }
+            else if (this.Mode == NetTransmissionMode.Stream)
+            {
+                return ProcessSendResult.Complete;
+            }
+            else
+            {
+                return ProcessSendResult.Complete;
+            }
+        }
+    }
+
     internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
+        // Console.WriteLine($"SendBlock: {info.NumberOfGenes} genes");
 
         lock (this.syncObject)
         {
@@ -119,7 +178,7 @@ internal sealed partial class SendTransmission : IDisposable
                 return NetResult.Closed;
             }
 
-            this.latestAckMics = Mics.GetSystem();
+            this.Connection.UpdateLatestAckMics();
             this.sentTcs = sentTcs;
             this.totalGene = info.NumberOfGenes;
 
@@ -144,7 +203,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                     span = span.Slice((int)info.FirstGeneSize);
                     Debug.Assert(span.Length == info.LastGeneSize);
-                    this.CreateFollowingPacket(1, span, out owner);
+                    this.CreateFollowingPacket(1, 1, span, out owner);
                     this.gene1.SetSend(owner);
                 }
                 else if (info.NumberOfGenes == 3)
@@ -157,12 +216,12 @@ internal sealed partial class SendTransmission : IDisposable
                     this.gene0.SetSend(owner);
 
                     span = span.Slice((int)info.FirstGeneSize);
-                    this.CreateFollowingPacket(1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
+                    this.CreateFollowingPacket(1, 1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
                     this.gene1.SetSend(owner);
 
                     span = span.Slice(FollowingGeneFrame.MaxGeneLength);
                     Debug.Assert(span.Length == info.LastGeneSize);
-                    this.CreateFollowingPacket(2, span, out owner);
+                    this.CreateFollowingPacket(2, 2, span, out owner);
                     this.gene2.SetSend(owner);
                 }
                 else
@@ -178,7 +237,7 @@ internal sealed partial class SendTransmission : IDisposable
                 }
 
                 this.Mode = NetTransmissionMode.Block;
-                this.Connection.CreateFlowControl();
+                this.Connection.CreateCongestionControl();
 
                 this.genes = new();
                 this.genes.GeneSerialListChain.Resize((int)info.NumberOfGenes);
@@ -194,7 +253,7 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : FollowingGeneFrame.MaxGeneLength);
                     var gene = new SendGene(this);
-                    this.CreateFollowingPacket(i, span.Slice(0, size), out owner);
+                    this.CreateFollowingPacket(i, i, span.Slice(0, size), out owner);
                     gene.SetSend(owner);
 
                     span = span.Slice(size);
@@ -205,6 +264,8 @@ internal sealed partial class SendTransmission : IDisposable
                 Debug.Assert(span.Length == 0);
             }
         }
+
+        this.Connection.AddSend(this);
 
         return NetResult.Success;
     }
@@ -230,7 +291,7 @@ internal sealed partial class SendTransmission : IDisposable
     }
 
     internal bool ProcessReceive_Ack(scoped Span<byte> span)
-    {// lock (Connection.sendTransmissions.SyncObject)
+    {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
 
         lock (this.syncObject)
@@ -248,13 +309,13 @@ internal sealed partial class SendTransmission : IDisposable
                     continue;
                 }
 
-                this.latestAckMics = Mics.FastSystem;
+                this.Connection.UpdateLatestAckMics();
 
                 if (this.Mode == NetTransmissionMode.Rama)
                 {
                     if (startGene == 0 && endGene == this.totalGene)
                     {
-                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck 0 - {this.totalGene}");
+                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.totalGene}");
 
                         this.gene0?.Dispose();
                         this.gene0 = null;
@@ -269,17 +330,17 @@ internal sealed partial class SendTransmission : IDisposable
                 }
                 else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
                 {
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
                     for (var i = startGene; i < endGene; i++)
                     {
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
-                            this.genes.GeneSerialListChain.Remove(gene);
-                        }
-                        else
-                        {
-                            return false;
+                            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Dispose send gene {gene.GeneSerial}");
+                            gene.Dispose(); // this.genes.GeneSerialListChain.Remove(gene);
                         }
                     }
+
+                    completeFlag = this.genes.GeneSerialListChain.Count == 0;
                 }
                 else
                 {
@@ -337,7 +398,7 @@ internal sealed partial class SendTransmission : IDisposable
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(int genePosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(int geneSerial, int dataPosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 
@@ -351,7 +412,10 @@ internal sealed partial class SendTransmission : IDisposable
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, genePosition); // GenePosition
+        BitConverter.TryWriteBytes(span, geneSerial); // GeneSerial
+        span = span.Slice(sizeof(int));
+
+        BitConverter.TryWriteBytes(span, dataPosition); // DataPosition
         span = span.Slice(sizeof(int));
 
         Debug.Assert(span.Length == 0);

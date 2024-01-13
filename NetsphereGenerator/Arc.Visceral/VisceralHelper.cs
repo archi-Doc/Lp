@@ -1,8 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;

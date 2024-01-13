@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics;
+using System.Text;
 using Arc.Collections;
 using Netsphere.Packet;
 using Netsphere.Server;
@@ -38,7 +40,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     private int totalGene;
     private TaskCompletionSource<NetResponse>? receivedTcs;
     private ReceiveStream? receiveStream;
-    private uint maxReceived;
+    private int maxReceivedPosition;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
     private ReceiveGene? gene2; // Gene 2
@@ -103,6 +105,15 @@ internal sealed partial class ReceiveTransmission : IDisposable
         else
         {
             this.Mode = NetTransmissionMode.Block;
+
+            this.genes = new();
+            this.genes.DataPositionListChain.Resize(totalGene);
+            for (var i = 0; i < totalGene; i++)
+            {
+                var gene = new ReceiveGene(this);
+                gene.Goshujin = this.genes;
+                this.genes.DataPositionListChain.Add(gene);
+            }
         }
 
         this.totalGene = totalGene;
@@ -114,8 +125,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = totalGene;
     }
 
-    internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
-    {
+    internal void ProcessReceive_Gene(int geneSerial, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
+    {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
@@ -124,23 +135,27 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
-                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
+                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
+                return;
+            }
+            else if (this.Mode == NetTransmissionMode.Initial)
+            {// The packet must be discarded since the first packet has not been received and the receiving mode is unknown.
                 return;
             }
 
             if (this.Mode == NetTransmissionMode.Rama)
             {// Single send/recv
-                if (genePosition == 0)
+                if (geneSerial == 0)
                 {
                     this.gene0 ??= new(this);
                     this.gene0.SetRecv(toBeShared);
                 }
-                else if (genePosition == 1)
+                else if (geneSerial == 1)
                 {
                     this.gene1 ??= new(this);
                     this.gene1.SetRecv(toBeShared);
                 }
-                else if (genePosition == 2)
+                else if (geneSerial == 2)
                 {
                     this.gene2 ??= new(this);
                     this.gene2.SetRecv(toBeShared);
@@ -169,8 +184,44 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         this.gene2?.IsReceived == true;
                 }
             }
-            else if (genePosition < this.totalGene)
+            else if (this.Mode == NetTransmissionMode.Block &&
+                this.genes is not null)
             {// Multiple send/recv
+                var chain = this.genes.DataPositionListChain;
+                if (chain.Get(dataPosition) is { } gene)
+                {
+                    gene.SetRecv(toBeShared);
+                    if (this.maxReceivedPosition <= dataPosition)
+                    {
+                        while (chain.Get(this.maxReceivedPosition) is { } g && g.IsReceived)
+                        {
+                            this.maxReceivedPosition++;
+                        }
+                    }
+
+                    if (this.maxReceivedPosition >= this.totalGene)
+                    {
+                        completeFlag = true;
+                    }
+                }
+
+                /*if (this.Connection.IsClient)
+                {
+                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log($"JJJ{dataPosition:00} - {this.maxReceivedPosition} - {this.genes.All(x => x.IsReceived)}");
+                    var sb = new StringBuilder();
+                    foreach (var x in this.genes)
+                    {
+                        if (x.IsReceived)
+                        {
+                            sb.Append("1");
+                        }
+                        else
+                        {
+                            sb.Append("0");
+                        }
+                    }
+                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log(sb.ToString());
+                }*/
             }
 
             if (completeFlag)
@@ -206,7 +257,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 }
                 else
                 {// Defer
-                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
+                    // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
                     this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
                 }
@@ -214,9 +265,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {genePosition}");
-
-            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
+            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
+            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
         }
 
         if (completeFlag)
@@ -237,15 +287,18 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             this.Connection.RemoveTransmission(this);
 
-            if (this.Connection is ServerConnection serverConnection)
-            {// InvokeServer: Connection, NetTransmission, Owner
-                var connectionContext = serverConnection.ConnectionContext;
-                var transmissionContext = new TransmissionContext(connectionContext, this.TransmissionId, dataKind, dataId, owner.IncrementAndShare());
-                connectionContext.InvokeSync(transmissionContext);
-            }
+            if (owner.IsRent)
+            {
+                if (this.Connection is ServerConnection serverConnection)
+                {// InvokeServer: Connection, NetTransmission, Owner
+                    var connectionContext = serverConnection.ConnectionContext;
+                    var transmissionContext = new TransmissionContext(connectionContext, this.TransmissionId, dataKind, dataId, owner.IncrementAndShare());
+                    connectionContext.InvokeSync(transmissionContext);
+                }
 
-            receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShareReadOnly(), 0));
-            owner.Return();
+                receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
+                owner.Return();
+            }
         }
     }
 
@@ -300,12 +353,60 @@ internal sealed partial class ReceiveTransmission : IDisposable
                     toBeMoved = default;
                 }
             }
+
+            return;
         }
         else
         {// Multiple send/recv
-            dataKind = 0;
-            dataId = 0;
-            toBeMoved = default;
+            // First
+            var firstGene = this.genes.DataPositionListChain.Get(0);
+            if (firstGene is null)
+            {
+                goto Abort;
+            }
+
+            var span = firstGene.Packet.Span;
+            dataKind = BitConverter.ToUInt32(span);
+            span = span.Slice(sizeof(uint));
+            dataId = BitConverter.ToUInt64(span);
+
+            var firstSpan = firstGene.Packet.Slice(12).Span;
+            var length = firstSpan.Length;
+
+            // Last
+            var lastGene = this.genes.DataPositionListChain.Get(this.totalGene - 1);
+            if (lastGene is null)
+            {
+                goto Abort;
+            }
+
+            length += (FollowingGeneFrame.MaxGeneLength * (this.totalGene - 2)) + lastGene.Packet.Span.Length;
+            toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+            span = toBeMoved.Span;
+
+            firstSpan.CopyTo(span);
+            span = span.Slice(firstSpan.Length);
+            for (var i = 1; i < this.totalGene; i++)
+            {
+                var gene = this.genes.DataPositionListChain.Get(i);
+                if (gene is null)
+                {
+                    toBeMoved.Return();
+                    goto Abort;
+                }
+
+                var src = gene.Packet.Span;
+                src.CopyTo(span);
+                span = span.Slice(src.Length);
+            }
+
+            Debug.Assert(span.Length == 0);
+            return;
         }
+
+Abort:
+        dataKind = 0;
+        dataId = 0;
+        toBeMoved = default;
     }
 }

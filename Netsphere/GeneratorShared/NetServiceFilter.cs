@@ -3,16 +3,14 @@
 namespace Netsphere;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = true)]
-public class NetServiceFilterAttribute : Attribute
+public class NetServiceFilterAttribute<TFilter> : Attribute
+    where TFilter : IServiceFilter
 {
-    public Type FilterType { get; set; }
-
     public int Order { get; set; } = int.MaxValue;
 
     public object[] Arguments { get; set; } = Array.Empty<object>();
 
-    public NetServiceFilterAttribute(Type filterType)
+    public NetServiceFilterAttribute()
     {
-        this.FilterType = filterType;
     }
 }

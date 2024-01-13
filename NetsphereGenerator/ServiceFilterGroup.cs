@@ -98,7 +98,7 @@ public class ServiceFilterGroup
             }
             else
             {
-                ssb.AppendLine($"{objectName}.{x.Identifier} ??= {serviceProvider}.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
+                ssb.AppendLine($"{objectName}.{x.Identifier} ??= {serviceProvider}?.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
             }
 
             using (var scopeNull = ssb.ScopeBrace($"if ({objectName}.{x.Identifier} == null)"))

@@ -5,7 +5,6 @@ using Netsphere.Block;
 namespace Netsphere.Server;
 
 public abstract class SyncResponder<TSend, TReceive> : INetResponder
-    where TReceive : ITinyhandSerialize<TReceive>
 {
     public virtual ulong DataId => BlockService.GetId<TSend, TReceive>();
 
@@ -33,7 +32,6 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
 }
 
 public abstract class AsyncResponder<TSend, TReceive> : INetResponder
-    where TReceive : ITinyhandSerialize<TReceive>
 {
     public virtual ulong DataId => BlockService.GetId<TSend, TReceive>();
 

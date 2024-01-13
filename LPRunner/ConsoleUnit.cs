@@ -94,7 +94,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             var netsphereOptions = new NetsphereOptions();
             netsphereOptions.Port = information.RunnerPort;
-            var param = new NetControl.Unit.Param(true, () => new ServerContext(), () => new CallContext(), "runner", netsphereOptions, true);
+            var param = new NetControl.Unit.Param(true, "runner", netsphereOptions, true);
             await this.RunStandalone(param);
 
             var parserOptions = SimpleParserOptions.Standard with

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Netsphere.Server;
 using NetsphereTest;
 
 namespace LP.NetServices;
@@ -29,7 +30,7 @@ public class RemoteBenchBroker
         }
     }
 
-    public async Task Process(Terminal terminal, NetNode node)
+    public async Task Process(NetTerminal terminal, NetNode node)
     {
         var data = new byte[100];
         int successCount = 0;
@@ -51,7 +52,7 @@ public class RemoteBenchBroker
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = terminal.TryCreate(node))
+                    using (var t = await terminal.TryConnect(node))
                     {
                         if (t is null)
                         {
@@ -94,7 +95,7 @@ public class RemoteBenchBroker
             AverageLatency = (int)(totalLatency / (successCount + failureCount)),
         };
 
-        using (var t = terminal.TryCreate(node))
+        using (var t = await terminal.TryConnect(node))
         {
             if (t is null)
             {
@@ -117,8 +118,8 @@ public class RemoteBenchBroker
     private int concurrent;
 }
 
-[NetServiceFilter(typeof(TestFilter), Order = 1)]
-[NetServiceFilter(typeof(TestFilterB), Order = 1)]
+[NetServiceFilter<TestFilter>(Order = 1)]
+[NetServiceFilter<TestFilterB>(Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
 {
@@ -184,7 +185,7 @@ public class TestFilterB : TestFilter
 
 public class TestFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
         await invoker(context);
     }
@@ -192,7 +193,7 @@ public class TestFilter : IServiceFilter
 
 public class NullFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> next)
     {
         context.Result = NetResult.NoNetService;
     }
@@ -200,7 +201,7 @@ public class NullFilter : IServiceFilter
 
 public class TestFilter2 : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> next)
     {
         await next(context);
     }

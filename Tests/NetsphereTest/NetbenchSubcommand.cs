@@ -30,7 +30,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
+        using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
         {
             /*var p = new PacketPunch(null);
             var sw = Stopwatch.StartNew();
@@ -125,7 +125,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         var count = 0;
         for (var j = 0; j < N; j++)
         {
-            using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
+            using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
             {
                 if (terminal is null)
                 {
@@ -172,11 +172,11 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
         var sw = Stopwatch.StartNew();
         var count = 0;
-        Parallel.For(0, Concurrent, i =>
+        Parallel.For(0, Concurrent, async i =>
         {
             for (var j = 0; j < (Total / Concurrent); j++)
             {
-                using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
+                using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
                 {
                     if (terminal is null)
                     {

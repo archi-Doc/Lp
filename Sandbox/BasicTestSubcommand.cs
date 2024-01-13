@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Net;
 using Arc.Unit;
-using LP.T3CS;
 using Netsphere;
 using Netsphere.Block;
 using Netsphere.Packet;
@@ -33,7 +31,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        this.NetControl.RegisterResponder(Netsphere.Responder.PingPacketResponder.Instance);
+        this.NetControl.RegisterResponder(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.RegisterResponder(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -45,12 +44,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        /*for (var i = 0; i < 10; i++)
-        {
-            p = new PacketPing("test56789");
-            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
-        }*/
-
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
 
         var netNode = await netTerminal.UnsafeGetNetNodeAsync(netAddress);
@@ -59,41 +52,51 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
+        // netTerminal.PacketTerminal.MaxResendCount = 0;
+        netTerminal.SetDeliveryFailureRatio(0.2);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
             {
-                var service = connection.GetService<TestService>();
-                var result2 = await service.Pingpong([0, 1, 2]);
-                /*var service = connection.GetService<ISomeService>();
-                service.Engage();
-                service.Send();
-                service.EngageAndSend();
-                service.Send(new(Proof, proof));*/
-
                 // Send Block*Stream, Receive Non*Block*Stream
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
-                /*var p2 = new PacketPing();
-                var response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
-                if (response.Value is not null)
+                var success = 0;
+
+                for (var i = 0; i < 20; i++)
                 {
-                    Console.WriteLine(response.Value.ToString());
-                }*/
+                    var testBlock = TestBlock.Create(10);
+                    var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
+                    if (testBlock.Equals(r.Value))
+                    {
+                        success++;
+                    }
+                }
+
+                for (var i = 0; i < 20_000; i += 1_000)
+                {
+                    Console.WriteLine($"TestBlock: {i}");
+                    var testBlock = TestBlock.Create(i);
+                    var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
+                    if (testBlock.Equals(r.Value))
+                    {
+                        success++;
+                    }
+                }
 
                 var tasks = new List<Task>();
                 var count = 0;
-                for (var i = 0; i < 10; i++)
+                var array = new byte[] { 0, 1, 2, };
+                for (var i = 0; i < 20; i++)
                 {
                     tasks.Add(Task.Run(async () =>
                     {
-                        var r = await connection.SendAndReceive<PacketPing, PacketPingResponse>(new PacketPing());
-                        if (r.Value is not null)
+                        var r = await connection.SendAndReceive<Memory<byte>, Memory<byte>>(array);
+                        if (r.Value.Span.SequenceEqual(array))
                         {
                             Interlocked.Increment(ref count);
+                            Interlocked.Increment(ref success);
                         }
                     }));
-
                 }
 
                 await Task.WhenAll(tasks);
@@ -135,30 +138,19 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
+
+                Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
             }
         }
 
-        // await Task.Delay(1000000000);
-
-        /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
-        {
-            return;
-        }
-
-        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
-        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
-
-        // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
-        {
-            if (terminal is null)
+        /*using (var connection = await netTerminal.TryConnect(netNode))
+        {// Reuse connection
+            if (connection is not null)
             {
-                return;
+                var service = connection.GetService<TestService>();
+                var result2 = await service.Pingpong([0, 1, 2]);
+                Console.WriteLine(result2?.Length.ToString());
             }
-
-            // terminal.SetMaximumResponseTime(1_000_000);
-            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
-            this.logger.TryGet()?.Log($"{t.ToString()}");
         }*/
     }
 

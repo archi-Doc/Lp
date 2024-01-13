@@ -48,7 +48,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
     {
         this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 
-        var sw = Stopwatch.StartNew();
+        /*var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(node))
         {
             NetEndPoint endPoint;
@@ -74,7 +74,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             {
                 this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
             }
-        }
+        }*/
     }
 
     public Control Control { get; set; }

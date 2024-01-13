@@ -23,7 +23,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        using (var terminal = this.netControl.TerminalObsolete.TryCreate(node))
+        using (var terminal = await this.netControl.NetTerminal.TryConnect(node))
         {
             if (terminal is null)
             {
@@ -53,7 +53,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             Console.WriteLine($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
-            await this.remoteBenchBroker.Process(netControl.TerminalObsolete, node);
+            await this.remoteBenchBroker.Process(netControl.NetTerminal, node);
         }
     }
 

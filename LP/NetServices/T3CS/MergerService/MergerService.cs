@@ -28,7 +28,7 @@ public partial interface IMergerService : IAuthorizedService
     NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param);
 }
 
-[NetServiceFilter(typeof(MergerOrTestFilter))]
+[NetServiceFilter<MergerOrTestFilter>]
 [NetServiceObject]
 public class MergerServiceImpl : AuthorizedService, IMergerService
 {// LPCallContext.Current

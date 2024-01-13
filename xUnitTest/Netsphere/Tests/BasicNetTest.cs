@@ -1,16 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
+using Arc.Crypto;
 using Netsphere;
-using Netsphere.Crypto;
+using Netsphere.Packet;
 using Xunit;
 
 namespace xUnitTest.NetsphereTest;
 
 [Collection(NetFixtureCollection.Name)]
-public class NodeTest
+public class BasicNetTest
 {
-    public NodeTest(NetFixture netFixture)
+    public BasicNetTest(NetFixture netFixture)
     {
         this.NetFixture = netFixture;
     }
@@ -18,6 +18,12 @@ public class NodeTest
     [Fact]
     public async Task Test1()
     {
+        this.NetControl.RegisterResponder(Netsphere.Responder.MemoryResponder.Instance);
+
+        var p = new PacketPing("test56789");
+        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
+        result.Result.Is(NetResult.Success);
+
         using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))
         {
             if (connection is null)
@@ -36,6 +42,14 @@ public class NodeTest
             task2 = await basicService.SumInt(3, 4).ResponseAsync;
             task2.Result.Is(NetResult.Success);
             task2.Value.Is(7);
+
+            for (var i = 0; i < 10_000; i += 1_000)
+            {
+                var array = new byte[i];
+                RandomVault.Pseudo.NextBytes(array);
+                var memory = await connection.SendAndReceive<Memory<byte>, Memory<byte>>(array.AsMemory());
+                memory.Value.Span.SequenceEqual(array).IsTrue();
+            }
         }
     }
 

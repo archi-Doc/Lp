@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -33,29 +34,19 @@ public class NetFixture : IDisposable
         options.EnableAlternative = true;
         options.EnableLogger = false;
 
-        var unit = builder.Build();
-        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
-        unit.RunStandalone(param).Wait();
+        this.unit = builder.Build();
+        var param = new NetControl.Unit.Param(true, "test", options, true);
+        this.unit.RunStandalone(param).Wait();
 
-        this.NetControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
+        this.NetControl = this.unit.Context.ServiceProvider.GetRequiredService<NetControl>();
     }
 
     public void Dispose()
     {
+        this.unit.Context.SendTerminateAsync(new()).Wait();
     }
 
     public NetControl NetControl { get; }
-}
 
-public class TestServerContext : ServerContext
-{
-}
-
-public class TestCallContext : CallContext<TestServerContext>
-{
-    public static new TestCallContext Current => (TestCallContext)CallContext.Current;
-
-    public TestCallContext()
-    {
-    }
+    private NetControl.Unit unit;
 }

@@ -166,7 +166,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                 foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                 {
-                    ssb.AppendLine($"ClientTerminalStaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                    ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
                 }
             }
 

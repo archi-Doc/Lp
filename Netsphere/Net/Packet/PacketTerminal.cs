@@ -55,11 +55,11 @@ public sealed partial class PacketTerminal
         this.netTerminal = netTerminal;
         this.logger = logger;
 
-        this.InitialResendTimeoutMics = Mics.FromMilliseconds(500);
+        this.RetransmissionTimeoutMics = NetConstants.DefaultRetransmissionTimeoutMics;
         this.MaxResendCount = 2;
     }
 
-    public long InitialResendTimeoutMics { get; set; }
+    public long RetransmissionTimeoutMics { get; set; }
 
     public int MaxResendCount { get; set; }
 
@@ -174,7 +174,7 @@ public sealed partial class PacketTerminal
                 }
             }
 
-            while (this.items.WaitingForResponseListChain.First is { } item && (Mics.FastSystem - item.SentMics) > this.InitialResendTimeoutMics)
+            while (this.items.WaitingForResponseListChain.First is { } item && (Mics.FastSystem - item.SentMics) > this.RetransmissionTimeoutMics)
             {// Waiting for response list
                 if (!netSender.CanSend)
                 {
@@ -249,7 +249,7 @@ public sealed partial class PacketTerminal
                 }
                 else if (packetType == PacketType.GetInformation)
                 {// PacketGetInformation
-                    var packet = new PacketGetInformationResponse(this.netBase.NodePublicKey);
+                    var packet = new PacketGetInformationResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
                     return;
@@ -276,7 +276,7 @@ public sealed partial class PacketTerminal
                 if (item.ResponseTcs is not null)
                 {
                     var elapsedMics = currentSystemMics > item.SentMics ? (int)(currentSystemMics - item.SentMics) : 0;
-                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, toBeShared.IncrementAndShareReadOnly(), elapsedMics));
+                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, toBeShared.IncrementAndShare(), elapsedMics));
                 }
             }
         }

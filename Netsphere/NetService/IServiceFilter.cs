@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Server;
+
 namespace Netsphere;
 
 public interface IServiceFilterBase
@@ -11,7 +13,7 @@ public interface IServiceFilterBase
 
 public interface IServiceFilter : IServiceFilterBase
 {
-    public Task Invoke(CallContext context, Func<CallContext, Task> invoker);
+    public Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker);
 }
 
 // Currently disabled.

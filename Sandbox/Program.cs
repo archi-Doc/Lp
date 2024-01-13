@@ -3,29 +3,12 @@
 global using Arc.Threading;
 global using CrystalData;
 global using Tinyhand;
-using System.Runtime.InteropServices;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using SimpleCommandLine;
 
 namespace Sandbox;
-
-public class TestServerContext : ServerContext
-{
-    public TestServerContext()
-    {
-    }
-}
-
-public class TestCallContext : CallContext<TestServerContext>
-{
-    public static new TestCallContext Current => (TestCallContext)CallContext.Current;
-
-    public TestCallContext()
-    {
-    }
-}
 
 public class Program
 {
@@ -47,7 +30,9 @@ public class Program
             .Configure(context =>
             {
                 // Command
+                context.AddCommand(typeof(SandboxSubcommand));
                 context.AddCommand(typeof(BasicTestSubcommand));
+                context.AddCommand(typeof(BlockTestSubcommand));
 
                 context.AddLoggerResolver(context =>
                 {
@@ -77,7 +62,7 @@ public class Program
         var unit = builder.Build();
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
-        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        var param = new NetControl.Unit.Param(true, "test", options, true);
         await unit.RunStandalone(param);
 
         var parserOptions = SimpleParserOptions.Standard with

@@ -21,20 +21,10 @@ public class NodeSubcommandGet : ISimpleCommandAsync<NodeSubcommandGetOptions>
             return;
         }
 
-        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(address))
+        var node = await this.Control.NetControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        if (node is not null)
         {
-            if (terminal is null)
-            {
-                return;
-            }
-
-            var p = new PacketGetNodeInformationObsolete();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketGetNodeInformationObsolete, PacketGetNodeInformationResponseObsolete>(p);
-            if (result.Value != null)
-            {
-                var node = new NetNode(address, result.Value.Node.PublicKey);
-                this.logger.TryGet()?.Log($"{node.ToString()}");
-            }
+            this.logger.TryGet()?.Log($"{node.ToString()}");
         }
     }
 

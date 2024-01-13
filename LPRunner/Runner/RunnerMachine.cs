@@ -4,6 +4,7 @@ using Arc.Unit;
 using BigMachines;
 using LP;
 using Netsphere;
+using Netsphere.Packet;
 
 namespace LPRunner;
 
@@ -146,20 +147,26 @@ public partial class RunnerMachine : Machine
 
     private async Task<NetResult> SendAcknowledge()
     {
-        var nodeAddress = this.Information.TryGetDualAddress();
-        if (!nodeAddress.IsValid)
+        var address = this.Information.TryGetDualAddress();
+        if (!address.IsValid)
         {
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.netControl.TerminalObsolete.TryCreate(nodeAddress))
+        var node = await this.netControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        if (node is null)
+        {
+            return NetResult.NoNodeInformation;
+        }
+
+        using (var terminal = await this.netControl.NetTerminal.TryConnect(node))
         {
             if (terminal is null)
             {
                 return NetResult.NoNetwork;
             }
 
-            var result = await terminal.SendAndReceiveAsync<PacketPingObsolete, PacketPingResponseObsolete>(new());
+            var result = await terminal.SendAndReceive<PacketPing, PacketPingResponse>(new());
             this.logger.TryGet()?.Log($"Ping: {result.Result}");
             return result.Result;
         }

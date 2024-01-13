@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -45,6 +48,13 @@ public enum VisceralTarget
     Event = 256,
     Type = Class | Struct | Interface | Record,
     All = ~0,
+}
+
+public enum InterfaceImplementation
+{
+    Unknown,
+    Implemented,
+    NotImplemented,
 }
 
 public class VisceralAttribute : IComparable<VisceralAttribute>
@@ -209,6 +219,8 @@ public class VisceralAttribute : IComparable<VisceralAttribute>
     }
 
     public SyntaxReference? SyntaxReference => this.attributeData?.ApplicationSyntaxReference;
+
+    public AttributeData? AttributeData => this.attributeData;
 
     protected AttributeData? attributeData;
 }
@@ -771,6 +783,25 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
             }
 
             return "object";
+        }
+    }
+
+    public InterfaceImplementation GetInterfaceImplementation(string fullInterfaceName)
+    {
+        if (!this.IsSealed)
+        {
+            return InterfaceImplementation.Unknown;
+        }
+        else
+        {
+            if (this.AllInterfaces.Contains(fullInterfaceName))
+            {
+                return InterfaceImplementation.Implemented;
+            }
+            else
+            {
+                return InterfaceImplementation.NotImplemented;
+            }
         }
     }
 
@@ -1826,6 +1857,9 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         }
     }
 
+    public bool IsSealed
+        => this.symbol?.IsSealed == true;
+
     public bool IsConstructedFromNullable
     {
         get
@@ -2049,6 +2083,20 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         else
         {
             return true;
+        }
+    }
+
+    public bool IsSameAssembly(IAssemblySymbol assemblySymbol)
+    {
+        if (this.symbol != null)
+        {
+#pragma warning disable RS1024
+            return this.symbol.ContainingAssembly == assemblySymbol;
+#pragma warning restore RS1024
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -2729,6 +2777,23 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         }
     }
 
+    public bool Field_IsPublic
+    {
+        get
+        {
+            if (this.symbol is IFieldSymbol fs)
+            {
+                return fs.DeclaredAccessibility == Accessibility.Public;
+            }
+            else if (this.memberInfo is FieldInfo fi)
+            {
+                return fi.IsPublic;
+            }
+
+            return false;
+        }
+    }
+
     public Accessibility Field_Accessibility
     {
         get
@@ -2793,6 +2858,40 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
             else if (this.memberInfo is PropertyInfo pi)
             {
                 return pi.SetMethod.IsPrivate;
+            }
+
+            return false;
+        }
+    }
+
+    public bool Property_IsPublicGetter
+    {
+        get
+        {
+            if (this.symbol is IPropertySymbol ps)
+            {
+                return ps.GetMethod?.DeclaredAccessibility == Accessibility.Public;
+            }
+            else if (this.memberInfo is PropertyInfo pi)
+            {
+                return pi.GetMethod.IsPublic;
+            }
+
+            return false;
+        }
+    }
+
+    public bool Property_IsPublicSetter
+    {
+        get
+        {
+            if (this.symbol is IPropertySymbol ps)
+            {
+                return ps.SetMethod?.DeclaredAccessibility == Accessibility.Public;
+            }
+            else if (this.memberInfo is PropertyInfo pi)
+            {
+                return pi.SetMethod.IsPublic;
             }
 
             return false;
@@ -2889,6 +2988,9 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
 
         return sb.ToString();
     }
+
+    public bool HasDefaultConstructor()
+        => this.GetMembers(VisceralTarget.Method).Any(a => a.Method_IsConstructor && a.Method_Parameters.Length == 0 && a.ContainingObject == this);
 
     private ImmutableArray<VisceralAttribute> SymbolToAttribute(ISymbol symbol)
     {
