@@ -2,17 +2,8 @@
 
 namespace Netsphere.Net;
 
-internal enum ProcessSendResult
-{
-    Complete,
-    Remaining,
-    Congested,
-}
-
 internal interface ICongestionControl
 {
-    // Connection Connection { get; }
-
     int NumberOfGenesInFlight { get; }
 
     bool IsCongested { get; }

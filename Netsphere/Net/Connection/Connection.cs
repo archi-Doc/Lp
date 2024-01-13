@@ -83,7 +83,7 @@ public abstract class Connection : IDisposable
         => this.smoothedRtt;
 
     public int RetransmissionTimeout
-        => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 1ms
+        => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
 
     public int SendCount
         => this.sendCount;
@@ -155,7 +155,7 @@ public abstract class Connection : IDisposable
                 return;
             }
 
-            var congestionControl = new NoCongestionControl(); //tempcode
+            var congestionControl = new CubicCongestionControl(this);
             if (Interlocked.CompareExchange(ref this.CongestionControl, congestionControl, null) == null)
             {
                 lock (this.ConnectionTerminal.CongestionControlList)
@@ -470,7 +470,14 @@ Wait:
             return ProcessSendResult.Complete;
         }
 
-        var result = transmission.ProcessSingleSend(netSender, this.GetCongestionControl());
+        var congestionControl = this.GetCongestionControl();
+        Console.WriteLine(congestionControl.ToString());
+        if (congestionControl.IsCongested)
+        {// If in a congested state, return ProcessSendResult.Congestion.
+            return ProcessSendResult.Congested;
+        }
+
+        var result = transmission.ProcessSingleSend(netSender);
         if (result == ProcessSendResult.Complete)
         {// Delete the node if there is no gene to send.
             this.sendList.Remove(node);
@@ -479,10 +486,6 @@ Wait:
         else if (result == ProcessSendResult.Remaining)
         {// If there are remaining genes, move it to the end.
             this.sendList.MoveToLast(node);
-        }
-        else
-        {// If in a congested state, return ProcessSendResult.Congestion.
-            return ProcessSendResult.Congested;
         }
 
         return this.sendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;

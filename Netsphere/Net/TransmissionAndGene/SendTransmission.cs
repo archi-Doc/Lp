@@ -102,7 +102,7 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal ProcessSendResult ProcessSingleSend(NetSender netSender, ICongestionControl congestionControl)
+    internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend)
         lock (this.syncObject)
         {
