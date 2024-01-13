@@ -69,11 +69,11 @@ internal partial class SendGene
     }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send_NotThreadSafe(NetSender netSender, int additional)
+    public bool Send_NotThreadSafe(NetSender netSender, int additional)
     {
         if (!this.CanSend || !this.Packet.TryIncrement())
         {// MemoryOwner has been returned to the pool (Disposed).
-            return;
+            return false;
         }
 
         var connection = this.SendTransmission.Connection;
@@ -91,6 +91,7 @@ internal partial class SendGene
         this.SentMics = currentMics;
 
         this.CongestionControl.AddInFlight(this, currentMics + connection.RetransmissionTimeout + additional);
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

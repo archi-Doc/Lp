@@ -128,12 +128,17 @@ public abstract class Connection : IDisposable
     private int rttvar; // Rtt variation (mics)
     private int sendCount;
     private int resendCount;
+    private long latestAckMics;
 
     // Ack
     internal long AckMics; // lock(AckBuffer.syncObject)
     internal Queue<ulong>? AckQueue; // lock(AckBuffer.syncObject)
 
     #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateLatestAckMics()
+        => this.latestAckMics = Mics.FastSystem;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ICongestionControl GetCongestionControl()
@@ -457,6 +462,13 @@ Wait:
 
         var transmission = node.Value;
         Debug.Assert(transmission.SendNode == node);
+
+        if (Mics.FastSystem - this.latestAckMics > NetConstants.TransmissionTimeoutMics)
+        {// Timeout
+            this.CloseTransmission();
+            this.Dispose();
+            return ProcessSendResult.Complete;
+        }
 
         var result = transmission.ProcessSingleSend(netSender, this.GetCongestionControl());
         if (result == ProcessSendResult.Complete)

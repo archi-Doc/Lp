@@ -57,23 +57,12 @@ internal sealed partial class SendTransmission : IDisposable
     private SendGene.GoshujinClass? genes; // Multiple genes
     private int sendIndex;
 
-    private long latestAckMics;
-
     #endregion
 
     public void Dispose()
     {
         this.Connection.RemoveTransmission(this);
         this.DisposeTransmission();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void CheckLatestAckMics(long currentMics)
-    {
-        if (currentMics - this.latestAckMics > NetConstants.TransmissionTimeoutMics)
-        {
-            this.Dispose();
-        }
     }
 
     internal void DisposeTransmission()
@@ -182,7 +171,7 @@ internal sealed partial class SendTransmission : IDisposable
                 return NetResult.Closed;
             }
 
-            this.latestAckMics = Mics.GetSystem();
+            this.Connection.UpdateLatestAckMics();
             this.sentTcs = sentTcs;
             this.totalGene = info.NumberOfGenes;
 
@@ -313,7 +302,7 @@ internal sealed partial class SendTransmission : IDisposable
                     continue;
                 }
 
-                this.latestAckMics = Mics.FastSystem;
+                this.Connection.UpdateLatestAckMics();
 
                 if (this.Mode == NetTransmissionMode.Rama)
                 {

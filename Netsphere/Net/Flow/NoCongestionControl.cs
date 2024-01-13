@@ -66,7 +66,8 @@ internal class NoCongestionControl : ICongestionControl
         // Resend
         SendGene? gene;
         lock (this.syncObject)
-        {
+        {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
+
             int addition = 0; // Increment rto (retransmission timeout) to create a small difference.
             while (netSender.CanSend)
             {// Retransmission
@@ -78,8 +79,11 @@ internal class NoCongestionControl : ICongestionControl
                 }
 
                 gene = firstNode.Value;
-                //gene.SendTransmission.CheckLatestAckMics(Mics.FastSystem);
-                gene.Send_NotThreadSafe(netSender, addition++);
+                if (!gene.Send_NotThreadSafe(netSender, addition++))
+                {// Cannot send
+                    // this.genesInFlight.RemoveNode(firstNode);
+                    // gene.Node = default;
+                }
 
                 /*var rto = gene.Send_NotThreadSafe(netSender);
                 if (rto > 0)
