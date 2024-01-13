@@ -5,30 +5,33 @@ using BigMachines;
 using LPRunner;
 using Netsphere;
 using Netsphere.Crypto;
+using Netsphere.Server;
 
 namespace LP.NetServices;
 
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
 {// Remote -> LPRunner
-    public RemoteControlService(ILogger<RemoteControlService> logger, BigMachine bigMachine, Terminal terminal, RunnerInformation information)
+    public RemoteControlService(ILogger<RemoteControlService> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
     {
         this.logger = logger;
+        this.netControl = netControl;
         this.bigMachine = bigMachine;
-        this.terminal = terminal;
         this.information = information;
     }
 
     public async NetTask RequestAuthorization(Token token)
     {
-        if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token, this.information.RemotePublicKey))
+        /*if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token, this.information.RemotePublicKey))
         {
             this.token = token;
             CallContext.Current.Result = NetResult.Success;
             return;
         }
 
-        CallContext.Current.Result = NetResult.NotAuthorized;
+        CallContext.Current.Result = NetResult.NotAuthorized;*/
+
+        TransmissionContext.Current.Result = NetResult.NotAuthorized;
     }
 
     public async NetTask<NetResult> Restart()
@@ -44,7 +47,14 @@ internal class RemoteControlService : IRemoteControlService
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.terminal.TryCreate(address))
+        var netTerminal = this.netControl.NetTerminal;
+        var netNode = await netTerminal.UnsafeGetNetNodeAsync(address);
+        if (netNode is null)
+        {
+            return NetResult.NoNodeInformation;
+        }
+
+        using (var terminal = await netTerminal.TryConnect(netNode))
         {
             if (terminal is null)
             {
@@ -75,8 +85,8 @@ internal class RemoteControlService : IRemoteControlService
     }
 
     private ILogger<RemoteControlService> logger;
+    private NetControl netControl;
     private BigMachine bigMachine;
-    private Terminal terminal;
     private RunnerInformation information;
     private Token? token;
 }

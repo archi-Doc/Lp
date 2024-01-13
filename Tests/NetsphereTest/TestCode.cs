@@ -2,22 +2,6 @@
 
 namespace NetsphereTest;
 
-public class TestServerContext : ServerContext
-{
-    public TestServerContext()
-    {
-    }
-}
-
-public class TestCallContext : CallContext<TestServerContext>
-{
-    public static new TestCallContext Current => (TestCallContext)CallContext.Current;
-
-    public TestCallContext()
-    {
-    }
-}
-
 [NetServiceInterface]
 public interface ICustomService : INetService
 {
@@ -37,14 +21,12 @@ public class CustomService : ICustomService, ICustomService2
     [NetServiceFilter<CustomFilter>(Arguments = new object[] { 1, 2, new string?[] { "te" }, 3 })]
     async NetTask ICustomService.Test()
     {
-        var serverContext = TestCallContext.Current;
     }
 
     [NetServiceFilter<CustomFilter>(Arguments = new object[] { 9, })]
 
     public async NetTask Test()
     {
-        var serverContext = TestCallContext.Current;
     }
 }
 

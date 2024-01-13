@@ -35,7 +35,7 @@ public class NetFixture : IDisposable
         options.EnableLogger = false;
 
         this.unit = builder.Build();
-        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        var param = new NetControl.Unit.Param(true, "test", options, true);
         this.unit.RunStandalone(param).Wait();
 
         this.NetControl = this.unit.Context.ServiceProvider.GetRequiredService<NetControl>();
@@ -49,17 +49,4 @@ public class NetFixture : IDisposable
     public NetControl NetControl { get; }
 
     private NetControl.Unit unit;
-}
-
-public class TestServerContext : ServerContext
-{
-}
-
-public class TestCallContext : CallContext<TestServerContext>
-{
-    public static new TestCallContext Current => (TestCallContext)CallContext.Current;
-
-    public TestCallContext()
-    {
-    }
 }

@@ -13,11 +13,9 @@ global using ValueLink;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
-using Netsphere.Crypto;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Misc;
-using Netsphere.Responder;
 using Netsphere.Server;
 using Netsphere.Stats;
 
@@ -40,10 +38,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 // Main services
                 context.AddSingleton<NetControl>();
                 context.AddSingleton<NetBase>();
-                context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
-                context.AddTransient<ServerObsolete>();
                 context.AddSingleton<NtpCorrection>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -66,7 +62,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public class Unit : BuiltUnit
     {
-        public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
+        public record Param(bool EnableServer, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
 
         public Unit(UnitContext context)
             : base(context)
@@ -82,7 +78,7 @@ public class NetControl : UnitBase, IUnitPreparable
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             if (param.EnableServer)
             {
-                netControl.SetupServer(param.NewServerContext, param.NewCallContext);
+                // netControl.SetupServer(param.NewServerContext, param.NewCallContext);
             }
 
             this.Context.SendPrepare(new());
@@ -95,8 +91,6 @@ public class NetControl : UnitBase, IUnitPreparable
     {
         this.unitLogger = unitLogger;
         this.ServiceProvider = context.ServiceProvider;
-        this.NewServerContext = () => new ServerContext();
-        this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
         this.NetStats = netStats;
 
@@ -108,10 +102,6 @@ public class NetControl : UnitBase, IUnitPreparable
     }
 
     #region FieldAndProperty
-
-    public Func<ServerContext> NewServerContext { get; private set; }
-
-    public Func<CallContext> NewCallContext { get; private set; }
 
     public NetBase NetBase { get; }
 
@@ -138,32 +128,6 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public bool TryGetResponder(ulong dataId, [MaybeNullWhen(false)] out INetResponder responder)
         => this.responders.TryGetValue(dataId, out responder);
-
-    public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
-    {
-        if (newServerContext != null)
-        {
-            this.NewServerContext = newServerContext;
-        }
-
-        if (newCallContext != null)
-        {
-            this.NewCallContext = newCallContext;
-        }
-
-        async Task InvokeServer(ServerTerminal terminal)
-        {
-            var server = this.ServiceProvider.GetRequiredService<ServerObsolete>();
-            try
-            {
-                await server.Process(terminal).ConfigureAwait(false);
-            }
-            finally
-            {
-                terminal.Dispose();
-            }
-        }
-    }
 
     private void Dump(ILog logger)
     {

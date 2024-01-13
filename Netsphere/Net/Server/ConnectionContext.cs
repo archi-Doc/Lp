@@ -61,8 +61,6 @@ public class ConnectionContext
 
     public ServerConnection ServerConnection { get; }
 
-    public Func<CallContext> NewCallContext { get; internal set; } = default!;
-
     private object syncObject = new();
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
     private Dictionary<uint, object> idToInstance = new();

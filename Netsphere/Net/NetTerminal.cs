@@ -22,7 +22,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetControl = netControl;
         this.IsAlternative = isAlternative;
         this.UnitLogger = unitLogger;
-        this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
         this.NetStats = netStats;
 
@@ -65,7 +64,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
-    private readonly ILogger logger;
     private readonly NetCleaner netCleaner;
 
     #endregion
