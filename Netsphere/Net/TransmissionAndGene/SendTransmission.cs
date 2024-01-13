@@ -110,23 +110,26 @@ internal sealed partial class SendTransmission : IDisposable
             {
                 if (this.gene0?.IsSent == false)
                 {
-                    this.gene0.Send_NotThreadSafe(netSender, 0);
-                    /*var rto = this.gene0.Send_NotThreadSafe(netSender);
-                    if (rto > 0)
-                    {// Send
-                        this.gene0.CongestionControl.AddInFlight(this.gene0, rto);
-                        this.Connection.IncrementSentCount();
-                    }*/
+                    if (!this.gene0.Send_NotThreadSafe(netSender, 0))
+                    {// Cannot send
+                        return ProcessSendResult.Complete;
+                    }
                 }
 
                 if (this.gene1?.IsSent == false)
                 {
-                    this.gene1.Send_NotThreadSafe(netSender, 1);
+                    if (!this.gene1.Send_NotThreadSafe(netSender, 1))
+                    {// Cannot send
+                        return ProcessSendResult.Complete;
+                    }
                 }
 
                 if (this.gene2?.IsSent == false)
                 {
-                    this.gene2.Send_NotThreadSafe(netSender, 2);
+                    if (!this.gene2.Send_NotThreadSafe(netSender, 2))
+                    {// Cannot send
+                        return ProcessSendResult.Complete;
+                    }
                 }
 
                 return ProcessSendResult.Complete;
@@ -139,7 +142,11 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         if (!gene.IsSent)
                         {
-                            gene.Send_NotThreadSafe(netSender, 0);
+                            if (!gene.Send_NotThreadSafe(netSender, 0))
+                            {// Cannot send
+                                return ProcessSendResult.Complete;
+                            }
+
                             return this.sendIndex >= this.totalGene ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
                         }
                     }

@@ -53,7 +53,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        netTerminal.SetDeliveryFailureRatio(0.3);
+        netTerminal.SetDeliveryFailureRatio(0.2);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
@@ -62,7 +62,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 var success = 0;
 
-                /*for (var i = 0; i < 20; i++)
+                for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
@@ -70,7 +70,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     {
                         success++;
                     }
-                }*/
+                }
 
                 for (var i = 0; i < 20_000; i += 1_000)
                 {
@@ -83,10 +83,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     }
                 }
 
-                /*var tasks = new List<Task>();
+                var tasks = new List<Task>();
                 var count = 0;
                 var array = new byte[] { 0, 1, 2, };
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 20; i++)
                 {
                     tasks.Add(Task.Run(async () =>
                     {
@@ -94,12 +94,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                         if (r.Value.Span.SequenceEqual(array))
                         {
                             Interlocked.Increment(ref count);
+                            Interlocked.Increment(ref success);
                         }
                     }));
                 }
 
                 await Task.WhenAll(tasks);
-                Console.WriteLine(count);*/
+                Console.WriteLine(count);
 
                 /*using (var stream = await connection.SendStream(1000))
                 {

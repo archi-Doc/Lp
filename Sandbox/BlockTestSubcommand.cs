@@ -42,7 +42,7 @@ public class BlockTestSubcommand : ISimpleCommandAsync
         {
             if (connection is not null)
             {
-                var testBlock = TestBlock.Create(100_000); // 100_000
+                var testBlock = TestBlock.Create(4_000_000); // 100_000
                 var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
                 var equals = testBlock.Equals(r.Value);
 
