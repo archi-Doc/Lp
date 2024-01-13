@@ -392,7 +392,6 @@ public class Control : ILogInformation
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
-        this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
         this.Crystalizer = crystalizer;
         this.Vault = vault;
         this.AuthorityVault = authorityVault;

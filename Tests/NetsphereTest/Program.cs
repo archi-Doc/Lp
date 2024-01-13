@@ -128,7 +128,7 @@ public class Program
                         return;
                     }
 
-                    if (context.LogSourceType == typeof(ClientTerminal))
+                    /*if (context.LogSourceType == typeof(ClientTerminal))
                     {// ClientTerminal
                         context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
                         return;
@@ -143,17 +143,7 @@ public class Program
                         context.SetOutput<StreamLogger<TerminalLoggerOptions>>();
                         return;
                     }
-                    else if (context.LogSourceType == typeof(NetSocketObsolete))
-                    {// NetSocket
-                        /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
-                        options.EnableLogger)
-                        {
-                            context.SetOutput<FileLogger<NetSocketLoggerOptions>>();
-                        }*/
-
-                        return;
-                    }
-                    else
+                    else*/
                     {
                         context.SetOutput<ConsoleLogger>();
                     }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
+using Netsphere.Server;
 
 namespace LP.NetServices;
 
@@ -24,15 +25,15 @@ internal class RemoteControlServiceImpl : RemoteControlService
 
     public async NetTask RequestAuthorization(Token token)
     {// NetTask<NetResult> is recommended.
-        if (CallContext.Current.ServerContext.Terminal.Node.Address.IsPrivateOrLocalLoopbackAddress() &&
+        if (TransmissionContext.Current.Connection.EndPoint.IsPrivateOrLocalLoopbackAddress() &&
             token.ValidateAndVerifyWithoutSalt(this.control.LPBase.RemotePublicKey))
         {
             this.token = token;
-            CallContext.Current.Result = NetResult.Success;
+            TransmissionContext.Current.Result = NetResult.Success;
             return;
         }
 
-        CallContext.Current.Result = NetResult.NotAuthorized;
+        TransmissionContext.Current.Result = NetResult.NotAuthorized;
     }
 
     public async NetTask<NetResult> Restart()
@@ -42,8 +43,7 @@ internal class RemoteControlServiceImpl : RemoteControlService
             return NetResult.NotAuthorized;
         }
 
-        var callContext = CallContext.Current;
-        if (callContext.ServerContext.Terminal.Node.Address.IsPrivateOrLocalLoopbackAddress())
+        if (TransmissionContext.Current.Connection.EndPoint.IsPrivateOrLocalLoopbackAddress())
         {// Restart
             this.logger.TryGet()?.Log("RemoteControlService.Restart()");
 

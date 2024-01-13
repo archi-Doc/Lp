@@ -49,7 +49,7 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
             return new(MergerResult.NotAuthorized);
         }
 
-        return this.merger.CreateCredit(LPCallContext.Current.ServerContext, param);
+        return this.merger.CreateCredit(param);
     }
 
     public new NetTask<NetResult> Authorize(Token token)

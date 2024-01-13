@@ -39,6 +39,12 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable,
         this.PublicKey = publicKey;
     }
 
+    public NetNode(in NetEndPoint endPoint, NodePublicKey publicKey)
+    {
+        this.Address = new(endPoint.EndPoint.Address, (ushort)endPoint.EndPoint.Port);
+        this.PublicKey = publicKey;
+    }
+
     [Key(0)]
     public NetAddress Address { get; private set; }
 

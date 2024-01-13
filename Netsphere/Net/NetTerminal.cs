@@ -1,11 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using Netsphere.Server;
 using Netsphere.Stats;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -16,11 +13,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const double DefaultResponseTimeoutInSeconds = 2d;
 
-    internal NetTerminal(NetControl netControl, bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(unitContext)
     {
-        this.NetControl = netControl;
-        this.IsAlternative = isAlternative;
         this.UnitLogger = unitLogger;
         this.NetBase = netBase;
         this.NetStats = netStats;
@@ -38,8 +33,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public CancellationToken CancellationToken
         => ThreadCore.Root.CancellationToken;
 
-    internal NetControl NetControl { get; }
-
     public NetBase NetBase { get; }
 
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
@@ -50,7 +43,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
-    public bool IsAlternative { get; }
+    public bool IsAlternative { get; private set; }
 
     public int Port { get; set; }
 
@@ -127,6 +120,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetSender.Stop();
         this.netCleaner.Stop();
     }
+
+    internal void SetAlternative(bool isAlternative)
+        => this.IsAlternative = isAlternative;
 
     internal void ProcessSend(NetSender netSender)
     {

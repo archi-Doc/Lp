@@ -11,7 +11,7 @@ namespace LP.Subcommands;
 [SimpleCommand("create-credit")]
 public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, AuthorityVault authorityVault, AuthorizedTerminalFactory authorizedTerminalFactory)
+    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, NetTerminal terminal, MergerNestedcommand nestedcommand, AuthorityVault authorityVault, AuthorizedTerminalFactory authorizedTerminalFactory)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -30,7 +30,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
                 return;
             }
 
-            var service = authorized.Terminal.GetService<IMergerService>();
+            var service = authorized.Connection.GetService<IMergerService>();
 
             /*var response = await service.GetInformation().ResponseAsync;
             if (response.IsSuccess && response.Value is { } informationResult)
@@ -57,7 +57,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
     }
 
     private ILogger logger;
-    private Terminal terminal;
+    private NetTerminal terminal;
     private MergerNestedcommand nestedcommand;
     private AuthorityVault authorityVault;
     private AuthorizedTerminalFactory authorizedTerminalFactory;

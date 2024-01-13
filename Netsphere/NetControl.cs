@@ -41,6 +41,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
+                context.AddSingleton<NetTerminal>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
@@ -86,7 +87,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal)
         : base(context)
     {
         this.unitLogger = unitLogger;
@@ -94,10 +95,11 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetBase = netBase;
         this.NetStats = netStats;
 
-        this.NetTerminal = new(this, false, context, unitLogger, netBase, netStats);
+        this.NetTerminal = netTerminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
-            this.Alternative = new(this, true, context, unitLogger, netBase, netStats);
+            this.Alternative = new(context, unitLogger, netBase, netStats);
+            this.Alternative.SetAlternative(true);
         }
     }
 
@@ -123,8 +125,8 @@ public class NetControl : UnitBase, IUnitPreparable
     }
 
     public void RegisterResponder<TResponder>(TResponder responder)
-    where TResponder : INetResponder
-    => this.responders.TryAdd(responder.DataId, responder);
+        where TResponder : INetResponder
+        => this.responders.TryAdd(responder.DataId, responder);
 
     public bool TryGetResponder(ulong dataId, [MaybeNullWhen(false)] out INetResponder responder)
         => this.responders.TryGetValue(dataId, out responder);

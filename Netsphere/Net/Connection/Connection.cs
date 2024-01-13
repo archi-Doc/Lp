@@ -38,13 +38,14 @@ public abstract class Connection : IDisposable
         Disposed,
     }
 
-    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
+    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
     {
         this.NetBase = connectionTerminal.NetBase;
         this.Logger = this.NetBase.UnitLogger.GetLogger(this.GetType());
         this.PacketTerminal = packetTerminal;
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
+        this.Node = node;
         this.EndPoint = endPoint;
     }
 
@@ -63,7 +64,12 @@ public abstract class Connection : IDisposable
     public string ConnectionIdText
         => ((ushort)this.ConnectionId).ToString("x4");
 
+    public NetNode Node { get; }
+
     public NetEndPoint EndPoint { get; }
+
+    public ulong Salt
+        => this.embryo.Salt;
 
     public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
 

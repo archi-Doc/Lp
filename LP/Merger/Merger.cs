@@ -61,7 +61,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async NetTask<MergerResult> CreateCredit(LPServerContext context, CreateCreditParams param)
+    public async NetTask<MergerResult> CreateCredit(CreateCreditParams param)
     {
         if (!param.Proof.ValidateAndVerify())
         {

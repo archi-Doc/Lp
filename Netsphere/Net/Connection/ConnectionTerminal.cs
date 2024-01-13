@@ -148,7 +148,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(endPoint, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -166,7 +166,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
@@ -177,7 +177,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         return connection;
@@ -193,8 +193,9 @@ public class ConnectionTerminal
             return false;
         }
 
+        var node = new NetNode(in endPoint, p.ClientPublicKey);
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         lock (this.serverConnections.SyncObject)

@@ -11,7 +11,7 @@ namespace LP.Subcommands;
 [SimpleCommand("restart")]
 public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandRestartOptions>
 {
-    public RemoteSubcommandRestart(ILogger<RemoteSubcommandRestart> logger, Terminal terminal, AuthorityVault authorityVault)
+    public RemoteSubcommandRestart(ILogger<RemoteSubcommandRestart> logger, NetTerminal terminal, AuthorityVault authorityVault)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -34,7 +34,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
         // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
         this.logger.TryGet()?.Log($"Start");
-        using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
+        using (var terminal = await this.terminal.TryConnect(nodeInformation))
         {
             if (terminal == null)
             {
@@ -42,7 +42,8 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            var token = await terminal.CreateToken(Token.Type.Authorize);
+            //var token = await terminal.CreateToken(Token.Type.Authorize);
+            var token = new Token();
             if (token == null)
             {
                 return;
@@ -68,7 +69,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
     }
 
     private ILogger logger;
-    private Terminal terminal;
+    private NetTerminal terminal;
     private AuthorityVault authorityVault;
 }
 
