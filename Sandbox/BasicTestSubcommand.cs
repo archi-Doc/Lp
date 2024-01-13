@@ -53,7 +53,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        netTerminal.SetDeliveryFailureRatio(0.0);
+        netTerminal.SetDeliveryFailureRatio(0.3);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)

@@ -16,8 +16,6 @@ internal class NoCongestionControl : ICongestionControl
     public int NumberOfGenesInFlight
         => this.genesInFlight.Count;
 
-    // Connection ICongestionControl.Connection => throw new NotImplementedException();
-
     public bool IsCongested
         => false;
 
@@ -52,8 +50,6 @@ internal class NoCongestionControl : ICongestionControl
                 this.genesInFlight.RemoveNode(node);
                 sendGene.Node = default;
             }
-
-            Console.WriteLine(this.genesInFlight.Count);
         }
     }
 
@@ -69,7 +65,6 @@ internal class NoCongestionControl : ICongestionControl
         SendGene? gene;
         lock (this.syncObject)
         {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
-
             int addition = 0; // Increment rto (retransmission timeout) to create a small difference.
             while (netSender.CanSend)
             {// Retransmission
@@ -83,23 +78,9 @@ internal class NoCongestionControl : ICongestionControl
                 gene = firstNode.Value;
                 if (!gene.Send_NotThreadSafe(netSender, addition++))
                 {// Cannot send
-                    // this.genesInFlight.RemoveNode(firstNode);
-                    // gene.Node = default;
-                }
-
-                /*var rto = gene.Send_NotThreadSafe(netSender);
-                if (rto > 0)
-                {// Resend
-                    // Console.WriteLine($"RESEND:{gene.GeneSerial}, RTO:{(rto - Mics.FastSystem) / 1_000}ms");
-                    this.genesInFlight.SetNodeKey(firstNode, rto + (addition++));
-
-                    gene.SendTransmission.Connection.IncrementResendCount();
-                }
-                else
-                {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
                     gene.Node = default;
-                }*/
+                }
             }
         }
 

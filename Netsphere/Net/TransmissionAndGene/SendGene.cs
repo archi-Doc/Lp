@@ -104,7 +104,8 @@ internal partial class SendGene
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void DisposeMemory()
-    {
+    {// lock (SendTransmissions.syncObject)
+        this.CongestionControl.RemoveInFlight(this);
         this.Packet.Return();
     }
 

@@ -161,7 +161,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
-        Console.WriteLine($"SendBlock: {info.NumberOfGenes} genes");//
+        // Console.WriteLine($"SendBlock: {info.NumberOfGenes} genes");
 
         lock (this.syncObject)
         {

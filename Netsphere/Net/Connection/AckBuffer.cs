@@ -128,7 +128,6 @@ internal partial class AckBuffer
 
         while (ackQueue.TryDequeue(out var ack))
         {
-Loop:
             if ((maxLength - position) < AckFrame.Margin)
             {// Send the packet due to the size approaching the limit.
                 SendPacket();
@@ -144,7 +143,7 @@ Loop:
             var transmissionId = (uint)(ack >> 32);
             var geneSerial = (int)ack;
 
-            this.logger.TryGet(LogLevel.Debug)?.Log($"ProcessAck: {transmissionId}, {geneSerial}");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"ProcessAck: {transmissionId}, {geneSerial}");
 
             if (previousTransmissionId == 0)
             {// Initial transmission id
@@ -172,15 +171,13 @@ Loop:
                     position += 8;
                     numberOfPairs++;
 
-                    startGene = -1;
-                    endGene = -1;
-
-                    goto Loop;
+                    startGene = geneSerial;
+                    endGene = geneSerial + 1;
                 }
             }
             else
             {// Different transmission id
-                this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
 
                 var span = owner.ByteArray.AsSpan(position);
                 BitConverter.TryWriteBytes(span, startGene);
@@ -198,10 +195,9 @@ Loop:
                 numberOfPairs = 0;
                 transmissionPosition = position;
                 position += 6;
+
                 startGene = geneSerial;
                 endGene = geneSerial + 1;
-
-                goto Loop;
             }
         }
 
@@ -211,7 +207,7 @@ Loop:
         {
             if (owner is not null)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
 
                 if (previousTransmissionId != 0)
                 {
