@@ -52,6 +52,8 @@ internal class NoCongestionControl : ICongestionControl
                 this.genesInFlight.RemoveNode(node);
                 sendGene.Node = default;
             }
+
+            Console.WriteLine(this.genesInFlight.Count);
         }
     }
 

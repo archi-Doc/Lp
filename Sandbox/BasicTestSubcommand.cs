@@ -58,18 +58,11 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                var success = 0;
-
                 // Send Block*Stream, Receive Non*Block*Stream
                 // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
-                /*var p2 = new PacketPing();
-                var response = await connection.SendAndReceive<PacketPing, PacketPingResponse>(p2);
-                if (response.Value is not null)
-                {
-                    Console.WriteLine(response.Value.ToString());
-                }*/
+                var success = 0;
 
-                for (var i = 0; i < 20; i++)
+                /*for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
@@ -77,10 +70,11 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     {
                         success++;
                     }
-                }
+                }*/
 
                 for (var i = 0; i < 20_000; i += 1_000)
                 {
+                    Console.WriteLine($"TestBlock: {i}");
                     var testBlock = TestBlock.Create(i);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
                     if (testBlock.Equals(r.Value))
@@ -148,7 +142,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
         }
 
-        using (var connection = await netTerminal.TryConnect(netNode))
+        /*using (var connection = await netTerminal.TryConnect(netNode))
         {// Reuse connection
             if (connection is not null)
             {
@@ -156,29 +150,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 var result2 = await service.Pingpong([0, 1, 2]);
                 Console.WriteLine(result2?.Length.ToString());
             }
-        }
-
-        // await Task.Delay(1000000000);
-
-        /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
-        {
-            return;
-        }
-
-        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
-        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
-
-        // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
-        {
-            if (terminal is null)
-            {
-                return;
-            }
-
-            // terminal.SetMaximumResponseTime(1_000_000);
-            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
-            this.logger.TryGet()?.Log($"{t.ToString()}");
         }*/
     }
 

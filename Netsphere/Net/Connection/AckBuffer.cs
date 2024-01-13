@@ -111,11 +111,11 @@ internal partial class AckBuffer
                 break;
             }
 
-            this.ProcessSend(netSender, connection, ackQueue);
+            this.ProcessAck(netSender, connection, ackQueue);
         }
     }
 
-    private void ProcessSend(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
+    private void ProcessAck(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
     {// AckFrameCode
         ByteArrayPool.Owner? owner = default;
         var position = 0;
@@ -143,6 +143,8 @@ Loop:
 
             var transmissionId = (uint)(ack >> 32);
             var geneSerial = (int)ack;
+
+            this.logger.TryGet(LogLevel.Debug)?.Log($"ProcessAck: {transmissionId}, {geneSerial}");
 
             if (previousTransmissionId == 0)
             {// Initial transmission id
@@ -178,6 +180,8 @@ Loop:
             }
             else
             {// Different transmission id
+                this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+
                 var span = owner.ByteArray.AsSpan(position);
                 BitConverter.TryWriteBytes(span, startGene);
                 span = span.Slice(sizeof(int));
@@ -207,6 +211,8 @@ Loop:
         {
             if (owner is not null)
             {
+                this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+
                 if (previousTransmissionId != 0)
                 {
                     var span = owner.ByteArray.AsSpan(position);

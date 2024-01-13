@@ -161,7 +161,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
-        // Console.WriteLine($"Genes: {info.NumberOfGenes}");
+        Console.WriteLine($"SendBlock: {info.NumberOfGenes} genes");//
 
         lock (this.syncObject)
         {
@@ -308,7 +308,7 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     if (startGene == 0 && endGene == this.totalGene)
                     {
-                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck 0 - {this.totalGene}");
+                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.totalGene}");
 
                         this.gene0?.Dispose();
                         this.gene0 = null;
