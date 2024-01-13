@@ -76,6 +76,12 @@ public abstract class Connection : IDisposable
     public bool IsOpen
         => this.State == ConnectionState.Open;
 
+    public bool IsClosed
+        => this.State == ConnectionState.Closed;
+
+    public bool IsDisposed
+        => this.State == ConnectionState.Disposed;
+
     public bool IsClosedOrDisposed
         => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
 

@@ -66,8 +66,8 @@ internal class CubicCongestionControl : ICongestionControl
 
     bool ICongestionControl.Process(NetSender netSender)
     {// lock (ConnectionTerminal.CongestionControlList)
-        if (this.Connection.IsClosedOrDisposed)
-        {// The connection is closed.
+        if (this.Connection.IsDisposed)
+        {// The connection is disposed.
             return false;
         }
 
