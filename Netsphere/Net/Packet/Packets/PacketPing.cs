@@ -47,7 +47,7 @@ public sealed partial class PacketPingResponse : IPacket, IBlock
     }
 
     [Key(0, AddProperty = "Message", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
-    [MaxLength(PacketPingObsolete.TextMaxLength)]
+    [MaxLength(PacketPing.MaxMessageLength)]
     private string _message = string.Empty;
 
     [Key(1)]
