@@ -20,7 +20,7 @@ internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
 {
-    private const int LowerRttLimit = 1_000; // 1ms
+    private const int LowerRttLimit = 10_000; // 10ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
 

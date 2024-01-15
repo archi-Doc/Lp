@@ -112,7 +112,7 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            this.SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
                 var logfile = "Logs/Client/.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
@@ -127,7 +127,7 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 1;
             });
 
-            this.SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            this.SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
                 var logfile = "Logs/Server/.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))

@@ -47,8 +47,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Stream logger
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(StreamLogger<>), typeof(StreamLoggerFactory<>)));
-                context.TryAddSingleton<StreamLoggerOptions>();
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(IdFileLogger<>), typeof(IdFileLoggerFactory<>)));
+                context.TryAddSingleton<IdFileLoggerOptions>();
 
                 // Machines
                 // context.AddTransient<EssentialNetMachine>();

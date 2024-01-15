@@ -2,9 +2,9 @@
 
 namespace Netsphere.Logging;
 
-public class StreamLoggerOptions : FileLoggerOptions
+public class IdFileLoggerOptions : FileLoggerOptions
 {
-    public StreamLoggerOptions()
+    public IdFileLoggerOptions()
     {
         this.Formatter.EventIdFormat = "X4";
         this.MaxQueue = 10_000;

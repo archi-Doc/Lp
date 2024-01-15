@@ -5,7 +5,7 @@ using Arc.Collections;
 
 namespace Netsphere.Net;
 
-internal class CubicCongestionControl : ICongestionControl
+public class CubicCongestionControl : ICongestionControl
 {
     private const int InitialCwnd = 10;
     private const double BurstRatio = 1.5d;
@@ -15,8 +15,14 @@ internal class CubicCongestionControl : ICongestionControl
     {
         this.Connection = connection;
         this.cwnd = InitialCwnd;
-        this.regen = this.cwnd / connection.SmoothedRtt * 1000;
-        this.logger = this.Connection.ConnectionTerminal.NetBase.UnitLogger.GetLogger<CubicCongestionControl>();
+        var rtt = connection.SmoothedRtt;
+        this.UpdateSmoothing(this.cwnd / rtt * 1000);
+
+        if (connection.IsClient)
+        {
+            this.logger = this.Connection.ConnectionTerminal.NetBase.UnitLogger.GetLogger<CubicCongestionControl>();
+            this.logger.TryGet()?.Log($"Cubic Congestion Control RTT: {rtt / 1000} ms");
+        }
     }
 
     #region FieldAndProperty
@@ -29,7 +35,7 @@ internal class CubicCongestionControl : ICongestionControl
     public bool IsCongested
         => this.genesInFlight.Count >= (int)this.capacity;
 
-    private readonly ILogger logger;
+    private readonly ILogger? logger;
 
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
@@ -39,10 +45,10 @@ internal class CubicCongestionControl : ICongestionControl
     // Smoothing transmissions
     private double capacity; // Equivalent to cwnd, but increases gradually to prevent mass transmission at once.
     private double regen; // The number of packets that can be transmitted per ms.
-    private double burst; // The number of packets that can be burst-transmitted per ms.
+    private double boost; // The number of packets that can be boost-transmitted per ms.
     private long lastProcessMics;
-    private long burstMicsMax;
-    private long burstMics;
+    private long boostMicsMax;
+    private long boostMics;
 
     #endregion
 
@@ -85,43 +91,72 @@ internal class CubicCongestionControl : ICongestionControl
         {// The connection is disposed.
             return false;
         }
+        else if (this.Connection.IsClient)
+        {
+        }
 
         // CongestionControl
-        var elapsedMics = this.lastProcessMics == 0 ? 0 : Mics.FastSystem - this.lastProcessMics;
+        var currentMics = Mics.FastSystem;
+        var elapsedMics = this.lastProcessMics == 0 ? 0 : currentMics - this.lastProcessMics;
+        this.lastProcessMics = currentMics;
+
         var intCapacity = (int)this.capacity;
+        var capLimit = false;
         if (intCapacity <= this.genesInFlight.Count)
         {// Capacity limited
-            if (this.burstMics > 0)
+            capLimit = true;
+
+            if (this.boostMics > 0)
             {// Burst
-                this.capacity += this.burst;
-                this.burstMics -= elapsedMics;
+                this.capacity += this.boost;
+
+                if (this.capacity > this.cwnd)
+                {
+                    this.capacity = this.cwnd;
+
+                    this.boostMics += elapsedMics;
+                    if (this.boostMics > this.boostMicsMax)
+                    {
+                        this.boostMics = this.boostMicsMax;
+                    }
+                }
+                else
+                {
+                    this.boostMics -= elapsedMics;
+                }
             }
             else
             {// Normal
                 this.capacity += this.regen;
-            }
 
-            if (this.capacity > this.cwnd)
-            {
-                this.capacity = this.cwnd;
+                if (this.capacity > this.cwnd)
+                {
+                    this.capacity = this.cwnd;
+
+                    this.boostMics += elapsedMics;
+                    if (this.boostMics > this.boostMicsMax)
+                    {
+                        this.boostMics = this.boostMicsMax;
+                    }
+                }
             }
         }
         else
         {// Not capacity limited (capacity > this.genesInFlight.Count).
-            var upperLimit = this.genesInFlight.Count + this.burst;
+            var upperLimit = this.genesInFlight.Count + this.boost;
             if (this.capacity > upperLimit)
             {
                 this.capacity = upperLimit;
             }
 
-            this.burstMics += elapsedMics;
-            if (this.burstMics > this.burstMicsMax)
+            this.boostMics += elapsedMics;
+            if (this.boostMics > this.boostMicsMax)
             {
-                this.burstMics = this.burstMicsMax;
+                this.boostMics = this.boostMicsMax;
             }
         }
 
-        this.logger.TryGet(LogLevel.Debug)?.Log($"current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F0}/{this.cwnd:F0} regen {this.regen:F2} burst/mics {this.burst:F2}/{this.burstMics}");
+        this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capLimit ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
 
         // Resend
         SendGene? gene;
@@ -155,7 +190,7 @@ internal class CubicCongestionControl : ICongestionControl
     private void UpdateSmoothing(double regen)
     {
         this.regen = regen;
-        this.burst = regen * BurstRatio;
-        this.burstMicsMax = (long)(10_000 * BurstRatioInv); // RTT / BurstRatio
+        this.boost = regen * BurstRatio;
+        this.boostMicsMax = (long)(this.Connection.SmoothedRtt * BurstRatioInv); // RTT / BurstRatio
     }
 }

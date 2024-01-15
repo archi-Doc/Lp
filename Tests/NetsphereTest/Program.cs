@@ -149,7 +149,7 @@ public class Program
                     }
                 });
             })
-            .SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            .SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
                 var logfile = "Logs/Client/.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
@@ -157,7 +157,7 @@ public class Program
                 options.MaxStreamCapacity = 1_000;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             })
-            .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            .SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
                 var logfile = "Logs/Server/.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
@@ -173,9 +173,9 @@ public class Program
                 options.MaxStreamCapacity = 1_000;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             })
-            .SetupOptions<NetSocketLoggerOptions>((context, options) =>
+            .SetupOptions<CongestionControlLoggerOptions>((context, options) =>
             {// FileLoggerOptions
-                var logfile = "Logs/Socket.txt";
+                var logfile = "Logs/CongestionControl.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";

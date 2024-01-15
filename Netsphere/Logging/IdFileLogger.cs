@@ -2,10 +2,10 @@
 
 namespace Netsphere.Logging;
 
-public class StreamLogger<TOption> : BufferedLogOutput
-    where TOption : StreamLoggerOptions
+public class IdFileLogger<TOption> : BufferedLogOutput
+    where TOption : IdFileLoggerOptions
 {
-    public StreamLogger(UnitCore core, UnitLogger unitLogger, TOption options)
+    public IdFileLogger(UnitCore core, UnitLogger unitLogger, TOption options)
         : base(unitLogger)
     {
         if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
@@ -28,6 +28,6 @@ public class StreamLogger<TOption> : BufferedLogOutput
 
     public override Task<int> Flush(bool terminate) => this.worker.Flush(terminate);
 
-    private StreamLoggerWorker worker;
+    private IdFileLoggerWorker worker;
     private TOption options;
 }
