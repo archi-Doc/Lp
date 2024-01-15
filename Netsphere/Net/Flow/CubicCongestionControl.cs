@@ -7,13 +7,16 @@ namespace Netsphere.Net;
 
 internal class CubicCongestionControl : ICongestionControl
 {
+    private const int InitialCwnd = 10;
     private const double BurstRatio = 1.5d;
     private const double BurstRatioInv = 1.0d / BurstRatio;
 
     public CubicCongestionControl(Connection connection)
     {
         this.Connection = connection;
-        this.cwnd = 100;
+        this.cwnd = InitialCwnd;
+        this.regen = this.cwnd / connection.SmoothedRtt * 1000;
+        this.logger = this.Connection.ConnectionTerminal.NetBase.UnitLogger.GetLogger<CubicCongestionControl>();
     }
 
     #region FieldAndProperty
@@ -26,6 +29,8 @@ internal class CubicCongestionControl : ICongestionControl
     public bool IsCongested
         => this.genesInFlight.Count >= (int)this.capacity;
 
+    private readonly ILogger logger;
+
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
 
@@ -33,7 +38,7 @@ internal class CubicCongestionControl : ICongestionControl
 
     // Smoothing transmissions
     private double capacity; // Equivalent to cwnd, but increases gradually to prevent mass transmission at once.
-    private double regen = 1.0d; // The number of packets that can be transmitted per ms.
+    private double regen; // The number of packets that can be transmitted per ms.
     private double burst; // The number of packets that can be burst-transmitted per ms.
     private long lastProcessMics;
     private long burstMicsMax;
@@ -116,7 +121,7 @@ internal class CubicCongestionControl : ICongestionControl
             }
         }
 
-        Console.WriteLine($"current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F2}/{this.cwnd:F2} regen {this.regen:F2} burst/mics {this.burst:F2}/{this.burstMics}");
+        this.logger.TryGet(LogLevel.Debug)?.Log($"current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F0}/{this.cwnd:F0} regen {this.regen:F2} burst/mics {this.burst:F2}/{this.burstMics}");
 
         // Resend
         SendGene? gene;

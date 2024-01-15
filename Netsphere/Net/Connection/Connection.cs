@@ -22,6 +22,7 @@ public abstract class Connection : IDisposable
 {
     private const int LowerRttLimit = 1_000; // 1ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
+    private const int DefaultRtt = 100_000; // 100ms
 
     public enum ConnectMode
     {
@@ -47,6 +48,8 @@ public abstract class Connection : IDisposable
         this.ConnectionId = connectionId;
         this.Node = node;
         this.EndPoint = endPoint;
+
+        this.smoothedRtt = DefaultRtt;
     }
 
     #region FieldAndProperty
@@ -486,7 +489,6 @@ Wait:
         }
 
         var congestionControl = this.GetCongestionControl();
-        Console.WriteLine(congestionControl.ToString());
         if (congestionControl.IsCongested)
         {// If in a congested state, return ProcessSendResult.Congestion.
             return ProcessSendResult.Congested;
