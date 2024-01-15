@@ -7,9 +7,13 @@ namespace Netsphere.Net;
 
 internal class CubicCongestionControl : ICongestionControl
 {
+    private const double BurstRatio = 1.5d;
+    private const double BurstRatioInv = 1.0d / BurstRatio;
+
     public CubicCongestionControl(Connection connection)
     {
         this.Connection = connection;
+        this.cwnd = 100;
     }
 
     #region FieldAndProperty
@@ -20,20 +24,26 @@ internal class CubicCongestionControl : ICongestionControl
         => this.genesInFlight.Count;
 
     public bool IsCongested
-        => this.sentCountPerRound >= this.maxSentCountPerRound;
+        => this.genesInFlight.Count >= (int)this.capacity;
 
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
 
-    private int sentCountPerRound;
-    private int maxSentCountPerRound;
+    private double cwnd; // Upper limit of the total number of genes in-flight.
+
+    // Smoothing transmissions
+    private double capacity; // Equivalent to cwnd, but increases gradually to prevent mass transmission at once.
+    private double regen = 1.0d; // The number of packets that can be transmitted per ms.
+    private double burst; // The number of packets that can be burst-transmitted per ms.
+    private long lastProcessMics;
+    private long burstMicsMax;
+    private long burstMics;
 
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICongestionControl.AddInFlight(SendGene sendGene, long rto)
     {
-        this.sentCountPerRound++;
         lock (this.syncObject)
         {
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
@@ -72,8 +82,41 @@ internal class CubicCongestionControl : ICongestionControl
         }
 
         // CongestionControl
-        this.sentCountPerRound = 0;
-        this.maxSentCountPerRound = 2;
+        var elapsedMics = this.lastProcessMics == 0 ? 0 : Mics.FastSystem - this.lastProcessMics;
+        var intCapacity = (int)this.capacity;
+        if (intCapacity <= this.genesInFlight.Count)
+        {// Capacity limited
+            if (this.burstMics > 0)
+            {// Burst
+                this.capacity += this.burst;
+                this.burstMics -= elapsedMics;
+            }
+            else
+            {// Normal
+                this.capacity += this.regen;
+            }
+
+            if (this.capacity > this.cwnd)
+            {
+                this.capacity = this.cwnd;
+            }
+        }
+        else
+        {// Not capacity limited (capacity > this.genesInFlight.Count).
+            var upperLimit = this.genesInFlight.Count + this.burst;
+            if (this.capacity > upperLimit)
+            {
+                this.capacity = upperLimit;
+            }
+
+            this.burstMics += elapsedMics;
+            if (this.burstMics > this.burstMicsMax)
+            {
+                this.burstMics = this.burstMicsMax;
+            }
+        }
+
+        Console.WriteLine($"current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F2}/{this.cwnd:F2} regen {this.regen:F2} burst/mics {this.burst:F2}/{this.burstMics}");
 
         // Resend
         SendGene? gene;
@@ -104,6 +147,10 @@ internal class CubicCongestionControl : ICongestionControl
         return true;
     }
 
-    public override string ToString()
-        => $"Cubic: Per round {this.sentCountPerRound}/{this.maxSentCountPerRound}, In-flight {this.genesInFlight.Count}";
+    private void UpdateSmoothing(double regen)
+    {
+        this.regen = regen;
+        this.burst = regen * BurstRatio;
+        this.burstMicsMax = (long)(10_000 * BurstRatioInv); // RTT / BurstRatio
+    }
 }

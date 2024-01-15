@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Arc.Collections;
 using Netsphere.Packet;
 
@@ -19,6 +18,8 @@ public enum NetTransmissionMode
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class SendTransmission : IDisposable
 {
+    private const int CongestionControlThreshold = 3;
+
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Send/Receive Ack -> Receive -> Disposed
      *  SendAsync                   (Client) : Initial -> Send/Receive Ack -> tcs / Disposed
@@ -181,6 +182,11 @@ internal sealed partial class SendTransmission : IDisposable
             this.Connection.UpdateLatestAckMics();
             this.sentTcs = sentTcs;
             this.totalGene = info.NumberOfGenes;
+
+            if (this.Connection.SendTransmissionsCount >= CongestionControlThreshold)
+            {// Enable congestion control when the number of SendTransmissions exceeds the threshold.
+                this.Connection.CreateCongestionControl();
+            }
 
             var span = block.Span;
             if (info.NumberOfGenes <= NetHelper.RamaGenes)

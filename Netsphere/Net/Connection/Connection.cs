@@ -114,6 +114,9 @@ public abstract class Connection : IDisposable
 
     internal ILogger Logger { get; }
 
+    internal int SendTransmissionsCount
+        => this.sendTransmissions.Count;
+
     internal long ClosedSystemMics;
     internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
@@ -205,7 +208,7 @@ public abstract class Connection : IDisposable
     {
         lock (this.sendTransmissions.SyncObject)
         {
-            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
+            if (this.NumberOfSendTransmissions >= this.Agreement.MaxTransmissions)
             {
                 return default;
             }
@@ -233,7 +236,7 @@ public abstract class Connection : IDisposable
             }
 
             /* To maintain consistency with the number of SendTransmission on the client side, limit the number of ReceiveTransmission in ProcessReceive_FirstGene().
-            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
+            if (this.NumberOfSendTransmissions >= this.Agreement.MaxTransmissions)
             {
                 return default;
             }*/
@@ -265,7 +268,7 @@ Retry:
                 return default;
             }
 
-            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
+            if (this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
             }
