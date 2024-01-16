@@ -57,7 +57,7 @@ internal class NoCongestionControl : ICongestionControl
     {
     }
 
-    bool ICongestionControl.Process(NetSender netSender)
+    bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
         // CongestionControl
 

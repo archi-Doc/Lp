@@ -13,8 +13,10 @@ internal interface ICongestionControl
     /// When the connection is closed, return false and release the congestion control.
     /// </summary>
     /// <param name="netSender">An instance of <see cref="NetSender"/>.</param>
+    /// <param name="elapsedMics">elapsedMics.</param>
+    /// <param name="elapsedMilliseconds">elapsedMilliseconds.</param>
     /// <returns>false: Release the congestion control.</returns>
-    bool Process(NetSender netSender);
+    bool Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds);
 
     void Report();
 

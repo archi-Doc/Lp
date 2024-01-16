@@ -8,6 +8,7 @@ using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
+#pragma warning disable SA1214
 #pragma warning disable SA1401 // Fields should be private
 
 namespace Netsphere;
@@ -42,7 +43,9 @@ public class ConnectionTerminal
     internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
     internal UnorderedLinkedList<Connection> CongestedList = new(); // lock (this.SyncSend)
 
-    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new(); // lock (this.CongestionControlList)
+    // lock (this.CongestionControlList)
+    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new();
+    private long lastCongestionControlMics;
 
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
@@ -288,10 +291,15 @@ public class ConnectionTerminal
         // CongestionControl
         lock (this.CongestionControlList)
         {
+            var currentMics = Mics.FastSystem;
+            var elapsedMics = this.lastCongestionControlMics == 0 ? 0 : currentMics - this.lastCongestionControlMics;
+            this.lastCongestionControlMics = currentMics;
+            var elapsedMilliseconds = elapsedMics * 0.001d;
+
             var congestionControlNode = this.CongestionControlList.First;
             while (congestionControlNode is not null)
             {
-                if (!congestionControlNode.Value.Process(netSender))
+                if (!congestionControlNode.Value.Process(netSender, elapsedMics, elapsedMilliseconds))
                 {
                     this.CongestionControlList.Remove(congestionControlNode);
                 }

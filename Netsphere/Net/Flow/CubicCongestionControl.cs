@@ -46,7 +46,6 @@ public class CubicCongestionControl : ICongestionControl
     private double capacity; // Equivalent to cwnd, but increases gradually to prevent mass transmission at once.
     private double regen; // The number of packets that can be transmitted per ms.
     private double boost; // The number of packets that can be boost-transmitted per ms.
-    private long lastProcessMics;
     private long boostMicsMax;
     private long boostMics;
 
@@ -85,21 +84,47 @@ public class CubicCongestionControl : ICongestionControl
     {
     }
 
-    bool ICongestionControl.Process(NetSender netSender)
+    bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
         if (this.Connection.IsDisposed)
         {// The connection is disposed.
             return false;
         }
-        else if (this.Connection.IsClient)
-        {
-        }
 
         // CongestionControl
-        var currentMics = Mics.FastSystem;
-        var elapsedMics = this.lastProcessMics == 0 ? 0 : currentMics - this.lastProcessMics;
-        this.lastProcessMics = currentMics;
+        this.ProcessCapacity(elapsedMics, elapsedMilliseconds);
 
+        // Resend
+        SendGene? gene;
+        lock (this.syncObject)
+        {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
+            while (netSender.CanSend)
+            {// Retransmission
+                var firstNode = this.genesInFlight.First;
+                if (firstNode is null)
+                {
+                    break;
+                }
+
+                gene = firstNode.Value;
+                if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < firstNode.Value.SentMics)
+                {
+                    break;
+                }
+
+                if (!gene.Send_NotThreadSafe(netSender, 0))
+                {// Cannot send
+                    this.genesInFlight.Remove(firstNode);
+                    gene.Node = default;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void ProcessCapacity(long elapsedMics, double elapsedMilliseconds)
+    {
         var intCapacity = (int)this.capacity;
         var capLimit = false;
         if (intCapacity <= this.genesInFlight.Count)
@@ -108,7 +133,7 @@ public class CubicCongestionControl : ICongestionControl
 
             if (this.boostMics > 0)
             {// Burst
-                this.capacity += this.boost;
+                this.capacity += this.boost * elapsedMilliseconds;
 
                 if (this.capacity > this.cwnd)
                 {
@@ -127,7 +152,7 @@ public class CubicCongestionControl : ICongestionControl
             }
             else
             {// Normal
-                this.capacity += this.regen;
+                this.capacity += this.regen * elapsedMilliseconds;
 
                 if (this.capacity > this.cwnd)
                 {
@@ -157,34 +182,6 @@ public class CubicCongestionControl : ICongestionControl
         }
 
         this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capLimit ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
-
-        // Resend
-        SendGene? gene;
-        lock (this.syncObject)
-        {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
-            while (netSender.CanSend)
-            {// Retransmission
-                var firstNode = this.genesInFlight.First;
-                if (firstNode is null)
-                {
-                    break;
-                }
-
-                gene = firstNode.Value;
-                if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < firstNode.Value.SentMics)
-                {
-                    break;
-                }
-
-                if (!gene.Send_NotThreadSafe(netSender, 0))
-                {// Cannot send
-                    this.genesInFlight.Remove(firstNode);
-                    gene.Node = default;
-                }
-            }
-        }
-
-        return true;
     }
 
     private void UpdateSmoothing(double regen)
