@@ -51,7 +51,7 @@ public class CubicCongestionControl : ICongestionControl
     {
         this.Connection = connection;
         this.cwnd = InitialCwnd;
-        this.ssthresh = InitialCwnd;
+        this.ssthresh = MaxCwnd;
         this.slowstart = true;
         this.UpdateRegen();
 
@@ -168,6 +168,8 @@ public class CubicCongestionControl : ICongestionControl
                     this.capacityLimited = false;
                     this.UpdateCubic((double)this.ackCount);
                     this.UpdateRegen();
+
+                    Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                 }
 
                 this.cubicCount = 0;
@@ -287,7 +289,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
-        if (this.slowstart && this.cwnd < this.ssthresh)
+        if (this.slowstart)
         {// Slow start
             var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
             acked -= cwnd - this.cwnd;
@@ -359,8 +361,6 @@ public class CubicCongestionControl : ICongestionControl
 
         this.increasePerAck = Math.Min(this.increasePerAck, 0.5);
         this.cwnd += acked * this.increasePerAck; // MaxCwnd
-
-        Console.WriteLine($"cwnd:{this.cwnd - (acked * this.increasePerAck):F2}->{this.cwnd:F2} {(int)acked}x{this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} target:{target:F2} tcp:{this.tcpCwnd:F2}");
     }
 
     private void UpdateRegen()
