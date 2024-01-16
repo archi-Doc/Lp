@@ -300,6 +300,7 @@ internal sealed partial class SendTransmission : IDisposable
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
 
+        long sentMics = 0;
         lock (this.syncObject)
         {
             while (span.Length >= 8)
@@ -323,12 +324,26 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.totalGene}");
 
-                        this.gene0?.Dispose(true);
-                        this.gene0 = null;
-                        this.gene1?.Dispose(true);
-                        this.gene1 = null;
-                        this.gene2?.Dispose(true);
-                        this.gene2 = null;
+                        if (this.gene0 is not null)
+                        {
+                            sentMics = Math.Max(sentMics, this.gene0.SentMics);
+                            this.gene0.Dispose(true);
+                            this.gene0 = null;
+                        }
+
+                        if (this.gene1 is not null)
+                        {
+                            sentMics = Math.Max(sentMics, this.gene1.SentMics);
+                            this.gene1.Dispose(true);
+                            this.gene1 = null;
+                        }
+
+                        if (this.gene2 is not null)
+                        {
+                            sentMics = Math.Max(sentMics, this.gene2.SentMics);
+                            this.gene2.Dispose(true);
+                            this.gene2 = null;
+                        }
 
                         completeFlag = true;
                         acked += this.totalGene;
@@ -343,6 +358,7 @@ internal sealed partial class SendTransmission : IDisposable
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
                             // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Dispose send gene {gene.GeneSerial}");
+                            sentMics = Math.Max(sentMics, gene.SentMics);
                             gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
                             acked++;
                         }
@@ -354,6 +370,12 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     return false;
                 }
+            }
+
+            var rtt = Mics.FastSystem - sentMics;
+            if (rtt > 0)
+            {
+                this.Connection.AddRtt((int)rtt);
             }
 
             if (completeFlag)

@@ -7,6 +7,7 @@ namespace Netsphere.Net;
 
 public class CubicCongestionControl : ICongestionControl
 {
+    private const int CubicThreshold = 10;
     private const int InitialCwnd = 10;
     private const int MaxCwnd = 1_000_000;
     private const double BurstRatio = 1.5d;
@@ -18,6 +19,8 @@ public class CubicCongestionControl : ICongestionControl
     {
         this.Connection = connection;
         this.cwnd = InitialCwnd;
+        this.ssthresh = InitialCwnd;
+        this.slowstart = true;
         var rtt = connection.SmoothedRtt;
         this.UpdateSmoothing(this.cwnd / rtt * 1000);
 
@@ -52,11 +55,13 @@ public class CubicCongestionControl : ICongestionControl
     private long boostMics;
 
     // Cubic
-    private int ack_cnt;
-    private int cnt;
-    private double cntInv; // 1 / this.cnt
+    private bool capacityLimited;
+    private int cubicCount;
+    private int ackCount;
+    private double increaseRatio; // 1 / this.cnt
     private double cwnd; // Upper limit of the total number of genes in-flight.
-    private double tcp_cwnd;
+    private double tcpCwnd;
+    private bool slowstart;
     private int ssthresh;
 
     #endregion
@@ -84,7 +89,7 @@ public class CubicCongestionControl : ICongestionControl
         {
             if (ack)
             {
-                this.ack_cnt++;
+                this.ackCount++;
             }
 
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
@@ -107,13 +112,18 @@ public class CubicCongestionControl : ICongestionControl
         }
 
         // CongestionControl: Cubic (cwnd)
-        if (this.capacityInt <= this.genesInFlight.Count &&
-            this.capacity >= this.cwnd)
-        {// cwnd limited
-            this.UpdateCubic((double)this.ack_cnt);
-        }
+        this.capacityLimited |= (this.genesInFlight.Count * 8) >= (this.capacityInt * 7);
+        if (this.cubicCount++ >= CubicThreshold)
+        {
+            if (this.capacityLimited)
+            {// Capacity limited
+                this.capacityLimited = false;
+                this.UpdateCubic((double)this.ackCount);
+            }
 
-        this.ack_cnt = 0;
+            this.cubicCount = 0;
+            this.ackCount = 0;
+        }
 
         // CongestionControl: Capacity
         var capacityLimited = this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
@@ -218,7 +228,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
-        if (true)
+        if (this.slowstart)
         {// Slow start
             var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
             acked -= cwnd - this.cwnd;
@@ -230,20 +240,19 @@ public class CubicCongestionControl : ICongestionControl
             }
         }
 
-tcp_friendliness:
-        this.tcp_cwnd += WtcpRatio * acked / this.cwnd;
-        if (this.tcp_cwnd > this.cwnd)
+TcpFriendliness:
+        this.tcpCwnd += WtcpRatio * acked / this.cwnd;
+        if (this.tcpCwnd > this.cwnd)
         {
-            var max_cnt = this.cwnd / (this.tcp_cwnd - this.cwnd);
-            if (this.cnt > max_cnt)
+            var ratio = (this.tcpCwnd - this.cwnd) / this.cwnd;
+            if (this.increaseRatio < ratio)
             {
-                this.cnt = max_cnt;
+                this.increaseRatio = ratio;
             }
         }
 
-        this.cnt = Math.Max(this.cnt, 2);
-        this.cntInv = 1 / this.cnt;
-        this.cwnd += acked * this.cntInv; // MaxCwnd
+        this.increaseRatio = Math.Min(this.increaseRatio, 0.5);
+        this.cwnd += acked * this.increaseRatio; // MaxCwnd
     }
 
     private void UpdateSmoothing(double regen)

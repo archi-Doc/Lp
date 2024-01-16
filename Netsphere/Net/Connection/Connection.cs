@@ -20,7 +20,7 @@ internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
 {
-    private const int LowerRttLimit = 10_000; // 10ms
+    private const int LowerRttLimit = 5_000; // 5ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
 
@@ -50,6 +50,7 @@ public abstract class Connection : IDisposable
         this.EndPoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
+        this.minimumRtt = DefaultRtt;
     }
 
     #region FieldAndProperty
@@ -97,6 +98,9 @@ public abstract class Connection : IDisposable
     public int SmoothedRtt
         => this.smoothedRtt;
 
+    public int MinimumRtt
+        => this.minimumRtt;
+
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
 
@@ -141,7 +145,7 @@ public abstract class Connection : IDisposable
     private UnorderedLinkedList<ReceiveTransmission> receiveDisposedList = new();
 
     // RTT
-    private int minRtt; // Minimum rtt (mics)
+    private int minimumRtt; // Minimum rtt (mics)
     private int smoothedRtt; // Smoothed rtt (mics)
     private int rttvar; // Rtt variation (mics)
     private int sendCount;
@@ -419,17 +423,17 @@ Wait:
             rttMics = UpperRttLimit;
         }
 
-        if (this.minRtt == 0)
+        if (this.minimumRtt == 0)
         {// Initial
-            this.minRtt = rttMics;
+            this.minimumRtt = rttMics;
             this.smoothedRtt = rttMics;
             this.rttvar = rttMics >> 1;
         }
         else
         {// Update
-            if (this.minRtt > rttMics)
+            if (this.minimumRtt > rttMics)
             {// minRtt is greater then the latest rtt.
-                this.minRtt = rttMics;
+                this.minimumRtt = rttMics;
             }
 
             var adjustedRtt = rttMics; // - ackDelay
