@@ -49,6 +49,9 @@ public class CubicCongestionControl : ICongestionControl
     private long boostMicsMax;
     private long boostMics;
 
+    // Cubic
+    private int ack_cnt;
+
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -68,10 +71,15 @@ public class CubicCongestionControl : ICongestionControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ICongestionControl.RemoveInFlight(SendGene sendGene)
+    void ICongestionControl.RemoveInFlight(SendGene sendGene, bool ack)
     {
         lock (this.syncObject)
         {
+            if (ack)
+            {
+                this.ack_cnt++;
+            }
+
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
             {
                 this.genesInFlight.Remove(node);
@@ -80,7 +88,7 @@ public class CubicCongestionControl : ICongestionControl
         }
     }
 
-    void ICongestionControl.Report()
+    void ICongestionControl.ReportAcked(int acked)
     {
     }
 
@@ -92,7 +100,7 @@ public class CubicCongestionControl : ICongestionControl
         }
 
         // CongestionControl
-        this.ProcessCapacity(elapsedMics, elapsedMilliseconds);
+        this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
 
         // Resend
         SendGene? gene;
@@ -123,7 +131,7 @@ public class CubicCongestionControl : ICongestionControl
         return true;
     }
 
-    private void ProcessCapacity(long elapsedMics, double elapsedMilliseconds)
+    private void CalculateCapacity(long elapsedMics, double elapsedMilliseconds)
     {
         var intCapacity = (int)this.capacity;
         var capLimit = false;

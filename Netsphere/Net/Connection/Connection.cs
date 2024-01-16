@@ -564,6 +564,7 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
+        var acked = 0;
         lock (this.sendTransmissions.SyncObject)
         {
             while (span.Length >= 6)
@@ -576,7 +577,7 @@ Wait:
                 var length = numberOfPairs * 8;
                 if (span.Length < length)
                 {
-                    return;
+                    break;
                 }
 
                 if (!this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
@@ -585,10 +586,12 @@ Wait:
                     continue;
                 }
 
-                transmission.ProcessReceive_Ack(span);
+                transmission.ProcessReceive_Ack(span, ref acked);
                 span = span.Slice(length);
             }
         }
+
+        this.GetCongestionControl().ReportAcked(acked);
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)

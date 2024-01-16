@@ -83,9 +83,9 @@ internal sealed partial class SendTransmission : IDisposable
         }
 
         this.Mode = NetTransmissionMode.Disposed;
-        this.gene0?.Dispose();
-        this.gene1?.Dispose();
-        this.gene2?.Dispose();
+        this.gene0?.Dispose(false);
+        this.gene1?.Dispose(false);
+        this.gene2?.Dispose(false);
         if (this.genes is not null)
         {
             foreach (var x in this.genes)
@@ -296,7 +296,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal bool ProcessReceive_Ack(scoped Span<byte> span)
+    internal bool ProcessReceive_Ack(scoped Span<byte> span, ref int acked)
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
 
@@ -323,14 +323,15 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.totalGene}");
 
-                        this.gene0?.Dispose();
+                        this.gene0?.Dispose(true);
                         this.gene0 = null;
-                        this.gene1?.Dispose();
+                        this.gene1?.Dispose(true);
                         this.gene1 = null;
-                        this.gene2?.Dispose();
+                        this.gene2?.Dispose(true);
                         this.gene2 = null;
 
                         completeFlag = true;
+                        acked += this.totalGene;
                         break;
                     }
                 }
@@ -342,7 +343,8 @@ internal sealed partial class SendTransmission : IDisposable
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
                             // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Dispose send gene {gene.GeneSerial}");
-                            gene.Dispose(); // this.genes.GeneSerialListChain.Remove(gene);
+                            gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
+                            acked++;
                         }
                     }
 

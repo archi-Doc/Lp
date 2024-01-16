@@ -53,7 +53,7 @@ internal class NoCongestionControl : ICongestionControl
         }
     }
 
-    void ICongestionControl.Report()
+    void ICongestionControl.ReportAcked(int acked)
     {
     }
 
