@@ -167,6 +167,7 @@ public class CubicCongestionControl : ICongestionControl
                 {// Capacity limited
                     this.capacityLimited = false;
                     this.UpdateCubic((double)this.ackCount);
+                    this.UpdateRegen();
                 }
 
                 this.cubicCount = 0;
@@ -177,7 +178,7 @@ public class CubicCongestionControl : ICongestionControl
             var capacityLimited = this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
             this.capacityInt = (int)this.capacity;
 
-            this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capacityLimited ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
+            // this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capacityLimited ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
 
             // Resend
             this.ProcessResend(netSender);
@@ -286,7 +287,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
-        if (this.slowstart)
+        if (this.slowstart && this.cwnd < this.ssthresh)
         {// Slow start
             var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
             acked -= cwnd - this.cwnd;
@@ -340,6 +341,11 @@ public class CubicCongestionControl : ICongestionControl
             this.increasePerAck = 0.01d / this.cwnd;
         }
 
+        if (this.lastMaxCwnd == 0 && this.increasePerAck < 0.05d)
+        {
+            this.increasePerAck = 0.05d;
+        }
+
         // Tcp friendliness
         this.tcpCwnd += WtcpRatio * acked / this.cwnd;
         if (this.tcpCwnd > this.cwnd)
@@ -353,6 +359,8 @@ public class CubicCongestionControl : ICongestionControl
 
         this.increasePerAck = Math.Min(this.increasePerAck, 0.5);
         this.cwnd += acked * this.increasePerAck; // MaxCwnd
+
+        Console.WriteLine($"cwnd:{this.cwnd - (acked * this.increasePerAck):F2}->{this.cwnd:F2} {(int)acked}x{this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} target:{target:F2} tcp:{this.tcpCwnd:F2}");
     }
 
     private void UpdateRegen()
