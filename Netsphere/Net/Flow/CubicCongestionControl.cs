@@ -8,8 +8,11 @@ namespace Netsphere.Net;
 public class CubicCongestionControl : ICongestionControl
 {
     private const int InitialCwnd = 10;
+    private const int MaxCwnd = 1_000_000;
     private const double BurstRatio = 1.5d;
     private const double BurstRatioInv = 1.0d / BurstRatio;
+    private const double Beta = 0.2d;
+    private const double WtcpRatio = 3d * Beta / (2d - Beta);
 
     public CubicCongestionControl(Connection connection)
     {
@@ -33,17 +36,16 @@ public class CubicCongestionControl : ICongestionControl
         => this.genesInFlight.Count;
 
     public bool IsCongested
-        => this.genesInFlight.Count >= (int)this.capacity;
+        => this.genesInFlight.Count >= this.capacityInt;
 
     private readonly ILogger? logger;
 
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
 
-    private double cwnd; // Upper limit of the total number of genes in-flight.
-
     // Smoothing transmissions
     private double capacity; // Equivalent to cwnd, but increases gradually to prevent mass transmission at once.
+    private int capacityInt; // (int)this.capacity
     private double regen; // The number of packets that can be transmitted per ms.
     private double boost; // The number of packets that can be boost-transmitted per ms.
     private long boostMicsMax;
@@ -51,6 +53,11 @@ public class CubicCongestionControl : ICongestionControl
 
     // Cubic
     private int ack_cnt;
+    private int cnt;
+    private double cntInv; // 1 / this.cnt
+    private double cwnd; // Upper limit of the total number of genes in-flight.
+    private double tcp_cwnd;
+    private int ssthresh;
 
     #endregion
 
@@ -99,8 +106,20 @@ public class CubicCongestionControl : ICongestionControl
             return false;
         }
 
-        // CongestionControl
-        this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
+        // CongestionControl: Cubic (cwnd)
+        if (this.capacityInt <= this.genesInFlight.Count &&
+            this.capacity >= this.cwnd)
+        {// cwnd limited
+            this.UpdateCubic((double)this.ack_cnt);
+        }
+
+        this.ack_cnt = 0;
+
+        // CongestionControl: Capacity
+        var capacityLimited = this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
+        this.capacityInt = (int)this.capacity;
+
+        this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capacityLimited ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
 
         // Resend
         SendGene? gene;
@@ -131,19 +150,15 @@ public class CubicCongestionControl : ICongestionControl
         return true;
     }
 
-    private void CalculateCapacity(long elapsedMics, double elapsedMilliseconds)
+    private bool CalculateCapacity(long elapsedMics, double elapsedMilliseconds)
     {
-        var intCapacity = (int)this.capacity;
-        var capLimit = false;
-        if (intCapacity <= this.genesInFlight.Count)
+        if (this.capacityInt <= this.genesInFlight.Count)
         {// Capacity limited
-            capLimit = true;
-
             if (this.boostMics > 0)
-            {// Burst
+            {// Boost
                 this.capacity += this.boost * elapsedMilliseconds;
 
-                if (this.capacity > this.cwnd)
+                if (this.capacity >= this.cwnd)
                 {
                     this.capacity = this.cwnd;
 
@@ -152,17 +167,20 @@ public class CubicCongestionControl : ICongestionControl
                     {
                         this.boostMics = this.boostMicsMax;
                     }
+
+                    return true;
                 }
                 else
                 {
                     this.boostMics -= elapsedMics;
+                    return true;
                 }
             }
             else
             {// Normal
                 this.capacity += this.regen * elapsedMilliseconds;
 
-                if (this.capacity > this.cwnd)
+                if (this.capacity >= this.cwnd)
                 {
                     this.capacity = this.cwnd;
 
@@ -171,6 +189,12 @@ public class CubicCongestionControl : ICongestionControl
                     {
                         this.boostMics = this.boostMicsMax;
                     }
+
+                    return true;
+                }
+                else
+                {
+                    return true;
                 }
             }
         }
@@ -187,9 +211,39 @@ public class CubicCongestionControl : ICongestionControl
             {
                 this.boostMics = this.boostMicsMax;
             }
+
+            return false;
+        }
+    }
+
+    private void UpdateCubic(double acked)
+    {
+        if (true)
+        {// Slow start
+            var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
+            acked -= cwnd - this.cwnd;
+            this.cwnd = cwnd; // MaxCwnd
+
+            if (acked == 0)
+            {
+                return;
+            }
         }
 
-        this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capLimit ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
+tcp_friendliness:
+        this.tcp_cwnd += WtcpRatio * acked / this.cwnd;
+        if (this.tcp_cwnd > this.cwnd)
+        {
+            var max_cnt = this.cwnd / (this.tcp_cwnd - this.cwnd);
+            if (this.cnt > max_cnt)
+            {
+                this.cnt = max_cnt;
+            }
+        }
+
+        this.cnt = Math.Max(this.cnt, 2);
+        this.cntInv = 1 / this.cnt;
+        this.cwnd += acked * this.cntInv; // MaxCwnd
     }
 
     private void UpdateSmoothing(double regen)

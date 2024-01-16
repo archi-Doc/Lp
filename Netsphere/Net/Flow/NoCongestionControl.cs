@@ -41,7 +41,7 @@ internal class NoCongestionControl : ICongestionControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ICongestionControl.RemoveInFlight(SendGene sendGene)
+    void ICongestionControl.RemoveInFlight(SendGene sendGene, bool ack)
     {
         lock (this.syncObject)
         {
