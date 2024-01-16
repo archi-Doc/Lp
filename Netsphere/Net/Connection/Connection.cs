@@ -594,8 +594,6 @@ Wait:
                 span = span.Slice(length);
             }
         }
-
-        this.GetCongestionControl().ReportAcked(acked);
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
