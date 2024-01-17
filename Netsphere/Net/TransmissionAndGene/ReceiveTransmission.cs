@@ -204,24 +204,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         completeFlag = true;
                     }
                 }
-
-                /*if (this.Connection.IsClient)
-                {
-                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log($"JJJ{dataPosition:00} - {this.maxReceivedPosition} - {this.genes.All(x => x.IsReceived)}");
-                    var sb = new StringBuilder();
-                    foreach (var x in this.genes)
-                    {
-                        if (x.IsReceived)
-                        {
-                            sb.Append("1");
-                        }
-                        else
-                        {
-                            sb.Append("0");
-                        }
-                    }
-                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log(sb.ToString());
-                }*/
             }
 
             if (completeFlag)
