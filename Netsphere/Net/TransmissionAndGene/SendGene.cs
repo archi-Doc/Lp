@@ -27,6 +27,8 @@ internal partial class SendGene
 
     public long SentMics { get; private set; }
 
+    // public bool ExcludeFromDeliveryFailure { get; set; }
+
     public bool IsSent
         => this.SentMics != 0;
 

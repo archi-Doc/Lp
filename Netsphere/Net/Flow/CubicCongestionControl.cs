@@ -113,7 +113,6 @@ public class CubicCongestionControl : ICongestionControl
     private bool slowstart;
 
     // Packet loss
-    private long nextPacketLossMics;
     private long epochStart;
     private double lastMaxCwnd;
     private long validDeliveryMics; // Mics greater than this value are treated as valid.
@@ -247,6 +246,13 @@ public class CubicCongestionControl : ICongestionControl
 
     private void Retreat()
     {
+        /*var node = this.genesInFlight.First;
+        while (node is not null)
+        {
+            node.Value.ExcludeFromDeliveryFailure = true;
+            node = node.Next;
+        }*/
+
         this.validDeliveryMics = Mics.FastSystem + this.Connection.MinimumRtt;
 
         this.epochStart = 0;
@@ -271,7 +277,7 @@ public class CubicCongestionControl : ICongestionControl
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
         SendGene? gene;
-        while (netSender.CanSend)
+        while (netSender.CanSend && !this.IsCongested)
         {// Retransmission
             var firstNode = this.genesInFlight.First;
             if (firstNode is null)
@@ -280,16 +286,26 @@ public class CubicCongestionControl : ICongestionControl
             }
 
             gene = firstNode.Value;
-            if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < firstNode.Value.SentMics)
+            if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < gene.SentMics)
             {
                 break;
             }
 
-            this.ReportDeliveryFailure();
+            // if(!gene.ExcludeFromDeliveryFailure)
+            if (gene.SentMics > this.validDeliveryMics)
+            {
+                this.ReportDeliveryFailure();
+            }
+
             if (!gene.Send_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
                 gene.Node = default;
+            }
+            else
+            {// Move to the last.
+                // gene.ExcludeFromDeliveryFailure = false;
+                this.genesInFlight.MoveToLast(firstNode);
             }
         }
     }
