@@ -18,9 +18,10 @@ public class CubicCongestionControl : ICongestionControl
     private const double WtcpRatio = 3d * Beta / (2d - Beta);
     private const double FastConvergenceRatio = (2d - Beta) / 2d;
     private const ulong CubicFactor = (1ul << 40) / 410ul;
+    private const double BrakeThreshold = 0.05d;
 
-    private static ReadOnlySpan<byte> v => new byte[]
-    {
+    private static ReadOnlySpan<byte> v =>
+    [
         0, 54, 54, 54,  118, 118, 118, 118,
         123,  129,  134,  138,  143,  147,  151,  156,
         157,  161,  164,  168,  170,  173,  176,  179,
@@ -29,7 +30,7 @@ public class CubicCongestionControl : ICongestionControl
         217,  219,  221,  222,  224,  225,  227,  229,
         231,  232,  234,  236,  237,  239,  240,  242,
         244,  245,  246,  248,  250,  251,  252,  254,
-    };
+    ];
 
     public static uint CubicRoot(ulong a)
     {
@@ -71,7 +72,7 @@ public class CubicCongestionControl : ICongestionControl
     public bool IsCongested
         => this.genesInFlight.Count >= this.capacityInt;
 
-    public double FailureFactor
+    public double FailureRatio
     {
         get
         {
@@ -121,6 +122,9 @@ public class CubicCongestionControl : ICongestionControl
     private double positiveFactor;
     private double negativeFactor;
     private double power;
+
+    // Test
+    // private int testCount;
 
     #endregion
 
@@ -226,16 +230,15 @@ public class CubicCongestionControl : ICongestionControl
         Volatile.Write(ref this.deliverySuccess, 0);
         Volatile.Write(ref this.deliveryFailure, 0);
 
-        var failureFactor = this.FailureFactor;
-        if (failureFactor > 0.05)
+        var failureFactor = this.FailureRatio;
+        if (failureFactor > BrakeThreshold)
         {
-            Console.WriteLine($"Retreat: {failureFactor:F3}");
-
+            Console.WriteLine($"Brake: {failureFactor:F3}");
             Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
 
             this.positiveFactor = 0;
             this.negativeFactor = 0;
-            this.Retreat();
+            this.Brake();
         }
 
         // Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
@@ -244,15 +247,8 @@ public class CubicCongestionControl : ICongestionControl
         this.negativeFactor *= this.power;
     }
 
-    private void Retreat()
+    private void Brake()
     {
-        /*var node = this.genesInFlight.First;
-        while (node is not null)
-        {
-            node.Value.ExcludeFromDeliveryFailure = true;
-            node = node.Next;
-        }*/
-
         this.validDeliveryMics = Mics.FastSystem + this.Connection.MinimumRtt;
 
         this.epochStart = 0;
@@ -277,8 +273,8 @@ public class CubicCongestionControl : ICongestionControl
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
         SendGene? gene;
-        while (netSender.CanSend && !this.IsCongested)
-        {// Retransmission
+        while (netSender.CanSend)
+        {// Retransmission. Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission.
             var firstNode = this.genesInFlight.First;
             if (firstNode is null)
             {
@@ -291,7 +287,6 @@ public class CubicCongestionControl : ICongestionControl
                 break;
             }
 
-            // if(!gene.ExcludeFromDeliveryFailure)
             if (gene.SentMics > this.validDeliveryMics)
             {
                 this.ReportDeliveryFailure();
@@ -304,7 +299,6 @@ public class CubicCongestionControl : ICongestionControl
             }
             else
             {// Move to the last.
-                // gene.ExcludeFromDeliveryFailure = false;
                 this.genesInFlight.MoveToLast(firstNode);
             }
         }
