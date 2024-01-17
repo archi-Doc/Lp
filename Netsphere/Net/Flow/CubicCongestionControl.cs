@@ -166,19 +166,6 @@ public class CubicCongestionControl : ICongestionControl
     public void ReportDeliveryFailure()
         => Interlocked.Increment(ref this.deliveryFailure);
 
-    void ICongestionControl.ReportPacketLoss()
-    {
-        if (Mics.FastSystem <= this.nextPacketLossMics)
-        {
-            return;
-        }
-
-        lock (this.syncObject)
-        {
-            this.ReportPacketLossInternal();
-        }
-    }
-
     bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
         if (this.Connection.IsDisposed)
@@ -241,8 +228,14 @@ public class CubicCongestionControl : ICongestionControl
         Volatile.Write(ref this.deliveryFailure, 0);
 
         var failureFactor = this.FailureFactor;
-        if (failureFactor > 0.01)
+        if (failureFactor > 0.05)
         {
+            Console.WriteLine($"Retreat: {failureFactor:F3}");
+
+            Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
+
+            this.positiveFactor = 0;
+            this.negativeFactor = 0;
             this.Retreat();
         }
 
@@ -254,12 +247,29 @@ public class CubicCongestionControl : ICongestionControl
 
     private void Retreat()
     {
+        this.validDeliveryMics = Mics.FastSystem + this.Connection.MinimumRtt;
 
+        this.epochStart = 0;
+        if (this.cwnd < this.lastMaxCwnd)
+        {// Fast convergence
+            this.lastMaxCwnd = this.cwnd * FastConvergenceRatio;
+        }
+        else
+        {
+            this.lastMaxCwnd = this.cwnd;
+        }
+
+        this.cwnd *= 1 - Beta;
+        if (this.cwnd < MinCwnd)
+        {
+            this.cwnd = MinCwnd;
+        }
+
+        this.ssthresh = this.cwnd;
     }
 
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
-        var resend = false;
         SendGene? gene;
         while (netSender.CanSend)
         {// Retransmission
@@ -275,18 +285,12 @@ public class CubicCongestionControl : ICongestionControl
                 break;
             }
 
-            resend = true;
-            this.negativeFactor++;
+            this.ReportDeliveryFailure();
             if (!gene.Send_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
                 gene.Node = default;
             }
-        }
-
-        if (resend)
-        {
-            this.ReportPacketLossInternal();
         }
     }
 
@@ -438,33 +442,5 @@ public class CubicCongestionControl : ICongestionControl
         this.regen = r;
         this.boost = r * BurstRatio;
         this.boostMicsMax = (long)(this.Connection.SmoothedRtt * BurstRatioInv); // RTT / BurstRatio
-    }
-
-    private void ReportPacketLossInternal()
-    {
-        if (Mics.FastSystem <= this.nextPacketLossMics)
-        {
-            return;
-        }
-
-        this.nextPacketLossMics = Mics.FastSystem + this.Connection.SmoothedRtt;
-
-        this.epochStart = 0;
-        if (this.cwnd < this.lastMaxCwnd)
-        {// Fast convergence
-            this.lastMaxCwnd = this.cwnd * FastConvergenceRatio;
-        }
-        else
-        {
-            this.lastMaxCwnd = this.cwnd;
-        }
-
-        this.cwnd *= 1 - Beta;
-        if (this.cwnd < MinCwnd)
-        {
-            this.cwnd = MinCwnd;
-        }
-
-        this.ssthresh = this.cwnd;
     }
 }

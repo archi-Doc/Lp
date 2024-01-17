@@ -61,10 +61,6 @@ internal class NoCongestionControl : ICongestionControl
     {
     }
 
-    void ICongestionControl.ReportPacketLoss()
-    {
-    }
-
     bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
         // CongestionControl

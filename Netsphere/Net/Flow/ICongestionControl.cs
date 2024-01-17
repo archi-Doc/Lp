@@ -18,8 +18,6 @@ internal interface ICongestionControl
     /// <returns>false: Release the congestion control.</returns>
     bool Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds);
 
-    void ReportPacketLoss();
-
     void ReportDeliverySuccess();
 
     void ReportDeliveryFailure();
