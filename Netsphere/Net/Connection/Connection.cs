@@ -568,7 +568,7 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
-        var acked = 0;
+        // var acked = 0;
         lock (this.sendTransmissions.SyncObject)
         {
             while (span.Length >= 6)
@@ -590,7 +590,7 @@ Wait:
                     continue;
                 }
 
-                transmission.ProcessReceive_Ack(span, ref acked);
+                transmission.ProcessReceive_Ack(span/*, ref acked*/);
                 span = span.Slice(length);
             }
         }

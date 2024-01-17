@@ -246,7 +246,7 @@ internal sealed partial class SendTransmission : IDisposable
                 this.Connection.CreateCongestionControl();
 
                 this.genes = new();
-                this.genes.GeneSerialListChain.Resize((int)info.NumberOfGenes);
+                this.genes.GeneSerialListChain.Resize(info.NumberOfGenes << 1);//tempcode
 
                 var firstGene = new SendGene(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
@@ -296,7 +296,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal bool ProcessReceive_Ack(scoped Span<byte> span, ref int acked)
+    internal bool ProcessReceive_Ack(scoped Span<byte> span/*, ref int acked*/)
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
 
@@ -346,7 +346,7 @@ internal sealed partial class SendTransmission : IDisposable
                         }
 
                         completeFlag = true;
-                        acked += this.totalGene;
+                        // acked += this.totalGene;
                         break;
                     }
                 }
@@ -360,7 +360,7 @@ internal sealed partial class SendTransmission : IDisposable
                             // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Dispose send gene {gene.GeneSerial}");
                             sentMics = Math.Max(sentMics, gene.SentMics);
                             gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
-                            acked++;
+                            // acked++;
                         }
                     }
 
