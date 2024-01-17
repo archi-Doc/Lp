@@ -4,7 +4,7 @@ namespace Netsphere.Net;
 
 internal interface ICongestionControl
 {
-    int NumberOfGenesInFlight { get; }
+    int NumberInFlight { get; }
 
     bool IsCongested { get; }
 
@@ -19,6 +19,10 @@ internal interface ICongestionControl
     bool Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds);
 
     void ReportPacketLoss();
+
+    void ReportDeliverySuccess();
+
+    void ReportDeliveryFailure();
 
     void AddInFlight(SendGene sendGene, long rto);
 

@@ -13,7 +13,7 @@ internal class NoCongestionControl : ICongestionControl
 
     #region FieldAndProperty
 
-    public int NumberOfGenesInFlight
+    public int NumberInFlight
         => this.genesInFlight.Count;
 
     public bool IsCongested
@@ -51,6 +51,14 @@ internal class NoCongestionControl : ICongestionControl
                 sendGene.Node = default;
             }
         }
+    }
+
+    void ICongestionControl.ReportDeliverySuccess()
+    {
+    }
+
+    void ICongestionControl.ReportDeliveryFailure()
+    {
     }
 
     void ICongestionControl.ReportPacketLoss()

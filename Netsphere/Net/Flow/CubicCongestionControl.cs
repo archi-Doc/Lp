@@ -65,11 +65,27 @@ public class CubicCongestionControl : ICongestionControl
 
     public Connection Connection { get; set; }
 
-    public int NumberOfGenesInFlight
+    public int NumberInFlight
         => this.genesInFlight.Count;
 
     public bool IsCongested
         => this.genesInFlight.Count >= this.capacityInt;
+
+    public double FailureFactor
+    {
+        get
+        {
+            var total = this.positiveFactor + this.negativeFactor;
+            if (total == 0)
+            {
+                return 0;
+            }
+            else
+            {
+                return this.negativeFactor / total;
+            }
+        }
+    }
 
     private readonly ILogger? logger;
 
@@ -100,6 +116,12 @@ public class CubicCongestionControl : ICongestionControl
     private long nextPacketLossMics;
     private long epochStart;
     private double lastMaxCwnd;
+    private long validDeliveryMics; // Mics greater than this value are treated as valid.
+    private uint deliverySuccess;
+    private uint deliveryFailure;
+    private double positiveFactor;
+    private double negativeFactor;
+    private double power;
 
     #endregion
 
@@ -127,6 +149,7 @@ public class CubicCongestionControl : ICongestionControl
             if (ack)
             {
                 this.ackCount++;
+                this.ReportDeliverySuccess();
             }
 
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
@@ -136,6 +159,12 @@ public class CubicCongestionControl : ICongestionControl
             }
         }
     }
+
+    public void ReportDeliverySuccess()
+        => Interlocked.Increment(ref this.deliverySuccess);
+
+    public void ReportDeliveryFailure()
+        => Interlocked.Increment(ref this.deliveryFailure);
 
     void ICongestionControl.ReportPacketLoss()
     {
@@ -159,6 +188,9 @@ public class CubicCongestionControl : ICongestionControl
 
         lock (this.syncObject)
         {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
+            // CongestionControl: Positive/Negative factor
+            this.ProcessFactor();
+
             // CongestionControl: Cubic (cwnd)
             this.capacityLimited |= (this.genesInFlight.Count * 8) >= (this.capacityInt * 7);
             if (this.cubicCount++ >= CubicThreshold)
@@ -189,6 +221,42 @@ public class CubicCongestionControl : ICongestionControl
         return true;
     }
 
+    private void ProcessFactor()
+    {
+        if (this.cubicCount == 0 || this.power == 0)
+        {
+            this.power = Math.Pow(0.5, 1000d / this.Connection.MinimumRtt);
+        }
+
+        if (Mics.FastSystem < this.validDeliveryMics)
+        {
+            Volatile.Write(ref this.deliverySuccess, 0);
+            Volatile.Write(ref this.deliveryFailure, 0);
+            return;
+        }
+
+        this.positiveFactor += Volatile.Read(ref this.deliverySuccess);
+        this.negativeFactor += Volatile.Read(ref this.deliveryFailure);
+        Volatile.Write(ref this.deliverySuccess, 0);
+        Volatile.Write(ref this.deliveryFailure, 0);
+
+        var failureFactor = this.FailureFactor;
+        if (failureFactor > 0.01)
+        {
+            this.Retreat();
+        }
+
+        // Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
+
+        this.positiveFactor *= this.power;
+        this.negativeFactor *= this.power;
+    }
+
+    private void Retreat()
+    {
+
+    }
+
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
         var resend = false;
@@ -208,6 +276,7 @@ public class CubicCongestionControl : ICongestionControl
             }
 
             resend = true;
+            this.negativeFactor++;
             if (!gene.Send_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
