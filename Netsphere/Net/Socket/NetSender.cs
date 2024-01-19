@@ -2,6 +2,7 @@
 
 using System.Net;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Misc;
 
 namespace Netsphere.Net;
@@ -164,6 +165,8 @@ internal class NetSender
     public int SendCapacity { get; private set; }
 
     public int SendCount { get; private set; }
+
+    public UnorderedLinkedList<SendGene> ResendList { get; } = new();
 
     private readonly NetTerminal netTerminal;
     private readonly NetBase netBase;

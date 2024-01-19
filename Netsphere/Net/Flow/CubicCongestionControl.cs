@@ -116,15 +116,12 @@ public class CubicCongestionControl : ICongestionControl
     // Packet loss
     private long epochStart;
     private double lastMaxCwnd;
-    private long validDeliveryMics; // Mics greater than this value are treated as valid.
+    private long downtimeAfterBrake; // Mics greater than this value are treated as valid.
     private uint deliverySuccess;
     private uint deliveryFailure;
     private double positiveFactor;
     private double negativeFactor;
     private double power;
-
-    // Test
-    // private int testCount;
 
     #endregion
 
@@ -218,7 +215,7 @@ public class CubicCongestionControl : ICongestionControl
             this.power = Math.Pow(0.5, 1000d / this.Connection.MinimumRtt);
         }
 
-        if (Mics.FastSystem < this.validDeliveryMics)
+        if (Mics.FastSystem < this.downtimeAfterBrake)
         {
             Volatile.Write(ref this.deliverySuccess, 0);
             Volatile.Write(ref this.deliveryFailure, 0);
@@ -249,7 +246,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void Brake()
     {
-        this.validDeliveryMics = Mics.FastSystem + this.Connection.MinimumRtt;
+        this.downtimeAfterBrake = Mics.FastSystem + this.Connection.MinimumRtt;
 
         this.epochStart = 0;
         if (this.cwnd < this.lastMaxCwnd)
@@ -287,7 +284,7 @@ public class CubicCongestionControl : ICongestionControl
                 break;
             }
 
-            if (gene.SentMics > this.validDeliveryMics)
+            if (gene.SentMics > this.downtimeAfterBrake)
             {
                 this.ReportDeliveryFailure();
             }
