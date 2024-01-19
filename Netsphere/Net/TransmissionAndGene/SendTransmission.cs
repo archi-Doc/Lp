@@ -103,6 +103,23 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
+    internal void SetResend(SendGene sendGene)
+    {
+        lock (this.syncObject)
+        {
+            Debug.Assert(sendGene.SendTransmission == this);
+
+            sendGene.SetResend();
+            if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
+            {
+                if (sendGene.GeneSerial < this.totalGene)
+                {
+                    this.sendIndex = sendGene.GeneSerial;
+                }
+            }
+        }
+    }
+
     internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend)
         lock (this.syncObject)

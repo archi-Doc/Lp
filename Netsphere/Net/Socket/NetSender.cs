@@ -166,7 +166,8 @@ internal class NetSender
 
     public int SendCount { get; private set; }
 
-    public UnorderedLinkedList<SendGene> ResendList { get; } = new();
+    public Queue<SendGene> ResendQueue { get; } = new();
+    // public UnorderedLinkedList<SendGene> ResendList { get; } = new();
 
     private readonly NetTerminal netTerminal;
     private readonly NetBase netBase;

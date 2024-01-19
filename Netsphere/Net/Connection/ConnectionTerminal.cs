@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
@@ -310,6 +311,42 @@ public class ConnectionTerminal
 
         lock (this.SyncSend)
         {
+            // Resend list
+            /*while (netSender.ResendList.First is { } firstNode)
+            {
+                var gene = firstNode.Value;
+                var connection = gene.SendTransmission.Connection;
+                if (connection.SendNode is null)
+                {
+                    connection.SendNode = this.SendList.AddLast(connection);
+                }
+
+                if (gene.SendTransmission.SendNode is null)
+                {
+                    gene.SendTransmission.SendNode = connection.SendList.AddLast(gene.SendTransmission);
+                }
+
+                netSender.ResendList.Remove(firstNode);
+            }*/
+
+            // Resend queue
+            while (netSender.ResendQueue.TryDequeue(out var gene))
+            {
+                var transmission = gene.SendTransmission;
+                var connection = transmission.Connection;
+                if (connection.SendNode is null)
+                {
+                    connection.SendNode = this.SendList.AddLast(connection);
+                }
+
+                if (transmission.SendNode is null)
+                {
+                    transmission.SendNode = connection.SendList.AddLast(transmission);
+                }
+
+                transmission.SetResend(gene);
+            }
+
             // CongestedList: Move to SendList when congestion is resolved.
             var currentNode = this.CongestedList.Last; // To maintain order in SendList, process from the last node.
             while (currentNode is not null)

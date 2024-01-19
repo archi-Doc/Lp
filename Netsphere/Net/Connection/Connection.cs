@@ -127,6 +127,7 @@ public abstract class Connection : IDisposable
     internal long ClosedSystemMics;
     internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
+    internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
 
     private Embryo embryo;
@@ -137,7 +138,6 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
-    private UnorderedLinkedList<SendTransmission> sendList = new(); // lock (this.ConnectionTerminal.SyncSend)
 
     // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
@@ -203,7 +203,7 @@ public abstract class Connection : IDisposable
 
             if (transmission.SendNode is null)
             {
-                transmission.SendNode = this.sendList.AddLast(transmission);
+                transmission.SendNode = this.SendList.AddLast(transmission);
             }
         }
     }
@@ -476,7 +476,7 @@ Wait:
             return ProcessSendResult.Complete;
         }
 
-        var node = this.sendList.First;
+        var node = this.SendList.First;
         if (node is null)
         {// No transmission to send.
             return ProcessSendResult.Complete;
@@ -501,15 +501,15 @@ Wait:
         var result = transmission.ProcessSingleSend(netSender);
         if (result == ProcessSendResult.Complete)
         {// Delete the node if there is no gene to send.
-            this.sendList.Remove(node);
+            this.SendList.Remove(node);
             transmission.SendNode = default;
         }
         else if (result == ProcessSendResult.Remaining)
         {// If there are remaining genes, move it to the end.
-            this.sendList.MoveToLast(node);
+            this.SendList.MoveToLast(node);
         }
 
-        return this.sendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+        return this.SendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)

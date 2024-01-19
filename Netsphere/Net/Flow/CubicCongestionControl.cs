@@ -270,15 +270,9 @@ public class CubicCongestionControl : ICongestionControl
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
         SendGene? gene;
-        while (netSender.CanSend)
-        {// Retransmission. Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission.
-            var firstNode = this.genesInFlight.First;
-            if (firstNode is null)
-            {
-                break;
-            }
-
-            gene = firstNode.Value;
+        while (this.genesInFlight.First is { } node)
+        {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
+            gene = node.Value;
             if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < gene.SentMics)
             {
                 break;
@@ -289,15 +283,13 @@ public class CubicCongestionControl : ICongestionControl
                 this.ReportDeliveryFailure();
             }
 
-            if (!gene.Send_NotThreadSafe(netSender, 0))
-            {// Cannot send
-                this.genesInFlight.Remove(firstNode);
-                gene.Node = default;
-            }
-            else
-            {// Move to the last.
-                this.genesInFlight.MoveToLast(firstNode);
-            }
+            /*this.genesInFlight.Remove(node);
+            gene.Node = default;
+            netSender.ResendList.AddLast(node);*/
+
+            netSender.ResendQueue.Enqueue(gene);
+            this.genesInFlight.Remove(node);
+            gene.Node = default;
         }
     }
 

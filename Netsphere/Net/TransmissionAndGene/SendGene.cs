@@ -69,6 +69,12 @@ internal partial class SendGene
     }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetResend()
+    {
+        this.SentMics = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Send_NotThreadSafe(NetSender netSender, int additional)
     {
         if (!this.CanSend || !this.Packet.TryIncrement())
