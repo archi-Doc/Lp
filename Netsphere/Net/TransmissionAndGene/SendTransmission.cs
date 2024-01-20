@@ -138,7 +138,8 @@ internal sealed partial class SendTransmission : IDisposable
             sendGene.SetResend();
             if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
             {
-                if (sendGene.GeneSerial < this.GenesMax)
+                if (sendGene.GeneSerial < this.GenesMax &&
+                    this.sendIndex > sendGene.GeneSerial)
                 {
                     this.sendIndex = sendGene.GeneSerial;
                 }
@@ -186,7 +187,7 @@ internal sealed partial class SendTransmission : IDisposable
                     if (this.genes.GeneSerialListChain.Get(this.sendIndex++) is { } gene)
                     {
                         if (!gene.IsSent)
-                        {//
+                        {
                             if (!gene.Send_NotThreadSafe(netSender, 0))
                             {// Cannot send
                                 return ProcessSendResult.Complete;

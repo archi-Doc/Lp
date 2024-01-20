@@ -135,8 +135,8 @@ public sealed class NetSocket
         {
         }
 
-        //tempcode udp.Client.SendBufferSize = SendBufferSize;
-        //tempcode udp.Client.ReceiveBufferSize = ReceiveBufferSize;
+        udp.Client.SendBufferSize = SendBufferSize;
+        udp.Client.ReceiveBufferSize = ReceiveBufferSize;
         udp.Client.ReceiveTimeout = ReceiveTimeout;
 
         try

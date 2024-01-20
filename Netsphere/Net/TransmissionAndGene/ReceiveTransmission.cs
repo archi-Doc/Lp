@@ -204,6 +204,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
                     {
                         completeFlag = true;
                     }
+
+                    if (dataPosition == 2877 && !completeFlag)
+                    {
+                    }
                 }
             }
 

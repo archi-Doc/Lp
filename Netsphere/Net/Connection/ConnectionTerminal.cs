@@ -344,6 +344,7 @@ public class ConnectionTerminal
                     transmission.SendNode = connection.SendList.AddLast(transmission);
                 }
 
+                Console.WriteLine(gene.GeneSerial);
                 transmission.SetResend(gene);
             }
 

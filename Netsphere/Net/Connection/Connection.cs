@@ -900,7 +900,7 @@ Wait:
             foreach (var x in this.sendTransmissions)
             {
                 x.DisposeTransmission();
-                x.Goshujin = null;
+                // x.Goshujin = null;
             }
 
             // Since it's within a lock statement, manually clear it.
