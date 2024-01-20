@@ -498,6 +498,7 @@ Wait:
             return ProcessSendResult.Congested;
         }
 
+        // Console.WriteLine(transmission.GenesMax);
         var result = transmission.ProcessSingleSend(netSender);
         if (result == ProcessSendResult.Complete)
         {// Delete the node if there is no gene to send.
