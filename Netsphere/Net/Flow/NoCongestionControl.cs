@@ -80,6 +80,7 @@ internal class NoCongestionControl : ICongestionControl
                 }
 
                 gene = firstNode.Value;
+                gene.SetResend();
                 if (!gene.Send_NotThreadSafe(netSender, addition++))
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);

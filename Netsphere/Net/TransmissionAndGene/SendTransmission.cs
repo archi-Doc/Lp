@@ -45,32 +45,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
-    public int GenesMax
-    {
-        get
-        {
-            if (this.genes is not null)
-            {
-                return this.genes.GeneSerialListChain.Capacity;//tempcode
-            }
-            else if (this.gene2 is not null)
-            {
-                return 3;
-            }
-            else if (this.gene1 is not null)
-            {
-                return 2;
-            }
-            else if (this.gene0 is not null)
-            {
-                return 1;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-    }
+    public int GeneSerialMax { get; private set; }
 
 #pragma warning disable SA1401 // Fields should be private
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
@@ -82,7 +57,7 @@ internal sealed partial class SendTransmission : IDisposable
     private SendGene? gene1; // Gene 1
     private SendGene? gene2; // Gene 2
     private SendGene.GoshujinClass? genes; // Multiple genes
-    private int sendIndex;
+    private int sendGeneSerial;
 
     #endregion
 
@@ -135,13 +110,17 @@ internal sealed partial class SendTransmission : IDisposable
         {
             Debug.Assert(sendGene.SendTransmission == this);
 
-            sendGene.SetResend();
-            if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
+            if (this.Mode == NetTransmissionMode.Rama)
             {
-                if (sendGene.GeneSerial < this.GenesMax &&
-                    this.sendIndex > sendGene.GeneSerial)
+                sendGene.SetResend();
+            }
+            else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
+            {
+                sendGene.SetResend();
+                this.genes.GeneSerialListChain.Remove(sendGene);
+                if (this.genes.GeneSerialListChain.Add(sendGene))
                 {
-                    this.sendIndex = sendGene.GeneSerial;
+                    this.GeneSerialMax = sendGene.GeneSerial + 1;
                 }
             }
         }
@@ -181,20 +160,16 @@ internal sealed partial class SendTransmission : IDisposable
             }
             else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
             {
-                var max = this.GenesMax;
-                while (this.sendIndex < max)
+                while (this.sendGeneSerial < this.GeneSerialMax)
                 {
-                    if (this.genes.GeneSerialListChain.Get(this.sendIndex++) is { } gene)
+                    if (this.genes.GeneSerialListChain.Get(this.sendGeneSerial++) is { } gene)
                     {
-                        if (!gene.IsSent)
-                        {
-                            if (!gene.Send_NotThreadSafe(netSender, 0))
-                            {// Cannot send
-                                return ProcessSendResult.Complete;
-                            }
-
-                            return this.sendIndex >= max ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+                        if (!gene.Send_NotThreadSafe(netSender, 0))
+                        {// Cannot send
+                            return ProcessSendResult.Complete;
                         }
+
+                        return this.sendGeneSerial >= this.GeneSerialMax ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
                     }
                 }
 
@@ -238,6 +213,7 @@ internal sealed partial class SendTransmission : IDisposable
                 this.Mode = NetTransmissionMode.Rama;
                 if (info.NumberOfGenes == 1)
                 {// gene0
+                    this.GeneSerialMax = info.NumberOfGenes;
                     this.gene0 = new(this);
 
                     this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span, out var owner);
@@ -245,6 +221,7 @@ internal sealed partial class SendTransmission : IDisposable
                 }
                 else if (info.NumberOfGenes == 2)
                 {// gene0, gene1
+                    this.GeneSerialMax = info.NumberOfGenes;
                     this.gene0 = new(this);
                     this.gene1 = new(this);
 
@@ -258,6 +235,7 @@ internal sealed partial class SendTransmission : IDisposable
                 }
                 else if (info.NumberOfGenes == 3)
                 {// gene0, gene1, gene2
+                    this.GeneSerialMax = info.NumberOfGenes;
                     this.gene0 = new(this);
                     this.gene1 = new(this);
                     this.gene2 = new(this);
@@ -289,8 +267,9 @@ internal sealed partial class SendTransmission : IDisposable
                 this.Mode = NetTransmissionMode.Block;
                 this.Connection.CreateCongestionControl();
 
+                this.GeneSerialMax = info.NumberOfGenes;
                 this.genes = new();
-                this.genes.GeneSerialListChain.Resize(info.NumberOfGenes);
+                this.genes.GeneSerialListChain.Resize(info.NumberOfGenes << 1);
 
                 var firstGene = new SendGene(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
@@ -353,9 +332,8 @@ internal sealed partial class SendTransmission : IDisposable
                 var endGene = BitConverter.ToInt32(span);
                 span = span.Slice(sizeof(int));
 
-                var max = this.GenesMax;
-                if (startGene < 0 || startGene >= max ||
-                    endGene < 0 || endGene > max)
+                if (startGene < 0 || startGene >= this.GeneSerialMax ||
+                    endGene < 0 || endGene > this.GeneSerialMax)
                 {
                     continue;
                 }
@@ -364,9 +342,9 @@ internal sealed partial class SendTransmission : IDisposable
 
                 if (this.Mode == NetTransmissionMode.Rama)
                 {
-                    if (startGene == 0 && endGene == max)
+                    if (startGene == 0 && endGene == this.GeneSerialMax)
                     {
-                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {max}");
+                        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.GeneSerialMax}");
 
                         if (this.gene0 is not null)
                         {

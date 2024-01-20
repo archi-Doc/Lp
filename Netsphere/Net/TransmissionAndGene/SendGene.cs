@@ -27,6 +27,8 @@ internal partial class SendGene
 
     public long SentMics { get; private set; }
 
+    public bool IsResend { get; private set; }
+
     public bool IsSent
         => this.SentMics != 0;
 
@@ -71,6 +73,7 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResend()
     {
+        this.IsResend = true;
         this.SentMics = 0;
     }
 
@@ -84,9 +87,10 @@ internal partial class SendGene
 
         var connection = this.SendTransmission.Connection;
         var currentMics = Mics.FastSystem;
-        if (this.IsSent)
+        if (this.IsResend)
         {
             connection.IncrementResendCount();
+            var span = this.Packet.Memory.Span;//
         }
         else
         {
