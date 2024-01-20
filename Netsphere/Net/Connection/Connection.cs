@@ -671,7 +671,7 @@ Wait:
             }
         }
 
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
+        transmission.ProcessReceive_Gene(0, 0, toBeShared.Slice(14)); // FirstGeneFrameCode
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
@@ -684,18 +684,14 @@ Wait:
 
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        /*var geneSerial = BitConverter.ToInt32(span);
+        var geneSerial = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int));
         if (geneSerial == 0)
         {
             return;
-        }*/
+        }
 
         var dataPosition = BitConverter.ToInt32(span);
-        if (dataPosition == 0)
-        {
-            return;
-        }
 
         ReceiveTransmission? transmission;
         lock (this.receiveTransmissions.SyncObject)
@@ -711,13 +707,10 @@ Wait:
             {
                 transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
                 this.receiveReceivedList.MoveToLast(node);
-                /*this.receiveReceivedList.Remove(node);
-                // this.receiveReceivedList.AddLast(node); // The node has been disposed and therefore cannot be reused.
-                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);*/
             }
         }
 
-        transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
+        transmission.ProcessReceive_Gene(geneSerial, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)

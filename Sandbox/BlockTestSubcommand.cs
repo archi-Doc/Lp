@@ -34,7 +34,7 @@ public class BlockTestSubcommand : ISimpleCommandAsync
             return;
         }
         
-        // this.NetControl.NetTerminal.SetDeliveryFailureRatio(0.05d);
+        this.NetControl.NetTerminal.SetDeliveryFailureRatio(0.05d);
         this.NetControl.NetTerminal.PacketTerminal.MaxResendCount = 10;
         //this.NetControl.Alternative!.SetDeliveryFailureRatio(0.05d);
         this.NetControl.Alternative!.PacketTerminal.MaxResendCount = 10;
