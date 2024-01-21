@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
@@ -19,6 +20,10 @@ public class CubicCongestionControl : ICongestionControl
     private const double FastConvergenceRatio = (2d - Beta) / 2d;
     private const ulong CubicFactor = (1ul << 40) / 410ul;
     private const double BrakeThreshold = 0.05d;
+    private const int HystartMinCwnd = 16;
+    private const int HystartRttSamples = 8;
+    private const int HystartMinEta = 4_000;
+    private const int HystartMaxEta = 16_000;
 
     private static ReadOnlySpan<byte> v =>
     [
@@ -123,6 +128,12 @@ public class CubicCongestionControl : ICongestionControl
     private double negativeFactor;
     private double power;
 
+    // Hystart
+    private long currentRoundMics;
+    private int previousMinRtt;
+    private int currentMinRtt = int.MaxValue;
+    private int currentRttSamples;
+
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -156,6 +167,26 @@ public class CubicCongestionControl : ICongestionControl
             {
                 this.genesInFlight.Remove(node);
                 sendGene.Node = default;
+            }
+        }
+    }
+
+    void ICongestionControl.LossDetected(SendGene sendGene)
+    {
+        lock (this.syncObject)
+        {
+            if (!sendGene.TrySetResend())
+            {
+                return;
+            }
+
+            if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
+            {
+                this.genesInFlight.MoveToFirst(node);
+            }
+            else
+            {
+                sendGene.Node = this.genesInFlight.AddLast(sendGene);
             }
         }
     }
@@ -208,6 +239,25 @@ public class CubicCongestionControl : ICongestionControl
         return true;
     }
 
+    void ICongestionControl.AddRtt(int rttMics)
+    {
+        if (this.slowstart)
+        {
+            Interlocked.Increment(ref this.currentRttSamples);
+
+            int current;
+            do
+            {
+                current = this.currentMinRtt;
+                if (current < rttMics)
+                {
+                    return;
+                }
+            }
+            while (Interlocked.CompareExchange(ref this.currentMinRtt, rttMics, current) != current);
+        }
+    }
+
     private void ProcessFactor()
     {
         if (this.cubicCount == 0 || this.power == 0)
@@ -248,7 +298,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void Brake()
     {
-        this.downtimeAfterBrake = Mics.FastSystem + this.Connection.MinimumRtt;
+        this.downtimeAfterBrake = Mics.FastSystem + this.Connection.SmoothedRtt;
 
         this.epochStart = 0;
         if (this.cwnd < this.lastMaxCwnd)
@@ -292,6 +342,7 @@ public class CubicCongestionControl : ICongestionControl
             }
             else
             {// Move to the last.
+                Console.WriteLine($"RESEND2: {gene.GeneSerial}");
                 this.genesInFlight.MoveToLast(firstNode);
             }
         }
@@ -365,6 +416,38 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
+        if (this.slowstart)
+        {// Hystart
+            var currentMinRtt = this.currentMinRtt;
+            var currentRttSamples = this.currentRttSamples;
+
+            if (this.cwnd >= HystartMinCwnd &&
+                currentRttSamples >= HystartRttSamples &&
+                currentMinRtt != 0 &&
+                this.previousMinRtt != 0)
+            {
+                var eta = Math.Clamp(currentMinRtt >> 3, HystartMinEta, HystartMaxEta);
+                Console.WriteLine($"Hystart {currentMinRtt} mics [{currentRttSamples}] ETA {eta} Previous {this.previousMinRtt}");
+                if (currentMinRtt >= (this.previousMinRtt + eta))
+                {// Exit slow start
+                    Console.WriteLine("Exit slow start");
+                    this.slowstart = false;
+                }
+            }
+
+            if ((Mics.FastSystem - this.currentRoundMics) > this.Connection.SmoothedRtt)
+            {
+                this.currentRoundMics = Mics.FastSystem;
+                if (currentRttSamples >= HystartRttSamples)
+                {
+                    this.previousMinRtt = currentMinRtt;
+                }
+
+                Volatile.Write(ref this.currentRttSamples, 0);
+                Volatile.Write(ref this.currentMinRtt, int.MaxValue);
+            }
+        }
+
         if (this.slowstart)
         {// Slow start
             var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);

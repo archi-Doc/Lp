@@ -916,7 +916,7 @@ Wait:
                     x.ReceivedDisposedNode = null;
                 }
 
-                x.Goshujin = null;
+                // x.Goshujin = null;
             }
 
             // Since it's within a lock statement, manually clear it.

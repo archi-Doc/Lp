@@ -304,6 +304,7 @@ internal sealed partial class SendTransmission : IDisposable
         var completeFlag = false;
 
         long sentMics = 0;
+        int lossPosition = -1;
         lock (this.syncObject)
         {
             while (span.Length >= 8)
@@ -364,19 +365,54 @@ internal sealed partial class SendTransmission : IDisposable
                         break;
                     }
                 }
-                else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
-                {
+                else if (this.genes is not null)
+                {// NetTransmissionMode.Block
                     this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
+                    var chain = this.genes.GeneSerialListChain;
                     for (var i = startGene; i < endGene; i++)
                     {
-                        if (this.genes.GeneSerialListChain.Get(i) is { } gene)
+                        if (chain.Get(i) is { } gene)
                         {
                             if (!gene.IsResend)
                             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                                 sentMics = Math.Max(sentMics, gene.SentMics);
+                                this.Connection.GetCongestionControl().AddRtt((int)(Mics.FastSystem - gene.SentMics));
                             }
 
                             gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
+                        }
+                    }
+
+                    if (chain.StartPosition < startGene)
+                    {
+                        var dif = startGene - chain.StartPosition;
+                        if (dif >= 3)
+                        {// Equivalent to kPacketThreshold 3 (RFC5681, RFC6675)
+                            if (startGene > lossPosition)
+                            {
+                                lossPosition = startGene;
+                            }
+                        }
+                        else if (dif >= 1)
+                        {
+                            var threshold = (this.Connection.SmoothedRtt * 9) >> 3;
+                            if (chain.StartPosition > 0 &&
+                                chain.Get(chain.StartPosition - 1) is { } g1 &&
+                                (Mics.FastSystem - g1.SentMics) > threshold)
+                            {
+                                if (startGene > lossPosition)
+                                {
+                                    lossPosition = startGene;
+                                }
+                            }
+                            else if (chain.Get(chain.StartPosition) is { } g2 &&
+                                (Mics.FastSystem - g2.SentMics) > threshold)
+                            {
+                                if (startGene > lossPosition)
+                                {
+                                    lossPosition = startGene;
+                                }
+                            }
                         }
                     }
 
@@ -391,7 +427,28 @@ internal sealed partial class SendTransmission : IDisposable
             var rtt = Mics.FastSystem - sentMics;
             if (sentMics != 0 && rtt > 0)
             {
-                this.Connection.AddRtt((int)rtt);
+                var r = (int)rtt;
+                this.Connection.AddRtt(r);
+                // this.Connection.GetCongestionControl().AddRtt(r);
+            }
+
+            if (lossPosition >= 0 && this.genes?.GeneSerialListChain is { } c)
+            {// Loss detected
+                Console.WriteLine($"Loss detected Start: {c.StartPosition} Loss: {lossPosition}");
+                for (var i = lossPosition - 1; i >= c.StartPosition; i--)
+                {
+                    if (c.Get(i) is { } gene)
+                    {
+                        gene.CongestionControl.LossDetected(gene);
+                    }
+                }
+                /*for (var i = c.StartPosition; i < lossPosition; i++)
+                {
+                    if (c.Get(i) is { } gene)
+                    {
+                        gene.CongestionControl.LossDetected(gene);
+                    }
+                }*/
             }
 
             if (completeFlag)

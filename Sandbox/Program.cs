@@ -59,7 +59,7 @@ public class Program
                 options.MaxLogCapacity = 1;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
-                options.MaxQueue = 10_000;
+                options.MaxQueue = 100_000;
             })
             .SetupOptions<CongestionControlLoggerOptions>((context, options) =>
             {// FileLoggerOptions

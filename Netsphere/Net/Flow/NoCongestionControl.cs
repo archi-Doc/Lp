@@ -53,6 +53,10 @@ internal class NoCongestionControl : ICongestionControl
         }
     }
 
+    void ICongestionControl.LossDetected(Netsphere.Net.SendGene sendGene)
+    {
+    }
+
     void ICongestionControl.ReportDeliverySuccess()
     {
     }
@@ -63,8 +67,6 @@ internal class NoCongestionControl : ICongestionControl
 
     bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
-        // CongestionControl
-
         // Resend
         SendGene? gene;
         lock (this.syncObject)
@@ -89,5 +91,9 @@ internal class NoCongestionControl : ICongestionControl
         }
 
         return true; // Do not dispose NoCongestionControl as it is shared across the connections.
+    }
+
+    void ICongestionControl.AddRtt(int rttMics)
+    {
     }
 }

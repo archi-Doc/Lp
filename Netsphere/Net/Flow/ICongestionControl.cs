@@ -25,4 +25,8 @@ internal interface ICongestionControl
     void AddInFlight(SendGene sendGene, long rto);
 
     void RemoveInFlight(SendGene sendGene, bool ack);
+
+    void LossDetected(SendGene sendGene);
+
+    void AddRtt(int rttMics);
 }

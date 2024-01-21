@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Text;
 using Arc.Collections;
 using Netsphere.Packet;
 using Netsphere.Server;
@@ -192,8 +191,14 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 if (chain.Get(dataPosition) is { } gene)
                 {
                     gene.SetRecv(toBeShared);
+
                     if (this.maxReceivedPosition <= dataPosition)
                     {
+                        if (this.maxReceivedPosition == dataPosition)
+                        {
+                            this.maxReceivedPosition++;
+                        }
+
                         while (chain.Get(this.maxReceivedPosition) is { } g && g.IsReceived)
                         {
                             this.maxReceivedPosition++;

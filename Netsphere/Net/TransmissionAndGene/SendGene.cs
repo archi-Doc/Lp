@@ -49,26 +49,22 @@ internal partial class SendGene
         this.Packet = toBeMoved;
     }
 
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long Send_NotThreadSafe(NetSender netSender)
+    public bool TrySetResend()
     {
-        if (!this.CanSend)
+        if (this.SentMics != 0)
         {
-            return 0;
-        }
-        else if (!this.Packet.TryIncrement())
-        {// MemoryOwner has been returned to the pool (Disposed).
-            return 0;
+            var threshold = this.SendTransmission.Connection.MinimumRtt;
+            if (Mics.FastSystem - this.SentMics < threshold)
+            {// Suppress the resending.
+                return false;
+            }
         }
 
-        var connection = this.SendTransmission.Connection;
-        var currentMics = Mics.FastSystem;
-
-        netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
-        this.SentMics = currentMics;
-        // Console.WriteLine($"Send: {this.Packet.Memory.Length} bytes to {connection.EndPoint.ToString()}");
-        return currentMics + connection.RetransmissionTimeout;
-    }*/
+        Console.WriteLine($"TrySetResend: {this.GeneSerial}");
+        this.IsResend = true;
+        this.SentMics = 0;
+        return true;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Resend_NotThreadSafe(NetSender netSender, int additional)
