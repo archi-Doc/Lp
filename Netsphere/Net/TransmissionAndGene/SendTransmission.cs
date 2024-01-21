@@ -110,17 +110,13 @@ internal sealed partial class SendTransmission : IDisposable
         {
             Debug.Assert(sendGene.SendTransmission == this);
 
-            if (this.Mode == NetTransmissionMode.Rama)
+            sendGene.SetResend();
+            if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
             {
-                sendGene.SetResend();
-            }
-            else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
-            {
-                sendGene.SetResend();
-                this.genes.GeneSerialListChain.Remove(sendGene);
-                if (this.genes.GeneSerialListChain.Add(sendGene))
+                if (sendGene.GeneSerial < this.GeneSerialMax &&
+                    this.sendGeneSerial > sendGene.GeneSerial)
                 {
-                    this.GeneSerialMax = sendGene.GeneSerial + 1;
+                    this.sendGeneSerial = sendGene.GeneSerial;
                 }
             }
         }
@@ -269,7 +265,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                 this.GeneSerialMax = info.NumberOfGenes;
                 this.genes = new();
-                this.genes.GeneSerialListChain.Resize(info.NumberOfGenes << 1);
+                this.genes.GeneSerialListChain.Resize(info.NumberOfGenes);
 
                 var firstGene = new SendGene(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
