@@ -441,6 +441,8 @@ Wait:
             var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
             this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
         }
+
+        // Console.WriteLine($"{rttMics} -> {this.smoothedRtt}");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -498,7 +500,6 @@ Wait:
             return ProcessSendResult.Congested;
         }
 
-        // Console.WriteLine(transmission.GenesMax);
         var result = transmission.ProcessSingleSend(netSender);
         if (result == ProcessSendResult.Complete)
         {// Delete the node if there is no gene to send.
@@ -569,7 +570,6 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
-        // var acked = 0;
         lock (this.sendTransmissions.SyncObject)
         {
             while (span.Length >= 6)
@@ -591,7 +591,7 @@ Wait:
                     continue;
                 }
 
-                transmission.ProcessReceive_Ack(span/*, ref acked*/);
+                transmission.ProcessReceive_Ack(span);
                 span = span.Slice(length);
             }
         }

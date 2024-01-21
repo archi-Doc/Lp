@@ -71,10 +71,19 @@ internal partial class SendGene
     }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetResend()
+    public bool Resend_NotThreadSafe(NetSender netSender, int additional)
     {
+        if (this.SentMics != 0)
+        {
+            var threshold = this.SendTransmission.Connection.MinimumRtt;
+            if (Mics.FastSystem - this.SentMics < threshold)
+            {// Suppress the resending.
+                return true;
+            }
+        }
+
         this.IsResend = true;
-        this.SentMics = 0;
+        return this.Send_NotThreadSafe(netSender, additional);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

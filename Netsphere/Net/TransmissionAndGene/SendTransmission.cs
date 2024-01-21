@@ -299,7 +299,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal bool ProcessReceive_Ack(scoped Span<byte> span/*, ref int acked*/)
+    internal bool ProcessReceive_Ack(scoped Span<byte> span)
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
 
@@ -329,27 +329,38 @@ internal sealed partial class SendTransmission : IDisposable
 
                         if (this.gene0 is not null)
                         {
-                            sentMics = Math.Max(sentMics, this.gene0.SentMics);
+                            if (!this.gene0.IsResend)
+                            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                                sentMics = Math.Max(sentMics, this.gene0.SentMics);
+                            }
+
                             this.gene0.Dispose(true);
                             this.gene0 = null;
                         }
 
                         if (this.gene1 is not null)
                         {
-                            sentMics = Math.Max(sentMics, this.gene1.SentMics);
+                            if (!this.gene1.IsResend)
+                            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                                sentMics = Math.Max(sentMics, this.gene1.SentMics);
+                            }
+
                             this.gene1.Dispose(true);
                             this.gene1 = null;
                         }
 
                         if (this.gene2 is not null)
                         {
-                            sentMics = Math.Max(sentMics, this.gene2.SentMics);
+                            if (!this.gene2.IsResend)
+                            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                                sentMics = Math.Max(sentMics, this.gene2.SentMics);
+                            }
+
                             this.gene2.Dispose(true);
                             this.gene2 = null;
                         }
 
                         completeFlag = true;
-                        // acked += this.totalGene;
                         break;
                     }
                 }
@@ -360,10 +371,12 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         if (this.genes.GeneSerialListChain.Get(i) is { } gene)
                         {
-                            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Dispose send gene {gene.GeneSerial}");
-                            sentMics = Math.Max(sentMics, gene.SentMics);
+                            if (!gene.IsResend)
+                            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                                sentMics = Math.Max(sentMics, gene.SentMics);
+                            }
+
                             gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
-                            // acked++;
                         }
                     }
 
@@ -376,7 +389,7 @@ internal sealed partial class SendTransmission : IDisposable
             }
 
             var rtt = Mics.FastSystem - sentMics;
-            if (rtt > 0)
+            if (sentMics != 0 && rtt > 0)
             {
                 this.Connection.AddRtt((int)rtt);
             }

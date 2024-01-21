@@ -237,11 +237,13 @@ public class CubicCongestionControl : ICongestionControl
             this.negativeFactor = 0;
             this.Brake();
         }
+        else
+        {
+            this.positiveFactor *= this.power;
+            this.negativeFactor *= this.power;
+        }
 
         // Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
-
-        this.positiveFactor *= this.power;
-        this.negativeFactor *= this.power;
     }
 
     private void Brake()
@@ -270,9 +272,9 @@ public class CubicCongestionControl : ICongestionControl
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
         SendGene? gene;
-        while (this.genesInFlight.First is { } node)
+        while (this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
-            gene = node.Value;
+            gene = firstNode.Value;
             if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < gene.SentMics)
             {
                 break;
@@ -283,15 +285,14 @@ public class CubicCongestionControl : ICongestionControl
                 this.ReportDeliveryFailure();
             }
 
-            gene.SetResend();
-            if (!gene.Send_NotThreadSafe(netSender, 0))
+            if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
-                this.genesInFlight.Remove(node);
+                this.genesInFlight.Remove(firstNode);
                 gene.Node = default;
             }
             else
             {// Move to the last.
-                this.genesInFlight.MoveToLast(node);
+                this.genesInFlight.MoveToLast(firstNode);
             }
         }
     }
