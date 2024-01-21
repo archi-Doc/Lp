@@ -166,8 +166,6 @@ internal class NetSender
 
     public int SendCount { get; private set; }
 
-    public Queue<SendGene> ResendQueue { get; } = new();
-
     private readonly NetTerminal netTerminal;
     private readonly NetBase netBase;
     private readonly ILogger logger;

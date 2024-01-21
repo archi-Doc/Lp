@@ -283,13 +283,16 @@ public class CubicCongestionControl : ICongestionControl
                 this.ReportDeliveryFailure();
             }
 
-            /*this.genesInFlight.Remove(node);
-            gene.Node = default;
-            netSender.ResendList.AddLast(node);*/
-
-            netSender.ResendQueue.Enqueue(gene);
-            this.genesInFlight.Remove(node);
-            gene.Node = default;
+            gene.SetResend();
+            if (!gene.Send_NotThreadSafe(netSender, 0))
+            {// Cannot send
+                this.genesInFlight.Remove(node);
+                gene.Node = default;
+            }
+            else
+            {// Move to the last.
+                this.genesInFlight.MoveToLast(node);
+            }
         }
     }
 

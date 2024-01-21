@@ -311,25 +311,6 @@ public class ConnectionTerminal
 
         lock (this.SyncSend)
         {
-            // Resend queue
-            while (netSender.ResendQueue.TryDequeue(out var gene))
-            {
-                var transmission = gene.SendTransmission;
-                var connection = transmission.Connection;
-                if (connection.SendNode is null)
-                {
-                    connection.SendNode = this.SendList.AddLast(connection);
-                }
-
-                if (transmission.SendNode is null)
-                {
-                    transmission.SendNode = connection.SendList.AddLast(transmission);
-                }
-
-                Console.WriteLine(gene.GeneSerial);
-                transmission.SetResend(gene);
-            }
-
             // CongestedList: Move to SendList when congestion is resolved.
             var currentNode = this.CongestedList.Last; // To maintain order in SendList, process from the last node.
             while (currentNode is not null)

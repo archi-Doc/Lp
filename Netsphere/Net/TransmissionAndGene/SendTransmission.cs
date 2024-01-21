@@ -104,24 +104,6 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal void SetResend(SendGene sendGene)
-    {
-        lock (this.syncObject)
-        {
-            Debug.Assert(sendGene.SendTransmission == this);
-
-            sendGene.SetResend();
-            if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
-            {
-                if (sendGene.GeneSerial < this.GeneSerialMax &&
-                    this.sendGeneSerial > sendGene.GeneSerial)
-                {
-                    this.sendGeneSerial = sendGene.GeneSerial;
-                }
-            }
-        }
-    }
-
     internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend)
         lock (this.syncObject)
@@ -160,12 +142,15 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     if (this.genes.GeneSerialListChain.Get(this.sendGeneSerial++) is { } gene)
                     {
-                        if (!gene.Send_NotThreadSafe(netSender, 0))
-                        {// Cannot send
-                            return ProcessSendResult.Complete;
-                        }
+                        if (!gene.IsSent)
+                        {
+                            if (!gene.Send_NotThreadSafe(netSender, 0))
+                            {// Cannot send
+                                return ProcessSendResult.Complete;
+                            }
 
-                        return this.sendGeneSerial >= this.GeneSerialMax ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+                            return this.sendGeneSerial >= this.GeneSerialMax ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+                        }
                     }
                 }
 
