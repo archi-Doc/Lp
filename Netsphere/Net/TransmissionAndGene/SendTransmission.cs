@@ -230,7 +230,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                     span = span.Slice((int)info.FirstGeneSize);
                     Debug.Assert(span.Length == info.LastGeneSize);
-                    this.CreateFollowingPacket(1, 1, span, out owner);
+                    this.CreateFollowingPacket(1, span, out owner);
                     this.gene1.SetSend(owner);
                 }
                 else if (info.NumberOfGenes == 3)
@@ -244,12 +244,12 @@ internal sealed partial class SendTransmission : IDisposable
                     this.gene0.SetSend(owner);
 
                     span = span.Slice((int)info.FirstGeneSize);
-                    this.CreateFollowingPacket(1, 1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
+                    this.CreateFollowingPacket(1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
                     this.gene1.SetSend(owner);
 
                     span = span.Slice(FollowingGeneFrame.MaxGeneLength);
                     Debug.Assert(span.Length == info.LastGeneSize);
-                    this.CreateFollowingPacket(2, 2, span, out owner);
+                    this.CreateFollowingPacket(2, span, out owner);
                     this.gene2.SetSend(owner);
                 }
                 else
@@ -282,7 +282,7 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : FollowingGeneFrame.MaxGeneLength);
                     var gene = new SendGene(this);
-                    this.CreateFollowingPacket(i, i, span.Slice(0, size), out owner);
+                    this.CreateFollowingPacket(i, span.Slice(0, size), out owner);
                     gene.SetSend(owner);
 
                     span = span.Slice(size);
@@ -450,7 +450,7 @@ internal sealed partial class SendTransmission : IDisposable
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(int geneSerial, int dataPosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(/*int geneSerial, */int dataPosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 
@@ -464,8 +464,8 @@ internal sealed partial class SendTransmission : IDisposable
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, geneSerial); // GeneSerial
-        span = span.Slice(sizeof(int));
+        // BitConverter.TryWriteBytes(span, geneSerial); // GeneSerial
+        // span = span.Slice(sizeof(int));
 
         BitConverter.TryWriteBytes(span, dataPosition); // DataPosition
         span = span.Slice(sizeof(int));

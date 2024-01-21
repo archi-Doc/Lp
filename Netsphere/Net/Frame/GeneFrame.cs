@@ -22,12 +22,12 @@ internal readonly struct FirstGeneFrame
 
 internal readonly struct FollowingGeneFrame
 {// FollowingGeneFrameCode
-    public const int Length = 14;
+    public const int Length = 10; // 14
     public const int LengthExcludingFrameType = Length - 2;
     public const int MaxGeneLength = PacketHeader.MaxFrameLength - Length;
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionId; // 4 bytes
-    public readonly int GeneSerial; // 4 bytes
+    // public readonly int GeneSerial; // 4 bytes
     public readonly int DataPosition; // 4 bytes
 }

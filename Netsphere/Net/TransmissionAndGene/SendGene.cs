@@ -90,7 +90,6 @@ internal partial class SendGene
         if (this.IsResend)
         {
             connection.IncrementResendCount();
-            var span = this.Packet.Memory.Span;//
         }
         else
         {

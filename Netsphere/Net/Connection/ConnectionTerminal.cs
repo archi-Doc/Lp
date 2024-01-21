@@ -311,24 +311,6 @@ public class ConnectionTerminal
 
         lock (this.SyncSend)
         {
-            // Resend list
-            /*while (netSender.ResendList.First is { } firstNode)
-            {
-                var gene = firstNode.Value;
-                var connection = gene.SendTransmission.Connection;
-                if (connection.SendNode is null)
-                {
-                    connection.SendNode = this.SendList.AddLast(connection);
-                }
-
-                if (gene.SendTransmission.SendNode is null)
-                {
-                    gene.SendTransmission.SendNode = connection.SendList.AddLast(gene.SendTransmission);
-                }
-
-                netSender.ResendList.Remove(firstNode);
-            }*/
-
             // Resend queue
             while (netSender.ResendQueue.TryDequeue(out var gene))
             {

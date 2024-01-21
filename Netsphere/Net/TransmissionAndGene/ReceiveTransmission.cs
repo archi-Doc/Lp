@@ -125,8 +125,9 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = totalGene;
     }
 
-    internal void ProcessReceive_Gene(int geneSerial, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(/*int geneSerial, */int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
     {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
+        var geneSerial = dataPosition;
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
