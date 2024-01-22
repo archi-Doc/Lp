@@ -173,13 +173,14 @@ public class CubicCongestionControl : ICongestionControl
 
     void ICongestionControl.LossDetected(SendGene sendGene)
     {
-        if (!sendGene.TrySetResend())
+        if (sendGene.CurrentState == SendGene.State.LossDetected)
         {
             return;
         }
 
         lock (this.syncObject)
         {
+            sendGene.SetLossDetected();
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
             {
                 this.genesInFlight.MoveToFirst(node);
