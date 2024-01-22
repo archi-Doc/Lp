@@ -385,7 +385,7 @@ internal sealed partial class SendTransmission : IDisposable
                     }
 
                     if (chain.StartPosition < startGene)
-                    {
+                    {// Loss detection
                         var dif = startGene - chain.StartPosition;
                         if (dif >= 3)
                         {// Packet Threshold: kPacketThreshold 3 (RFC5681, RFC6675)

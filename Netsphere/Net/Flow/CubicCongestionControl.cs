@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
@@ -9,6 +10,7 @@ namespace Netsphere.Net;
 
 public class CubicCongestionControl : ICongestionControl
 {
+    private const double BrakeThreshold = 0.05d;
     private const int CubicThreshold = 10;
     private const double InitialCwnd = 10;
     private const double MaxCwnd = 1_000_000;
@@ -19,7 +21,6 @@ public class CubicCongestionControl : ICongestionControl
     private const double WtcpRatio = 3d * Beta / (2d - Beta);
     private const double FastConvergenceRatio = (2d - Beta) / 2d;
     private const ulong CubicFactor = (1ul << 40) / 410ul;
-    private const double BrakeThreshold = 0.05d;
     private const int HystartMinCwnd = 16;
     private const int HystartRttSamples = 8;
     private const int HystartMinEta = 4_000;
@@ -97,6 +98,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
+    private readonly ConcurrentQueue<SendGene> genesLossDetected = new();
 
     // Smoothing transmissions
     private double capacity; // Equivalent to cwnd, but increases gradually to prevent mass transmission at once.
@@ -177,26 +179,12 @@ public class CubicCongestionControl : ICongestionControl
         {
             return;
         }
-
-        lock (this.syncObject)
+        else
         {
             sendGene.SetLossDetected();
-            if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
-            {
-                this.genesInFlight.MoveToFirst(node);
-            }
-            else
-            {
-                sendGene.Node = this.genesInFlight.AddFirst(sendGene);
-            }
+            this.genesLossDetected.Enqueue(sendGene);
         }
     }
-
-    public void ReportDeliverySuccess()
-        => Interlocked.Increment(ref this.deliverySuccess);
-
-    public void ReportDeliveryFailure()
-        => Interlocked.Increment(ref this.deliveryFailure);
 
     bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
@@ -228,7 +216,7 @@ public class CubicCongestionControl : ICongestionControl
             }
 
             // CongestionControl: Capacity
-            var capacityLimited = this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
+            this.CalculateCapacity(elapsedMics, elapsedMilliseconds);
             this.capacityInt = (int)this.capacity;
 
             // this.logger?.TryGet(LogLevel.Debug)?.Log($"{(capacityLimited ? "CAP " : string.Empty)}current/cap/cwnd {this.NumberOfGenesInFlight}/{this.capacity:F1}/{this.cwnd:F1} regen {this.regen:F2} boost {this.boost:F2} mics/max {this.boostMics}/{this.boostMicsMax}");
@@ -290,6 +278,8 @@ public class CubicCongestionControl : ICongestionControl
         }
         else
         {
+            // Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
+
             this.positiveFactor *= this.power;
             this.negativeFactor *= this.power;
         }
@@ -322,12 +312,38 @@ public class CubicCongestionControl : ICongestionControl
 
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
+        int resendCapacity = 1 + (int)this.boost; // tempcode
         SendGene? gene;
-        while (this.genesInFlight.First is { } firstNode)
+
+        // Loss detection
+        while (resendCapacity-- > 0 && this.genesLossDetected.TryDequeue(out gene))
+        {
+            if (gene.Node is not UnorderedLinkedList<SendGene>.Node node)
+            {
+                continue;
+            }
+
+            if (gene.SentMics > this.downtimeAfterBrake)
+            {
+                this.ReportDeliveryFailure();
+            }
+
+            if (!gene.Resend_NotThreadSafe(netSender, 0))
+            {// Cannot send
+                this.genesInFlight.Remove(node);
+                gene.Node = default;
+            }
+            else
+            {// Resend
+                Console.WriteLine($"RESEND: {gene.GeneSerial}");
+                this.genesInFlight.MoveToLast(node);  // Move to the last.
+            }
+        }
+
+        while (resendCapacity-- > 0 && this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
-            if (gene.CurrentState != SendGene.State.LossDetected &&
-                Mics.FastSystem < (gene.SentMics + gene.SendTransmission.Connection.RetransmissionTimeout))
+            if (Mics.FastSystem < (gene.SentMics + gene.SendTransmission.Connection.RetransmissionTimeout))
             {
                 break;
             }
@@ -531,4 +547,10 @@ public class CubicCongestionControl : ICongestionControl
         this.boost = r * BurstRatio;
         this.boostMicsMax = (long)(this.Connection.SmoothedRtt * BurstRatioInv); // RTT / BurstRatio
     }
+
+    private void ReportDeliverySuccess()
+        => Interlocked.Increment(ref this.deliverySuccess);
+
+    private void ReportDeliveryFailure()
+        => Interlocked.Increment(ref this.deliveryFailure);
 }

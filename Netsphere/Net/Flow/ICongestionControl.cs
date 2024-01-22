@@ -18,9 +18,9 @@ internal interface ICongestionControl
     /// <returns>false: Release the congestion control.</returns>
     bool Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds);
 
-    void ReportDeliverySuccess();
+    // void ReportDeliverySuccess();
 
-    void ReportDeliveryFailure();
+    // void ReportDeliveryFailure();
 
     void AddInFlight(SendGene sendGene, long rto);
 

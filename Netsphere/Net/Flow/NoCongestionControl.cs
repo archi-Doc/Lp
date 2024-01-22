@@ -57,13 +57,13 @@ internal class NoCongestionControl : ICongestionControl
     {
     }
 
-    void ICongestionControl.ReportDeliverySuccess()
+    /*void ICongestionControl.ReportDeliverySuccess()
     {
     }
 
     void ICongestionControl.ReportDeliveryFailure()
     {
-    }
+    }*/
 
     bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
