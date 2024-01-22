@@ -10,6 +10,14 @@ namespace Netsphere.Net;
 [ValueLinkObject(Restricted = true)]
 internal partial class SendGene
 {// lock (transmission.syncObject)
+    public enum State
+    {
+        Initial,
+        Sent,
+        Resent,
+        LossDetected,
+    }
+
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "GeneSerialList")]
     public SendGene(SendTransmission sendTransmission)
     {
@@ -51,8 +59,8 @@ internal partial class SendGene
 
     public bool TrySetResend()
     {
-        if (this.SentMics != 0)
-        {
+        if (this.IsSent)
+        {// Sent
             var threshold = this.SendTransmission.Connection.MinimumRtt;
             if (Mics.FastSystem - this.SentMics < threshold)
             {// Suppress the resending.
@@ -62,15 +70,14 @@ internal partial class SendGene
 
         Console.WriteLine($"TrySetResend: {this.GeneSerial}");
         this.IsResend = true;
-        this.SentMics = 0;
         return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Resend_NotThreadSafe(NetSender netSender, int additional)
     {
-        if (this.SentMics != 0)
-        {
+        if (this.IsSent)
+        {// Sent
             var threshold = this.SendTransmission.Connection.MinimumRtt;
             if (Mics.FastSystem - this.SentMics < threshold)
             {// Suppress the resending.

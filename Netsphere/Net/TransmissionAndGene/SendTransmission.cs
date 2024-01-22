@@ -58,6 +58,8 @@ internal sealed partial class SendTransmission : IDisposable
     private SendGene? gene2; // Gene 2
     private SendGene.GoshujinClass? genes; // Multiple genes
     private int sendGeneSerial;
+    private int lastLossPosition;
+    private long lastLossMics;
 
     #endregion
 
@@ -376,7 +378,6 @@ internal sealed partial class SendTransmission : IDisposable
                             if (!gene.IsResend)
                             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                                 sentMics = Math.Max(sentMics, gene.SentMics);
-                                this.Connection.GetCongestionControl().AddRtt((int)(Mics.FastSystem - gene.SentMics));
                             }
 
                             gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
@@ -387,15 +388,15 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         var dif = startGene - chain.StartPosition;
                         if (dif >= 3)
-                        {// Equivalent to kPacketThreshold 3 (RFC5681, RFC6675)
+                        {// Packet Threshold: kPacketThreshold 3 (RFC5681, RFC6675)
                             if (startGene > lossPosition)
                             {
                                 lossPosition = startGene;
                             }
                         }
                         else if (dif >= 1)
-                        {
-                            var threshold = (this.Connection.SmoothedRtt * 9) >> 3;
+                        {// Time Threshold
+                            var threshold = (Math.Max(this.Connection.SmoothedRtt, this.Connection.LatestRtt) * 9) >> 3;
                             if (chain.StartPosition > 0 &&
                                 chain.Get(chain.StartPosition - 1) is { } g1 &&
                                 (Mics.FastSystem - g1.SentMics) > threshold)
@@ -429,12 +430,20 @@ internal sealed partial class SendTransmission : IDisposable
             {
                 var r = (int)rtt;
                 this.Connection.AddRtt(r);
-                // this.Connection.GetCongestionControl().AddRtt(r);
+                this.Connection.GetCongestionControl().AddRtt(r);
             }
 
             if (lossPosition >= 0 && this.genes?.GeneSerialListChain is { } c)
             {// Loss detected
-                Console.WriteLine($"Loss detected Start: {c.StartPosition} Loss: {lossPosition}");
+                if (Mics.FastSystem - this.lastLossMics > this.Connection.SmoothedRtt)
+                {
+                    this.lastLossPosition = 0;
+                    this.lastLossMics = Mics.FastSystem;
+                }
+
+                var startPosition = Math.Max(this.lastLossPosition, c.StartPosition);
+
+                Console.WriteLine($"Loss detected Start: {startPosition} Loss: {lossPosition}");
                 for (var i = lossPosition - 1; i >= c.StartPosition; i--)
                 {
                     if (c.Get(i) is { } gene)
@@ -442,13 +451,8 @@ internal sealed partial class SendTransmission : IDisposable
                         gene.CongestionControl.LossDetected(gene);
                     }
                 }
-                /*for (var i = c.StartPosition; i < lossPosition; i++)
-                {
-                    if (c.Get(i) is { } gene)
-                    {
-                        gene.CongestionControl.LossDetected(gene);
-                    }
-                }*/
+
+                this.lastLossPosition = Math.Max(this.lastLossPosition, startPosition);
             }
 
             if (completeFlag)

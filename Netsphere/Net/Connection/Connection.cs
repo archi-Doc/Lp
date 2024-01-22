@@ -101,6 +101,9 @@ public abstract class Connection : IDisposable
     public int MinimumRtt
         => this.minimumRtt;
 
+    public int LatestRtt
+        => this.latestRtt;
+
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
 
@@ -147,6 +150,7 @@ public abstract class Connection : IDisposable
     // RTT
     private int minimumRtt; // Minimum rtt (mics)
     private int smoothedRtt; // Smoothed rtt (mics)
+    private int latestRtt; // Latest rtt (mics)
     private int rttvar; // Rtt variation (mics)
     private int sendCount;
     private int resendCount;
@@ -423,6 +427,7 @@ Wait:
             rttMics = UpperRttLimit;
         }
 
+        this.latestRtt = rttMics;
         if (this.minimumRtt == 0)
         {// Initial
             this.minimumRtt = rttMics;
@@ -441,8 +446,6 @@ Wait:
             var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
             this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
         }
-
-        // Console.WriteLine($"{rttMics} -> {this.smoothedRtt}");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
