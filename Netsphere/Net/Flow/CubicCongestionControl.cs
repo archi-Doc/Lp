@@ -326,7 +326,8 @@ public class CubicCongestionControl : ICongestionControl
         while (this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
-            if ((Mics.FastSystem - gene.SendTransmission.Connection.RetransmissionTimeout) < gene.SentMics)
+            if (gene.CurrentState != SendGene.State.LossDetected &&
+                Mics.FastSystem < (gene.SentMics + gene.SendTransmission.Connection.RetransmissionTimeout))
             {
                 break;
             }

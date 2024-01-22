@@ -452,7 +452,6 @@ Wait:
     internal void IncrementResendCount()
     {
         this.resendCount++; // Not thread-safe, though it doesn't matter.
-        // this.AddRtt(this.smoothedRtt * 2); // tempcode
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -634,6 +633,7 @@ Wait:
                 }
                 else if (transmission.Mode != NetTransmissionMode.Initial)
                 {// Processing the first packet is limited to the initial state, as the state gets cleared.
+                    this.ConnectionTerminal.AckBuffer.Add(this, transmissionId, 0); // Resend the ACK in case it was not received.
                     return;
                 }
 

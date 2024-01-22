@@ -33,7 +33,7 @@ public class SandboxSubcommand : ISimpleCommandAsync
             return;
         }
 
-        netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
+        // netTerminal.PacketTerminal.MaxResendCount = 0;
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)

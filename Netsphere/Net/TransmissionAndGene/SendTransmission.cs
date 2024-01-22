@@ -112,7 +112,7 @@ internal sealed partial class SendTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Rama)
             {
-                if (this.gene0?.IsSent == false)
+                if (this.gene0?.CurrentState == SendGene.State.Initial)
                 {
                     if (!this.gene0.Send_NotThreadSafe(netSender, 0))
                     {// Cannot send
@@ -120,7 +120,7 @@ internal sealed partial class SendTransmission : IDisposable
                     }
                 }
 
-                if (this.gene1?.IsSent == false)
+                if (this.gene1?.CurrentState == SendGene.State.Initial)
                 {
                     if (!this.gene1.Send_NotThreadSafe(netSender, 1))
                     {// Cannot send
@@ -128,7 +128,7 @@ internal sealed partial class SendTransmission : IDisposable
                     }
                 }
 
-                if (this.gene2?.IsSent == false)
+                if (this.gene2?.CurrentState == SendGene.State.Initial)
                 {
                     if (!this.gene2.Send_NotThreadSafe(netSender, 2))
                     {// Cannot send
@@ -144,7 +144,7 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     if (this.genes.GeneSerialListChain.Get(this.sendGeneSerial++) is { } gene)
                     {
-                        if (!gene.IsSent)
+                        if (gene.CurrentState == SendGene.State.Initial)
                         {
                             if (!gene.Send_NotThreadSafe(netSender, 0))
                             {// Cannot send
@@ -332,7 +332,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                         if (this.gene0 is not null)
                         {
-                            if (!this.gene0.IsResend)
+                            if (this.gene0.CurrentState == SendGene.State.Sent)
                             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                                 sentMics = Math.Max(sentMics, this.gene0.SentMics);
                             }
@@ -343,7 +343,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                         if (this.gene1 is not null)
                         {
-                            if (!this.gene1.IsResend)
+                            if (this.gene1.CurrentState == SendGene.State.Sent)
                             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                                 sentMics = Math.Max(sentMics, this.gene1.SentMics);
                             }
@@ -354,7 +354,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                         if (this.gene2 is not null)
                         {
-                            if (!this.gene2.IsResend)
+                            if (this.gene2.CurrentState == SendGene.State.Sent)
                             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                                 sentMics = Math.Max(sentMics, this.gene2.SentMics);
                             }
@@ -375,7 +375,7 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         if (chain.Get(i) is { } gene)
                         {
-                            if (!gene.IsResend)
+                            if (gene.CurrentState == SendGene.State.Sent)
                             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                                 sentMics = Math.Max(sentMics, gene.SentMics);
                             }

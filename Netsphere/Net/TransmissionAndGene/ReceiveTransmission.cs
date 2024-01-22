@@ -253,7 +253,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
             this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
         }
 
