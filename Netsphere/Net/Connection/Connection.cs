@@ -8,6 +8,7 @@ using Arc.Collections;
 using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
+using static Netsphere.Net.AckQueue;
 
 #pragma warning disable SA1202
 #pragma warning disable SA1214
@@ -159,7 +160,7 @@ public abstract class Connection : IDisposable
     // Ack
     internal long AckMics; // lock(AckBuffer.syncObject)
     internal Queue<uint>? AckRama; // lock(AckBuffer.syncObject)
-    internal Queue<ReceiveTransmission>? AckBlock; // lock(AckBuffer.syncObject)
+    internal Queue<ReceiveTransmissionAndAckGene>? AckBlock; // lock(AckBuffer.syncObject)
 
     #endregion
 
@@ -634,7 +635,7 @@ Wait:
                 }
                 else if (transmission.Mode != NetTransmissionMode.Initial)
                 {// Processing the first packet is limited to the initial state, as the state gets cleared.
-                    this.ConnectionTerminal.AckBuffer.AckBlock(this, transmission, 0); // Resend the ACK in case it was not received.
+                    this.ConnectionTerminal.AckQueue.AckBlock(this, transmission, 0); // Resend the ACK in case it was not received.
                     return;
                 }
 
@@ -644,7 +645,7 @@ Wait:
             {// Server side
                 if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// The same TransmissionId already exists.
-                    this.ConnectionTerminal.AckBuffer.AckBlock(this, transmission, 0); // Resend the ACK in case it was not received.
+                    this.ConnectionTerminal.AckQueue.AckBlock(this, transmission, 0); // Resend the ACK in case it was not received.
                     return;
                 }
 

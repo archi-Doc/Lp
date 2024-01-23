@@ -2,12 +2,23 @@
 
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
 internal partial class AckQueue
 {
+    internal readonly struct ReceiveTransmissionAndAckGene
+    {
+        public ReceiveTransmissionAndAckGene(ReceiveTransmission transmission, Queue<int> ackGene)
+        {
+            this.ReceiveTransmission = transmission;
+            this.AckGene = ackGene;
+        }
+
+        public readonly ReceiveTransmission ReceiveTransmission;
+        public readonly Queue<int> AckGene;
+    }
+
     public AckQueue(ConnectionTerminal connectionTerminal)
     {
         this.connectionTerminal = connectionTerminal;
@@ -22,7 +33,7 @@ internal partial class AckQueue
     private readonly object syncObject = new();
     private readonly Queue<Connection> connectionQueue = new();
     private readonly Queue<Queue<uint>> freeAckRama = new();
-    private readonly Queue<Queue<ReceiveTransmission>> freeAckBlock = new();
+    private readonly Queue<Queue<ReceiveTransmissionAndAckGene>> freeAckBlock = new();
     private readonly Queue<Queue<int>> freeAckGene = new();
 
     #endregion
@@ -43,11 +54,11 @@ internal partial class AckQueue
                 ackRama ??= new();
                 this.freeAckBlock.TryDequeue(out var ackBlock); // Reuse the queued queue.
                 ackBlock ??= new();
-                this.connectionQueue.Enqueue(connection);
 
                 connection.AckMics = Mics.FastSystem + NetConstants.AckDelayMics;
                 connection.AckRama = ackRama;
                 connection.AckBlock = ackBlock;
+                this.connectionQueue.Enqueue(connection);
             }
 
             ackRama.Enqueue(transmissionId);
@@ -84,7 +95,7 @@ internal partial class AckQueue
                 ackGene ??= new();
 
                 receiveTransmission.AckGene = ackGene;
-                ackBlock.Enqueue(receiveTransmission);
+                ackBlock.Enqueue(new(receiveTransmission, ackGene));
             }
 
             ackGene.Enqueue(geneSerial);
@@ -95,7 +106,7 @@ internal partial class AckQueue
     {
         Connection? connection = default;
         Queue<uint>? ackRama = default;
-        Queue<ReceiveTransmission>? ackBlock = default;
+        Queue<ReceiveTransmissionAndAckGene>? ackBlock = default;
 
         while (true)
         {
@@ -122,8 +133,13 @@ internal partial class AckQueue
                 if (connection is not null && Mics.FastSystem > connection.AckMics)
                 {
                     this.connectionQueue.Dequeue();
-                    ackRama = connection.AckRama;
-                    ackBlock = connection.AckBlock;
+                    ackRama = connection.AckRama!;
+                    ackBlock = connection.AckBlock!;
+                    foreach (var x in ackBlock)
+                    {
+                        x.ReceiveTransmission.AckGene = default;
+                    }
+
                     connection.AckMics = 0;
                     connection.AckRama = default;
                     connection.AckBlock = default;
@@ -141,13 +157,13 @@ internal partial class AckQueue
         }
     }
 
-    private void ProcessAck(NetSender netSender, Connection connection, Queue<uint> ackRama, Queue<ReceiveTransmission> ackBlock)
+    private void ProcessAck(NetSender netSender, Connection connection, Queue<uint> ackRama, Queue<ReceiveTransmissionAndAckGene> ackBlock)
     {
         const int maxLength = PacketHeader.MaxFrameLength - 2;
         ushort numberOfRama = 0;
         ushort numberOfBlock = 0;
 
-        Owner? owner = default;
+        ByteArrayPool.Owner? owner = default;
         Span<byte> span = default;
 
         while (ackRama.TryDequeue(out var transmissionId))
@@ -158,7 +174,7 @@ internal partial class AckQueue
             }
 
             if (owner is null)
-            {
+            {// Prepare
                 owner = PacketPool.Rent();
                 span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
             }
@@ -170,10 +186,67 @@ internal partial class AckQueue
 
         while (ackBlock.TryDequeue(out var transmission))
         {
+            if (owner is not null && span.Length < AckFrame.Margin)
+            {// Send the packet when the remaining length falls below the margin.
+                Send(span.Length);
+            }
+
+            if (owner is null)
+            {// Prepare
+                owner = PacketPool.Rent();
+                span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
+            }
+
+            var ackGene = transmission.AckGene;
+            transmission.AckGene = default;
+            if (ackGene is null)
+            {
+                continue;
+            }
+
+            var transmissionSpan = span;
+            var geneSpan = span;
             var transmissionId = transmission.TransmissionId;
             int successiveReceivedPosition = 0;
             int receiveCapacity = 0;
-            int numberOfPairs = 0;
+            ushort numberOfPairs = 0;
+            int startGene = -1;
+            int endGene = -1;
+
+            while (ackGene.TryDequeue(out var geneSerial))
+            {
+                if (startGene == -1)
+                {// Initial gene
+                    startGene = geneSerial;
+                    endGene = geneSerial + 1;
+                }
+                else if (endGene == geneSerial)
+                {// Serial genes
+                    endGene = geneSerial + 1;
+                }
+                else
+                {// Not serial gene
+                    BitConverter.TryWriteBytes(geneSpan, startGene);
+                    geneSpan = geneSpan.Slice(sizeof(int));
+                    BitConverter.TryWriteBytes(geneSpan, endGene);
+                    geneSpan = geneSpan.Slice(sizeof(int));
+                    numberOfPairs++;
+
+                    startGene = geneSerial;
+                    endGene = geneSerial + 1;
+
+                    if (owner is not null && span.Length < AckFrame.Margin)
+                    {// Send the packet when the remaining length falls below the margin.
+                        Send(span.Length);
+                    }
+
+                    if (owner is null)
+                    {// Prepare
+                        owner = PacketPool.Rent();
+                        span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
+                    }
+                }
+            }
         }
 
         if (owner is not null && span.Length > 0)
@@ -182,7 +255,7 @@ internal partial class AckQueue
         }
 
         owner?.Return(); // Return the rent buffer.
-        // ackRama and ackBlock will be returned later for reuse.
+                         // ackRama and ackBlock will be returned later for reuse.
 
         void Send(int spanLength)
         {
@@ -258,7 +331,7 @@ internal partial class AckQueue
             }
             else
             {// Different transmission id
-                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+             // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
 
                 var span = owner.ByteArray.AsSpan(position);
                 BitConverter.TryWriteBytes(span, startGene);
@@ -380,7 +453,7 @@ internal partial class AckQueue
             }
             else
             {// Different transmission id
-                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
+             // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
 
                 var span = owner.ByteArray.AsSpan(position);
                 BitConverter.TryWriteBytes(span, startGene);

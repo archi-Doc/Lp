@@ -137,7 +137,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // 2nd: AckBuffer (Ack)
-        this.ConnectionTerminal.AckBuffer.ProcessSend(netSender);
+        this.ConnectionTerminal.AckQueue.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;

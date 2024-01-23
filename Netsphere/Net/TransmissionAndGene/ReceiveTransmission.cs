@@ -136,7 +136,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
-                this.Connection.ConnectionTerminal.AckBuffer.AckBlock(this.Connection, this, geneSerial);
+                this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, geneSerial);
                 return;
             }
             else if (this.Mode == NetTransmissionMode.Initial)
@@ -246,13 +246,13 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Defer
                     // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
-                    this.Connection.ConnectionTerminal.AckBuffer.AckRama(this.Connection, this.TransmissionId);
+                    this.Connection.ConnectionTerminal.AckQueue.AckRama(this.Connection, this.TransmissionId);
                 }
             }
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.ConnectionTerminal.AckBuffer.AckBlock(this.Connection, this, geneSerial);
+            this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, geneSerial);
         }
 
         if (completeFlag)

@@ -22,7 +22,7 @@ public class ConnectionTerminal
     {
         this.NetBase = netTerminal.NetBase;
         this.NetTerminal = netTerminal;
-        this.AckBuffer = new(this);
+        this.AckQueue = new(this);
         this.packetTerminal = this.NetTerminal.PacketTerminal;
         this.netStats = this.NetTerminal.NetStats;
         this.CongestionControlList.AddFirst(this.NoCongestionControl);
@@ -36,7 +36,7 @@ public class ConnectionTerminal
 
     internal NetTerminal NetTerminal { get; }
 
-    internal AckQueue AckBuffer { get; }
+    internal AckQueue AckQueue { get; }
 
     internal ICongestionControl NoCongestionControl { get; } = new NoCongestionControl();
 
