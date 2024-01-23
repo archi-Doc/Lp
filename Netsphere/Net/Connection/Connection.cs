@@ -589,6 +589,9 @@ Wait:
                         this.UpdateLatestAckMics();
                         transmission.ProcessReceive_AckRama();
                     }
+                    else
+                    {
+                    }
                 }
                 else
                 {// Block/Stream
@@ -812,7 +815,7 @@ Wait:
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
     }
 
-    internal void CreateAckPacket(ByteArrayPool.Owner owner, ushort numberOfTransmissions, int length, out int packetLength)
+    internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
     {
         var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
         var span = owner.ByteArray.AsSpan();
@@ -835,10 +838,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack); // Frame type
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, numberOfTransmissions); // Number of transmissions
-        span = span.Slice(sizeof(ushort));
-
-        this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + sizeof(ushort) + length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
+        this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
         packetLength = PacketHeader.Length + written;
     }
 

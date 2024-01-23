@@ -316,43 +316,40 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal void ProcessReceive_AckRamaInternal()
     {
+        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.GeneSerialMax}");
+
         long sentMics = 0;
-        if (this.Mode == NetTransmissionMode.Rama)
+        if (this.gene0 is not null)
         {
-            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.GeneSerialMax}");
-
-            if (this.gene0 is not null)
-            {
-                if (this.gene0.CurrentState == SendGene.State.Sent)
-                {// Exclude resent genes as they do not allow for accurate RTT measurement.
-                    sentMics = Math.Max(sentMics, this.gene0.SentMics);
-                }
-
-                this.gene0.Dispose(true);
-                this.gene0 = null;
+            if (this.gene0.CurrentState == SendGene.State.Sent)
+            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                sentMics = Math.Max(sentMics, this.gene0.SentMics);
             }
 
-            if (this.gene1 is not null)
-            {
-                if (this.gene1.CurrentState == SendGene.State.Sent)
-                {// Exclude resent genes as they do not allow for accurate RTT measurement.
-                    sentMics = Math.Max(sentMics, this.gene1.SentMics);
-                }
+            this.gene0.Dispose(true);
+            this.gene0 = null;
+        }
 
-                this.gene1.Dispose(true);
-                this.gene1 = null;
+        if (this.gene1 is not null)
+        {
+            if (this.gene1.CurrentState == SendGene.State.Sent)
+            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                sentMics = Math.Max(sentMics, this.gene1.SentMics);
             }
 
-            if (this.gene2 is not null)
-            {
-                if (this.gene2.CurrentState == SendGene.State.Sent)
-                {// Exclude resent genes as they do not allow for accurate RTT measurement.
-                    sentMics = Math.Max(sentMics, this.gene2.SentMics);
-                }
+            this.gene1.Dispose(true);
+            this.gene1 = null;
+        }
 
-                this.gene2.Dispose(true);
-                this.gene2 = null;
+        if (this.gene2 is not null)
+        {
+            if (this.gene2.CurrentState == SendGene.State.Sent)
+            {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                sentMics = Math.Max(sentMics, this.gene2.SentMics);
             }
+
+            this.gene2.Dispose(true);
+            this.gene2 = null;
         }
 
         var rtt = Mics.FastSystem - sentMics;

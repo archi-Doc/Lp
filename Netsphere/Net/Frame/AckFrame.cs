@@ -8,8 +8,6 @@ internal readonly struct AckFrame
 {// AckFrameCode
     public const int Length = 2;
     public const int Margin = 32;
-    public const int RamaSize = 8;
-    public const int BlockSize = 14; // + 8 x NumberOfPairs
 
     public readonly FrameType FrameType; // 2 bytes
 

@@ -224,18 +224,16 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {// Fast Ack
             if (completeFlag)
             {
-                if (this.Connection.Agreement.MaxTransmissions < 10)
+                if (this.Connection.Agreement.MaxTransmissions < 0)
                 {// Instant
                     this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack 0 - {this.totalGene}");
 
-                    Span<byte> ackFrame = stackalloc byte[2 + 2 + 2 + 4];
+                    Span<byte> ackFrame = stackalloc byte[2 + 4 + 4];
                     var span = ackFrame;
                     BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
                     span = span.Slice(sizeof(ushort));
-                    BitConverter.TryWriteBytes(span, (ushort)1); // The number of rama ack.
-                    span = span.Slice(sizeof(ushort));
-                    BitConverter.TryWriteBytes(span, (ushort)0); // The number of block ack.
-                    span = span.Slice(sizeof(ushort));
+                    BitConverter.TryWriteBytes(span, (int)-1);
+                    span = span.Slice(sizeof(int));
                     BitConverter.TryWriteBytes(span, this.TransmissionId);
                     span = span.Slice(sizeof(uint));
 

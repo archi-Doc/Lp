@@ -53,7 +53,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        netTerminal.SetDeliveryFailureRatio(0.2);
+        // netTerminal.SetDeliveryFailureRatio(0.2);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
@@ -72,7 +72,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     }
                 }
 
-                for (var i = 0; i < 20_000; i += 1_000)
+                /*for (var i = 0; i < 20_000; i += 1_000)
                 {
                     Console.WriteLine($"TestBlock: {i}");
                     var testBlock = TestBlock.Create(i);
@@ -81,9 +81,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     {
                         success++;
                     }
-                }
+                }*/
 
-                var tasks = new List<Task>();
+                /*var tasks = new List<Task>();
                 var count = 0;
                 var array = new byte[] { 0, 1, 2, };
                 for (var i = 0; i < 20; i++)
@@ -100,7 +100,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 }
 
                 await Task.WhenAll(tasks);
-                Console.WriteLine(count);
+                Console.WriteLine(count);/
 
                 /*using (var stream = await connection.SendStream(1000))
                 {

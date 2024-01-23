@@ -77,14 +77,14 @@ internal partial class AckBuffer
 
         lock (this.syncObject)
         {
-            var ackBlock = connection.AckQueue;
-            if (ackBlock is null)
+            var ackQueue = connection.AckQueue;
+            if (ackQueue is null)
             {
-                this.freeAckQueue.TryDequeue(out ackBlock); // Reuse the queued queue.
-                ackBlock ??= new();
+                this.freeAckQueue.TryDequeue(out ackQueue); // Reuse the queued queue.
+                ackQueue ??= new();
 
                 connection.AckMics = Mics.FastSystem + NetConstants.AckDelayMics;
-                connection.AckQueue = ackBlock;
+                connection.AckQueue = ackQueue;
                 this.connectionQueue.Enqueue(connection);
             }
 
@@ -95,7 +95,7 @@ internal partial class AckBuffer
                 ackGene ??= new();
 
                 receiveTransmission.AckGene = ackGene;
-                ackBlock.Enqueue(new(receiveTransmission, ackGene));
+                ackQueue.Enqueue(new(receiveTransmission, ackGene));
             }
 
             ackGene.Enqueue(geneSerial);
@@ -151,7 +151,6 @@ internal partial class AckBuffer
     private void ProcessAck(NetSender netSender, Connection connection, Queue<ReceiveTransmissionAndAckGene> ackQueue)
     {
         const int maxLength = PacketHeader.MaxFrameLength - 2;
-        ushort numberOfTransmissions = 0;
 
         ByteArrayPool.Owner? owner = default;
         Span<byte> span = default;
@@ -161,19 +160,18 @@ internal partial class AckBuffer
 NewPacket:
             if (owner is not null && span.Length < AckFrame.Margin)
             {// Send the packet when the remaining length falls below the margin.
-                Send(span.Length);
+                Send(maxLength - span.Length);
             }
 
             if (owner is null)
             {// Prepare
                 owner = PacketPool.Rent();
-                span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
+                span = owner.ByteArray.AsSpan(PacketHeader.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
             }
 
             var ackGene = item.AckGene;
             if (ackGene == this.rama)
             {// Rama
-                numberOfTransmissions++;
                 BitConverter.TryWriteBytes(span, (int)-1);
                 span = span.Slice(sizeof(int));
                 BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
@@ -184,7 +182,6 @@ NewPacket:
                 int receiveCapacity = 0;
                 int successiveReceivedPosition = 0;
 
-                numberOfTransmissions++;
                 BitConverter.TryWriteBytes(span, receiveCapacity);
                 span = span.Slice(sizeof(int));
                 BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
@@ -244,7 +241,7 @@ NewPacket:
 
         if (owner is not null && span.Length > 0)
         {// Send the packet if not empty.
-            Send(span.Length);
+            Send(maxLength - span.Length);
         }
 
         owner?.Return(); // Return the rent buffer.
@@ -252,12 +249,10 @@ NewPacket:
 
         void Send(int spanLength)
         {
-            connection.CreateAckPacket(owner, numberOfTransmissions, spanLength, out var packetLength);
+            connection.CreateAckPacket(owner, spanLength, out var packetLength);
             netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
             // owner = owner.Return(); // Moved
             owner = default;
-
-            numberOfTransmissions = 0;
         }
     }
 }
