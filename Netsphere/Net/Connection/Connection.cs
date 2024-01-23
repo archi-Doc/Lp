@@ -590,7 +590,7 @@ Wait:
                         transmission.ProcessReceive_AckRama();
                     }
                     else
-                    {
+                    {// SendTransmission has already been disposed due to reasons such as having already received response data.
                     }
                 }
                 else

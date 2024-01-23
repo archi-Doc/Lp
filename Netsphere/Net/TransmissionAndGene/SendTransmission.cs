@@ -18,7 +18,7 @@ public enum NetTransmissionMode
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class SendTransmission : IDisposable
 {
-    private const int CongestionControlThreshold = 3;
+    private const int CongestionControlThreshold = 5;
 
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Send/Receive Ack -> Receive -> Disposed
@@ -185,15 +185,15 @@ internal sealed partial class SendTransmission : IDisposable
             this.Connection.UpdateLatestAckMics();
             this.sentTcs = sentTcs;
 
-            if (this.Connection.SendTransmissionsCount >= CongestionControlThreshold)
-            {// Enable congestion control when the number of SendTransmissions exceeds the threshold.
-                this.Connection.CreateCongestionControl();
-            }
-
             var span = block.Span;
             if (info.NumberOfGenes <= NetHelper.RamaGenes)
             {// Rama
                 this.Mode = NetTransmissionMode.Rama;
+                if (this.Connection.SendTransmissionsCount >= CongestionControlThreshold)
+                {// Enable congestion control when the number of SendTransmissions exceeds the threshold.
+                    this.Connection.CreateCongestionControl();
+                }
+
                 if (info.NumberOfGenes == 1)
                 {// gene0
                     this.GeneSerialMax = info.NumberOfGenes;
