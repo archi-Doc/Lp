@@ -123,7 +123,7 @@ public class CubicCongestionControl : ICongestionControl
     // Packet loss
     private long epochStart;
     private double lastMaxCwnd;
-    private long downtimeAfterBrake; // Mics greater than this value are treated as valid.
+    private long brakeRefractoryMics;
     private uint deliverySuccess;
     private uint deliveryFailure;
     private double positiveFactor;
@@ -163,6 +163,17 @@ public class CubicCongestionControl : ICongestionControl
             {
                 this.ackCount++;
                 this.ReportDeliverySuccess();
+
+                if (this.brakeRefractoryMics != 0 &&
+                    sendGene.SentMics > this.brakeRefractoryMics)
+                {
+                    this.brakeRefractoryMics = 0;
+
+                    this.positiveFactor = 0;
+                    this.negativeFactor = 0;
+                    Volatile.Write(ref this.deliverySuccess, 1);
+                    Volatile.Write(ref this.deliveryFailure, 0);
+                }
             }
 
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
@@ -249,16 +260,14 @@ public class CubicCongestionControl : ICongestionControl
 
     private void ProcessFactor()
     {
+        if (this.brakeRefractoryMics != 0)
+        {
+            return;
+        }
+
         if (this.cubicCount == 0 || this.power == 0)
         {
             this.power = Math.Pow(0.5, 1000d / this.Connection.MinimumRtt);
-        }
-
-        if (Mics.FastSystem < this.downtimeAfterBrake)
-        {
-            Volatile.Write(ref this.deliverySuccess, 0);
-            Volatile.Write(ref this.deliveryFailure, 0);
-            return;
         }
 
         this.positiveFactor += Volatile.Read(ref this.deliverySuccess);
@@ -289,7 +298,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void Brake()
     {
-        this.downtimeAfterBrake = Mics.FastSystem + this.Connection.SmoothedRtt;
+        this.brakeRefractoryMics = Mics.FastSystem;
 
         this.epochStart = 0;
         if (this.cwnd < this.lastMaxCwnd)
@@ -323,11 +332,7 @@ public class CubicCongestionControl : ICongestionControl
                 continue;
             }
 
-            if (gene.SentMics > this.downtimeAfterBrake)
-            {
-                this.ReportDeliveryFailure();
-            }
-
+            this.ReportDeliveryFailure();
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(node);
@@ -348,11 +353,7 @@ public class CubicCongestionControl : ICongestionControl
                 break;
             }
 
-            if (gene.SentMics > this.downtimeAfterBrake)
-            {
-                this.ReportDeliveryFailure();
-            }
-
+            this.ReportDeliveryFailure();
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
