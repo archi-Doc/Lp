@@ -15,10 +15,10 @@ internal readonly struct AckFrame
     // public readonly ushort NumberOfRamaTransmissions;
     // public readonly ushort NumberOfBlockTransmissions;
 
-    // x NumberOfRamaTransmissions
+    // x NumberOfRamaTransmissions : Rama
     // public readonly uint TransmissionId;
 
-    // x NumberOfBlockTransmissions
+    // x NumberOfBlockTransmissions : Block/Stream
     // public readonly uint TransmissionId;
     // public readonly int SuccessiveReceivedPosition;
     // public readonly int ReceiveCapacity;
