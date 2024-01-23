@@ -36,7 +36,7 @@ public class ConnectionTerminal
 
     internal NetTerminal NetTerminal { get; }
 
-    internal AckBuffer AckBuffer { get; }
+    internal AckQueue AckBuffer { get; }
 
     internal ICongestionControl NoCongestionControl { get; } = new NoCongestionControl();
 

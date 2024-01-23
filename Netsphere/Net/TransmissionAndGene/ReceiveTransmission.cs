@@ -33,6 +33,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
     internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedDisposedNode;
     internal long ReceivedDisposedMics;
+    internal Queue<int>? AckGene; // lock(AckBuffer.syncObject)
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();
@@ -135,7 +136,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
-                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
+                this.Connection.ConnectionTerminal.AckBuffer.AckBlock(this.Connection, this, geneSerial);
                 return;
             }
             else if (this.Mode == NetTransmissionMode.Initial)
@@ -227,18 +228,16 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Instant
                     this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack 0 - {this.totalGene}");
 
-                    Span<byte> ackFrame = stackalloc byte[2 + 6 + 8];
+                    Span<byte> ackFrame = stackalloc byte[2 + 2 + 2 + 4];
                     var span = ackFrame;
                     BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
                     span = span.Slice(sizeof(ushort));
+                    BitConverter.TryWriteBytes(span, (ushort)1); // The number of rama ack.
+                    span = span.Slice(sizeof(ushort));
+                    BitConverter.TryWriteBytes(span, (ushort)0); // The number of block ack.
+                    span = span.Slice(sizeof(ushort));
                     BitConverter.TryWriteBytes(span, this.TransmissionId);
                     span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, (ushort)1); // Number of pairs
-                    span = span.Slice(sizeof(ushort));
-                    BitConverter.TryWriteBytes(span, 0); // StartGene
-                    span = span.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(span, this.totalGene); // EndGene
-                    span = span.Slice(sizeof(int));
 
                     Debug.Assert(span.Length == 0);
                     this.Connection.SendPriorityFrame(ackFrame);
@@ -247,13 +246,13 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Defer
                     // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
-                    this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
+                    this.Connection.ConnectionTerminal.AckBuffer.AckRama(this.Connection, this.TransmissionId);
                 }
             }
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
+            this.Connection.ConnectionTerminal.AckBuffer.AckBlock(this.Connection, this, geneSerial);
         }
 
         if (completeFlag)

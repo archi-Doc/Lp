@@ -158,7 +158,8 @@ public abstract class Connection : IDisposable
 
     // Ack
     internal long AckMics; // lock(AckBuffer.syncObject)
-    internal Queue<ulong>? AckQueue; // lock(AckBuffer.syncObject)
+    internal Queue<uint>? AckRama; // lock(AckBuffer.syncObject)
+    internal Queue<ReceiveTransmission>? AckBlock; // lock(AckBuffer.syncObject)
 
     #endregion
 
@@ -633,7 +634,7 @@ Wait:
                 }
                 else if (transmission.Mode != NetTransmissionMode.Initial)
                 {// Processing the first packet is limited to the initial state, as the state gets cleared.
-                    this.ConnectionTerminal.AckBuffer.Add(this, transmissionId, 0); // Resend the ACK in case it was not received.
+                    this.ConnectionTerminal.AckBuffer.AckBlock(this, transmission, 0); // Resend the ACK in case it was not received.
                     return;
                 }
 
@@ -643,7 +644,7 @@ Wait:
             {// Server side
                 if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {// The same TransmissionId already exists.
-                    this.ConnectionTerminal.AckBuffer.Add(this, transmissionId, 0); // Resend the ACK in case it was not received.
+                    this.ConnectionTerminal.AckBuffer.AckBlock(this, transmission, 0); // Resend the ACK in case it was not received.
                     return;
                 }
 
@@ -791,7 +792,7 @@ Wait:
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
     }
 
-    internal void CreateAckPacket(ByteArrayPool.Owner owner, int geneLength, out int packetLength)
+    internal void CreateAckPacket(ByteArrayPool.Owner owner, ushort numberOfRama, int numberOfBlock, int length, out int packetLength)
     {
         var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
         var span = owner.ByteArray.AsSpan();
@@ -814,7 +815,12 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack); // Frame type
         span = span.Slice(sizeof(ushort));
 
-        this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + geneLength), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
+        BitConverter.TryWriteBytes(span, numberOfRama); // Number of rama
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, numberOfBlock); // Number of block
+        span = span.Slice(sizeof(ushort));
+
+        this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + (sizeof(ushort) * 2) + length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
         packetLength = PacketHeader.Length + written;
     }
 
