@@ -5,7 +5,7 @@ using Netsphere.Packet;
 
 namespace Netsphere.Net;
 
-internal partial class AckQueue
+internal partial class AckBuffer
 {
     internal readonly struct ReceiveTransmissionAndAckGene
     {
@@ -19,49 +19,51 @@ internal partial class AckQueue
         public readonly Queue<int> AckGene;
     }
 
-    public AckQueue(ConnectionTerminal connectionTerminal)
+    public AckBuffer(ConnectionTerminal connectionTerminal)
     {
         this.connectionTerminal = connectionTerminal;
-        this.logger = connectionTerminal.UnitLogger.GetLogger<AckQueue>();
+        this.logger = connectionTerminal.UnitLogger.GetLogger<AckBuffer>();
     }
 
     #region FieldAndProperty
 
     private readonly ConnectionTerminal connectionTerminal;
     private readonly ILogger logger;
+    private readonly Queue<int> rama = new();
 
     private readonly object syncObject = new();
     private readonly Queue<Connection> connectionQueue = new();
-    private readonly Queue<Queue<uint>> freeAckRama = new();
-    private readonly Queue<Queue<ReceiveTransmissionAndAckGene>> freeAckBlock = new();
+    private readonly Queue<Queue<ReceiveTransmissionAndAckGene>> freeAckQueue = new();
     private readonly Queue<Queue<int>> freeAckGene = new();
 
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AckRama(Connection connection, uint transmissionId)
+    public void AckRama(Connection connection, ReceiveTransmission receiveTransmission)
     {
 #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {transmissionId}");
+        this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}");
 #endif
 
         lock (this.syncObject)
         {
-            var ackRama = connection.AckRama;
-            if (ackRama is null)
+            var ackQueue = connection.AckQueue;
+            if (ackQueue is null)
             {
-                this.freeAckRama.TryDequeue(out ackRama); // Reuse the queued queue.
-                ackRama ??= new();
-                this.freeAckBlock.TryDequeue(out var ackBlock); // Reuse the queued queue.
-                ackBlock ??= new();
+                this.freeAckQueue.TryDequeue(out ackQueue); // Reuse the queued queue.
+                ackQueue ??= new();
 
                 connection.AckMics = Mics.FastSystem + NetConstants.AckDelayMics;
-                connection.AckRama = ackRama;
-                connection.AckBlock = ackBlock;
+                connection.AckQueue = ackQueue;
                 this.connectionQueue.Enqueue(connection);
             }
 
-            ackRama.Enqueue(transmissionId);
+            var ackGene = receiveTransmission.AckGene;
+            if (ackGene is null)
+            {
+                receiveTransmission.AckGene = this.rama;
+                ackQueue.Enqueue(new(receiveTransmission, this.rama));
+            }
         }
     }
 
@@ -74,17 +76,14 @@ internal partial class AckQueue
 
         lock (this.syncObject)
         {
-            var ackBlock = connection.AckBlock;
+            var ackBlock = connection.AckQueue;
             if (ackBlock is null)
             {
-                this.freeAckRama.TryDequeue(out var ackRama); // Reuse the queued queue.
-                ackRama ??= new();
-                this.freeAckBlock.TryDequeue(out ackBlock); // Reuse the queued queue.
+                this.freeAckQueue.TryDequeue(out ackBlock); // Reuse the queued queue.
                 ackBlock ??= new();
 
                 connection.AckMics = Mics.FastSystem + NetConstants.AckDelayMics;
-                connection.AckRama = ackRama;
-                connection.AckBlock = ackBlock;
+                connection.AckQueue = ackBlock;
                 this.connectionQueue.Enqueue(connection);
             }
 
@@ -105,23 +104,16 @@ internal partial class AckQueue
     public void ProcessSend(NetSender netSender)
     {
         Connection? connection = default;
-        Queue<uint>? ackRama = default;
-        Queue<ReceiveTransmissionAndAckGene>? ackBlock = default;
+        Queue<ReceiveTransmissionAndAckGene>? ackQueue = default;
 
         while (true)
         {
             lock (this.syncObject)
             {
-                if (ackRama is not null)
+                if (ackQueue is not null)
                 {
-                    this.freeAckRama.Enqueue(ackRama);
-                    ackRama = default;
-                }
-
-                if (ackBlock is not null)
-                {
-                    this.freeAckBlock.Enqueue(ackBlock);
-                    ackBlock = default;
+                    this.freeAckQueue.Enqueue(ackQueue);
+                    ackQueue = default;
                 }
 
                 if (!netSender.CanSend)
@@ -133,40 +125,37 @@ internal partial class AckQueue
                 if (connection is not null && Mics.FastSystem > connection.AckMics)
                 {
                     this.connectionQueue.Dequeue();
-                    ackRama = connection.AckRama!;
-                    ackBlock = connection.AckBlock!;
-                    foreach (var x in ackBlock)
+                    ackQueue = connection.AckQueue!;
+                    foreach (var x in ackQueue)
                     {
                         x.ReceiveTransmission.AckGene = default;
                     }
 
                     connection.AckMics = 0;
-                    connection.AckRama = default;
-                    connection.AckBlock = default;
+                    connection.AckQueue = default;
                 }
             }
 
             // To shorten the acquisition time of the exclusive lock, temporarily release the lock.
 
-            if (connection is null || ackRama is null || ackBlock is null)
+            if (connection is null || ackQueue is null)
             {
                 break;
             }
 
-            this.ProcessAck(netSender, connection, ackRama, ackBlock);
+            this.ProcessAck(netSender, connection, ackQueue);
         }
     }
 
-    private void ProcessAck(NetSender netSender, Connection connection, Queue<uint> ackRama, Queue<ReceiveTransmissionAndAckGene> ackBlock)
+    private void ProcessAck(NetSender netSender, Connection connection, Queue<ReceiveTransmissionAndAckGene> ackQueue)
     {
         const int maxLength = PacketHeader.MaxFrameLength - 2;
-        ushort numberOfRama = 0;
-        ushort numberOfBlock = 0;
+        ushort numberOfTransmissions = 0;
 
         ByteArrayPool.Owner? owner = default;
         Span<byte> span = default;
 
-        while (ackRama.TryDequeue(out var transmissionId))
+        while (ackQueue.TryDequeue(out var item))
         {
             if (owner is not null && span.Length < AckFrame.Margin)
             {// Send the packet when the remaining length falls below the margin.
@@ -179,9 +168,16 @@ internal partial class AckQueue
                 span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
             }
 
-            numberOfRama++;
-            BitConverter.TryWriteBytes(span, transmissionId);
-            span = span.Slice(sizeof(uint));
+            if (item.AckGene == this.rama)
+            {// Rama
+                numberOfTransmissions++;
+                BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
+                span = span.Slice(sizeof(uint));
+            }
+            else
+            {// Block/Stream
+
+            }
         }
 
         while (ackBlock.TryDequeue(out var transmission))
@@ -259,13 +255,12 @@ internal partial class AckQueue
 
         void Send(int spanLength)
         {
-            connection.CreateAckPacket(owner, numberOfRama, numberOfBlock, spanLength, out var packetLength);
+            connection.CreateAckPacket(owner, numberOfTransmissions, spanLength, out var packetLength);
             netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
             // owner = owner.Return(); // Moved
             owner = default;
 
-            numberOfRama = 0;
-            numberOfBlock = 0;
+            numberOfTransmissions = 0;
         }
     }
 

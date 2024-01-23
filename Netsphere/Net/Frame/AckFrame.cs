@@ -8,21 +8,21 @@ internal readonly struct AckFrame
 {// AckFrameCode
     public const int Length = 2;
     public const int Margin = 32;
-    public const int RamaSize = 4;
+    public const int RamaSize = 8;
     public const int BlockSize = 14; // + 8 x NumberOfPairs
 
     public readonly FrameType FrameType; // 2 bytes
 
-    // public readonly ushort NumberOfRamaTransmissions;
-    // public readonly ushort NumberOfBlockTransmissions;
+    // public readonly ushort NumberOfTransmissions;
 
-    // x NumberOfRamaTransmissions : Rama
+    // Rama (Complete)
+    // public readonly int ReceiveCapacity; // -1
     // public readonly uint TransmissionId;
 
-    // x NumberOfBlockTransmissions : Block/Stream
+    // Block/Stream
+    // public readonly int ReceiveCapacity;
     // public readonly uint TransmissionId;
     // public readonly int SuccessiveReceivedPosition;
-    // public readonly int ReceiveCapacity;
     // public readonly ushort NumberOfPairs; // 2 bytes
     //   public readonly int StartGene; // 4 bytes
     //   public readonly int EndGene; // 4 bytes

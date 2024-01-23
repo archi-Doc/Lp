@@ -246,7 +246,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Defer
                     // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
-                    this.Connection.ConnectionTerminal.AckQueue.AckRama(this.Connection, this.TransmissionId);
+                    this.Connection.ConnectionTerminal.AckQueue.AckRama(this.Connection, this);
                 }
             }
         }
