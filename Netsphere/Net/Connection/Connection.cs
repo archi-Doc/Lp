@@ -575,27 +575,47 @@ Wait:
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
         {
-            while (span.Length >= 6)
+            while (span.Length >= 8)
             {
+                var receiveCapacity = BitConverter.ToInt32(span);
+                span = span.Slice(sizeof(int));
                 var transmissionId = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
-                var numberOfPairs = BitConverter.ToUInt16(span);
-                span = span.Slice(sizeof(ushort));
 
-                var length = numberOfPairs * 8;
-                if (span.Length < length)
-                {
-                    break;
+                if (receiveCapacity < 0)
+                {// Rama (Complete)
+                    if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
+                    {
+                        this.UpdateLatestAckMics();
+                        transmission.ProcessReceive_AckRama();
+                    }
                 }
+                else
+                {// Block/Stream
+                    if (span.Length < 6)
+                    {
+                        break;
+                    }
 
-                if (!this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
-                {
+                    var successiveReceivedPosition = BitConverter.ToInt32(span);
+                    span = span.Slice(sizeof(int));
+                    var numberOfPairs = BitConverter.ToUInt16(span);
+                    span = span.Slice(sizeof(ushort));
+
+                    var length = numberOfPairs * 8;
+                    if (span.Length < length)
+                    {
+                        break;
+                    }
+
+                    if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
+                    {
+                        this.UpdateLatestAckMics();
+                        transmission.ProcessReceive_AckBlock(receiveCapacity, successiveReceivedPosition, span);
+                    }
+
                     span = span.Slice(length);
-                    continue;
                 }
-
-                transmission.ProcessReceive_Ack(span);
-                span = span.Slice(length);
             }
         }
     }

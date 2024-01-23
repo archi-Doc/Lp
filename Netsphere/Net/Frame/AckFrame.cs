@@ -13,8 +13,6 @@ internal readonly struct AckFrame
 
     public readonly FrameType FrameType; // 2 bytes
 
-    // public readonly ushort NumberOfTransmissions;
-
     // Rama (Complete)
     // public readonly int ReceiveCapacity; // -1
     // public readonly uint TransmissionId;

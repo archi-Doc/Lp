@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
 
@@ -34,7 +35,7 @@ internal partial class AckBuffer
     private readonly object syncObject = new();
     private readonly Queue<Connection> connectionQueue = new();
     private readonly Queue<Queue<ReceiveTransmissionAndAckGene>> freeAckQueue = new();
-    private readonly Queue<Queue<int>> freeAckGene = new();
+    private readonly ConcurrentQueue<Queue<int>> freeAckGene = new();
 
     #endregion
 
@@ -157,6 +158,7 @@ internal partial class AckBuffer
 
         while (ackQueue.TryDequeue(out var item))
         {
+NewPacket:
             if (owner is not null && span.Length < AckFrame.Margin)
             {// Send the packet when the remaining length falls below the margin.
                 Send(span.Length);
@@ -168,80 +170,75 @@ internal partial class AckBuffer
                 span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
             }
 
-            if (item.AckGene == this.rama)
+            var ackGene = item.AckGene;
+            if (ackGene == this.rama)
             {// Rama
                 numberOfTransmissions++;
+                BitConverter.TryWriteBytes(span, (int)-1);
+                span = span.Slice(sizeof(int));
                 BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
                 span = span.Slice(sizeof(uint));
             }
             else
             {// Block/Stream
+                int receiveCapacity = 0;
+                int successiveReceivedPosition = 0;
 
-            }
-        }
+                numberOfTransmissions++;
+                BitConverter.TryWriteBytes(span, receiveCapacity);
+                span = span.Slice(sizeof(int));
+                BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
+                span = span.Slice(sizeof(uint));
+                BitConverter.TryWriteBytes(span, successiveReceivedPosition);
+                span = span.Slice(sizeof(int));
 
-        while (ackBlock.TryDequeue(out var transmission))
-        {
-            if (owner is not null && span.Length < AckFrame.Margin)
-            {// Send the packet when the remaining length falls below the margin.
-                Send(span.Length);
-            }
+                ushort numberOfPairs = 0;
+                var numberOfPairsSpan = span;
+                span = span.Slice(sizeof(ushort));
 
-            if (owner is null)
-            {// Prepare
-                owner = PacketPool.Rent();
-                span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
-            }
+                int startGene = -1;
+                int endGene = -1;
+                while (ackGene.TryDequeue(out var geneSerial))
+                {
+                    if (startGene == -1)
+                    {// Initial gene
+                        startGene = geneSerial;
+                        endGene = geneSerial + 1;
+                    }
+                    else if (endGene == geneSerial)
+                    {// Serial genes
+                        endGene = geneSerial + 1;
+                    }
+                    else
+                    {// Not serial gene
+                        BitConverter.TryWriteBytes(span, startGene);
+                        span = span.Slice(sizeof(int));
+                        BitConverter.TryWriteBytes(span, endGene);
+                        span = span.Slice(sizeof(int));
+                        numberOfPairs++;
 
-            var ackGene = transmission.AckGene;
-            transmission.AckGene = default;
-            if (ackGene is null)
-            {
-                continue;
-            }
+                        if (owner is not null && span.Length < AckFrame.Margin)
+                        {// Send the packet when the remaining length falls below the margin.
+                            BitConverter.TryWriteBytes(numberOfPairsSpan, numberOfPairs);
+                            goto NewPacket;
+                        }
 
-            var transmissionSpan = span;
-            var geneSpan = span;
-            var transmissionId = transmission.TransmissionId;
-            int successiveReceivedPosition = 0;
-            int receiveCapacity = 0;
-            ushort numberOfPairs = 0;
-            int startGene = -1;
-            int endGene = -1;
-
-            while (ackGene.TryDequeue(out var geneSerial))
-            {
-                if (startGene == -1)
-                {// Initial gene
-                    startGene = geneSerial;
-                    endGene = geneSerial + 1;
+                        startGene = geneSerial;
+                        endGene = geneSerial + 1;
+                    }
                 }
-                else if (endGene == geneSerial)
-                {// Serial genes
-                    endGene = geneSerial + 1;
-                }
-                else
-                {// Not serial gene
-                    BitConverter.TryWriteBytes(geneSpan, startGene);
-                    geneSpan = geneSpan.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(geneSpan, endGene);
-                    geneSpan = geneSpan.Slice(sizeof(int));
+
+                if (startGene != -1)
+                {
+                    BitConverter.TryWriteBytes(span, startGene);
+                    span = span.Slice(sizeof(int));
+                    BitConverter.TryWriteBytes(span, endGene);
+                    span = span.Slice(sizeof(int));
                     numberOfPairs++;
-
-                    startGene = geneSerial;
-                    endGene = geneSerial + 1;
-
-                    if (owner is not null && span.Length < AckFrame.Margin)
-                    {// Send the packet when the remaining length falls below the margin.
-                        Send(span.Length);
-                    }
-
-                    if (owner is null)
-                    {// Prepare
-                        owner = PacketPool.Rent();
-                        span = owner.ByteArray.AsSpan(PacketHeader.Length + 6, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
-                    }
+                    BitConverter.TryWriteBytes(numberOfPairsSpan, numberOfPairs);
                 }
+
+                this.freeAckGene.Enqueue(ackGene);
             }
         }
 
@@ -251,7 +248,7 @@ internal partial class AckBuffer
         }
 
         owner?.Return(); // Return the rent buffer.
-                         // ackRama and ackBlock will be returned later for reuse.
+        // ackQueue will be returned later for reuse.
 
         void Send(int spanLength)
         {
@@ -261,250 +258,6 @@ internal partial class AckBuffer
             owner = default;
 
             numberOfTransmissions = 0;
-        }
-    }
-
-    private void ProcessAckOb(NetSender netSender, Connection connection, Queue<uint> ackRama, Queue<ReceiveTransmission> ackBlock)
-    {// AckFrameCode
-        ByteArrayPool.Owner? owner = default;
-        var position = 0;
-        var transmissionPosition = 0;
-        const int maxLength = NetControl.MaxPacketLength - 16; // remainig = maxLength - position;
-        uint previousTransmissionId = 0;
-        ushort numberOfPairs = 0;
-        int startGene = -1;
-        int endGene = -1;
-
-        while (ackQueue.TryDequeue(out var ack))
-        {
-            if ((maxLength - position) < AckFrame.Margin)
-            {// Send the packet due to the size approaching the limit.
-                SendPacket();
-            }
-
-            if (owner is null)
-            {
-                owner = PacketPool.Rent();
-                transmissionPosition = PacketHeader.Length + AckFrame.Length;
-                position = transmissionPosition + 6;
-            }
-
-            var transmissionId = (uint)(ack >> 32);
-            var geneSerial = (int)ack;
-
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"ProcessAck: {transmissionId}, {geneSerial}");
-
-            if (previousTransmissionId == 0)
-            {// Initial transmission id
-                previousTransmissionId = transmissionId;
-                startGene = geneSerial;
-                endGene = geneSerial + 1;
-            }
-            else if (transmissionId == previousTransmissionId)
-            {// Same transmission id
-                if (startGene == -1)
-                {// Initial gene
-                    startGene = geneSerial;
-                    endGene = geneSerial + 1;
-                }
-                else if (endGene == geneSerial)
-                {// Serial genes
-                    endGene = geneSerial + 1;
-                }
-                else
-                {// Not serial gene
-                    var span = owner.ByteArray.AsSpan(position);
-                    BitConverter.TryWriteBytes(span, startGene);
-                    span = span.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(span, endGene);
-                    position += 8;
-                    numberOfPairs++;
-
-                    startGene = geneSerial;
-                    endGene = geneSerial + 1;
-                }
-            }
-            else
-            {// Different transmission id
-             // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
-
-                var span = owner.ByteArray.AsSpan(position);
-                BitConverter.TryWriteBytes(span, startGene);
-                span = span.Slice(sizeof(int));
-                BitConverter.TryWriteBytes(span, endGene);
-                position += 8;
-                numberOfPairs++;
-
-                span = owner.ByteArray.AsSpan(transmissionPosition);
-                BitConverter.TryWriteBytes(span, previousTransmissionId);
-                span = span.Slice(sizeof(uint));
-                BitConverter.TryWriteBytes(span, numberOfPairs);
-
-                previousTransmissionId = transmissionId;
-                numberOfPairs = 0;
-                transmissionPosition = position;
-                position += 6;
-
-                startGene = geneSerial;
-                endGene = geneSerial + 1;
-            }
-        }
-
-        SendPacket();
-
-        void SendPacket()
-        {
-            if (owner is not null)
-            {
-                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
-
-                if (previousTransmissionId != 0)
-                {
-                    var span = owner.ByteArray.AsSpan(position);
-                    BitConverter.TryWriteBytes(span, startGene);
-                    span = span.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(span, endGene);
-                    position += 8;
-                    numberOfPairs++;
-
-                    span = owner.ByteArray.AsSpan(transmissionPosition);
-                    BitConverter.TryWriteBytes(span, previousTransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, numberOfPairs);
-
-                    previousTransmissionId = 0;
-                    numberOfPairs = 0;
-                    transmissionPosition = 0;
-                    startGene = -1;
-                    endGene = -1;
-                }
-
-                connection.CreateAckPacket(owner, position - PacketHeader.Length, out var packetLength);
-                netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
-                // owner = owner.Return(); // Moved
-            }
-        }
-    }
-
-    private void ProcessAck(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
-    {// AckFrameCode
-        ByteArrayPool.Owner? owner = default;
-        var position = 0;
-        var transmissionPosition = 0;
-        const int maxLength = NetControl.MaxPacketLength - 16; // remainig = maxLength - position;
-        uint previousTransmissionId = 0;
-        ushort numberOfPairs = 0;
-        int startGene = -1;
-        int endGene = -1;
-
-        while (ackQueue.TryDequeue(out var ack))
-        {
-            if ((maxLength - position) < AckFrame.Margin)
-            {// Send the packet due to the size approaching the limit.
-                SendPacket();
-            }
-
-            if (owner is null)
-            {
-                owner = PacketPool.Rent();
-                transmissionPosition = PacketHeader.Length + AckFrame.Length;
-                position = transmissionPosition + 6;
-            }
-
-            var transmissionId = (uint)(ack >> 32);
-            var geneSerial = (int)ack;
-
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"ProcessAck: {transmissionId}, {geneSerial}");
-
-            if (previousTransmissionId == 0)
-            {// Initial transmission id
-                previousTransmissionId = transmissionId;
-                startGene = geneSerial;
-                endGene = geneSerial + 1;
-            }
-            else if (transmissionId == previousTransmissionId)
-            {// Same transmission id
-                if (startGene == -1)
-                {// Initial gene
-                    startGene = geneSerial;
-                    endGene = geneSerial + 1;
-                }
-                else if (endGene == geneSerial)
-                {// Serial genes
-                    endGene = geneSerial + 1;
-                }
-                else
-                {// Not serial gene
-                    var span = owner.ByteArray.AsSpan(position);
-                    BitConverter.TryWriteBytes(span, startGene);
-                    span = span.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(span, endGene);
-                    position += 8;
-                    numberOfPairs++;
-
-                    startGene = geneSerial;
-                    endGene = geneSerial + 1;
-                }
-            }
-            else
-            {// Different transmission id
-             // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
-
-                var span = owner.ByteArray.AsSpan(position);
-                BitConverter.TryWriteBytes(span, startGene);
-                span = span.Slice(sizeof(int));
-                BitConverter.TryWriteBytes(span, endGene);
-                position += 8;
-                numberOfPairs++;
-
-                span = owner.ByteArray.AsSpan(transmissionPosition);
-                BitConverter.TryWriteBytes(span, previousTransmissionId);
-                span = span.Slice(sizeof(uint));
-                BitConverter.TryWriteBytes(span, numberOfPairs);
-
-                previousTransmissionId = transmissionId;
-                numberOfPairs = 0;
-                transmissionPosition = position;
-                position += 6;
-
-                startGene = geneSerial;
-                endGene = geneSerial + 1;
-            }
-        }
-
-        SendPacket();
-
-        void SendPacket()
-        {
-            if (owner is not null)
-            {
-                // this.logger.TryGet(LogLevel.Debug)?.Log($"SendingAck: {previousTransmissionId}, {startGene} - {endGene}");
-
-                if (previousTransmissionId != 0)
-                {
-                    var span = owner.ByteArray.AsSpan(position);
-                    BitConverter.TryWriteBytes(span, startGene);
-                    span = span.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(span, endGene);
-                    position += 8;
-                    numberOfPairs++;
-
-                    span = owner.ByteArray.AsSpan(transmissionPosition);
-                    BitConverter.TryWriteBytes(span, previousTransmissionId);
-                    span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, numberOfPairs);
-
-                    previousTransmissionId = 0;
-                    numberOfPairs = 0;
-                    transmissionPosition = 0;
-                    startGene = -1;
-                    endGene = -1;
-                }
-
-                connection.CreateAckPacket(owner, position - PacketHeader.Length, out var packetLength);
-                netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
-                // owner = owner.Return(); // Moved
-            }
         }
     }
 }
