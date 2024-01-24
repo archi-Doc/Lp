@@ -172,9 +172,9 @@ NewPacket:
             var ackGene = item.AckGene;
             if (ackGene == this.rama)
             {// Rama
-                BitConverter.TryWriteBytes(span, (int)-1);
+                BitConverter.TryWriteBytes(span, (int)-1); // 4 bytes
                 span = span.Slice(sizeof(int));
-                BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
+                BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId); // 4 bytes
                 span = span.Slice(sizeof(uint));
             }
             else
@@ -182,16 +182,16 @@ NewPacket:
                 int receiveCapacity = 0;
                 int successiveReceivedPosition = 0;
 
-                BitConverter.TryWriteBytes(span, receiveCapacity);
+                BitConverter.TryWriteBytes(span, receiveCapacity); // 4 bytes
                 span = span.Slice(sizeof(int));
-                BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId);
+                BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId); // 4 bytes
                 span = span.Slice(sizeof(uint));
-                BitConverter.TryWriteBytes(span, successiveReceivedPosition);
+                BitConverter.TryWriteBytes(span, successiveReceivedPosition); // 4 bytes
                 span = span.Slice(sizeof(int));
 
                 ushort numberOfPairs = 0;
                 var numberOfPairsSpan = span;
-                span = span.Slice(sizeof(ushort));
+                span = span.Slice(sizeof(ushort)); // 2 bytes
 
                 int startGene = -1;
                 int endGene = -1;
@@ -208,6 +208,7 @@ NewPacket:
                     }
                     else
                     {// Not serial gene
+                        Console.WriteLine($"{startGene} - {endGene}");
                         BitConverter.TryWriteBytes(span, startGene);
                         span = span.Slice(sizeof(int));
                         BitConverter.TryWriteBytes(span, endGene);
@@ -227,6 +228,7 @@ NewPacket:
 
                 if (startGene != -1)
                 {
+                    Console.WriteLine($"{startGene} - {endGene}");
                     BitConverter.TryWriteBytes(span, startGene);
                     span = span.Slice(sizeof(int));
                     BitConverter.TryWriteBytes(span, endGene);

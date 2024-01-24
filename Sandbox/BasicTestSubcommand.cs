@@ -72,7 +72,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     }
                 }*/
 
-                for (var i = 0; i < 20_000; i += 1_000)
+                for (var i = 0; i < 20_000; i += 1_430)
                 {
                     Console.WriteLine($"TestBlock: {i}");
                     var testBlock = TestBlock.Create(i);
@@ -82,6 +82,20 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                         success++;
                     }
                 }
+
+                /*Console.WriteLine($"TestBlock: 20_000");
+                var testBlock2 = TestBlock.Create(20_000);
+                var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock2);
+                if (testBlock2.Equals(r.Value))
+                {
+                    success++;
+                }
+
+                r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock2);
+                if (testBlock2.Equals(r.Value))
+                {
+                    success++;
+                }*/
 
                 /*var tasks = new List<Task>();
                 var count = 0;

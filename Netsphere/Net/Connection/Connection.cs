@@ -614,12 +614,17 @@ Wait:
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
                         this.UpdateLatestAckMics();
-                        transmission.ProcessReceive_AckBlock(receiveCapacity, successiveReceivedPosition, span);
+                        transmission.ProcessReceive_AckBlock(receiveCapacity, successiveReceivedPosition, span, numberOfPairs);
+                    }
+                    else
+                    {// SendTransmission has already been disposed due to reasons such as having already received response data.
                     }
 
                     span = span.Slice(length);
                 }
             }
+
+            Debug.Assert(span.Length == 0);
         }
     }
 

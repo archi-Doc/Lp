@@ -79,12 +79,16 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal void DisposeInternal()
     {// lock (this.syncObject)
-        // Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()}");
+        // Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()} {this.GeneSerialMax}");
         if (this.Mode == NetTransmissionMode.Disposed)
         {
             return;
         }
 
+        if (this.Connection.IsClient && this.GeneSerialMax == 14)
+        {
+            Console.WriteLine($"Dispose GeneSerialMax 14 ");
+        }
         this.Mode = NetTransmissionMode.Disposed;
         this.gene0?.Dispose(false);
         this.gene1?.Dispose(false);
@@ -93,6 +97,7 @@ internal sealed partial class SendTransmission : IDisposable
         {
             foreach (var x in this.genes)
             {
+                Console.WriteLine($"Dispose {x.GeneSerial}");
                 x.DisposeMemory();
             }
 
@@ -316,7 +321,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal void ProcessReceive_AckRamaInternal()
     {
-        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama 0 - {this.GeneSerialMax}");
+        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama {this.GeneSerialMax}");
 
         long sentMics = 0;
         if (this.gene0 is not null)
@@ -372,7 +377,7 @@ internal sealed partial class SendTransmission : IDisposable
         this.DisposeInternal();
     }
 
-    internal void ProcessReceive_AckBlock(int receiveCapacity, int successiveReceivedPosition, scoped Span<byte> span)
+    internal void ProcessReceive_AckBlock(int receiveCapacity, int successiveReceivedPosition, scoped Span<byte> span, ushort numberOfPairs)
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
         long sentMics = 0;
@@ -386,7 +391,7 @@ internal sealed partial class SendTransmission : IDisposable
                 return;
             }
 
-            while (span.Length >= 8)
+            while (numberOfPairs-- > 0)
             {
                 var startGene = BitConverter.ToInt32(span);
                 span = span.Slice(sizeof(int));
@@ -397,6 +402,10 @@ internal sealed partial class SendTransmission : IDisposable
                     endGene < 0 || endGene > this.GeneSerialMax)
                 {
                     continue;
+                }
+
+                if (this.Connection.IsClient && endGene == 14)
+                {//
                 }
 
                 // NetTransmissionMode.Block
