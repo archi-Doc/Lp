@@ -178,7 +178,7 @@ public class CubicCongestionControl : ICongestionControl
 
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
             {
-                Console.WriteLine($"RemoveInFlight {this.Connection.IsClient} {sendGene.GeneSerial}");
+                // Console.WriteLine($"RemoveInFlight {this.Connection.IsClient} {sendGene.GeneSerial}/{sendGene.SendTransmission.GeneSerialMax}");
                 this.genesInFlight.Remove(node);
                 sendGene.Node = default;
             }
@@ -355,7 +355,7 @@ public class CubicCongestionControl : ICongestionControl
             }
 
             this.ReportDeliveryFailure();
-            Console.WriteLine($"RESEND2: {gene.GeneSerial} ({this.Connection.IsClient})");
+            Console.WriteLine($"RESEND2: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient})");
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
