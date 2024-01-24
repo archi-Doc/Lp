@@ -85,33 +85,16 @@ internal sealed partial class SendTransmission : IDisposable
             return;
         }
 
-        if (this.Connection.IsClient && this.GeneSerialMax == 14)
-        {//
-            Console.WriteLine($"Dispose GeneSerialMax 14 {this.genes.GeneSerialListChain.Capacity}");
-        }
         this.Mode = NetTransmissionMode.Disposed;
         this.gene0?.Dispose(false);
         this.gene1?.Dispose(false);
         this.gene2?.Dispose(false);
         if (this.genes is not null)
         {
-            for (var i = 0; i < this.genes.GeneSerialListChain.Capacity; i++)
+            foreach (var x in this.genes)
             {
-                if (this.genes.GeneSerialListChain.Get(i) is { } x)
-                {
-                    x.DisposeMemory();
-                }
-            }
-
-            /*foreach (var x in this.genes)
-            {
-                if (this.Connection.IsClient && this.GeneSerialMax == 14)
-                {//
-                    Console.WriteLine($"Dispose {x.GeneSerial}");
-                }
-
                 x.DisposeMemory();
-            }*/
+            }
 
             this.genes = default; // this.genes.Clear();
         }

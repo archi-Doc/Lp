@@ -208,7 +208,7 @@ NewPacket:
                     }
                     else
                     {// Not serial gene
-                        Console.WriteLine($"{startGene} - {endGene}");
+                        // Console.WriteLine($"{startGene} - {endGene}");
                         BitConverter.TryWriteBytes(span, startGene);
                         span = span.Slice(sizeof(int));
                         BitConverter.TryWriteBytes(span, endGene);
@@ -228,7 +228,7 @@ NewPacket:
 
                 if (startGene != -1)
                 {
-                    Console.WriteLine($"{startGene} - {endGene}");
+                    // Console.WriteLine($"{startGene} - {endGene}");
                     BitConverter.TryWriteBytes(span, startGene);
                     span = span.Slice(sizeof(int));
                     BitConverter.TryWriteBytes(span, endGene);
