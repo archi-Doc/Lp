@@ -326,13 +326,14 @@ public class CubicCongestionControl : ICongestionControl
         SendGene? gene;
 
         // Loss detection
-        while (resendCapacity-- > 0 && this.genesLossDetected.TryDequeue(out gene))
+        while (resendCapacity > 0 && this.genesLossDetected.TryDequeue(out gene))
         {
             if (gene.Node is not UnorderedLinkedList<SendGene>.Node node)
             {
                 continue;
             }
 
+            resendCapacity--;
             this.ReportDeliveryFailure();
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
@@ -346,7 +347,7 @@ public class CubicCongestionControl : ICongestionControl
             }
         }
 
-        while (resendCapacity-- > 0 && this.genesInFlight.First is { } firstNode)
+        while (resendCapacity > 0 && this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
             if (Mics.FastSystem < (gene.SentMics + gene.SendTransmission.Connection.RetransmissionTimeout))
@@ -354,6 +355,7 @@ public class CubicCongestionControl : ICongestionControl
                 break;
             }
 
+            resendCapacity--;
             this.ReportDeliveryFailure();
             Console.WriteLine($"RESEND2: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient})");
             if (!gene.Resend_NotThreadSafe(netSender, 0))

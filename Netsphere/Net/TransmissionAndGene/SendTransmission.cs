@@ -399,10 +399,6 @@ internal sealed partial class SendTransmission : IDisposable
                     continue;
                 }
 
-                if (this.Connection.IsClient && endGene == 14)
-                {//
-                }
-
                 // NetTransmissionMode.Block
                 this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
                 var chain = this.genes.GeneSerialListChain;
@@ -419,39 +415,32 @@ internal sealed partial class SendTransmission : IDisposable
                     }
                 }
 
-                if (chain.StartPosition < startGene)
-                {// Loss detection
-                    var dif = startGene - chain.StartPosition;
-                    if (dif >= 3)
-                    {// Packet Threshold: kPacketThreshold 3 (RFC5681, RFC6675)
+                if (endGene - chain.StartPosition > 3)
+                {// Loss detection: Packet Threshold kPacketThreshold 3 (RFC5681, RFC6675)
+                    lossPosition = startGene;
+                }
+
+                /*else if (dif >= 1)
+                {// Time Threshold
+                    var threshold = (Math.Max(this.Connection.SmoothedRtt, this.Connection.LatestRtt) * 9) >> 3;
+                    if (chain.StartPosition > 0 &&
+                        chain.Get(chain.StartPosition - 1) is { } g1 &&
+                        (Mics.FastSystem - g1.SentMics) > threshold)
+                    {
                         if (startGene > lossPosition)
                         {
                             lossPosition = startGene;
                         }
                     }
-
-                    /*else if (dif >= 1)
-                    {// Time Threshold
-                        var threshold = (Math.Max(this.Connection.SmoothedRtt, this.Connection.LatestRtt) * 9) >> 3;
-                        if (chain.StartPosition > 0 &&
-                            chain.Get(chain.StartPosition - 1) is { } g1 &&
-                            (Mics.FastSystem - g1.SentMics) > threshold)
+                    else if (chain.Get(chain.StartPosition) is { } g2 &&
+                        (Mics.FastSystem - g2.SentMics) > threshold)
+                    {
+                        if (startGene > lossPosition)
                         {
-                            if (startGene > lossPosition)
-                            {
-                                lossPosition = startGene;
-                            }
+                            lossPosition = startGene;
                         }
-                        else if (chain.Get(chain.StartPosition) is { } g2 &&
-                            (Mics.FastSystem - g2.SentMics) > threshold)
-                        {
-                            if (startGene > lossPosition)
-                            {
-                                lossPosition = startGene;
-                            }
-                        }
-                    }*/
-                }
+                    }
+                }*/
 
                 completeFlag = this.genes.GeneSerialListChain.Count == 0;
             }
@@ -475,7 +464,7 @@ internal sealed partial class SendTransmission : IDisposable
                 var startPosition = Math.Max(this.lastLossPosition, c.StartPosition);
 
                 Console.WriteLine($"Loss detected Start: {startPosition} Loss: {lossPosition}");
-                for (var i = lossPosition - 1; i >= c.StartPosition; i--)
+                for (var i = lossPosition - 1; i >= startPosition; i--)
                 {
                     if (c.Get(i) is { } gene)
                     {

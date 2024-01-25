@@ -118,6 +118,33 @@ internal partial class SendGene
         return true;
     }
 
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool NoSend_NotThreadSafe(NetSender netSender, int additional)
+    {
+        if (!this.CanSend || !this.Packet.TryIncrement())
+        {// MemoryOwner has been returned to the pool (Disposed).
+            return false;
+        }
+
+        var connection = this.SendTransmission.Connection;
+        var currentMics = Mics.FastSystem;
+
+        this.SentMics = currentMics;
+        if (this.CurrentState == State.Initial)
+        {// First send
+            this.CurrentState = State.Sent;
+            connection.IncrementSendCount();
+        }
+        else
+        {// Resend (Sent, Resent, LossDetected)
+            this.CurrentState = State.Resent;
+            connection.IncrementResendCount();
+        }
+
+        this.CongestionControl.AddInFlight(this, currentMics + connection.RetransmissionTimeout + additional);
+        return true;
+    }*/
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose(bool ack)
     {// lock (SendTransmissions.syncObject)
