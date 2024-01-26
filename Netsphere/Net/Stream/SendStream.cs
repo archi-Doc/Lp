@@ -2,9 +2,13 @@
 
 namespace Netsphere.Net;
 
-public class SendStream
+public class SendStream : IDisposable
 {
     public SendStream()
+    {
+    }
+
+    public void Dispose()
     {
     }
 }

@@ -224,7 +224,40 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
-    public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
+    public async Task<ReceiveStreamResult> SendStream(long maxLength)
+    {
+        if (this.CancellationToken.IsCancellationRequested)
+        {
+            return new(NetResult.Canceled);
+        }
+
+        if (this.Agreement.MaxStreamLength < maxLength)
+        {
+            return new(NetResult.StreamLengthLimit);
+        }
+
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        {
+            if (transmissionAndTimeout.Transmission is null)
+            {
+                return new(NetResult.NoTransmission);
+            }
+
+            var result = transmissionAndTimeout.Transmission.SendStream();
+            if (result != NetResult.Success)
+            {
+                // stream.Dispose();
+                return new(result);
+            }
+
+            var stream = new ReceiveStream();
+
+            return new(NetResult.Success, stream);
+        }
+    }
+
+    /*public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
         where TSend : ITinyhandSerialize<TSend>
     {
         if (this.CancellationToken.IsCancellationRequested)
@@ -258,7 +291,7 @@ public sealed partial class ClientConnection : Connection
 
             return new(NetResult.Success, stream);
         }
-    }
+    }*/
 
     /*public async Task<NetStream?> CreateStream(long size)
     {

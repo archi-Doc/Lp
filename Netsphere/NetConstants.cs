@@ -16,6 +16,8 @@ internal static class NetConstants
     public const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
     public const int SendCapacityPerRound = 50;
 
+    public const int DefaultSendBufferSize = 1024 * 1024;
+
     public static readonly long MicsPerRound = Mics.FromMilliseconds(1);
     public static readonly double MicsPerRoundRev = 1d / MicsPerRound;
     public static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);

@@ -19,5 +19,5 @@ public record ServerOptions
     /// Gets the maximum size of stream transmissions.<br/>
     /// 0: Stream transmission is disabled.
     /// </summary>
-    public long MaxStreamSize { get; init; } = 0;
+    public long MaxStreamLength { get; init; } = 0;
 }
