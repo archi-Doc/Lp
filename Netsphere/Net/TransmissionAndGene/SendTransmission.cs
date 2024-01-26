@@ -282,9 +282,9 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal NetResult SendStream(uint dataKind, ulong dataId, long size, bool requiresResponse)
+    internal SendStream SendStream(long maxLength)
     {
-        var info = NetHelper.CalculateGene(size);
+        var info = NetHelper.CalculateGene(maxLength);
 
         lock (this.syncObject)
         {
@@ -292,7 +292,7 @@ internal sealed partial class SendTransmission : IDisposable
 
             if (info.NumberOfGenes > this.Connection.Agreement.MaxStreamGenes)
             {
-                return NetResult.StreamSizeLimit;
+                return NetResult.StreamLengthLimit;
             }
 
             this.Mode = NetTransmissionMode.Stream;

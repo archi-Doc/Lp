@@ -102,14 +102,14 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await Task.WhenAll(tasks);
                 Console.WriteLine(count);
 
-                /*using (var stream = await connection.SendStream(1000))
+                using (var stream = await connection.SendStream(1000))
                 {
-                    if (stream is not null)
+                    /*if (stream is not null)
                     {
                         var result2 = await stream.Send([]);
                         stream.Dispose();
-                    }
-                }*/
+                    }*/
+                }
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
