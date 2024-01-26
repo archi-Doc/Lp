@@ -357,7 +357,7 @@ public class CubicCongestionControl : ICongestionControl
 
             resendCapacity--;
             this.ReportDeliveryFailure();
-            Console.WriteLine($"RESEND2: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient})");
+            Console.WriteLine($"RESEND2: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient}) {gene.SendTransmission.Connection.RetransmissionTimeout} mics");
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
