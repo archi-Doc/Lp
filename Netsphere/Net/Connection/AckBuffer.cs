@@ -179,8 +179,8 @@ NewPacket:
             }
             else
             {// Block/Stream
-                int receiveCapacity = 0;
-                int successiveReceivedPosition = 0;
+                int receiveCapacity = item.ReceiveTransmission.ReceiveCapacity;
+                int successiveReceivedPosition = item.ReceiveTransmission.SuccessiveReceivedPosition;
 
                 BitConverter.TryWriteBytes(span, receiveCapacity); // 4 bytes
                 span = span.Slice(sizeof(int));

@@ -89,7 +89,7 @@ public class CubicCongestionControl : ICongestionControl
             }
             else
             {
-                return this.negativeFactor / total;
+                return (this.negativeFactor - 1d) / total; // Decrease sensitivity by subtracting 1.
             }
         }
     }

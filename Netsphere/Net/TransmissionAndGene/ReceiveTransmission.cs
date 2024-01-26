@@ -29,6 +29,24 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
+    public int ReceiveCapacity
+    {
+        get
+        {
+            if (this.genes is null)
+            {
+                return 0;
+            }
+            else
+            {
+                return this.genes.DataPositionListChain.Capacity - this.genes.DataPositionListChain.Consumed;
+            }
+        }
+    }
+
+    public int SuccessiveReceivedPosition
+        => this.maxReceivedPosition;
+
 #pragma warning disable SA1401 // Fields should be private
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
     internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedDisposedNode;

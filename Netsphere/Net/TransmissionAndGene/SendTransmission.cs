@@ -402,6 +402,28 @@ internal sealed partial class SendTransmission : IDisposable
                 // NetTransmissionMode.Block
                 this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
                 var chain = this.genes.GeneSerialListChain;
+
+                // [chain.StartPosition, successiveReceivedPosition)
+                for (var i = chain.StartPosition; i < successiveReceivedPosition; i++)
+                {
+                    if (chain.Get(i) is { } gene)
+                    {
+                        if (gene.CurrentState == SendGene.State.Sent)
+                        {// Exclude resent genes as they do not allow for accurate RTT measurement.
+                            sentMics = Math.Max(sentMics, gene.SentMics);
+                        }
+
+                        gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
+                    }
+                }
+
+                // Console.WriteLine($"ReceiveCapacity {receiveCapacity}");
+                if (startGene < successiveReceivedPosition)
+                {
+                    startGene = successiveReceivedPosition - 1;
+                }
+
+                // [startGene, endGene)
                 for (var i = startGene; i < endGene; i++)
                 {
                     if (chain.Get(i) is { } gene)
