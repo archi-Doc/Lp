@@ -224,37 +224,61 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
-    public async Task<ReceiveStreamResult> SendStream(long maxLength)
+    public async Task<(NetResult Result, ISendStream? Stream)> SendStream(long maxLength)
     {
         if (this.CancellationToken.IsCancellationRequested)
         {
-            return new(NetResult.Canceled);
+            return new(NetResult.Canceled, default);
         }
 
         if (this.Agreement.MaxStreamLength < maxLength)
         {
-            return new(NetResult.StreamLengthLimit);
+            return new(NetResult.StreamLengthLimit, default);
         }
 
         var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
+        if (transmissionAndTimeout.Transmission is null)
         {
-            if (transmissionAndTimeout.Transmission is null)
-            {
-                return new(NetResult.NoTransmission);
-            }
-
-            var result = transmissionAndTimeout.Transmission.SendStream();
-            if (result != NetResult.Success)
-            {
-                // stream.Dispose();
-                return new(result);
-            }
-
-            var stream = new ReceiveStream();
-
-            return new(NetResult.Success, stream);
+            return new(NetResult.NoTransmission, default);
         }
+
+        var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, tcs);
+        if (result != NetResult.Success)
+        {
+            return new(result, default);
+        }
+
+        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, tcs));
+    }
+
+    public async Task<(NetResult Result, ISendStream<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength)
+    {
+        if (this.CancellationToken.IsCancellationRequested)
+        {
+            return new(NetResult.Canceled, default);
+        }
+
+        if (this.Agreement.MaxStreamLength < maxLength)
+        {
+            return new(NetResult.StreamLengthLimit, default);
+        }
+
+        var timeout = this.NetBase.DefaultSendTimeout;
+        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
+        if (transmissionAndTimeout.Transmission is null)
+        {
+            return new(NetResult.NoTransmission, default);
+        }
+
+        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
+        if (result != NetResult.Success)
+        {
+            return new(result, default);
+        }
+
+        return new(NetResult.Success, new SendStreamAndReceive<TReceive>(transmissionAndTimeout.Transmission));
     }
 
     /*public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)

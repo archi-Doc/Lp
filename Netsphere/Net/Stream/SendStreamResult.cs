@@ -2,17 +2,17 @@
 
 namespace Netsphere.Net;
 
-public readonly struct SendStreamResult : IDisposable
+/*public readonly struct SendStreamResult : IDisposable
 {
-    public SendStreamResult(NetResult result, SendStream? stream = default)
+    public SendStreamResult(NetResult result, ISendStream? stream = default)
     {
         this.Result = result;
         this.Stream = stream;
     }
 
     public readonly NetResult Result;
-    public readonly SendStream? Stream;
+    public readonly ISendStream? Stream;
 
     public void Dispose()
         => this.Stream?.Dispose();
-}
+}*/

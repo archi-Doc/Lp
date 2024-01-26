@@ -282,13 +282,17 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal SendStream SendStream(long maxLength)
+    internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTc)
     {
         var info = NetHelper.CalculateGene(maxLength);
 
         lock (this.syncObject)
         {
-            Debug.Assert(this.Mode == NetTransmissionMode.Initial);
+            if (this.Connection.IsClosedOrDisposed ||
+                this.Mode != NetTransmissionMode.Initial)
+            {
+                return NetResult.Closed;
+            }
 
             if (info.NumberOfGenes > this.Connection.Agreement.MaxStreamGenes)
             {
@@ -296,6 +300,7 @@ internal sealed partial class SendTransmission : IDisposable
             }
 
             this.Mode = NetTransmissionMode.Stream;
+            this.sentTcs = sentTc;
         }
 
         return NetResult.Success;
