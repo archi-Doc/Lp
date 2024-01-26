@@ -105,7 +105,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 var (_, stream) = await connection.SendStream(1000);
                 if (stream is not null)
                 {
-                    var result2 = await stream.Send([]);
+                    var result2 = await stream.Send(new byte[0]);
                     await stream.Complete();
                 }
 

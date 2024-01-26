@@ -47,6 +47,9 @@ internal sealed partial class SendTransmission : IDisposable
 
     public int GeneSerialMax { get; private set; }
 
+    internal TaskCompletionSource<NetResult>? SentTcs
+        => this.sentTcs;
+
 #pragma warning disable SA1401 // Fields should be private
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
 #pragma warning restore SA1401 // Fields should be private
@@ -300,10 +303,19 @@ internal sealed partial class SendTransmission : IDisposable
             }
 
             this.Mode = NetTransmissionMode.Stream;
+            this.Connection.CreateCongestionControl();
             this.sentTcs = sentTc;
+
+            this.GeneSerialMax = info.NumberOfGenes;
+            this.genes = new();
+            this.genes.GeneSerialListChain.Resize(info.NumberOfGenes);
         }
 
         return NetResult.Success;
+    }
+
+    internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer)
+    {
     }
 
     internal void ProcessReceive_AckRama()

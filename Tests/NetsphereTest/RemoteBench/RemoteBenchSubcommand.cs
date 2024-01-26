@@ -23,14 +23,14 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        using (var terminal = await this.netControl.NetTerminal.TryConnect(node))
+        using (var connection = await this.netControl.NetTerminal.TryConnect(node))
         {
-            if (terminal is null)
+            if (connection is null)
             {
                 return;
             }
 
-            var service = terminal.GetService<IBenchmarkService>();
+            var service = connection.GetService<IBenchmarkService>();
             if (await service.Register() == NetResult.Success)
             {
                 Console.WriteLine($"Register: Success");

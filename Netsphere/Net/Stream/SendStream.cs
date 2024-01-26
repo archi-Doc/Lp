@@ -1,36 +1,47 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
+using System.Diagnostics;
 
 namespace Netsphere.Net;
 
 public interface ISendStream
 {
+    Task<NetResult> Send(ReadOnlyMemory<byte> buffer);
+
     Task<NetResult> Complete();
 }
 
 internal class SendStream : ISendStream
 {
-    public SendStream(SendTransmission sendTransmission, TaskCompletionSource<NetResult> tcs)
+    public SendStream(SendTransmission sendTransmission)
     {
+        Debug.Assert(sendTransmission.Mode == NetTransmissionMode.Stream);
+
         this.sendTransmission = sendTransmission;
-        this.tcs = tcs;
     }
 
     private bool complete;
     private SendTransmission sendTransmission;
-    private TaskCompletionSource<NetResult> tcs;
 
-    public Task<NetResult> Complete()
+    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer)
+        => this.sendTransmission.ProcessSend(buffer);
+
+    public async Task<NetResult> Complete()
     {
         if (this.complete)
         {
-            return Task.FromResult(NetResult.Closed);
+            return NetResult.Closed;
+        }
+
+        var result = NetResult.Success;
+        if (this.sendTransmission.SentTcs is { } tcs)
+        {
+            result = await tcs.Task.ConfigureAwait(false);
         }
 
         this.sendTransmission.Dispose();
         this.complete = true;
 
-        return this.tcs.Task;
+        return result;
     }
 }

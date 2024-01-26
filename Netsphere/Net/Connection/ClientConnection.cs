@@ -247,10 +247,11 @@ public sealed partial class ClientConnection : Connection
         var result = transmissionAndTimeout.Transmission.SendStream(maxLength, tcs);
         if (result != NetResult.Success)
         {
+            transmissionAndTimeout.Transmission.Dispose();
             return new(result, default);
         }
 
-        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, tcs));
+        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission));
     }
 
     public async Task<(NetResult Result, ISendStream<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength)
