@@ -73,7 +73,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     public NetControl NetControl { get; set; }
 
-    private async Task BenchLargeData(ClientTerminal terminal)
+    private async Task BenchLargeData(ClientConnection terminal)
     {
         const int N = 4_000_000;
         var service = terminal.GetService<IBenchmarkService>();
@@ -87,7 +87,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         Console.WriteLine(sw.ElapsedMilliseconds.ToString());
     }
 
-    private async Task PingpongSmallData(ClientTerminal terminal)
+    private async Task PingpongSmallData(ClientConnection terminal)
     {
         const int N = 100; // 20;
         var service = terminal.GetService<IBenchmarkService>();

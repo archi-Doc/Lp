@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Text;
 using Arc.Collections;
 using Netsphere.Packet;
 using Netsphere.Server;
@@ -30,10 +29,29 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
+    public int ReceiveCapacity
+    {
+        get
+        {
+            if (this.genes is null)
+            {
+                return 0;
+            }
+            else
+            {
+                return this.genes.DataPositionListChain.Capacity - this.genes.DataPositionListChain.Consumed;
+            }
+        }
+    }
+
+    public int SuccessiveReceivedPosition
+        => this.maxReceivedPosition;
+
 #pragma warning disable SA1401 // Fields should be private
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
     internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedDisposedNode;
     internal long ReceivedDisposedMics;
+    internal Queue<int>? AckGene; // lock(AckBuffer.syncObject)
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();
@@ -125,8 +143,9 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = totalGene;
     }
 
-    internal void ProcessReceive_Gene(int geneSerial, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(/*int geneSerial, */int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
     {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
+        var geneSerial = dataPosition;
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
@@ -135,7 +154,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
-                this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
+                this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, geneSerial);
                 return;
             }
             else if (this.Mode == NetTransmissionMode.Initial)
@@ -191,8 +210,14 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 if (chain.Get(dataPosition) is { } gene)
                 {
                     gene.SetRecv(toBeShared);
+
                     if (this.maxReceivedPosition <= dataPosition)
                     {
+                        if (this.maxReceivedPosition == dataPosition)
+                        {
+                            this.maxReceivedPosition++;
+                        }
+
                         while (chain.Get(this.maxReceivedPosition) is { } g && g.IsReceived)
                         {
                             this.maxReceivedPosition++;
@@ -204,24 +229,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         completeFlag = true;
                     }
                 }
-
-                /*if (this.Connection.IsClient)
-                {
-                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log($"JJJ{dataPosition:00} - {this.maxReceivedPosition} - {this.genes.All(x => x.IsReceived)}");
-                    var sb = new StringBuilder();
-                    foreach (var x in this.genes)
-                    {
-                        if (x.IsReceived)
-                        {
-                            sb.Append("1");
-                        }
-                        else
-                        {
-                            sb.Append("0");
-                        }
-                    }
-                    this.Connection.Logger.TryGet(LogLevel.Warning)?.Log(sb.ToString());
-                }*/
             }
 
             if (completeFlag)
@@ -237,20 +244,16 @@ internal sealed partial class ReceiveTransmission : IDisposable
             {
                 if (this.Connection.Agreement.MaxTransmissions < 10)
                 {// Instant
-                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack 0 - {this.totalGene}");
+                    this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack {this.totalGene}");
 
-                    Span<byte> ackFrame = stackalloc byte[2 + 6 + 8];
+                    Span<byte> ackFrame = stackalloc byte[2 + 4 + 4];
                     var span = ackFrame;
                     BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
                     span = span.Slice(sizeof(ushort));
+                    BitConverter.TryWriteBytes(span, (int)-1);
+                    span = span.Slice(sizeof(int));
                     BitConverter.TryWriteBytes(span, this.TransmissionId);
                     span = span.Slice(sizeof(uint));
-                    BitConverter.TryWriteBytes(span, (ushort)1); // Number of pairs
-                    span = span.Slice(sizeof(ushort));
-                    BitConverter.TryWriteBytes(span, 0); // StartGene
-                    span = span.Slice(sizeof(int));
-                    BitConverter.TryWriteBytes(span, this.totalGene); // EndGene
-                    span = span.Slice(sizeof(int));
 
                     Debug.Assert(span.Length == 0);
                     this.Connection.SendPriorityFrame(ackFrame);
@@ -259,14 +262,13 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Defer
                     // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
-                    this.Connection.ConnectionTerminal.AckBuffer.AddRange(this.Connection, this.TransmissionId, 0, this.totalGene);
+                    this.Connection.ConnectionTerminal.AckQueue.AckRama(this.Connection, this);
                 }
             }
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack {geneSerial}");
-            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, geneSerial);
+            this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, geneSerial);
         }
 
         if (completeFlag)

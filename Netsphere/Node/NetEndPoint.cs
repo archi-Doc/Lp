@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-
 namespace Netsphere;
 
 [TinyhandObject]
@@ -21,6 +19,12 @@ public readonly partial record struct NetEndPoint
 
     public bool IsValid
         => this.EndPoint is not null;
+
+    /*public NetAddress ToNetAddress()
+        => new NetAddress(this.EndPoint.Address, (ushort)this.EndPoint.Port);*/
+
+    public bool IsPrivateOrLocalLoopbackAddress()
+        => new NetAddress(this.EndPoint.Address, (ushort)this.EndPoint.Port).IsPrivateOrLocalLoopbackAddress();
 
     public bool EndPointEquals(IPEndPoint endPoint)
         => this.EndPoint.Equals(endPoint);

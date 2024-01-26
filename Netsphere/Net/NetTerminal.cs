@@ -1,14 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using Netsphere.Server;
 using Netsphere.Stats;
-
-#pragma warning disable SA1202 // Elements should be ordered by access
 
 namespace Netsphere;
 
@@ -16,11 +11,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const double DefaultResponseTimeoutInSeconds = 2d;
 
-    internal NetTerminal(NetControl netControl, bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(unitContext)
     {
-        this.NetControl = netControl;
-        this.IsAlternative = isAlternative;
         this.UnitLogger = unitLogger;
         this.NetBase = netBase;
         this.NetStats = netStats;
@@ -38,8 +31,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public CancellationToken CancellationToken
         => ThreadCore.Root.CancellationToken;
 
-    internal NetControl NetControl { get; }
-
     public NetBase NetBase { get; }
 
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
@@ -48,9 +39,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public NetStats NetStats { get; }
 
+    public NetResponder NetResponder { get; private set; } = default!;
+
     public PacketTerminal PacketTerminal { get; }
 
-    public bool IsAlternative { get; }
+    public bool IsAlternative { get; private set; }
 
     public int Port { get; set; }
 
@@ -128,6 +121,12 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.netCleaner.Stop();
     }
 
+    internal void Initialize(NetResponder netResponder, bool isAlternative)
+    {
+        this.NetResponder = netResponder;
+        this.IsAlternative = isAlternative;
+    }
+
     internal void ProcessSend(NetSender netSender)
     {
         // 1st: PacketTerminal (Packets: Connect, Ack, Loss, ...)
@@ -138,7 +137,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // 2nd: AckBuffer (Ack)
-        this.ConnectionTerminal.AckBuffer.ProcessSend(netSender);
+        this.ConnectionTerminal.AckQueue.ProcessSend(netSender);
         if (!netSender.CanSend)
         {
             return;

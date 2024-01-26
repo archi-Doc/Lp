@@ -41,12 +41,14 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
+                context.AddSingleton<NetResponder>();
+                context.AddSingleton<NetTerminal>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Stream logger
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(StreamLogger<>), typeof(StreamLoggerFactory<>)));
-                context.TryAddSingleton<StreamLoggerOptions>();
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(IdFileLogger<>), typeof(IdFileLoggerFactory<>)));
+                context.TryAddSingleton<IdFileLoggerOptions>();
 
                 // Machines
                 // context.AddTransient<EssentialNetMachine>();
@@ -86,18 +88,21 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetResponder netResponder, NetTerminal netTerminal)
         : base(context)
     {
         this.unitLogger = unitLogger;
         this.ServiceProvider = context.ServiceProvider;
         this.NetBase = netBase;
         this.NetStats = netStats;
+        this.NetResponder = netResponder;
 
-        this.NetTerminal = new(this, false, context, unitLogger, netBase, netStats);
+        this.NetTerminal = netTerminal;
+        this.NetTerminal.Initialize(this.NetResponder, false);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
-            this.Alternative = new(this, true, context, unitLogger, netBase, netStats);
+            this.Alternative = new(context, unitLogger, netBase, netStats);
+            this.Alternative.Initialize(this.NetResponder, true);
         }
     }
 
@@ -107,6 +112,8 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetStats NetStats { get; }
 
+    public NetResponder NetResponder { get; }
+
     public NetTerminal NetTerminal { get; }
 
     public NetTerminal? Alternative { get; }
@@ -114,20 +121,12 @@ public class NetControl : UnitBase, IUnitPreparable
     internal IServiceProvider ServiceProvider { get; }
 
     private UnitLogger unitLogger;
-    private ConcurrentDictionary<ulong, INetResponder> responders = new();
 
     #endregion
 
     public void Prepare(UnitMessage.Prepare message)
     {
     }
-
-    public void RegisterResponder<TResponder>(TResponder responder)
-    where TResponder : INetResponder
-    => this.responders.TryAdd(responder.DataId, responder);
-
-    public bool TryGetResponder(ulong dataId, [MaybeNullWhen(false)] out INetResponder responder)
-        => this.responders.TryGetValue(dataId, out responder);
 
     private void Dump(ILog logger)
     {

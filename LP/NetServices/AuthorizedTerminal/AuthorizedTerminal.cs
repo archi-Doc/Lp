@@ -12,7 +12,7 @@ public class AuthorizedTerminalFactory
         this.authorityVault = authorityVault;
     }
 
-    public async Task<AuthorizedTerminal<TService>?> Create<TService>(Terminal terminal, NetNode node, string authorityName, ILogger? logger)
+    public async Task<AuthorizedTerminal<TService>?> Create<TService>(NetTerminal terminal, NetNode node, string authorityName, ILogger? logger)
         where TService : IAuthorizedService
     {
         // Authority key
@@ -26,20 +26,20 @@ public class AuthorizedTerminalFactory
         // Try to get a cached terminal
 
         // Terminal
-        var clientTerminal = await terminal.CreateAndEncrypt(node);
-        if (clientTerminal == null)
+        var connection = await terminal.TryConnect(node);
+        if (connection == null)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, node.ToString());
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
         // Service & authorize
-        var service = clientTerminal.GetService<TService>();
+        var service = connection.GetService<TService>();
         // var token = await clientTerminal.CreateToken(Token.Type.Authorize);
         // authority.SignToken(token);
         // var response = await service.Authorize(token).ResponseAsync;
 
-        var proof = new EngageProof(clientTerminal.Salt);
+        var proof = new EngageProof(connection.Salt);
         authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
         var response = await service.Engage(proof).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
@@ -48,7 +48,7 @@ public class AuthorizedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        return new(clientTerminal, authority, service, logger);
+        return new(connection, authority, service, logger);
     }
 
     private AuthorityVault authorityVault;
@@ -57,9 +57,9 @@ public class AuthorizedTerminalFactory
 public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
     where TService : IAuthorizedService
 {
-    internal AuthorizedTerminal(ClientTerminal terminal, Authority authority, TService service, ILogger? logger)
+    internal AuthorizedTerminal(ClientConnection terminal, Authority authority, TService service, ILogger? logger)
     {
-        this.Terminal = terminal;
+        this.Connection = terminal;
         this.Authority = authority;
         this.Service = service;
         this.logger = logger;
@@ -72,17 +72,17 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
             return false;
         }
 
-        return this.Terminal == other.Terminal &&
+        return this.Connection == other.Connection &&
             typeof(TService) == other.Service.GetType() &&
             this.Authority == other.Authority;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Terminal, typeof(TService), this.Authority);
+        return HashCode.Combine(this.Connection, typeof(TService), this.Authority);
     }
 
-    public ClientTerminal Terminal { get; private set; }
+    public ClientConnection Connection { get; private set; }
 
     public TService Service { get; private set; }
 
@@ -122,10 +122,10 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
             if (disposing)
             {
                 // free managed resources.
-                this.Terminal?.Dispose();
+                this.Connection?.Dispose();
             }
 
-            this.Terminal = default!;
+            this.Connection = default!;
             this.Service = default!;
             this.Authority = default!;
 

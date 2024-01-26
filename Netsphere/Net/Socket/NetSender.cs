@@ -2,6 +2,7 @@
 
 using System.Net;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Misc;
 
 namespace Netsphere.Net;

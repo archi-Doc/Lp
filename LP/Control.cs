@@ -112,7 +112,7 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            this.SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
                 var logfile = "Logs/Client/.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
@@ -127,7 +127,7 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 1;
             });
 
-            this.SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            this.SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
                 var logfile = "Logs/Server/.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
@@ -392,7 +392,6 @@ public class Control : ILogInformation
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
-        this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
         this.Crystalizer = crystalizer;
         this.Vault = vault;
         this.AuthorityVault = authorityVault;

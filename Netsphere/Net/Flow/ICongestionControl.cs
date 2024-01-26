@@ -4,7 +4,7 @@ namespace Netsphere.Net;
 
 internal interface ICongestionControl
 {
-    int NumberOfGenesInFlight { get; }
+    int NumberInFlight { get; }
 
     bool IsCongested { get; }
 
@@ -13,12 +13,20 @@ internal interface ICongestionControl
     /// When the connection is closed, return false and release the congestion control.
     /// </summary>
     /// <param name="netSender">An instance of <see cref="NetSender"/>.</param>
+    /// <param name="elapsedMics">elapsedMics.</param>
+    /// <param name="elapsedMilliseconds">elapsedMilliseconds.</param>
     /// <returns>false: Release the congestion control.</returns>
-    bool Process(NetSender netSender);
+    bool Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds);
 
-    void Report();
+    // void ReportDeliverySuccess();
+
+    // void ReportDeliveryFailure();
 
     void AddInFlight(SendGene sendGene, long rto);
 
-    void RemoveInFlight(SendGene sendGene);
+    void RemoveInFlight(SendGene sendGene, bool ack);
+
+    void LossDetected(SendGene sendGene);
+
+    void AddRtt(int rttMics);
 }

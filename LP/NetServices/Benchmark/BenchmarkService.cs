@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere;
+using Netsphere.Server;
 
 namespace LP.NetServices;
 
@@ -16,7 +17,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
 
     public async NetTask<NetResult> Register()
     {
-        this.remoteBenchBroker.Register(LPCallContext.Current.ServerContext.Terminal.Node);
+        this.remoteBenchBroker.Register(TransmissionContext.Current.Connection.Node);
         return NetResult.Success;
     }
 
@@ -27,7 +28,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
 
     public async NetTask Report(IBenchmarkService.ReportRecord record)
     {
-        this.remoteBenchBroker.Report(LPCallContext.Current.ServerContext.Terminal.Node, record);
+        this.remoteBenchBroker.Report(TransmissionContext.Current.Connection.Node, record);
     }
 
     public async NetTask<byte[]?> Pingpong(byte[] data)

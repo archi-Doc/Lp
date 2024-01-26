@@ -9,7 +9,7 @@ namespace LP.Subcommands;
 [SimpleCommand("info")]
 public class MergerNestedcommandInfo : ISimpleCommandAsync
 {
-    public MergerNestedcommandInfo(ILogger<MergerNestedcommandInfo> logger, Terminal terminal, MergerNestedcommand nestedcommand)
+    public MergerNestedcommandInfo(ILogger<MergerNestedcommandInfo> logger, NetTerminal terminal, MergerNestedcommand nestedcommand)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -26,7 +26,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
         }*/
 
         this.logger.TryGet()?.Log(string.Empty);
-        using (var terminal = await this.terminal.CreateAndEncrypt(this.nestedcommand.Node))
+        using (var terminal = await this.terminal.TryConnect(this.nestedcommand.Node))
         {
             if (terminal == null)
             {
@@ -62,6 +62,6 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
     }
 
     private ILogger logger;
-    private Terminal terminal;
+    private NetTerminal terminal;
     private MergerNestedcommand nestedcommand;
 }

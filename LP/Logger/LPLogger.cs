@@ -56,7 +56,7 @@ public class LPLogger
                         return;
                     }
 
-                    if (context.LogSourceType == typeof(ClientTerminal))
+                    /*if (context.LogSourceType == typeof(ClientTerminal))
                     {// ClientTerminal
                         if (context.TryGetOptions<LPOptions>(out var options) &&
                         options.NetsphereOptions.EnableLogger)
@@ -80,15 +80,7 @@ public class LPLogger
                     {
                         context.SetOutput<EmptyLogger>();
                         return;
-
-                        /*if (context.TryGetOptions<LPOptions>(out var options) &&
-                        options.NetsphereOptions.EnableLogger)
-                        {
-                            context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
-                        }
-
-                        return;*/
-                    }
+                    }*/
 
                     context.SetOutput<ConsoleAndFileLogger>();
                 });

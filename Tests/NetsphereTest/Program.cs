@@ -128,7 +128,7 @@ public class Program
                         return;
                     }
 
-                    if (context.LogSourceType == typeof(ClientTerminal))
+                    /*if (context.LogSourceType == typeof(ClientTerminal))
                     {// ClientTerminal
                         context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
                         return;
@@ -143,23 +143,13 @@ public class Program
                         context.SetOutput<StreamLogger<TerminalLoggerOptions>>();
                         return;
                     }
-                    else if (context.LogSourceType == typeof(NetSocketObsolete))
-                    {// NetSocket
-                        /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
-                        options.EnableLogger)
-                        {
-                            context.SetOutput<FileLogger<NetSocketLoggerOptions>>();
-                        }*/
-
-                        return;
-                    }
-                    else
+                    else*/
                     {
                         context.SetOutput<ConsoleLogger>();
                     }
                 });
             })
-            .SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            .SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
                 var logfile = "Logs/Client/.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
@@ -167,7 +157,7 @@ public class Program
                 options.MaxStreamCapacity = 1_000;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             })
-            .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            .SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
                 var logfile = "Logs/Server/.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
@@ -183,9 +173,9 @@ public class Program
                 options.MaxStreamCapacity = 1_000;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             })
-            .SetupOptions<NetSocketLoggerOptions>((context, options) =>
+            .SetupOptions<CongestionControlLoggerOptions>((context, options) =>
             {// FileLoggerOptions
-                var logfile = "Logs/Socket.txt";
+                var logfile = "Logs/CongestionControl.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";

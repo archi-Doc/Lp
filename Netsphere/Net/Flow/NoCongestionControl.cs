@@ -13,7 +13,7 @@ internal class NoCongestionControl : ICongestionControl
 
     #region FieldAndProperty
 
-    public int NumberOfGenesInFlight
+    public int NumberInFlight
         => this.genesInFlight.Count;
 
     public bool IsCongested
@@ -41,7 +41,7 @@ internal class NoCongestionControl : ICongestionControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ICongestionControl.RemoveInFlight(SendGene sendGene)
+    void ICongestionControl.RemoveInFlight(SendGene sendGene, bool ack)
     {
         lock (this.syncObject)
         {
@@ -53,14 +53,20 @@ internal class NoCongestionControl : ICongestionControl
         }
     }
 
-    void ICongestionControl.Report()
+    void ICongestionControl.LossDetected(Netsphere.Net.SendGene sendGene)
     {
     }
 
-    bool ICongestionControl.Process(NetSender netSender)
-    {// lock (ConnectionTerminal.CongestionControlList)
-        // CongestionControl
+    /*void ICongestionControl.ReportDeliverySuccess()
+    {
+    }
 
+    void ICongestionControl.ReportDeliveryFailure()
+    {
+    }*/
+
+    bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
+    {// lock (ConnectionTerminal.CongestionControlList)
         // Resend
         SendGene? gene;
         lock (this.syncObject)
@@ -76,7 +82,7 @@ internal class NoCongestionControl : ICongestionControl
                 }
 
                 gene = firstNode.Value;
-                if (!gene.Send_NotThreadSafe(netSender, addition++))
+                if (!gene.Resend_NotThreadSafe(netSender, addition++))
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
                     gene.Node = default;
@@ -85,5 +91,9 @@ internal class NoCongestionControl : ICongestionControl
         }
 
         return true; // Do not dispose NoCongestionControl as it is shared across the connections.
+    }
+
+    void ICongestionControl.AddRtt(int rttMics)
+    {
     }
 }

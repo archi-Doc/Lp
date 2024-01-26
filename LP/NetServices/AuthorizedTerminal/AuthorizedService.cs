@@ -21,13 +21,14 @@ public class AuthorizedService : IAuthorizedService
 {
     public async NetTask<NetResult> Authorize(Token token)
     {// -> Engage
-        if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token) &&
+        //tempcode
+        /*if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token) &&
             token.TokenType == Token.Type.Authorize)
         {
             this.AuthorizedKey = token.PublicKey;
             this.Engaged = true;
             return NetResult.Success;
-        }
+        }*/
 
         this.Engaged = false;
         return NetResult.NotAuthorized;
@@ -35,12 +36,13 @@ public class AuthorizedService : IAuthorizedService
 
     public async NetTask<NetResult> Engage(EngageProof proof)
     {// -> Engage
-        if (proof.ValidateAndVerify(CallContext.Current.ServerContext.Terminal.Salt))
+        //tempcode
+        /*if (proof.ValidateAndVerify(CallContext.Current.ServerContext.Terminal.Salt))
         {
             this.AuthorizedKey = proof.PublicKey;
             this.Engaged = true;
             return NetResult.Success;
-        }
+        }*/
 
         this.Engaged = false;
         return NetResult.NotAuthorized;

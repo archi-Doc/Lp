@@ -156,16 +156,11 @@ public class BenchmarkServiceImpl : IBenchmarkService
     // [NetServiceFilter(typeof(NullFilter))]
     public async NetTask Wait(int millisecondsToWait)
     {
-        if (CallContext.Current is not TestCallContext context)
-        {
-            throw new NetException(NetResult.NoCallContext);
-        }
-
         Console.Write("Wait -> ");
         await Task.Delay(millisecondsToWait);
         Console.WriteLine($"{millisecondsToWait}");
 
-        context.Result = NetResult.NoEncryptedConnection;
+        TransmissionContext.Current.Result = NetResult.NoEncryptedConnection;
     }
 
     private RemoteBenchBroker remoteBenchBroker;
@@ -173,7 +168,7 @@ public class BenchmarkServiceImpl : IBenchmarkService
 
 public class TestFilterB : TestFilter
 {
-    public async Task Invoke(ServerContext context, Func<ServerContext, Task> next)
+    public new async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> next)
     {
         await next(context);
     }

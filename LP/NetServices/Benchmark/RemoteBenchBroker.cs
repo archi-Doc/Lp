@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
-
 namespace LP.NetServices;
 
 internal class RemoteBenchBroker
 {
-    public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger, Terminal terminal)
+    public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger, NetTerminal terminal)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -48,14 +46,14 @@ internal class RemoteBenchBroker
 
         async void StartNode(NetNode node)
         {
-            using (var t = this.terminal.TryCreate(node))
+            using (var transmission = await this.terminal.TryConnect(node))
             {
-                if (t is null)
+                if (transmission is null)
                 {
                     return;
                 }
 
-                var service = t.GetService<IBenchmarkService>();
+                var service = transmission.GetService<IBenchmarkService>();
                 var result = await service.Start(total, concurrent);
                 if (result == NetResult.Success)
                 {
@@ -124,7 +122,7 @@ internal class RemoteBenchBroker
     }
 
     private ILogger logger;
-    private Terminal terminal;
+    private NetTerminal terminal;
 
     private object syncObject = new();
     private Dictionary<NetNode, IBenchmarkService.ReportRecord?> nodes = new();

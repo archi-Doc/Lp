@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Netsphere.Logging;
 
-internal partial class StreamLoggerWorker : TaskCore
+internal partial class IdFileLoggerWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
 
@@ -13,14 +13,14 @@ internal partial class StreamLoggerWorker : TaskCore
     private partial class Stream
     {
         [Link(Type = ChainType.QueueList, Name = "LimitQueue", Primary = true)]
-        public Stream(StreamLoggerWorker worker, long id)
+        public Stream(IdFileLoggerWorker worker, long id)
         {
             this.worker = worker;
             this.Id = id;
             this.FilePath = this.worker.basePath + this.Id.ToString("X4") + this.worker.baseExtension;
         }
 
-        public void Enqueue(StreamLoggerWork work)
+        public void Enqueue(IdFileLoggerWork work)
             => this.queue.Enqueue(work);
 
         public async Task Flush()
@@ -67,14 +67,14 @@ internal partial class StreamLoggerWorker : TaskCore
 
         public string FilePath { get; private set; }
 
-        private StreamLoggerWorker worker;
-        private Queue<StreamLoggerWork> queue = new();
+        private IdFileLoggerWorker worker;
+        private Queue<IdFileLoggerWork> queue = new();
     }
 
-    public StreamLoggerWorker(UnitCore core, UnitLogger unitLogger, StreamLoggerOptions options)
+    public IdFileLoggerWorker(UnitCore core, UnitLogger unitLogger, IdFileLoggerOptions options)
         : base(core, Process, false)
     {
-        this.logger = unitLogger.GetLogger<StreamLoggerWorker>();
+        this.logger = unitLogger.GetLogger<IdFileLoggerWorker>();
         this.options = options;
         this.formatter = new(options.Formatter);
 
@@ -98,7 +98,7 @@ internal partial class StreamLoggerWorker : TaskCore
 
     public static async Task Process(object? obj)
     {
-        var worker = (StreamLoggerWorker)obj!;
+        var worker = (IdFileLoggerWorker)obj!;
 
         await worker.Sync().ConfigureAwait(false);
         while (worker.Sleep(1000))
@@ -109,7 +109,7 @@ internal partial class StreamLoggerWorker : TaskCore
         await worker.Flush(false).ConfigureAwait(false);
     }
 
-    public void Add(StreamLoggerWork work)
+    public void Add(IdFileLoggerWork work)
     {
         this.queue.Enqueue(work);
     }
@@ -284,23 +284,23 @@ internal partial class StreamLoggerWorker : TaskCore
 
     public int Count => this.queue.Count;
 
-    private ILogger<StreamLoggerWorker>? logger;
-    private StreamLoggerOptions options;
+    private ILogger<IdFileLoggerWorker>? logger;
+    private IdFileLoggerOptions options;
     private string basePath;
     private string baseFile;
     private string baseExtension;
     private SimpleLogFormatter formatter;
 
     private SemaphoreSlim semaphore = new(1, 1);
-    private ConcurrentQueue<StreamLoggerWork> queue = new();
+    private ConcurrentQueue<IdFileLoggerWork> queue = new();
     private Stream.GoshujinClass goshujin = new();
     // private DateTime limitLogTime;
     // private int limitLogCount = 0;
 }
 
-internal class StreamLoggerWork
+internal class IdFileLoggerWork
 {
-    public StreamLoggerWork(LogOutputParameter parameter)
+    public IdFileLoggerWork(LogOutputParameter parameter)
     {
         this.Parameter = parameter;
     }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
@@ -8,6 +9,7 @@ using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
+#pragma warning disable SA1214
 #pragma warning disable SA1401 // Fields should be private
 
 namespace Netsphere;
@@ -20,7 +22,7 @@ public class ConnectionTerminal
     {
         this.NetBase = netTerminal.NetBase;
         this.NetTerminal = netTerminal;
-        this.AckBuffer = new(this);
+        this.AckQueue = new(this);
         this.packetTerminal = this.NetTerminal.PacketTerminal;
         this.netStats = this.NetTerminal.NetStats;
         this.CongestionControlList.AddFirst(this.NoCongestionControl);
@@ -34,7 +36,7 @@ public class ConnectionTerminal
 
     internal NetTerminal NetTerminal { get; }
 
-    internal AckBuffer AckBuffer { get; }
+    internal AckBuffer AckQueue { get; }
 
     internal ICongestionControl NoCongestionControl { get; } = new NoCongestionControl();
 
@@ -42,7 +44,9 @@ public class ConnectionTerminal
     internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
     internal UnorderedLinkedList<Connection> CongestedList = new(); // lock (this.SyncSend)
 
-    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new(); // lock (this.CongestionControlList)
+    // lock (this.CongestionControlList)
+    internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new();
+    private long lastCongestionControlMics;
 
     private readonly PacketTerminal packetTerminal;
     private readonly NetStats netStats;
@@ -148,7 +152,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(endPoint, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -166,7 +170,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
@@ -177,7 +181,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         return connection;
@@ -193,8 +197,9 @@ public class ConnectionTerminal
             return false;
         }
 
+        var node = new NetNode(in endPoint, p.ClientPublicKey);
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
         lock (this.serverConnections.SyncObject)
@@ -287,10 +292,15 @@ public class ConnectionTerminal
         // CongestionControl
         lock (this.CongestionControlList)
         {
+            var currentMics = Mics.FastSystem;
+            var elapsedMics = this.lastCongestionControlMics == 0 ? 0 : currentMics - this.lastCongestionControlMics;
+            this.lastCongestionControlMics = currentMics;
+            var elapsedMilliseconds = elapsedMics * 0.001d;
+
             var congestionControlNode = this.CongestionControlList.First;
             while (congestionControlNode is not null)
             {
-                if (!congestionControlNode.Value.Process(netSender))
+                if (!congestionControlNode.Value.Process(netSender, elapsedMics, elapsedMilliseconds))
                 {
                     this.CongestionControlList.Remove(congestionControlNode);
                 }

@@ -31,8 +31,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        this.NetControl.RegisterResponder(Netsphere.Responder.MemoryResponder.Instance);
-        this.NetControl.RegisterResponder(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.NetResponder.Register(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -53,7 +53,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        netTerminal.SetDeliveryFailureRatio(0.2);
+        // netTerminal.SetDeliveryFailureRatio(0.2);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
