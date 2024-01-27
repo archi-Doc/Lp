@@ -63,6 +63,7 @@ internal sealed partial class SendTransmission : IDisposable
     private int sendGeneSerial;
     private int lastLossPosition;
     private long lastLossMics;
+    private int receiveCapacity;
 
     #endregion
 
@@ -316,6 +317,46 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer)
     {
+        if (this.genes is null)
+        {
+            return NetResult.InvalidTransmissionState;
+        }
+
+        var chain = this.genes.GeneSerialListChain;
+        while (buffer.Length > 0)
+        {
+            var delay = NetConstants.DefaultSendStreamDelayMilliseconds;
+
+Loop:
+            if (this.Connection.IsClosedOrDisposed)
+            {
+                return NetResult.Closed;
+            }
+
+            var sendCapacity = chain.Capacity - chain.Consumed;
+            var receiveCapacity = this.receiveCapacity - chain.Consumed;
+            var capacity = Math.Min(sendCapacity, receiveCapacity);
+
+            if (capacity <= 0)
+            {
+                this.Connection.PacketTerminal.AddSendPacket(this.Connection.EndPoint.EndPoint, default, default);
+
+                try
+                {
+                    await Task.Delay(delay, this.Connection.CancellationToken).ConfigureAwait(false);
+                    delay <<= 1;
+                }
+                catch
+                {
+                    return NetResult.Canceled;
+                }
+
+                goto Loop;
+            }
+        }
+
+
+
     }
 
     internal void ProcessReceive_AckRama()

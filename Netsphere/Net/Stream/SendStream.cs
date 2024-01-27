@@ -30,7 +30,7 @@ internal class SendStream : ISendStream
     {
         if (this.complete)
         {
-            return NetResult.Closed;
+            return NetResult.Success;
         }
 
         var result = NetResult.Success;
