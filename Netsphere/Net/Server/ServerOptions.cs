@@ -20,4 +20,9 @@ public record ServerOptions
     /// 0: Stream transmission is disabled.
     /// </summary>
     public long MaxStreamLength { get; init; } = 0;
+
+    /// <summary>
+    /// Gets the size of stream buffer.
+    /// </summary>
+    public int StreamBufferSize { get; init; } = 8 * 1024 * 1024; // 8MB
 }

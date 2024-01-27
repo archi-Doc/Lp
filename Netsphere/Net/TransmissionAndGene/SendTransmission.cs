@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Packet;
@@ -309,7 +310,7 @@ internal sealed partial class SendTransmission : IDisposable
 
             this.GeneSerialMax = info.NumberOfGenes;
             this.genes = new();
-            this.genes.GeneSerialListChain.Resize(info.NumberOfGenes);
+            this.genes.GeneSerialListChain.Resize(this.Connection.Agreement.StreamBufferGenes);
         }
 
         return NetResult.Success;
@@ -353,10 +354,41 @@ Loop:
 
                 goto Loop;
             }
+
+            lock (this.syncObject)
+            {
+                if (this.Connection.IsClosedOrDisposed)
+                {
+                    return NetResult.Closed;
+                }
+
+                // Recalculate
+                sendCapacity = chain.Capacity - chain.Consumed;
+                capacity = Math.Min(sendCapacity, receiveCapacity);
+
+                while (buffer.Length > 0 || capacity > 0)
+                {
+                    SendGene gene;
+                    var currentPosition = 0;
+                    if (currentPosition == 0)
+                    {
+                        gene = new SendGene(this);
+                        this.CreateFirstPacket(0, this.GeneSerialMax, 0, 0, buffer.Slice(0, (int)info.FirstGeneSize), out var owner);
+                        gene.SetSend(owner);
+                        buffer = buffer.Slice((int)info.FirstGeneSize);
+                    }
+                    else
+                    {
+                    }
+
+                    gene.Goshujin = this.genes;
+                    chain.Add(gene);
+
+                    currentPosition++;.
+                    capacity--;
+                }
+            }
         }
-
-
-
     }
 
     internal void ProcessReceive_AckRama()
@@ -444,6 +476,7 @@ Loop:
                 return;
             }
 
+            this.receiveCapacity = receiveCapacity;
             while (numberOfPairs-- > 0)
             {
                 var startGene = BitConverter.ToInt32(span);
