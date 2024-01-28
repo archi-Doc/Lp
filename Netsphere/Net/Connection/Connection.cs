@@ -644,7 +644,6 @@ Wait:
         var rttHint = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int)); // 4
         var totalGenes = BitConverter.ToInt32(span);
-        span = span.Slice(sizeof(int)); // 4
 
         if (rttHint > 0)
         {
@@ -687,10 +686,16 @@ Wait:
                     transmission = new(this, transmissionId, default, default);
                     transmission.SetState_Receiving(totalGenes);
                 }
-                else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
+                else if (transmissionMode == 1)
                 {// Stream mode
+                    var maxLength = BitConverter.ToInt64(span);
+                    if (maxLength > this.Agreement.MaxStreamLength)
+                    {
+                        return;
+                    }
+
                     transmission = new(this, transmissionId, default, default);
-                    transmission.SetState_ReceivingStream(totalGenes);
+                    transmission.SetState_ReceivingStream(maxLength);
                 }
                 else
                 {
@@ -749,7 +754,7 @@ Wait:
         transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
-    internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
+    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)
     {
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
@@ -789,7 +794,7 @@ Wait:
         return true;
     }
 
-    internal void CreatePacket(scoped Span<byte> frameHeader, scoped Span<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
@@ -886,7 +891,7 @@ Wait:
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
-    internal bool TryEncryptCbc(uint salt, Span<byte> source, Span<byte> destination, out int written)
+    internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
         this.embryo.Iv.CopyTo(iv);

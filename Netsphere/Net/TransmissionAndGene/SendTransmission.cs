@@ -65,7 +65,7 @@ internal sealed partial class SendTransmission : IDisposable
     private int lastLossPosition;
     private long lastLossMics;
 
-    private long streamMaxLength;
+    private long streamRemaining;
     private int receiveCapacity;
 
     #endregion
@@ -311,7 +311,7 @@ internal sealed partial class SendTransmission : IDisposable
             this.sentTcs = sentTc;
 
             this.GeneSerialMax = -1;
-            this.streamMaxLength = maxLength;
+            this.streamRemaining = maxLength;
             this.genes = new();
             this.genes.GeneSerialListChain.Resize(this.Connection.Agreement.StreamBufferGenes);
         }
@@ -372,24 +372,41 @@ Loop:
 
                 while (capacity > 0)
                 {
-                    SendGene gene;
+                    int size;
+                    var gene = new SendGene(this);
+                    ByteArrayPool.MemoryOwner owner;
                     if (this.sendGeneSerial == 0)
                     {
-                        var size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
-                        gene = new SendGene(this);
-                        this.CreateFirstPacket(0, this.GeneSerialMax, 0, 0, buffer.Slice(0, size).Span, out var owner);
-                        gene.SetSend(owner);
-                        buffer = buffer.Slice(size);
+                        size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
+                        this.CreateFirstPacket(1, this.streamRemaining, 0, buffer.Slice(0, size).Span, out owner);
                     }
                     else
                     {
+                        if (this.streamRemaining > FollowingGeneFrame.MaxGeneLength)
+                        {
+                            size = Math.Min(buffer.Length, FollowingGeneFrame.MaxGeneLength);
+                        }
+                        else
+                        {
+                            size = Math.Min(buffer.Length, (int)this.streamRemaining);
+                        }
+
+                        this.CreateFollowingPacket(this.sendGeneSerial, buffer.Slice(0, size).Span, out owner);
                     }
+
+                    gene.SetSend(owner);
+                    buffer = buffer.Slice(size);
+                    this.sendGeneSerial++;
+                    this.streamRemaining -= size;
 
                     gene.Goshujin = this.genes;
                     chain.Add(gene);
 
-                    currentPosition++;
                     capacity--;
+                    if (buffer.Length == 0 || this.streamRemaining == 0)
+                    {
+                        return NetResult.Success;
+                    }
                 }
             }
         }
@@ -607,7 +624,7 @@ Loop:
         }
     }
 
-    private void CreateFirstPacket(ushort transmissionMode, int totalGene, uint dataKind, ulong dataId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket(ushort transmissionMode, int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -640,7 +657,37 @@ Loop:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(/*int geneSerial, */int dataPosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket(ushort transmissionMode, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    {
+        Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
+
+        // FirstGeneFrameCode
+        Span<byte> frameHeader = stackalloc byte[FirstGeneFrame.Length];
+        var span = frameHeader;
+
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, transmissionMode); // TransmissionMode
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
+        span = span.Slice(sizeof(int));
+
+        BitConverter.TryWriteBytes(span, maxStreamLength); // MaxStreamLength
+        span = span.Slice(sizeof(long));
+
+        BitConverter.TryWriteBytes(span, dataId); // Data id
+        span = span.Slice(sizeof(ulong));
+
+        Debug.Assert(span.Length == 0);
+        this.Connection.CreatePacket(frameHeader, block, out owner);
+    }
+
+    private void CreateFollowingPacket(/*int geneSerial, */int dataPosition, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 

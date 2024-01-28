@@ -58,11 +58,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                // Send Block*Stream, Receive Non*Block*Stream
-                // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 var success = 0;
 
-                for (var i = 0; i < 20; i++)
+                /*for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
@@ -100,7 +98,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 }
 
                 await Task.WhenAll(tasks);
-                Console.WriteLine(count);
+                Console.WriteLine(count);*/
 
                 var (_, stream) = await connection.SendStream(1000);
                 if (stream is not null)

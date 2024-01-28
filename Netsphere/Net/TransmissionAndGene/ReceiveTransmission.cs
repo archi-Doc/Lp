@@ -56,6 +56,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     private readonly object syncObject = new();
     private int totalGene;
+    private long streamMaxLength;
     private TaskCompletionSource<NetResponse>? receivedTcs;
     private ReceiveStream? receiveStream;
     private int maxReceivedPosition;
@@ -137,10 +138,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = totalGene;
     }
 
-    internal void SetState_ReceivingStream(int totalGene)
+    internal void SetState_ReceivingStream(long maxLength)
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
-        this.totalGene = totalGene;
+        this.streamMaxLength = maxLength;
     }
 
     internal void ProcessReceive_Gene(/*int geneSerial, */int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
