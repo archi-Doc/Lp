@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Block;
@@ -51,6 +52,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             return;
         }
+
+        this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 4_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
         // netTerminal.SetDeliveryFailureRatio(0.2);
@@ -103,7 +106,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 var (_, stream) = await connection.SendStream(1000);
                 if (stream is not null)
                 {
-                    var result2 = await stream.Send(new byte[0]);
+                    var result2 = await stream.Send(new byte[123]);
                     await stream.Complete();
                 }
 

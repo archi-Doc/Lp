@@ -142,6 +142,18 @@ internal sealed partial class ReceiveTransmission : IDisposable
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
         this.streamMaxLength = maxLength;
+
+        var info = NetHelper.CalculateGene(maxLength);
+        var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
+
+        this.genes = new();
+        this.genes.DataPositionListChain.Resize(bufferGenes);
+        for (var i = 0; i < bufferGenes; i++)
+        {
+            var gene = new ReceiveGene(this);
+            gene.Goshujin = this.genes;
+            this.genes.DataPositionListChain.Add(gene);
+        }
     }
 
     internal void ProcessReceive_Gene(/*int geneSerial, */int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
@@ -204,9 +216,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         this.gene2?.IsReceived == true;
                 }
             }
-            else if (this.Mode == NetTransmissionMode.Block &&
-                this.genes is not null)
-            {// Multiple send/recv
+            else if (this.genes is not null)
+            {// Block, Stream
                 var chain = this.genes.DataPositionListChain;
                 if (chain.Get(dataPosition) is { } gene)
                 {
@@ -225,10 +236,17 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         }
                     }
 
-                    if (this.maxReceivedPosition >= this.totalGene)
+                    if (this.Mode == NetTransmissionMode.Block)
                     {
-                        completeFlag = true;
+                        if (this.maxReceivedPosition >= this.totalGene)
+                        {
+                            completeFlag = true;
+                        }
                     }
+                    /*else if (this.Mode == NetTransmissionMode.Stream)
+                    {
+                        completeFlag = toBeShared.Memory.Length == 0;
+                    }*/
                 }
             }
 

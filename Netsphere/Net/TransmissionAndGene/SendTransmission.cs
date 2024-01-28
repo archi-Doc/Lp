@@ -145,8 +145,8 @@ internal sealed partial class SendTransmission : IDisposable
 
                 return ProcessSendResult.Complete;
             }
-            else if (this.Mode == NetTransmissionMode.Block && this.genes is not null)
-            {
+            else if (this.genes is not null)
+            {// Block or Stream
                 while (this.sendGeneSerial < this.GeneSerialMax)
                 {
                     if (this.genes.GeneSerialListChain.Get(this.sendGeneSerial++) is { } gene)
@@ -163,10 +163,6 @@ internal sealed partial class SendTransmission : IDisposable
                     }
                 }
 
-                return ProcessSendResult.Complete;
-            }
-            else if (this.Mode == NetTransmissionMode.Stream && this.genes is not null)
-            {
                 return ProcessSendResult.Complete;
             }
             else
@@ -289,7 +285,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTc)
+    internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTcs)
     {
         // var info = NetHelper.CalculateGene(maxLength);
 
@@ -306,14 +302,19 @@ internal sealed partial class SendTransmission : IDisposable
                 return NetResult.StreamLengthLimit;
             }*/
 
+            this.Connection.UpdateLatestAckMics();
             this.Mode = NetTransmissionMode.Stream;
             this.Connection.CreateCongestionControl();
-            this.sentTcs = sentTc;
+            this.sentTcs = sentTcs;
 
-            this.GeneSerialMax = -1;
+            this.GeneSerialMax = 0;
             this.streamRemaining = maxLength;
             this.genes = new();
-            this.genes.GeneSerialListChain.Resize(this.Connection.Agreement.StreamBufferGenes);
+
+            var info = NetHelper.CalculateGene(maxLength);
+            var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
+            this.genes.GeneSerialListChain.Resize(bufferGenes);
+            this.receiveCapacity = bufferGenes;
         }
 
         return NetResult.Success;
@@ -321,19 +322,19 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer)
     {
-        if (this.genes is null)
-        {
-            return NetResult.UnknownException;
-        }
-
-        var complete = buffer.Length == 0;
-        var chain = this.genes.GeneSerialListChain;
+        var addSend = false;
         while (true)
         {
             var delay = NetConstants.DefaultSendStreamDelayMilliseconds;
 
 Loop:
             if (this.Connection.IsClosedOrDisposed)
+            {
+                return NetResult.Closed;
+            }
+
+            var chain = this.genes?.GeneSerialListChain;
+            if (chain is null)
             {
                 return NetResult.Closed;
             }
@@ -361,12 +362,18 @@ Loop:
 
             lock (this.syncObject)
             {
-                if (this.Connection.IsClosedOrDisposed)
+                if (this.Connection.IsClosedOrDisposed || chain is null)
                 {
                     return NetResult.Closed;
                 }
 
                 // Recalculate
+                chain = this.genes?.GeneSerialListChain;
+                if (chain is null)
+                {
+                    return NetResult.Closed;
+                }
+
                 sendCapacity = chain.Capacity - chain.Consumed;
                 capacity = Math.Min(sendCapacity, receiveCapacity);
 
@@ -375,7 +382,7 @@ Loop:
                     int size;
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;
-                    if (this.sendGeneSerial == 0)
+                    if (this.GeneSerialMax == 0)
                     {
                         size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
                         this.CreateFirstPacket(1, this.streamRemaining, 0, buffer.Slice(0, size).Span, out owner);
@@ -391,25 +398,41 @@ Loop:
                             size = Math.Min(buffer.Length, (int)this.streamRemaining);
                         }
 
-                        this.CreateFollowingPacket(this.sendGeneSerial, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFollowingPacket(this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
                     }
 
                     gene.SetSend(owner);
-                    buffer = buffer.Slice(size);
-                    this.sendGeneSerial++;
-                    this.streamRemaining -= size;
-
                     gene.Goshujin = this.genes;
                     chain.Add(gene);
+                    addSend = true;
+                    Debug.Assert(gene.GeneSerial == this.GeneSerialMax);
 
+                    buffer = buffer.Slice(size);
+                    this.GeneSerialMax++;
+                    this.streamRemaining -= size;
                     capacity--;
                     if (buffer.Length == 0 || this.streamRemaining == 0)
                     {
-                        return NetResult.Success;
+                        goto Exit;
                     }
                 }
             }
+
+            // AddSend
+            if (addSend)
+            {
+                addSend = false;
+                this.Connection.AddSend(this);
+            }
         }
+
+Exit:
+        if (addSend)
+        {
+            this.Connection.AddSend(this);
+        }
+
+        return NetResult.Success;
     }
 
     internal void ProcessReceive_AckRama()
@@ -576,7 +599,8 @@ Loop:
                     }
                 }*/
 
-                completeFlag = this.genes.GeneSerialListChain.Count == 0;
+                completeFlag = this.Mode == NetTransmissionMode.Block &&
+                    this.genes.GeneSerialListChain.Count == 0;
             }
 
             var rtt = Mics.FastSystem - sentMics;

@@ -16,8 +16,6 @@ internal class SendStream : ISendStream
 {
     public SendStream(SendTransmission sendTransmission)
     {
-        Debug.Assert(sendTransmission.Mode == NetTransmissionMode.Stream);
-
         this.sendTransmission = sendTransmission;
     }
 
@@ -42,7 +40,18 @@ internal class SendStream : ISendStream
         var result = NetResult.Success;
         if (this.sendTransmission.SentTcs is { } tcs)
         {
-            result = await tcs.Task.ConfigureAwait(false);
+            try
+            {
+                result = await tcs.Task.WaitAsync(this.sendTransmission.Connection.CancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                return NetResult.Timeout;
+            }
+            catch
+            {
+                return NetResult.Canceled;
+            }
         }
 
         this.sendTransmission.Dispose();

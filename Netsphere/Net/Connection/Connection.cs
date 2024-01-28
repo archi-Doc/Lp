@@ -471,8 +471,16 @@ Wait:
         this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, default);
     }
 
-    internal void SendCloseFrame() // Close
-        => this.SendPriorityFrame([]);
+    internal void SendCloseFrame()
+    {
+        // this.SendPriorityFrame([]); // Close 1 (Obsolete)
+
+        Span<byte> frame = stackalloc byte[2]; // Close 2
+        var span = frame;
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Close);
+        span = span.Slice(sizeof(ushort));
+        this.SendPriorityFrame(frame);
+    }
 
     internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend)
@@ -534,8 +542,8 @@ Wait:
         span = span.Slice(10);
 
         if (span.Length == 0)
-        {// Close frame
-            this.ConnectionTerminal.CloseInternal(this, false);
+        {// Close 1 (Obsolete)
+            // this.ConnectionTerminal.CloseInternal(this, false);
             return;
         }
 
@@ -555,7 +563,11 @@ Wait:
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
-            if (frameType == FrameType.Ack)
+            if (frameType == FrameType.Close)
+            {// Close 2
+                this.ConnectionTerminal.CloseInternal(this, false);
+            }
+            else if (frameType == FrameType.Ack)
             {// Ack
                 this.ProcessReceive_Ack(endPoint, owner);
             }

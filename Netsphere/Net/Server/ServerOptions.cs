@@ -16,8 +16,9 @@ public record ServerOptions
     public int MaxBlockSize { get; init; } = 4 * 1024 * 1024; // 4MB
 
     /// <summary>
-    /// Gets the maximum size of stream transmissions.<br/>
+    /// Gets the maximum length of stream transmissions.<br/>
     /// 0: Stream transmission is disabled.
+    /// -1: Unlimited.
     /// </summary>
     public long MaxStreamLength { get; init; } = 0;
 
