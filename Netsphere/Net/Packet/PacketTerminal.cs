@@ -93,7 +93,7 @@ public sealed partial class PacketTerminal
     {
         if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
         {
-            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.InvalidAddress, default, 0));
+            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
         }
 
         return this.SendAndReceiveAsync<TSend, TReceive>(endPoint, packet);

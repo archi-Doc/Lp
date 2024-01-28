@@ -47,7 +47,7 @@ public partial class ConnectionAgreementBlock : IBlock
         {
             this.maxStreamLength = value;
             var info = NetHelper.CalculateGene(this.maxStreamLength);
-            this.MaxStreamGenes = info.NumberOfGenes;
+            // this.MaxStreamGenes = info.NumberOfGenes;
         }
     }
 
@@ -66,8 +66,8 @@ public partial class ConnectionAgreementBlock : IBlock
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }
 
-    [IgnoreMember]
-    public int MaxStreamGenes { get; private set; }
+    /*[IgnoreMember]
+    public int MaxStreamGenes { get; private set; }*/
 
     [IgnoreMember]
     public int StreamBufferGenes { get; private set; }

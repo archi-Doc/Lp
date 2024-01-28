@@ -64,6 +64,8 @@ internal sealed partial class SendTransmission : IDisposable
     private int sendGeneSerial;
     private int lastLossPosition;
     private long lastLossMics;
+
+    private long streamMaxLength;
     private int receiveCapacity;
 
     #endregion
@@ -163,7 +165,7 @@ internal sealed partial class SendTransmission : IDisposable
 
                 return ProcessSendResult.Complete;
             }
-            else if (this.Mode == NetTransmissionMode.Stream)
+            else if (this.Mode == NetTransmissionMode.Stream && this.genes is not null)
             {
                 return ProcessSendResult.Complete;
             }
@@ -289,7 +291,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTc)
     {
-        var info = NetHelper.CalculateGene(maxLength);
+        // var info = NetHelper.CalculateGene(maxLength);
 
         lock (this.syncObject)
         {
@@ -299,16 +301,17 @@ internal sealed partial class SendTransmission : IDisposable
                 return NetResult.Closed;
             }
 
-            if (info.NumberOfGenes > this.Connection.Agreement.MaxStreamGenes)
+            /*if (info.NumberOfGenes > this.Connection.Agreement.MaxStreamGenes)
             {
                 return NetResult.StreamLengthLimit;
-            }
+            }*/
 
             this.Mode = NetTransmissionMode.Stream;
             this.Connection.CreateCongestionControl();
             this.sentTcs = sentTc;
 
-            this.GeneSerialMax = info.NumberOfGenes;
+            this.GeneSerialMax = -1;
+            this.streamMaxLength = maxLength;
             this.genes = new();
             this.genes.GeneSerialListChain.Resize(this.Connection.Agreement.StreamBufferGenes);
         }
@@ -320,11 +323,12 @@ internal sealed partial class SendTransmission : IDisposable
     {
         if (this.genes is null)
         {
-            return NetResult.InvalidTransmissionState;
+            return NetResult.UnknownException;
         }
 
+        var complete = buffer.Length == 0;
         var chain = this.genes.GeneSerialListChain;
-        while (buffer.Length > 0)
+        while (true)
         {
             var delay = NetConstants.DefaultSendStreamDelayMilliseconds;
 
@@ -366,16 +370,16 @@ Loop:
                 sendCapacity = chain.Capacity - chain.Consumed;
                 capacity = Math.Min(sendCapacity, receiveCapacity);
 
-                while (buffer.Length > 0 || capacity > 0)
+                while (capacity > 0)
                 {
                     SendGene gene;
-                    var currentPosition = 0;
-                    if (currentPosition == 0)
+                    if (this.sendGeneSerial == 0)
                     {
+                        var size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
                         gene = new SendGene(this);
-                        this.CreateFirstPacket(0, this.GeneSerialMax, 0, 0, buffer.Slice(0, (int)info.FirstGeneSize), out var owner);
+                        this.CreateFirstPacket(0, this.GeneSerialMax, 0, 0, buffer.Slice(0, size).Span, out var owner);
                         gene.SetSend(owner);
-                        buffer = buffer.Slice((int)info.FirstGeneSize);
+                        buffer = buffer.Slice(size);
                     }
                     else
                     {
@@ -384,7 +388,7 @@ Loop:
                     gene.Goshujin = this.genes;
                     chain.Add(gene);
 
-                    currentPosition++;.
+                    currentPosition++;
                     capacity--;
                 }
             }

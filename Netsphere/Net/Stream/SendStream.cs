@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics;
 
 namespace Netsphere.Net;
@@ -20,18 +21,23 @@ internal class SendStream : ISendStream
         this.sendTransmission = sendTransmission;
     }
 
-    private bool complete;
-    private SendTransmission sendTransmission;
+    private readonly SendTransmission sendTransmission;
+    private bool isComplete;
+
+    public bool IsComplete
+        => this.isComplete;
 
     public Task<NetResult> Send(ReadOnlyMemory<byte> buffer)
-        => this.sendTransmission.ProcessSend(buffer);
+        => buffer.Length == 0 ? Task.FromResult(NetResult.Success) : this.sendTransmission.ProcessSend(buffer);
 
     public async Task<NetResult> Complete()
     {
-        if (this.complete)
+        if (this.isComplete)
         {
-            return NetResult.Success;
+            return NetResult.Completed;
         }
+
+        await this.sendTransmission.ProcessSend(ReadOnlyMemory<byte>.Empty);
 
         var result = NetResult.Success;
         if (this.sendTransmission.SentTcs is { } tcs)
@@ -40,7 +46,7 @@ internal class SendStream : ISendStream
         }
 
         this.sendTransmission.Dispose();
-        this.complete = true;
+        this.isComplete = true;
 
         return result;
     }

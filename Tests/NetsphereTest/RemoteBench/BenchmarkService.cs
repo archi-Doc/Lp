@@ -38,16 +38,6 @@ public class BenchmarkServiceImpl : IBenchmarkService
     {
     }
 
-    // [NetServiceFilter(typeof(NullFilter))]
-    public async NetTask Wait(int millisecondsToWait)
-    {
-        Console.Write("Wait -> ");
-        await Task.Delay(millisecondsToWait);
-        Console.WriteLine($"{millisecondsToWait}");
-
-        TransmissionContext.Current.Result = NetResult.NoEncryptedConnection;
-    }
-
     private RemoteBenchBroker remoteBenchBroker;
 }
 
