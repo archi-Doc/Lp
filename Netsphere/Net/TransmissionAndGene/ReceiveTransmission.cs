@@ -233,12 +233,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
                             completeFlag = true;
                         }
                     }
-                    else if (this.Mode == NetTransmissionMode.Stream &&
-                        dataPosition == 0)
-                    {// Invoke stream
-                        gene.Goshujin = default;
-                        owner = toBeShared;
-                    }
                 }
             }
 
@@ -308,16 +302,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
                 receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
                 owner.Return();
-            }
-        }
-        else if (this.Mode == NetTransmissionMode.Stream &&
-            owner.IsRent)
-        {// Invoke stream
-            if (this.Connection is ServerConnection serverConnection)
-            {
-                var receiveStream = new ReceiveStream(this, dataId, owner);
-                var connectionContext = serverConnection.ConnectionContext;
-                Task.Run(() => connectionContext.InvokeStream(receiveStream));
             }
         }
     }
@@ -440,18 +424,84 @@ Abort:
 
     internal async Task<(NetResult Result, int Written)> ProcessReceive(Memory<byte> buffer, CancellationToken cancellationToken)
     {
+        if (buffer.Length < FollowingGeneFrame.MaxGeneLength)
+        {
+            throw new ArgumentException(nameof(buffer));
+        }
+
+        int remaining = buffer.Length;
         int written = 0;
+        int lastMaxReceivedPosition;
         while (true)
         {
             if (this.Mode != NetTransmissionMode.Stream)
             {
-                return (NetResult.Closed, written);
+                return (NetResult.Completed, written);
             }
 
-            var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
             lock (this.syncObject)
             {
+                var chain = this.genes?.DataPositionListChain;
+                if (chain is null)
+                {
+                    return (NetResult.Closed, written);
+                }
 
+                while (chain.Get(this.totalGene) is { } gene)
+                {
+                    if (remaining < FollowingGeneFrame.MaxGeneLength)
+                    {
+                        return (NetResult.Success, written);
+                    }
+
+                    var length = gene.Packet.Span.Length;
+                    if (length > 0)
+                    {
+                        if (this.totalGene == 0)
+                        {// First gene
+                            length -= 12;
+                            gene.Packet.Span.Slice(12).CopyTo(buffer.Span);
+                        }
+                        else
+                        {
+                            gene.Packet.Span.CopyTo(buffer.Span);
+                        }
+
+                        buffer = buffer.Slice(length);
+                        written += length;
+                        remaining -= length;
+                    }
+
+                    this.totalGene++;
+                    gene.Dispose();
+                    gene.Goshujin = default;
+
+                    if (length == 0)
+                    {// Complete
+                        return (NetResult.Completed, written);
+                    }
+                }
+
+                lastMaxReceivedPosition = this.maxReceivedPosition;
+            }
+
+            // Wait for data arrival.
+            var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
+            while (this.maxReceivedPosition == lastMaxReceivedPosition)
+            {
+                try
+                {
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    delay <<= 1;
+                }
+                catch (TimeoutException)
+                {
+                    return (NetResult.Timeout, written);
+                }
+                catch
+                {
+                    return (NetResult.Canceled, written);
+                }
             }
         }
     }

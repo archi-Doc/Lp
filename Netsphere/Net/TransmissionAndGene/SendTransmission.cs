@@ -349,7 +349,7 @@ Loop:
 
                 try
                 {
-                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(delay, this.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
                     delay <<= 1;
                 }
                 catch
@@ -412,7 +412,8 @@ Loop:
                     this.streamRemaining -= size;
                     capacity--;
                     if (buffer.Length == 0 || this.streamRemaining == 0)
-                    {
+                    {// Complete
+                        this.streamRemaining = 0;
                         goto Exit;
                     }
                 }
@@ -610,8 +611,14 @@ Exit:
                     }
                 }*/
 
-                completeFlag = this.Mode == NetTransmissionMode.Block &&
-                    this.genes.GeneSerialListChain.Count == 0;
+                if (this.Mode == NetTransmissionMode.Block)
+                {
+                    completeFlag = this.genes.GeneSerialListChain.Count == 0;
+                }
+                else
+                {
+                    completeFlag = this.streamRemaining == 0; // this.genes.GeneSerialListChain.StartPosition >= this.GeneSerialMax
+                }
             }
 
             var rtt = Mics.FastSystem - sentMics;

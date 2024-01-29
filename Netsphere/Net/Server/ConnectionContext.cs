@@ -182,5 +182,7 @@ SendNoNetService:
 
     public async Task InvokeStream(ReceiveStream receiveStream)
     {
+        var buffer = new byte[1_000_000];
+        var result = await receiveStream.Receive(buffer);
     }
 }

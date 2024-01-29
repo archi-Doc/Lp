@@ -4,7 +4,7 @@ namespace Netsphere.Net;
 
 public class ReceiveStream
 {
-    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId)
     {
         this.receiveTransmission = receiveTransmission;
         this.DataId = dataId;

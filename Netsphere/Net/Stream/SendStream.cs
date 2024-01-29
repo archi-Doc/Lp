@@ -4,9 +4,9 @@ namespace Netsphere.Net;
 
 public interface ISendStream
 {
-    Task<NetResult> Send(ReadOnlyMemory<byte> buffer);
+    Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default);
 
-    Task<NetResult> Complete();
+    Task<NetResult> Complete(CancellationToken cancellationToken = default);
 }
 
 public class SendStream : ISendStream
@@ -59,7 +59,7 @@ public class SendStream : ISendStream
         {
             try
             {
-                result = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(this.sendTransmission.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {

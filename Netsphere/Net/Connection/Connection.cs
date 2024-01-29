@@ -8,6 +8,7 @@ using Arc.Collections;
 using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 using static Netsphere.Net.AckBuffer;
 
 #pragma warning disable SA1202
@@ -671,6 +672,8 @@ Wait:
         }
 
         ReceiveTransmission? transmission;
+        long maxStreamLength = 0;
+        ulong dataId = 0;
         lock (this.receiveTransmissions.SyncObject)
         {
             if (this.IsClient)
@@ -708,14 +711,17 @@ Wait:
                 }
                 else if (transmissionMode == 1)
                 {// Stream mode
-                    var maxLength = BitConverter.ToInt64(span);
-                    if (maxLength > this.Agreement.MaxStreamLength)
+                    maxStreamLength = BitConverter.ToInt64(span);
+                    span = span.Slice(sizeof(int) + sizeof(uint)); // 8
+                    dataId = BitConverter.ToUInt64(span);
+
+                    if (maxStreamLength > this.Agreement.MaxStreamLength)
                     {
                         return;
                     }
 
                     transmission = new(this, transmissionId, default);
-                    transmission.SetState_ReceivingStream(maxLength);
+                    transmission.SetState_ReceivingStream(maxStreamLength);
                 }
                 else
                 {
@@ -729,6 +735,16 @@ Wait:
         }
 
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
+
+        if (transmission.Mode == NetTransmissionMode.Stream)
+        {// Invoke stream
+            if (this is ServerConnection serverConnection)
+            {
+                var receiveStream = new ReceiveStream(transmission, dataId);
+                var connectionContext = serverConnection.ConnectionContext;
+                Task.Run(() => connectionContext.InvokeStream(receiveStream));
+            }
+        }
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
