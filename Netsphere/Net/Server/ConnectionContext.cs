@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Net;
 
 namespace Netsphere.Server;
 
@@ -177,5 +178,9 @@ SendNoNetService:
         transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
         transmissionContext.Return();
         return;
+    }
+
+    public async Task InvokeStream(ReceiveStream receiveStream)
+    {
     }
 }

@@ -579,6 +579,14 @@ Wait:
             {// FollowingGene
                 this.ProcessReceive_FollowingGene(endPoint, owner);
             }
+            else if (frameType == FrameType.Knock)
+            {// Knock
+                this.ProcessReceive_Knock(endPoint, owner);
+            }
+            else if (frameType == FrameType.KnockResponse)
+            {// KnockResponse
+                this.ProcessReceive_KnockResponse(endPoint, owner);
+            }
         }
     }
 
@@ -764,6 +772,55 @@ Wait:
         }
 
         transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
+    }
+
+    internal void ProcessReceive_Knock(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    {// KnockResponseFrameCode
+        if (toBeShared.Memory.Length < (KnockFrame.Length - 2))
+        {
+            return;
+        }
+
+        ReceiveTransmission? transmission;
+        var transmissionId = BitConverter.ToUInt32(toBeShared.Span);
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+            {
+                return;
+            }
+        }
+
+        Span<byte> frame = stackalloc byte[KnockResponseFrame.Length];
+        var span = frame;
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.KnockResponse);
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, transmission.ReceiveCapacity);
+        span = span.Slice(sizeof(int));
+
+        this.SendPriorityFrame(frame);
+    }
+
+    internal void ProcessReceive_KnockResponse(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    {
+        var span = toBeShared.Span;
+        if (span.Length < (KnockResponseFrame.Length - 2))
+        {
+            return;
+        }
+
+        var transmissionId = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
+            {
+                var receiveCapacity = BitConverter.ToInt32(span);
+                span = span.Slice(sizeof(int));
+
+                transmission.ReceiveCapacity = receiveCapacity;
+            }
+        }
     }
 
     internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)

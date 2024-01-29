@@ -6,9 +6,10 @@ namespace Netsphere.Packet;
 
 internal readonly struct KnockFrame
 {// KnockFrameCode
-    public const int Length = 2;
+    public const int Length = 6;
 
     public readonly FrameType FrameType; // 2 bytes
+    public readonly uint TransmissionId; // 4 bytes
 }
 
 internal readonly struct KnockResponseFrame
@@ -16,6 +17,6 @@ internal readonly struct KnockResponseFrame
     public const int Length = 10;
 
     public readonly FrameType FrameType; // 2 bytes
+    public readonly uint TransmissionId; // 4 bytes
     public readonly int ReceiveCapacity; // 4 bytes
-    public readonly int SuccessiveReceivedPosition; // 4 bytes
 }

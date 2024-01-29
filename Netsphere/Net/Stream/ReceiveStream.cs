@@ -4,9 +4,16 @@ namespace Netsphere.Net;
 
 public class ReceiveStream : IDisposable
 {
-    public ReceiveStream()
+    public ReceiveStream(ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
+        this.DataId = dataId;
     }
+
+    #region FieldAndProperty
+
+    public ulong DataId { get; }
+
+    #endregion
 
     public void Dispose()
     {

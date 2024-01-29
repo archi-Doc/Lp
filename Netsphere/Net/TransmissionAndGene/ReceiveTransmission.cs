@@ -243,10 +243,12 @@ internal sealed partial class ReceiveTransmission : IDisposable
                             completeFlag = true;
                         }
                     }
-                    /*else if (this.Mode == NetTransmissionMode.Stream)
-                    {
-                        completeFlag = toBeShared.Memory.Length == 0;
-                    }*/
+                    else if (this.Mode == NetTransmissionMode.Stream &&
+                        dataPosition == 0)
+                    {// Invoke stream
+                        gene.Goshujin = default;
+                        owner = toBeShared;
+                    }
                 }
             }
 
@@ -319,6 +321,16 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
                 receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
                 owner.Return();
+            }
+        }
+        else if (this.Mode == NetTransmissionMode.Stream &&
+            owner.IsRent)
+        {// Invoke stream
+            if (this.Connection is ServerConnection serverConnection)
+            {
+                var receiveStream = new ReceiveStream(dataId, owner);
+                var connectionContext = serverConnection.ConnectionContext;
+                Task.Run(() => connectionContext.InvokeStream(receiveStream));
             }
         }
     }

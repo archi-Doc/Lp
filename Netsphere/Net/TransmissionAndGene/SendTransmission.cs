@@ -53,6 +53,7 @@ internal sealed partial class SendTransmission : IDisposable
 
 #pragma warning disable SA1401 // Fields should be private
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
+    internal int ReceiveCapacity;
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();
@@ -66,7 +67,6 @@ internal sealed partial class SendTransmission : IDisposable
     private long lastLossMics;
 
     private long streamRemaining;
-    private int receiveCapacity;
 
     #endregion
 
@@ -314,7 +314,7 @@ internal sealed partial class SendTransmission : IDisposable
             var info = NetHelper.CalculateGene(maxLength);
             var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
             this.genes.GeneSerialListChain.Resize(bufferGenes);
-            this.receiveCapacity = bufferGenes;
+            this.ReceiveCapacity = bufferGenes;
         }
 
         return NetResult.Success;
@@ -340,12 +340,12 @@ Loop:
             }
 
             var sendCapacity = chain.Capacity - chain.Consumed;
-            var receiveCapacity = this.receiveCapacity - chain.Consumed;
+            var receiveCapacity = this.ReceiveCapacity - chain.Consumed;
             var capacity = Math.Min(sendCapacity, receiveCapacity);
 
             if (capacity <= 0)
             {
-                this.Connection.PacketTerminal.AddSendPacket(this.Connection.EndPoint.EndPoint, default, default);
+                SendKnockFrame();
 
                 try
                 {
@@ -433,6 +433,17 @@ Exit:
         }
 
         return NetResult.Success;
+
+        void SendKnockFrame()
+        {
+            Span<byte> frame = stackalloc byte[KnockFrame.Length];
+            var span = frame;
+            BitConverter.TryWriteBytes(span, (ushort)FrameType.Knock);
+            span = span.Slice(sizeof(ushort));
+            BitConverter.TryWriteBytes(span, this.TransmissionId);
+            span = span.Slice(sizeof(uint));
+            this.Connection.SendPriorityFrame(frame);
+        }
     }
 
     internal void ProcessReceive_AckRama()
@@ -520,7 +531,7 @@ Exit:
                 return;
             }
 
-            this.receiveCapacity = receiveCapacity;
+            this.ReceiveCapacity = receiveCapacity;
             while (numberOfPairs-- > 0)
             {
                 var startGene = BitConverter.ToInt32(span);
