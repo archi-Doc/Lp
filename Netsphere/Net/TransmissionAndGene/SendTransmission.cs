@@ -320,7 +320,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer)
+    internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer, ulong dataId)
     {
         var addSend = false;
         while (true)
@@ -385,7 +385,7 @@ Loop:
                     if (this.GeneSerialMax == 0)
                     {
                         size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
-                        this.CreateFirstPacket(1, this.streamRemaining, 0, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFirstPacket(1, this.streamRemaining, dataId, buffer.Slice(0, size).Span, out owner);
                     }
                     else
                     {

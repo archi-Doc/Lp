@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Diagnostics;
-
 namespace Netsphere.Net;
 
 public interface ISendStream
@@ -12,12 +9,17 @@ public interface ISendStream
     Task<NetResult> Complete();
 }
 
-internal class SendStream : ISendStream
+public class SendStream : ISendStream
 {
-    public SendStream(SendTransmission sendTransmission)
+    internal SendStream(SendTransmission sendTransmission, ulong dataId)
     {
         this.sendTransmission = sendTransmission;
+        this.DataId = dataId;
     }
+
+    #region FieldAndProperty
+
+    public ulong DataId { get; }
 
     private readonly SendTransmission sendTransmission;
     private bool isComplete;
@@ -25,8 +27,10 @@ internal class SendStream : ISendStream
     public bool IsComplete
         => this.isComplete;
 
+    #endregion
+
     public Task<NetResult> Send(ReadOnlyMemory<byte> buffer)
-        => buffer.Length == 0 ? Task.FromResult(NetResult.Success) : this.sendTransmission.ProcessSend(buffer);
+        => buffer.Length == 0 ? Task.FromResult(NetResult.Success) : this.sendTransmission.ProcessSend(buffer, this.DataId);
 
     public async Task<NetResult> Complete()
     {
@@ -35,7 +39,7 @@ internal class SendStream : ISendStream
             return NetResult.Completed;
         }
 
-        await this.sendTransmission.ProcessSend(ReadOnlyMemory<byte>.Empty);
+        await this.sendTransmission.ProcessSend(ReadOnlyMemory<byte>.Empty, this.DataId);
 
         var result = NetResult.Success;
         if (this.sendTransmission.SentTcs is { } tcs)

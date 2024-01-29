@@ -2,10 +2,11 @@
 
 namespace Netsphere.Net;
 
-public class ReceiveStream : IDisposable
+public class ReceiveStream
 {
-    public ReceiveStream(ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
+        this.receiveTransmission = receiveTransmission;
         this.DataId = dataId;
     }
 
@@ -13,13 +14,15 @@ public class ReceiveStream : IDisposable
 
     public ulong DataId { get; }
 
+    private readonly ReceiveTransmission receiveTransmission;
+
     #endregion
 
-    public void Dispose()
+    public void Abort()
     {
     }
 
-    public async Task<ByteArrayPool.MemoryOwner> Receive()
+    public async Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer)
     {
         return default;
     }
