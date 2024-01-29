@@ -35,7 +35,7 @@ internal class SendStreamAndReceive<TReceive> : ISendStream<TReceive>
         NetResponse response;
         var timeout = connection.NetBase.DefaultSendTimeout;
         var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        using (var receiveTransmission = connection.TryCreateReceiveTransmission(transmissionId, tcs, default))
+        using (var receiveTransmission = connection.TryCreateReceiveTransmission(transmissionId, tcs))
         {
             if (receiveTransmission is null)
             {

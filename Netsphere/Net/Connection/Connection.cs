@@ -311,7 +311,7 @@ Wait:
         goto Retry;
     }
 
-    internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
         lock (this.receiveTransmissions.SyncObject)
         {
@@ -357,7 +357,7 @@ Wait:
                 return default;
             }
 
-            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
             receiveTransmission.ReceivedDisposedMics = currentMics;
             receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
@@ -703,7 +703,7 @@ Wait:
 
                 if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
                 {// Block mode
-                    transmission = new(this, transmissionId, default, default);
+                    transmission = new(this, transmissionId, default);
                     transmission.SetState_Receiving(totalGenes);
                 }
                 else if (transmissionMode == 1)
@@ -714,7 +714,7 @@ Wait:
                         return;
                     }
 
-                    transmission = new(this, transmissionId, default, default);
+                    transmission = new(this, transmissionId, default);
                     transmission.SetState_ReceivingStream(maxLength);
                 }
                 else

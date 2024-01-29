@@ -12,12 +12,11 @@ namespace Netsphere.Net;
 internal sealed partial class ReceiveTransmission : IDisposable
 {
     // [Link(Name = "DisposedList", Type = ChainType.QueueList, AutoLink = false)]
-    public ReceiveTransmission(Connection connection, uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    public ReceiveTransmission(Connection connection, uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
         this.Connection = connection;
         this.TransmissionId = transmissionId;
         this.receivedTcs = receivedTcs;
-        this.receiveStream = receiveStream;
     }
 
     #region FieldAndProperty
@@ -56,9 +55,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     private readonly object syncObject = new();
     private int totalGene;
-    private long streamMaxLength;
     private TaskCompletionSource<NetResponse>? receivedTcs;
-    private ReceiveStream? receiveStream;
     private int maxReceivedPosition;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
@@ -107,12 +104,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
             this.receivedTcs.SetResult(new(NetResult.Closed));
             this.receivedTcs = null;
         }
-
-        if (this.receiveStream is not null)
-        {
-            this.receiveStream?.Dispose();
-            this.receiveStream = null;
-        }
     }
 
     internal void SetState_Receiving(int totalGene)
@@ -141,7 +132,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
     internal void SetState_ReceivingStream(long maxLength)
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
-        this.streamMaxLength = maxLength;
 
         var info = NetHelper.CalculateGene(maxLength);
         var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
@@ -295,14 +285,11 @@ internal sealed partial class ReceiveTransmission : IDisposable
         if (completeFlag)
         {// Receive complete
             TaskCompletionSource<NetResponse>? receivedTcs;
-            ReceiveStream? receiveStream;
 
             lock (this.syncObject)
             {
                 receivedTcs = this.receivedTcs;
                 this.receivedTcs = default;
-                receiveStream = this.receiveStream;
-                this.receiveStream = default;
 
                 // this.Goshujin = null; // -> this.Connection.RemoveTransmission(this);
                 this.DisposeInternal();
@@ -328,7 +315,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {// Invoke stream
             if (this.Connection is ServerConnection serverConnection)
             {
-                var receiveStream = new ReceiveStream(dataId, owner);
+                var receiveStream = new ReceiveStream(this, dataId, owner);
                 var connectionContext = serverConnection.ConnectionContext;
                 Task.Run(() => connectionContext.InvokeStream(receiveStream));
             }
