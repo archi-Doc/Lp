@@ -16,7 +16,9 @@ internal static class NetConstants
     public const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
     public const int SendCapacityPerRound = 50;
     public const int InitialSendStreamDelayMilliseconds = 100;
+    public const int MaxSendStreamDelayMilliseconds = 1_000;
     public const int InitialReceiveStreamDelayMilliseconds = 100;
+    public const int MaxReceiveStreamDelayMilliseconds = 1_000;
 
     public const int DefaultSendBufferSize = 1024 * 1024;
 

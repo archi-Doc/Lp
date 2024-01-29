@@ -224,7 +224,7 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
-    public async Task<(NetResult Result, ISendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
     {
         if (this.CancellationToken.IsCancellationRequested)
         {
@@ -251,7 +251,7 @@ public sealed partial class ClientConnection : Connection
             return new(result, default);
         }
 
-        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, dataId));
+        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
     }
 
     public async Task<(NetResult Result, ISendStream<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength)

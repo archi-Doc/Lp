@@ -2,25 +2,37 @@
 
 namespace Netsphere.Net;
 
-public class ReceiveStream
+#pragma warning disable SA1202 // Elements should be ordered by access
+
+public abstract class ReceiveStreamBase
 {
-    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId)
+    internal ReceiveStreamBase(ReceiveTransmission receiveTransmission, ulong dataId)
     {
-        this.receiveTransmission = receiveTransmission;
+        this.ReceiveTransmission = receiveTransmission;
         this.DataId = dataId;
     }
 
     #region FieldAndProperty
 
+    internal ReceiveTransmission ReceiveTransmission { get; }
+
     public ulong DataId { get; }
 
-    private readonly ReceiveTransmission receiveTransmission;
+    internal int CurrentPosition { get; set; }
 
     #endregion
 
     public void Abort()
-        => this.receiveTransmission.ProcessAbort();
+        => this.ReceiveTransmission.ProcessAbort();
+}
+
+public class ReceiveStream : ReceiveStreamBase
+{
+    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId)
+        : base(receiveTransmission, dataId)
+    {
+    }
 
     public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        => this.receiveTransmission.ProcessReceive(buffer, cancellationToken);
+        => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
 }

@@ -2,36 +2,30 @@
 
 namespace Netsphere.Net;
 
-public interface ISendStream
-{
-    Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default);
+#pragma warning disable SA1202 // Elements should be ordered by access
 
-    Task<NetResult> Complete(CancellationToken cancellationToken = default);
-}
-
-public class SendStream : ISendStream
+public abstract class SendStreamBase
 {
-    internal SendStream(SendTransmission sendTransmission, ulong dataId)
+    internal SendStreamBase(SendTransmission sendTransmission, long maxLength, ulong dataId)
     {
-        this.sendTransmission = sendTransmission;
+        this.SendTransmission = sendTransmission;
+        this.RemainingLength = maxLength;
         this.DataId = dataId;
     }
 
-    #region FieldAndProperty
+    internal SendTransmission SendTransmission { get; }
 
-    public ulong DataId { get; }
+    public bool IsComplete { get; protected set; }
 
-    private readonly SendTransmission sendTransmission;
-    private bool isComplete;
+    public ulong DataId { get; protected set; }
 
-    public bool IsComplete
-        => this.isComplete;
+    public long RemainingLength { get; internal set; }
 
-    #endregion
+    public long SentLength { get; internal set; }
 
     public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (this.isComplete)
+        if (this.IsComplete)
         {
             return Task.FromResult(NetResult.Completed);
         }
@@ -41,25 +35,33 @@ public class SendStream : ISendStream
         }
         else
         {
-            return this.sendTransmission.ProcessSend(buffer, this.DataId, cancellationToken);
+            return this.SendTransmission.ProcessSend(this, buffer, cancellationToken);
         }
+    }
+}
+
+public class SendStream : SendStreamBase
+{
+    internal SendStream(SendTransmission sendTransmission, long maxLength, ulong dataId)
+        : base(sendTransmission, maxLength, dataId)
+    {
     }
 
     public async Task<NetResult> Complete(CancellationToken cancellationToken = default)
     {
-        if (this.isComplete)
+        if (this.IsComplete)
         {
             return NetResult.Completed;
         }
 
-        await this.sendTransmission.ProcessSend(ReadOnlyMemory<byte>.Empty, this.DataId, cancellationToken);
+        await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
 
         var result = NetResult.Success;
-        if (this.sendTransmission.SentTcs is { } tcs)
+        if (this.SendTransmission.SentTcs is { } tcs)
         {
             try
             {
-                result = await tcs.Task.WaitAsync(this.sendTransmission.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(this.SendTransmission.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -71,8 +73,8 @@ public class SendStream : ISendStream
             }
         }
 
-        this.sendTransmission.Dispose();
-        this.isComplete = true;
+        this.SendTransmission.Dispose();
+        this.IsComplete = true;
 
         return result;
     }

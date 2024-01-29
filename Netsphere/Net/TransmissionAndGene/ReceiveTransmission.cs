@@ -132,6 +132,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     internal void SetState_ReceivingStream(long maxLength)
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
+        this.totalGene = -1;
 
         var info = NetHelper.CalculateGene(maxLength);
         var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
@@ -231,6 +232,13 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         if (this.maxReceivedPosition >= this.totalGene)
                         {
                             completeFlag = true;
+                        }
+                    }
+                    else if (this.Mode == NetTransmissionMode.Stream)
+                    {
+                        if (toBeShared.Memory.Length == 0)
+                        {
+                            this.totalGene = dataPosition;
                         }
                     }
                 }
@@ -422,7 +430,7 @@ Abort:
         }
     }
 
-    internal async Task<(NetResult Result, int Written)> ProcessReceive(Memory<byte> buffer, CancellationToken cancellationToken)
+    internal async Task<(NetResult Result, int Written)> ProcessReceive(ReceiveStreamBase stream, Memory<byte> buffer, CancellationToken cancellationToken)
     {
         if (buffer.Length < FollowingGeneFrame.MaxGeneLength)
         {
@@ -447,17 +455,25 @@ Abort:
                     return (NetResult.Closed, written);
                 }
 
-                while (chain.Get(this.totalGene) is { } gene)
+                while (chain.Get(stream.CurrentPosition) is { } gene)
                 {
                     if (remaining < FollowingGeneFrame.MaxGeneLength)
                     {
                         return (NetResult.Success, written);
                     }
+                    else if (!gene.IsReceived)
+                    {
+                        if (this.totalGene < 0 ||
+                            stream.CurrentPosition < this.totalGene)
+                        {
+                            break;
+                        }
+                    }
 
                     var length = gene.Packet.Span.Length;
                     if (length > 0)
                     {
-                        if (this.totalGene == 0)
+                        if (stream.CurrentPosition == 0)
                         {// First gene
                             length -= 12;
                             gene.Packet.Span.Slice(12).CopyTo(buffer.Span);
@@ -472,7 +488,7 @@ Abort:
                         remaining -= length;
                     }
 
-                    this.totalGene++;
+                    stream.CurrentPosition++;
                     gene.Dispose();
                     gene.Goshujin = default;
 
@@ -492,7 +508,7 @@ Abort:
                 try
                 {
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-                    delay <<= 1;
+                    delay = Math.Min(delay << 1, NetConstants.MaxReceiveStreamDelayMilliseconds);
                 }
                 catch (TimeoutException)
                 {

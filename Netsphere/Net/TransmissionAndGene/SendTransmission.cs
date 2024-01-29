@@ -13,6 +13,7 @@ public enum NetTransmissionMode
     Rama,
     Block,
     Stream,
+    StreamCompleted,
     Disposed,
 }
 
@@ -65,8 +66,6 @@ internal sealed partial class SendTransmission : IDisposable
     private int sendGeneSerial;
     private int lastLossPosition;
     private long lastLossMics;
-
-    private long streamRemaining;
 
     #endregion
 
@@ -308,7 +307,6 @@ internal sealed partial class SendTransmission : IDisposable
             this.sentTcs = sentTcs;
 
             this.GeneSerialMax = 0;
-            this.streamRemaining = maxLength;
             this.genes = new();
 
             var info = NetHelper.CalculateGene(maxLength);
@@ -320,7 +318,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer, ulong dataId, CancellationToken cancellationToken)
+    internal async Task<NetResult> ProcessSend(SendStreamBase stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
         var addSend = false;
         while (true)
@@ -350,7 +348,7 @@ Loop:
                 try
                 {
                     await Task.Delay(delay, this.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
-                    delay <<= 1;
+                    delay = Math.Min(delay << 1, NetConstants.MaxSendStreamDelayMilliseconds);
                 }
                 catch
                 {
@@ -383,19 +381,19 @@ Loop:
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;
                     if (this.GeneSerialMax == 0)
-                    {
+                    {// First gene
                         size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
-                        this.CreateFirstPacket(1, this.streamRemaining, dataId, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFirstPacket(1, stream.RemainingLength, stream.DataId, buffer.Slice(0, size).Span, out owner);
                     }
                     else
-                    {
-                        if (this.streamRemaining > FollowingGeneFrame.MaxGeneLength)
+                    {// Following gene
+                        if (stream.RemainingLength > FollowingGeneFrame.MaxGeneLength)
                         {
                             size = Math.Min(buffer.Length, FollowingGeneFrame.MaxGeneLength);
                         }
                         else
                         {
-                            size = Math.Min(buffer.Length, (int)this.streamRemaining);
+                            size = Math.Min(buffer.Length, (int)stream.RemainingLength);
                         }
 
                         this.CreateFollowingPacket(this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
@@ -409,11 +407,12 @@ Loop:
 
                     buffer = buffer.Slice(size);
                     this.GeneSerialMax++;
-                    this.streamRemaining -= size;
+                    stream.RemainingLength -= size;
+                    stream.SentLength += size;
                     capacity--;
-                    if (buffer.Length == 0 || this.streamRemaining == 0)
+                    if (buffer.Length == 0 || stream.RemainingLength == 0)
                     {// Complete
-                        this.streamRemaining = 0;
+                        this.Mode = NetTransmissionMode.StreamCompleted;
                         goto Exit;
                     }
                 }
@@ -615,9 +614,9 @@ Exit:
                 {
                     completeFlag = this.genes.GeneSerialListChain.Count == 0;
                 }
-                else
+                else if (this.Mode == NetTransmissionMode.StreamCompleted)
                 {
-                    completeFlag = this.streamRemaining == 0; // this.genes.GeneSerialListChain.StartPosition >= this.GeneSerialMax
+                    completeFlag = this.genes.GeneSerialListChain.StartPosition >= this.GeneSerialMax;
                 }
             }
 

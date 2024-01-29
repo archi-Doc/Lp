@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Block;
@@ -103,12 +104,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await Task.WhenAll(tasks);
                 Console.WriteLine(count);*/
 
-                var (_, stream) = await connection.SendStream(1000);
-                if (stream is not null)
-                {
-                    var result2 = await stream.Send(new byte[123]);
-                    await stream.Complete();
-                }
+                await this.TestStream(connection, 1_000);
+                await this.TestStream(connection, 10_000);
+                await this.TestStream(connection, 100_000);
+                await this.TestStream(connection, 1_000_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
@@ -151,6 +150,21 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 Console.WriteLine(result2?.Length.ToString());
             }
         }*/
+    }
+
+    private async Task TestStream(ClientConnection connection, int size)
+    {
+        var buffer = new byte[size];
+        RandomVault.Pseudo.NextBytes(buffer);
+        var hash = FarmHash.Hash64(buffer);
+
+        var r = await connection.SendStream(size, hash);
+        Debug.Assert(r.Result == NetResult.Success);
+        if (r.Stream is not null)
+        {
+            var result2 = await r.Stream.Send(buffer);
+            await r.Stream.Complete();
+        }
     }
 
     public NetControl NetControl { get; set; }

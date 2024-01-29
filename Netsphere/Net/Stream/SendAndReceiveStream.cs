@@ -1,38 +1,31 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
+using System.Threading;
 
 namespace Netsphere.Net;
 
-public interface ISendAndReceiveStream
+internal class SendAndReceiveStream : SendStreamBase
 {
-    Task<NetResultValue<ReceiveStream>> CompleteAndReceive();
-}
-
-internal class SendAndReceiveStream : ISendAndReceiveStream
-{
-    public SendAndReceiveStream(SendTransmission sendTransmission)
+    internal SendAndReceiveStream(SendTransmission sendTransmission, long maxLength, ulong dataId)
+        : base(sendTransmission, maxLength, dataId)
     {
-        this.sendTransmission = sendTransmission;
     }
 
-    private bool complete;
-    private SendTransmission sendTransmission;
-
-    public async Task<NetResultValue<ReceiveStream>> CompleteAndReceive()
+    public async Task<NetResultValue<ReceiveStream>> CompleteAndReceive(CancellationToken cancellationToken = default)
     {
-        if (this.complete)
+        if (this.IsComplete)
         {
-            return new(NetResult.Closed);
+            return new(NetResult.Completed);
         }
 
-        var connection = this.sendTransmission.Connection;
-        var transmissionId = this.sendTransmission.TransmissionId;
+        await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
 
-        this.sendTransmission.Dispose();
-        this.complete = true;
+        this.SendTransmission.Dispose();
+        this.IsComplete = true;
 
         NetResponse response;
+        var connection = this.SendTransmission.Connection;
+        var transmissionId = this.SendTransmission.TransmissionId;
         var timeout = connection.NetBase.DefaultSendTimeout;
         var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         using (var receiveTransmission = connection.TryCreateReceiveTransmission(transmissionId, tcs))
@@ -44,7 +37,7 @@ internal class SendAndReceiveStream : ISendAndReceiveStream
 
             try
             {
-                response = await tcs.Task.WaitAsync(timeout, connection.CancellationToken).ConfigureAwait(false);
+                response = await tcs.Task.WaitAsync(timeout, connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
                 if (response.IsFailure)
                 {
                     return new(response.Result);
