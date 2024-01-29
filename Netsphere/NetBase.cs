@@ -34,8 +34,6 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
 
-    public int DefaultSendBufferSize { get; set; } = NetConstants.DefaultSendBufferSize;
-
     public NodePublicKey NodePublicKey { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;

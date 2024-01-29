@@ -19,11 +19,8 @@ public class ReceiveStream
     #endregion
 
     public void Abort()
-    {
-    }
+        => this.receiveTransmission.ProcessAbort();
 
-    public async Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer)
-    {
-        return default;
-    }
+    public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        => this.receiveTransmission.ProcessReceive(buffer, cancellationToken);
 }

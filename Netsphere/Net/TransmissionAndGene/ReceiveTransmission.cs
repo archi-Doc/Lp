@@ -429,4 +429,30 @@ Abort:
         dataId = 0;
         toBeMoved = default;
     }
+
+    internal void ProcessAbort()
+    {
+        if (this.Mode != NetTransmissionMode.Disposed)
+        {
+            this.Dispose();
+        }
+    }
+
+    internal async Task<(NetResult Result, int Written)> ProcessReceive(Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        int written = 0;
+        while (true)
+        {
+            if (this.Mode != NetTransmissionMode.Stream)
+            {
+                return (NetResult.Closed, written);
+            }
+
+            var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
+            lock (this.syncObject)
+            {
+
+            }
+        }
+    }
 }

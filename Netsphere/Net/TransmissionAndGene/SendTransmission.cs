@@ -320,12 +320,12 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer, ulong dataId)
+    internal async Task<NetResult> ProcessSend(ReadOnlyMemory<byte> buffer, ulong dataId, CancellationToken cancellationToken)
     {
         var addSend = false;
         while (true)
         {
-            var delay = NetConstants.DefaultSendStreamDelayMilliseconds;
+            var delay = NetConstants.InitialSendStreamDelayMilliseconds;
 
 Loop:
             if (this.Connection.IsClosedOrDisposed)
@@ -349,7 +349,7 @@ Loop:
 
                 try
                 {
-                    await Task.Delay(delay, this.Connection.CancellationToken).ConfigureAwait(false);
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     delay <<= 1;
                 }
                 catch

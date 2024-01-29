@@ -25,5 +25,5 @@ public record ServerOptions
     /// <summary>
     /// Gets the size of stream buffer.
     /// </summary>
-    public int StreamBufferSize { get; init; } = 8 * 1024 * 1024; // 8MB
+    public int StreamBufferSize { get; init; } = 1 * 1024 * 1024; //tempcode // 8MB
 }

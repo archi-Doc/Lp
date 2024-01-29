@@ -29,24 +29,37 @@ public class SendStream : ISendStream
 
     #endregion
 
-    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer)
-        => buffer.Length == 0 ? Task.FromResult(NetResult.Success) : this.sendTransmission.ProcessSend(buffer, this.DataId);
+    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        if (this.isComplete)
+        {
+            return Task.FromResult(NetResult.Completed);
+        }
+        else if (buffer.Length == 0)
+        {
+            return Task.FromResult(NetResult.Success);
+        }
+        else
+        {
+            return this.sendTransmission.ProcessSend(buffer, this.DataId, cancellationToken);
+        }
+    }
 
-    public async Task<NetResult> Complete()
+    public async Task<NetResult> Complete(CancellationToken cancellationToken = default)
     {
         if (this.isComplete)
         {
             return NetResult.Completed;
         }
 
-        await this.sendTransmission.ProcessSend(ReadOnlyMemory<byte>.Empty, this.DataId);
+        await this.sendTransmission.ProcessSend(ReadOnlyMemory<byte>.Empty, this.DataId, cancellationToken);
 
         var result = NetResult.Success;
         if (this.sendTransmission.SentTcs is { } tcs)
         {
             try
             {
-                result = await tcs.Task.WaitAsync(this.sendTransmission.Connection.CancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
