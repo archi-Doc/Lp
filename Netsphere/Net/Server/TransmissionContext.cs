@@ -60,7 +60,7 @@ public sealed class TransmissionContext
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
+    public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
     {
         if (this.Connection.IsClosedOrDisposed)
         {
@@ -72,7 +72,7 @@ public sealed class TransmissionContext
             return default;
         }
 
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!BlockService.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }

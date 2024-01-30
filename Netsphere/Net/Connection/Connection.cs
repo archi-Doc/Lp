@@ -740,9 +740,9 @@ Wait:
         {// Invoke stream
             if (this is ServerConnection serverConnection)
             {
-                var receiveStream = new ReceiveStream(transmission, dataId);
+                var streamContext = new StreamContext(transmission, dataId);
                 var connectionContext = serverConnection.ConnectionContext;
-                Task.Run(() => connectionContext.InvokeStream(receiveStream));
+                Task.Run(() => connectionContext.InvokeStream(streamContext));
             }
         }
     }

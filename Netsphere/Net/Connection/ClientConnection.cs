@@ -50,9 +50,9 @@ public sealed partial class ClientConnection : Connection
         return StaticNetService.CreateClient<TService>(this);
     }
 
-    public async Task<NetResult> Send<TSend>(TSend packet)
+    public async Task<NetResult> Send<TSend>(TSend data)
     {
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!BlockService.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }
@@ -94,7 +94,7 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend packet, ulong dataId = 0)
+    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend data, ulong dataId = 0)
     {
         if (this.IsClosedOrDisposed)
         {
@@ -108,7 +108,7 @@ public sealed partial class ClientConnection : Connection
 
         dataId = dataId != 0 ? dataId : BlockService.GetId<TSend, TReceive>();
 
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!BlockService.TrySerialize(data, out var owner))
         {
             return new(NetResult.SerializationError);
         }

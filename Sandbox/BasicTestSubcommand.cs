@@ -18,7 +18,7 @@ public class CustomConnectionContext : ConnectionContext
     {
     }
 
-    public override async Task InvokeStream(ReceiveStream receiveStream)
+    public override async Task InvokeStream(StreamContext streamContext)
     {
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -27,7 +27,7 @@ public class CustomConnectionContext : ConnectionContext
 
         while (true)
         {
-            var r = await receiveStream.Receive(buffer);
+            var r = await streamContext.Receive(buffer);
             if (r.Result == NetResult.Success ||
                 r.Result == NetResult.Completed)
             {
@@ -42,9 +42,9 @@ public class CustomConnectionContext : ConnectionContext
             if (r.Result == NetResult.Completed)
             {
                 var h = BitConverter.ToUInt64(hash.HashFinal());
-                Debug.Assert(h == receiveStream.DataId);
+                Debug.Assert(h == streamContext.DataId);
 
-                receiveStream.SendAndForget(h);
+                streamContext.SendAndForget(h);
                 break;
             }
         }
@@ -98,7 +98,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 4_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        // netTerminal.SetDeliveryFailureRatio(0.2);
+        // netTerminal.SetDeliveryFailureRatio(0.03);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
@@ -145,9 +145,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await Task.WhenAll(tasks);
                 Console.WriteLine(count);*/
 
-                // await this.TestStream2(connection, 1_000);
-                // await this.TestStream2(connection, 10_000);
-                // await this.TestStream2(connection, 100_000);
+                /*await this.TestStream2(connection, 1_000);
+                await this.TestStream2(connection, 10_000);
+                await this.TestStream2(connection, 100_000);
+                await this.TestStream2(connection, 1_000_000);*/
                 await this.TestStream2(connection, 1_000_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))

@@ -11,7 +11,7 @@ internal class SendAndReceiveStream : SendStreamBase
     {
     }
 
-    public async Task<NetResultValue<ReceiveStream>> CompleteAndReceive(CancellationToken cancellationToken = default)
+    public async Task<NetResultValue<StreamContext>> CompleteAndReceive(CancellationToken cancellationToken = default)
     {
         if (this.IsComplete)
         {

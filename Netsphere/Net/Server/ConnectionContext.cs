@@ -12,7 +12,7 @@ public class ExampleConnectionContext : ConnectionContext
     {
     }
 
-    public override async Task InvokeStream(ReceiveStream receiveStream)
+    public override async Task InvokeStream(StreamContext streamContext)
     {
         return;
     }
@@ -80,7 +80,7 @@ public class ConnectionContext
 
     #endregion
 
-    public virtual Task InvokeStream(ReceiveStream receiveStream)
+    public virtual Task InvokeStream(StreamContext streamContext)
         => Task.CompletedTask;
 
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)

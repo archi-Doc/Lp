@@ -6,15 +6,24 @@ namespace Netsphere.Net;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public abstract class ReceiveStreamBase
+public sealed class StreamContext
 {
-    internal ReceiveStreamBase(ReceiveTransmission receiveTransmission, ulong dataId)
+    public enum State
+    {
+        Receiving,
+        Received,
+        Sent,
+    }
+
+    internal StreamContext(ReceiveTransmission receiveTransmission, ulong dataId)
     {
         this.ReceiveTransmission = receiveTransmission;
         this.DataId = dataId;
     }
 
     #region FieldAndProperty
+
+    public State CurrentState { get; internal set; }
 
     internal ReceiveTransmission ReceiveTransmission { get; }
 
@@ -28,22 +37,18 @@ public abstract class ReceiveStreamBase
 
     public void Abort()
         => this.ReceiveTransmission.ProcessAbort();
-}
-
-public class ReceiveStream : ReceiveStreamBase
-{
-    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId)
-        : base(receiveTransmission, dataId)
-    {
-    }
 
     public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
         => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
 
-    public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
+    public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
     {
         var connection = this.ReceiveTransmission.Connection;
         if (connection.IsClosedOrDisposed)
+        {
+            return NetResult.Closed;
+        }
+        else if (this.CurrentState != State.Received)
         {
             return NetResult.Closed;
         }
@@ -53,7 +58,7 @@ public class ReceiveStream : ReceiveStreamBase
             return default;
         }
 
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!BlockService.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }
@@ -65,6 +70,7 @@ public class ReceiveStream : ReceiveStreamBase
             return NetResult.NoTransmission;
         }
 
+        this.CurrentState = State.Sent;
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.

@@ -430,11 +430,15 @@ Abort:
         }
     }
 
-    internal async Task<(NetResult Result, int Written)> ProcessReceive(ReceiveStreamBase stream, Memory<byte> buffer, CancellationToken cancellationToken)
+    internal async Task<(NetResult Result, int Written)> ProcessReceive(StreamContext stream, Memory<byte> buffer, CancellationToken cancellationToken)
     {
         if (buffer.Length < FollowingGeneFrame.MaxGeneLength)
         {
             throw new ArgumentException(nameof(buffer));
+        }
+        else if (stream.CurrentState != StreamContext.State.Receiving)
+        {
+            return (NetResult.Completed, 0);
         }
 
         int remaining = buffer.Length;
@@ -524,6 +528,7 @@ Abort:
         }
 
 Complete:
+        stream.CurrentState = StreamContext.State.Received;
         this.Connection.RemoveTransmission(this);
         return (NetResult.Completed, written);
     }
