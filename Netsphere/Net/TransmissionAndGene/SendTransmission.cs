@@ -286,8 +286,6 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTcs)
     {
-        // var info = NetHelper.CalculateGene(maxLength);
-
         lock (this.syncObject)
         {
             if (this.Connection.IsClosedOrDisposed ||
@@ -295,11 +293,6 @@ internal sealed partial class SendTransmission : IDisposable
             {
                 return NetResult.Closed;
             }
-
-            /*if (info.NumberOfGenes > this.Connection.Agreement.MaxStreamGenes)
-            {
-                return NetResult.StreamLengthLimit;
-            }*/
 
             this.Connection.UpdateLatestAckMics();
             this.Mode = NetTransmissionMode.Stream;

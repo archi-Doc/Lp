@@ -486,6 +486,7 @@ Abort:
                         buffer = buffer.Slice(length);
                         written += length;
                         remaining -= length;
+                        stream.ReceivedLength += length;
                     }
 
                     stream.CurrentPosition++;
@@ -494,7 +495,8 @@ Abort:
 
                     if (length == 0)
                     {// Complete
-                        return (NetResult.Completed, written);
+                        this.DisposeInternal();
+                        goto Complete;
                     }
                 }
 
@@ -520,5 +522,9 @@ Abort:
                 }
             }
         }
+
+Complete:
+        this.Connection.RemoveTransmission(this);
+        return (NetResult.Completed, written);
     }
 }

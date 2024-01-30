@@ -1,72 +1,71 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Threading;
 using Netsphere.Block;
 
 namespace Netsphere.Net;
 
-public interface ISendStream<TReceive>
+public class SendStreamAndReceive<TReceive> : SendStreamBase
 {
-    Task<NetResultValue<TReceive>> CompleteAndReceive();
-}
-
-internal class SendStreamAndReceive<TReceive> : ISendStream<TReceive>
-{
-    public SendStreamAndReceive(SendTransmission sendTransmission)
+    internal SendStreamAndReceive(SendTransmission sendTransmission, long maxLength, ulong dataId)
+        : base(sendTransmission, maxLength, dataId)
     {
-        this.sendTransmission = sendTransmission;
     }
 
-    private bool complete;
-    private SendTransmission sendTransmission;
-
-    public async Task<NetResultValue<TReceive>> CompleteAndReceive()
+    public async Task<NetResultValue<TReceive>> CompleteAndReceive(CancellationToken cancellationToken = default)
     {
-        if (this.complete)
+        if (this.IsComplete)
         {
-            return new(NetResult.Closed);
+            return new(NetResult.Completed);
         }
 
-        var connection = this.sendTransmission.Connection;
-        var transmissionId = this.sendTransmission.TransmissionId;
+        await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
 
-        this.sendTransmission.Dispose();
-        this.complete = true;
-
-        NetResponse response;
-        var timeout = connection.NetBase.DefaultSendTimeout;
-        var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        using (var receiveTransmission = connection.TryCreateReceiveTransmission(transmissionId, tcs))
+        try
         {
-            if (receiveTransmission is null)
-            {
-                return new(NetResult.NoTransmission);
-            }
+            this.IsComplete = true;
 
-            try
+            NetResponse response;
+            var connection = this.SendTransmission.Connection;
+            var timeout = connection.NetBase.DefaultSendTimeout;
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
             {
-                response = await tcs.Task.WaitAsync(timeout, connection.CancellationToken).ConfigureAwait(false);
-                if (response.IsFailure)
+                if (receiveTransmission is null)
                 {
-                    return new(response.Result);
+                    return new(NetResult.NoTransmission);
+                }
+
+                try
+                {
+                    response = await tcs.Task.WaitAsync(timeout, connection.CancellationToken).ConfigureAwait(false);
+                    if (response.IsFailure)
+                    {
+                        return new(response.Result);
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    return new(NetResult.Timeout);
+                }
+                catch
+                {
+                    return new(NetResult.Canceled);
                 }
             }
-            catch (TimeoutException)
-            {
-                return new(NetResult.Timeout);
-            }
-            catch
-            {
-                return new(NetResult.Canceled);
-            }
-        }
 
-        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
-        {
+            if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+            {
+                response.Return();
+                return new(NetResult.DeserializationError);
+            }
+
             response.Return();
-            return new(NetResult.DeserializationError);
+            return new(NetResult.Success, receive);
         }
-
-        response.Return();
-        return new(NetResult.Success, receive);
+        finally
+        {
+            this.SendTransmission.Dispose();
+        }
     }
 }

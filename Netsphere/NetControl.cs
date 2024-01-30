@@ -69,7 +69,7 @@ public class NetControl : UnitBase, IUnitPreparable
         {
         }
 
-        public async Task RunStandalone(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null)
+        public async Task Run(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null)
         {
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetOptions(options);

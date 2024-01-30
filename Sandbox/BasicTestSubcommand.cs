@@ -1,15 +1,55 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
-using Netsphere.Block;
+using Netsphere.Net;
 using Netsphere.Packet;
+using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace Sandbox;
+
+public class CustomConnectionContext : ConnectionContext
+{
+    public CustomConnectionContext(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+    }
+
+    public override async Task InvokeStream(ReceiveStream receiveStream)
+    {
+        var buffer = new byte[100_000];
+        var hash = new FarmHash();
+        hash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await receiveStream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                var h = BitConverter.ToUInt64(hash.HashFinal());
+                Debug.Assert(h == receiveStream.DataId);
+
+                receiveStream.SendAndForget(h);
+                break;
+            }
+        }
+    }
+}
 
 [SimpleCommand("basic")]
 public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
@@ -105,10 +145,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await Task.WhenAll(tasks);
                 Console.WriteLine(count);*/
 
-                await this.TestStream(connection, 1_000);
-                await this.TestStream(connection, 10_000);
-                await this.TestStream(connection, 100_000);
-                await this.TestStream(connection, 1_000_000);
+                // await this.TestStream2(connection, 1_000);
+                // await this.TestStream2(connection, 10_000);
+                // await this.TestStream2(connection, 100_000);
+                await this.TestStream2(connection, 1_000_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
@@ -165,6 +205,22 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             var result2 = await r.Stream.Send(buffer);
             await r.Stream.Complete();
+        }
+    }
+
+    private async Task TestStream2(ClientConnection connection, int size)
+    {
+        var buffer = new byte[size];
+        RandomVault.Pseudo.NextBytes(buffer);
+        var hash = FarmHash.Hash64(buffer);
+
+        var r = await connection.SendStreamAndReceive<ulong>(size, hash);
+        Debug.Assert(r.Result == NetResult.Success);
+        if (r.Stream is not null)
+        {
+            var r2 = await r.Stream.Send(buffer);
+            var r3 = await r.Stream.CompleteAndReceive();
+            Debug.Assert(r3.Value == hash);
         }
     }
 

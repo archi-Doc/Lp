@@ -95,7 +95,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var options = new NetsphereOptions();
             options.Port = information.RunnerPort;
             options.NodeName = "Runner";
-            await this.RunStandalone(options, true);
+            await this.Run(options, true);
 
             var parserOptions = SimpleParserOptions.Standard with
             {

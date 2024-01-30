@@ -191,7 +191,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
-        await unit.RunStandalone(options, true);
+        await unit.Run(options, true);
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
