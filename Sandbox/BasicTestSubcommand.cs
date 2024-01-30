@@ -75,6 +75,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
         this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
         this.NetControl.NetResponder.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.NetResponder.Register(Netsphere.Responder.TestStreamResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -149,7 +150,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await this.TestStream2(connection, 10_000);
                 await this.TestStream2(connection, 100_000);
                 await this.TestStream2(connection, 1_000_000);*/
-                await this.TestStream2(connection, 1_000_000);
+                // await this.TestStream2(connection, 1_000_000);
+
+                var r = await connection.SendAndReceiveStream(12_345);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {

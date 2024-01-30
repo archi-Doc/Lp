@@ -50,16 +50,21 @@ public sealed partial class ClientConnection : Connection
         return StaticNetService.CreateClient<TService>(this);
     }
 
-    public async Task<NetResult> Send<TSend>(TSend data)
+    public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0)
     {
-        if (!BlockService.TrySerialize(data, out var owner))
+        if (this.IsClosedOrDisposed)
         {
-            return NetResult.SerializationError;
+            return NetResult.Closed;
         }
 
         if (this.CancellationToken.IsCancellationRequested)
         {
-            return default;
+            return NetResult.Canceled;
+        }
+
+        if (!BlockService.TrySerialize(data, out var owner))
+        {
+            return NetResult.SerializationError;
         }
 
         var timeout = this.NetBase.DefaultSendTimeout;
@@ -67,11 +72,13 @@ public sealed partial class ClientConnection : Connection
         {
             if (transmissionAndTimeout.Transmission is null)
             {
+                owner.Return();
                 return NetResult.NoTransmission;
             }
 
             var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var result = transmissionAndTimeout.Transmission.SendBlock(0, 0, owner, tcs);
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, tcs);
+            owner.Return();
             if (result != NetResult.Success)
             {
                 return result;
@@ -228,19 +235,19 @@ public sealed partial class ClientConnection : Connection
     {
         if (this.CancellationToken.IsCancellationRequested)
         {
-            return new(NetResult.Canceled, default);
+            return (NetResult.Canceled, default);
         }
 
         if (this.Agreement.MaxStreamLength < maxLength)
         {
-            return new(NetResult.StreamLengthLimit, default);
+            return (NetResult.StreamLengthLimit, default);
         }
 
         var timeout = this.NetBase.DefaultSendTimeout;
         var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
         if (transmissionAndTimeout.Transmission is null)
         {
-            return new(NetResult.NoTransmission, default);
+            return (NetResult.NoTransmission, default);
         }
 
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -248,10 +255,10 @@ public sealed partial class ClientConnection : Connection
         if (result != NetResult.Success)
         {
             transmissionAndTimeout.Transmission.Dispose();
-            return new(result, default);
+            return (result, default);
         }
 
-        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
+        return (NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
     }
 
     public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
@@ -283,17 +290,21 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, new SendStreamAndReceive<TReceive>(transmissionAndTimeout.Transmission, maxLength, dataId));
     }
 
-    /*public async Task<ReceiveStreamResult> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
-        where TSend : ITinyhandSerialize<TSend>
+    public async Task<(NetResult Result, ReceiveStream? Stream)> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
     {
+        if (this.IsClosedOrDisposed)
+        {
+            return (NetResult.Closed, default);
+        }
+
         if (this.CancellationToken.IsCancellationRequested)
         {
-            return new(NetResult.Canceled);
+            return (NetResult.Canceled, default);
         }
 
         if (!BlockService.TrySerialize(packet, out var owner))
         {
-            return new(NetResult.SerializationError);
+            return (NetResult.SerializationError, default);
         }
 
         var timeout = this.NetBase.DefaultSendTimeout;
@@ -302,49 +313,32 @@ public sealed partial class ClientConnection : Connection
             if (transmissionAndTimeout.Transmission is null)
             {
                 owner.Return();
-                return new(NetResult.NoTransmission);
+                return (NetResult.NoTransmission, default);
             }
 
-            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, default);
+            var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, tcs);
             owner.Return();
             if (result != NetResult.Success)
             {
-                // stream.Dispose();
-                return new(result);
+                return (result, default);
             }
 
-            var stream = new ReceiveStream();
-
-            return new(NetResult.Success, stream);
-        }
-    }*/
-
-    /*public async Task<NetStream?> CreateStream(long size)
-    {
-        if (this.CancellationToken.IsCancellationRequested)
-        {
-            return default;
-        }
-        else if (this.Agreement.MaxStreamSize < size)
-        {
-            return default;
+            try
+            {
+                result = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                return (NetResult.Timeout, default);
+            }
+            catch
+            {
+                return (NetResult.Canceled, default);
+            }
         }
 
-        var timeout = this.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
-        if (transmissionAndTimeout.Transmission is null)
-        {
-            return default;
-        }
-
-        var result = transmissionAndTimeout.Transmission.SendStream(0, 0, size, false);
-        if (result != NetResult.Success)
-        {
-            transmissionAndTimeout.Dispose();
-            return default;
-        }
-
-        return default;
-        // return transmission;
-    }*/
+        var stream = new ReceiveStream();
+        return new(NetResult.Success, stream);
+    }
 }

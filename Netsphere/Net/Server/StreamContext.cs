@@ -9,7 +9,7 @@ namespace Netsphere.Net;
 public sealed class StreamContext
 {
     public enum State
-    {
+    {// Server: Receiving->Received->(Sent), Client: Receiving->Received
         Receiving,
         Received,
         Sent,

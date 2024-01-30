@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Netsphere.Net;
 
-internal class SendAndReceiveStream : SendStreamBase
+/*internal class SendAndReceiveStream : SendStreamBase
 {
     internal SendAndReceiveStream(SendTransmission sendTransmission, long maxLength, ulong dataId)
         : base(sendTransmission, maxLength, dataId)
@@ -56,4 +56,4 @@ internal class SendAndReceiveStream : SendStreamBase
         response.Return();
         return new(NetResult.Success);
     }
-}
+}*/

@@ -41,7 +41,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
-                context.AddSingleton<NetResponder>();
+                context.AddSingleton<ResponderControl>();
                 context.AddSingleton<NetTerminal>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -85,7 +85,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetResponder netResponder, NetTerminal netTerminal)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, ResponderControl netResponder, NetTerminal netTerminal)
         : base(context)
     {
         this.unitLogger = unitLogger;
@@ -109,7 +109,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetStats NetStats { get; }
 
-    public NetResponder NetResponder { get; }
+    public ResponderControl NetResponder { get; }
 
     public NetTerminal NetTerminal { get; }
 
