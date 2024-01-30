@@ -54,6 +54,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
         this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 4_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
@@ -64,7 +65,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             {
                 var success = 0;
 
-                for (var i = 0; i < 20; i++)
+                /*for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
@@ -72,7 +73,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     {
                         success++;
                     }
-                }
+                }*/
 
                 /*for (var i = 0; i < 20_000; i += 1_000)
                 {
@@ -104,10 +105,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await Task.WhenAll(tasks);
                 Console.WriteLine(count);*/
 
-                /*await this.TestStream(connection, 1_000);
+                await this.TestStream(connection, 1_000);
                 await this.TestStream(connection, 10_000);
                 await this.TestStream(connection, 100_000);
-                await this.TestStream(connection, 1_000_000);*/
+                await this.TestStream(connection, 1_000_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {

@@ -218,9 +218,14 @@ public sealed partial class PacketTerminal
 
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
-        {// Packet types (0-127)
+        {// Packet types (0-127), Client -> Server
             if (packetType == PacketType.Connect)
             {// PacketConnect
+                if (!this.netBase.EnableServer)
+                {
+                    return;
+                }
+
                 if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
                 {
                     Task.Run(() =>
@@ -257,7 +262,7 @@ public sealed partial class PacketTerminal
             }
         }
         else if (packetUInt16 < 255)
-        {// Packet response types (128-255)
+        {// Packet response types (128-255), Server -> Client (Response)
             Item? item;
             lock (this.items.SyncObject)
             {
