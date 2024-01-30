@@ -1,13 +1,35 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Block;
-using Netsphere.Packet;
+using Netsphere.Net;
+using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace Sandbox;
+
+public class CustomConnectionContext : ConnectionContext
+{
+    public CustomConnectionContext(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+    }
+
+    public override async Task InvokeStream(ReceiveStream receiveStream)
+    {
+        var buffer = new byte[1_000_000];
+        var r = await receiveStream.Receive(buffer);
+        if (r.Result == NetResult.Completed)
+        {
+            var b = buffer.AsMemory(0, r.Written);
+            var hash = FarmHash.Hash64(b.Span);
+            Debug.Assert(hash == receiveStream.DataId);
+        }
+    }
+}
 
 [SimpleCommand("block")]
 public class BlockTestSubcommand : ISimpleCommandAsync

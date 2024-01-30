@@ -61,9 +61,9 @@ public abstract class Connection : IDisposable
 
     public NetBase NetBase { get; }
 
-    public ConnectionTerminal ConnectionTerminal { get; }
+    internal ConnectionTerminal ConnectionTerminal { get; }
 
-    public PacketTerminal PacketTerminal { get; }
+    internal PacketTerminal PacketTerminal { get; }
 
     public ulong ConnectionId { get; }
 

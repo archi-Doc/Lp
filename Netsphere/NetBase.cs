@@ -12,6 +12,9 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         this.UnitLogger = logger;
         this.ServerOptions = new();
+
+        this.NewConnectionContext = connection => new ConnectionContext(connection);
+        this.NodeName = System.Environment.OSVersion.ToString();
     }
 
     #region FieldAndProperty
@@ -24,9 +27,11 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public NetsphereOptions NetsphereOptions { get; private set; } = default!;
 
+    public Func<ServerConnection, ConnectionContext> NewConnectionContext { get; set; }
+
     public bool EnableServer { get; private set; }
 
-    public string NodeName { get; private set; } = default!;
+    public string NodeName { get; set; } = default!;
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
@@ -76,15 +81,9 @@ public class NetBase : UnitBase, IUnitPreparable
         }
     }
 
-    public void SetParameter(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
+    public void SetParameter(bool enableServer, NetsphereOptions netsphereOptions)
     {
         this.EnableServer = enableServer;
-        this.NodeName = nodeName;
-        if (string.IsNullOrEmpty(this.NodeName))
-        {
-            this.NodeName = System.Environment.OSVersion.ToString();
-        }
-
         this.NetsphereOptions = netsphereOptions;
     }
 

@@ -1,16 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Net;
 
 namespace Netsphere.Server;
 
-public class CustomConnectionContext : ConnectionContext
+public class ExampleConnectionContext : ConnectionContext
 {
-    public CustomConnectionContext(ServerConnection serverConnection)
+    public ExampleConnectionContext(ServerConnection serverConnection)
         : base(serverConnection)
     {
+    }
+
+    public override async Task InvokeStream(ReceiveStream receiveStream)
+    {
+        return;
     }
 }
 
@@ -76,17 +80,8 @@ public class ConnectionContext
 
     #endregion
 
-    public async Task InvokeStream(ReceiveStream receiveStream)
-    {
-        var buffer = new byte[1_000_000];
-        var r = await receiveStream.Receive(buffer);
-        if (r.Result == NetResult.Completed)
-        {
-            var b = buffer.AsMemory(0, r.Written);
-            var hash = FarmHash.Hash64(b.Span);
-            Debug.Assert(hash == receiveStream.DataId);
-        }
-    }
+    public virtual Task InvokeStream(ReceiveStream receiveStream)
+        => Task.CompletedTask;
 
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {

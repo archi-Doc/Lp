@@ -64,7 +64,9 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public class Unit : BuiltUnit
     {
-        public record Param(bool EnableServer, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
+        public record Param(bool EnableServer, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null);
+
+        public static Param DefaultParam { get; } = new(true, "Test", new(), false);
 
         public Unit(UnitContext context)
             : base(context)
@@ -74,8 +76,13 @@ public class NetControl : UnitBase, IUnitPreparable
         public async Task RunStandalone(Param param)
         {
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            netBase.SetParameter(param.EnableServer, param.NodeName, param.Options);
+            netBase.SetParameter(param.EnableServer, param.Options);
+            netBase.NodeName = param.NodeName;
             netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
+            if (param.newConnectionContext is not null)
+            {
+                netBase.NewConnectionContext = param.newConnectionContext;
+            }
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             if (param.EnableServer)

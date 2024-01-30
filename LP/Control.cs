@@ -163,7 +163,8 @@ public class Control : ILogInformation
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
-                netBase.SetParameter(true, options.NodeName, options.NetsphereOptions);
+                netBase.SetParameter(true, options.NetsphereOptions);
+                netBase.NodeName = options.NodeName;
                 netBase.AllowUnsafeConnection = true; // betacode
             });
 
