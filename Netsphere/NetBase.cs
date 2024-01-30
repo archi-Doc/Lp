@@ -13,8 +13,9 @@ public class NetBase : UnitBase, IUnitPreparable
         this.UnitLogger = logger;
         this.ServerOptions = new();
 
+        this.NetsphereOptions = new();
+        this.NetsphereOptions.NodeName = System.Environment.OSVersion.ToString();
         this.NewConnectionContext = connection => new ConnectionContext(connection);
-        this.NodeName = System.Environment.OSVersion.ToString();
     }
 
     #region FieldAndProperty
@@ -25,13 +26,9 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public CancellationToken CancellationToken => this.Core.CancellationToken;
 
-    public NetsphereOptions NetsphereOptions { get; private set; } = default!;
+    public NetsphereOptions NetsphereOptions { get; private set; }
 
     public Func<ServerConnection, ConnectionContext> NewConnectionContext { get; set; }
-
-    public bool EnableServer { get; private set; }
-
-    public string NodeName { get; set; } = default!;
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
@@ -81,9 +78,8 @@ public class NetBase : UnitBase, IUnitPreparable
         }
     }
 
-    public void SetParameter(bool enableServer, NetsphereOptions netsphereOptions)
+    public void SetOptions(NetsphereOptions netsphereOptions)
     {
-        this.EnableServer = enableServer;
         this.NetsphereOptions = netsphereOptions;
     }
 
@@ -108,5 +104,5 @@ public class NetBase : UnitBase, IUnitPreparable
         return TinyhandSerializer.Serialize(this.NodePrivateKey);
     }
 
-    public override string ToString() => $"NetBase: {this.NodeName}";
+    public override string ToString() => $"NetBase: {this.NetsphereOptions.NodeName}";
 }

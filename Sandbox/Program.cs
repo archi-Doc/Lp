@@ -71,15 +71,16 @@ public class Program
             })
             .SetupOptions<NetsphereOptions>((context, options) =>
             {// NetsphereOptions
+                options.NodeName = "test";
                 options.EnableEssential = true;
+                options.EnableServer = true;
                 options.EnableAlternative = true;
             });
 
         var unit = builder.Build();
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
-        var param = new NetControl.Unit.Param(true, "test", options, true);
-        await unit.RunStandalone(param);
+        await unit.RunStandalone(options, true);
 
         var parserOptions = SimpleParserOptions.Standard with
         {

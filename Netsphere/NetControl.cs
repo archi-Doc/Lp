@@ -64,32 +64,22 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public class Unit : BuiltUnit
     {
-        public record Param(bool EnableServer, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null);
-
-        public static Param DefaultParam { get; } = new(true, "Test", new(), false);
-
         public Unit(UnitContext context)
             : base(context)
         {
         }
 
-        public async Task RunStandalone(Param param)
+        public async Task RunStandalone(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null)
         {
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            netBase.SetParameter(param.EnableServer, param.Options);
-            netBase.NodeName = param.NodeName;
-            netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
-            if (param.newConnectionContext is not null)
+            netBase.SetOptions(options);
+            netBase.AllowUnsafeConnection = allowUnsafeConnection;
+            if (newConnectionContext is not null)
             {
-                netBase.NewConnectionContext = param.newConnectionContext;
+                netBase.NewConnectionContext = newConnectionContext;
             }
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
-            if (param.EnableServer)
-            {
-                // netControl.SetupServer(param.NewServerContext, param.NewCallContext);
-            }
-
             this.Context.SendPrepare(new());
             await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }

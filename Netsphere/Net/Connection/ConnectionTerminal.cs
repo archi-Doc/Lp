@@ -360,11 +360,6 @@ public class ConnectionTerminal
 
         if (packetUInt16 < 384)
         {// Client -> Server
-            if (!this.NetBase.EnableServer)
-            {
-                return;
-            }
-
             ServerConnection? connection = default;
             lock (this.serverConnections.SyncObject)
             {

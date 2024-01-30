@@ -92,10 +92,10 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetNodeKey(information.NodeKey);
 
-            var netsphereOptions = new NetsphereOptions();
-            netsphereOptions.Port = information.RunnerPort;
-            var param = new NetControl.Unit.Param(true, "runner", netsphereOptions, true);
-            await this.RunStandalone(param);
+            var options = new NetsphereOptions();
+            options.Port = information.RunnerPort;
+            options.NodeName = "Runner";
+            await this.RunStandalone(options, true);
 
             var parserOptions = SimpleParserOptions.Standard with
             {
