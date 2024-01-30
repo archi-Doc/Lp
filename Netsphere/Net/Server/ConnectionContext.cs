@@ -6,6 +6,14 @@ using Netsphere.Net;
 
 namespace Netsphere.Server;
 
+public class CustomConnectionContext : ConnectionContext
+{
+    public CustomConnectionContext(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+    }
+}
+
 public class ConnectionContext
 {
     public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
@@ -48,9 +56,9 @@ public class ConnectionContext
         public ServiceDelegate Invoke { get; }
     }
 
-    public ConnectionContext(IServiceProvider? serviceProvider, ServerConnection serverConnection)
+    public ConnectionContext(ServerConnection serverConnection)
     {
-        this.ServiceProvider = serviceProvider;
+        this.ServiceProvider = default; // serviceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
     }
@@ -63,18 +71,29 @@ public class ConnectionContext
 
     public ServerConnection ServerConnection { get; }
 
-    private object syncObject = new();
-    private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
-    private Dictionary<uint, object> idToInstance = new();
+    private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
+    private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
 
     #endregion
 
-    public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    public async Task InvokeStream(ReceiveStream receiveStream)
     {
-        return false;
+        var buffer = new byte[1_000_000];
+        var r = await receiveStream.Receive(buffer);
+        if (r.Result == NetResult.Completed)
+        {
+            var b = buffer.AsMemory(0, r.Written);
+            var hash = FarmHash.Hash64(b.Span);
+            Debug.Assert(hash == receiveStream.DataId);
+        }
     }
 
-    public void InvokeSync(TransmissionContext transmissionContext)
+    /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    {
+        return false;
+    }*/
+
+    internal void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
@@ -94,16 +113,16 @@ public class ConnectionContext
             return;
         }
 
-        if (!this.InvokeCustom(transmissionContext))
+        /*if (!this.InvokeCustom(transmissionContext))
         {
             transmissionContext.Return();
-        }
+        }*/
     }
 
-    public async Task InvokeRPC(TransmissionContext transmissionContext)
+    internal async Task InvokeRPC(TransmissionContext transmissionContext)
     {// Thread-safe
         ServiceMethod? serviceMethod;
-        lock (this.syncObject)
+        lock (this.idToServiceMethod)
         {
             if (!this.idToServiceMethod.TryGetValue(transmissionContext.DataId, out serviceMethod))
             {
@@ -179,17 +198,5 @@ SendNoNetService:
         transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
         transmissionContext.Return();
         return;
-    }
-
-    public async Task InvokeStream(ReceiveStream receiveStream)
-    {
-        var buffer = new byte[1_000_000];
-        var r = await receiveStream.Receive(buffer);
-        if (r.Result == NetResult.Completed)
-        {
-            var b = buffer.AsMemory(0, r.Written);
-            var hash = FarmHash.Hash64(b.Span);
-            Debug.Assert(hash == receiveStream.DataId);
-        }
     }
 }
