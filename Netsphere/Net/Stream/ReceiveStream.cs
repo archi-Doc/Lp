@@ -4,7 +4,7 @@ namespace Netsphere.Net;
 
 public class ReceiveStream
 {
-    internal ReceiveStream(ReceiveTransmission receiveTransmission)
+    internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId)
     {
     }
 

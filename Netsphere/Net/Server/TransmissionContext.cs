@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Block;
+using Netsphere.Net;
 
 #pragma warning disable SA1401
 
@@ -87,5 +88,35 @@ public sealed class TransmissionContext
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
+    }
+
+    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    {
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return (NetResult.Canceled, default);
+        }
+
+        if (this.Connection.Agreement.MaxStreamLength < maxLength)
+        {
+            return (NetResult.StreamLengthLimit, default);
+        }
+
+        var timeout = this.Connection.NetBase.DefaultSendTimeout;
+        var transmissionAndTimeout = await this.ConnectionTryCreateSendTransmission(timeout).ConfigureAwait(false);
+        if (transmissionAndTimeout.Transmission is null)
+        {
+            return (NetResult.NoTransmission, default);
+        }
+
+        var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, tcs);
+        if (result != NetResult.Success)
+        {
+            transmissionAndTimeout.Transmission.Dispose();
+            return (result, default);
+        }
+
+        return (NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
     }
 }

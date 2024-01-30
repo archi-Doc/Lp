@@ -314,6 +314,21 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
+    internal void StartStream(ulong dataId)
+    {
+        TaskCompletionSource<NetResponse>? receivedTcs;
+        lock (this.syncObject)
+        {
+            receivedTcs = this.receivedTcs;
+            this.receivedTcs = default;
+        }
+
+        if (receivedTcs is not null)
+        {
+            receivedTcs.SetResult(new(NetResult.Success, dataId, default, 0));
+        }
+    }
+
     internal void ProcessReceive_GeneComplete(out uint dataKind, out ulong dataId, out ByteArrayPool.MemoryOwner toBeMoved)
     {// lock (this.syncObject)
         if (this.genes is null)

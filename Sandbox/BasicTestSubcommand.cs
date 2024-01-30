@@ -6,6 +6,7 @@ using Arc.Unit;
 using Netsphere;
 using Netsphere.Net;
 using Netsphere.Packet;
+using Netsphere.Responder;
 using Netsphere.Server;
 using SimpleCommandLine;
 
@@ -152,7 +153,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await this.TestStream2(connection, 1_000_000);*/
                 // await this.TestStream2(connection, 1_000_000);
 
-                var r = await connection.SendAndReceiveStream(12_345);
+                var r = await connection.SendAndReceiveStream(12_345, TestStreamResponder.Instance.DataId);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {

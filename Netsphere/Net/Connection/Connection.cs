@@ -688,7 +688,27 @@ Wait:
                     return;
                 }
 
-                transmission.SetState_Receiving(totalGenes);
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+                {// Block mode
+                    transmission.SetState_Receiving(totalGenes);
+                }
+                else if (transmissionMode == 1)
+                {// Stream mode
+                    maxStreamLength = BitConverter.ToInt64(span);
+                    span = span.Slice(sizeof(int) + sizeof(uint)); // 8
+                    dataId = BitConverter.ToUInt64(span);
+
+                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    {
+                        return;
+                    }
+
+                    transmission.SetState_ReceivingStream(maxStreamLength);
+                }
+                else
+                {
+                    return;
+                }
             }
             else
             {// Server side
@@ -743,6 +763,10 @@ Wait:
                 var streamContext = new StreamContext(transmission, dataId);
                 var connectionContext = serverConnection.ConnectionContext;
                 Task.Run(() => connectionContext.InvokeStream(streamContext));
+            }
+            else if (this is ClientConnection clientConnection)
+            {
+                transmission.StartStream(dataId);
             }
         }
     }
