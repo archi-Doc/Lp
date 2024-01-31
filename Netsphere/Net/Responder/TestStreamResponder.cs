@@ -32,7 +32,7 @@ public class TestStreamResponder : INetResponder
             if (stream is not null)
             {
                 await stream.Send(buffer);
-                // await stream.Complete();
+                await stream.Complete();
             }
         });
 

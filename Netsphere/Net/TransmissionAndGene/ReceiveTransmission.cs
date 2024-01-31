@@ -308,7 +308,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                     connectionContext.InvokeSync(transmissionContext);
                 }
 
-                receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
+                receivedTcs?.SetResult(new(NetResult.Success, dataId, 0, owner.IncrementAndShare()));
                 owner.Return();
             }
         }
@@ -325,7 +325,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
         if (receivedTcs is not null)
         {
-            receivedTcs.SetResult(new(NetResult.Success, dataId, default, 0));
+            receivedTcs.SetResult(new(NetResult.Success, dataId, maxStreamLength, default));
         }
     }
 

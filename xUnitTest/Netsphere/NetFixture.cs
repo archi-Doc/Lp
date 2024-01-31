@@ -33,10 +33,10 @@ public class NetFixture : IDisposable
         var options = new NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableLogger = false;
+        options.NodeName = "Test";
 
         this.unit = builder.Build();
-        var param = new NetControl.Unit.Param(true, "test", options, true);
-        this.unit.RunStandalone(param).Wait();
+        this.unit.Run(options, true).Wait();
 
         this.NetControl = this.unit.Context.ServiceProvider.GetRequiredService<NetControl>();
     }

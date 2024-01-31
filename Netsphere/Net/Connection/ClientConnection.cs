@@ -354,7 +354,7 @@ public sealed partial class ClientConnection : Connection
             }
         }
 
-        var stream = new ReceiveStream(receiveTransmission, response.DataId, 1000);//
+        var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
         return new(NetResult.Success, stream);
     }
 }

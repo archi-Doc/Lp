@@ -283,7 +283,7 @@ public sealed partial class PacketTerminal
                 if (item.ResponseTcs is not null)
                 {
                     var elapsedMics = currentSystemMics > item.SentMics ? (int)(currentSystemMics - item.SentMics) : 0;
-                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, toBeShared.IncrementAndShare(), elapsedMics));
+                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, elapsedMics, toBeShared.IncrementAndShare()));
                 }
             }
         }

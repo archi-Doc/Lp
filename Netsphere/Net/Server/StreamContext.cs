@@ -4,8 +4,6 @@ using Netsphere.Block;
 
 namespace Netsphere.Net;
 
-#pragma warning disable SA1202 // Elements should be ordered by access
-
 public sealed class StreamContext : ReceiveStream
 {
     internal StreamContext(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
