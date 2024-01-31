@@ -32,6 +32,4 @@ public readonly record struct NetResponse
     public readonly ulong DataId;
     public readonly long Additional; // ElapsedMics, MaxStreamLength
     public readonly ByteArrayPool.MemoryOwner Received;
-
-    public int ElapsedMics => (int)this.Additional;
 }

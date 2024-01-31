@@ -62,10 +62,10 @@ public class CubicCongestionControl : ICongestionControl
         this.slowstart = true;
         this.UpdateRegen();
 
-        if (connection.IsClient)
+        /*if (connection.IsClient)
         {
             this.logger = this.Connection.ConnectionTerminal.NetBase.UnitLogger.GetLogger<CubicCongestionControl>();
-        }
+        }*/
     }
 
     #region FieldAndProperty
@@ -94,7 +94,7 @@ public class CubicCongestionControl : ICongestionControl
         }
     }
 
-    private readonly ILogger? logger;
+    // private readonly ILogger? logger;
 
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
@@ -123,12 +123,13 @@ public class CubicCongestionControl : ICongestionControl
     // Packet loss
     private long epochStart;
     private double lastMaxCwnd;
-    private long brakeRefractoryMics;
+    private long refractoryMics;
     private uint deliverySuccess;
     private uint deliveryFailure;
     private double positiveFactor;
     private double negativeFactor;
     private double power;
+    private int taichi = 1;
 
     // Hystart
     private long currentRoundMics;
@@ -163,17 +164,6 @@ public class CubicCongestionControl : ICongestionControl
             {
                 this.ackCount++;
                 this.ReportDeliverySuccess();
-
-                if (this.brakeRefractoryMics != 0 &&
-                    sendGene.SentMics > this.brakeRefractoryMics)
-                {
-                    this.brakeRefractoryMics = 0;
-
-                    this.positiveFactor = 0;
-                    this.negativeFactor = 0;
-                    Volatile.Write(ref this.deliverySuccess, 1);
-                    Volatile.Write(ref this.deliveryFailure, 0);
-                }
             }
 
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
@@ -261,7 +251,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void ProcessFactor()
     {
-        if (this.brakeRefractoryMics != 0)
+        if (Mics.FastSystem <= this.refractoryMics)
         {
             return;
         }
@@ -276,11 +266,16 @@ public class CubicCongestionControl : ICongestionControl
         Volatile.Write(ref this.deliverySuccess, 0);
         Volatile.Write(ref this.deliveryFailure, 0);
 
-        var failureFactor = this.FailureRatio;
-        if (failureFactor > BrakeThreshold)
+        var failureRatio = this.FailureRatio;
+        if (failureRatio > BrakeThreshold)
         {
-            Console.WriteLine($"Brake: {failureFactor:F3}");
-            Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
+            if (this.negativeFactor > this.positiveFactor)
+            {
+                this.taichi <<= 1;
+            }
+
+            Console.WriteLine($"Brake: {this.taichi},{failureRatio:F3}");
+            Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureRatio:F3} power {this.power:F3}");
 
             this.positiveFactor = 0;
             this.negativeFactor = 0;
@@ -290,16 +285,19 @@ public class CubicCongestionControl : ICongestionControl
         {
             // Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
 
+            if (this.positiveFactor >= 2d)
+            {
+                this.taichi = 1;
+            }
+
             this.positiveFactor *= this.power;
             this.negativeFactor *= this.power;
         }
-
-        // Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureFactor:F3} power {this.power:F3}");
     }
 
     private void Brake()
     {
-        this.brakeRefractoryMics = Mics.FastSystem;
+        this.refractoryMics = Mics.FastSystem + this.Connection.SmoothedRtt;
 
         this.epochStart = 0;
         if (this.cwnd < this.lastMaxCwnd)
@@ -350,7 +348,7 @@ public class CubicCongestionControl : ICongestionControl
         while (resendCapacity > 0 && this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
-            if (Mics.FastSystem < (gene.SentMics + gene.SendTransmission.Connection.RetransmissionTimeout))
+            if (Mics.FastSystem < (gene.SentMics + (gene.SendTransmission.Connection.RetransmissionTimeout * this.taichi)))
             {
                 break;
             }
@@ -553,8 +551,18 @@ public class CubicCongestionControl : ICongestionControl
     }
 
     private void ReportDeliverySuccess()
-        => Interlocked.Increment(ref this.deliverySuccess);
+    {
+        if (Mics.FastSystem > this.refractoryMics)
+        {
+            Interlocked.Increment(ref this.deliverySuccess);
+        }
+    }
 
     private void ReportDeliveryFailure()
-        => Interlocked.Increment(ref this.deliveryFailure);
+    {
+        if (Mics.FastSystem > this.refractoryMics)
+        {
+            Interlocked.Increment(ref this.deliveryFailure);
+        }
+    }
 }

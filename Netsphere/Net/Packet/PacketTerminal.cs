@@ -141,7 +141,7 @@ public sealed partial class PacketTerminal
                 response.Return();
             }
 
-            return (NetResult.Success, receive, response.ElapsedMics);
+            return (NetResult.Success, receive, (int)response.Additional);
         }
         catch
         {
