@@ -760,13 +760,13 @@ Wait:
         {// Invoke stream
             if (this is ServerConnection serverConnection)
             {
-                var streamContext = new StreamContext(transmission, dataId);
+                var streamContext = new StreamContext(transmission, dataId, maxStreamLength);
                 var connectionContext = serverConnection.ConnectionContext;
                 Task.Run(() => connectionContext.InvokeStream(streamContext));
             }
             else if (this is ClientConnection clientConnection)
             {
-                transmission.StartStream(dataId);
+                transmission.StartStream(dataId, maxStreamLength);
             }
         }
     }

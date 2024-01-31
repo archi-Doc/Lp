@@ -28,11 +28,11 @@ public class TestStreamResponder : INetResponder
             var buffer = new byte[size];
             r.NextBytes(buffer);
 
-            transmissionContext.SendAndForget(size + 1);
             var (_, stream) = await transmissionContext.SendStream(size, FarmHash.Hash64(buffer));
             if (stream is not null)
             {
                 await stream.Send(buffer);
+                // await stream.Complete();
             }
         });
 

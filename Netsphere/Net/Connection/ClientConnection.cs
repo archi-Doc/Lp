@@ -54,8 +54,7 @@ public sealed partial class ClientConnection : Connection
         {
             return NetResult.Closed;
         }
-
-        if (this.CancellationToken.IsCancellationRequested)
+        else if (this.CancellationToken.IsCancellationRequested)
         {
             return NetResult.Canceled;
         }
@@ -105,14 +104,12 @@ public sealed partial class ClientConnection : Connection
         {
             return new(NetResult.Closed);
         }
-
-        if (this.CancellationToken.IsCancellationRequested)
+        else if (this.CancellationToken.IsCancellationRequested)
         {
             return new(NetResult.Canceled);
         }
 
         dataId = dataId != 0 ? dataId : BlockService.GetId<TSend, TReceive>();
-
         if (!BlockService.TrySerialize(data, out var owner))
         {
             return new(NetResult.SerializationError);
@@ -178,8 +175,7 @@ public sealed partial class ClientConnection : Connection
         {
             return new(NetResult.Closed, 0, default);
         }
-
-        if (this.CancellationToken.IsCancellationRequested)
+        else if (this.CancellationToken.IsCancellationRequested)
         {
             return new(NetResult.Canceled, 0, default);
         }
@@ -235,8 +231,7 @@ public sealed partial class ClientConnection : Connection
         {
             return (NetResult.Closed, default);
         }
-
-        if (this.CancellationToken.IsCancellationRequested)
+        else if (this.CancellationToken.IsCancellationRequested)
         {
             return (NetResult.Canceled, default);
         }
@@ -270,8 +265,7 @@ public sealed partial class ClientConnection : Connection
         {
             return (NetResult.Closed, default);
         }
-
-        if (this.CancellationToken.IsCancellationRequested)
+        else if (this.CancellationToken.IsCancellationRequested)
         {
             return new(NetResult.Canceled, default);
         }
@@ -304,8 +298,7 @@ public sealed partial class ClientConnection : Connection
         {
             return (NetResult.Closed, default);
         }
-
-        if (this.CancellationToken.IsCancellationRequested)
+        else if (this.CancellationToken.IsCancellationRequested)
         {
             return (NetResult.Canceled, default);
         }
@@ -343,8 +336,8 @@ public sealed partial class ClientConnection : Connection
             try
             {
                 response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
-                if (response.IsFailure)
-                {
+                if (response.IsFailure || !response.Received.IsEmpty)
+                {// Failure or not stream.
                     receiveTransmission.Dispose();
                     return new(response.Result, default);
                 }
@@ -361,7 +354,7 @@ public sealed partial class ClientConnection : Connection
             }
         }
 
-        var stream = new ReceiveStream(receiveTransmission, response.DataId);
+        var stream = new ReceiveStream(receiveTransmission, response.DataId, 1000);//
         return new(NetResult.Success, stream);
     }
 }

@@ -120,21 +120,21 @@ public sealed class TransmissionContext
         }
 
         var timeout = this.Connection.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.Connection.TryCreateSendTransmission(timeout).ConfigureAwait(false);
-        if (transmissionAndTimeout.Transmission is null)
+        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        if (transmission is null)
         {
             return (NetResult.NoTransmission, default);
         }
 
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         this.sent = true;
-        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, tcs);
+        var result = transmission.SendStream(maxLength, tcs);
         if (result != NetResult.Success)
         {
-            transmissionAndTimeout.Transmission.Dispose();
+            transmission.Dispose();
             return (result, default);
         }
 
-        return (NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
+        return (NetResult.Success, new SendStream(transmission, maxLength, dataId));
     }
 }

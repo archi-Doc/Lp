@@ -314,7 +314,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
-    internal void StartStream(ulong dataId)
+    internal void StartStream(ulong dataId, long maxStreamLength)
     {
         TaskCompletionSource<NetResponse>? receivedTcs;
         lock (this.syncObject)
@@ -445,13 +445,13 @@ Abort:
         }
     }
 
-    internal async Task<(NetResult Result, int Written)> ProcessReceive(StreamContext stream, Memory<byte> buffer, CancellationToken cancellationToken)
+    internal async Task<(NetResult Result, int Written)> ProcessReceive(ReceiveStream stream, Memory<byte> buffer, CancellationToken cancellationToken)
     {
         if (buffer.Length < FollowingGeneFrame.MaxGeneLength)
         {
             throw new ArgumentException(nameof(buffer));
         }
-        else if (stream.CurrentState != StreamContext.State.Receiving)
+        else if (stream.State != StreamState.Receiving)
         {
             return (NetResult.Completed, 0);
         }
@@ -520,12 +520,26 @@ Abort:
                 }
 
                 lastMaxReceivedPosition = this.maxReceivedPosition;
+                if (stream.ReceivedLength >= stream.MaxStreamLength)
+                {// Complete
+                    this.DisposeInternal();
+                    goto Complete;
+                }
             }
 
             // Wait for data arrival.
             var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
             while (this.maxReceivedPosition == lastMaxReceivedPosition)
             {
+                if (this.Connection.IsClosedOrDisposed)
+                {
+                    return (NetResult.Closed, written);
+                }
+                else if (this.Mode != NetTransmissionMode.Stream)
+                {
+                    return (NetResult.Completed, written);
+                }
+
                 try
                 {
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
@@ -543,7 +557,7 @@ Abort:
         }
 
 Complete:
-        stream.CurrentState = StreamContext.State.Received;
+        stream.State = StreamState.Received;
         this.Connection.RemoveTransmission(this);
         return (NetResult.Completed, written);
     }

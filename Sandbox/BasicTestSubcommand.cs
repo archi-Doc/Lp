@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net.Http;
 using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
@@ -153,7 +154,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await this.TestStream2(connection, 1_000_000);*/
                 // await this.TestStream2(connection, 1_000_000);
 
-                var r = await connection.SendAndReceiveStream(12_345, TestStreamResponder.Instance.DataId);
+                await this.TestStream3(connection, 1_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
@@ -226,6 +227,40 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             var r2 = await r.Stream.Send(buffer);
             var r3 = await r.Stream.CompleteAndReceive();
             Debug.Assert(r3.Value == hash);
+        }
+    }
+
+    private async Task TestStream3(ClientConnection connection, int size)
+    {
+        var (_, stream) = await connection.SendAndReceiveStream(size, TestStreamResponder.Instance.DataId);
+        if (stream is not null)
+        {
+            var buffer = new byte[100_000];
+            var hash = new FarmHash();
+            hash.HashInitialize();
+            long total = 0;
+
+            while (true)
+            {
+                var r = await stream.Receive(buffer);
+                if (r.Result == NetResult.Success ||
+                    r.Result == NetResult.Completed)
+                {
+                    hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                    total += r.Written;
+                }
+                else
+                {
+                    break;
+                }
+
+                if (r.Result == NetResult.Completed)
+                {
+                    var h = BitConverter.ToUInt64(hash.HashFinal());
+                    Debug.Assert(h == stream.DataId);
+                    break;
+                }
+            }
         }
     }
 
