@@ -23,4 +23,5 @@ public enum NetResult
     NotAuthorized,
     NoTransmission,
     Completed,
+    AlreadySent,
 }

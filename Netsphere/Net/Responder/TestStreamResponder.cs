@@ -6,6 +6,8 @@ namespace Netsphere.Responder;
 
 public class TestStreamResponder : INetResponder
 {
+    public const int MaxLength = 1024 * 1024 * 100;
+
     public static readonly INetResponder Instance = new TestStreamResponder();
 
     public ulong DataId
@@ -19,7 +21,20 @@ public class TestStreamResponder : INetResponder
             return false;
         }
 
-        transmissionContext.
+        Task.Run(async () =>
+        {
+            size = Math.Min(size, MaxLength);
+            var r = new Xoshiro256StarStar((ulong)size);
+            var buffer = new byte[size];
+            r.NextBytes(buffer);
+
+            transmissionContext.SendAndForget(size + 1);
+            var (_, stream) = await transmissionContext.SendStream(size, FarmHash.Hash64(buffer));
+            if (stream is not null)
+            {
+                await stream.Send(buffer);
+            }
+        });
 
         return true;
     }

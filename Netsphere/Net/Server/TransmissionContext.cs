@@ -22,6 +22,8 @@ public sealed class TransmissionContext
         this.Owner = toBeShared;
     }
 
+    #region FieldAndProperty
+
     public ConnectionContext ConnectionContext { get; }
 
     public ServerConnection Connection => this.ConnectionContext.ServerConnection;
@@ -36,6 +38,10 @@ public sealed class TransmissionContext
 
     public NetResult Result { get; set; }
 
+    private bool sent;
+
+    #endregion
+
     public void Return()
         => this.Owner = this.Owner.Return();
 
@@ -45,10 +51,13 @@ public sealed class TransmissionContext
         {
             return NetResult.Closed;
         }
-
-        if (this.Connection.CancellationToken.IsCancellationRequested)
+        else if (this.Connection.CancellationToken.IsCancellationRequested)
         {
             return default;
+        }
+        else if (this.sent)
+        {
+            return NetResult.AlreadySent;
         }
 
         var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
@@ -57,6 +66,7 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
+        this.sent = true;
         var result = transmission.SendBlock(0, dataId, toBeShared, default);
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
@@ -67,10 +77,13 @@ public sealed class TransmissionContext
         {
             return NetResult.Closed;
         }
-
-        if (this.Connection.CancellationToken.IsCancellationRequested)
+        else if (this.Connection.CancellationToken.IsCancellationRequested)
         {
             return default;
+        }
+        else if (this.sent)
+        {
+            return NetResult.AlreadySent;
         }
 
         if (!BlockService.TrySerialize(data, out var owner))
@@ -85,6 +98,7 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
+        this.sent = true;
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
@@ -96,20 +110,24 @@ public sealed class TransmissionContext
         {
             return (NetResult.Canceled, default);
         }
-
-        if (this.Connection.Agreement.MaxStreamLength < maxLength)
+        else if (this.Connection.Agreement.MaxStreamLength < maxLength)
         {
             return (NetResult.StreamLengthLimit, default);
         }
+        else if (this.sent)
+        {
+            return (NetResult.AlreadySent, default);
+        }
 
         var timeout = this.Connection.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.ConnectionTryCreateSendTransmission(timeout).ConfigureAwait(false);
+        var transmissionAndTimeout = await this.Connection.TryCreateSendTransmission(timeout).ConfigureAwait(false);
         if (transmissionAndTimeout.Transmission is null)
         {
             return (NetResult.NoTransmission, default);
         }
 
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        this.sent = true;
         var result = transmissionAndTimeout.Transmission.SendStream(maxLength, tcs);
         if (result != NetResult.Success)
         {
