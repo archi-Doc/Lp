@@ -8,6 +8,7 @@ using Arc.Collections;
 using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 using static Netsphere.Net.AckBuffer;
 
 #pragma warning disable SA1202
@@ -60,9 +61,9 @@ public abstract class Connection : IDisposable
 
     public NetBase NetBase { get; }
 
-    public ConnectionTerminal ConnectionTerminal { get; }
+    internal ConnectionTerminal ConnectionTerminal { get; }
 
-    public PacketTerminal PacketTerminal { get; }
+    internal PacketTerminal PacketTerminal { get; }
 
     public ulong ConnectionId { get; }
 
@@ -311,7 +312,7 @@ Wait:
         goto Retry;
     }
 
-    internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
         lock (this.receiveTransmissions.SyncObject)
         {
@@ -357,7 +358,7 @@ Wait:
                 return default;
             }
 
-            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs, receiveStream);
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
             receiveTransmission.ReceivedDisposedMics = currentMics;
             receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
@@ -471,8 +472,16 @@ Wait:
         this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, default);
     }
 
-    internal void SendCloseFrame() // Close
-        => this.SendPriorityFrame([]);
+    internal void SendCloseFrame()
+    {
+        // this.SendPriorityFrame([]); // Close 1 (Obsolete)
+
+        Span<byte> frame = stackalloc byte[2]; // Close 2
+        var span = frame;
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Close);
+        span = span.Slice(sizeof(ushort));
+        this.SendPriorityFrame(frame);
+    }
 
     internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend)
@@ -534,8 +543,8 @@ Wait:
         span = span.Slice(10);
 
         if (span.Length == 0)
-        {// Close frame
-            this.ConnectionTerminal.CloseInternal(this, false);
+        {// Close 1 (Obsolete)
+            // this.ConnectionTerminal.CloseInternal(this, false);
             return;
         }
 
@@ -555,7 +564,11 @@ Wait:
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
-            if (frameType == FrameType.Ack)
+            if (frameType == FrameType.Close)
+            {// Close 2
+                this.ConnectionTerminal.CloseInternal(this, false);
+            }
+            else if (frameType == FrameType.Ack)
             {// Ack
                 this.ProcessReceive_Ack(endPoint, owner);
             }
@@ -566,6 +579,14 @@ Wait:
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
                 this.ProcessReceive_FollowingGene(endPoint, owner);
+            }
+            else if (frameType == FrameType.Knock)
+            {// Knock
+                this.ProcessReceive_Knock(endPoint, owner);
+            }
+            else if (frameType == FrameType.KnockResponse)
+            {// KnockResponse
+                this.ProcessReceive_KnockResponse(endPoint, owner);
             }
         }
     }
@@ -644,7 +665,6 @@ Wait:
         var rttHint = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int)); // 4
         var totalGenes = BitConverter.ToInt32(span);
-        span = span.Slice(sizeof(int)); // 4
 
         if (rttHint > 0)
         {
@@ -652,6 +672,8 @@ Wait:
         }
 
         ReceiveTransmission? transmission;
+        long maxStreamLength = 0;
+        ulong dataId = 0;
         lock (this.receiveTransmissions.SyncObject)
         {
             if (this.IsClient)
@@ -666,7 +688,27 @@ Wait:
                     return;
                 }
 
-                transmission.SetState_Receiving(totalGenes);
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+                {// Block mode
+                    transmission.SetState_Receiving(totalGenes);
+                }
+                else if (transmissionMode == 1)
+                {// Stream mode
+                    maxStreamLength = BitConverter.ToInt64(span);
+                    span = span.Slice(sizeof(int) + sizeof(uint)); // 8
+                    dataId = BitConverter.ToUInt64(span);
+
+                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    {
+                        return;
+                    }
+
+                    transmission.SetState_ReceivingStream(maxStreamLength);
+                }
+                else
+                {
+                    return;
+                }
             }
             else
             {// Server side
@@ -684,13 +726,22 @@ Wait:
 
                 if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
                 {// Block mode
-                    transmission = new(this, transmissionId, default, default);
+                    transmission = new(this, transmissionId, default);
                     transmission.SetState_Receiving(totalGenes);
                 }
-                else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
+                else if (transmissionMode == 1)
                 {// Stream mode
-                    transmission = new(this, transmissionId, default, default);
-                    transmission.SetState_ReceivingStream(totalGenes);
+                    maxStreamLength = BitConverter.ToInt64(span);
+                    span = span.Slice(sizeof(int) + sizeof(uint)); // 8
+                    dataId = BitConverter.ToUInt64(span);
+
+                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    {
+                        return;
+                    }
+
+                    transmission = new(this, transmissionId, default);
+                    transmission.SetState_ReceivingStream(maxStreamLength);
                 }
                 else
                 {
@@ -704,6 +755,20 @@ Wait:
         }
 
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
+
+        if (transmission.Mode == NetTransmissionMode.Stream)
+        {// Invoke stream
+            if (this is ServerConnection serverConnection)
+            {
+                var streamContext = new StreamContext(transmission, dataId, maxStreamLength);
+                var connectionContext = serverConnection.ConnectionContext;
+                Task.Run(() => connectionContext.InvokeStream(streamContext));
+            }
+            else if (this is ClientConnection clientConnection)
+            {
+                transmission.StartStream(dataId, maxStreamLength);
+            }
+        }
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
@@ -749,7 +814,56 @@ Wait:
         transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
-    internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
+    internal void ProcessReceive_Knock(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    {// KnockResponseFrameCode
+        if (toBeShared.Memory.Length < (KnockFrame.Length - 2))
+        {
+            return;
+        }
+
+        ReceiveTransmission? transmission;
+        var transmissionId = BitConverter.ToUInt32(toBeShared.Span);
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+            {
+                return;
+            }
+        }
+
+        Span<byte> frame = stackalloc byte[KnockResponseFrame.Length];
+        var span = frame;
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.KnockResponse);
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, transmission.ReceiveCapacity);
+        span = span.Slice(sizeof(int));
+
+        this.SendPriorityFrame(frame);
+    }
+
+    internal void ProcessReceive_KnockResponse(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    {
+        var span = toBeShared.Span;
+        if (span.Length < (KnockResponseFrame.Length - 2))
+        {
+            return;
+        }
+
+        var transmissionId = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
+            {
+                var receiveCapacity = BitConverter.ToInt32(span);
+                span = span.Slice(sizeof(int));
+
+                transmission.ReceiveCapacity = receiveCapacity;
+            }
+        }
+    }
+
+    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)
     {
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
@@ -789,7 +903,7 @@ Wait:
         return true;
     }
 
-    internal void CreatePacket(scoped Span<byte> frameHeader, scoped Span<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
@@ -886,7 +1000,7 @@ Wait:
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
-    internal bool TryEncryptCbc(uint salt, Span<byte> source, Span<byte> destination, out int written)
+    internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
         this.embryo.Iv.CopyTo(iv);

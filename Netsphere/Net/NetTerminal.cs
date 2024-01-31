@@ -39,7 +39,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public NetStats NetStats { get; }
 
-    public NetResponder NetResponder { get; private set; } = default!;
+    public ResponderControl NetResponder { get; private set; } = default!;
 
     public PacketTerminal PacketTerminal { get; }
 
@@ -121,7 +121,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.netCleaner.Stop();
     }
 
-    internal void Initialize(NetResponder netResponder, bool isAlternative)
+    internal void Initialize(ResponderControl netResponder, bool isAlternative)
     {
         this.NetResponder = netResponder;
         this.IsAlternative = isAlternative;

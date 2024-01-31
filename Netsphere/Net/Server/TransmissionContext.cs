@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Block;
+using Netsphere.Net;
 
 #pragma warning disable SA1401
 
@@ -21,6 +22,8 @@ public sealed class TransmissionContext
         this.Owner = toBeShared;
     }
 
+    #region FieldAndProperty
+
     public ConnectionContext ConnectionContext { get; }
 
     public ServerConnection Connection => this.ConnectionContext.ServerConnection;
@@ -35,6 +38,10 @@ public sealed class TransmissionContext
 
     public NetResult Result { get; set; }
 
+    private bool sent;
+
+    #endregion
+
     public void Return()
         => this.Owner = this.Owner.Return();
 
@@ -44,10 +51,13 @@ public sealed class TransmissionContext
         {
             return NetResult.Closed;
         }
-
-        if (this.Connection.CancellationToken.IsCancellationRequested)
+        else if (this.Connection.CancellationToken.IsCancellationRequested)
         {
             return default;
+        }
+        else if (this.sent)
+        {
+            return NetResult.AlreadySent;
         }
 
         var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
@@ -56,23 +66,27 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
+        this.sent = true;
         var result = transmission.SendBlock(0, dataId, toBeShared, default);
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public NetResult SendAndForget<TSend>(TSend packet, ulong dataId = 0)
+    public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
     {
         if (this.Connection.IsClosedOrDisposed)
         {
             return NetResult.Closed;
         }
-
-        if (this.Connection.CancellationToken.IsCancellationRequested)
+        else if (this.Connection.CancellationToken.IsCancellationRequested)
         {
             return default;
         }
+        else if (this.sent)
+        {
+            return NetResult.AlreadySent;
+        }
 
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!BlockService.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }
@@ -84,8 +98,43 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
+        this.sent = true;
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
+    }
+
+    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    {
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return (NetResult.Canceled, default);
+        }
+        else if (this.Connection.Agreement.MaxStreamLength < maxLength)
+        {
+            return (NetResult.StreamLengthLimit, default);
+        }
+        else if (this.sent)
+        {
+            return (NetResult.AlreadySent, default);
+        }
+
+        var timeout = this.Connection.NetBase.DefaultSendTimeout;
+        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        if (transmission is null)
+        {
+            return (NetResult.NoTransmission, default);
+        }
+
+        var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        this.sent = true;
+        var result = transmission.SendStream(maxLength, tcs);
+        if (result != NetResult.Success)
+        {
+            transmission.Dispose();
+            return (result, default);
+        }
+
+        return (NetResult.Success, new SendStream(transmission, maxLength, dataId));
     }
 }

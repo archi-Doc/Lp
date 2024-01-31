@@ -1,0 +1,71 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using System.Threading;
+using Netsphere.Block;
+
+namespace Netsphere.Net;
+
+public class SendStreamAndReceive<TReceive> : SendStreamBase
+{
+    internal SendStreamAndReceive(SendTransmission sendTransmission, long maxLength, ulong dataId)
+        : base(sendTransmission, maxLength, dataId)
+    {
+    }
+
+    public async Task<NetResultValue<TReceive>> CompleteAndReceive(CancellationToken cancellationToken = default)
+    {
+        if (this.IsComplete)
+        {
+            return new(NetResult.Completed);
+        }
+
+        await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+
+        try
+        {
+            this.IsComplete = true;
+
+            NetResponse response;
+            var connection = this.SendTransmission.Connection;
+            var timeout = connection.NetBase.DefaultSendTimeout;
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
+            {
+                if (receiveTransmission is null)
+                {
+                    return new(NetResult.NoTransmission);
+                }
+
+                try
+                {
+                    response = await tcs.Task.WaitAsync(timeout, connection.CancellationToken).ConfigureAwait(false);
+                    if (response.IsFailure)
+                    {
+                        return new(response.Result);
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    return new(NetResult.Timeout);
+                }
+                catch
+                {
+                    return new(NetResult.Canceled);
+                }
+            }
+
+            if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+            {
+                response.Return();
+                return new(NetResult.DeserializationError);
+            }
+
+            response.Return();
+            return new(NetResult.Success, receive);
+        }
+        finally
+        {
+            this.SendTransmission.Dispose();
+        }
+    }
+}

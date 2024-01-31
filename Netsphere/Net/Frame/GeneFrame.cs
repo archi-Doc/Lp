@@ -15,8 +15,8 @@ internal readonly struct FirstGeneFrame
     public readonly ushort TransmissionMode; // 2 bytes 0:Block, 1:Stream
     public readonly uint TransmissionId; // 4 bytes
     public readonly int RttHint; // 4 bytes
-    public readonly int TotalGene; // 4 bytes
-    public readonly uint DataKind; // 4 bytes
+    public readonly int TotalGene; // 4 bytes (StreamMaxLength for Stream)
+    public readonly uint DataKind; // 4 bytes (StreamMaxLength for Stream)
     public readonly ulong DataId; // 8 bytes
 }
 

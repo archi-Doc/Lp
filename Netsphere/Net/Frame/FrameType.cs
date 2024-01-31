@@ -4,7 +4,10 @@ namespace Netsphere.Packet;
 
 public enum FrameType : ushort
 {
+    Close,
     Ack,
     FirstGene,
     FollowingGene,
+    Knock,
+    KnockResponse,
 }

@@ -4,33 +4,6 @@ using Netsphere.Block;
 
 namespace Netsphere.Server;
 
-public abstract class SyncResponder<TSend, TReceive> : INetResponder
-{
-    public virtual ulong DataId => BlockService.GetId<TSend, TReceive>();
-
-    public virtual TReceive? RespondSync(TSend value) => default;
-
-    public bool Respond(TransmissionContext transmissionContext)
-    {
-        if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.Owner.Memory.Span, out var t))
-        {
-            transmissionContext.Return();
-            return false;
-        }
-
-        transmissionContext.Return();
-
-        var response = this.RespondSync(t);
-        if (response == null)
-        {
-            return false;
-        }
-
-        transmissionContext.SendAndForget(response, this.DataId);
-        return true;
-    }
-}
-
 public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 {
     public virtual ulong DataId => BlockService.GetId<TSend, TReceive>();
@@ -58,11 +31,4 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 
         return true;
     }
-}
-
-public interface INetResponder
-{
-    ulong DataId { get; }
-
-    bool Respond(TransmissionContext transmissionContext);
 }

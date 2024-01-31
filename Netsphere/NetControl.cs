@@ -41,7 +41,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
-                context.AddSingleton<NetResponder>();
+                context.AddSingleton<ResponderControl>();
                 context.AddSingleton<NetTerminal>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -64,31 +64,28 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public class Unit : BuiltUnit
     {
-        public record Param(bool EnableServer, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
-
         public Unit(UnitContext context)
             : base(context)
         {
         }
 
-        public async Task RunStandalone(Param param)
+        public async Task Run(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null)
         {
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            netBase.SetParameter(param.EnableServer, param.NodeName, param.Options);
-            netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
-
-            var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
-            if (param.EnableServer)
+            netBase.SetOptions(options);
+            netBase.AllowUnsafeConnection = allowUnsafeConnection;
+            if (newConnectionContext is not null)
             {
-                // netControl.SetupServer(param.NewServerContext, param.NewCallContext);
+                netBase.NewConnectionContext = newConnectionContext;
             }
 
+            var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             this.Context.SendPrepare(new());
             await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetResponder netResponder, NetTerminal netTerminal)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, ResponderControl netResponder, NetTerminal netTerminal)
         : base(context)
     {
         this.unitLogger = unitLogger;
@@ -112,7 +109,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetStats NetStats { get; }
 
-    public NetResponder NetResponder { get; }
+    public ResponderControl NetResponder { get; }
 
     public NetTerminal NetTerminal { get; }
 

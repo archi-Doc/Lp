@@ -1,8 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Net;
 
 namespace Netsphere.Server;
+
+public class ExampleConnectionContext : ConnectionContext
+{
+    public ExampleConnectionContext(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+    }
+
+    public override async Task InvokeStream(StreamContext streamContext)
+    {
+        return;
+    }
+}
 
 public class ConnectionContext
 {
@@ -46,9 +60,9 @@ public class ConnectionContext
         public ServiceDelegate Invoke { get; }
     }
 
-    public ConnectionContext(IServiceProvider? serviceProvider, ServerConnection serverConnection)
+    public ConnectionContext(ServerConnection serverConnection)
     {
-        this.ServiceProvider = serviceProvider;
+        this.ServiceProvider = default; // serviceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
     }
@@ -61,18 +75,20 @@ public class ConnectionContext
 
     public ServerConnection ServerConnection { get; }
 
-    private object syncObject = new();
-    private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
-    private Dictionary<uint, object> idToInstance = new();
+    private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
+    private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
 
     #endregion
 
-    public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    public virtual Task InvokeStream(StreamContext streamContext)
+        => Task.CompletedTask;
+
+    /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
         return false;
-    }
+    }*/
 
-    public void InvokeSync(TransmissionContext transmissionContext)
+    internal void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
@@ -92,16 +108,16 @@ public class ConnectionContext
             return;
         }
 
-        if (!this.InvokeCustom(transmissionContext))
+        /*if (!this.InvokeCustom(transmissionContext))
         {
             transmissionContext.Return();
-        }
+        }*/
     }
 
-    public async Task InvokeRPC(TransmissionContext transmissionContext)
+    internal async Task InvokeRPC(TransmissionContext transmissionContext)
     {// Thread-safe
         ServiceMethod? serviceMethod;
-        lock (this.syncObject)
+        lock (this.idToServiceMethod)
         {
             if (!this.idToServiceMethod.TryGetValue(transmissionContext.DataId, out serviceMethod))
             {

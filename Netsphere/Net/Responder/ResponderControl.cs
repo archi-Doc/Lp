@@ -6,9 +6,9 @@ using Netsphere.Server;
 
 namespace Netsphere;
 
-public sealed class NetResponder
+public sealed class ResponderControl
 {
-    public NetResponder()
+    public ResponderControl()
     {
     }
 

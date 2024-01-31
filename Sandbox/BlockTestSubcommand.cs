@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Block;
-using Netsphere.Packet;
 using SimpleCommandLine;
 
 namespace Sandbox;
@@ -34,6 +34,7 @@ public class BlockTestSubcommand : ISimpleCommandAsync
             return;
         }
 
+        this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
         this.NetControl.NetBase.DefaultSendTimeout = TimeSpan.FromMinutes(1);
         this.NetControl.NetTerminal.SetDeliveryFailureRatio(0.05d);
         this.NetControl.NetTerminal.PacketTerminal.MaxResendCount = 10;

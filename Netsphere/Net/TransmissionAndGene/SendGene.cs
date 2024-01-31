@@ -41,8 +41,6 @@ internal partial class SendGene
 
     internal object? Node; // lock (this.CongestionControl.syncObject)
 
-    #endregion
-
     public bool CanSend
         => this.SendTransmission.Mode != NetTransmissionMode.Disposed &&
         this.SendTransmission.Connection.State == Connection.ConnectionState.Open;
@@ -65,6 +63,8 @@ internal partial class SendGene
             return true;
         }
     }
+
+    #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)

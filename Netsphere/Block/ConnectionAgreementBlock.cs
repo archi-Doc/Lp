@@ -19,6 +19,7 @@ public partial class ConnectionAgreementBlock : IBlock
         this.MaxTransmissions = options.MaxTransmissions;
         this.MaxBlockSize = options.MaxBlockSize;
         this.MaxStreamLength = options.MaxStreamLength;
+        this.StreamBufferSize = options.StreamBufferSize;
     }
 
     public uint BlockId => 0x12345678;
@@ -46,16 +47,32 @@ public partial class ConnectionAgreementBlock : IBlock
         {
             this.maxStreamLength = value;
             var info = NetHelper.CalculateGene(this.maxStreamLength);
-            this.MaxStreamGenes = info.NumberOfGenes;
+            // this.MaxStreamGenes = info.NumberOfGenes;
+        }
+    }
+
+    [Key(3)]
+    public int StreamBufferSize
+    {
+        get => this.streamBufferSize;
+        set
+        {
+            this.streamBufferSize = value;
+            var info = NetHelper.CalculateGene(this.streamBufferSize);
+            this.StreamBufferGenes = info.NumberOfGenes;
         }
     }
 
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }
 
+    /*[IgnoreMember]
+    public int MaxStreamGenes { get; private set; }*/
+
     [IgnoreMember]
-    public int MaxStreamGenes { get; private set; }
+    public int StreamBufferGenes { get; private set; }
 
     private int maxBlockSize;
     private long maxStreamLength;
+    private int streamBufferSize;
 }

@@ -51,6 +51,7 @@ public sealed partial class PacketTerminal
     public PacketTerminal(NetBase netBase, NetStats netStats, NetTerminal netTerminal, ILogger<PacketTerminal> logger)
     {
         this.netBase = netBase;
+        this.options = this.netBase.NetsphereOptions;
         this.netStats = netStats;
         this.netTerminal = netTerminal;
         this.logger = logger;
@@ -64,6 +65,7 @@ public sealed partial class PacketTerminal
     public int MaxResendCount { get; set; }
 
     private readonly NetBase netBase;
+    private readonly NetsphereOptions options;
     private readonly NetStats netStats;
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
@@ -93,7 +95,7 @@ public sealed partial class PacketTerminal
     {
         if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
         {
-            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.InvalidAddress, default, 0));
+            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
         }
 
         return this.SendAndReceiveAsync<TSend, TReceive>(endPoint, packet);
@@ -218,9 +220,14 @@ public sealed partial class PacketTerminal
 
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
-        {// Packet types (0-127)
+        {// Packet types (0-127), Client -> Server
             if (packetType == PacketType.Connect)
             {// PacketConnect
+                if (!this.options.EnableServer)
+                {
+                    return;
+                }
+
                 if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
                 {
                     Task.Run(() =>
@@ -235,11 +242,11 @@ public sealed partial class PacketTerminal
                     return;
                 }
             }
-            else if (this.netBase.NetsphereOptions.EnableEssential)
+            else if (this.options.EnableEssential)
             {
                 if (packetType == PacketType.Ping)
                 {// PacketPing
-                    var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
+                    var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.options.NodeName);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
 #if LOG_LOWLEVEL_NET
@@ -257,7 +264,7 @@ public sealed partial class PacketTerminal
             }
         }
         else if (packetUInt16 < 255)
-        {// Packet response types (128-255)
+        {// Packet response types (128-255), Server -> Client (Response)
             Item? item;
             lock (this.items.SyncObject)
             {

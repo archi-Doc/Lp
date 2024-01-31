@@ -12,12 +12,11 @@ namespace Netsphere.Net;
 internal sealed partial class ReceiveTransmission : IDisposable
 {
     // [Link(Name = "DisposedList", Type = ChainType.QueueList, AutoLink = false)]
-    public ReceiveTransmission(Connection connection, uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs, ReceiveStream? receiveStream)
+    public ReceiveTransmission(Connection connection, uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
         this.Connection = connection;
         this.TransmissionId = transmissionId;
         this.receivedTcs = receivedTcs;
-        this.receiveStream = receiveStream;
     }
 
     #region FieldAndProperty
@@ -57,7 +56,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
     private readonly object syncObject = new();
     private int totalGene;
     private TaskCompletionSource<NetResponse>? receivedTcs;
-    private ReceiveStream? receiveStream;
     private int maxReceivedPosition;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
@@ -106,12 +104,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
             this.receivedTcs.SetResult(new(NetResult.Closed));
             this.receivedTcs = null;
         }
-
-        if (this.receiveStream is not null)
-        {
-            this.receiveStream?.Dispose();
-            this.receiveStream = null;
-        }
     }
 
     internal void SetState_Receiving(int totalGene)
@@ -137,10 +129,22 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = totalGene;
     }
 
-    internal void SetState_ReceivingStream(int totalGene)
+    internal void SetState_ReceivingStream(long maxLength)
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
-        this.totalGene = totalGene;
+        this.totalGene = -1;
+
+        var info = NetHelper.CalculateGene(maxLength);
+        var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
+
+        this.genes = new();
+        this.genes.DataPositionListChain.Resize(bufferGenes);
+        for (var i = 0; i < bufferGenes; i++)
+        {
+            var gene = new ReceiveGene(this);
+            gene.Goshujin = this.genes;
+            this.genes.DataPositionListChain.Add(gene);
+        }
     }
 
     internal void ProcessReceive_Gene(/*int geneSerial, */int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
@@ -203,9 +207,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         this.gene2?.IsReceived == true;
                 }
             }
-            else if (this.Mode == NetTransmissionMode.Block &&
-                this.genes is not null)
-            {// Multiple send/recv
+            else if (this.genes is not null)
+            {// Block, Stream
                 var chain = this.genes.DataPositionListChain;
                 if (chain.Get(dataPosition) is { } gene)
                 {
@@ -224,9 +227,19 @@ internal sealed partial class ReceiveTransmission : IDisposable
                         }
                     }
 
-                    if (this.maxReceivedPosition >= this.totalGene)
+                    if (this.Mode == NetTransmissionMode.Block)
                     {
-                        completeFlag = true;
+                        if (this.maxReceivedPosition >= this.totalGene)
+                        {
+                            completeFlag = true;
+                        }
+                    }
+                    else if (this.Mode == NetTransmissionMode.Stream)
+                    {
+                        if (toBeShared.Memory.Length == 0)
+                        {
+                            this.totalGene = dataPosition;
+                        }
                     }
                 }
             }
@@ -274,14 +287,11 @@ internal sealed partial class ReceiveTransmission : IDisposable
         if (completeFlag)
         {// Receive complete
             TaskCompletionSource<NetResponse>? receivedTcs;
-            ReceiveStream? receiveStream;
 
             lock (this.syncObject)
             {
                 receivedTcs = this.receivedTcs;
                 this.receivedTcs = default;
-                receiveStream = this.receiveStream;
-                this.receiveStream = default;
 
                 // this.Goshujin = null; // -> this.Connection.RemoveTransmission(this);
                 this.DisposeInternal();
@@ -301,6 +311,21 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 receivedTcs?.SetResult(new(NetResult.Success, dataId, owner.IncrementAndShare(), 0));
                 owner.Return();
             }
+        }
+    }
+
+    internal void StartStream(ulong dataId, long maxStreamLength)
+    {
+        TaskCompletionSource<NetResponse>? receivedTcs;
+        lock (this.syncObject)
+        {
+            receivedTcs = this.receivedTcs;
+            this.receivedTcs = default;
+        }
+
+        if (receivedTcs is not null)
+        {
+            receivedTcs.SetResult(new(NetResult.Success, dataId, default, 0));
         }
     }
 
@@ -410,5 +435,130 @@ Abort:
         dataKind = 0;
         dataId = 0;
         toBeMoved = default;
+    }
+
+    internal void ProcessAbort()
+    {
+        if (this.Mode != NetTransmissionMode.Disposed)
+        {
+            this.Dispose();
+        }
+    }
+
+    internal async Task<(NetResult Result, int Written)> ProcessReceive(ReceiveStream stream, Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        if (buffer.Length < FollowingGeneFrame.MaxGeneLength)
+        {
+            throw new ArgumentException(nameof(buffer));
+        }
+        else if (stream.State != StreamState.Receiving)
+        {
+            return (NetResult.Completed, 0);
+        }
+
+        int remaining = buffer.Length;
+        int written = 0;
+        int lastMaxReceivedPosition;
+        while (true)
+        {
+            if (this.Mode != NetTransmissionMode.Stream)
+            {
+                return (NetResult.Completed, written);
+            }
+
+            lock (this.syncObject)
+            {
+                var chain = this.genes?.DataPositionListChain;
+                if (chain is null)
+                {
+                    return (NetResult.Closed, written);
+                }
+
+                while (chain.Get(stream.CurrentPosition) is { } gene)
+                {
+                    if (remaining < FollowingGeneFrame.MaxGeneLength)
+                    {
+                        return (NetResult.Success, written);
+                    }
+                    else if (!gene.IsReceived)
+                    {
+                        if (this.totalGene < 0 ||
+                            stream.CurrentPosition < this.totalGene)
+                        {
+                            break;
+                        }
+                    }
+
+                    var length = gene.Packet.Span.Length;
+                    if (length > 0)
+                    {
+                        if (stream.CurrentPosition == 0)
+                        {// First gene
+                            length -= 12;
+                            gene.Packet.Span.Slice(12).CopyTo(buffer.Span);
+                        }
+                        else
+                        {
+                            gene.Packet.Span.CopyTo(buffer.Span);
+                        }
+
+                        buffer = buffer.Slice(length);
+                        written += length;
+                        remaining -= length;
+                        stream.ReceivedLength += length;
+                    }
+
+                    stream.CurrentPosition++;
+                    gene.Dispose();
+                    gene.Goshujin = default;
+
+                    if (length == 0)
+                    {// Complete
+                        this.DisposeInternal();
+                        goto Complete;
+                    }
+                }
+
+                lastMaxReceivedPosition = this.maxReceivedPosition;
+                if (stream.ReceivedLength >= stream.MaxStreamLength)
+                {// Complete
+                    this.DisposeInternal();
+                    goto Complete;
+                }
+            }
+
+            // Wait for data arrival.
+            var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
+            while (this.maxReceivedPosition == lastMaxReceivedPosition)
+            {
+                if (this.Connection.IsClosedOrDisposed)
+                {
+                    return (NetResult.Closed, written);
+                }
+                else if (this.Mode != NetTransmissionMode.Stream)
+                {
+                    return (NetResult.Completed, written);
+                }
+
+                try
+                {
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    delay = Math.Min(delay << 1, NetConstants.MaxReceiveStreamDelayMilliseconds);
+                }
+                catch (TimeoutException)
+                {
+                    return (NetResult.Timeout, written);
+                }
+                catch
+                {
+                    return (NetResult.Canceled, written);
+                }
+            }
+        }
+
+Complete:
+        stream.State = StreamState.Received;
+        this.Connection.RemoveTransmission(this);
+        return (NetResult.Completed, written);
     }
 }

@@ -6,7 +6,6 @@ namespace Netsphere.Packet;
 
 internal readonly struct AckFrame
 {// AckFrameCode
-    public const int Length = 2;
     public const int Margin = 32;
 
     public readonly FrameType FrameType; // 2 bytes

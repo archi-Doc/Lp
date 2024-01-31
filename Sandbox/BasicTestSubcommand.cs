@@ -1,13 +1,57 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net.Http;
+using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
-using Netsphere.Block;
+using Netsphere.Net;
 using Netsphere.Packet;
+using Netsphere.Responder;
+using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace Sandbox;
+
+public class CustomConnectionContext : ConnectionContext
+{
+    public CustomConnectionContext(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+    }
+
+    public override async Task InvokeStream(StreamContext streamContext)
+    {
+        var buffer = new byte[100_000];
+        var hash = new FarmHash();
+        hash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await streamContext.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                var h = BitConverter.ToUInt64(hash.HashFinal());
+                Debug.Assert(h == streamContext.DataId);
+
+                streamContext.SendAndForget(h);
+                break;
+            }
+        }
+    }
+}
 
 [SimpleCommand("basic")]
 public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
@@ -33,6 +77,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
         this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
         this.NetControl.NetResponder.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.NetResponder.Register(Netsphere.Responder.TestStreamResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -52,17 +97,18 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
+        this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 4_000_000, };
+
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        // netTerminal.SetDeliveryFailureRatio(0.2);
+        // netTerminal.SetDeliveryFailureRatio(0.03);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
             {
-                // Send Block*Stream, Receive Non*Block*Stream
-                // Send(), SendAndReceive(), SendAndReceiveStream(), SendStream(), SendStreamAndReceive()
                 var success = 0;
 
-                for (var i = 0; i < 20; i++)
+                /*for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
                     var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
@@ -70,9 +116,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     {
                         success++;
                     }
-                }
+                }*/
 
-                for (var i = 0; i < 20_000; i += 1_000)
+                /*for (var i = 0; i < 20_000; i += 1_000)
                 {
                     Console.WriteLine($"TestBlock: {i}");
                     var testBlock = TestBlock.Create(i);
@@ -100,16 +146,15 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 }
 
                 await Task.WhenAll(tasks);
-                Console.WriteLine(count);
+                Console.WriteLine(count);*/
 
-                using (var stream = await connection.SendStream(1000))
-                {
-                    /*if (stream is not null)
-                    {
-                        var result2 = await stream.Send([]);
-                        stream.Dispose();
-                    }*/
-                }
+                /*await this.TestStream2(connection, 1_000);
+                await this.TestStream2(connection, 10_000);
+                await this.TestStream2(connection, 100_000);
+                await this.TestStream2(connection, 1_000_000);*/
+                // await this.TestStream2(connection, 1_000_000);
+
+                await this.TestStream3(connection, 1_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {
@@ -152,6 +197,71 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 Console.WriteLine(result2?.Length.ToString());
             }
         }*/
+    }
+
+    private async Task TestStream(ClientConnection connection, int size)
+    {
+        var buffer = new byte[size];
+        RandomVault.Pseudo.NextBytes(buffer);
+        var hash = FarmHash.Hash64(buffer);
+
+        var r = await connection.SendStream(size, hash);
+        Debug.Assert(r.Result == NetResult.Success);
+        if (r.Stream is not null)
+        {
+            var result2 = await r.Stream.Send(buffer);
+            await r.Stream.Complete();
+        }
+    }
+
+    private async Task TestStream2(ClientConnection connection, int size)
+    {
+        var buffer = new byte[size];
+        RandomVault.Pseudo.NextBytes(buffer);
+        var hash = FarmHash.Hash64(buffer);
+
+        var r = await connection.SendStreamAndReceive<ulong>(size, hash);
+        Debug.Assert(r.Result == NetResult.Success);
+        if (r.Stream is not null)
+        {
+            var r2 = await r.Stream.Send(buffer);
+            var r3 = await r.Stream.CompleteAndReceive();
+            Debug.Assert(r3.Value == hash);
+        }
+    }
+
+    private async Task TestStream3(ClientConnection connection, int size)
+    {
+        var (_, stream) = await connection.SendAndReceiveStream(size, TestStreamResponder.Instance.DataId);
+        if (stream is not null)
+        {
+            var buffer = new byte[100_000];
+            var hash = new FarmHash();
+            hash.HashInitialize();
+            long total = 0;
+
+            while (true)
+            {
+                var r = await stream.Receive(buffer);
+                if (r.Result == NetResult.Success ||
+                    r.Result == NetResult.Completed)
+                {
+                    hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                    total += r.Written;
+                }
+                else
+                {
+                    break;
+                }
+
+                if (r.Result == NetResult.Completed)
+                {
+                    var h = BitConverter.ToUInt64(hash.HashFinal());
+                    Debug.Assert(h == stream.DataId);
+                    break;
+                }
+            }
+        }
     }
 
     public NetControl NetControl { get; set; }

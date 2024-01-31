@@ -12,6 +12,10 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         this.UnitLogger = logger;
         this.ServerOptions = new();
+
+        this.NetsphereOptions = new();
+        this.NetsphereOptions.NodeName = System.Environment.OSVersion.ToString();
+        this.NewConnectionContext = connection => new ConnectionContext(connection);
     }
 
     #region FieldAndProperty
@@ -22,19 +26,15 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public CancellationToken CancellationToken => this.Core.CancellationToken;
 
-    public NetsphereOptions NetsphereOptions { get; private set; } = default!;
+    public NetsphereOptions NetsphereOptions { get; private set; }
 
-    public bool EnableServer { get; private set; }
-
-    public string NodeName { get; private set; } = default!;
+    public Func<ServerConnection, ConnectionContext> NewConnectionContext { get; set; }
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
     public ServerOptions ServerOptions { get; set; }
 
     public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
-
-    public int DefaultSendBufferSize { get; set; } = NetConstants.DefaultSendBufferSize;
 
     public NodePublicKey NodePublicKey { get; private set; }
 
@@ -78,15 +78,8 @@ public class NetBase : UnitBase, IUnitPreparable
         }
     }
 
-    public void SetParameter(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
+    public void SetOptions(NetsphereOptions netsphereOptions)
     {
-        this.EnableServer = enableServer;
-        this.NodeName = nodeName;
-        if (string.IsNullOrEmpty(this.NodeName))
-        {
-            this.NodeName = System.Environment.OSVersion.ToString();
-        }
-
         this.NetsphereOptions = netsphereOptions;
     }
 
@@ -111,5 +104,5 @@ public class NetBase : UnitBase, IUnitPreparable
         return TinyhandSerializer.Serialize(this.NodePrivateKey);
     }
 
-    public override string ToString() => $"NetBase: {this.NodeName}";
+    public override string ToString() => $"NetBase: {this.NetsphereOptions.NodeName}";
 }
