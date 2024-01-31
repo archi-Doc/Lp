@@ -327,7 +327,7 @@ public sealed partial class ClientConnection : Connection
             }
 
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs);
+            receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId+1, tcs);
             if (receiveTransmission is null)
             {
                 return (NetResult.NoTransmission, default);
