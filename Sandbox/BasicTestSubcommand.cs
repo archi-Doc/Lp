@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
+using Netsphere.Block;
 using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Responder;
@@ -101,7 +102,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
         // netTerminal.SetDeliveryFailureRatioForTest(0.03);
-        netTerminal.SetReceiveTransmissionGapForTest(1);
+        // netTerminal.SetReceiveTransmissionGapForTest(1);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
@@ -152,12 +153,12 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await this.TestStream2(connection, 10_000);
                 await this.TestStream2(connection, 100_000);
                 await this.TestStream2(connection, 1_000_000);*/
-                // await this.TestStream2(connection, 1_000_000);
+                await this.TestStream2(connection, 2_000_000);
 
-                await this.TestStream3(connection, 1_000);
-                /*await this.TestStream3(connection, 10_000);
-                await this.TestStream3(connection, 100_000);
-                await this.TestStream3(connection, 1_000_000);*/
+                // await this.TestStream3(connection, 1_000);
+                // await this.TestStream3(connection, 10_000);
+                // await this.TestStream3(connection, 100_000);
+                // await this.TestStream3(connection, 1_000_000);
 
                 /*using (var result2 = await connection.SendAndReceiveStream(p2))
                 {

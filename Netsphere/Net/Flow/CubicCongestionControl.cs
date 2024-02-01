@@ -129,7 +129,6 @@ public class CubicCongestionControl : ICongestionControl
     private double positiveFactor;
     private double negativeFactor;
     private double power;
-    private int taichi = 1;
 
     // Hystart
     private long currentRoundMics;
@@ -140,7 +139,7 @@ public class CubicCongestionControl : ICongestionControl
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ICongestionControl.AddInFlight(SendGene sendGene, long rto)
+    void ICongestionControl.AddInFlight(SendGene sendGene, int additional)
     {
         lock (this.syncObject)
         {
@@ -271,10 +270,10 @@ public class CubicCongestionControl : ICongestionControl
         {
             if (this.negativeFactor > this.positiveFactor)
             {
-                this.taichi <<= 1;
+                this.Connection.DoubleTaichi();
             }
 
-            Console.WriteLine($"Brake: {this.taichi},{failureRatio:F3}");
+            Console.WriteLine($"Brake: {this.Connection.Taichi},{failureRatio:F3}");
             Console.WriteLine($"+{this.positiveFactor:F3} -{this.negativeFactor:F3} : {failureRatio:F3} power {this.power:F3}");
 
             this.positiveFactor = 0;
@@ -287,7 +286,7 @@ public class CubicCongestionControl : ICongestionControl
 
             if (this.positiveFactor >= 2d)
             {
-                this.taichi = 1;
+                this.Connection.ResetTaichi();
             }
 
             this.positiveFactor *= this.power;
@@ -348,7 +347,7 @@ public class CubicCongestionControl : ICongestionControl
         while (resendCapacity > 0 && this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
-            if (Mics.FastSystem < (gene.SentMics + (gene.SendTransmission.Connection.RetransmissionTimeout * this.taichi)))
+            if (Mics.FastSystem < (gene.SentMics + (gene.SendTransmission.Connection.RetransmissionTimeout * this.Connection.Taichi)))
             {
                 break;
             }

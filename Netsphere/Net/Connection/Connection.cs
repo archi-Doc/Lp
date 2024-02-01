@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -109,6 +110,9 @@ public abstract class Connection : IDisposable
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
 
+    public int TaichiTimeout
+        => this.RetransmissionTimeout * this.Taichi;
+
     public int SendCount
         => this.sendCount;
 
@@ -162,7 +166,22 @@ public abstract class Connection : IDisposable
     internal long AckMics; // lock(AckBuffer.syncObject)
     internal Queue<ReceiveTransmissionAndAckGene>? AckQueue; // lock(AckBuffer.syncObject)
 
+    // Connection lost
+    internal int Taichi = 1;
+
     #endregion
+
+    internal void ResetTaichi()
+        => this.Taichi = 1;
+
+    internal void DoubleTaichi()
+    {
+        this.Taichi <<= 1;
+        if (this.Taichi < 1)
+        {
+            this.Taichi = 1;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateLatestAckMics()

@@ -25,10 +25,11 @@ internal class NoCongestionControl : ICongestionControl
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ICongestionControl.AddInFlight(SendGene sendGene, long rto)
+    void ICongestionControl.AddInFlight(SendGene sendGene, int additional)
     {
         lock (this.syncObject)
         {
+            var rto = Mics.FastSystem + sendGene.SendTransmission.Connection.TaichiTimeout + additional;
             if (sendGene.Node is OrderedMultiMap<long, SendGene>.Node node)
             {
                 this.genesInFlight.SetNodeKey(node, rto);
@@ -45,6 +46,7 @@ internal class NoCongestionControl : ICongestionControl
     {
         lock (this.syncObject)
         {
+            sendGene.SendTransmission.Connection.ResetTaichi();
             if (sendGene.Node is OrderedMultiMap<long, SendGene>.Node node)
             {
                 this.genesInFlight.RemoveNode(node);
@@ -82,6 +84,8 @@ internal class NoCongestionControl : ICongestionControl
                 }
 
                 gene = firstNode.Value;
+                gene.SendTransmission.Connection.DoubleTaichi();
+                Console.WriteLine($"RESEND: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
                 if (!gene.Resend_NotThreadSafe(netSender, addition++))
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
