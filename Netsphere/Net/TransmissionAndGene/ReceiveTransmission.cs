@@ -209,6 +209,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
             }
             else if (this.genes is not null)
             {// Block, Stream
+                // Console.WriteLine(dataPosition);
+                if (dataPosition == 754)
+                {}
+
                 var chain = this.genes.DataPositionListChain;
                 if (chain.Get(dataPosition) is { } gene)
                 {

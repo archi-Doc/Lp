@@ -329,7 +329,7 @@ Loop:
             }
 
             var sendCapacity = chain.Capacity - chain.Consumed;
-            var receiveCapacity = this.ReceiveCapacity - chain.Consumed;
+            var receiveCapacity = this.ReceiveCapacity; // - chain.Consumed;
             var capacity = Math.Min(sendCapacity, receiveCapacity);
 
             if (capacity <= 0)

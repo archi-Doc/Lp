@@ -856,6 +856,8 @@ Wait:
         var span = frame;
         BitConverter.TryWriteBytes(span, (ushort)FrameType.KnockResponse);
         span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, transmission.TransmissionId);
+        span = span.Slice(sizeof(uint));
         BitConverter.TryWriteBytes(span, transmission.ReceiveCapacity);
         span = span.Slice(sizeof(int));
 

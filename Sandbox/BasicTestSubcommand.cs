@@ -33,6 +33,7 @@ public class CustomConnectionContext : ConnectionContext
             if (r.Result == NetResult.Success ||
                 r.Result == NetResult.Completed)
             {
+                // Console.WriteLine($"recv {r.Written}");
                 hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
                 total += r.Written;
             }
