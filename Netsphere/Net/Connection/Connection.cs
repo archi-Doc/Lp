@@ -314,6 +314,8 @@ Wait:
 
     internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
+        transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
+
         lock (this.receiveTransmissions.SyncObject)
         {
             Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));

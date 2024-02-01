@@ -36,7 +36,7 @@ public class Program
                 context.AddCommand(typeof(BlockTestSubcommand));
 
                 context.AddLoggerResolver(context =>
-                {
+                {// Logger
                     if (context.LogSourceType == typeof(Netsphere.Net.CubicCongestionControl))
                     {
                         context.SetOutput<FileLogger<CongestionControlLoggerOptions>>();
@@ -77,6 +77,7 @@ public class Program
                 options.EnableAlternative = true;
             });
 
+        // Netsphere
         var unit = builder.Build();
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");

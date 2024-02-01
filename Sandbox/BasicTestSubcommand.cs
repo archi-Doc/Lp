@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Net.Http;
 using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
@@ -75,16 +74,16 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
-        this.NetControl.NetResponder.Register(Netsphere.Responder.TestBlockResponder.Instance);
-        this.NetControl.NetResponder.Register(Netsphere.Responder.TestStreamResponder.Instance);
+        this.NetControl.ResponderControl.Register(MemoryResponder.Instance);
+        this.NetControl.ResponderControl.Register(TestBlockResponder.Instance);
+        this.NetControl.ResponderControl.Register(TestStreamResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
         var p = new PacketPing("test56789");
-        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
+        var result = await packetTerminal.SendAndReceive<PacketPing, PacketPingResponse>(netAddress, p);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
@@ -98,10 +97,11 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
-        this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 4_000_000, };
+        this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 100_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
-        // netTerminal.SetDeliveryFailureRatio(0.03);
+        // netTerminal.SetDeliveryFailureRatioForTest(0.03);
+        netTerminal.SetReceiveTransmissionGapForTest(1);
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
