@@ -76,7 +76,7 @@ public class NetControl : UnitBase, IUnitPreparable
             netBase.AllowUnsafeConnection = allowUnsafeConnection;
             if (newConnectionContext is not null)
             {
-                netBase.NewConnectionContext = newConnectionContext;
+                netBase.ServerConnectionContext = newConnectionContext;
             }
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();

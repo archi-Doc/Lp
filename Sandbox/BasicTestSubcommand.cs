@@ -52,6 +52,12 @@ public class CustomConnectionContext : ConnectionContext
             }
         }
     }
+
+    public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    {
+        agreement.Update(this.ServerConnection.Agreement);
+        return agreement;
+    }
 }
 
 [SimpleCommand("basic")]
@@ -98,8 +104,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
-        this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 100_000_000, };
+        this.NetControl.NetBase.ServerConnectionContext = connection => new CustomConnectionContext(connection);
+        // this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 100_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
         // netTerminal.SetDeliveryFailureRatioForTest(0.03);
@@ -109,6 +115,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             if (connection is not null)
             {
                 var success = 0;
+
+                var agreement = TinyhandSerializer.Clone(connection.Agreement);
+                agreement.MaxStreamLength = 100_000_000;
+                var agreementResult = await connection.RequestAgreement(agreement);
 
                 /*for (var i = 0; i < 20; i++)
                 {

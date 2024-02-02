@@ -34,7 +34,7 @@ public class BlockTestSubcommand : ISimpleCommandAsync
             return;
         }
 
-        this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
+        this.NetControl.NetBase.ServerConnectionContext = connection => new CustomConnectionContext(connection);
         this.NetControl.NetBase.DefaultSendTimeout = TimeSpan.FromMinutes(1);
         this.NetControl.NetTerminal.SetDeliveryFailureRatioForTest(0.05d);
         this.NetControl.NetTerminal.PacketTerminal.MaxResendCount = 10;

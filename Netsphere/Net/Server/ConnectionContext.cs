@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Block;
 using Netsphere.Net;
 
 namespace Netsphere.Server;
@@ -15,6 +16,11 @@ public class ExampleConnectionContext : ConnectionContext
     public override async Task InvokeStream(StreamContext streamContext)
     {
         return;
+    }
+
+    public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    {
+        return this.ServerConnection.Agreement;
     }
 }
 
@@ -83,6 +89,10 @@ public class ConnectionContext
     public virtual Task InvokeStream(StreamContext streamContext)
         => Task.CompletedTask;
 
+    public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+        => this.ServerConnection.Agreement;
+
+
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
         return false;
@@ -92,7 +102,11 @@ public class ConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (this.NetTerminal.NetResponder.TryGet(transmissionContext.DataId, out var responder))
+            if (transmissionContext.DataId == ConnectionAgreementBlock.DataId)
+            {
+                this.AgreementRequested(transmissionContext);
+            }
+            else if (this.NetTerminal.NetResponder.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }
@@ -193,5 +207,25 @@ SendNoNetService:
         transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
         transmissionContext.Return();
         return;
+    }
+
+    private bool AgreementRequested(TransmissionContext transmissionContext)
+    {
+        if (!TinyhandSerializer.TryDeserialize<ConnectionAgreementBlock>(transmissionContext.Owner.Memory.Span, out var t))
+        {
+            transmissionContext.Return();
+            return false;
+        }
+
+        transmissionContext.Return();
+
+        var response = this.RequestAgreement(t);
+        if (response != this.ServerConnection.Agreement)
+        {
+            this.ServerConnection.Agreement.Update(response);
+        }
+
+        transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);
+        return true;
     }
 }

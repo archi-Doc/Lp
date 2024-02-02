@@ -221,7 +221,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 }
 
                 /*else if (this.Mode == NetTransmissionMode.Block)
-                { //  Check anyway during chain.Get(dataPosition).
+                { //  Check anyway in chain.Get(dataPosition).
                     if (dataPosition < 0 ||
                     dataPosition >= this.totalGene)
                     {// Out of range
