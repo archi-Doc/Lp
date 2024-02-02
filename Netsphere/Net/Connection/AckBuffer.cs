@@ -179,10 +179,10 @@ NewPacket:
             }
             else
             {// Block/Stream
-                int receiveCapacity = item.ReceiveTransmission.ReceiveCapacity;
+                int maxReceivePosition = item.ReceiveTransmission.MaxReceivePosition;
                 int successiveReceivedPosition = item.ReceiveTransmission.SuccessiveReceivedPosition;
 
-                BitConverter.TryWriteBytes(span, receiveCapacity); // 4 bytes
+                BitConverter.TryWriteBytes(span, maxReceivePosition); // 4 bytes
                 span = span.Slice(sizeof(int));
                 BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId); // 4 bytes
                 span = span.Slice(sizeof(uint));

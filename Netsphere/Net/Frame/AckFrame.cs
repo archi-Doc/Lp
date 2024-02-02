@@ -15,7 +15,7 @@ internal readonly struct AckFrame
     // public readonly uint TransmissionId;
 
     // Block/Stream
-    // public readonly int ReceiveCapacity;
+    // public readonly int MaxReceivePosition;
     // public readonly uint TransmissionId;
     // public readonly int SuccessiveReceivedPosition;
     // public readonly ushort NumberOfPairs; // 2 bytes

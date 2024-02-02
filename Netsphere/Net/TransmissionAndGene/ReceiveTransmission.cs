@@ -28,7 +28,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
-    public int ReceiveCapacity
+    public int MaxReceivePosition
     {
         get
         {
@@ -38,7 +38,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
             }
             else
             {
-                return this.genes.DataPositionListChain.Capacity - this.genes.DataPositionListChain.Consumed;
+                return this.genes.DataPositionListChain.EndPosition;
             }
         }
     }
@@ -210,10 +210,25 @@ internal sealed partial class ReceiveTransmission : IDisposable
             else if (this.genes is not null)
             {// Block, Stream
                 // Console.WriteLine(dataPosition);
-                if (dataPosition == 754)
-                {}
-
                 var chain = this.genes.DataPositionListChain;
+                if (this.Mode == NetTransmissionMode.Stream)
+                {// Stream
+                    if (dataPosition < chain.StartPosition ||
+                    dataPosition >= chain.EndPosition)
+                    {// Out of range (no ack)
+                        return;
+                    }
+                }
+
+                /*else if (this.Mode == NetTransmissionMode.Block)
+                { //  Check anyway during chain.Get(dataPosition).
+                    if (dataPosition < 0 ||
+                    dataPosition >= this.totalGene)
+                    {// Out of range
+                        return;
+                    }
+                }*/
+
                 if (chain.Get(dataPosition) is { } gene)
                 {
                     gene.SetRecv(toBeShared);
@@ -514,10 +529,13 @@ Abort:
 
                     stream.CurrentPosition++;
                     gene.Dispose();
-                    gene.Goshujin = default;
+
+                    chain.Remove(gene);
+                    chain.Add(gene);
 
                     if (length == 0)
                     {// Complete
+                        gene.Goshujin = default;
                         this.DisposeInternal();
                         goto Complete;
                     }

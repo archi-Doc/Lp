@@ -54,7 +54,7 @@ internal sealed partial class SendTransmission : IDisposable
 
 #pragma warning disable SA1401 // Fields should be private
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
-    internal int ReceiveCapacity;
+    internal int MaxReceivePosition;
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();
@@ -303,7 +303,7 @@ internal sealed partial class SendTransmission : IDisposable
             var info = NetHelper.CalculateGene(maxLength);
             var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
             this.genes.GeneSerialListChain.Resize(bufferGenes);
-            this.ReceiveCapacity = bufferGenes;
+            this.MaxReceivePosition = bufferGenes;
         }
 
         return NetResult.Success;
@@ -328,11 +328,7 @@ Loop:
                 return NetResult.Closed;
             }
 
-            var sendCapacity = chain.Capacity - chain.Consumed;
-            var receiveCapacity = this.ReceiveCapacity; // - chain.Consumed;
-            var capacity = Math.Min(sendCapacity, receiveCapacity);
-
-            if (capacity <= 0)
+            if (this.GeneSerialMax >= this.MaxReceivePosition)
             {
                 SendKnockFrame();
 
@@ -363,11 +359,9 @@ Loop:
                     return NetResult.Closed;
                 }
 
-                sendCapacity = chain.Capacity - chain.Consumed;
-                capacity = Math.Min(sendCapacity, receiveCapacity);
-
-                while (capacity > 0)
+                while (this.GeneSerialMax < this.MaxReceivePosition)
                 {
+                    Debug.Assert(chain.CanAdd);
                     int size;
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;
@@ -400,7 +394,6 @@ Loop:
                     this.GeneSerialMax++;
                     stream.RemainingLength -= size;
                     stream.SentLength += size;
-                    capacity--;
                     if (buffer.Length == 0 || stream.RemainingLength == 0)
                     {// Complete
                         this.Mode = NetTransmissionMode.StreamCompleted;
@@ -508,7 +501,7 @@ Exit:
         this.DisposeInternal();
     }
 
-    internal void ProcessReceive_AckBlock(int receiveCapacity, int successiveReceivedPosition, scoped Span<byte> span, ushort numberOfPairs)
+    internal void ProcessReceive_AckBlock(int maxReceivePosition, int successiveReceivedPosition, scoped Span<byte> span, ushort numberOfPairs)
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
         long sentMics = 0;
@@ -522,7 +515,7 @@ Exit:
                 return;
             }
 
-            this.ReceiveCapacity = receiveCapacity;
+            this.MaxReceivePosition = maxReceivePosition;
             while (numberOfPairs-- > 0)
             {
                 var startGene = BitConverter.ToInt32(span);

@@ -154,7 +154,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await this.TestStream2(connection, 10_000);
                 await this.TestStream2(connection, 100_000);
                 await this.TestStream2(connection, 1_000_000);*/
-                await this.TestStream2(connection, 2_000_000);
+                await this.TestStream2(connection, 10_000_000);
 
                 // await this.TestStream3(connection, 1_000);
                 // await this.TestStream3(connection, 10_000);

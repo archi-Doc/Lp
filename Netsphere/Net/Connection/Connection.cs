@@ -619,12 +619,12 @@ Wait:
         {
             while (span.Length >= 8)
             {
-                var receiveCapacity = BitConverter.ToInt32(span);
+                var maxReceivePosition = BitConverter.ToInt32(span);
                 span = span.Slice(sizeof(int));
                 var transmissionId = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
 
-                if (receiveCapacity < 0)
+                if (maxReceivePosition < 0)
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
@@ -656,7 +656,7 @@ Wait:
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
                         this.UpdateLatestAckMics();
-                        transmission.ProcessReceive_AckBlock(receiveCapacity, successiveReceivedPosition, span, numberOfPairs);
+                        transmission.ProcessReceive_AckBlock(maxReceivePosition, successiveReceivedPosition, span, numberOfPairs);
                     }
                     else
                     {// SendTransmission has already been disposed due to reasons such as having already received response data.
@@ -858,7 +858,7 @@ Wait:
         span = span.Slice(sizeof(ushort));
         BitConverter.TryWriteBytes(span, transmission.TransmissionId);
         span = span.Slice(sizeof(uint));
-        BitConverter.TryWriteBytes(span, transmission.ReceiveCapacity);
+        BitConverter.TryWriteBytes(span, transmission.MaxReceivePosition);
         span = span.Slice(sizeof(int));
 
         this.SendPriorityFrame(frame);
@@ -878,10 +878,10 @@ Wait:
         {
             if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
             {
-                var receiveCapacity = BitConverter.ToInt32(span);
+                var maxReceivePosition = BitConverter.ToInt32(span);
                 span = span.Slice(sizeof(int));
 
-                transmission.ReceiveCapacity = receiveCapacity;
+                transmission.MaxReceivePosition = maxReceivePosition;
             }
         }
     }

@@ -54,8 +54,6 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    
-
     public void Clean()
     {
         var systemCurrentMics = Mics.GetSystem();
