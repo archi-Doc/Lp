@@ -92,7 +92,6 @@ public class ConnectionContext
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
         => this.ServerConnection.Agreement;
 
-
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
         return false;
