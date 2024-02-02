@@ -20,8 +20,8 @@ public class BlockTestSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
-        this.NetControl.NetResponder.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.ResponderControl.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.ResponderControl.Register(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -34,9 +34,9 @@ public class BlockTestSubcommand : ISimpleCommandAsync
             return;
         }
 
-        this.NetControl.NetBase.NewConnectionContext = connection => new CustomConnectionContext(connection);
+        this.NetControl.NetBase.ServerConnectionContext = connection => new CustomConnectionContext(connection);
         this.NetControl.NetBase.DefaultSendTimeout = TimeSpan.FromMinutes(1);
-        this.NetControl.NetTerminal.SetDeliveryFailureRatio(0.05d);
+        this.NetControl.NetTerminal.SetDeliveryFailureRatioForTest(0.05d);
         this.NetControl.NetTerminal.PacketTerminal.MaxResendCount = 10;
         //this.NetControl.Alternative!.SetDeliveryFailureRatio(0.05d);
         this.NetControl.Alternative!.PacketTerminal.MaxResendCount = 10;

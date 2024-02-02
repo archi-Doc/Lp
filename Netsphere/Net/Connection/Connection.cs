@@ -1,11 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
 using Netsphere.Block;
+using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
 using static Arc.Unit.ByteArrayPool;
@@ -109,6 +111,9 @@ public abstract class Connection : IDisposable
     public int RetransmissionTimeout
         => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
 
+    public int TaichiTimeout
+        => this.RetransmissionTimeout * this.Taichi;
+
     public int SendCount
         => this.sendCount;
 
@@ -162,7 +167,22 @@ public abstract class Connection : IDisposable
     internal long AckMics; // lock(AckBuffer.syncObject)
     internal Queue<ReceiveTransmissionAndAckGene>? AckQueue; // lock(AckBuffer.syncObject)
 
+    // Connection lost
+    internal int Taichi = 1;
+
     #endregion
+
+    internal void ResetTaichi()
+        => this.Taichi = 1;
+
+    internal void DoubleTaichi()
+    {
+        this.Taichi <<= 1;
+        if (this.Taichi < 1)
+        {
+            this.Taichi = 1;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateLatestAckMics()
@@ -212,6 +232,16 @@ public abstract class Connection : IDisposable
                 transmission.SendNode = this.SendList.AddLast(transmission);
             }
         }
+    }
+
+    public bool ValidateAndVerify(AuthenticationToken token)
+    {
+        if (token.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return TinyhandHelper.ValidateAndVerify(token);
     }
 
     public void Close()
@@ -314,6 +344,8 @@ Wait:
 
     internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
+        transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
+
         lock (this.receiveTransmissions.SyncObject)
         {
             Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
@@ -598,12 +630,12 @@ Wait:
         {
             while (span.Length >= 8)
             {
-                var receiveCapacity = BitConverter.ToInt32(span);
+                var maxReceivePosition = BitConverter.ToInt32(span);
                 span = span.Slice(sizeof(int));
                 var transmissionId = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
 
-                if (receiveCapacity < 0)
+                if (maxReceivePosition < 0)
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
@@ -635,7 +667,7 @@ Wait:
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
                         this.UpdateLatestAckMics();
-                        transmission.ProcessReceive_AckBlock(receiveCapacity, successiveReceivedPosition, span, numberOfPairs);
+                        transmission.ProcessReceive_AckBlock(maxReceivePosition, successiveReceivedPosition, span, numberOfPairs);
                     }
                     else
                     {// SendTransmission has already been disposed due to reasons such as having already received response data.
@@ -835,7 +867,9 @@ Wait:
         var span = frame;
         BitConverter.TryWriteBytes(span, (ushort)FrameType.KnockResponse);
         span = span.Slice(sizeof(ushort));
-        BitConverter.TryWriteBytes(span, transmission.ReceiveCapacity);
+        BitConverter.TryWriteBytes(span, transmission.TransmissionId);
+        span = span.Slice(sizeof(uint));
+        BitConverter.TryWriteBytes(span, transmission.MaxReceivePosition);
         span = span.Slice(sizeof(int));
 
         this.SendPriorityFrame(frame);
@@ -855,10 +889,10 @@ Wait:
         {
             if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
             {
-                var receiveCapacity = BitConverter.ToInt32(span);
+                var maxReceivePosition = BitConverter.ToInt32(span);
                 span = span.Slice(sizeof(int));
 
-                transmission.ReceiveCapacity = receiveCapacity;
+                transmission.MaxReceivePosition = maxReceivePosition;
             }
         }
     }

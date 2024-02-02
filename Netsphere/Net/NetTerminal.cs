@@ -69,14 +69,19 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
         => this.NetStats.TryCreateEndPoint(in address, out endPoint);
 
-    public void SetDeliveryFailureRatio(double ratio)
+    public void SetDeliveryFailureRatioForTest(double ratio)
     {
         this.NetSender.SetDeliveryFailureRatio(ratio);
     }
 
+    public void SetReceiveTransmissionGapForTest(uint gap)
+    {
+        this.ConnectionTerminal.SetReceiveTransmissionGapForTest(gap);
+    }
+
     public async Task<NetNode?> UnsafeGetNetNodeAsync(NetAddress address)
     {
-        var t = await this.PacketTerminal.SendAndReceiveAsync<PacketGetInformation, PacketGetInformationResponse>(address, new()).ConfigureAwait(false);
+        var t = await this.PacketTerminal.SendAndReceive<PacketGetInformation, PacketGetInformationResponse>(address, new()).ConfigureAwait(false);
         if (t.Value is null)
         {
             return null;

@@ -44,7 +44,7 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
 
     public NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
     {
-        if (!this.Engaged)
+        if (!this.Authenticated)
         {
             return new(MergerResult.NotAuthorized);
         }
@@ -52,8 +52,8 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
         return this.merger.CreateCredit(param);
     }
 
-    public new NetTask<NetResult> Authorize(Token token)
-        => base.Authorize(token);
+    public new NetTask<NetResult> Authenticate(AuthenticationToken token)
+        => base.Authenticate(token);
 
     private Merger merger;
 }

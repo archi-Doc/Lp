@@ -35,7 +35,7 @@ public class DeliveryTestSubcommand : ISimpleCommandAsync<DeliveryTestOptions>
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
-        netTerminal.SetDeliveryFailureRatio(0.3); // 1 - 0.3^3 = 0.973
+        netTerminal.SetDeliveryFailureRatioForTest(0.3); // 1 - 0.3^3 = 0.973
         var packetTerminal = netTerminal.PacketTerminal;
 
         sw.Restart();
@@ -47,7 +47,7 @@ public class DeliveryTestSubcommand : ISimpleCommandAsync<DeliveryTestOptions>
             array[i] = Task.Run(async () =>
             {
                 var p = new PacketPing("test56789");
-                var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(nodeAddress, p);
+                var result = await packetTerminal.SendAndReceive<PacketPing, PacketPingResponse>(nodeAddress, p);
                 if (result.Result == NetResult.Success)
                 {
                     Interlocked.Increment(ref successCount);

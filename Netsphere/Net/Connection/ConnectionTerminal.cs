@@ -37,6 +37,8 @@ public class ConnectionTerminal
 
     internal ICongestionControl NoCongestionControl { get; } = new NoCongestionControl();
 
+    internal uint ReceiveTransmissionGap { get; private set; }
+
     internal readonly object SyncSend = new();
     internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
     internal UnorderedLinkedList<Connection> CongestedList = new(); // lock (this.SyncSend)
@@ -143,7 +145,7 @@ public class ConnectionTerminal
 
         // Create a new connection
         var packet = new PacketConnect(0, this.NetTerminal.NodePublicKey);
-        var t = await this.packetTerminal.SendAndReceiveAsync<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
+        var t = await this.packetTerminal.SendAndReceive<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
             return default;
@@ -397,6 +399,11 @@ public class ConnectionTerminal
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
         }
+    }
+
+    internal void SetReceiveTransmissionGapForTest(uint gap)
+    {
+        this.ReceiveTransmissionGap = gap;
     }
 
     private void CloseClientConnection(ClientConnection.GoshujinClass g, ClientConnection connection)

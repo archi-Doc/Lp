@@ -2,6 +2,7 @@
 
 namespace Netsphere.Crypto;
 
+/*
 /// <summary>
 /// Immutable token object.
 /// </summary>
@@ -141,3 +142,4 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         return this.ValidateAndVerifyWithoutPublicKey();
     }
 }
+*/

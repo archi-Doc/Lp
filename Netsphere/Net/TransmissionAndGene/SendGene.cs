@@ -114,7 +114,7 @@ internal partial class SendGene
             connection.IncrementResendCount();
         }
 
-        this.CongestionControl.AddInFlight(this, currentMics + connection.RetransmissionTimeout + additional);
+        this.CongestionControl.AddInFlight(this, additional);
         return true;
     }
 

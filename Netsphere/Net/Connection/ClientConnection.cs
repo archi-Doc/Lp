@@ -354,7 +354,19 @@ public sealed partial class ClientConnection : Connection
             }
         }
 
-        var stream = new ReceiveStream(receiveTransmission, response.DataId, 1000);//
+        var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
         return new(NetResult.Success, stream);
+    }
+
+    public async Task<NetResult> RequestAgreement(ConnectionAgreementBlock agreement)
+    {
+        var result = await this.SendAndReceive<ConnectionAgreementBlock, ConnectionAgreementBlock>(agreement, ConnectionAgreementBlock.DataId).ConfigureAwait(false);
+        if (result.Result == NetResult.Success &&
+            result.Value is not null)
+        {
+            this.Agreement.Update(result.Value);
+        }
+
+        return result.Result;
     }
 }

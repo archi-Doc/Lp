@@ -18,10 +18,10 @@ public class BasicNetTest
     [Fact]
     public async Task Test1()
     {
-        this.NetControl.NetResponder.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.ResponderControl.Register(Netsphere.Responder.MemoryResponder.Instance);
 
         var p = new PacketPing("test56789");
-        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
+        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
         result.Result.Is(NetResult.Success);
 
         using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))

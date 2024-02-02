@@ -39,17 +39,17 @@ public sealed partial class Authority
         proof.SignProof<T>(privateKey, proofMics);
     }
 
-    public void SignToken(Token token)
+    public void SignToken(AuthenticationToken token)
     {
         var privateKey = this.GetOrCreatePrivateKey();
-        token.Sign(privateKey);
+        Netsphere.TinyhandHelper.Sign(token, privateKey, 9);
     }
 
-    public void SignToken(Credit credit, Token token)
+    /*public void SignToken(Credit credit, Token token)
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
         token.Sign(privateKey);
-    }
+    }*/
 
     public byte[]? SignData(Credit credit, byte[] data)
     {

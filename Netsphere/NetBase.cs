@@ -15,7 +15,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
         this.NetsphereOptions = new();
         this.NetsphereOptions.NodeName = System.Environment.OSVersion.ToString();
-        this.NewConnectionContext = connection => new ConnectionContext(connection);
+        this.ServerConnectionContext = connection => new ConnectionContext(connection);
     }
 
     #region FieldAndProperty
@@ -28,7 +28,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public NetsphereOptions NetsphereOptions { get; private set; }
 
-    public Func<ServerConnection, ConnectionContext> NewConnectionContext { get; set; }
+    public Func<ServerConnection, ConnectionContext> ServerConnectionContext { get; set; }
 
     public bool AllowUnsafeConnection { get; set; } = false;
 

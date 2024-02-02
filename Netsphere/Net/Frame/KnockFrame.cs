@@ -18,5 +18,5 @@ internal readonly struct KnockResponseFrame
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionId; // 4 bytes
-    public readonly int ReceiveCapacity; // 4 bytes
+    public readonly int MaxReceivePosition; // 4 bytes
 }

@@ -89,7 +89,7 @@ public sealed partial class PacketTerminal
         this.AddSendPacket(endPoint.EndPoint, owner, true, default);
     }*/
 
-    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
+    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -98,10 +98,10 @@ public sealed partial class PacketTerminal
             return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
         }
 
-        return this.SendAndReceiveAsync<TSend, TReceive>(endPoint, packet);
+        return this.SendAndReceive<TSend, TReceive>(endPoint, packet);
     }
 
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -141,7 +141,7 @@ public sealed partial class PacketTerminal
                 response.Return();
             }
 
-            return (NetResult.Success, receive, response.ElapsedMics);
+            return (NetResult.Success, receive, (int)response.Additional);
         }
         catch
         {
@@ -283,7 +283,7 @@ public sealed partial class PacketTerminal
                 if (item.ResponseTcs is not null)
                 {
                     var elapsedMics = currentSystemMics > item.SentMics ? (int)(currentSystemMics - item.SentMics) : 0;
-                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, toBeShared.IncrementAndShare(), elapsedMics));
+                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, elapsedMics, toBeShared.IncrementAndShare()));
                 }
             }
         }

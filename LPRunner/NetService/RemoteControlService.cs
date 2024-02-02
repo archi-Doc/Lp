@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Security.Cryptography.X509Certificates;
 using Arc.Unit;
 using BigMachines;
 using LPRunner;
@@ -20,16 +21,15 @@ internal class RemoteControlService : IRemoteControlService
         this.information = information;
     }
 
-    public async NetTask RequestAuthorization(Token token)
+    public async NetTask Authenticate(AuthenticationToken token)
     {
-        /*if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token, this.information.RemotePublicKey))
+        if (TransmissionContext.Current.Connection.ValidateAndVerify(token) &&
+            token.PublicKey.Equals(this.information.RemotePublicKey))
         {
             this.token = token;
-            CallContext.Current.Result = NetResult.Success;
+            TransmissionContext.Current.Result = NetResult.Success;
             return;
         }
-
-        CallContext.Current.Result = NetResult.NotAuthorized;*/
 
         TransmissionContext.Current.Result = NetResult.NotAuthorized;
     }
@@ -62,7 +62,7 @@ internal class RemoteControlService : IRemoteControlService
             }
 
             var remoteControl = terminal.GetService<IRemoteControlService>();
-            var response = await remoteControl.RequestAuthorization(this.token).ResponseAsync;
+            var response = await remoteControl.Authenticate(this.token).ResponseAsync;
             this.logger.TryGet()?.Log($"RequestAuthorization: {response.Result}");
             if (!response.IsSuccess)
             {
@@ -88,5 +88,5 @@ internal class RemoteControlService : IRemoteControlService
     private NetControl netControl;
     private BigMachine bigMachine;
     private RunnerInformation information;
-    private Token? token;
+    private AuthenticationToken? token;
 }

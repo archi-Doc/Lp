@@ -8,7 +8,7 @@ namespace LP.NetServices;
 [NetServiceInterface]
 public interface RemoteControlService : INetService
 {
-    public NetTask RequestAuthorization(Token token);
+    public NetTask Authenticate(AuthenticationToken token);
 
     public NetTask<NetResult> Restart();
 }
@@ -23,10 +23,11 @@ internal class RemoteControlServiceImpl : RemoteControlService
         this.control = control;
     }
 
-    public async NetTask RequestAuthorization(Token token)
+    public async NetTask Authenticate(AuthenticationToken token)
     {// NetTask<NetResult> is recommended.
         if (TransmissionContext.Current.Connection.EndPoint.IsPrivateOrLocalLoopbackAddress() &&
-            token.ValidateAndVerifyWithoutSalt(this.control.LPBase.RemotePublicKey))
+            TransmissionContext.Current.Connection.ValidateAndVerify(token) &&
+            token.PublicKey.Equals(this.control.LPBase.RemotePublicKey))
         {
             this.token = token;
             TransmissionContext.Current.Result = NetResult.Success;
@@ -61,5 +62,5 @@ internal class RemoteControlServiceImpl : RemoteControlService
 
     private ILogger<RemoteControlServiceImpl> logger;
     private Control control;
-    private Token? token;
+    private AuthenticationToken? token;
 }

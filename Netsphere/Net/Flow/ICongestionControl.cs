@@ -22,7 +22,7 @@ internal interface ICongestionControl
 
     // void ReportDeliveryFailure();
 
-    void AddInFlight(SendGene sendGene, long rto);
+    void AddInFlight(SendGene sendGene, int additional);
 
     void RemoveInFlight(SendGene sendGene, bool ack);
 
