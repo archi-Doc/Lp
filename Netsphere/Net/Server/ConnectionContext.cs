@@ -68,7 +68,7 @@ public class ConnectionContext
 
     public ConnectionContext(ServerConnection serverConnection)
     {
-        this.ServiceProvider = default; // serviceProvider;
+        this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
     }

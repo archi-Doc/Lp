@@ -295,6 +295,7 @@ public class Control : ILogInformation
                     }
                 }
 
+                options.NetsphereOptions.EnableServer = true;
                 context.SetOptions(options);
             }
         }
