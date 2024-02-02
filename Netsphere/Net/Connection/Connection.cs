@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
 using Netsphere.Block;
+using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
 using static Arc.Unit.ByteArrayPool;
@@ -231,6 +232,16 @@ public abstract class Connection : IDisposable
                 transmission.SendNode = this.SendList.AddLast(transmission);
             }
         }
+    }
+
+    public bool ValidateAndVerify(AuthenticationToken token)
+    {
+        if (token.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return TinyhandHelper.ValidateAndVerify(token);
     }
 
     public void Close()

@@ -34,31 +34,25 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
         // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
         this.logger.TryGet()?.Log($"Start");
-        using (var terminal = await this.terminal.TryConnect(nodeInformation))
+        using (var connection = await this.terminal.TryConnect(nodeInformation))
         {
-            if (terminal == null)
+            if (connection == null)
             {
                 this.logger.TryGet()?.Log(Hashed.Error.Connect, nodeInformation.ToString());
                 return;
             }
 
-            //var token = await terminal.CreateToken(Token.Type.Authorize);
-            var token = new Token();
-            if (token == null)
-            {
-                return;
-            }
-
+            var token = new AuthenticationToken(connection.Salt);
             authority.SignToken(token);
-            if (!token.ValidateAndVerifyWithoutPublicKey())
+            if (!connection.ValidateAndVerify(token))
             {
                 return;
             }
 
-            var service = terminal.GetService<RemoteControlService>();
-            var response = await service.RequestAuthorization(token).ResponseAsync;
+            var service = connection.GetService<RemoteControlService>();
+            var response = await service.Authenticate(token).ResponseAsync;
             var result = response.Result;
-            this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+            this.logger.TryGet()?.Log($"Authenticate: {result}");
 
             if (result == NetResult.Success)
             {

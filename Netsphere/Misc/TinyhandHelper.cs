@@ -17,7 +17,7 @@ public static class TinyhandHelper
 
     public static void ReturnBuffer(byte[] buffer) => arrayPool.Return(buffer);
 
-    public static bool Sign<T>(this T value, SignaturePrivateKey privateKey, long signedMics)
+    public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {
         var ecdsa = privateKey.TryGetEcdsa();
@@ -31,7 +31,7 @@ public static class TinyhandHelper
         try
         {
             value.PublicKey = privateKey.ToPublicKey();
-            value.SignedMics = signedMics;
+            value.SignedMics = Mics.GetCorrected(); // signedMics;
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
             writer.FlushAndGetReadOnlySpan(out var span, out _);

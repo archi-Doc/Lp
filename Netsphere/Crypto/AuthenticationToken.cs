@@ -12,6 +12,11 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
     {
     }
 
+    public AuthenticationToken(ulong salt)
+    {
+        this.Salt = salt;
+    }
+
     #region FieldAndProperty
 
     [Key(0)]
@@ -40,16 +45,6 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
         }
 
         return true;
-    }
-
-    public bool ValidateAndVerify(ulong salt)
-    {
-        if (this.Salt == salt)
-        {
-            return false;
-        }
-
-        return TinyhandHelper.ValidateAndVerify(this);
     }
 
     public bool Equals(AuthenticationToken? other)

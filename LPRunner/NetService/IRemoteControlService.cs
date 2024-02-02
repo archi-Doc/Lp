@@ -8,7 +8,7 @@ namespace LP.NetServices;
 [NetServiceInterface]
 public interface IRemoteControlService : INetService
 {
-    public NetTask RequestAuthorization(Token token);
+    public NetTask Authenticate(AuthenticationToken token);
 
     public NetTask<NetResult> Restart();
 }
