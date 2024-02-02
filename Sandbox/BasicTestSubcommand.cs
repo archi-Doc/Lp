@@ -82,9 +82,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        this.NetControl.ResponderControl.Register(MemoryResponder.Instance);
-        this.NetControl.ResponderControl.Register(TestBlockResponder.Instance);
-        this.NetControl.ResponderControl.Register(TestStreamResponder.Instance);
+        this.NetControl.Responders.Register(MemoryResponder.Instance);
+        this.NetControl.Responders.Register(TestBlockResponder.Instance);
+        this.NetControl.Responders.Register(TestStreamResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
