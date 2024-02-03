@@ -122,7 +122,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 var service = connection.GetService<TestService>();
                 var pingpong = await service.Pingpong([1, 2, 3,]);
-                var stream = await service.ReceiveStream(123);
+                var stream = await service.ReceiveData("test", 123);
                 if (stream is not null)
                 {
                     await this.ProcessReceiveStream(stream);
@@ -220,6 +220,25 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 Console.WriteLine(result2?.Length.ToString());
             }
         }*/
+    }
+
+    public NetTask<Netsphere.Net.ReceiveStream?> ReceiveData(string a1, long a2)
+    {
+        return new NetTask<Netsphere.Net.ReceiveStream?>(Core());
+
+        async Task<ServiceResponse<Netsphere.Net.ReceiveStream?>> Core()
+        {
+            if (!Netsphere.Block.BlockService.TrySerialize((a1, a2), out var owner))
+            {
+                return new(default!, NetResult.SerializationError);
+            }
+
+            var con = new ClientConnection();
+            var r = await con.SendAndReceiveServiceStream(owner, 0x86e351f56dc1430eul).ConfigureAwait(false);
+            // var response = await this.ClientConnection.SendAndReceiveService(owner, 0x86e351f56dc1430eul).ConfigureAwait(false);
+            owner.Return();
+            return new(r.Stream, r.Result);
+        }
     }
 
     private async Task TestStream(ClientConnection connection, int size)

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Drawing;
 using Arc.Crypto;
 using Netsphere;
@@ -15,9 +16,9 @@ public interface TestService : INetService
 
     public NetTask<ulong> GetHash(byte[] data);
 
-    public NetTask<ReceiveStream?> ReceiveStream(long length);
+    public NetTask<ReceiveStream?> ReceiveData(string name, long length);
 
-    public NetTask<SendStream?> SendStream(ulong dataId);
+    // public NetTask<SendStreamAndReceive<ulong>?> SendData();
 }
 
 [NetServiceObject]
@@ -31,7 +32,7 @@ public class TestServiceImpl : TestService
     public async NetTask<ulong> GetHash(byte[] data)
         => Arc.Crypto.FarmHash.Hash64(data);
 
-    public async NetTask<StreamService?> ReceiveStream(long length)
+    public async NetTask<ReceiveStream?> ReceiveData(string name, long length)
     {
         length = Math.Min(length, MaxStreamLength);
         var r = new Xoshiro256StarStar((ulong)length);
@@ -46,6 +47,13 @@ public class TestServiceImpl : TestService
             await stream.Complete();
         }
 
-        return stream;
+        return default;
     }
+
+    /*public async NetTask<SendStreamAndReceive<ulong>?> SendData()
+    {
+        var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+
+        return default;
+    }*/
 }
