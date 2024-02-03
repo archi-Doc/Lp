@@ -511,50 +511,59 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
 
                 ssb.AppendLine();
-                ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveService(owner, {method.IdString}).ConfigureAwait(false);");
-                ssb.AppendLine("owner.Return();");
-                using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
+                if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
                 {
-                    AppendReturn("(NetResult)response.DataId");
-                }
-
-                using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
-                {
-                    AppendReturn("response.Result");
-                }
-
-                ssb.AppendLine();
-                if (method.ReturnType == ServiceMethod.Type.ByteArray)
-                {
-                    ssb.AppendLine("var result = response.Value.Memory.ToArray();");
-                    ssb.AppendLine("response.Value.Return();");
-                }
-                else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
-                {
-                    ssb.AppendLine("var result = response.Value;");
-                }
-                else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
-                {
-                    ssb.AppendLine("var result = response.Value.AsReadOnly();");
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveServiceStream(owner, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine("owner.Return();");
+                    ssb.AppendLine("return new(response.Stream, response.Result);");
                 }
                 else
                 {
-                    using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveService(owner, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine("owner.Return();");
+                    using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
                     {
-                        AppendReturn("NetResult.DeserializationError");
+                        AppendReturn("(NetResult)response.DataId");
+                    }
+
+                    using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
+                    {
+                        AppendReturn("response.Result");
                     }
 
                     ssb.AppendLine();
-                    ssb.AppendLine("response.Value.Return();");
-                }
+                    if (method.ReturnType == ServiceMethod.Type.ByteArray)
+                    {
+                        ssb.AppendLine("var result = response.Value.Memory.ToArray();");
+                        ssb.AppendLine("response.Value.Return();");
+                    }
+                    else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
+                    {
+                        ssb.AppendLine("var result = response.Value;");
+                    }
+                    else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
+                    {
+                        ssb.AppendLine("var result = response.Value.AsReadOnly();");
+                    }
+                    else
+                    {
+                        using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
+                        {
+                            AppendReturn("NetResult.DeserializationError");
+                        }
 
-                if (method.ReturnObject == null)
-                {
-                    ssb.AppendLine($"return default;");
-                }
-                else
-                {
-                    ssb.AppendLine($"return new(result);");
+                        ssb.AppendLine();
+                        ssb.AppendLine("response.Value.Return();");
+                    }
+
+                    if (method.ReturnObject == null)
+                    {
+                        ssb.AppendLine($"return default;");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"return new(result);");
+                    }
                 }
             }
         }

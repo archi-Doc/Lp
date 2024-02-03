@@ -11,6 +11,9 @@ public class ServiceMethod
     public const string ByteArrayName = "byte[]";
     public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
     public const string ReadOnlyMemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
+    public const string ReceiveStreamName = "Netsphere.ReceiveStream";
+    public const string SendStreamName = "Netsphere.SendStream";
+    public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive";
 
     public enum Type
     {
@@ -18,6 +21,9 @@ public class ServiceMethod
         ByteArray,
         MemoryOwner,
         ReadOnlyMemoryOwner,
+        ReceiveStream,
+        SendStream,
+        SendStreamAndReceive,
     }
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
@@ -218,6 +224,9 @@ public class ServiceMethod
         ByteArrayName => Type.ByteArray,
         MemoryOwnerName => Type.MemoryOwner,
         ReadOnlyMemoryOwnerName => Type.ReadOnlyMemoryOwner,
+        ReceiveStreamName => Type.ReceiveStream,
+        SendStreamName => Type.SendStream,
+        SendStreamAndReceiveName => Type.SendStreamAndReceive,
         _ => Type.Other,
     };
 
