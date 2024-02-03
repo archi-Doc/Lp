@@ -840,6 +840,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {// ByteArrayPool.ReadOnlyMemoryOwner result;
             ssb.AppendLine("context.Owner = result.AsMemory();");
         }
+        else if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
+        {
+        }
         else
         {// Other
             using (var scopeSerialize = ssb.ScopeBrace($"if (Netsphere.Block.BlockService.TrySerialize(result, out var owner2))"))

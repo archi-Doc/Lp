@@ -36,6 +36,9 @@ public class TestServiceImpl : TestService
         var buffer = new byte[length];
         r.NextBytes(buffer);
 
+        // TransmissionContext.Current.Result = NetResult.AlreadySent;
+        // return default;
+
         var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
         if (stream is not null)

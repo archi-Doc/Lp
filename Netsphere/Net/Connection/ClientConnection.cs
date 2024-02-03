@@ -229,11 +229,11 @@ public sealed partial class ClientConnection : Connection
     {
         if (this.IsClosedOrDisposed)
         {
-            return new(NetResult.Closed, default);
+            return (NetResult.Closed, default);
         }
         else if (this.CancellationToken.IsCancellationRequested)
         {
-            return new(NetResult.Canceled, default);
+            return (NetResult.Canceled, default);
         }
 
         NetResponse response;
@@ -243,13 +243,13 @@ public sealed partial class ClientConnection : Connection
         {
             if (transmissionAndTimeout.Transmission is null)
             {
-                return new(NetResult.NoTransmission, default);
+                return (NetResult.NoTransmission, default);
             }
 
             var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
             if (result != NetResult.Success)
             {
-                return new(result, default);
+                return (result, default);
             }
 
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -278,6 +278,11 @@ public sealed partial class ClientConnection : Connection
                 receiveTransmission.Dispose();
                 return (NetResult.Canceled, default);
             }
+        }
+
+        if (response.Additional == 0)
+        {// No stream
+            return ((NetResult)response.DataId, default);
         }
 
         var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
@@ -411,6 +416,11 @@ public sealed partial class ClientConnection : Connection
                 receiveTransmission.Dispose();
                 return (NetResult.Canceled, default);
             }
+        }
+
+        if (response.Additional == 0)
+        {// No stream
+            return ((NetResult)response.DataId, default);
         }
 
         var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);

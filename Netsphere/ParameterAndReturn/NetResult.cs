@@ -19,9 +19,9 @@ public enum NetResult
     NoNodeInformation,
     NoNetwork,
     NoNetService,
-    NoCallContext,
-    NotAuthorized,
     NoTransmission,
+    NotAuthorized,
+    NotFound,
     Completed,
     AlreadySent,
 }

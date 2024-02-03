@@ -36,7 +36,7 @@ public class CustomFilter : IServiceFilter
     {
         if (context is not TransmissionContext testContext)
         {
-            throw new NetException(NetResult.NoCallContext);
+            throw new NetException(NetResult.UnknownException);
         }
 
         await invoker(context).ConfigureAwait(false);
