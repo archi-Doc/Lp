@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Threading;
 using Netsphere.Block;
+using Netsphere.Net;
 
-namespace Netsphere.Net;
+namespace Netsphere;
 
 public class SendStreamAndReceive<TReceive> : SendStreamBase
 {

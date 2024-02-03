@@ -169,7 +169,7 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, receive);
     }
 
-    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> SendAndReceiveService(ByteArrayPool.MemoryOwner data, ulong dataId)
+    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
         if (this.IsClosedOrDisposed)
         {
@@ -225,7 +225,7 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
-    public async Task<(NetResult Result, ReceiveStream? Stream)> SendAndReceiveServiceStream(ByteArrayPool.MemoryOwner data, ulong dataId)
+    public async Task<(NetResult Result, ReceiveStream? Stream)> RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
         if (this.IsClosedOrDisposed)
         {

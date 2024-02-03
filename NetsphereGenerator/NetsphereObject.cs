@@ -513,13 +513,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 ssb.AppendLine();
                 if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
                 {
-                    ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveServiceStream(owner, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine($"var response = await this.ClientConnection.RpcSendAndReceiveStream(owner, {method.IdString}).ConfigureAwait(false);");
                     ssb.AppendLine("owner.Return();");
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                 }
                 else
                 {
-                    ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveService(owner, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine($"var response = await this.ClientConnection.RpcSendAndReceive(owner, {method.IdString}).ConfigureAwait(false);");
                     ssb.AppendLine("owner.Return();");
                     using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
                     {

@@ -15,7 +15,7 @@ public interface TestService : INetService
 
     public NetTask<ReceiveStream?> ReceiveData(string name, long length);
 
-    // public NetTask<SendStreamAndReceive<ulong>?> SendData();
+    public NetTask<SendStreamAndReceive<ulong>?> SendData();
 }
 
 [NetServiceObject]
@@ -37,7 +37,6 @@ public class TestServiceImpl : TestService
         r.NextBytes(buffer);
 
         // TransmissionContext.Current.Result = NetResult.AlreadySent;
-        // return default;
 
         var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
@@ -50,10 +49,10 @@ public class TestServiceImpl : TestService
         return default;
     }
 
-    /*public async NetTask<SendStreamAndReceive<ulong>?> SendData()
+    public async NetTask<SendStreamAndReceive<ulong>?> SendData()
     {
-        var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+        // var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
         return default;
-    }*/
+    }
 }
