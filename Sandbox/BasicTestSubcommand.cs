@@ -121,7 +121,12 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 var agreementResult = await connection.RequestAgreement(agreement);
 
                 var service = connection.GetService<TestService>();
-                var re = await service.Pingpong([1, 2, 3,]);
+                var pingpong = await service.Pingpong([1, 2, 3,]);
+                var stream = await service.ReceiveStream(123);
+                if (stream is not null)
+                {
+                    await this.ProcessReceiveStream(stream);
+                }
 
                 /*for (var i = 0; i < 20; i++)
                 {
@@ -251,6 +256,40 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
     private async Task TestStream3(ClientConnection connection, int size)
     {
         var (_, stream) = await connection.SendAndReceiveStream(size, TestStreamResponder.Instance.DataId);
+        if (stream is not null)
+        {
+            var buffer = new byte[100_000];
+            var hash = new FarmHash();
+            hash.HashInitialize();
+            long total = 0;
+
+            while (true)
+            {
+                var r = await stream.Receive(buffer);
+                await Console.Out.WriteLineAsync($"{r.Result.ToString()} {r.Written}");
+                if (r.Result == NetResult.Success ||
+                    r.Result == NetResult.Completed)
+                {
+                    hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                    total += r.Written;
+                }
+                else
+                {
+                    break;
+                }
+
+                if (r.Result == NetResult.Completed)
+                {
+                    var h = BitConverter.ToUInt64(hash.HashFinal());
+                    Debug.Assert(h == stream.DataId);
+                    break;
+                }
+            }
+        }
+    }
+
+    private async Task ProcessReceiveStream(ReceiveStream stream)
+    {
         if (stream is not null)
         {
             var buffer = new byte[100_000];

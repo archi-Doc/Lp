@@ -128,7 +128,8 @@ public class ConnectionContext
     }
 
     internal async Task InvokeRPC(TransmissionContext transmissionContext)
-    {// Thread-safe
+    {
+        // Get ServiceMethod
         ServiceMethod? serviceMethod;
         lock (this.idToServiceMethod)
         {
@@ -167,20 +168,24 @@ public class ConnectionContext
             }
         }
 
+        // Invoke
         TransmissionContext.AsyncLocal.Value = transmissionContext;
         try
         {
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                var result = transmissionContext.Result;
-                if (result == NetResult.Success)
-                {// Success
-                    transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
-                }
-                else
-                {// Failure
-                    transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                if (!transmissionContext.IsSent)
+                {
+                    var result = transmissionContext.Result;
+                    if (result == NetResult.Success)
+                    {// Success
+                        transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                    }
+                    else
+                    {// Failure
+                        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                    }
                 }
             }
             catch

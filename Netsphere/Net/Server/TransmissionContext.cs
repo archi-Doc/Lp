@@ -38,7 +38,7 @@ public sealed class TransmissionContext
 
     public NetResult Result { get; set; }
 
-    private bool sent;
+    public bool IsSent { get; private set; }
 
     #endregion
 
@@ -55,7 +55,7 @@ public sealed class TransmissionContext
         {
             return default;
         }
-        else if (this.sent)
+        else if (this.IsSent)
         {
             return NetResult.AlreadySent;
         }
@@ -66,7 +66,7 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
-        this.sent = true;
+        this.IsSent = true;
         var result = transmission.SendBlock(0, dataId, toBeShared, default);
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
@@ -81,7 +81,7 @@ public sealed class TransmissionContext
         {
             return default;
         }
-        else if (this.sent)
+        else if (this.IsSent)
         {
             return NetResult.AlreadySent;
         }
@@ -98,7 +98,7 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
-        this.sent = true;
+        this.IsSent = true;
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
@@ -114,7 +114,7 @@ public sealed class TransmissionContext
         {
             return (NetResult.StreamLengthLimit, default);
         }
-        else if (this.sent)
+        else if (this.IsSent)
         {
             return (NetResult.AlreadySent, default);
         }
@@ -127,7 +127,7 @@ public sealed class TransmissionContext
         }
 
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.sent = true;
+        this.IsSent = true;
         var result = transmission.SendStream(maxLength, tcs);
         if (result != NetResult.Success)
         {

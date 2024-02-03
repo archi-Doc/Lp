@@ -2,7 +2,7 @@
 
 namespace Netsphere.Net;
 
-public class SendStream : SendStreamBase
+public class SendStream : SendStreamBase, StreamService
 {
     internal SendStream(SendTransmission sendTransmission, long maxLength, ulong dataId)
         : base(sendTransmission, maxLength, dataId)
