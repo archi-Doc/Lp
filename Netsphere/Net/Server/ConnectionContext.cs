@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Block;
 using Netsphere.Net;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Server;
 
@@ -11,11 +12,6 @@ public class ExampleConnectionContext : ConnectionContext
     public ExampleConnectionContext(ServerConnection serverConnection)
         : base(serverConnection)
     {
-    }
-
-    public override async Task InvokeStream(StreamContext streamContext)
-    {
-        return;
     }
 
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
@@ -86,9 +82,6 @@ public class ConnectionContext
 
     #endregion
 
-    public virtual Task InvokeStream(StreamContext streamContext)
-        => Task.CompletedTask;
-
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
         => this.ServerConnection.Agreement;
 
@@ -96,6 +89,58 @@ public class ConnectionContext
     {
         return false;
     }*/
+
+    internal void InvokeStream(uint transmissionId, ulong dataId, long maxStreamLength)
+    {
+        // Get ServiceMethod
+        var serviceMethod = this.TryGetServiceMethod(dataId);
+        if (serviceMethod is null)
+        {
+            return;
+        }
+
+        var transmissionContext = new TransmissionContext(this, transmissionId, 1, dataId, default);
+
+        // Invoke
+        Task.Run(async () =>
+        {
+            TransmissionContext.AsyncLocal.Value = transmissionContext;
+            try
+            {
+                await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
+                try
+                {
+                    if (!transmissionContext.IsSent)
+                    {
+                        var result = transmissionContext.Result;
+                        if (result == NetResult.Success)
+                        {// Success
+                            transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                        }
+                        else
+                        {// Failure
+                            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+            catch (NetException netException)
+            {// NetException
+                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)netException.Result);
+            }
+            catch
+            {// Unknown exception
+                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownException);
+            }
+            finally
+            {
+                transmissionContext.Return();
+            }
+        });
+    }
 
     internal void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
@@ -130,42 +175,10 @@ public class ConnectionContext
     internal async Task InvokeRPC(TransmissionContext transmissionContext)
     {
         // Get ServiceMethod
-        ServiceMethod? serviceMethod;
-        lock (this.idToServiceMethod)
+        var serviceMethod = this.TryGetServiceMethod(transmissionContext.DataId);
+        if (serviceMethod == null)
         {
-            if (!this.idToServiceMethod.TryGetValue(transmissionContext.DataId, out serviceMethod))
-            {
-                // Get ServiceInfo.
-                var serviceId = (uint)(transmissionContext.DataId >> 32);
-                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
-                {
-                    goto SendNoNetService;
-                }
-
-                // Get ServiceMethod.
-                if (!serviceInfo.TryGetMethod(transmissionContext.DataId, out serviceMethod))
-                {
-                    goto SendNoNetService;
-                }
-
-                // Get Backend instance.
-                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
-                {
-                    try
-                    {
-                        backendInstance = serviceInfo.CreateBackend(this);
-                    }
-                    catch
-                    {
-                        goto SendNoNetService;
-                    }
-
-                    this.idToInstance.TryAdd(serviceId, backendInstance);
-                }
-
-                serviceMethod = serviceMethod with { ServerInstance = backendInstance, };
-                this.idToServiceMethod.TryAdd(transmissionContext.DataId, serviceMethod);
-            }
+            goto SendNoNetService;
         }
 
         // Invoke
@@ -231,5 +244,48 @@ SendNoNetService:
 
         transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);
         return true;
+    }
+
+    private ServiceMethod? TryGetServiceMethod(ulong dataId)
+    {
+        ServiceMethod? serviceMethod;
+        lock (this.idToServiceMethod)
+        {
+            if (!this.idToServiceMethod.TryGetValue(dataId, out serviceMethod))
+            {
+                // Get ServiceInfo.
+                var serviceId = (uint)(dataId >> 32);
+                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
+                {
+                    return null;
+                }
+
+                // Get ServiceMethod.
+                if (!serviceInfo.TryGetMethod(dataId, out serviceMethod))
+                {
+                    return null;
+                }
+
+                // Get Backend instance.
+                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
+                {
+                    try
+                    {
+                        backendInstance = serviceInfo.CreateBackend(this);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+
+                    this.idToInstance.TryAdd(serviceId, backendInstance);
+                }
+
+                serviceMethod = serviceMethod with { ServerInstance = backendInstance, };
+                this.idToServiceMethod.TryAdd(dataId, serviceMethod);
+            }
+        }
+
+        return serviceMethod;
     }
 }

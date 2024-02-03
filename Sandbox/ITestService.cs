@@ -15,7 +15,7 @@ public interface TestService : INetService
 
     public NetTask<ReceiveStream?> ReceiveData(string name, long length);
 
-    public NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength, ulong dataId);
+    public NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength);
 
     public NetTask<SendStream?> SendData2(long maxLength);
 }
@@ -51,9 +51,10 @@ public class TestServiceImpl : TestService
         return default;
     }
 
-    public async NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength, ulong dataId)
+    public async NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength)
     {
-        // var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+        var (_, stream) = await TransmissionContext.Current.ReceiveStream();
+        var stream = new ReceiveStream()
 
         return default;
     }

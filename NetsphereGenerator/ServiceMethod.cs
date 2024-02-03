@@ -74,7 +74,7 @@ public class ServiceMethod
                 if (serviceMethod.ReturnType == Type.SendStreamAndReceive)
                 {
                     serviceMethod.StreamTypeArgument = rt.Object.Generics_Arguments[0].FullName;
-            }
+                }
             }
         }
 
@@ -86,17 +86,12 @@ public class ServiceMethod
         if (serviceMethod.ReturnType == Type.SendStream ||
             serviceMethod.ReturnType == Type.SendStreamAndReceive)
         {
-            if (method.Method_Parameters.Length > 2 || method.Method_Parameters.Length == 0)
+            if (method.Method_Parameters.Length > 1 || method.Method_Parameters.Length == 0)
             {
                 method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
                 return null;
             }
-            else if (method.Method_Parameters.Length == 2 && method.Method_Parameters[1] != "ulong")
-            {
-                method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
-                return null;
-            }
-            else if (method.Method_Parameters.Length >= 1 && method.Method_Parameters[0] != "long")
+            else if (method.Method_Parameters[0] != "long")
             {
                 method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
                 return null;

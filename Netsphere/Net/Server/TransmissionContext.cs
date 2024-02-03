@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Block;
-using Netsphere.Net;
 
 #pragma warning disable SA1401
 

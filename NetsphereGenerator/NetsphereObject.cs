@@ -489,29 +489,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             {
                 if (method.ReturnType == ServiceMethod.Type.SendStream)
                 {
-                    if (method.ParameterLength == 1)
-                    {
-                        ssb.AppendLine("var response = await this.ClientConnection.SendStream(a1).ConfigureAwait(false);");
-                    }
-                    else
-                    {
-                        ssb.AppendLine("var response = await this.ClientConnection.SendStream(a1, a2).ConfigureAwait(false);");
-                    }
-
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                     return;
                 }
                 else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
                 {
-                    if (method.ParameterLength == 1)
-                    {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1).ConfigureAwait(false);");
-                    }
-                    else
-                    {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, a2).ConfigureAwait(false);");
-                    }
-
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                     return;
                 }

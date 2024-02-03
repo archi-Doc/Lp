@@ -792,9 +792,8 @@ Wait:
         {// Invoke stream
             if (this is ServerConnection serverConnection)
             {
-                var streamContext = new StreamContext(transmission, dataId, maxStreamLength);
                 var connectionContext = serverConnection.ConnectionContext;
-                Task.Run(() => connectionContext.InvokeStream(streamContext));
+                connectionContext.InvokeStream(transmission.TransmissionId, dataId, maxStreamLength);
             }
             else if (this is ClientConnection clientConnection)
             {

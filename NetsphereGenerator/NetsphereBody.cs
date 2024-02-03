@@ -83,7 +83,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_SendStreamParam = new DiagnosticDescriptor(
-        id: "NSG014", title: "SendStream param", messageFormat: "Method that returns SendStream type must be declared as either 'Method(long maxLength)' or 'Method(long maxLength, ulong dataId)'",
+        id: "NSG014", title: "SendStream param", messageFormat: "Method that returns SendStream type must be declared as 'Method(long maxLength)''",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public NetsphereBody(SourceProductionContext context)

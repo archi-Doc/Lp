@@ -20,7 +20,7 @@ public class CustomConnectionContext : ConnectionContext
     {
     }
 
-    public override async Task InvokeStream(StreamContext streamContext)
+    /*public override async Task InvokeStream(StreamContext streamContext)
     {
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -51,7 +51,7 @@ public class CustomConnectionContext : ConnectionContext
                 break;
             }
         }
-    }
+    }*/
 
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
     {// Accept the request
@@ -128,7 +128,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     await this.ProcessReceiveStream(response.Value);
                 }*/
 
-                var stream = await service.SendData(123_000, 123);
+                var stream = await service.SendData(123_000);
                 if (stream is not null)
                 {
                     await this.ProcessSendStream(stream, 123_000);
