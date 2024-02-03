@@ -82,6 +82,10 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         id: "NSG013", title: "FilterType not derived", messageFormat: "Service filter must implement 'IServiceFilter' or 'IServiceFilterAsync'",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor Error_SendStreamParam = new DiagnosticDescriptor(
+        id: "NSG014", title: "SendStream param", messageFormat: "Method that returns SendStream type must be declared as either 'Method(long maxLength)' or 'Method(long maxLength, ulong dataId)'",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
     public NetsphereBody(SourceProductionContext context)
         : base(context)
     {

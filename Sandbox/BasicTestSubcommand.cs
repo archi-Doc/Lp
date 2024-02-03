@@ -128,7 +128,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     await this.ProcessReceiveStream(response.Value);
                 }
 
-                var stream = await service.SendData();
+                var stream = await service.SendData(123_000, 123);
                 if (stream is not null)
                 {
                     await this.ProcessSendStream(stream, 123_000);

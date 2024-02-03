@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Immutable;
 using System.Text;
 using Arc.Visceral;
 using Microsoft.CodeAnalysis;
@@ -486,6 +487,35 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {
+                if (method.ReturnType == ServiceMethod.Type.SendStream)
+                {
+                    if (method.ParameterLength == 1)
+                    {
+                        ssb.AppendLine("var response = await this.ClientConnection.SendStream(a1).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        ssb.AppendLine("var response = await this.ClientConnection.SendStream(a1, a2).ConfigureAwait(false);");
+                    }
+
+                    ssb.AppendLine("return new(response.Stream, response.Result);");
+                    return;
+                }
+                else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+                {
+                    if (method.ParameterLength == 1)
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, a2).ConfigureAwait(false);");
+                    }
+
+                    ssb.AppendLine("return new(response.Stream, response.Result);");
+                    return;
+                }
+
                 if (method.ParameterType == ServiceMethod.Type.ByteArray)
                 {
                     ssb.AppendLine($"var owner = new {ServiceMethod.MemoryOwnerName}(a1);");
@@ -876,5 +906,18 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine("return si;");
         }
+    }
+
+    internal string? TryGetParameterName(int position)
+    {
+        if (this.symbol is IMethodSymbol ms)
+        {
+            if (position >= 0 && position < ms.Parameters.Length)
+            {
+                return ms.Parameters[position].Name;
+            }
+        }
+
+        return null;
     }
 }
