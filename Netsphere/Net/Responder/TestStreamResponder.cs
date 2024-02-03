@@ -28,7 +28,7 @@ public class TestStreamResponder : INetResponder
             var buffer = new byte[size];
             r.NextBytes(buffer);
 
-            var (_, stream) = await transmissionContext.SendStream(size, FarmHash.Hash64(buffer));
+            var (_, stream) = transmissionContext.SendStream(size, FarmHash.Hash64(buffer));
             if (stream is not null)
             {
                 await stream.Send(buffer);

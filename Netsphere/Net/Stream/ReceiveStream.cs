@@ -6,7 +6,7 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public class ReceiveStream : StreamService
+public class ReceiveStream
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {

@@ -103,7 +103,12 @@ public sealed class TransmissionContext
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    public (NetResult Result, ReceiveStream? Stream) ReceiveStream(long maxLength)
+    {
+        return (NetResult.Success, default);
+    }
+
+    public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
         if (this.Connection.CancellationToken.IsCancellationRequested)
         {

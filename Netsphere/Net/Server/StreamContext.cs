@@ -4,7 +4,7 @@ using Netsphere.Block;
 
 namespace Netsphere.Net;
 
-public sealed class StreamContext : ReceiveStream
+/*public sealed class StreamContext : ReceiveStream
 {
     internal StreamContext(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
         : base(receiveTransmission, dataId, maxStreamLength)
@@ -45,4 +45,4 @@ public sealed class StreamContext : ReceiveStream
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
-}
+}*/

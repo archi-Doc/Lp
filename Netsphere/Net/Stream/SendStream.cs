@@ -4,7 +4,7 @@ using Netsphere.Net;
 
 namespace Netsphere;
 
-public class SendStream : SendStreamBase, StreamService
+public class SendStream : SendStreamBase
 {
     internal SendStream(SendTransmission sendTransmission, long maxLength, ulong dataId)
         : base(sendTransmission, maxLength, dataId)

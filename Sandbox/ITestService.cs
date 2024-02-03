@@ -40,7 +40,7 @@ public class TestServiceImpl : TestService
 
         // TransmissionContext.Current.Result = NetResult.AlreadySent;
 
-        var (_, stream) = await TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+        var (_, stream) = TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
         if (stream is not null)
         {
@@ -53,9 +53,10 @@ public class TestServiceImpl : TestService
 
     public async NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength)
     {
-        var (_, stream) = await TransmissionContext.Current.ReceiveStream();
-        var stream = new ReceiveStream()
+        var context = TransmissionContext.Current;
+        var (_, stream) = context.ReceiveStream(maxLength);
 
+        context.SendAndForget<ulong>(123);
         return default;
     }
 
