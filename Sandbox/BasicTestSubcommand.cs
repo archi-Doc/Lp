@@ -122,11 +122,11 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 var service = connection.GetService<TestService>();
                 var pingpong = await service.Pingpong([1, 2, 3,]);
-                var response = await service.ReceiveData("test", 123_000).ResponseAsync;
+                /*var response = await service.ReceiveData("test", 123_000).ResponseAsync;
                 if (response.Value is not null)
                 {
                     await this.ProcessReceiveStream(response.Value);
-                }
+                }*/
 
                 var stream = await service.SendData(123_000, 123);
                 if (stream is not null)
