@@ -54,7 +54,7 @@ public class CustomConnectionContext : ConnectionContext
     }
 
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
-    {
+    {// Accept the request
         agreement.Update(this.ServerConnection.Agreement);
         return agreement;
     }
@@ -120,6 +120,9 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 agreement.MaxStreamLength = 100_000_000;
                 var agreementResult = await connection.RequestAgreement(agreement);
 
+                var service = connection.GetService<TestService>();
+                var re = await service.Pingpong([1, 2, 3,]);
+
                 /*for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
@@ -164,7 +167,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 await this.TestStream2(connection, 10_000);
                 await this.TestStream2(connection, 100_000);
                 await this.TestStream2(connection, 1_000_000);*/
-                await this.TestStream2(connection, 10_000_000);
+                // await this.TestStream2(connection, 10_000_000);
 
                 // await this.TestStream3(connection, 1_000);
                 // await this.TestStream3(connection, 10_000);
