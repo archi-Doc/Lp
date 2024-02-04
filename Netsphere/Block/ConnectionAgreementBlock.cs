@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Net;
 using Netsphere.Server;
 
@@ -102,5 +103,16 @@ public partial record ConnectionAgreementBlock : IBlock
         {
             this.StreamBufferSize = target.StreamBufferSize;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CheckStreamLength(long maxStreamLength)
+    {
+        if (this.maxStreamLength < 0)
+        {
+            return true;
+        }
+
+        return this.maxStreamLength >= maxStreamLength;
     }
 }

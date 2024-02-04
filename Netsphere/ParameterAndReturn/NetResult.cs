@@ -23,5 +23,5 @@ public enum NetResult
     NotAuthorized,
     NotFound,
     Completed,
-    AlreadySent,
+    InvalidOperation,
 }

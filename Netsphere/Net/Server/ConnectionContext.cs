@@ -3,7 +3,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Block;
 using Netsphere.Net;
-using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Server;
 
@@ -90,7 +89,7 @@ public class ConnectionContext
         return false;
     }*/
 
-    internal void InvokeStream(uint transmissionId, ulong dataId, long maxStreamLength)
+    internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId)
     {
         // Get ServiceMethod
         var serviceMethod = this.TryGetServiceMethod(dataId);
@@ -99,7 +98,7 @@ public class ConnectionContext
             return;
         }
 
-        var transmissionContext = new TransmissionContext(this, transmissionId, 1, dataId, default);
+        var transmissionContext = new TransmissionContext(this, receiveTransmission.TransmissionId, 1, dataId, default, receiveTransmission);
 
         // Invoke
         Task.Run(async () =>

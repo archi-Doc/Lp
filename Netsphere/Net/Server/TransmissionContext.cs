@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Block;
+using Netsphere.Net;
 
 #pragma warning disable SA1401
 
@@ -12,13 +13,14 @@ public sealed class TransmissionContext
 
     internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
 
-    public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared, ReceiveTransmission? receiveTransmission)
     {
         this.ConnectionContext = connectionContext;
         this.TransmissionId = transmissionId;
         this.DataKind = dataKind;
         this.DataId = dataId;
         this.Owner = toBeShared;
+        this.receiveTransmission = receiveTransmission;
     }
 
     #region FieldAndProperty
@@ -39,10 +41,19 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
+    private ReceiveTransmission? receiveTransmission;
+
     #endregion
 
     public void Return()
-        => this.Owner = this.Owner.Return();
+    {
+        this.Owner = this.Owner.Return();
+        if (this.receiveTransmission is not null)
+        {
+            this.receiveTransmission.Dispose();
+            this.receiveTransmission = null;
+        }
+    }
 
     public NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
     {
@@ -56,7 +67,7 @@ public sealed class TransmissionContext
         }
         else if (this.IsSent)
         {
-            return NetResult.AlreadySent;
+            return NetResult.InvalidOperation;
         }
 
         var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
@@ -82,7 +93,7 @@ public sealed class TransmissionContext
         }
         else if (this.IsSent)
         {
-            return NetResult.AlreadySent;
+            return NetResult.InvalidOperation;
         }
 
         if (!BlockService.TrySerialize(data, out var owner))
@@ -105,7 +116,22 @@ public sealed class TransmissionContext
 
     public (NetResult Result, ReceiveStream? Stream) ReceiveStream(long maxLength)
     {
-        return (NetResult.Success, default);
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return (NetResult.Canceled, default);
+        }
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        {
+            return (NetResult.StreamLengthLimit, default);
+        }
+        else if (this.receiveTransmission is null)
+        {
+            return (NetResult.InvalidOperation, default);
+        }
+
+        var stream = new ReceiveStream(this.receiveTransmission, this.DataId, maxLength);
+        this.receiveTransmission = default;
+        return (NetResult.Success, stream);
     }
 
     public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
@@ -114,13 +140,13 @@ public sealed class TransmissionContext
         {
             return (NetResult.Canceled, default);
         }
-        else if (this.Connection.Agreement.MaxStreamLength < maxLength)
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
         else if (this.IsSent)
         {
-            return (NetResult.AlreadySent, default);
+            return (NetResult.InvalidOperation, default);
         }
 
         var timeout = this.Connection.NetBase.DefaultSendTimeout;

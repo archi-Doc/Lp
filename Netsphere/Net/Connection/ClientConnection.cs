@@ -300,7 +300,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (this.Agreement.MaxStreamLength < maxLength)
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -334,7 +334,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled, default);
         }
 
-        if (this.Agreement.MaxStreamLength < maxLength)
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return new(NetResult.StreamLengthLimit, default);
         }

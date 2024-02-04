@@ -10,7 +10,6 @@ using Netsphere.Block;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 using static Netsphere.Net.AckBuffer;
 
 #pragma warning disable SA1202
@@ -730,7 +729,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -767,7 +766,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -793,7 +792,7 @@ Wait:
             if (this is ServerConnection serverConnection)
             {
                 var connectionContext = serverConnection.ConnectionContext;
-                connectionContext.InvokeStream(transmission.TransmissionId, dataId, maxStreamLength);
+                connectionContext.InvokeStream(transmission, dataId);
             }
             else if (this is ClientConnection clientConnection)
             {
