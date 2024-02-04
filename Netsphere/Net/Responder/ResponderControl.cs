@@ -12,12 +12,12 @@ public sealed class ResponderControl
     {
     }
 
-    private ConcurrentDictionary<ulong, INetResponder> responders = new();
+    private ConcurrentDictionary<ulong, INetResponder> dataIdToResponder = new();
 
     public void Register<TResponder>(TResponder responder)
         where TResponder : INetResponder
-        => this.responders.TryAdd(responder.DataId, responder);
+        => this.dataIdToResponder.TryAdd(responder.DataId, responder);
 
     public bool TryGet(ulong dataId, [MaybeNullWhen(false)] out INetResponder responder)
-        => this.responders.TryGetValue(dataId, out responder);
+        => this.dataIdToResponder.TryGetValue(dataId, out responder);
 }
