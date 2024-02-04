@@ -12,6 +12,8 @@ global using LP;
 global using Netsphere;
 global using Tinyhand;
 using LP.Data;
+using LP.NetServices;
+using LP.NetServices.T3CS;
 using LP.Services;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
@@ -397,6 +399,9 @@ public class Control : ILogInformation
         this.Vault = vault;
         this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
+
+        this.NetControl.Services.Register<IMergerService>();
+        this.NetControl.Services.Register<IBenchmarkService>();
 
         this.MergerProvider = new();
         if (this.LPBase.Mode == LPMode.Merger)

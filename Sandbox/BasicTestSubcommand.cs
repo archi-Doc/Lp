@@ -135,6 +135,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                     await this.ProcessSendStream(stream, 123_000);
                 }
 
+                await Console.Out.WriteLineAsync("SendData2");
+                var stream2 = await service.SendData2(123_000);
+                if (stream2 is not null)
+                {
+                    await this.ProcessSendStream(stream2, 123_000);
+                }
+
                 /*for (var i = 0; i < 20; i++)
                 {
                     var testBlock = TestBlock.Create(10);
@@ -338,6 +345,18 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var r2 = await stream.Send(buffer);
         var r3 = await stream.CompleteAndReceive();
         Debug.Assert(r3.Value == hash);
+    }
+
+    private async Task ProcessSendStream(SendStream stream, int size)
+    {
+        var buffer = new byte[size];
+        RandomVault.Pseudo.NextBytes(buffer);
+        var hash = FarmHash.Hash64(buffer);
+
+        var r2 = await stream.Send(buffer);
+        Console.WriteLine(r2.ToString());
+        var r3 = await stream.Complete();
+        Console.WriteLine(r3.ToString());
     }
 
     public NetControl NetControl { get; set; }

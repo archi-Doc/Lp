@@ -54,8 +54,8 @@ public class TestServiceImpl : TestService
 
     public async NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength)
     {
-        var context = TransmissionContext.Current;
-        var stream = context.ReceiveStream;
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.ReceiveStream;
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -78,7 +78,7 @@ public class TestServiceImpl : TestService
 
             if (r.Result == NetResult.Completed)
             {
-                context.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
             }
         }
 
@@ -88,6 +88,7 @@ public class TestServiceImpl : TestService
 
     public async NetTask<SendStream?> SendData2(long maxLength)
     {
+        TransmissionContext.Current.Connection.Close();
         return default;
     }
 }

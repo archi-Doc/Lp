@@ -14,25 +14,22 @@ public sealed class ServiceControl
 
     private UInt64Hashtable<ConnectionContext.ServiceInfo> dataIdToResponder = new();
 
-    public bool Register<TService>()
+    public void Register<TService>()
         where TService : INetService
     {
         var serviceId = ServiceTypeToId<TService>();
-        return this.Register(serviceId);
+        this.Register(serviceId);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Register(uint serviceId)
+    public void Register(uint serviceId)
     {
-        if (StaticNetService.TryGetServiceInfo(serviceId, out var info))
+        if (!StaticNetService.TryGetServiceInfo(serviceId, out var info))
         {
-            this.dataIdToResponder.TryAdd(serviceId, info);
-            return true;
+            throw new InvalidOperationException("Failed to register the class with the corresponding ServiceId.");
         }
-        else
-        {
-            return false;
-        }
+
+        this.dataIdToResponder.TryAdd(serviceId, info);
     }
 
     public bool TryGet<TService>([MaybeNullWhen(false)] out ConnectionContext.ServiceInfo info)
