@@ -12,6 +12,8 @@ public enum NetResult
     Timeout,
     Canceled,
     Closed,
+    Completed,
+    InvalidOperation,
     SerializationError,
     DeserializationError,
     BlockSizeLimit,
@@ -22,6 +24,4 @@ public enum NetResult
     NoTransmission,
     NotAuthorized,
     NotFound,
-    Completed,
-    InvalidOperation,
 }

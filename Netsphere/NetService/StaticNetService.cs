@@ -16,14 +16,10 @@ public static class StaticNetService
     }
 
     public static void SetServiceInfo(ConnectionContext.ServiceInfo info)
-    {
-        idToInfo[info.ServiceId] = info;
-    }
+        => serviceIdToInfo.TryAdd(info.ServiceId, info); // serviceIdToInfo[info.ServiceId] = info;
 
-    public static bool TryGetServiceInfo(uint id, [MaybeNullWhen(false)] out ConnectionContext.ServiceInfo info)
-    {
-        return idToInfo.TryGetValue(id, out info);
-    }
+    public static bool TryGetServiceInfo(uint serviceId, [MaybeNullWhen(false)] out ConnectionContext.ServiceInfo info)
+        => serviceIdToInfo.TryGetValue(serviceId, out info);
 
     public static TService CreateClient<TService>(ClientConnection clientConnection)
         where TService : INetService
@@ -37,7 +33,7 @@ public static class StaticNetService
         throw new InvalidOperationException($"Could not create an instance of the net service {typeof(TService).ToString()}.");
     }
 
-    private static ConcurrentDictionary<uint, ConnectionContext.ServiceInfo> idToInfo = new();
+    private static UInt32Hashtable<ConnectionContext.ServiceInfo> serviceIdToInfo = new();
 
     private static class DelegateCache<T>
     {

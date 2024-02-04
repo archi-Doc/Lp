@@ -92,13 +92,14 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetBase = netBase;
         this.NetStats = netStats;
         this.Responders = new();
+        this.Services = new();
 
         this.NetTerminal = netTerminal;
-        this.NetTerminal.Initialize(this.Responders, false);
+        this.NetTerminal.Initialize(this.Responders, this.Services, false);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
             this.Alternative = new(context, unitLogger, netBase, netStats);
-            this.Alternative.Initialize(this.Responders, true);
+            this.Alternative.Initialize(this.Responders, this.Services, true);
         }
     }
 
@@ -109,6 +110,8 @@ public class NetControl : UnitBase, IUnitPreparable
     public NetStats NetStats { get; }
 
     public ResponderControl Responders { get; }
+
+    public ServiceControl Services { get; }
 
     public NetTerminal NetTerminal { get; }
 

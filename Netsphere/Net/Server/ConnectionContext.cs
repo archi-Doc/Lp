@@ -155,7 +155,7 @@ public class ConnectionContext
             {
                 this.AgreementRequested(transmissionContext);
             }
-            else if (this.NetTerminal.NetResponder.TryGet(transmissionContext.DataId, out var responder))
+            else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }
@@ -260,7 +260,7 @@ SendNoNetService:
             {
                 // Get ServiceInfo.
                 var serviceId = (uint)(dataId >> 32);
-                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
+                if (!this.NetTerminal.Services.TryGet(serviceId, out var serviceInfo))
                 {
                     return null;
                 }

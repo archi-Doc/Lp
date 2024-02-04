@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Server;
 
@@ -12,7 +11,7 @@ public sealed class ResponderControl
     {
     }
 
-    private ConcurrentDictionary<ulong, INetResponder> dataIdToResponder = new();
+    private UInt64Hashtable<INetResponder> dataIdToResponder = new();
 
     public void Register<TResponder>(TResponder responder)
         where TResponder : INetResponder
