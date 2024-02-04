@@ -89,7 +89,7 @@ public class ConnectionContext
         return false;
     }*/
 
-    internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId)
+    internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
         // Get ServiceMethod
         var serviceMethod = this.TryGetServiceMethod(dataId);
@@ -98,7 +98,13 @@ public class ConnectionContext
             return;
         }
 
-        var transmissionContext = new TransmissionContext(this, receiveTransmission.TransmissionId, 1, dataId, default, receiveTransmission);
+        var transmissionContext = new TransmissionContext(this, receiveTransmission.TransmissionId, 1, dataId, default);
+        if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
+        {
+            transmissionContext.Return();
+            receiveTransmission.Dispose();
+            return;
+        }
 
         // Invoke
         Task.Run(async () =>

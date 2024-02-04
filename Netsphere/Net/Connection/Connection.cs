@@ -792,7 +792,7 @@ Wait:
             if (this is ServerConnection serverConnection)
             {
                 var connectionContext = serverConnection.ConnectionContext;
-                connectionContext.InvokeStream(transmission, dataId);
+                connectionContext.InvokeStream(transmission, dataId, maxStreamLength);
             }
             else if (this is ClientConnection clientConnection)
             {

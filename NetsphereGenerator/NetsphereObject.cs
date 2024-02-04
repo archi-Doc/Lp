@@ -794,6 +794,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {// No parameter
             ssb.AppendLine($"var owner = {ServiceMethod.MemoryOwnerName}.Empty;");
         }
+        else if (method.ReturnType == ServiceMethod.Type.SendStream ||
+            method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+        {
+            ssb.AppendLine("var value = context.ReceiveStream.MaxStreamLength;");
+        }
         else
         {
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(context.Owner, out var value))"))
@@ -837,7 +842,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine("var result = NetResult.Success;");
         }*/
 
-        ssb.AppendLine("context.Owner.Return();");
+        ssb.AppendLine("context.Return();");
         if (method.ReturnObject == null)
         {// NetTask
             ssb.AppendLine($"context.Owner = {ServiceMethod.MemoryOwnerName}.Empty;");
@@ -854,7 +859,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {// ByteArrayPool.ReadOnlyMemoryOwner result;
             ssb.AppendLine("context.Owner = result.AsMemory();");
         }
-        else if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
+        else if (method.ReturnType == ServiceMethod.Type.ReceiveStream ||
+            method.ReturnType == ServiceMethod.Type.SendStream ||
+            method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
         {
         }
         else

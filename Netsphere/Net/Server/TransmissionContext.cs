@@ -13,14 +13,13 @@ public sealed class TransmissionContext
 
     internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
 
-    internal TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared, ReceiveTransmission? receiveTransmission)
+    internal TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
         this.ConnectionContext = connectionContext;
         this.TransmissionId = transmissionId;
         this.DataKind = dataKind;
         this.DataId = dataId;
         this.Owner = toBeShared;
-        this.receiveTransmission = receiveTransmission;
     }
 
     #region FieldAndProperty
@@ -41,17 +40,20 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
-    private ReceiveTransmission? receiveTransmission;
+    public ReceiveStream ReceiveStream
+        => this.receiveStream ?? throw new InvalidOperationException();
+
+    private ReceiveStream? receiveStream;
 
     #endregion
 
     public void Return()
     {
         this.Owner = this.Owner.Return();
-        if (this.receiveTransmission is not null)
+        if (this.receiveStream is not null)
         {
-            this.receiveTransmission.Dispose();
-            this.receiveTransmission = null;
+            this.receiveStream.Abort();
+            this.receiveStream = default;
         }
     }
 
@@ -114,26 +116,6 @@ public sealed class TransmissionContext
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public (NetResult Result, ReceiveStream? Stream) ReceiveStream(long maxLength)
-    {
-        if (this.Connection.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
-        }
-        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
-        {
-            return (NetResult.StreamLengthLimit, default);
-        }
-        else if (this.receiveTransmission is null)
-        {
-            return (NetResult.InvalidOperation, default);
-        }
-
-        var stream = new ReceiveStream(this.receiveTransmission, this.DataId, maxLength);
-        this.receiveTransmission = default;
-        return (NetResult.Success, stream);
-    }
-
     public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
         if (this.Connection.CancellationToken.IsCancellationRequested)
@@ -166,5 +148,44 @@ public sealed class TransmissionContext
         }
 
         return (NetResult.Success, new SendStream(transmission, maxLength, dataId));
+    }
+
+    /*public (NetResult Result, ReceiveStream? Stream) ReceiveStream(long maxLength)
+    {
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return (NetResult.Canceled, default);
+        }
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        {
+            return (NetResult.StreamLengthLimit, default);
+        }
+        else if (this.receiveTransmission is null)
+        {
+            return (NetResult.InvalidOperation, default);
+        }
+
+        var stream = new ReceiveStream(this.receiveTransmission, this.DataId, maxLength);
+        this.receiveTransmission = default;
+        return (NetResult.Success, stream);
+    }*/
+
+    internal bool CreateReceiveStream(ReceiveTransmission receiveTransmission, long maxLength)
+    {
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        {
+            return false;
+        }
+        else if (this.receiveStream is not null)
+        {
+            return false;
+        }
+
+        this.receiveStream = new ReceiveStream(receiveTransmission, this.DataId, maxLength);
+        return true;
     }
 }
