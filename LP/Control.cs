@@ -20,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
 using Netsphere.Logging;
+using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace LP;
@@ -166,8 +167,15 @@ public class Control : ILogInformation
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
                 netBase.SetOptions(options.NetsphereOptions);
+
                 netBase.AllowUnsafeConnection = true; // betacode
+                netBase.ServerOptions = netBase.ServerOptions with { MaxStreamLength = 100_000_000, }; // betacode
             });
+
+            /*this.SetupOptions<ServerOptions>((context, options) =>
+            {// ServerOptions
+                options.MaxStreamLength = 100_000_000; // betacode
+            });*/
 
             this.SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions

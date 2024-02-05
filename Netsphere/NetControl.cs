@@ -37,6 +37,7 @@ public class NetControl : UnitBase, IUnitPreparable
             {
                 // Main services
                 context.AddSingleton<NetControl>();
+                // context.AddSingleton<ServerOptions>();
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();

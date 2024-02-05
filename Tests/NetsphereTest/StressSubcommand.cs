@@ -79,26 +79,15 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                 for (var j = 0; j < (options.Total / options.Concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
+                    using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
                     {
-                        if (terminal is null)
+                        if (connection is null)
                         {
                             return;
 
                         }
-                        /*var p = new PacketPing("test56789012345678901234567890123456789");
-                        sw2.Restart();
-                        var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
-                        if (result.Result == NetResult.Success)
-                        {
-                            Interlocked.Increment(ref successCount);
-                        }
-                        else
-                        {
-                            Interlocked.Increment(ref failureCount);
-                        }*/
 
-                        var service = terminal.GetService<IBenchmarkService>();
+                        var service = connection.GetService<IBenchmarkService>();
                         sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL

@@ -446,7 +446,7 @@ public class CubicCongestionControl : ICongestionControl
                 this.previousMinRtt != 0)
             {
                 var eta = Math.Clamp(currentMinRtt >> 3, HystartMinEta, HystartMaxEta);
-                Console.WriteLine($"Hystart {currentMinRtt} mics [{currentRttSamples}] ETA {eta} Previous {this.previousMinRtt}");
+                Console.WriteLine($"Hystart MinRtt Current/Prev {currentMinRtt / 1000}/{this.previousMinRtt / 1000} ms [{currentRttSamples}] ETA {eta}");
                 if (currentMinRtt >= (this.previousMinRtt + eta))
                 {// Exit slow start
                     Console.WriteLine("Exit slow start");

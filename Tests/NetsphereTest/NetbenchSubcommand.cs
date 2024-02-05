@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using Arc.Crypto;
 using Arc.Unit;
 using LP.NetServices;
 using SimpleCommandLine;
@@ -52,8 +53,9 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             Logger.Priority.Information($"t: {t}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");*/
 
-            await this.BenchLargeData(connection); // 1060 ms
             // await this.PingpongSmallData(connection); // 350ms -> 220ms
+            // await this.TestLargeData(connection); // 1060 ms
+            await this.TestStreamData(connection);
 
             /*var service = connection.GetService<IBenchmarkService>();
             byte[] data = [0, 1, 2,];
@@ -81,17 +83,42 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     public NetControl NetControl { get; set; }
 
-    private async Task BenchLargeData(ClientConnection connection)
+    private async Task TestStreamData(ClientConnection connection)
+    {
+        const int N = 10_000_000;
+        var service = connection.GetService<IBenchmarkService>();
+        var data = new byte[N];
+        RandomVault.Pseudo.NextBytes(data);
+
+        var sw = Stopwatch.StartNew();
+        var stream = await service.GetHash(N);
+        if (stream is null)
+        {
+            return;
+        }
+
+        await stream.Send(data);
+        var response = await stream.CompleteAndReceive();
+
+        sw.Stop();
+
+        Console.WriteLine(FarmHash.Hash64(data) == response.Value);
+        Console.WriteLine(sw.ElapsedMilliseconds.ToString());
+
+    }
+    private async Task TestLargeData(ClientConnection connection)
     {
         const int N = 4_000_000;
         var service = connection.GetService<IBenchmarkService>();
         var data = new byte[N];
+        RandomVault.Pseudo.NextBytes(data);
 
         var sw = Stopwatch.StartNew();
         var response = await service.GetHash(data).ResponseAsync;
         sw.Stop();
 
         Console.WriteLine(response);
+        Console.WriteLine(FarmHash.Hash64(data) == response.Value);
         Console.WriteLine(sw.ElapsedMilliseconds.ToString());
     }
 
