@@ -50,7 +50,14 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             // await this.BenchLargeData(terminal); // 1060 ms
             // await this.PingpongSmallData(terminal); // 350 ms
 
-            // var service = terminal.GetService<IBenchmarkService>();
+            if (terminal is not null)
+            {
+                var service = terminal.GetService<IBenchmarkService>();
+
+                byte[] data = [0, 1, 2,];
+                var data2 = await service.Pingpong(data);
+            }
+            
 
             /*await service.Wait(200);
             await service.Wait(200);
@@ -67,7 +74,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             w3.ResponseAsync.Wait();*/
         }
 
-        await this.PingpongSmallData2(node);
+        // await this.PingpongSmallData2(node);
         // await this.MassiveSmallData(node); // 1000 ms
     }
 

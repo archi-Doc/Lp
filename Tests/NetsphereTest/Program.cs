@@ -193,6 +193,9 @@ public class Program
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
         await unit.Run(options, true);
 
+        var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
+        netControl.Services.Register<IBenchmarkService>();
+
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
         {
