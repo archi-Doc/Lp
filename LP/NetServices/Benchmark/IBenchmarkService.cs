@@ -12,6 +12,8 @@ public partial interface IBenchmarkService : INetService
 
     public NetTask<byte[]?> Pingpong(byte[] data);
 
+    public NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength);
+
     public NetTask<NetResult> Register();
 
     public NetTask<NetResult> Start(int total, int concurrent);

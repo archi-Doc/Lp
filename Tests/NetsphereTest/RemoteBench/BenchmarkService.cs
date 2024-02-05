@@ -38,6 +38,11 @@ public class BenchmarkServiceImpl : IBenchmarkService
     {
     }
 
+    public NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
+    {
+        return default;
+    }
+
     private RemoteBenchBroker remoteBenchBroker;
 }
 

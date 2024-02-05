@@ -451,11 +451,6 @@ Wait:
 
     internal void AddRtt(int rttMics)
     {
-        Console.WriteLine(rttMics);
-        if (rttMics < 150_000)
-        {
-        }
-
         if (rttMics < LowerRttLimit)
         {
             rttMics = LowerRttLimit;
