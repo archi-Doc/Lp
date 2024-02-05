@@ -190,7 +190,8 @@ public class Program
         }
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
-        await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
+        options.EnableServer = true;
+        await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true);
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();

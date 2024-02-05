@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Netsphere;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial class NetsphereOptions : ILogInformation
+public partial record NetsphereOptions
 {
     [SimpleOption("address", Description = "Global IP address")]
     public string Address { get; set; } = string.Empty;
@@ -30,9 +30,4 @@ public partial class NetsphereOptions : ILogInformation
 
     [SimpleOption("logger", Description = "Enable network logger")]
     public bool EnableLogger { get; set; } = false;
-
-    public void LogInformation(ILog logger)
-    {
-        logger.Log($"Address: {this.Address}, Port: {this.Port}, Alternative: {this.EnableAlternative}");
-    }
 }

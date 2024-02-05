@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPOptions : ILogInformation
+public partial record LPOptions
 {
     public const string DefaultOptionsName = "Options.tinyhand";
 
@@ -50,11 +50,6 @@ public partial record LPOptions : ILogInformation
 
     [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
     public long Lifespan { get; init; }
-
-    public void LogInformation(ILog log)
-    {
-        this.NetsphereOptions.LogInformation(log);
-    }
 
     /*public bool TryLoad()
     {
