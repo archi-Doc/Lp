@@ -22,6 +22,7 @@ public partial record ConnectionAgreementBlock : IBlock
         this.MaxBlockSize = options.MaxBlockSize;
         this.MaxStreamLength = options.MaxStreamLength;
         this.StreamBufferSize = options.StreamBufferSize;
+        this.AllowBidirectionalConnection = options.AllowBidirectionalConnection;
     }
 
     public uint BlockId => 0x95843fb5;
@@ -64,6 +65,9 @@ public partial record ConnectionAgreementBlock : IBlock
             this.StreamBufferGenes = info.NumberOfGenes;
         }
     }
+
+    [Key(4)]
+    public bool AllowBidirectionalConnection { get; set; }
 
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }

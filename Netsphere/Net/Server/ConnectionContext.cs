@@ -118,7 +118,11 @@ public class ConnectionContext
                     if (!transmissionContext.IsSent)
                     {
                         var result = transmissionContext.Result;
-                        if (result == NetResult.Success)
+                        /*if (transmissionContext.Connection.IsClosedOrDisposed)
+                        {
+                            transmissionContext.ForceSendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.Closed);
+                        }
+                        else */if (result == NetResult.Success)
                         {// Success
                             transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
                         }
@@ -193,7 +197,10 @@ public class ConnectionContext
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                if (!transmissionContext.IsSent)
+                if (transmissionContext.Connection.IsClosedOrDisposed)
+                {
+                }
+                else if (!transmissionContext.IsSent)
                 {
                     var result = transmissionContext.Result;
                     if (result == NetResult.Success)

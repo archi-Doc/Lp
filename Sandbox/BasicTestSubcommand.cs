@@ -354,9 +354,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var hash = FarmHash.Hash64(buffer);
 
         var r2 = await stream.Send(buffer);
-        Console.WriteLine(r2.ToString());
         var r3 = await stream.Complete();
-        Console.WriteLine(r3.ToString());
     }
 
     public NetControl NetControl { get; set; }

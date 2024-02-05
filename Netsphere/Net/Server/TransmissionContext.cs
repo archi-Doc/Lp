@@ -188,4 +188,17 @@ public sealed class TransmissionContext
         this.receiveStream = new ReceiveStream(receiveTransmission, this.DataId, maxLength);
         return true;
     }
+
+    /*internal NetResult ForceSendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
+    {
+        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        if (transmission is null)
+        {
+            return NetResult.NoTransmission;
+        }
+
+        this.IsSent = true;
+        var result = transmission.SendBlock(0, dataId, toBeShared, default);
+        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
+    }*/
 }

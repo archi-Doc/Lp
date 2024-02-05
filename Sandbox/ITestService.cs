@@ -88,7 +88,8 @@ public class TestServiceImpl : TestService
 
     public async NetTask<SendStream?> SendData2(long maxLength)
     {
-        TransmissionContext.Current.Connection.Close();
+        var context = TransmissionContext.Current;
+        context.Connection.Close();
         return default;
     }
 }

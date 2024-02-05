@@ -249,6 +249,8 @@ public class ConnectionTerminal
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)
     {
+        connection.CloseTransmission(); // Dispose transmissions because the connection is closing.
+
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
         {
