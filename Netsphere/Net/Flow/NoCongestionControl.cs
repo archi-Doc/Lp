@@ -85,14 +85,11 @@ internal class NoCongestionControl : ICongestionControl
 
                 gene = firstNode.Value;
                 gene.SendTransmission.Connection.DoubleTaichi();
+                Console.WriteLine($"RESEND: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
                 if (!gene.Resend_NotThreadSafe(netSender, addition++))
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
                     gene.Node = default;
-                }
-                else
-                {// Resent
-                    Console.WriteLine($"RESEND: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
                 }
             }
         }
