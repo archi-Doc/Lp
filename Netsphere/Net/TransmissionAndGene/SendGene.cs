@@ -82,7 +82,7 @@ internal partial class SendGene
     public bool Resend_NotThreadSafe(NetSender netSender, int additional)
     {
         if (!this.CanResend)
-        {// Suppress the resending.
+        {// Suppress resending.
             return true;
         }
 
