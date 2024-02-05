@@ -46,14 +46,14 @@ internal class RemoteBenchBroker
 
         async void StartNode(NetNode node)
         {
-            using (var transmission = await this.terminal.TryConnect(node))
+            using (var connection = await this.terminal.TryConnect(node))
             {
-                if (transmission is null)
+                if (connection is null)
                 {
                     return;
                 }
 
-                var service = transmission.GetService<IBenchmarkService>();
+                var service = connection.GetService<IBenchmarkService>();
                 var result = await service.Start(total, concurrent);
                 if (result == NetResult.Success)
                 {

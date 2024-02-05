@@ -400,18 +400,17 @@ public class Control : ILogInformation
         this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
 
-        this.NetControl.Services.Register<IMergerService>();
-        this.NetControl.Services.Register<IBenchmarkService>();
+        if (this.LPBase.TestFeatures)
+        {
+            this.NetControl.Services.Register<IBenchmarkService>();
+        }
 
         this.MergerProvider = new();
         if (this.LPBase.Mode == LPMode.Merger)
         {// Merger
+            this.NetControl.Services.Register<IMergerService>();
+
             this.MergerProvider.Create(context);
-            // this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>();
-        }
-        else
-        {
-            // this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<LpData>>();
         }
 
         this.Core = core;
