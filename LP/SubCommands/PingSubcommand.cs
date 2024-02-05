@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Netsphere;
+using Netsphere.Packet;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -42,27 +43,21 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     {
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
-        /*var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(address))
-        {
-            if (terminal is null)
-            {
-                return;
-            }
+        var packetTerminal = this.Control.NetControl.NetTerminal.PacketTerminal;
 
-            var p = new PacketPingObsolete("test56789012345678901234567890123456789");
-            sw.Restart();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketPingObsolete, PacketPingResponseObsolete>(p);
-            sw.Stop();
-            if (result.Value != null)
-            {
-                this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
-            }
-            else
-            {
-                this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
-            }
-        }*/
+        var sw = Stopwatch.StartNew();
+        var p = new PacketPing("test56789");
+        var result = await packetTerminal.SendAndReceive<PacketPing, PacketPingResponse>(address, p);
+
+        sw.Stop();
+        if (result.Value != null)
+        {
+            this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+        }
+        else
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
+        }
     }
 
     public Control Control { get; set; }
