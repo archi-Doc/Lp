@@ -361,7 +361,7 @@ Loop:
 
                 while (this.GeneSerialMax < this.MaxReceivePosition)
                 {
-                    Debug.Assert(chain.CanAdd);
+                    Debug.Assert(chain.CanAdd);//
                     int size;
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;

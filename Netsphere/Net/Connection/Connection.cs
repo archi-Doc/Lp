@@ -523,7 +523,7 @@ Wait:
 
         var node = this.SendList.First;
         if (node is null)
-        {// No transmission to send.
+        {// No transmission to send
             return ProcessSendResult.Complete;
         }
 

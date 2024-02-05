@@ -209,7 +209,7 @@ public class CubicCongestionControl : ICongestionControl
                     this.UpdateCubic((double)this.ackCount);
                     this.UpdateRegen();
 
-                    this.cwnd = 300d;//tempcode
+                    this.cwnd = 100d;//tempcode
                     Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                 }
 
