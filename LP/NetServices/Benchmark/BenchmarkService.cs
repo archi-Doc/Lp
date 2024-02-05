@@ -36,8 +36,9 @@ internal class BenchmarkServiceImpl : IBenchmarkService
         return data;
     }
 
-    public async NetTask Send(byte[] data)
+    public async NetTask<ulong> GetHash(byte[] data)
     {
+        return FarmHash.Hash64(data);
     }
 
     public async NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
