@@ -53,7 +53,7 @@ public abstract class Connection : IDisposable
         this.EndPoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
-        this.minimumRtt = DefaultRtt;
+        this.minimumRtt = 0;
     }
 
     #region FieldAndProperty
@@ -102,7 +102,7 @@ public abstract class Connection : IDisposable
         => this.smoothedRtt;
 
     public int MinimumRtt
-        => this.minimumRtt;
+        => this.minimumRtt == 0 ? this.smoothedRtt : this.minimumRtt;
 
     public int LatestRtt
         => this.latestRtt;
@@ -451,6 +451,11 @@ Wait:
 
     internal void AddRtt(int rttMics)
     {
+        Console.WriteLine(rttMics);
+        if (rttMics < 150_000)
+        {
+        }
+
         if (rttMics < LowerRttLimit)
         {
             rttMics = LowerRttLimit;

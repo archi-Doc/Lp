@@ -19,7 +19,7 @@ public partial class NetStatsMachine : Machine
     {
         this.logger = logger;
         this.netControl = netControl;
-        this.statsData = statsData;
+        this.netStats = statsData;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
 
@@ -31,19 +31,19 @@ public partial class NetStatsMachine : Machine
     {
         this.logger.TryGet()?.Log("Unknown");
 
-        this.statsData.UpdateStats();
+        this.netStats.UpdateStats();
 
-        if (this.statsData.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
-            this.statsData.MyIpv6Address.AddressState != MyAddress.State.Unknown)
+        if (this.netStats.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+            this.netStats.MyIpv6Address.AddressState != MyAddress.State.Unknown)
         {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
         }
 
         var tasks = new List<Task<AddressQueryResult>>();
-        if (this.statsData.MyIpv4Address.AddressState == MyAddress.State.Unknown)
+        if (this.netStats.MyIpv4Address.AddressState == MyAddress.State.Unknown)
         {
-            if (this.statsData.EssentialAddress.CountIpv4 < NodeThreshold)
+            if (this.netStats.EssentialAddress.CountIpv4 < NodeThreshold)
             {
                 tasks.Add(this.GetIcanhazipIPv4());
             }
@@ -52,9 +52,9 @@ public partial class NetStatsMachine : Machine
             }
         }
 
-        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Unknown)
+        if (this.netStats.MyIpv6Address.AddressState == MyAddress.State.Unknown)
         {
-            if (this.statsData.EssentialAddress.CountIpv6 < NodeThreshold)
+            if (this.netStats.EssentialAddress.CountIpv6 < NodeThreshold)
             {
                 tasks.Add(this.GetIcanhazipIPv6());
             }
@@ -66,11 +66,11 @@ public partial class NetStatsMachine : Machine
         var results = await Task.WhenAll(tasks);
         foreach (var x in results)
         {
-            this.statsData.ReportAddress(x);
+            this.netStats.ReportAddress(x);
         }
 
-        if (this.statsData.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
-             this.statsData.MyIpv6Address.AddressState != MyAddress.State.Unknown)
+        if (this.netStats.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+             this.netStats.MyIpv6Address.AddressState != MyAddress.State.Unknown)
         {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
@@ -82,15 +82,15 @@ public partial class NetStatsMachine : Machine
     [StateMethod]
     protected async Task<StateResult> AddressFixed(StateParameter parameter)
     {
-        this.logger.TryGet()?.Log("AddressFixed");
-        this.logger.TryGet()?.Log(this.statsData.Dump());
+        this.logger.TryGet()?.Log(this.netStats.Dump());
+        this.logger.TryGet()?.Log(this.netStats.GetMyNetNode().ToString());
 
         return StateResult.Terminate;
     }
 
     private readonly ILogger logger;
     private readonly NetControl netControl;
-    private readonly NetStats statsData;
+    private readonly NetStats netStats;
 
     /*private void ReportIpAddress(IPAddress ipAddress, string uri)
     {
