@@ -102,9 +102,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
         sw.Stop();
 
-        Console.WriteLine(FarmHash.Hash64(data) == response.Value);
         Console.WriteLine(sw.ElapsedMilliseconds.ToString());
-
+        Console.WriteLine($"{FarmHash.Hash64(data) == response.Value} Send/Resend {connection.SendCount}/{connection.ResendCount}");
     }
     private async Task TestLargeData(ClientConnection connection)
     {
