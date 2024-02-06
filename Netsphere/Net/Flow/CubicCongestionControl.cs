@@ -196,6 +196,16 @@ public class CubicCongestionControl : ICongestionControl
 
         lock (this.syncObject)
         {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
+            /*var nif = (double)this.NumberInFlight;
+            if (nif > 0d)
+            {
+                nif = this.genesLossDetected.Count / nif;
+                if (nif > 0d)
+                {
+                    Console.WriteLine($"{this.genesLossDetected.Count} {nif:F2}");
+                }
+            }*/
+
             // CongestionControl: Positive/Negative factor
             this.ProcessFactor();
 
@@ -340,7 +350,7 @@ public class CubicCongestionControl : ICongestionControl
             }
             else
             {// Resend
-                Console.WriteLine($"RESEND: {gene.GeneSerial}");
+                Console.WriteLine($"Resend(loss detection): {gene.GeneSerial}");
                 this.genesInFlight.MoveToLast(node);  // Move to the last.
             }
         }
@@ -356,7 +366,7 @@ public class CubicCongestionControl : ICongestionControl
 
             resendCapacity--;
             this.ReportDeliveryFailure();
-            Console.WriteLine($"RESEND2: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient}) {gene.SendTransmission.Connection.RetransmissionTimeout} mics");
+            Console.WriteLine($"Resend(timeout): {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient}) {gene.SendTransmission.Connection.RetransmissionTimeout} mics");
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
@@ -437,6 +447,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
+        this.slowstart = false;//
         if (this.slowstart)
         {// Hystart
             var currentMinRtt = this.currentMinRtt;

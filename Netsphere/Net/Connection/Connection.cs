@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
+using Arc.Unit;
 using Netsphere.Block;
 using Netsphere.Crypto;
 using Netsphere.Net;
@@ -109,7 +110,7 @@ public abstract class Connection : IDisposable
 
     // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + (this.smoothedRtt >> 3) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 10ms
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 10ms
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
@@ -892,6 +893,8 @@ Wait:
                 span = span.Slice(sizeof(int));
 
                 transmission.MaxReceivePosition = maxReceivePosition;
+
+                this.Logger.TryGet(LogLevel.Debug)?.Log($"KnockResponse: {maxReceivePosition}");
             }
         }
     }

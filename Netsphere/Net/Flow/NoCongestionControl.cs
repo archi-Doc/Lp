@@ -59,14 +59,6 @@ internal class NoCongestionControl : ICongestionControl
     {
     }
 
-    /*void ICongestionControl.ReportDeliverySuccess()
-    {
-    }
-
-    void ICongestionControl.ReportDeliveryFailure()
-    {
-    }*/
-
     bool ICongestionControl.Process(NetSender netSender, long elapsedMics, double elapsedMilliseconds)
     {// lock (ConnectionTerminal.CongestionControlList)
         // Resend
@@ -85,7 +77,7 @@ internal class NoCongestionControl : ICongestionControl
 
                 gene = firstNode.Value;
                 gene.SendTransmission.Connection.DoubleTaichi();
-                Console.WriteLine($"RESEND: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
+                Console.WriteLine($"Resend(timeout): {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
                 if (!gene.Resend_NotThreadSafe(netSender, addition++))
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);

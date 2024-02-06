@@ -131,7 +131,6 @@ public sealed class TransmissionContext
             return (NetResult.InvalidOperation, default);
         }
 
-        var timeout = this.Connection.NetBase.DefaultSendTimeout;
         var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
         if (transmission is null)
         {

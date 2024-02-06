@@ -10,7 +10,7 @@ namespace Netsphere.Net;
 public sealed class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendBufferSize = 8 * 1024 * 1024;
+    // private const int SendBufferSize = 8 * 1024 * 1024;
     private const int ReceiveBufferSize = 8 * 1024 * 1024;
 
     private class RecvCore : ThreadCore
@@ -135,7 +135,7 @@ public sealed class NetSocket
         {
         }
 
-        udp.Client.SendBufferSize = SendBufferSize;
+        // udp.Client.SendBufferSize = SendBufferSize;
         udp.Client.ReceiveBufferSize = ReceiveBufferSize;
         udp.Client.ReceiveTimeout = ReceiveTimeout;
 

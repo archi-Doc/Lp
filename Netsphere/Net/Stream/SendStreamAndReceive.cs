@@ -27,7 +27,7 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
 
             NetResponse response;
             var connection = this.SendTransmission.Connection;
-            var timeout = connection.NetBase.DefaultSendTimeout;
+            // var timeout = connection.NetBase.DefaultSendTimeout;
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
             using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
             {
@@ -38,7 +38,7 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(timeout, connection.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(connection.CancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);
