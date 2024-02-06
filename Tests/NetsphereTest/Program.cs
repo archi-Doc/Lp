@@ -84,7 +84,6 @@ public class Program
             {
                 var original = context.GetOrCreateOptions<NetsphereOptions>();
                 original.EnableAlternative = true;
-                original.EnableLogger = false;
                 original.Port = 49152;
 
                 NetsphereOptions? options = default;
@@ -123,8 +122,8 @@ public class Program
                 context.AddLoggerResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)
-                    {// Debug -> no output
-                        context.SetOutput<EmptyLogger>();
+                    {
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
                     }
 
@@ -148,6 +147,15 @@ public class Program
                         context.SetOutput<ConsoleLogger>();
                     }
                 });
+            })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/Debug.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.ClearLogsAtStartup = true;
+                options.MaxQueue = 100_000;
             })
             .SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions

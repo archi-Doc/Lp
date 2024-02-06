@@ -172,11 +172,6 @@ public class Control : ILogInformation
                 netBase.ServerOptions = netBase.ServerOptions with { MaxStreamLength = 100_000_000, }; // betacode
             });
 
-            /*this.SetupOptions<ServerOptions>((context, options) =>
-            {// ServerOptions
-                options.MaxStreamLength = 100_000_000; // betacode
-            });*/
-
             this.SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);

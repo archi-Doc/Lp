@@ -162,6 +162,10 @@ public sealed partial class PacketTerminal
                     return;
                 }
 
+#if LOG_LOWLEVEL_NET
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Send packet id:{item.PacketId}");
+#endif
+
                 if (item.ResponseTcs is not null)
                 {// WaitingToSend -> WaitingForResponse
                     netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
@@ -197,6 +201,10 @@ public sealed partial class PacketTerminal
                 var span = item.MemoryOwner.Span;
                 BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
                 BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
+
+#if LOG_LOWLEVEL_NET
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
+#endif
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                 item.SentMics = Mics.FastSystem;

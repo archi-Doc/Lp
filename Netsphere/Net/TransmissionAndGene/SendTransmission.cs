@@ -541,6 +541,11 @@ Exit:
                         if (gene.CurrentState == SendGene.State.Sent)
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
                             sentMics = Math.Max(sentMics, gene.SentMics);
+                            var rtt2 = (int)(Mics.FastSystem - gene.SentMics);
+#if LOG_LOWLEVEL_NET
+                            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt2} mics");//
+#endif
+                            this.Connection.AddRtt(rtt2);
                         }
 
                         gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
@@ -561,6 +566,11 @@ Exit:
                         if (gene.CurrentState == SendGene.State.Sent)
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
                             sentMics = Math.Max(sentMics, gene.SentMics);
+                            var rtt2 = (int)(Mics.FastSystem - gene.SentMics);
+#if LOG_LOWLEVEL_NET
+                            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt2} mics");//
+#endif
+                            this.Connection.AddRtt(rtt2);
                         }
 
                         gene.Dispose(true); // this.genes.GeneSerialListChain.Remove(gene);
@@ -608,7 +618,7 @@ Exit:
             if (sentMics != 0 && rtt > 0)
             {
                 var r = (int)rtt;
-                this.Connection.AddRtt(r);
+                // this.Connection.AddRtt(r);
                 this.Connection.GetCongestionControl().AddRtt(r);
             }
 

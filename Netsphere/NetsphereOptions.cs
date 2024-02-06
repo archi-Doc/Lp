@@ -27,7 +27,4 @@ public partial record NetsphereOptions
 
     [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
-
-    [SimpleOption("logger", Description = "Enable network logger")]
-    public bool EnableLogger { get; set; } = false;
 }

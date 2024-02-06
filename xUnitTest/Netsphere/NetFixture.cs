@@ -32,7 +32,6 @@ public class NetFixture : IDisposable
 
         var options = new NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = false;
         options.NodeName = "Test";
 
         this.unit = builder.Build();

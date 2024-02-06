@@ -45,7 +45,8 @@ public class LPLogger
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        context.SetOutput<EmptyLogger>();
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        // context.SetOutput<EmptyLogger>();
                         return;
                     }
 

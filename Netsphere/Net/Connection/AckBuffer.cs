@@ -251,6 +251,10 @@ NewPacket:
 
         void Send(int spanLength)
         {
+#if LOG_LOWLEVEL_NET
+            this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, SendAck");
+#endif
+
             connection.CreateAckPacket(owner, spanLength, out var packetLength);
             netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
             // owner = owner.Return(); // Moved
