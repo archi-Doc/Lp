@@ -68,6 +68,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
             if (r.Result == NetResult.Completed)
             {
                 transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                break;
             }
         }
 

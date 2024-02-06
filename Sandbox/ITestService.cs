@@ -79,6 +79,7 @@ public class TestServiceImpl : TestService
             if (r.Result == NetResult.Completed)
             {
                 transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                break;
             }
         }
 
