@@ -354,7 +354,7 @@ Loop:
                 }
 
                 while (this.GeneSerialMax < this.MaxReceivePosition)
-                {
+                {x
                     Debug.Assert(chain.CanAdd);// Consumed < items.Length;
                     int size;
                     var gene = new SendGene(this);
