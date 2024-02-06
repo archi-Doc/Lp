@@ -209,7 +209,7 @@ public class CubicCongestionControl : ICongestionControl
                     this.UpdateCubic((double)this.ackCount);
                     this.UpdateRegen();
 
-                    this.cwnd = 100d;//tempcode
+                    // this.cwnd = 100d;//tempcode
                     Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                 }
 
@@ -345,10 +345,11 @@ public class CubicCongestionControl : ICongestionControl
             }
         }
 
+        var timeout = this.Connection.TaichiTimeout;
         while (resendCapacity > 0 && this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
-            if (Mics.FastSystem < (gene.SentMics + (gene.SendTransmission.Connection.RetransmissionTimeout * this.Connection.Taichi)))
+            if (Mics.FastSystem < (gene.SentMics + timeout))
             {
                 break;
             }

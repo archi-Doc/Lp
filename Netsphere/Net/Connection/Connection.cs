@@ -107,8 +107,9 @@ public abstract class Connection : IDisposable
     public int LatestRtt
         => this.latestRtt;
 
+    // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
+        => this.smoothedRtt + (this.smoothedRtt >> 3) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 10ms
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
