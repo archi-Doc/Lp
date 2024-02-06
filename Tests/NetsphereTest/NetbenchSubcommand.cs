@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using Arc.Crypto;
 using Arc.Unit;
 using LP.NetServices;
 using SimpleCommandLine;
@@ -27,30 +28,39 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             }
         }
 
-        this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
-
-        // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
+        // node = NetNode.Alternative;
+        using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
         {
+            if (connection is null)
+            {
+                return;
+            }
+
+            this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
+
             /*var p = new PacketPunch(null);
             var sw = Stopwatch.StartNew();
-            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var t = await connection.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
             for (var i = 0; i < 10; i++)
             {
-                t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+                t = await connection.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             }
 
             Logger.Priority.Information($"t: {t}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");*/
 
-            // await this.BenchLargeData(terminal); // 1060 ms
-            // await this.PingpongSmallData(terminal); // 350 ms
+            // await this.PingpongSmallData(connection); // 350ms -> 220ms
+            // await this.TestLargeData(connection); // 1060 ms
+            await this.TestStreamData(connection);
 
-            // var service = terminal.GetService<IBenchmarkService>();
+            /*var service = connection.GetService<IBenchmarkService>();
+            byte[] data = [0, 1, 2,];
+            var data2 = await service.Pingpong(data);*/
+
 
             /*await service.Wait(200);
             await service.Wait(200);
@@ -67,30 +77,54 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             w3.ResponseAsync.Wait();*/
         }
 
-        await this.PingpongSmallData2(node);
+        // await this.PingpongSmallData2(node); // // 380ms -> 340ms -> 110ms?
         // await this.MassiveSmallData(node); // 1000 ms
     }
 
     public NetControl NetControl { get; set; }
 
-    private async Task BenchLargeData(ClientConnection terminal)
+    private async Task TestStreamData(ClientConnection connection)
     {
-        const int N = 4_000_000;
-        var service = terminal.GetService<IBenchmarkService>();
+        const int N = 10_000_000;
+        var service = connection.GetService<IBenchmarkService>();
         var data = new byte[N];
+        RandomVault.Pseudo.NextBytes(data);
 
         var sw = Stopwatch.StartNew();
-        var response = await service.Send(data).ResponseAsync;
+        var stream = await service.GetHash(N);
+        if (stream is null)
+        {
+            return;
+        }
+
+        await stream.Send(data);
+        var response = await stream.CompleteAndReceive();
+
+        sw.Stop();
+
+        Console.WriteLine(sw.ElapsedMilliseconds.ToString());
+        Console.WriteLine($"{FarmHash.Hash64(data) == response.Value} Send/Resend {connection.SendCount}/{connection.ResendCount}");
+    }
+    private async Task TestLargeData(ClientConnection connection)
+    {
+        const int N = 4_000_000;
+        var service = connection.GetService<IBenchmarkService>();
+        var data = new byte[N];
+        RandomVault.Pseudo.NextBytes(data);
+
+        var sw = Stopwatch.StartNew();
+        var response = await service.GetHash(data).ResponseAsync;
         sw.Stop();
 
         Console.WriteLine(response);
+        Console.WriteLine(FarmHash.Hash64(data) == response.Value);
         Console.WriteLine(sw.ElapsedMilliseconds.ToString());
     }
 
-    private async Task PingpongSmallData(ClientConnection terminal)
+    private async Task PingpongSmallData(ClientConnection connection)
     {
         const int N = 100; // 20;
-        var service = terminal.GetService<IBenchmarkService>();
+        var service = connection.GetService<IBenchmarkService>();
         var data = new byte[100];
 
         var sw = Stopwatch.StartNew();
@@ -117,7 +151,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     }
 
     private async Task PingpongSmallData2(NetNode node)
-    {// 380ms -> 340ms
+    {
         const int N = 50;
         var data = new byte[100];
 
@@ -125,13 +159,13 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         var count = 0;
         for (var j = 0; j < N; j++)
         {
-            using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
+            using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
             {
-                if (terminal is null)
+                if (connection is null)
                 {
                     return;
                 }
-                var service = terminal.GetService<IBenchmarkService>();
+                var service = connection.GetService<IBenchmarkService>();
                 var response = await service.Pingpong(data).ResponseAsync;
                 if (response.IsSuccess)
                 {
@@ -156,7 +190,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
         sw.Stop();
 
-       // Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
+        // Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
         Console.WriteLine($"PingpongSmallData2 {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
         Console.WriteLine();
     }
@@ -176,14 +210,14 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         {
             for (var j = 0; j < (Total / Concurrent); j++)
             {
-                using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
+                using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
                 {
-                    if (terminal is null)
+                    if (connection is null)
                     {
                         return;
                     }
 
-                    var service = terminal.GetService<IBenchmarkService>();
+                    var service = connection.GetService<IBenchmarkService>();
                     var response = service.Pingpong(data).ResponseAsync;
                     if (response.Result.IsSuccess)
                     {

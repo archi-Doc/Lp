@@ -37,11 +37,11 @@ public class NetControl : UnitBase, IUnitPreparable
             {
                 // Main services
                 context.AddSingleton<NetControl>();
+                // context.AddSingleton<ServerOptions>();
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
-                context.AddSingleton<ResponderControl>();
                 context.AddSingleton<NetTerminal>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -85,21 +85,22 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, ResponderControl netResponder, NetTerminal netTerminal)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal)
         : base(context)
     {
         this.unitLogger = unitLogger;
         this.ServiceProvider = context.ServiceProvider;
         this.NetBase = netBase;
         this.NetStats = netStats;
-        this.ResponderControl = netResponder;
+        this.Responders = new();
+        this.Services = new();
 
         this.NetTerminal = netTerminal;
-        this.NetTerminal.Initialize(this.ResponderControl, false);
+        this.NetTerminal.Initialize(this.Responders, this.Services, false);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
             this.Alternative = new(context, unitLogger, netBase, netStats);
-            this.Alternative.Initialize(this.ResponderControl, true);
+            this.Alternative.Initialize(this.Responders, this.Services, true);
         }
     }
 
@@ -109,7 +110,9 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetStats NetStats { get; }
 
-    public ResponderControl ResponderControl { get; }
+    public ResponderControl Responders { get; }
+
+    public ServiceControl Services { get; }
 
     public NetTerminal NetTerminal { get; }
 

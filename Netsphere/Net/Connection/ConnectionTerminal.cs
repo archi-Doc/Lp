@@ -15,8 +15,9 @@ public class ConnectionTerminal
 {// ConnectionStateCode: Open -> Closed -> Disposed
     private static readonly long AdditionalServerMics = Mics.FromSeconds(1);
 
-    public ConnectionTerminal(NetTerminal netTerminal)
+    public ConnectionTerminal(IServiceProvider serviceProvider, NetTerminal netTerminal)
     {
+        this.ServiceProvider = serviceProvider;
         this.NetBase = netTerminal.NetBase;
         this.NetTerminal = netTerminal;
         this.AckQueue = new(this);
@@ -28,6 +29,8 @@ public class ConnectionTerminal
     }
 
     public NetBase NetBase { get; }
+
+    internal IServiceProvider ServiceProvider { get; }
 
     internal UnitLogger UnitLogger => this.NetTerminal.UnitLogger;
 
@@ -246,6 +249,8 @@ public class ConnectionTerminal
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)
     {
+        connection.CloseTransmission(); // Dispose transmissions because the connection is closing.
+
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
         {

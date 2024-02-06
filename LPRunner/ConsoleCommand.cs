@@ -4,6 +4,7 @@ using Arc.Threading;
 using Arc.Unit;
 using BigMachines;
 using LP;
+using LP.NetServices;
 using Netsphere;
 using SimpleCommandLine;
 
@@ -17,6 +18,8 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.logger = logger;
         this.bigMachine = bigMachine;
         this.netControl = netControl;
+
+        this.netControl.Services.Register<IRemoteControlService>();
     }
 
     public async Task RunAsync(string[] args)

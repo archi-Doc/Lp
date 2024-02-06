@@ -20,8 +20,9 @@ public class BlockTestSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.NetControl.ResponderControl.Register(Netsphere.Responder.MemoryResponder.Instance);
-        this.NetControl.ResponderControl.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.Responders.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.NetControl.Services.Register<TestService>();
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;

@@ -106,11 +106,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
         this.userInterfaceService.WriteLine($"{pub.ToString()}");
 
-        var token = new Token(Token.Type.Identification, 0, 0, Identifier.Three);
-        var bb = token.Sign(originator);
-        bb = token.ValidateAndVerifyWithoutPublicKey();
-
-        originator.CreateSignature(value, out var signature);
         // this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
 
         /*using (var terminal = this.control.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))

@@ -26,4 +26,9 @@ public record ServerOptions
     /// Gets the size of stream buffer.
     /// </summary>
     public int StreamBufferSize { get; init; } = 8 * 1024 * 1024; // 8MB
+
+    /// <summary>
+    /// Gets a value indicating whether to allow bidirectional connections.
+    /// </summary>
+    public bool AllowBidirectionalConnection { get; init; }
 }

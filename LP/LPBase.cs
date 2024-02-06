@@ -161,7 +161,7 @@ public class LPBase : ILogInformation
         logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");
         logger.Log($"Node: {this.NodeName}, Mode: {this.Mode.ToString()}, Test: {this.TestFeatures}");
-        this.Options.LogInformation(logger);
+        // logger.Log(this.Options.ToString());
     }
 
     private string CombinePath(string directory, string path, string defaultFilename)

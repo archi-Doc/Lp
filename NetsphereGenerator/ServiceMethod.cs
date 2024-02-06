@@ -11,6 +11,9 @@ public class ServiceMethod
     public const string ByteArrayName = "byte[]";
     public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
     public const string ReadOnlyMemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
+    public const string ReceiveStreamName = "Netsphere.ReceiveStream";
+    public const string SendStreamName = "Netsphere.SendStream";
+    public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
 
     public enum Type
     {
@@ -18,6 +21,9 @@ public class ServiceMethod
         ByteArray,
         MemoryOwner,
         ReadOnlyMemoryOwner,
+        ReceiveStream,
+        SendStream,
+        SendStreamAndReceive,
     }
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
@@ -64,13 +70,32 @@ public class ServiceMethod
                     method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.Object.LocalName);
                 }
 
-                serviceMethod.ReturnType = NameToType(rt.FullName);
+                serviceMethod.ReturnType = NameToType(rt.Object.OriginalDefinition?.FullName);
+                if (serviceMethod.ReturnType == Type.SendStreamAndReceive)
+                {
+                    serviceMethod.StreamTypeArgument = rt.Object.Generics_Arguments[0].FullName;
+                }
             }
         }
 
         if (method.Method_Parameters.Length == 1)
         {
             serviceMethod.ParameterType = NameToType(method.Method_Parameters[0]);
+        }
+
+        if (serviceMethod.ReturnType == Type.SendStream ||
+            serviceMethod.ReturnType == Type.SendStreamAndReceive)
+        {
+            if (method.Method_Parameters.Length > 1 || method.Method_Parameters.Length == 0)
+            {
+                method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
+                return null;
+            }
+            else if (method.Method_Parameters[0] != "long")
+            {
+                method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
+                return null;
+            }
         }
 
         return serviceMethod;
@@ -102,6 +127,8 @@ public class ServiceMethod
     public Type ParameterType { get; private set; }
 
     public Type ReturnType { get; private set; }
+
+    public string StreamTypeArgument { get; private set; } = string.Empty;
 
     public string GetParameters()
     {// int a1, string a2
@@ -213,11 +240,14 @@ public class ServiceMethod
         }
     }
 
-    private static Type NameToType(string name) => name switch
+    private static Type NameToType(string? name) => name switch
     {
         ByteArrayName => Type.ByteArray,
         MemoryOwnerName => Type.MemoryOwner,
         ReadOnlyMemoryOwnerName => Type.ReadOnlyMemoryOwner,
+        ReceiveStreamName => Type.ReceiveStream,
+        SendStreamName => Type.SendStream,
+        SendStreamAndReceiveName => Type.SendStreamAndReceive,
         _ => Type.Other,
     };
 

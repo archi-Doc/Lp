@@ -13,7 +13,7 @@ public sealed class TransmissionContext
 
     internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
 
-    public TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal TransmissionContext(ConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
         this.ConnectionContext = connectionContext;
         this.TransmissionId = transmissionId;
@@ -38,12 +38,24 @@ public sealed class TransmissionContext
 
     public NetResult Result { get; set; }
 
-    private bool sent;
+    public bool IsSent { get; private set; }
+
+    public ReceiveStream ReceiveStream
+        => this.receiveStream ?? throw new InvalidOperationException();
+
+    private ReceiveStream? receiveStream;
 
     #endregion
 
     public void Return()
-        => this.Owner = this.Owner.Return();
+    {
+        this.Owner = this.Owner.Return();
+        if (this.receiveStream is not null)
+        {
+            this.receiveStream.Abort();
+            this.receiveStream = default;
+        }
+    }
 
     public NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
     {
@@ -55,9 +67,9 @@ public sealed class TransmissionContext
         {
             return default;
         }
-        else if (this.sent)
+        else if (this.IsSent)
         {
-            return NetResult.AlreadySent;
+            return NetResult.InvalidOperation;
         }
 
         var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
@@ -66,7 +78,7 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
-        this.sent = true;
+        this.IsSent = true;
         var result = transmission.SendBlock(0, dataId, toBeShared, default);
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
@@ -81,9 +93,9 @@ public sealed class TransmissionContext
         {
             return default;
         }
-        else if (this.sent)
+        else if (this.IsSent)
         {
-            return NetResult.AlreadySent;
+            return NetResult.InvalidOperation;
         }
 
         if (!BlockService.TrySerialize(data, out var owner))
@@ -98,28 +110,27 @@ public sealed class TransmissionContext
             return NetResult.NoTransmission;
         }
 
-        this.sent = true;
+        this.IsSent = true;
         var result = transmission.SendBlock(0, dataId, owner, default);
         owner.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
         if (this.Connection.CancellationToken.IsCancellationRequested)
         {
             return (NetResult.Canceled, default);
         }
-        else if (this.Connection.Agreement.MaxStreamLength < maxLength)
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
-        else if (this.sent)
+        else if (this.IsSent)
         {
-            return (NetResult.AlreadySent, default);
+            return (NetResult.InvalidOperation, default);
         }
 
-        var timeout = this.Connection.NetBase.DefaultSendTimeout;
         var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
         if (transmission is null)
         {
@@ -127,7 +138,7 @@ public sealed class TransmissionContext
         }
 
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-        this.sent = true;
+        this.IsSent = true;
         var result = transmission.SendStream(maxLength, tcs);
         if (result != NetResult.Success)
         {
@@ -137,4 +148,56 @@ public sealed class TransmissionContext
 
         return (NetResult.Success, new SendStream(transmission, maxLength, dataId));
     }
+
+    /*public (NetResult Result, ReceiveStream? Stream) ReceiveStream(long maxLength)
+    {
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return (NetResult.Canceled, default);
+        }
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        {
+            return (NetResult.StreamLengthLimit, default);
+        }
+        else if (this.receiveTransmission is null)
+        {
+            return (NetResult.InvalidOperation, default);
+        }
+
+        var stream = new ReceiveStream(this.receiveTransmission, this.DataId, maxLength);
+        this.receiveTransmission = default;
+        return (NetResult.Success, stream);
+    }*/
+
+    internal bool CreateReceiveStream(ReceiveTransmission receiveTransmission, long maxLength)
+    {
+        if (this.Connection.CancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        {
+            return false;
+        }
+        else if (this.receiveStream is not null)
+        {
+            return false;
+        }
+
+        this.receiveStream = new ReceiveStream(receiveTransmission, this.DataId, maxLength);
+        return true;
+    }
+
+    /*internal NetResult ForceSendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
+    {
+        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        if (transmission is null)
+        {
+            return NetResult.NoTransmission;
+        }
+
+        this.IsSent = true;
+        var result = transmission.SendBlock(0, dataId, toBeShared, default);
+        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
+    }*/
 }

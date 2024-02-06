@@ -46,11 +46,15 @@ internal partial class SendGene
         this.SendTransmission.Connection.State == Connection.ConnectionState.Open;
 
     public bool CanResend
+        => (Mics.FastSystem - this.SentMics) > this.SendTransmission.Connection.MinimumRtt;
+
+    /*public bool CanResend
     {
         get
         {
             if (this.CurrentState == State.Sent ||
-            this.CurrentState == State.Resent)
+            this.CurrentState == State.Resent ||
+            this.CurrentState == State.LossDetected)
             {// Sent
                 var threshold = this.SendTransmission.Connection.MinimumRtt;
                 if (Mics.FastSystem - this.SentMics < threshold)
@@ -62,7 +66,7 @@ internal partial class SendGene
             // Initial or LossDetected
             return true;
         }
-    }
+    }*/
 
     #endregion
 
@@ -82,7 +86,7 @@ internal partial class SendGene
     public bool Resend_NotThreadSafe(NetSender netSender, int additional)
     {
         if (!this.CanResend)
-        {// Suppress the resending.
+        {// Suppress resending.
             return true;
         }
 
@@ -100,6 +104,10 @@ internal partial class SendGene
 
         var connection = this.SendTransmission.Connection;
         var currentMics = Mics.FastSystem;
+
+// #if LOG_LOWLEVEL_NET
+        connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
+// #endif
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
         this.SentMics = currentMics;

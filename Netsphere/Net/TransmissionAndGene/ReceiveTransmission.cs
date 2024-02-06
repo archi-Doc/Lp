@@ -44,7 +44,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     public int SuccessiveReceivedPosition
-        => this.maxReceivedPosition;
+        => this.successiveReceivedPosition;
 
 #pragma warning disable SA1401 // Fields should be private
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
@@ -56,7 +56,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     private readonly object syncObject = new();
     private int totalGene;
     private TaskCompletionSource<NetResponse>? receivedTcs;
-    private int maxReceivedPosition;
+    private int successiveReceivedPosition;
     private ReceiveGene? gene0; // Gene 0
     private ReceiveGene? gene1; // Gene 1
     private ReceiveGene? gene2; // Gene 2
@@ -233,22 +233,22 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {
                     gene.SetRecv(toBeShared);
 
-                    if (this.maxReceivedPosition <= dataPosition)
+                    if (this.successiveReceivedPosition <= dataPosition)
                     {
-                        if (this.maxReceivedPosition == dataPosition)
+                        if (this.successiveReceivedPosition == dataPosition)
                         {
-                            this.maxReceivedPosition++;
+                            this.successiveReceivedPosition++;
                         }
 
-                        while (chain.Get(this.maxReceivedPosition) is { } g && g.IsReceived)
+                        while (chain.Get(this.successiveReceivedPosition) is { } g && g.IsReceived)
                         {
-                            this.maxReceivedPosition++;
+                            this.successiveReceivedPosition++;
                         }
                     }
 
                     if (this.Mode == NetTransmissionMode.Block)
                     {
-                        if (this.maxReceivedPosition >= this.totalGene)
+                        if (this.successiveReceivedPosition >= this.totalGene)
                         {
                             completeFlag = true;
                         }
@@ -541,7 +541,7 @@ Abort:
                     }
                 }
 
-                lastMaxReceivedPosition = this.maxReceivedPosition;
+                lastMaxReceivedPosition = this.successiveReceivedPosition;
                 if (stream.ReceivedLength >= stream.MaxStreamLength)
                 {// Complete
                     this.DisposeInternal();
@@ -551,7 +551,7 @@ Abort:
 
             // Wait for data arrival.
             var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
-            while (this.maxReceivedPosition == lastMaxReceivedPosition)
+            while (this.successiveReceivedPosition == lastMaxReceivedPosition)
             {
                 if (this.Connection.IsClosedOrDisposed)
                 {

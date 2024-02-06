@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Immutable;
 using System.Text;
 using Arc.Visceral;
 using Microsoft.CodeAnalysis;
@@ -486,6 +487,19 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {
+                if (method.ReturnType == ServiceMethod.Type.SendStream)
+                {
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine("return new(response.Stream, response.Result);");
+                    return;
+                }
+                else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+                {
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine("return new(response.Stream, response.Result);");
+                    return;
+                }
+
                 if (method.ParameterType == ServiceMethod.Type.ByteArray)
                 {
                     ssb.AppendLine($"var owner = new {ServiceMethod.MemoryOwnerName}(a1);");
@@ -511,50 +525,59 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
 
                 ssb.AppendLine();
-                ssb.AppendLine($"var response = await this.ClientConnection.SendAndReceiveService(owner, {method.IdString}).ConfigureAwait(false);");
-                ssb.AppendLine("owner.Return();");
-                using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
+                if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
                 {
-                    AppendReturn("(NetResult)response.DataId");
-                }
-
-                using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
-                {
-                    AppendReturn("response.Result");
-                }
-
-                ssb.AppendLine();
-                if (method.ReturnType == ServiceMethod.Type.ByteArray)
-                {
-                    ssb.AppendLine("var result = response.Value.Memory.ToArray();");
-                    ssb.AppendLine("response.Value.Return();");
-                }
-                else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
-                {
-                    ssb.AppendLine("var result = response.Value;");
-                }
-                else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
-                {
-                    ssb.AppendLine("var result = response.Value.AsReadOnly();");
+                    ssb.AppendLine($"var response = await this.ClientConnection.RpcSendAndReceiveStream(owner, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine("owner.Return();");
+                    ssb.AppendLine("return new(response.Stream, response.Result);");
                 }
                 else
                 {
-                    using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
+                    ssb.AppendLine($"var response = await this.ClientConnection.RpcSendAndReceive(owner, {method.IdString}).ConfigureAwait(false);");
+                    ssb.AppendLine("owner.Return();");
+                    using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
                     {
-                        AppendReturn("NetResult.DeserializationError");
+                        AppendReturn("(NetResult)response.DataId");
+                    }
+
+                    using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
+                    {
+                        AppendReturn("response.Result");
                     }
 
                     ssb.AppendLine();
-                    ssb.AppendLine("response.Value.Return();");
-                }
+                    if (method.ReturnType == ServiceMethod.Type.ByteArray)
+                    {
+                        ssb.AppendLine("var result = response.Value.Memory.ToArray();");
+                        ssb.AppendLine("response.Value.Return();");
+                    }
+                    else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
+                    {
+                        ssb.AppendLine("var result = response.Value;");
+                    }
+                    else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
+                    {
+                        ssb.AppendLine("var result = response.Value.AsReadOnly();");
+                    }
+                    else
+                    {
+                        using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
+                        {
+                            AppendReturn("NetResult.DeserializationError");
+                        }
 
-                if (method.ReturnObject == null)
-                {
-                    ssb.AppendLine($"return default;");
-                }
-                else
-                {
-                    ssb.AppendLine($"return new(result);");
+                        ssb.AppendLine();
+                        ssb.AppendLine("response.Value.Return();");
+                    }
+
+                    if (method.ReturnObject == null)
+                    {
+                        ssb.AppendLine($"return default;");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"return new(result);");
+                    }
                 }
             }
         }
@@ -771,6 +794,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {// No parameter
             ssb.AppendLine($"var owner = {ServiceMethod.MemoryOwnerName}.Empty;");
         }
+        else if (method.ReturnType == ServiceMethod.Type.SendStream ||
+            method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+        {
+            ssb.AppendLine("var value = context.ReceiveStream.MaxStreamLength;");
+        }
         else
         {
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(context.Owner, out var value))"))
@@ -814,7 +842,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine("var result = NetResult.Success;");
         }*/
 
-        ssb.AppendLine("context.Owner.Return();");
+        ssb.AppendLine("context.Return();");
         if (method.ReturnObject == null)
         {// NetTask
             ssb.AppendLine($"context.Owner = {ServiceMethod.MemoryOwnerName}.Empty;");
@@ -830,6 +858,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
         {// ByteArrayPool.ReadOnlyMemoryOwner result;
             ssb.AppendLine("context.Owner = result.AsMemory();");
+        }
+        else if (method.ReturnType == ServiceMethod.Type.ReceiveStream ||
+            method.ReturnType == ServiceMethod.Type.SendStream ||
+            method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+        {
         }
         else
         {// Other
@@ -864,5 +897,18 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine("return si;");
         }
+    }
+
+    internal string? TryGetParameterName(int position)
+    {
+        if (this.symbol is IMethodSymbol ms)
+        {
+            if (position >= 0 && position < ms.Parameters.Length)
+            {
+                return ms.Parameters[position].Name;
+            }
+        }
+
+        return null;
     }
 }

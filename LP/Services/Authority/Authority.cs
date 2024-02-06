@@ -42,7 +42,7 @@ public sealed partial class Authority
     public void SignToken(AuthenticationToken token)
     {
         var privateKey = this.GetOrCreatePrivateKey();
-        Netsphere.TinyhandHelper.Sign(token, privateKey, 9);
+        Netsphere.TinyhandHelper.Sign(token, privateKey);
     }
 
     /*public void SignToken(Credit credit, Token token)

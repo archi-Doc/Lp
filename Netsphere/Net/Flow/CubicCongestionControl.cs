@@ -196,6 +196,16 @@ public class CubicCongestionControl : ICongestionControl
 
         lock (this.syncObject)
         {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
+            /*var nif = (double)this.NumberInFlight;
+            if (nif > 0d)
+            {
+                nif = this.genesLossDetected.Count / nif;
+                if (nif > 0d)
+                {
+                    Console.WriteLine($"{this.genesLossDetected.Count} {nif:F2}");
+                }
+            }*/
+
             // CongestionControl: Positive/Negative factor
             this.ProcessFactor();
 
@@ -209,6 +219,7 @@ public class CubicCongestionControl : ICongestionControl
                     this.UpdateCubic((double)this.ackCount);
                     this.UpdateRegen();
 
+                    // this.cwnd = 100d;//tempcode
                     Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                 }
 
@@ -339,22 +350,23 @@ public class CubicCongestionControl : ICongestionControl
             }
             else
             {// Resend
-                Console.WriteLine($"RESEND: {gene.GeneSerial}");
+                Console.WriteLine($"Resend(loss detection): {gene.GeneSerial}");
                 this.genesInFlight.MoveToLast(node);  // Move to the last.
             }
         }
 
+        var timeout = this.Connection.TaichiTimeout;
         while (resendCapacity > 0 && this.genesInFlight.First is { } firstNode)
         {// Retransmission. (Do not check IsCongested, as it causes Genes in-flight to be stuck and stops transmission)
             gene = firstNode.Value;
-            if (Mics.FastSystem < (gene.SentMics + (gene.SendTransmission.Connection.RetransmissionTimeout * this.Connection.Taichi)))
+            if (Mics.FastSystem < (gene.SentMics + timeout))
             {
                 break;
             }
 
             resendCapacity--;
             this.ReportDeliveryFailure();
-            Console.WriteLine($"RESEND2: {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient}) {gene.SendTransmission.Connection.RetransmissionTimeout} mics");
+            Console.WriteLine($"Resend(timeout): {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax} ({this.Connection.IsClient}) {gene.SendTransmission.Connection.RetransmissionTimeout} mics");
             if (!gene.Resend_NotThreadSafe(netSender, 0))
             {// Cannot send
                 this.genesInFlight.Remove(firstNode);
@@ -435,6 +447,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
+        this.slowstart = false;//
         if (this.slowstart)
         {// Hystart
             var currentMinRtt = this.currentMinRtt;
@@ -446,7 +459,7 @@ public class CubicCongestionControl : ICongestionControl
                 this.previousMinRtt != 0)
             {
                 var eta = Math.Clamp(currentMinRtt >> 3, HystartMinEta, HystartMaxEta);
-                Console.WriteLine($"Hystart {currentMinRtt} mics [{currentRttSamples}] ETA {eta} Previous {this.previousMinRtt}");
+                Console.WriteLine($"Hystart MinRtt Current/Prev {currentMinRtt / 1000}/{this.previousMinRtt / 1000} ms [{currentRttSamples}] ETA {eta}");
                 if (currentMinRtt >= (this.previousMinRtt + eta))
                 {// Exit slow start
                     Console.WriteLine("Exit slow start");

@@ -13,11 +13,6 @@ public class ExampleConnectionContext : ConnectionContext
     {
     }
 
-    public override async Task InvokeStream(StreamContext streamContext)
-    {
-        return;
-    }
-
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
     {
         return this.ServerConnection.Agreement;
@@ -68,7 +63,7 @@ public class ConnectionContext
 
     public ConnectionContext(ServerConnection serverConnection)
     {
-        this.ServiceProvider = default; // serviceProvider;
+        this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
     }
@@ -86,9 +81,6 @@ public class ConnectionContext
 
     #endregion
 
-    public virtual Task InvokeStream(StreamContext streamContext)
-        => Task.CompletedTask;
-
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
         => this.ServerConnection.Agreement;
 
@@ -96,6 +88,68 @@ public class ConnectionContext
     {
         return false;
     }*/
+
+    internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
+    {
+        // Get ServiceMethod
+        var serviceMethod = this.TryGetServiceMethod(dataId);
+        if (serviceMethod is null)
+        {
+            return;
+        }
+
+        var transmissionContext = new TransmissionContext(this, receiveTransmission.TransmissionId, 1, dataId, default);
+        if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
+        {
+            transmissionContext.Return();
+            receiveTransmission.Dispose();
+            return;
+        }
+
+        // Invoke
+        Task.Run(async () =>
+        {
+            TransmissionContext.AsyncLocal.Value = transmissionContext;
+            try
+            {
+                await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
+                try
+                {
+                    if (!transmissionContext.IsSent)
+                    {
+                        var result = transmissionContext.Result;
+                        /*if (transmissionContext.Connection.IsClosedOrDisposed)
+                        {
+                            transmissionContext.ForceSendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.Closed);
+                        }
+                        else */if (result == NetResult.Success)
+                        {// Success
+                            transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                        }
+                        else
+                        {// Failure
+                            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+            catch (NetException netException)
+            {// NetException
+                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)netException.Result);
+            }
+            catch
+            {// Unknown exception
+                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownException);
+            }
+            finally
+            {
+                transmissionContext.Return();
+            }
+        });
+    }
 
     internal void InvokeSync(TransmissionContext transmissionContext)
     {// transmissionContext.Return();
@@ -105,7 +159,7 @@ public class ConnectionContext
             {
                 this.AgreementRequested(transmissionContext);
             }
-            else if (this.NetTerminal.NetResponder.TryGet(transmissionContext.DataId, out var responder))
+            else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }
@@ -128,59 +182,35 @@ public class ConnectionContext
     }
 
     internal async Task InvokeRPC(TransmissionContext transmissionContext)
-    {// Thread-safe
-        ServiceMethod? serviceMethod;
-        lock (this.idToServiceMethod)
+    {
+        // Get ServiceMethod
+        var serviceMethod = this.TryGetServiceMethod(transmissionContext.DataId);
+        if (serviceMethod == null)
         {
-            if (!this.idToServiceMethod.TryGetValue(transmissionContext.DataId, out serviceMethod))
-            {
-                // Get ServiceInfo.
-                var serviceId = (uint)(transmissionContext.DataId >> 32);
-                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
-                {
-                    goto SendNoNetService;
-                }
-
-                // Get ServiceMethod.
-                if (!serviceInfo.TryGetMethod(transmissionContext.DataId, out serviceMethod))
-                {
-                    goto SendNoNetService;
-                }
-
-                // Get Backend instance.
-                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
-                {
-                    try
-                    {
-                        backendInstance = serviceInfo.CreateBackend(this);
-                    }
-                    catch
-                    {
-                        goto SendNoNetService;
-                    }
-
-                    this.idToInstance.TryAdd(serviceId, backendInstance);
-                }
-
-                serviceMethod = serviceMethod with { ServerInstance = backendInstance, };
-                this.idToServiceMethod.TryAdd(transmissionContext.DataId, serviceMethod);
-            }
+            goto SendNoNetService;
         }
 
+        // Invoke
         TransmissionContext.AsyncLocal.Value = transmissionContext;
         try
         {
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                var result = transmissionContext.Result;
-                if (result == NetResult.Success)
-                {// Success
-                    transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                if (transmissionContext.Connection.IsClosedOrDisposed)
+                {
                 }
-                else
-                {// Failure
-                    transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                else if (!transmissionContext.IsSent)
+                {
+                    var result = transmissionContext.Result;
+                    if (result == NetResult.Success)
+                    {// Success
+                        transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                    }
+                    else
+                    {// Failure
+                        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                    }
                 }
             }
             catch
@@ -226,5 +256,48 @@ SendNoNetService:
 
         transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);
         return true;
+    }
+
+    private ServiceMethod? TryGetServiceMethod(ulong dataId)
+    {
+        ServiceMethod? serviceMethod;
+        lock (this.idToServiceMethod)
+        {
+            if (!this.idToServiceMethod.TryGetValue(dataId, out serviceMethod))
+            {
+                // Get ServiceInfo.
+                var serviceId = (uint)(dataId >> 32);
+                if (!this.NetTerminal.Services.TryGet(serviceId, out var serviceInfo))
+                {
+                    return null;
+                }
+
+                // Get ServiceMethod.
+                if (!serviceInfo.TryGetMethod(dataId, out serviceMethod))
+                {
+                    return null;
+                }
+
+                // Get Backend instance.
+                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
+                {
+                    try
+                    {
+                        backendInstance = serviceInfo.CreateBackend(this);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+
+                    this.idToInstance.TryAdd(serviceId, backendInstance);
+                }
+
+                serviceMethod = serviceMethod with { ServerInstance = backendInstance, };
+                this.idToServiceMethod.TryAdd(dataId, serviceMethod);
+            }
+        }
+
+        return serviceMethod;
     }
 }

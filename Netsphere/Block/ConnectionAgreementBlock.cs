@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Net;
 using Netsphere.Server;
 
@@ -21,6 +22,7 @@ public partial record ConnectionAgreementBlock : IBlock
         this.MaxBlockSize = options.MaxBlockSize;
         this.MaxStreamLength = options.MaxStreamLength;
         this.StreamBufferSize = options.StreamBufferSize;
+        this.AllowBidirectionalConnection = options.AllowBidirectionalConnection;
     }
 
     public uint BlockId => 0x95843fb5;
@@ -64,6 +66,9 @@ public partial record ConnectionAgreementBlock : IBlock
         }
     }
 
+    [Key(4)]
+    public bool AllowBidirectionalConnection { get; set; }
+
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }
 
@@ -102,5 +107,16 @@ public partial record ConnectionAgreementBlock : IBlock
         {
             this.StreamBufferSize = target.StreamBufferSize;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CheckStreamLength(long maxStreamLength)
+    {
+        if (this.maxStreamLength < 0)
+        {
+            return true;
+        }
+
+        return this.maxStreamLength >= maxStreamLength;
     }
 }

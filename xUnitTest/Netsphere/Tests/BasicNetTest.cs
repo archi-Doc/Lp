@@ -18,7 +18,7 @@ public class BasicNetTest
     [Fact]
     public async Task Test1()
     {
-        this.NetControl.ResponderControl.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
 
         var p = new PacketPing("test56789");
         var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);

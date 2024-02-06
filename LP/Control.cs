@@ -12,12 +12,16 @@ global using LP;
 global using Netsphere;
 global using Tinyhand;
 using LP.Data;
+using LP.Logger.Options;
+using LP.NetServices;
+using LP.NetServices.T3CS;
 using LP.Services;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
 using Netsphere.Logging;
+using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace LP;
@@ -112,9 +116,9 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
+            this.SetupOptions<DebugLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Client/.txt";
+                var logfile = "Logs/Debug.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
@@ -124,22 +128,10 @@ public class Control : ILogInformation
                     options.Path = Path.Combine(context.RootDirectory, logfile);
                 }
 
-                options.MaxLogCapacity = 1;
-            });
-
-            this.SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
-            {// ServerTerminalLoggerOptions
-                var logfile = "Logs/Server/.txt";
-                if (context.TryGetOptions<LPOptions>(out var lpOptions))
-                {
-                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
-                }
-                else
-                {
-                    options.Path = Path.Combine(context.RootDirectory, logfile);
-                }
-
-                options.MaxLogCapacity = 1;
+                options.MaxLogCapacity = 5;
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K";
+                options.ClearLogsAtStartup = true;
+                options.MaxQueue = 100_000;
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
@@ -164,7 +156,9 @@ public class Control : ILogInformation
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
                 netBase.SetOptions(options.NetsphereOptions);
+
                 netBase.AllowUnsafeConnection = true; // betacode
+                netBase.ServerOptions = netBase.ServerOptions with { MaxStreamLength = 100_000_000, }; // betacode
             });
 
             this.SetupOptions<CrystalizerOptions>((context, options) =>
@@ -295,6 +289,7 @@ public class Control : ILogInformation
                     }
                 }
 
+                options.NetsphereOptions.EnableServer = true;
                 context.SetOptions(options);
             }
         }
@@ -397,15 +392,17 @@ public class Control : ILogInformation
         this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
 
+        if (this.LPBase.TestFeatures)
+        {
+            this.NetControl.Services.Register<IBenchmarkService>();
+        }
+
         this.MergerProvider = new();
         if (this.LPBase.Mode == LPMode.Merger)
         {// Merger
+            this.NetControl.Services.Register<IMergerService>();
+
             this.MergerProvider.Create(context);
-            // this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>();
-        }
-        else
-        {
-            // this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<LpData>>();
         }
 
         this.Core = core;

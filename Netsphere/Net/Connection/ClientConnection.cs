@@ -14,7 +14,7 @@ public sealed partial class ClientConnection : Connection
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
-    public ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
+    internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
     }
@@ -169,7 +169,7 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, receive);
     }
 
-    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> SendAndReceiveService(ByteArrayPool.MemoryOwner data, ulong dataId)
+    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
         if (this.IsClosedOrDisposed)
         {
@@ -225,6 +225,70 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
+    public async Task<(NetResult Result, ReceiveStream? Stream)> RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
+    {
+        if (this.IsClosedOrDisposed)
+        {
+            return (NetResult.Closed, default);
+        }
+        else if (this.CancellationToken.IsCancellationRequested)
+        {
+            return (NetResult.Canceled, default);
+        }
+
+        NetResponse response;
+        ReceiveTransmission? receiveTransmission;
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        {
+            if (transmissionAndTimeout.Transmission is null)
+            {
+                return (NetResult.NoTransmission, default);
+            }
+
+            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
+            if (result != NetResult.Success)
+            {
+                return (result, default);
+            }
+
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs);
+            if (receiveTransmission is null)
+            {
+                return (NetResult.NoTransmission, default);
+            }
+
+            try
+            {
+                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                if (response.IsFailure || !response.Received.IsEmpty)
+                {// Failure or not stream.
+                    receiveTransmission.Dispose();
+                    return new(response.Result, default);
+                }
+            }
+            catch (TimeoutException)
+            {
+                receiveTransmission.Dispose();
+                return (NetResult.Timeout, default);
+            }
+            catch
+            {
+                receiveTransmission.Dispose();
+                return (NetResult.Canceled, default);
+            }
+        }
+
+        if (response.Additional == 0)
+        {// No stream
+            return ((NetResult)response.DataId, default);
+        }
+
+        var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
+        return new(NetResult.Success, stream);
+    }
+
     public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
     {
         if (this.IsClosedOrDisposed)
@@ -236,7 +300,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (this.Agreement.MaxStreamLength < maxLength)
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -270,7 +334,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled, default);
         }
 
-        if (this.Agreement.MaxStreamLength < maxLength)
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return new(NetResult.StreamLengthLimit, default);
         }
@@ -352,6 +416,11 @@ public sealed partial class ClientConnection : Connection
                 receiveTransmission.Dispose();
                 return (NetResult.Canceled, default);
             }
+        }
+
+        if (response.Additional == 0)
+        {// No stream
+            return ((NetResult)response.DataId, default);
         }
 
         var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);

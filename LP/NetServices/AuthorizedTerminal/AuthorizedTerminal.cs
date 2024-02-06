@@ -2,6 +2,7 @@
 
 using LP.T3CS;
 using Netsphere;
+using Netsphere.Crypto;
 
 namespace LP.NetServices;
 
@@ -39,9 +40,10 @@ public class AuthorizedTerminalFactory
         // authority.SignToken(token);
         // var response = await service.Authorize(token).ResponseAsync;
 
-        var proof = new EngageProof(connection.Salt);
-        authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
-        var response = await service.Engage(proof).ResponseAsync;
+        var token = new AuthenticationToken(connection.Salt);
+        authority.SignToken(token);
+        // authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
+        var response = await service.Authenticate(token).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);

@@ -34,8 +34,14 @@ public class BenchmarkServiceImpl : IBenchmarkService
         return data;
     }
 
-    public async NetTask Send(byte[] data)
+    public async NetTask<ulong> GetHash(byte[] data)
     {
+        return 0;
+    }
+
+    public async NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
+    {
+        return default;
     }
 
     private RemoteBenchBroker remoteBenchBroker;

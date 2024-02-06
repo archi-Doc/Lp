@@ -6,11 +6,11 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
+using Arc.Unit;
 using Netsphere.Block;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 using static Netsphere.Net.AckBuffer;
 
 #pragma warning disable SA1202
@@ -54,7 +54,7 @@ public abstract class Connection : IDisposable
         this.EndPoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
-        this.minimumRtt = DefaultRtt;
+        this.minimumRtt = 0;
     }
 
     #region FieldAndProperty
@@ -103,13 +103,14 @@ public abstract class Connection : IDisposable
         => this.smoothedRtt;
 
     public int MinimumRtt
-        => this.minimumRtt;
+        => this.minimumRtt == 0 ? this.smoothedRtt : this.minimumRtt;
 
     public int LatestRtt
         => this.latestRtt;
 
+    // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 10ms
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
@@ -524,7 +525,7 @@ Wait:
 
         var node = this.SendList.First;
         if (node is null)
-        {// No transmission to send.
+        {// No transmission to send
             return ProcessSendResult.Complete;
         }
 
@@ -730,7 +731,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -767,7 +768,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (maxStreamLength > this.Agreement.MaxStreamLength)
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -792,9 +793,8 @@ Wait:
         {// Invoke stream
             if (this is ServerConnection serverConnection)
             {
-                var streamContext = new StreamContext(transmission, dataId, maxStreamLength);
                 var connectionContext = serverConnection.ConnectionContext;
-                Task.Run(() => connectionContext.InvokeStream(streamContext));
+                connectionContext.InvokeStream(transmission, dataId, maxStreamLength);
             }
             else if (this is ClientConnection clientConnection)
             {
@@ -893,6 +893,8 @@ Wait:
                 span = span.Slice(sizeof(int));
 
                 transmission.MaxReceivePosition = maxReceivePosition;
+
+                this.Logger.TryGet(LogLevel.Debug)?.Log($"KnockResponse: {maxReceivePosition}");
             }
         }
     }

@@ -37,6 +37,9 @@ internal partial class PacketConnect : IPacket
 
     [Key(4)]
     public ulong ClientSalt2 { get; set; }
+
+    [Key(5)]
+    public bool Bidirectional { get; set; }
 }
 
 [TinyhandObject]

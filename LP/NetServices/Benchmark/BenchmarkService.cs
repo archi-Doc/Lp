@@ -36,8 +36,42 @@ internal class BenchmarkServiceImpl : IBenchmarkService
         return data;
     }
 
-    public async NetTask Send(byte[] data)
+    public async NetTask<ulong> GetHash(byte[] data)
     {
+        return FarmHash.Hash64(data);
+    }
+
+    public async NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.ReceiveStream;
+
+        var buffer = new byte[100_000];
+        var hash = new FarmHash();
+        hash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+            }
+        }
+
+        return default;
     }
 
     private ILogger logger;

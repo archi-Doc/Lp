@@ -84,7 +84,6 @@ public class Program
             {
                 var original = context.GetOrCreateOptions<NetsphereOptions>();
                 original.EnableAlternative = true;
-                original.EnableLogger = false;
                 original.Port = 49152;
 
                 NetsphereOptions? options = default;
@@ -105,8 +104,6 @@ public class Program
                 context.AddCommand(typeof(TaskScalingSubcommand));
                 context.AddCommand(typeof(StressSubcommand));
                 context.AddCommand(typeof(RemoteBenchSubcommand));
-                context.AddCommand(typeof(UdpRecvSubcommand));
-                // context.AddCommand(typeof(UdpSendSubcommand));
 
                 // NetService
                 context.AddSingleton<BenchmarkServiceImpl>();
@@ -123,8 +120,8 @@ public class Program
                 context.AddLoggerResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)
-                    {// Debug -> no output
-                        context.SetOutput<EmptyLogger>();
+                    {
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
                     }
 
@@ -149,36 +146,14 @@ public class Program
                     }
                 });
             })
-            .SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
-            {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Client/.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.MaxStreamCapacity = 1_000;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
-            })
-            .SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
-            {// ServerTerminalLoggerOptions
-                var logfile = "Logs/Server/.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.MaxStreamCapacity = 1_000;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
-            })
-            .SetupOptions<TerminalLoggerOptions>((context, options) =>
-            {// ServerTerminalLoggerOptions
-                var logfile = "Logs/Terminal/.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.MaxStreamCapacity = 1_000;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
-            })
-            .SetupOptions<CongestionControlLoggerOptions>((context, options) =>
+            .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
-                var logfile = "Logs/CongestionControl.txt";
+                var logfile = "Logs/Debug.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
+                options.MaxLogCapacity = 10;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.ClearLogsAtStartup = true;
+                options.MaxQueue = 100_000;
             });
 
         Console.WriteLine(string.Join(' ', args));
@@ -190,8 +165,12 @@ public class Program
         }
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
-        await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
+        options.EnableServer = true;
+        await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true);
+
+        var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
+        netControl.Services.Register<IBenchmarkService>();
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with

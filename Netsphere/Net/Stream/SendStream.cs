@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.Net;
+using Netsphere.Net;
+
+namespace Netsphere;
 
 public class SendStream : SendStreamBase
 {

@@ -8,7 +8,7 @@ using Netsphere.Misc;
 namespace Netsphere.Net;
 
 internal class NetSender
-{// LOG_LOWLEVEL_NET
+{
     private const int RetryLimit = 3;
     private const int RetryIntervalInMilliseconds = 500;
 
@@ -74,7 +74,7 @@ internal class NetSender
     public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
     {
 #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");
+        // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");
 #endif
 
         this.SendCount++;
