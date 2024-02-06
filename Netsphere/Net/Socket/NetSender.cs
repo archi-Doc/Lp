@@ -8,7 +8,7 @@ using Netsphere.Misc;
 namespace Netsphere.Net;
 
 internal class NetSender
-{// LOG_LOWLEVEL_NET
+{
     private const int RetryLimit = 3;
     private const int RetryIntervalInMilliseconds = 500;
 

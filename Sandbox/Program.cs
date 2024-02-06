@@ -37,12 +37,6 @@ public class Program
 
                 context.AddLoggerResolver(context =>
                 {// Logger
-                    if (context.LogSourceType == typeof(Netsphere.Net.CubicCongestionControl))
-                    {
-                        context.SetOutput<FileLogger<CongestionControlLoggerOptions>>();
-                        return;
-                    }
-
                     if (context.LogLevel == LogLevel.Debug)
                     {
                         context.SetOutput<FileLogger<FileLoggerOptions>>();

@@ -156,37 +156,6 @@ public class Program
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
-            })
-            .SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
-            {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Client/.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.MaxStreamCapacity = 1_000;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
-            })
-            .SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
-            {// ServerTerminalLoggerOptions
-                var logfile = "Logs/Server/.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.MaxStreamCapacity = 1_000;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
-            })
-            .SetupOptions<TerminalLoggerOptions>((context, options) =>
-            {// ServerTerminalLoggerOptions
-                var logfile = "Logs/Terminal/.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.MaxStreamCapacity = 1_000;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
-            })
-            .SetupOptions<CongestionControlLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
-                var logfile = "Logs/CongestionControl.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             });
 
         Console.WriteLine(string.Join(' ', args));

@@ -101,9 +101,9 @@ internal partial class SendGene
         var connection = this.SendTransmission.Connection;
         var currentMics = Mics.FastSystem;
 
-#if LOG_LOWLEVEL_NET
+// #if LOG_LOWLEVEL_NET
         connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
-#endif
+// #endif
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
         this.SentMics = currentMics;
