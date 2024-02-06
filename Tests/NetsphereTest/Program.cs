@@ -104,8 +104,6 @@ public class Program
                 context.AddCommand(typeof(TaskScalingSubcommand));
                 context.AddCommand(typeof(StressSubcommand));
                 context.AddCommand(typeof(RemoteBenchSubcommand));
-                context.AddCommand(typeof(UdpRecvSubcommand));
-                // context.AddCommand(typeof(UdpSendSubcommand));
 
                 // NetService
                 context.AddSingleton<BenchmarkServiceImpl>();
@@ -152,7 +150,7 @@ public class Program
             {// FileLoggerOptions
                 var logfile = "Logs/Debug.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
+                options.MaxLogCapacity = 10;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;

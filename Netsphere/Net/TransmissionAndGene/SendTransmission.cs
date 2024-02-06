@@ -642,7 +642,7 @@ Exit:
 
                 var startPosition = Math.Max(this.lastLossPosition, c.StartPosition);
 
-                Console.WriteLine($"Loss detected Start: {startPosition} Loss: {lossPosition}");
+                this.Connection.Logger.TryGet(LogLevel.Information)?.Log($"Loss detected Start: {startPosition} Loss: {lossPosition}");
                 for (var i = lossPosition - 1; i >= startPosition; i--)
                 {
                     if (c.Get(i) is { } gene)
