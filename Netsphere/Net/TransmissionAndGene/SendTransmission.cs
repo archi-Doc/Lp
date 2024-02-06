@@ -322,12 +322,6 @@ Loop:
                 return NetResult.Closed;
             }
 
-            var chain = this.genes?.GeneSerialListChain;
-            if (chain is null)
-            {
-                return NetResult.Closed;
-            }
-
             if (this.GeneSerialMax >= this.MaxReceivePosition)
             {
                 SendKnockFrame();
@@ -347,13 +341,13 @@ Loop:
 
             lock (this.syncObject)
             {
-                if (this.Connection.IsClosedOrDisposed || chain is null)
+                if (this.Connection.IsClosedOrDisposed)
                 {
                     return NetResult.Closed;
                 }
 
                 // Recalculate
-                chain = this.genes?.GeneSerialListChain;
+                var chain = this.genes?.GeneSerialListChain;
                 if (chain is null)
                 {
                     return NetResult.Closed;
@@ -361,7 +355,7 @@ Loop:
 
                 while (this.GeneSerialMax < this.MaxReceivePosition)
                 {
-                    Debug.Assert(chain.CanAdd);//
+                    Debug.Assert(chain.CanAdd);// Consumed < items.Length;
                     int size;
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;
@@ -519,7 +513,6 @@ Exit:
     internal void ProcessReceive_AckBlock(int maxReceivePosition, int successiveReceivedPosition, scoped Span<byte> span, ushort numberOfPairs)
     {// lock (SendTransmissions.syncObject)
         var completeFlag = false;
-        long sentMics = 0;
         int lossPosition = -1;
         var congestionControl = this.Connection.GetCongestionControl();
         lock (this.syncObject)
@@ -556,7 +549,6 @@ Exit:
                     {
                         if (gene.CurrentState == SendGene.State.Sent)
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
-                            sentMics = Math.Max(sentMics, gene.SentMics);
                             var rtt = (int)(Mics.FastSystem - gene.SentMics);
 #if LOG_LOWLEVEL_NET
                             this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
@@ -582,7 +574,6 @@ Exit:
                     {
                         if (gene.CurrentState == SendGene.State.Sent)
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
-                            sentMics = Math.Max(sentMics, gene.SentMics);
                             var rtt = (int)(Mics.FastSystem - gene.SentMics);
 #if LOG_LOWLEVEL_NET
                             this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
@@ -642,8 +633,8 @@ Exit:
 
                 var startPosition = Math.Max(this.lastLossPosition, c.StartPosition);
 
-                this.Connection.Logger.TryGet(LogLevel.Information)?.Log($"Loss detected Start: {startPosition} Loss: {lossPosition}");
-                for (var i = lossPosition - 1; i >= startPosition; i--)
+                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"Loss detected Start: {startPosition} Loss: {lossPosition} In-flight: {congestionControl.NumberInFlight}");
+                for (var i = startPosition; i < lossPosition; i++)
                 {
                     if (c.Get(i) is { } gene)
                     {
@@ -651,7 +642,7 @@ Exit:
                     }
                 }
 
-                this.lastLossPosition = Math.Max(this.lastLossPosition, startPosition);
+                this.lastLossPosition = Math.Max(this.lastLossPosition, lossPosition);
             }
 
             if (completeFlag)
