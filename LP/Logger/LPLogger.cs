@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Data;
+using LP.Logger.Options;
 using Microsoft.Extensions.DependencyInjection;
-using Netsphere;
-using Netsphere.Logging;
 
 namespace LP.Logging;
 
@@ -45,7 +43,7 @@ public class LPLogger
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        context.SetOutput<FileLogger<DebugLoggerOptions>>();
                         // context.SetOutput<EmptyLogger>();
                         return;
                     }

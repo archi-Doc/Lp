@@ -12,6 +12,7 @@ global using LP;
 global using Netsphere;
 global using Tinyhand;
 using LP.Data;
+using LP.Logger.Options;
 using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.Services;
@@ -115,9 +116,9 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<ClientConnectionLoggerOptions>((context, options) =>
+            this.SetupOptions<DebugLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Client/.txt";
+                var logfile = "Logs/Debug.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
@@ -127,22 +128,10 @@ public class Control : ILogInformation
                     options.Path = Path.Combine(context.RootDirectory, logfile);
                 }
 
-                options.MaxLogCapacity = 1;
-            });
-
-            this.SetupOptions<ServerConnectionLoggerOptions>((context, options) =>
-            {// ServerTerminalLoggerOptions
-                var logfile = "Logs/Server/.txt";
-                if (context.TryGetOptions<LPOptions>(out var lpOptions))
-                {
-                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
-                }
-                else
-                {
-                    options.Path = Path.Combine(context.RootDirectory, logfile);
-                }
-
-                options.MaxLogCapacity = 1;
+                options.MaxLogCapacity = 5;
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K";
+                options.ClearLogsAtStartup = true;
+                options.MaxQueue = 100_000;
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>

@@ -61,14 +61,6 @@ public class Program
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
             })
-            .SetupOptions<CongestionControlLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
-                var logfile = "Logs/CongestionControl.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
-                options.ClearLogsAtStartup = true;
-            })
             .SetupOptions<NetsphereOptions>((context, options) =>
             {// NetsphereOptions
                 options.NodeName = "test";
