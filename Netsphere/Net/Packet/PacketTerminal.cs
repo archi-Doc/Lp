@@ -238,10 +238,14 @@ public sealed partial class PacketTerminal
 
                 if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
                 {
+                    if (p.ServerPublicKeyChecksum != this.netTerminal.NodePublicKey.GetHashCode())
+                    {// Public Key does not match
+                        return;
+                    }
+
                     Task.Run(() =>
                     {
                         var packet = new PacketConnectResponse(this.netBase.ServerOptions);
-
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.AddSendPacket(endPoint, owner, default);

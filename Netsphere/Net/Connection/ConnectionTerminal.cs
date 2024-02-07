@@ -147,7 +147,7 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new PacketConnect(0, this.NetTerminal.NodePublicKey);
+        var packet = new PacketConnect(0, this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
         var t = await this.packetTerminal.SendAndReceive<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {

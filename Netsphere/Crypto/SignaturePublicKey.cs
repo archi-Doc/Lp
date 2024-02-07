@@ -228,7 +228,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     {
         Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
         this.TryWriteBytes(span, out _);
-        return FarmHash.Hash64(span);
+        return XxHash3.Hash64(span);
     }
 
     public string ToBase64()
