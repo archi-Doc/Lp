@@ -353,9 +353,10 @@ Loop:
                     return NetResult.Closed;
                 }
 
-                while (this.GeneSerialMax < this.MaxReceivePosition)
+                while (this.GeneSerialMax < this.MaxReceivePosition &&
+                    chain.CanAdd)
                 {
-                    Debug.Assert(chain.CanAdd);// Consumed < items.Length;
+                    // Debug.Assert(chain.CanAdd); // Consumed < items.Length;
                     int size;
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;
