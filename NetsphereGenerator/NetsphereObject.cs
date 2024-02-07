@@ -633,7 +633,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Constructor(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(ConnectionContext connectionContext)"))
+        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(ServerConnectionContext connectionContext)"))
         {
             ssb.AppendLine($"var impl = connectionContext.ServiceProvider?.GetService(typeof({this.FullName})) as {this.FullName};");
             using (var scopeIf = ssb.ScopeBrace($"if (impl == null)"))
@@ -884,14 +884,14 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     internal void GenerateBackend_ServiceInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
     {
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
-        using (var scopeMethod = ssb.ScopeBrace($"public static ConnectionContext.ServiceInfo ServiceInfo_{serviceIdString}()"))
+        using (var scopeMethod = ssb.ScopeBrace($"public static ServerConnectionContext.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            ssb.AppendLine($"var si = new ConnectionContext.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x));");
+            ssb.AppendLine($"var si = new ServerConnectionContext.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x));");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)
                 {
-                    ssb.AppendLine($"si.AddMethod(new ConnectionContext.ServiceMethod({x.IdString}, {x.MethodString}));");
+                    ssb.AppendLine($"si.AddMethod(new ServerConnectionContext.ServiceMethod({x.IdString}, {x.MethodString}));");
                 }
             }
 

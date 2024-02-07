@@ -15,7 +15,8 @@ public class NetBase : UnitBase, IUnitPreparable
 
         this.NetsphereOptions = new();
         this.NetsphereOptions.NodeName = System.Environment.OSVersion.ToString();
-        this.ServerConnectionContext = connection => new ConnectionContext(connection);
+        this.NewServerConnectionContext = connection => new ServerConnectionContext(connection);
+        this.NewClientConnectionContext = connection => new ClientConnectionContext(connection);
     }
 
     #region FieldAndProperty
@@ -28,8 +29,6 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public NetsphereOptions NetsphereOptions { get; private set; }
 
-    public Func<ServerConnection, ConnectionContext> ServerConnectionContext { get; set; }
-
     public bool AllowUnsafeConnection { get; set; } = false;
 
     public ServerOptions ServerOptions { get; set; }
@@ -39,6 +38,10 @@ public class NetBase : UnitBase, IUnitPreparable
     public NodePublicKey NodePublicKey { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
+
+    internal Func<ServerConnection, ServerConnectionContext> NewServerConnectionContext { get; set; }
+
+    internal Func<ClientConnection, ClientConnectionContext> NewClientConnectionContext { get; set; }
 
     public class LogFlag
     {

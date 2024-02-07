@@ -24,8 +24,6 @@ public class AuthorizedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        // Try to get a cached terminal
-
         // Terminal
         var connection = await terminal.TryConnect(node);
         if (connection == null)
@@ -40,14 +38,20 @@ public class AuthorizedTerminalFactory
         // authority.SignToken(token);
         // var response = await service.Authorize(token).ResponseAsync;
 
-        var token = new AuthenticationToken(connection.Salt);
-        authority.SignToken(token);
-        // authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
-        var response = await service.Authenticate(token).ResponseAsync;
-        if (!response.IsSuccess || response.Value != NetResult.Success)
+        var context = connection.GetContext();
+        if (!context.IsAuthenticated)
         {
-            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
-            return null; // AuthorizedTerminal<TService>.Invalid;
+            var token = new AuthenticationToken(connection.Salt);
+            authority.SignToken(token);
+            // authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
+            var response = await service.Authenticate(token).ResponseAsync;
+            if (!response.IsSuccess || response.Value != NetResult.Success)
+            {
+                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
+                return null; // AuthorizedTerminal<TService>.Invalid;
+            }
+
+            context.IsAuthenticated = true;
         }
 
         return new(connection, authority, service, logger);

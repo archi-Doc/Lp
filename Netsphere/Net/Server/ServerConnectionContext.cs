@@ -6,7 +6,7 @@ using Netsphere.Net;
 
 namespace Netsphere.Server;
 
-public class ExampleConnectionContext : ConnectionContext
+public class ExampleConnectionContext : ServerConnectionContext
 {
     public ExampleConnectionContext(ServerConnection serverConnection)
         : base(serverConnection)
@@ -19,13 +19,13 @@ public class ExampleConnectionContext : ConnectionContext
     }
 }
 
-public class ConnectionContext
+public class ServerConnectionContext
 {
     public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
 
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
 
-    public delegate object CreateBackendDelegate(ConnectionContext connectionContext);
+    public delegate object CreateBackendDelegate(ServerConnectionContext connectionContext);
 
     public class ServiceInfo
     {
@@ -61,7 +61,7 @@ public class ConnectionContext
         public ServiceDelegate Invoke { get; }
     }
 
-    public ConnectionContext(ServerConnection serverConnection)
+    public ServerConnectionContext(ServerConnection serverConnection)
     {
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;

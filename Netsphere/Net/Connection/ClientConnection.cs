@@ -19,6 +19,8 @@ public sealed partial class ClientConnection : Connection
     {
     }
 
+    #region FieldAndProperty
+
     public override ConnectionState State
     {
         get
@@ -41,6 +43,26 @@ public sealed partial class ClientConnection : Connection
     public override bool IsClient => true;
 
     public override bool IsServer => false;
+
+    private ClientConnectionContext? context;
+
+    #endregion
+
+    public ClientConnectionContext GetContext()
+        => this.GetContext<ClientConnectionContext>();
+
+    public TContext GetContext<TContext>()
+        where TContext : ClientConnectionContext
+    {
+        if (this.context is not null)
+        {
+            return (TContext)this.context;
+        }
+
+        var context = this.NetBase.NewClientConnectionContext(this);
+        Interlocked.CompareExchange(ref this.context, context, null);
+        return (TContext)this.context;
+    }
 
     public TService GetService<TService>()
         where TService : INetService
