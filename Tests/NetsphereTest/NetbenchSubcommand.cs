@@ -85,7 +85,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     private async Task TestStreamData(ClientConnection connection)
     {
-        const int N = 10_000_000;
+        const int N = 15_000_000;
         var service = connection.GetService<IBenchmarkService>();
         var data = new byte[N];
         RandomVault.Pseudo.NextBytes(data);

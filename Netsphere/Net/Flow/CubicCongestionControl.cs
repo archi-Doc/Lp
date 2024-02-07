@@ -447,7 +447,6 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
-        this.slowstart = false;//
         if (this.slowstart)
         {// Hystart
             var currentMinRtt = this.currentMinRtt;
