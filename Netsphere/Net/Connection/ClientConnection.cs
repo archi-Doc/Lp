@@ -17,6 +17,7 @@ public sealed partial class ClientConnection : Connection
     internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
+        this.context = this.NetBase.NewClientConnectionContext(this);
     }
 
     #region FieldAndProperty
@@ -44,25 +45,16 @@ public sealed partial class ClientConnection : Connection
 
     public override bool IsServer => false;
 
-    private ClientConnectionContext? context;
+    private ClientConnectionContext context;
 
     #endregion
 
     public ClientConnectionContext GetContext()
-        => this.GetContext<ClientConnectionContext>();
+        => this.context;
 
     public TContext GetContext<TContext>()
         where TContext : ClientConnectionContext
-    {
-        if (this.context is not null)
-        {
-            return (TContext)this.context;
-        }
-
-        var context = this.NetBase.NewClientConnectionContext(this);
-        Interlocked.CompareExchange(ref this.context, context, null);
-        return (TContext)this.context;
-    }
+        => (TContext)this.context;
 
     public TService GetService<TService>()
         where TService : INetService

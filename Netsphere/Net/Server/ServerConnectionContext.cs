@@ -15,7 +15,7 @@ public class ExampleConnectionContext : ServerConnectionContext
 
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
     {
-        return this.ServerConnection.Agreement;
+        return this.Connection.Agreement;
     }
 }
 
@@ -65,7 +65,7 @@ public class ServerConnectionContext
     {
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
-        this.ServerConnection = serverConnection;
+        this.Connection = serverConnection;
     }
 
     #region FieldAndProperty
@@ -74,7 +74,7 @@ public class ServerConnectionContext
 
     public NetTerminal NetTerminal { get; }
 
-    public ServerConnection ServerConnection { get; }
+    public ServerConnection Connection { get; }
 
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
@@ -82,7 +82,7 @@ public class ServerConnectionContext
     #endregion
 
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
-        => this.ServerConnection.Agreement;
+        => this.Connection.Agreement;
 
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
@@ -98,7 +98,7 @@ public class ServerConnectionContext
             return;
         }
 
-        var transmissionContext = new TransmissionContext(this, receiveTransmission.TransmissionId, 1, dataId, default);
+        var transmissionContext = new TransmissionContext(this.Connection, receiveTransmission.TransmissionId, 1, dataId, default);
         if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
         {
             transmissionContext.Return();
@@ -249,9 +249,9 @@ SendNoNetService:
         transmissionContext.Return();
 
         var response = this.RequestAgreement(t);
-        if (response != this.ServerConnection.Agreement)
+        if (response != this.Connection.Agreement)
         {
-            this.ServerConnection.Agreement.Update(response);
+            this.Connection.Agreement.Update(response);
         }
 
         transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);

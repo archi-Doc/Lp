@@ -16,8 +16,10 @@ public sealed partial class ServerConnection : Connection
     internal ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
-        this.Context = this.NetBase.NewServerConnectionContext(this);
+        this.context = this.NetBase.NewServerConnectionContext(this);
     }
+
+    #region FieldAndProperty
 
     public override ConnectionState State
     {
@@ -42,5 +44,14 @@ public sealed partial class ServerConnection : Connection
 
     public override bool IsServer => true;
 
-    public ServerConnectionContext Context { get; }
+    private ServerConnectionContext context;
+
+    #endregion
+
+    public ServerConnectionContext GetContext()
+        => this.context;
+
+    public TContext GetContext<TContext>()
+        where TContext : ServerConnectionContext
+        => (TContext)this.context;
 }

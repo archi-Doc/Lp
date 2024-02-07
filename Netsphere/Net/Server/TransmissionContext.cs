@@ -13,9 +13,9 @@ public sealed class TransmissionContext
 
     internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
 
-    internal TransmissionContext(ServerConnectionContext connectionContext, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal TransmissionContext(ServerConnection connection, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
-        this.ConnectionContext = connectionContext;
+        this.Connection = connection;
         this.TransmissionId = transmissionId;
         this.DataKind = dataKind;
         this.DataId = dataId;
@@ -24,9 +24,9 @@ public sealed class TransmissionContext
 
     #region FieldAndProperty
 
-    public ServerConnectionContext ConnectionContext { get; }
+    // public ServerConnectionContext ConnectionContext { get; }
 
-    public ServerConnection Connection => this.ConnectionContext.ServerConnection;
+    public ServerConnection Connection { get; } // => this.ConnectionContext.ServerConnection;
 
     public uint TransmissionId { get; }
 
