@@ -362,7 +362,6 @@ public class ConnectionTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
-        this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");//
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
 
