@@ -30,7 +30,7 @@ internal class NoCongestionControl : ICongestionControl
         lock (this.syncObject)
         {
             var rto = Mics.FastSystem + sendGene.SendTransmission.Connection.TaichiTimeout + additional;
-            Console.WriteLine($"RTT {sendGene.SendTransmission.Connection.SmoothedRtt}, var {sendGene.SendTransmission.Connection.RttVar}, Taichi timeout {sendGene.SendTransmission.Connection.TaichiTimeout}, RTO {sendGene.SendTransmission.Connection.RetransmissionTimeout}");
+            // Console.WriteLine($"RTT {sendGene.SendTransmission.Connection.SmoothedRtt}, var {sendGene.SendTransmission.Connection.RttVar}, Taichi timeout {sendGene.SendTransmission.Connection.TaichiTimeout}, RTO {sendGene.SendTransmission.Connection.RetransmissionTimeout}");
             if (sendGene.Node is OrderedMultiMap<long, SendGene>.Node node)
             {
                 this.genesInFlight.SetNodeKey(node, rto);

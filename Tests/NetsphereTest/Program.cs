@@ -121,8 +121,8 @@ public class Program
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        //context.SetOutput<FileLogger<FileLoggerOptions>>();
-                        //return;
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        return;
                     }
 
                     /*if (context.LogSourceType == typeof(ClientTerminal))
@@ -157,7 +157,7 @@ public class Program
             })
             .SetupOptions<ConsoleLoggerOptions>((context, options) =>
             {
-                options.Formatter.EnableColor = false;
+                // options.Formatter.EnableColor = false;
             });
 
         Console.WriteLine(string.Join(' ', args));
