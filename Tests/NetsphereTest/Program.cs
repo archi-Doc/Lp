@@ -154,6 +154,10 @@ public class Program
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
+            })
+            .SetupOptions<ConsoleLoggerOptions>((context, options) =>
+            {
+                options.Formatter.EnableColor = false;
             });
 
         Console.WriteLine(string.Join(' ', args));
