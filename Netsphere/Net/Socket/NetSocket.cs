@@ -62,6 +62,7 @@ public sealed class NetSocket
         public RecvCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
+            this.Thread.Priority = ThreadPriority.Highest;//
             this.socket = socket;
         }
 

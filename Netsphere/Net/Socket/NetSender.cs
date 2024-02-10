@@ -56,6 +56,7 @@ internal class NetSender
         public SendCore(ThreadCoreBase parent, NetSender sender)
                 : base(parent, Process, false)
         {
+            this.Thread.Priority = ThreadPriority.Highest;//
             this.sender = sender;
             this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.sender.Process); // Use multimedia timer if available.
         }
