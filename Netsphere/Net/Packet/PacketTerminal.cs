@@ -216,7 +216,7 @@ public sealed partial class PacketTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
-        this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");//
+        //this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");//
         // PacketHeaderCode
         var span = toBeShared.Span;
         if (BitConverter.ToUInt32(span) != (uint)XxHash3.Hash64(span.Slice(4)))
