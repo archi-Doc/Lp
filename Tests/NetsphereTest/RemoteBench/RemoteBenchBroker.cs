@@ -90,7 +90,7 @@ public class RemoteBenchBroker
             Concurrent = concurrent,
             ElapsedMilliseconds = sw.ElapsedMilliseconds,
             CountPerSecond = (int)((successCount + failureCount) * 1000 / sw.ElapsedMilliseconds),
-            AverageLatency = (int)(totalLatency / (successCount + failureCount)),x
+            AverageLatency = (int)(totalLatency / (successCount + failureCount)), // tempcode
         };
 
         using (var t = await terminal.TryConnect(node))
