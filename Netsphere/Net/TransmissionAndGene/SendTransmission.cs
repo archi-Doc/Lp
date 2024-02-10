@@ -440,7 +440,7 @@ Exit:
 
     internal void ProcessReceive_AckRamaInternal()
     {
-        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama {this.GeneSerialMax}");
+        //this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama {this.GeneSerialMax}");
 
         // int sentCount = 0;
         // long sentAccumulated = 0;
@@ -540,7 +540,7 @@ Exit:
                 }
 
                 // NetTransmissionMode.Block
-                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
+                //this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck {startGene} - {endGene - 1}");
                 var chain = this.genes.GeneSerialListChain;
 
                 // [chain.StartPosition, successiveReceivedPosition)
@@ -552,7 +552,7 @@ Exit:
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
                             var rtt = (int)(Mics.FastSystem - gene.SentMics);
 #if LOG_LOWLEVEL_NET
-                            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                            //this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
 #endif
                             this.Connection.AddRtt(rtt);
                             congestionControl.AddRtt(rtt);
@@ -577,7 +577,7 @@ Exit:
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
                             var rtt = (int)(Mics.FastSystem - gene.SentMics);
 #if LOG_LOWLEVEL_NET
-                            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                            //this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
 #endif
                             this.Connection.AddRtt(rtt);
                             congestionControl.AddRtt(rtt);

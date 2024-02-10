@@ -43,7 +43,7 @@ internal partial class AckBuffer
     public void AckRama(Connection connection, ReceiveTransmission receiveTransmission)
     {
 // #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}");
+        //this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}");
 // #endif
 
         lock (this.syncObject)
@@ -72,7 +72,7 @@ internal partial class AckBuffer
     public void AckBlock(Connection connection, ReceiveTransmission receiveTransmission, int geneSerial)
     {
 // #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
+        //this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
 // #endif
 
         lock (this.syncObject)
