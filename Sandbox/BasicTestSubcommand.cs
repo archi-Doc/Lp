@@ -91,13 +91,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        var p = new PacketPing("test56789");
+        /*var p = new PacketPing("test56789");
         var result = await packetTerminal.SendAndReceive<PacketPing, PacketPingResponse>(netAddress, p);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");*/
 
         var netNode = await netTerminal.UnsafeGetNetNodeAsync(netAddress);
         if (netNode is null)
@@ -117,19 +117,20 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             {
                 var success = 0;
 
-                var agreement = TinyhandSerializer.Clone(connection.Agreement);
+                var service = connection.GetService<TestService>();
+                var pingpong = await service.Pingpong([1, 2, 3,]);
+
+                /*var agreement = TinyhandSerializer.Clone(connection.Agreement);
                 agreement.MaxStreamLength = 100_000_000;
                 var agreementResult = await connection.RequestAgreement(agreement);
 
-                var service = connection.GetService<TestService>();
-                var pingpong = await service.Pingpong([1, 2, 3,]);
-                /*var response = await service.ReceiveData("test", 123_000).ResponseAsync;
+                var response = await service.ReceiveData("test", 123_000).ResponseAsync;
                 if (response.Value is not null)
                 {
                     await this.ProcessReceiveStream(response.Value);
                 }*/
 
-                var stream = await service.SendData(123_000);
+                /*var stream = await service.SendData(123_000);
                 if (stream is not null)
                 {
                     await this.ProcessSendStream(stream, 123_000);
@@ -140,7 +141,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 if (stream2 is not null)
                 {
                     await this.ProcessSendStream(stream2, 123_000);
-                }
+                }*/
 
                 /*for (var i = 0; i < 20; i++)
                 {
