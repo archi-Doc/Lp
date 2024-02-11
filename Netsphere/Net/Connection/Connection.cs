@@ -113,7 +113,7 @@ public abstract class Connection : IDisposable
 
     // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + 40_000; // + NetConstants.AckDelayMics;
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 40_000
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
