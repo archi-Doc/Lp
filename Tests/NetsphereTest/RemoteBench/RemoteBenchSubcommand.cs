@@ -33,19 +33,19 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             var service = connection.GetService<IBenchmarkService>();
             if (await service.Register() == NetResult.Success)
             {
-                //Console.WriteLine($"Register: Success"); // tempcode
+                this.logger.TryGet()?.Log($"Register: Success");
 
             }
             else
             {
-                //Console.WriteLine($"Register: Failure");
+                this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }
         }
 
         while (true)
         {
-            //Console.WriteLine($"Waiting...");
+            this.logger.TryGet()?.Log($"Waiting...");
             if (await this.remoteBenchBroker.Wait() == false)
             {
                 Console.WriteLine($"Exit");
