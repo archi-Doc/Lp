@@ -369,13 +369,15 @@ public class ConnectionTerminal
 
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
-
+        this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual A");//
         if (packetUInt16 < 384)
         {// Client -> Server
             ServerConnection? connection = default;
             lock (this.serverConnections.SyncObject)
             {
+                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual B");//
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
+                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual C");//
 
                 if (connection?.State == Connection.ConnectionState.Closed)
                 {// Reopen
