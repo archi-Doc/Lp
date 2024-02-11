@@ -389,6 +389,7 @@ public class ConnectionTerminal
                 }
             }
 
+            this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual2");//
             if (connection is not null &&
                 connection.EndPoint.EndPointEquals(endPoint))
             {
