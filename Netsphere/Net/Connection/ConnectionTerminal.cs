@@ -362,22 +362,14 @@ public class ConnectionTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
-        if (NetConstants.LogLowLevelNet)
-        {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");//
-        }
-
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
-        this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual A");//
         if (packetUInt16 < 384)
         {// Client -> Server
             ServerConnection? connection = default;
             lock (this.serverConnections.SyncObject)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual B");//
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
-                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual C");//
 
                 if (connection?.State == Connection.ConnectionState.Closed)
                 {// Reopen
@@ -391,7 +383,6 @@ public class ConnectionTerminal
                 }
             }
 
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual2");//
             if (connection is not null &&
                 connection.EndPoint.EndPointEquals(endPoint))
             {
@@ -403,9 +394,7 @@ public class ConnectionTerminal
             ClientConnection? connection = default;
             lock (this.clientConnections.SyncObject)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual D");//
                 this.clientConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
-                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual E");//
             }
 
             if (connection is not null &&

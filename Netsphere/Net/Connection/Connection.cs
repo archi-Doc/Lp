@@ -113,7 +113,7 @@ public abstract class Connection : IDisposable
 
     // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 10ms
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + 40_000; // + NetConstants.AckDelayMics;
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
@@ -568,7 +568,7 @@ Wait:
         {
             return;
         }
-        this.Logger.TryGet(LogLevel.Debug)?.Log($"Receive actual3");//
+
         // PacketHeaderCode
         var span = toBeShared.Span;
 
@@ -595,7 +595,7 @@ Wait:
             {
                 return;
             }
-            this.Logger.TryGet(LogLevel.Debug)?.Log($"Receive actual4");//
+
             this.ResponseSystemMics = Mics.FastSystem;
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
@@ -630,7 +630,6 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
-        this.Logger.TryGet(LogLevel.Debug)?.Log($"Receive actual5");//
         lock (this.sendTransmissions.SyncObject)
         {
             while (span.Length >= 8)
@@ -644,7 +643,6 @@ Wait:
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
-                        this.Logger.TryGet(LogLevel.Debug)?.Log($"Receive actual6");//
                         this.UpdateLatestAckMics();
                         transmission.ProcessReceive_AckRama();
                     }
