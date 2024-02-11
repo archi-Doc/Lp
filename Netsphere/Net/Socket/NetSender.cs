@@ -249,10 +249,10 @@ internal class NetSender
                 }
 #endif
 
-                /*if (NetConstants.LogLowLevelNet)
+                if (NetConstants.LogLowLevelNet)
                 {
                     this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual");
-                }*/
+                }
 
                 ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();
@@ -274,10 +274,10 @@ internal class NetSender
                 }
 #endif
 
-                /*if (NetConstants.LogLowLevelNet)
+                if (NetConstants.LogLowLevelNet)
                 {
                     this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual");
-                }*/
+                }
 
                 ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();
