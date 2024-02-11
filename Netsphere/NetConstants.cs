@@ -4,6 +4,7 @@ namespace Netsphere;
 
 internal static class NetConstants
 {
+    public const bool LogLowLevelNet = true;
     public const int AckDelayMics = 10_000; // 10ms
     public const long ConnectionOpenToClosedMics = 5_000_000; // 5s
     public const long ConnectionClosedToDisposalMics = 10_000_000; // 10s
