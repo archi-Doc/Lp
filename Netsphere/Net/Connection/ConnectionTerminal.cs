@@ -403,7 +403,9 @@ public class ConnectionTerminal
             ClientConnection? connection = default;
             lock (this.clientConnections.SyncObject)
             {
+                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual D");//
                 this.clientConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
+                this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual E");//
             }
 
             if (connection is not null &&

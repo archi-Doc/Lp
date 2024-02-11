@@ -159,6 +159,7 @@ public class Program
             {
                 options.Formatter.EnableColor = false; // tempcode
                 options.EnableBuffering = true;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
             });
 
         Console.WriteLine(string.Join(' ', args));
