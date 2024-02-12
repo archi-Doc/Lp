@@ -73,7 +73,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     private async Task TestPingpong(NetNode node)
     {
-        const int N = 10;
+        const int N = 100;
 
         using (var connection = await this.netControl.NetTerminal.TryConnect(node))
         {
