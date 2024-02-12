@@ -344,6 +344,8 @@ public sealed partial class PacketTerminal
                 this.items.SentListChain.AddLast(item);
             }*/
         }
+
+        this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
     }
 
     private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
