@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -23,15 +25,17 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        await Console.Out.WriteLineAsync("Wait about 10 seconds for the execution environment to stabilize.");
+        await Console.Out.WriteLineAsync("Wait about 3 seconds for the execution environment to stabilize.");
         try
         {
-            await Task.Delay(10_000, ThreadCore.Root.CancellationToken);
+            await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
         }
         catch
         {
             return;
         }
+
+        await this.TestPingpong(node);
 
         using (var connection = await this.netControl.NetTerminal.TryConnect(node))
         {
@@ -41,55 +45,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var service = connection.GetService<IBenchmarkService>();
-            this.logger.TryGet(LogLevel.Debug)?.Log("1");
-            if (await service.Register() == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log($"Register: Success");
-
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"Register: Failure");
-                return;
-            }
-
-            this.logger.TryGet(LogLevel.Debug)?.Log("2");
-            if (await service.Register() == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log($"Register: Success");
-
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"Register: Failure");
-                return;
-            }
-
-            this.logger.TryGet(LogLevel.Debug)?.Log("3");
-            if (await service.Register() == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log($"Register: Success");
-
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"Register: Failure");
-                return;
-            }
-
-            this.logger.TryGet(LogLevel.Debug)?.Log("4");
-            if (await service.Register() == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log($"Register: Success");
-
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"Register: Failure");
-                return;
-            }
-
-            this.logger.TryGet(LogLevel.Debug)?.Log("5");
             if (await service.Register() == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Register: Success");
@@ -113,6 +68,30 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
             Console.WriteLine($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
             await this.remoteBenchBroker.Process(netControl.NetTerminal, node);
+        }
+    }
+
+    private async Task TestPingpong(NetNode node)
+    {
+        const int N = 10;
+
+        using (var connection = await this.netControl.NetTerminal.TryConnect(node))
+        {
+            if (connection is null)
+            {
+                return;
+            }
+
+            var sw = Stopwatch.StartNew();
+            var service = connection.GetService<IBenchmarkService>();
+            for (var i = 0; i < N; i++)
+            {
+                await service.Pingpong([0, 1, 2,]);
+            }
+
+            sw.Stop();
+
+            this.logger.TryGet()?.Log($"Pingpong x {N} {sw.ElapsedMilliseconds} ms");
         }
     }
 
