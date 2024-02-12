@@ -19,8 +19,8 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
-        {
+        if (!NetNode.TryParse(options.Node, out var node))
+        {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
             return;
         }
 

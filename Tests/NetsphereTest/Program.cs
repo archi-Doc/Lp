@@ -83,8 +83,8 @@ public class Program
             .Preload(context =>
             {
                 var original = context.GetOrCreateOptions<NetsphereOptions>();
-                original.EnableAlternative = true;
-                original.Port = 49152;
+                // original.EnableAlternative = true;
+                // original.Port = 49152;
 
                 NetsphereOptions? options = default;
                 if (context.Arguments.TryGetOption("ns", out var nsArg))
@@ -172,6 +172,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         options.EnableServer = true;
+        options.EnableAlternative = false;
         await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true);
 
