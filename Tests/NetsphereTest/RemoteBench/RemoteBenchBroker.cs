@@ -112,7 +112,7 @@ public class RemoteBenchBroker
             AverageLatency = (int)(totalLatency / totalCount),
         };
 
-        using (var t = await terminal.TryConnect(node))
+        using (var t = await terminal.TryConnect(node, Connection.ConnectMode.NoReuse))
         {
             if (t is null)
             {
