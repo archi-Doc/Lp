@@ -41,6 +41,55 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var service = connection.GetService<IBenchmarkService>();
+            this.logger.TryGet(LogLevel.Debug)?.Log("1");
+            if (await service.Register() == NetResult.Success)
+            {
+                this.logger.TryGet()?.Log($"Register: Success");
+
+            }
+            else
+            {
+                this.logger.TryGet()?.Log($"Register: Failure");
+                return;
+            }
+
+            this.logger.TryGet(LogLevel.Debug)?.Log("2");
+            if (await service.Register() == NetResult.Success)
+            {
+                this.logger.TryGet()?.Log($"Register: Success");
+
+            }
+            else
+            {
+                this.logger.TryGet()?.Log($"Register: Failure");
+                return;
+            }
+
+            this.logger.TryGet(LogLevel.Debug)?.Log("3");
+            if (await service.Register() == NetResult.Success)
+            {
+                this.logger.TryGet()?.Log($"Register: Success");
+
+            }
+            else
+            {
+                this.logger.TryGet()?.Log($"Register: Failure");
+                return;
+            }
+
+            this.logger.TryGet(LogLevel.Debug)?.Log("4");
+            if (await service.Register() == NetResult.Success)
+            {
+                this.logger.TryGet()?.Log($"Register: Success");
+
+            }
+            else
+            {
+                this.logger.TryGet()?.Log($"Register: Failure");
+                return;
+            }
+
+            this.logger.TryGet(LogLevel.Debug)?.Log("5");
             if (await service.Register() == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Register: Success");
