@@ -154,10 +154,10 @@ public sealed partial class PacketTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        if (this.logCount++ < 50)
+        /*if (this.logCount++ < 50)
         {
             this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.WaitingToSendListChain.Count}");
-        }
+        }*/
 
         lock (this.items.SyncObject)
         {
@@ -350,7 +350,7 @@ public sealed partial class PacketTerminal
             }*/
         }
 
-        this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
+        // this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
     }
 
     private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
