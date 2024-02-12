@@ -23,6 +23,16 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
+        await Console.Out.WriteLineAsync("Wait about 10 seconds for the execution environment to stabilize.");
+        try
+        {
+            await Task.Delay(10_000, ThreadCore.Root.CancellationToken);
+        }
+        catch
+        {
+            return;
+        }
+
         using (var connection = await this.netControl.NetTerminal.TryConnect(node))
         {
             if (connection is null)
