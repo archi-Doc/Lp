@@ -122,7 +122,7 @@ public class Program
                     if (context.LogLevel == LogLevel.Debug)
                     {
                         // context.SetOutput<FileLogger<FileLoggerOptions>>(); // tempcode
-                        // return;
+                        return;
                     }
 
                     /*if (context.LogSourceType == typeof(ClientTerminal))

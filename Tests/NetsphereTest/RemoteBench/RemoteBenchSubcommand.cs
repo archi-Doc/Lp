@@ -3,7 +3,6 @@
 using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
-using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -35,7 +34,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        await this.TestPingpong(node);
+        // await this.TestPingpong(node);
 
         using (var connection = await this.netControl.NetTerminal.TryConnect(node))
         {
@@ -66,7 +65,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 break;
             }
 
-            Console.WriteLine($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
+            this.logger.TryGet()?.Log($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
             await this.remoteBenchBroker.Process(netControl.NetTerminal, node);
         }
     }

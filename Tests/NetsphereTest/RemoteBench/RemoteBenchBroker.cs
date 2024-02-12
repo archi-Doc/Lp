@@ -1,15 +1,28 @@
 ﻿using System.Diagnostics;
+using Arc.Unit;
+using NetsphereTest;
 
 namespace LP.NetServices;
 
 public class RemoteBenchBroker
 {
-    public RemoteBenchBroker()
+    public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger)
     {
+        this.logger = logger;
     }
 
     public void Start(int total, int concurrent)
     {
+        if (total == 0)
+        {
+            total = 1_000;
+        }
+
+        if (concurrent == 0)
+        {
+            concurrent = 25;
+        }
+
         Volatile.Write(ref this.total, total);
         Volatile.Write(ref this.concurrent, concurrent);
         this.pulseEvent.Pulse();
@@ -50,7 +63,7 @@ public class RemoteBenchBroker
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = await terminal.TryConnect(node))
+                    using (var t = await terminal.TryConnect(node, Connection.ConnectMode.NoReuse))
                     {
                         if (t is null)
                         {
@@ -83,14 +96,20 @@ public class RemoteBenchBroker
 
         sw.Stop();
 
+        var totalCount = successCount + failureCount;
+        if (totalCount == 0)
+        {
+            totalCount = 1;
+        }
+
         var record = new IBenchmarkService.ReportRecord()
         {
             SuccessCount = successCount,
             FailureCount = failureCount,
             Concurrent = concurrent,
             ElapsedMilliseconds = sw.ElapsedMilliseconds,
-            CountPerSecond = (int)((successCount + failureCount) * 1000 / sw.ElapsedMilliseconds),
-            AverageLatency = (int)(totalLatency / (successCount + failureCount)), // tempcode
+            CountPerSecond = (int)(totalCount * 1000 / sw.ElapsedMilliseconds),
+            AverageLatency = (int)(totalLatency / totalCount),
         };
 
         using (var t = await terminal.TryConnect(node))
@@ -104,14 +123,15 @@ public class RemoteBenchBroker
             await service.Report(record);
         }
 
-        await Console.Out.WriteLineAsync(record.ToString());
+        this.logger.TryGet()?.Log(record.ToString());
     }
 
     public int Total => this.total;
 
     public int Concurrent => this.concurrent;
 
-    private AsyncPulseEvent pulseEvent = new();
+    private readonly AsyncPulseEvent pulseEvent = new();
+    private readonly ILogger logger;
     private int total;
     private int concurrent;
 }
