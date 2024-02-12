@@ -71,6 +71,8 @@ public sealed partial class PacketTerminal
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
 
+    private int logCount = 0;
+
     /*public void SendAndForget<TSend>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
     {
@@ -152,10 +154,13 @@ public sealed partial class PacketTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
+        if (this.logCount++ < 50)
+        {
+            this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.WaitingToSendListChain.Count}");
+        }
+
         lock (this.items.SyncObject)
         {
-            // this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.ToSendListChain.Count}");
-
             while (this.items.WaitingToSendListChain.First is { } item)
             {// Waiting to send
                 if (!netSender.CanSend)
