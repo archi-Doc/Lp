@@ -78,6 +78,11 @@ public class Program
             }
         }
 
+        // Secrets
+        const string secretName = "netsphere_secrets";
+        var testSecret = Environment.GetEnvironmentVariable(secretName);
+        await Console.Out.WriteLineAsync($"{secretName}: {testSecret}");
+
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
             .Preload(context =>
