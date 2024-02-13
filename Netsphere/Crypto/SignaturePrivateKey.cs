@@ -5,6 +5,10 @@ using System.Text;
 
 namespace Netsphere.Crypto;
 
+/// <summary>
+/// Represents a private key data.<br/>
+/// Signature: ECDsa, secp256r1.
+/// </summary>
 [TinyhandObject]
 public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<SignaturePrivateKey>
 {

@@ -10,7 +10,8 @@ using Arc.Collections;
 namespace Netsphere.Crypto;
 
 /// <summary>
-/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
+/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).<br/>
+/// Signature: ECDsa, secp256r1.
 /// </summary>
 [TinyhandObject]
 public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<SignaturePublicKey>, IStringConvertible<SignaturePublicKey>

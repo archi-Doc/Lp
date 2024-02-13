@@ -54,6 +54,9 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }
+
+            connection.RequestAgreement();
+            connection.GetBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
         }
 
         while (true)

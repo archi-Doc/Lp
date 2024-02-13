@@ -5,6 +5,10 @@ using System.Security.Cryptography;
 
 namespace Netsphere.Crypto;
 
+/// <summary>
+/// Represents a private key data.<br/>
+/// Encryption: ECDiffieHellman, secp256r1.
+/// </summary>
 [TinyhandObject]
 public sealed partial class NodePrivateKey : PrivateKey, IEquatable<NodePrivateKey>
 {
