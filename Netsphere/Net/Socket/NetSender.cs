@@ -56,6 +56,7 @@ internal class NetSender
         public SendCore(ThreadCoreBase parent, NetSender sender)
                 : base(parent, Process, false)
         {
+            this.Thread.Priority = ThreadPriority.AboveNormal;
             this.sender = sender;
             this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.sender.Process); // Use multimedia timer if available.
         }
@@ -73,9 +74,10 @@ internal class NetSender
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
     {
-#if LOG_LOWLEVEL_NET
-        // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");
-#endif
+        if (NetConstants.LogLowLevelNet)
+        {
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");
+        }
 
         this.SendCount++;
         if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
@@ -247,6 +249,11 @@ internal class NetSender
                 }
 #endif
 
+                if (NetConstants.LogLowLevelNet)
+                {
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual");
+                }
+
                 ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();
             }
@@ -266,6 +273,11 @@ internal class NetSender
                     continue;
                 }
 #endif
+
+                if (NetConstants.LogLowLevelNet)
+                {
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual");
+                }
 
                 ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();

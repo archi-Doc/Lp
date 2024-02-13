@@ -42,9 +42,10 @@ internal partial class AckBuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AckRama(Connection connection, ReceiveTransmission receiveTransmission)
     {
-// #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}");
-// #endif
+        if (NetConstants.LogLowLevelNet)
+        {
+            this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}");
+        }
 
         lock (this.syncObject)
         {
@@ -71,9 +72,10 @@ internal partial class AckBuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AckBlock(Connection connection, ReceiveTransmission receiveTransmission, int geneSerial)
     {
-// #if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
-// #endif
+        if (NetConstants.LogLowLevelNet)
+        {
+            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
+        }
 
         lock (this.syncObject)
         {
@@ -251,9 +253,10 @@ NewPacket:
 
         void Send(int spanLength)
         {
-// #if LOG_LOWLEVEL_NET
-            this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, SendAck");
-// #endif
+            if (NetConstants.LogLowLevelNet)
+            {
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, SendAck");
+            }
 
             connection.CreateAckPacket(owner, spanLength, out var packetLength);
             netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));

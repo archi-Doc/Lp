@@ -353,9 +353,10 @@ Loop:
                     return NetResult.Closed;
                 }
 
-                while (this.GeneSerialMax < this.MaxReceivePosition)
-                {x
-                    Debug.Assert(chain.CanAdd);// Consumed < items.Length;
+                while (this.GeneSerialMax < this.MaxReceivePosition &&
+                    chain.CanAdd)
+                {
+                    // Debug.Assert(chain.CanAdd); // Consumed < items.Length;
                     int size;
                     var gene = new SendGene(this);
                     ByteArrayPool.MemoryOwner owner;
@@ -550,9 +551,12 @@ Exit:
                         if (gene.CurrentState == SendGene.State.Sent)
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
                             var rtt = (int)(Mics.FastSystem - gene.SentMics);
-#if LOG_LOWLEVEL_NET
-                            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
-#endif
+
+                            if (NetConstants.LogLowLevelNet)
+                            {
+                                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                            }
+
                             this.Connection.AddRtt(rtt);
                             congestionControl.AddRtt(rtt);
                         }
@@ -575,9 +579,12 @@ Exit:
                         if (gene.CurrentState == SendGene.State.Sent)
                         {// Exclude resent genes as they do not allow for accurate RTT measurement.
                             var rtt = (int)(Mics.FastSystem - gene.SentMics);
-#if LOG_LOWLEVEL_NET
-                            this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
-#endif
+
+                            if (NetConstants.LogLowLevelNet)
+                            {
+                                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                            }
+
                             this.Connection.AddRtt(rtt);
                             congestionControl.AddRtt(rtt);
                         }

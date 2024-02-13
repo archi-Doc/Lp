@@ -33,7 +33,7 @@ internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 public record RemoteBenchOptions
 {
     [SimpleOption("total", Description = "Total")]
-    public int Total { get; init; } = 1_00;
+    public int Total { get; init; } = 1_000;
 
     [SimpleOption("concurrent", Description = "Concurrent")]
     public int Concurrent { get; init; } = 25;

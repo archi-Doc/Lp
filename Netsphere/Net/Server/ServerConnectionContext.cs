@@ -6,7 +6,7 @@ using Netsphere.Net;
 
 namespace Netsphere.Server;
 
-public class ExampleConnectionContext : ConnectionContext
+public class ExampleConnectionContext : ServerConnectionContext
 {
     public ExampleConnectionContext(ServerConnection serverConnection)
         : base(serverConnection)
@@ -15,17 +15,17 @@ public class ExampleConnectionContext : ConnectionContext
 
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
     {
-        return this.ServerConnection.Agreement;
+        return this.Connection.Agreement;
     }
 }
 
-public class ConnectionContext
+public class ServerConnectionContext
 {
     public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
 
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
 
-    public delegate object CreateBackendDelegate(ConnectionContext connectionContext);
+    public delegate object CreateBackendDelegate(ServerConnectionContext connectionContext);
 
     public class ServiceInfo
     {
@@ -61,11 +61,11 @@ public class ConnectionContext
         public ServiceDelegate Invoke { get; }
     }
 
-    public ConnectionContext(ServerConnection serverConnection)
+    public ServerConnectionContext(ServerConnection serverConnection)
     {
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
-        this.ServerConnection = serverConnection;
+        this.Connection = serverConnection;
     }
 
     #region FieldAndProperty
@@ -74,7 +74,7 @@ public class ConnectionContext
 
     public NetTerminal NetTerminal { get; }
 
-    public ServerConnection ServerConnection { get; }
+    public ServerConnection Connection { get; }
 
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
@@ -82,7 +82,7 @@ public class ConnectionContext
     #endregion
 
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
-        => this.ServerConnection.Agreement;
+        => this.Connection.Agreement;
 
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
@@ -98,7 +98,7 @@ public class ConnectionContext
             return;
         }
 
-        var transmissionContext = new TransmissionContext(this, receiveTransmission.TransmissionId, 1, dataId, default);
+        var transmissionContext = new TransmissionContext(this.Connection, receiveTransmission.TransmissionId, 1, dataId, default);
         if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
         {
             transmissionContext.Return();
@@ -249,9 +249,9 @@ SendNoNetService:
         transmissionContext.Return();
 
         var response = this.RequestAgreement(t);
-        if (response != this.ServerConnection.Agreement)
+        if (response != this.Connection.Agreement)
         {
-            this.ServerConnection.Agreement.Update(response);
+            this.Connection.Agreement.Update(response);
         }
 
         transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);

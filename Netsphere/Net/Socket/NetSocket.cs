@@ -29,6 +29,14 @@ public sealed class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
+            /*var udp = core.socket.UnsafeUdpClient;
+            if (udp == null)
+            {
+                return;
+            }
+
+            udp.Client.Blocking = false;*/
+
             ByteArrayPool.Owner? arrayOwner = null;
             while (!core.IsTerminated)
             {
@@ -62,6 +70,7 @@ public sealed class NetSocket
         public RecvCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
+            this.Thread.Priority = ThreadPriority.AboveNormal;
             this.socket = socket;
         }
 

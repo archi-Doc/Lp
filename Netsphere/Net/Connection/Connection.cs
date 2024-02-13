@@ -108,9 +108,12 @@ public abstract class Connection : IDisposable
     public int LatestRtt
         => this.latestRtt;
 
+    public int RttVar
+        => this.rttvar;
+
     // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics; // 10ms
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + 40_000; // + NetConstants.AckDelayMics;
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
@@ -793,8 +796,7 @@ Wait:
         {// Invoke stream
             if (this is ServerConnection serverConnection)
             {
-                var connectionContext = serverConnection.ConnectionContext;
-                connectionContext.InvokeStream(transmission, dataId, maxStreamLength);
+                serverConnection.GetContext().InvokeStream(transmission, dataId, maxStreamLength);
             }
             else if (this is ClientConnection clientConnection)
             {

@@ -78,13 +78,17 @@ public class Program
             }
         }
 
+        // Secrets
+        const string secretName = "netsphere_secrets";
+        var testSecret = Environment.GetEnvironmentVariable(secretName);
+
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
             .Preload(context =>
             {
                 var original = context.GetOrCreateOptions<NetsphereOptions>();
-                original.EnableAlternative = true;
-                original.Port = 49152;
+                // original.EnableAlternative = true;
+                // original.Port = 49152;
 
                 NetsphereOptions? options = default;
                 if (context.Arguments.TryGetOption("ns", out var nsArg))
@@ -121,7 +125,7 @@ public class Program
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        // context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
                     }
 
@@ -154,6 +158,12 @@ public class Program
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
+            })
+            .SetupOptions<ConsoleLoggerOptions>((context, options) =>
+            {
+                options.Formatter.EnableColor = false; // tempcode
+                options.EnableBuffering = true;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
             });
 
         Console.WriteLine(string.Join(' ', args));
@@ -166,6 +176,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         options.EnableServer = true;
+        options.EnableAlternative = false;
         await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true);
 

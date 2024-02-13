@@ -15,10 +15,11 @@ internal partial class PacketConnect : IPacket
     {
     }
 
-    public PacketConnect(ushort engagement, NodePublicKey clientPublicKey)
+    public PacketConnect(ushort engagement, NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
     {
         this.Engagement = engagement;
         this.ClientPublicKey = clientPublicKey;
+        this.ServerPublicKeyChecksum = serverPublicKeyChecksum;
         this.ClientSalt = RandomVault.Crypto.NextUInt64();
         this.ClientSalt2 = RandomVault.Crypto.NextUInt64();
     }
@@ -33,12 +34,15 @@ internal partial class PacketConnect : IPacket
     public NodePublicKey ClientPublicKey { get; set; }
 
     [Key(3)]
-    public ulong ClientSalt { get; set; }
+    public int ServerPublicKeyChecksum { get; set; }
 
     [Key(4)]
-    public ulong ClientSalt2 { get; set; }
+    public ulong ClientSalt { get; set; }
 
     [Key(5)]
+    public ulong ClientSalt2 { get; set; }
+
+    [Key(6)]
     public bool Bidirectional { get; set; }
 }
 
@@ -57,15 +61,19 @@ internal partial class PacketConnectResponse : IPacket
     public PacketConnectResponse(ServerOptions options)
         : this()
     {
+        // this.Success = true;
         this.Agreement = new(options);
     }
 
-    [Key(0)]
-    public ulong ServerSalt { get; set; }
+    /*[Key(0)]
+    public bool Success { get; set; }*/
 
     [Key(1)]
-    public ulong ServerSalt2 { get; set; }
+    public ulong ServerSalt { get; set; }
 
     [Key(2)]
+    public ulong ServerSalt2 { get; set; }
+
+    [Key(3)]
     public ConnectionAgreementBlock Agreement { get; set; }
 }

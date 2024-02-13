@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
 using SimpleCommandLine;
@@ -18,10 +19,22 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+        if (!NetNode.TryParse(options.Node, out var node))
+        {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
+            return;
+        }
+
+        await Console.Out.WriteLineAsync("Wait about 3 seconds for the execution environment to stabilize.");
+        try
+        {
+            await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
+        }
+        catch
         {
             return;
         }
+
+        // await this.TestPingpong(node);
 
         using (var connection = await this.netControl.NetTerminal.TryConnect(node))
         {
@@ -33,27 +46,54 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             var service = connection.GetService<IBenchmarkService>();
             if (await service.Register() == NetResult.Success)
             {
-                Console.WriteLine($"Register: Success");
+                this.logger.TryGet()?.Log($"Register: Success");
 
             }
             else
             {
-                Console.WriteLine($"Register: Failure");
+                this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }
+
+            connection.RequestAgreement();
+            connection.GetBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
         }
 
         while (true)
         {
-            Console.WriteLine($"Waiting...");
+            this.logger.TryGet()?.Log($"Waiting...");
             if (await this.remoteBenchBroker.Wait() == false)
             {
                 Console.WriteLine($"Exit");
                 break;
             }
 
-            Console.WriteLine($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
+            this.logger.TryGet()?.Log($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
             await this.remoteBenchBroker.Process(netControl.NetTerminal, node);
+        }
+    }
+
+    private async Task TestPingpong(NetNode node)
+    {
+        const int N = 100;
+
+        using (var connection = await this.netControl.NetTerminal.TryConnect(node))
+        {
+            if (connection is null)
+            {
+                return;
+            }
+
+            var sw = Stopwatch.StartNew();
+            var service = connection.GetService<IBenchmarkService>();
+            for (var i = 0; i < N; i++)
+            {
+                await service.Pingpong([0, 1, 2,]);
+            }
+
+            sw.Stop();
+
+            this.logger.TryGet()?.Log($"Pingpong x {N} {sw.ElapsedMilliseconds} ms");
         }
     }
 

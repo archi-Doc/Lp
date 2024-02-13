@@ -69,14 +69,20 @@ public class NetControl : UnitBase, IUnitPreparable
         {
         }
 
-        public async Task Run(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ConnectionContext>? newConnectionContext = null)
+        public async Task Run(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ServerConnectionContext>? newServerConnectionContext = null, Func<ClientConnection, ClientConnectionContext>? newClientConnectionContext = null)
         {
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetOptions(options);
             netBase.AllowUnsafeConnection = allowUnsafeConnection;
-            if (newConnectionContext is not null)
+
+            if (newServerConnectionContext is not null)
             {
-                netBase.ServerConnectionContext = newConnectionContext;
+                netBase.NewServerConnectionContext = newServerConnectionContext;
+            }
+
+            if (newClientConnectionContext is not null)
+            {
+                netBase.NewClientConnectionContext = newClientConnectionContext;
             }
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
@@ -117,6 +123,18 @@ public class NetControl : UnitBase, IUnitPreparable
     public NetTerminal NetTerminal { get; }
 
     public NetTerminal? Alternative { get; }
+
+    public Func<ServerConnection, ServerConnectionContext> NewServerConnectionContext
+    {
+        get => this.NetBase.NewServerConnectionContext;
+        set => this.NetBase.NewServerConnectionContext = value;
+    }
+
+    public Func<ClientConnection, ClientConnectionContext> NewClientConnectionContext
+    {
+        get => this.NetBase.NewClientConnectionContext;
+        set => this.NetBase.NewClientConnectionContext = value;
+    }
 
     internal IServiceProvider ServiceProvider { get; }
 

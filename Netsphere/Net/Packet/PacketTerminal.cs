@@ -114,9 +114,10 @@ public sealed partial class PacketTerminal
         CreatePacket(0, packet, out var owner);
         this.AddSendPacket(endPoint.EndPoint, owner, responseTcs);
 
-#if LOG_LOWLEVEL_NET
-        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
-#endif
+        if (NetConstants.LogLowLevelNet)
+        {
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+        }
 
         try
         {
@@ -153,8 +154,6 @@ public sealed partial class PacketTerminal
     {
         lock (this.items.SyncObject)
         {
-            // this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.ToSendListChain.Count}");
-
             while (this.items.WaitingToSendListChain.First is { } item)
             {// Waiting to send
                 if (!netSender.CanSend)
@@ -162,9 +161,10 @@ public sealed partial class PacketTerminal
                     return;
                 }
 
-#if LOG_LOWLEVEL_NET
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Send packet id:{item.PacketId}");
-#endif
+                if (NetConstants.LogLowLevelNet)
+                {
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Send packet id:{item.PacketId}");
+                }
 
                 if (item.ResponseTcs is not null)
                 {// WaitingToSend -> WaitingForResponse
@@ -202,9 +202,10 @@ public sealed partial class PacketTerminal
                 BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
                 BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
 
-#if LOG_LOWLEVEL_NET
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
-#endif
+                if (NetConstants.LogLowLevelNet)
+                {
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
+                }
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
                 item.SentMics = Mics.FastSystem;
@@ -216,6 +217,11 @@ public sealed partial class PacketTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
+        if (NetConstants.LogLowLevelNet)
+        {
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
+        }
+
         // PacketHeaderCode
         var span = toBeShared.Span;
         if (BitConverter.ToUInt32(span) != (uint)XxHash3.Hash64(span.Slice(4)))
@@ -238,10 +244,14 @@ public sealed partial class PacketTerminal
 
                 if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
                 {
+                    if (p.ServerPublicKeyChecksum != this.netTerminal.NodePublicKey.GetHashCode())
+                    {// Public Key does not match
+                        return;
+                    }
+
                     Task.Run(() =>
                     {
                         var packet = new PacketConnectResponse(this.netBase.ServerOptions);
-
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.AddSendPacket(endPoint, owner, default);
@@ -257,9 +267,12 @@ public sealed partial class PacketTerminal
                     var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.options.NodeName);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
-#if LOG_LOWLEVEL_NET
-                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
-#endif
+
+                    if (NetConstants.LogLowLevelNet)
+                    {
+                        // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
+                    }
+
                     return;
                 }
                 else if (packetType == PacketType.GetInformation)
@@ -284,9 +297,10 @@ public sealed partial class PacketTerminal
 
             if (item is not null)
             {
-#if LOG_LOWLEVEL_NET
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} received {toBeShared.Span.Length} {packetType.ToString()}");
-#endif
+                if (NetConstants.LogLowLevelNet)
+                {
+                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} received {toBeShared.Span.Length} {packetType.ToString()}");
+                }
 
                 if (item.ResponseTcs is not null)
                 {
@@ -328,6 +342,8 @@ public sealed partial class PacketTerminal
                 this.items.SentListChain.AddLast(item);
             }*/
         }
+
+        // this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
     }
 
     private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)

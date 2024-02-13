@@ -12,7 +12,7 @@ public sealed class ServiceControl
     {
     }
 
-    private UInt64Hashtable<ConnectionContext.ServiceInfo> dataIdToResponder = new();
+    private UInt64Hashtable<ServerConnectionContext.ServiceInfo> dataIdToResponder = new();
 
     public void Register<TService>()
         where TService : INetService
@@ -32,7 +32,7 @@ public sealed class ServiceControl
         this.dataIdToResponder.TryAdd(serviceId, info);
     }
 
-    public bool TryGet<TService>([MaybeNullWhen(false)] out ConnectionContext.ServiceInfo info)
+    public bool TryGet<TService>([MaybeNullWhen(false)] out ServerConnectionContext.ServiceInfo info)
         where TService : INetService
     {
         var serviceId = ServiceTypeToId<TService>();
@@ -40,7 +40,7 @@ public sealed class ServiceControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out ConnectionContext.ServiceInfo info)
+    public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out ServerConnectionContext.ServiceInfo info)
         => this.dataIdToResponder.TryGetValue(serviceId, out info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

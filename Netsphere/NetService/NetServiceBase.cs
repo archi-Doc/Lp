@@ -6,16 +6,16 @@ namespace Netsphere;
 
 public abstract class NetServiceBase
 {
-    public NetServiceBase(ConnectionContext connectionContext)
+    public NetServiceBase(ServerConnectionContext connectionContext)
     {
         this.ConnectionContext = connectionContext;
     }
 
-    public ConnectionContext ConnectionContext { get; }
+    public ServerConnectionContext ConnectionContext { get; }
 }
 
 public abstract class NetServiceBase<TConnectionContext>
-    where TConnectionContext : ConnectionContext
+    where TConnectionContext : ServerConnectionContext
 {
     public NetServiceBase(TConnectionContext connectionContext)
     {

@@ -10,7 +10,8 @@ using Arc.Collections;
 namespace Netsphere.Crypto;
 
 /// <summary>
-/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
+/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).<br/>
+/// Encryption: ECDiffieHellman, secp256r1.
 /// </summary>
 [TinyhandObject]
 public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<EncryptionPublicKey>, IStringConvertible<EncryptionPublicKey>
@@ -185,7 +186,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
     {
         Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
         this.TryWriteBytes(span, out _);
-        return FarmHash.Hash64(span);
+        return XxHash3.Hash64(span);
     }
 
     public string ToBase64()

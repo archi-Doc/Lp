@@ -13,7 +13,7 @@ public class CubicCongestionControl : ICongestionControl
     private const double BrakeThreshold = 0.05d;
     private const int CubicThreshold = 10;
     private const double InitialCwnd = 10;
-    private const double MaxCwnd = 1_000_000;
+    private const double MaxCwnd = 10_000;
     private const double MinCwnd = 2;
     private const double BurstRatio = 1.5d;
     private const double BurstRatioInv = 1.0d / BurstRatio;
@@ -219,7 +219,6 @@ public class CubicCongestionControl : ICongestionControl
                     this.UpdateCubic((double)this.ackCount);
                     this.UpdateRegen();
 
-                    // this.cwnd = 100d;//tempcode
                     Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                 }
 
@@ -447,7 +446,6 @@ public class CubicCongestionControl : ICongestionControl
 
     private void UpdateCubic(double acked)
     {
-        this.slowstart = false;//
         if (this.slowstart)
         {// Hystart
             var currentMinRtt = this.currentMinRtt;
@@ -484,7 +482,7 @@ public class CubicCongestionControl : ICongestionControl
         {// Slow start
             var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
             acked -= cwnd - this.cwnd;
-            this.cwnd = cwnd; // MaxCwnd
+            this.cwnd = Math.Min(cwnd, MaxCwnd);
 
             if (acked == 0)
             {
@@ -552,6 +550,10 @@ public class CubicCongestionControl : ICongestionControl
 
         this.increasePerAck = Math.Min(this.increasePerAck, 0.5);
         this.cwnd += acked * this.increasePerAck; // MaxCwnd
+        if (this.cwnd > MaxCwnd)
+        {
+            this.cwnd = MaxCwnd;
+        }
     }
 
     private void UpdateRegen()

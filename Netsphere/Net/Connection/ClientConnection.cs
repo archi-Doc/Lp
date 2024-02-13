@@ -17,7 +17,10 @@ public sealed partial class ClientConnection : Connection
     internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
+        this.context = this.NetBase.NewClientConnectionContext(this);
     }
+
+    #region FieldAndProperty
 
     public override ConnectionState State
     {
@@ -41,6 +44,17 @@ public sealed partial class ClientConnection : Connection
     public override bool IsClient => true;
 
     public override bool IsServer => false;
+
+    private ClientConnectionContext context;
+
+    #endregion
+
+    public ClientConnectionContext GetContext()
+        => this.context;
+
+    public TContext GetContext<TContext>()
+        where TContext : ClientConnectionContext
+        => (TContext)this.context;
 
     public TService GetService<TService>()
         where TService : INetService
