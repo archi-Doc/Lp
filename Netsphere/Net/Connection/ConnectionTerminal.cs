@@ -364,7 +364,7 @@ public class ConnectionTerminal
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
         }
 
         // PacketHeaderCode

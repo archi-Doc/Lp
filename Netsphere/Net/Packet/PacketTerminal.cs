@@ -71,8 +71,6 @@ public sealed partial class PacketTerminal
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
 
-    private int logCount = 0;
-
     /*public void SendAndForget<TSend>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
     {
@@ -118,7 +116,7 @@ public sealed partial class PacketTerminal
 
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
         }
 
         try
@@ -154,11 +152,6 @@ public sealed partial class PacketTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        /*if (this.logCount++ < 50)
-        {
-            this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.WaitingToSendListChain.Count}");
-        }*/
-
         lock (this.items.SyncObject)
         {
             while (this.items.WaitingToSendListChain.First is { } item)
@@ -170,7 +163,7 @@ public sealed partial class PacketTerminal
 
                 if (NetConstants.LogLowLevelNet)
                 {
-                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Send packet id:{item.PacketId}");
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Send packet id:{item.PacketId}");
                 }
 
                 if (item.ResponseTcs is not null)
@@ -211,7 +204,7 @@ public sealed partial class PacketTerminal
 
                 if (NetConstants.LogLowLevelNet)
                 {
-                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
                 }
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
@@ -226,7 +219,7 @@ public sealed partial class PacketTerminal
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
         }
 
         // PacketHeaderCode
@@ -277,7 +270,7 @@ public sealed partial class PacketTerminal
 
                     if (NetConstants.LogLowLevelNet)
                     {
-                        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
+                        // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
                     }
 
                     return;
