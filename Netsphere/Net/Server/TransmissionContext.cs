@@ -13,9 +13,9 @@ public sealed class TransmissionContext
 
     internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
 
-    internal TransmissionContext(ServerConnection connection, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal TransmissionContext(ServerConnection serverConnection, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
     {
-        this.Connection = connection;
+        this.ServerConnection = serverConnection;
         this.TransmissionId = transmissionId;
         this.DataKind = dataKind;
         this.DataId = dataId;
@@ -24,9 +24,7 @@ public sealed class TransmissionContext
 
     #region FieldAndProperty
 
-    // public ServerConnectionContext ConnectionContext { get; }
-
-    public ServerConnection Connection { get; } // => this.ConnectionContext.ServerConnection;
+    public ServerConnection ServerConnection { get; } // => this.ConnectionContext.ServerConnection;
 
     public uint TransmissionId { get; }
 
@@ -59,11 +57,11 @@ public sealed class TransmissionContext
 
     public NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
     {
-        if (this.Connection.IsClosedOrDisposed)
+        if (this.ServerConnection.IsClosedOrDisposed)
         {
             return NetResult.Closed;
         }
-        else if (this.Connection.CancellationToken.IsCancellationRequested)
+        else if (this.ServerConnection.CancellationToken.IsCancellationRequested)
         {
             return default;
         }
@@ -72,7 +70,7 @@ public sealed class TransmissionContext
             return NetResult.InvalidOperation;
         }
 
-        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
         if (transmission is null)
         {
             return NetResult.NoTransmission;
@@ -85,11 +83,11 @@ public sealed class TransmissionContext
 
     public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
     {
-        if (this.Connection.IsClosedOrDisposed)
+        if (this.ServerConnection.IsClosedOrDisposed)
         {
             return NetResult.Closed;
         }
-        else if (this.Connection.CancellationToken.IsCancellationRequested)
+        else if (this.ServerConnection.CancellationToken.IsCancellationRequested)
         {
             return default;
         }
@@ -103,7 +101,7 @@ public sealed class TransmissionContext
             return NetResult.SerializationError;
         }
 
-        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
         if (transmission is null)
         {
             owner.Return();
@@ -118,11 +116,11 @@ public sealed class TransmissionContext
 
     public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
-        if (this.Connection.CancellationToken.IsCancellationRequested)
+        if (this.ServerConnection.CancellationToken.IsCancellationRequested)
         {
             return (NetResult.Canceled, default);
         }
-        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        else if (!this.ServerConnection.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -131,7 +129,7 @@ public sealed class TransmissionContext
             return (NetResult.InvalidOperation, default);
         }
 
-        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
+        var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
         if (transmission is null)
         {
             return (NetResult.NoTransmission, default);
@@ -171,11 +169,11 @@ public sealed class TransmissionContext
 
     internal bool CreateReceiveStream(ReceiveTransmission receiveTransmission, long maxLength)
     {
-        if (this.Connection.CancellationToken.IsCancellationRequested)
+        if (this.ServerConnection.CancellationToken.IsCancellationRequested)
         {
             return false;
         }
-        else if (!this.Connection.Agreement.CheckStreamLength(maxLength))
+        else if (!this.ServerConnection.Agreement.CheckStreamLength(maxLength))
         {
             return false;
         }

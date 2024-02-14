@@ -7,7 +7,7 @@ using Netsphere.Server;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBidirectionalService
+public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 {
     public RemoteBenchRunnerImpl(ILogger<RemoteBenchRunnerImpl> logger, RemoteBenchBroker remoteBenchBroker, NetTerminal netTerminal)
     {
@@ -21,8 +21,6 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBi
     private readonly ILogger logger;
     private readonly RemoteBenchBroker remoteBenchBroker;
     private readonly NetTerminal netTerminal;
-
-    public ClientConnection ClientConnection => throw new NotImplementedException();
 
     #endregion
 
@@ -39,10 +37,11 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBi
         }
 
         var transmissionContext = TransmissionContext.Current;
-        this.logger.TryGet()?.Log($"Benchmark {transmissionContext.Connection.DestinationNode.ToString()}, Total/Concurrent: {total}/{concurrent}");
+        this.logger.TryGet()?.Log($"Benchmark {transmissionContext.ServerConnection.DestinationNode.ToString()}, Total/Concurrent: {total}/{concurrent}");
 
-        var serverConnection = transmissionContext.Connection;
+        var serverConnection = transmissionContext.ServerConnection;
         var connectionContext = serverConnection.GetContext();
+        var clientConnection = (ClientConnection)serverConnection.GetBidirectional();
 
         var data = new byte[100];
         int successCount = 0;
@@ -61,7 +60,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBi
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = await this.netTerminal.TryConnect(transmissionContext.Connection.DestinationNode, Connection.ConnectMode.NoReuse))
+                    using (var t = await this.netTerminal.TryConnect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse))
                     {
                         if (t is null)
                         {
@@ -110,7 +109,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBi
             AverageLatency = (int)(totalLatency / totalCount),
         };
 
-        var service =this.ClientConnection.GetService<IBenchmarkService>();
+        var service =clientConnection.GetService<IBenchmarkService>();
         await service.Report(record);
 
         this.logger.TryGet()?.Log(record.ToString());

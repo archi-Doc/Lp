@@ -4,7 +4,7 @@ using Netsphere.Server;
 
 namespace Netsphere;
 
-public abstract class NetServiceBase
+/*public abstract class NetServiceBase
 {
     public NetServiceBase(ServerConnectionContext connectionContext)
     {
@@ -23,4 +23,4 @@ public abstract class NetServiceBase<TConnectionContext>
     }
 
     public TConnectionContext ConnectionContext { get; }
-}
+}*/

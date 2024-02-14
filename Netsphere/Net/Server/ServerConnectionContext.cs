@@ -15,7 +15,7 @@ public class ExampleConnectionContext : ServerConnectionContext
 
     public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
     {
-        return this.Connection.Agreement;
+        return this.ServerConnection.Agreement;
     }
 }
 
@@ -65,7 +65,7 @@ public class ServerConnectionContext
     {
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
-        this.Connection = serverConnection;
+        this.ServerConnection = serverConnection;
     }
 
     #region FieldAndProperty
@@ -74,7 +74,7 @@ public class ServerConnectionContext
 
     public NetTerminal NetTerminal { get; }
 
-    public ServerConnection Connection { get; }
+    public ServerConnection ServerConnection { get; }
 
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
@@ -82,7 +82,7 @@ public class ServerConnectionContext
     #endregion
 
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
-        => this.Connection.Agreement;
+        => this.ServerConnection.Agreement;
 
     /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
     {
@@ -98,7 +98,7 @@ public class ServerConnectionContext
             return;
         }
 
-        var transmissionContext = new TransmissionContext(this.Connection, receiveTransmission.TransmissionId, 1, dataId, default);
+        var transmissionContext = new TransmissionContext(this.ServerConnection, receiveTransmission.TransmissionId, 1, dataId, default);
         if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
         {
             transmissionContext.Return();
@@ -197,7 +197,7 @@ public class ServerConnectionContext
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                if (transmissionContext.Connection.IsClosedOrDisposed)
+                if (transmissionContext.ServerConnection.IsClosedOrDisposed)
                 {
                 }
                 else if (!transmissionContext.IsSent)
@@ -249,9 +249,9 @@ SendNoNetService:
         transmissionContext.Return();
 
         var response = this.RequestAgreement(t);
-        if (response != this.Connection.Agreement)
+        if (response != this.ServerConnection.Agreement)
         {
-            this.Connection.Agreement.Update(response);
+            this.ServerConnection.Agreement.Update(response);
         }
 
         transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);
