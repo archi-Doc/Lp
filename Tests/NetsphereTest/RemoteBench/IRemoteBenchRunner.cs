@@ -39,7 +39,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBi
         }
 
         var context = TransmissionContext.Current;
-        this.logger.TryGet()?.Log($"Benchmark {context.Connection.Node.ToString()}, Total/Concurrent: {total}/{concurrent}");
+        this.logger.TryGet()?.Log($"Benchmark {context.Connection.DestinationNode.ToString()}, Total/Concurrent: {total}/{concurrent}");
 
         var data = new byte[100];
         int successCount = 0;
@@ -58,7 +58,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler, IBi
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = await this.netTerminal.TryConnect(context.Connection.Node, Connection.ConnectMode.NoReuse))
+                    using (var t = await this.netTerminal.TryConnect(context.Connection.DestinationNode, Connection.ConnectMode.NoReuse))
                     {
                         if (t is null)
                         {

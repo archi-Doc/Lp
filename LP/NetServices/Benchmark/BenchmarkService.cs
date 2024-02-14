@@ -17,7 +17,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
 
     public async NetTask<NetResult> Register()
     {
-        this.remoteBenchBroker.Register(TransmissionContext.Current.Connection.Node);
+        this.remoteBenchBroker.Register(TransmissionContext.Current.Connection.DestinationNode);
         return NetResult.Success;
     }
 
@@ -28,7 +28,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
 
     public async NetTask Report(IBenchmarkService.ReportRecord record)
     {
-        this.remoteBenchBroker.Report(TransmissionContext.Current.Connection.Node, record);
+        this.remoteBenchBroker.Report(TransmissionContext.Current.Connection.DestinationNode, record);
     }
 
     public async NetTask<byte[]?> Pingpong(byte[] data)

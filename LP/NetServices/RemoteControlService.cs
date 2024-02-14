@@ -25,7 +25,7 @@ internal class RemoteControlServiceImpl : RemoteControlService
 
     public async NetTask Authenticate(AuthenticationToken token)
     {// NetTask<NetResult> is recommended.
-        if (TransmissionContext.Current.Connection.EndPoint.IsPrivateOrLocalLoopbackAddress() &&
+        if (TransmissionContext.Current.Connection.DestinationEndPoint.IsPrivateOrLocalLoopbackAddress() &&
             TransmissionContext.Current.Connection.ValidateAndVerify(token) &&
             token.PublicKey.Equals(this.control.LPBase.RemotePublicKey))
         {
@@ -44,7 +44,7 @@ internal class RemoteControlServiceImpl : RemoteControlService
             return NetResult.NotAuthorized;
         }
 
-        if (TransmissionContext.Current.Connection.EndPoint.IsPrivateOrLocalLoopbackAddress())
+        if (TransmissionContext.Current.Connection.DestinationEndPoint.IsPrivateOrLocalLoopbackAddress())
         {// Restart
             this.logger.TryGet()?.Log("RemoteControlService.Restart()");
 

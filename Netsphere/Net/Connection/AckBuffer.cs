@@ -44,7 +44,7 @@ internal partial class AckBuffer
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}");
+            this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}");
         }
 
         lock (this.syncObject)
@@ -74,7 +74,7 @@ internal partial class AckBuffer
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
+            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
         }
 
         lock (this.syncObject)
@@ -255,11 +255,11 @@ NewPacket:
         {
             if (NetConstants.LogLowLevelNet)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, SendAck");
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()}, SendAck");
             }
 
             connection.CreateAckPacket(owner, spanLength, out var packetLength);
-            netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
+            netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
             // owner = owner.Return(); // Moved
             owner = default;
         }

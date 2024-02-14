@@ -50,8 +50,8 @@ public abstract class Connection : IDisposable
         this.PacketTerminal = packetTerminal;
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
-        this.Node = node;
-        this.EndPoint = endPoint;
+        this.DestinationNode = node;
+        this.DestinationEndPoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
         this.minimumRtt = 0;
@@ -72,9 +72,9 @@ public abstract class Connection : IDisposable
     public string ConnectionIdText
         => ((ushort)this.ConnectionId).ToString("x4");
 
-    public NetNode Node { get; }
+    public NetNode DestinationNode { get; }
 
-    public NetEndPoint EndPoint { get; }
+    public NetEndPoint DestinationEndPoint { get; }
 
     public ulong Salt
         => this.embryo.Salt;
@@ -505,7 +505,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, default);
+        this.PacketTerminal.AddSendPacket(this.DestinationEndPoint.EndPoint, owner, default);
     }
 
     internal void SendCloseFrame()
@@ -918,7 +918,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -954,7 +954,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -982,7 +982,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -1035,7 +1035,7 @@ Wait:
             connectionString = "Client";
         }
 
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)

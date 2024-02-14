@@ -47,7 +47,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             if (await service.Register() == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Register: Success");
-
             }
             else
             {
@@ -55,8 +54,8 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 return;
             }
 
-            connection.RequestAgreement();
-            connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
+            // connection.RequestAgreement();
+            // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
         }
 
         while (true)

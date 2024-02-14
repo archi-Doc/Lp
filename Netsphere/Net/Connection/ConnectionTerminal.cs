@@ -165,7 +165,7 @@ public class ConnectionTerminal
         {// ConnectionStateCode
             newConnection.Goshujin = this.clientConnections;
             this.clientConnections.OpenListChain.AddLast(newConnection);
-            this.clientConnections.OpenEndPointChain.Add(newConnection.EndPoint, newConnection);
+            this.clientConnections.OpenEndPointChain.Add(newConnection.DestinationEndPoint, newConnection);
             newConnection.ResponseSystemMics = Mics.GetSystem();
         }
 
@@ -208,7 +208,7 @@ public class ConnectionTerminal
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
             this.serverConnections.OpenListChain.AddLast(connection);
-            this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
+            this.serverConnections.OpenEndPointChain.Add(connection.DestinationEndPoint, connection);
             connection.ResponseSystemMics = Mics.GetSystem();
         }
 
@@ -383,13 +383,13 @@ public class ConnectionTerminal
                     connection.ClosedSystemMics = 0;
 
                     this.serverConnections.OpenListChain.AddLast(connection);
-                    this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
+                    this.serverConnections.OpenEndPointChain.Add(connection.DestinationEndPoint, connection);
                     connection.ResponseSystemMics = Mics.GetSystem();
                 }
             }
 
             if (connection is not null &&
-                connection.EndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndPoint.EndPointEquals(endPoint))
             {
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
@@ -403,7 +403,7 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.EndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndPoint.EndPointEquals(endPoint))
             {
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
@@ -422,7 +422,7 @@ public class ConnectionTerminal
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
 
-        g.ClosedEndPointChain.Add(connection.EndPoint, connection);
+        g.ClosedEndPointChain.Add(connection.DestinationEndPoint, connection);
         g.ClosedListChain.AddLast(connection);
         connection.ClosedSystemMics = Mics.GetSystem();
     }
@@ -434,7 +434,7 @@ public class ConnectionTerminal
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
 
-        g.ClosedEndPointChain.Add(connection.EndPoint, connection);
+        g.ClosedEndPointChain.Add(connection.DestinationEndPoint, connection);
         g.ClosedListChain.AddLast(connection);
         connection.ClosedSystemMics = Mics.GetSystem();
     }
