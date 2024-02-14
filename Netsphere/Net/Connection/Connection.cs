@@ -63,6 +63,8 @@ public abstract class Connection : IDisposable
 
     public NetBase NetBase { get; }
 
+    public NetTerminal NetTerminal => this.ConnectionTerminal.NetTerminal;
+
     internal ConnectionTerminal ConnectionTerminal { get; }
 
     internal PacketTerminal PacketTerminal { get; }
