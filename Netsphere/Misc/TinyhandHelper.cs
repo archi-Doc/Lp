@@ -23,12 +23,6 @@ public static class TinyhandHelper
         return Base64.Url.FromByteArrayToString(TinyhandSerializer.SerializeObject(value));
     }
 
-    public static string ToBase64Token<T>(this T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        return "{" + Base64.Url.FromByteArrayToString(TinyhandSerializer.SerializeObject(value)) + "}";
-    }
-
     public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {

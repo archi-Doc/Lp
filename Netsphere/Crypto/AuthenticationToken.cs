@@ -1,13 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using Netsphere.Misc;
+
 namespace Netsphere.Crypto;
 
 /// <summary>
 /// Represents an authentication token.
 /// </summary>
 [TinyhandObject]
-public partial class AuthenticationToken : ISignAndVerify, IEquatable<AuthenticationToken>
+public partial class AuthenticationToken : ISignAndVerify, IEquatable<AuthenticationToken>, IStringConvertible<AuthenticationToken>
 {
+    private const char Identifier = 'A';
+
+    /*static AuthenticationToken()
+    {
+        var maxLength = SignaturePublicKey.MaxStringLength + Base64.Url.GetEncodedLength(KeyHelper.SignatureLength + 8 + 4); // 146
+    }*/
+
     public AuthenticationToken()
     {
     }
@@ -16,6 +26,8 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
     {
         this.Salt = salt;
     }
+
+    public static int MaxStringLength => 256;
 
     #region FieldAndProperty
 
@@ -32,6 +44,9 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
     public ulong Salt { get; protected set; }
 
     #endregion
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out AuthenticationToken instance)
+        => TokenHelper.TryParse(Identifier, source, out instance);
 
     public bool Validate()
     {
@@ -61,5 +76,11 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
     }
 
     public override string ToString()
-        => this.ToBase64Token();
+        => TokenHelper.ToBase64(this, Identifier);
+
+    public int GetStringLength()
+        => throw new NotImplementedException();
+
+    public bool TryFormat(Span<char> destination, out int written)
+        => TokenHelper.TryFormat(this, Identifier, destination, out written);
 }

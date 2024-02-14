@@ -28,7 +28,13 @@ public class CreateTokenSubcommand : ISimpleCommandAsync<CreateCreditOptions>
 
         var token = new AuthenticationToken();
         authority.SignToken(token);
-        this.consoleService.WriteLine(token.ToString());
+        var st = token.ToString();
+        this.consoleService.WriteLine(st);
+
+        if (AuthenticationToken.TryParse(st, out var token2))
+        {
+            this.consoleService.WriteLine($"{token.Equals(token2)}: {token2.ToString()}");
+        }
     }
 
     private readonly IConsoleService consoleService;
