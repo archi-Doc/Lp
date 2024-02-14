@@ -9,22 +9,12 @@ namespace Netsphere.Crypto;
 /// Represents an authentication token.
 /// </summary>
 [TinyhandObject]
-public partial class AuthenticationToken : ISignAndVerify, IEquatable<AuthenticationToken>, IStringConvertible<AuthenticationToken>
+public sealed partial class NetRequestToken : ISignAndVerify, IEquatable<NetRequestToken>, IStringConvertible<NetRequestToken>
 {
-    private const char Identifier = 'A';
+    private const char Identifier = 'N';
 
-    /*static AuthenticationToken()
+    public NetRequestToken()
     {
-        var maxLength = SignaturePublicKey.MaxStringLength + Base64.Url.GetEncodedLength(KeyHelper.SignatureLength + 8 + 4); // 146
-    }*/
-
-    public AuthenticationToken()
-    {
-    }
-
-    public AuthenticationToken(ulong salt)
-    {
-        this.Salt = salt;
     }
 
     public static int MaxStringLength => 256;
@@ -32,29 +22,29 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
     #region FieldAndProperty
 
     [Key(0)]
+    public char TokenIdentifier { get; private set; } = Identifier;
+
+    [Key(1)]
     public SignaturePublicKey PublicKey { get; set; }
 
-    [Key(1, Level = 1)]
+    [Key(2, Level = 1)]
     public byte[] Signature { get; set; } = Array.Empty<byte>();
 
-    [Key(2)]
-    public long SignedMics { get; set; }
-
     [Key(3)]
-    public ulong Salt { get; protected set; }
+    public long SignedMics { get; set; }
 
     #endregion
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out AuthenticationToken instance)
-        => TokenHelper.TryParse(Identifier, source, out instance);
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetRequestToken token)
+        => TokenHelper.TryParse(Identifier, source, out token);
 
     public bool Validate()
     {
-        if (this.SignedMics == 0)
+        if (this.TokenIdentifier != Identifier)
         {
             return false;
         }
-        else if (this.Salt == 0)
+        else if (this.SignedMics == 0)
         {
             return false;
         }
@@ -62,7 +52,7 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
         return true;
     }
 
-    public bool Equals(AuthenticationToken? other)
+    public bool Equals(NetRequestToken? other)
     {
         if (other == null)
         {
@@ -71,8 +61,7 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
 
         return this.PublicKey.Equals(other.PublicKey) &&
             this.Signature.SequenceEqual(other.Signature) &&
-            this.SignedMics == other.SignedMics &&
-            this.Salt == other.Salt;
+            this.SignedMics == other.SignedMics;
     }
 
     public override string ToString()

@@ -12,6 +12,7 @@ internal static class TokenHelper
         where T : ITinyhandSerialize<T>
     {
         instance = default;
+        source = source.Trim();
         if (source.Length < 3)
         {
             return false;

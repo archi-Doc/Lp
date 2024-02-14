@@ -6,17 +6,17 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("create-token")]
-public class CreateTokenSubcommand : ISimpleCommandAsync<CreateCreditOptions>
+[SimpleCommand("new-token")]
+public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
 {
-    public CreateTokenSubcommand(IConsoleService consoleService, ILogger<CreateTokenSubcommand> logger, AuthorityVault authorityVault)
+    public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityVault authorityVault)
     {
         this.consoleService = consoleService;
         this.logger = logger;
         this.authorityVault = authorityVault;
     }
 
-    public async Task RunAsync(CreateCreditOptions options, string[] args)
+    public async Task RunAsync(NewTokenOptions options, string[] args)
     {
         // Authority key
         var authority = await this.authorityVault.GetAuthority(options.AuthorityName);
@@ -26,12 +26,12 @@ public class CreateTokenSubcommand : ISimpleCommandAsync<CreateCreditOptions>
             return;
         }
 
-        var token = new AuthenticationToken();
+        var token = new NetRequestToken();
         authority.SignToken(token);
         var st = token.ToString();
         this.consoleService.WriteLine(st);
 
-        if (AuthenticationToken.TryParse(st, out var token2))
+        if (NetRequestToken.TryParse(st, out var token2))
         {
             this.consoleService.WriteLine($"{token.Equals(token2)}: {token2.ToString()}");
         }
@@ -42,7 +42,7 @@ public class CreateTokenSubcommand : ISimpleCommandAsync<CreateCreditOptions>
     private readonly AuthorityVault authorityVault;
 }
 
-public record CreateTokenOptions
+public record NewTokenOptions
 {
     [SimpleOption("authority", Description = "Authority name", Required = true)]
     public string AuthorityName { get; init; } = string.Empty;

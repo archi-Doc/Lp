@@ -40,9 +40,9 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
         this.logger.TryGet()?.Log(nodeKey.ToPublicKey().ToString());
     }
 
-    private ILogger<NodeKeySubcommandNew> logger;
-    private IUserInterfaceService userInterfaceService;
-    private Seedphrase seedPhrase;
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly Seedphrase seedPhrase;
 }
 
 public record NodeKeySubcommandNewOptions
