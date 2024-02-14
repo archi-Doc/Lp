@@ -39,7 +39,8 @@ public sealed partial class Authority
         proof.SignProof<T>(privateKey, proofMics);
     }
 
-    public void SignToken(AuthenticationToken token)
+    public void SignToken<T>(T token)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
     {
         var privateKey = this.GetOrCreatePrivateKey();
         Netsphere.TinyhandHelper.Sign(token, privateKey);

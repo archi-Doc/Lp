@@ -59,4 +59,7 @@ public partial class AuthenticationToken : ISignAndVerify, IEquatable<Authentica
             this.SignedMics == other.SignedMics &&
             this.Salt == other.Salt;
     }
+
+    public override string ToString()
+        => this.ToBase64Token();
 }
