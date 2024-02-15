@@ -56,7 +56,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
             // connection.RequestAgreement();
             // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
-            connection.SendAndReceive
+            // connection.InvokeBidirectional(0);
         }
 
         while (true)

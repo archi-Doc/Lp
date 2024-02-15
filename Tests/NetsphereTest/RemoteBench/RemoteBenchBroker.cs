@@ -101,7 +101,7 @@ public class RemoteBenchBroker
             totalCount = 1;
         }
 
-        var record = new IBenchmarkService.ReportRecord()
+        var record = new RemoteBenchRecord()
         {
             SuccessCount = successCount,
             FailureCount = failureCount,

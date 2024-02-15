@@ -72,14 +72,14 @@ internal class RemoteBenchBroker
         }
     }
 
-    public void Report(NetNode? node, IBenchmarkService.ReportRecord record)
+    public void Report(NetNode? node, RemoteBenchRecord record)
     {
         if (node == null)
         {
             return;
         }
 
-        IBenchmarkService.ReportRecord[] records;
+        RemoteBenchRecord[] records;
         lock (this.syncObject)
         {
             this.nodes[node] = record;
@@ -89,7 +89,7 @@ internal class RemoteBenchBroker
                 return;
             }
 
-            records = this.nodes.Values.ToArray() as IBenchmarkService.ReportRecord[];
+            records = this.nodes.Values.ToArray() as RemoteBenchRecord[];
         }
 
         long successCount = 0;
@@ -126,5 +126,5 @@ internal class RemoteBenchBroker
     private NetTerminal terminal;
 
     private object syncObject = new();
-    private Dictionary<NetNode, IBenchmarkService.ReportRecord?> nodes = new();
+    private Dictionary<NetNode, RemoteBenchRecord?> nodes = new();
 }

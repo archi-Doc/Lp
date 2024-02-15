@@ -14,5 +14,5 @@ public interface IBlock
     /// <summary>
     /// Gets an identifier of the block.
     /// </summary>
-    public uint BlockId { get; }
+    uint BlockId { get; }
 }

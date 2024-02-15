@@ -26,7 +26,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
         return NetResult.NoNetService;
     }
 
-    public async NetTask Report(IBenchmarkService.ReportRecord record)
+    public async NetTask Report(RemoteBenchRecord record)
     {
         this.remoteBenchBroker.Report(TransmissionContext.Current.ServerConnection.DestinationNode, record);
     }

@@ -28,7 +28,7 @@ public sealed class TransmissionContext
 
     public uint TransmissionId { get; }
 
-    public uint DataKind { get; }
+    public uint DataKind { get; } // 0:Block, 1:RPC, 2:Control
 
     public ulong DataId { get; }
 

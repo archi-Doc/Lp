@@ -99,7 +99,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             totalCount = 1;
         }
 
-        var record = new IBenchmarkService.ReportRecord()
+        var record = new RemoteBenchRecord()
         {
             SuccessCount = successCount,
             FailureCount = failureCount,
