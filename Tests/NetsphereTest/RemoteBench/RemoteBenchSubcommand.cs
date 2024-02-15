@@ -56,7 +56,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
             // connection.RequestAgreement();
             // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
-            // connection.InvokeBidirectional(0);
+            connection.InvokeBidirectional(Tinyhand.TinyhandHelper.GetFullNameId<IBenchmarkService>());
         }
 
         while (true)

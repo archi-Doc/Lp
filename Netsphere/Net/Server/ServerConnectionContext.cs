@@ -84,10 +84,17 @@ public class ServerConnectionContext
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
         => this.ServerConnection.Agreement;
 
-    /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    public virtual bool InvokeBidirectional(ulong dataId)
     {
+        if (dataId == 1)
+        {
+            this.ServerConnection.PrepareBidirectional();
+            _ = Task.Run(() => { });
+            return true;
+        }
+
         return false;
-    }*/
+    }
 
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {

@@ -57,6 +57,12 @@ public abstract class Connection : IDisposable
         this.minimumRtt = 0;
     }
 
+    public Connection(Connection connection)
+        : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndPoint)
+    {
+        this.Initialize(connection.Agreement, connection.embryo);
+    }
+
     #region FieldAndProperty
 
     public CancellationToken CancellationToken => this.NetBase.CancellationToken;

@@ -20,6 +20,12 @@ public sealed partial class ClientConnection : Connection
         this.context = this.NetBase.NewClientConnectionContext(this);
     }
 
+    internal ClientConnection(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+        this.context = this.NetBase.NewClientConnectionContext(this);
+    }
+
     #region FieldAndProperty
 
     public override ConnectionState State

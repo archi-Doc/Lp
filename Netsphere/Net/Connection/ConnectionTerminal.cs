@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
@@ -170,6 +171,28 @@ public class ConnectionTerminal
         }
 
         return newConnection;
+    }
+
+    internal void PrepareBidirectional(ServerConnection serverConnection)
+    {
+        lock (this.clientConnections.SyncObject)
+        {
+            if (this.clientConnections.ConnectionIdChain.TryGetValue(serverConnection.ConnectionId, out var connection))
+            {
+                // ConnectionStateCode
+                this.clientConnections.ClosedListChain.Remove(connection);//
+                this.clientConnections.ClosedEndPointChain.Remove(connection);
+                connection.ClosedSystemMics = 0;
+            }
+            else
+            {
+                connection = new ClientConnection(serverConnection);
+            }
+
+            this.clientConnections.OpenListChain.AddLast(connection);
+            this.clientConnections.OpenEndPointChain.Add(serverConnection.DestinationEndPoint, connection);
+            connection.ResponseSystemMics = Mics.GetSystem();
+        }
     }
 
     internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)

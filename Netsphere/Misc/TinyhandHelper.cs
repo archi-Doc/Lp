@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
+using Netsphere.Block;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 

@@ -19,6 +19,12 @@ public sealed partial class ServerConnection : Connection
         this.context = this.NetBase.NewServerConnectionContext(this);
     }
 
+    internal ServerConnection(ClientConnection clientConnection)
+        : base(clientConnection)
+    {
+        this.context = this.NetBase.NewServerConnectionContext(this);
+    }
+
     #region FieldAndProperty
 
     public override ConnectionState State
@@ -54,4 +60,7 @@ public sealed partial class ServerConnection : Connection
     public TContext GetContext<TContext>()
         where TContext : ServerConnectionContext
         => (TContext)this.context;
+
+    public void PrepareBidirectional()
+        => this.ConnectionTerminal.PrepareBidirectional(this);
 }
