@@ -96,7 +96,7 @@ public sealed class TransmissionContext
             return NetResult.InvalidOperation;
         }
 
-        if (!BlockService.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }

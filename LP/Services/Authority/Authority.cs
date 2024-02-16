@@ -44,7 +44,7 @@ public sealed partial class Authority
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {
         var privateKey = this.GetOrCreatePrivateKey();
-        Netsphere.TinyhandHelper.Sign(token, privateKey);
+        NetHelper.Sign(token, privateKey);
     }
 
     /*public void SignToken(Credit credit, Token token)

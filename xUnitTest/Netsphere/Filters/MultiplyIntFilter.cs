@@ -12,7 +12,7 @@ public class MultiplyIntFilter : IServiceFilter
     {
         if (TinyhandSerializer.TryDeserialize<int>(context.Owner.Memory.Span, out var value))
         {
-            if (Netsphere.Block.BlockService.TrySerialize(value * this.multiplier, out var owner))
+            if (NetHelper.TrySerialize(value * this.multiplier, out var owner))
             {
                 context.Owner.Return();
                 context.Owner = owner;

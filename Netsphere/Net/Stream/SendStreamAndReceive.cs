@@ -54,7 +54,7 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
                 }
             }
 
-            if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+            if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
             {
                 response.Return();
                 return new(NetResult.DeserializationError);

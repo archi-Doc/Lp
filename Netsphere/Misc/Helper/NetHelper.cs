@@ -1,10 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Packet;
 using Tinyhand.IO;
+
+#pragma warning disable SA1202
 
 namespace Netsphere;
 
@@ -18,6 +21,47 @@ public static class NetHelper
 
     private static ArrayPool<byte> arrayPool { get; } = ArrayPool<byte>.Create(BufferLength, BufferMax);
 
+    private static byte[] RentBuffer()
+        => arrayPool.Rent(BufferLength);
+
+    private static void ReturnBuffer(byte[] buffer)
+        => arrayPool.Return(buffer);
+
+    public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
+    {
+        var buffer = RentBuffer();
+        try
+        {
+            var writer = new TinyhandWriter(buffer);
+            TinyhandSerializer.Serialize(ref writer, value, TinyhandSerializerOptions.Standard);
+
+            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+            if (isInitialBuffer)
+            {
+                owner = new ByteArrayPool.MemoryOwner(buffer, 0, arrayLength);
+                return true;
+            }
+            else
+            {
+                ReturnBuffer(buffer);
+                owner = new ByteArrayPool.MemoryOwner(array);
+                return true;
+            }
+        }
+        catch
+        {
+            ReturnBuffer(buffer);
+            owner = default;
+            return false;
+        }
+    }
+
+    public static bool TryDeserialize<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value)
+        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
+
+    public static bool TryDeserialize<T>(ByteArrayPool.ReadOnlyMemoryOwner owner, [MaybeNullWhen(false)] out T value)
+        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
+
     public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {
@@ -27,7 +71,7 @@ public static class NetHelper
             return false;
         }
 
-        var buffer = arrayPool.Rent(BufferLength);
+        var buffer = RentBuffer();
         var writer = new TinyhandWriter(buffer) { Level = 0, };
         try
         {
@@ -50,7 +94,7 @@ public static class NetHelper
         finally
         {
             writer.Dispose();
-            arrayPool.Return(buffer);
+            ReturnBuffer(buffer);
         }
     }
 
@@ -68,7 +112,7 @@ public static class NetHelper
             return false;
         }
 
-        var buffer = arrayPool.Rent(BufferLength);
+        var buffer = RentBuffer();
         var writer = new TinyhandWriter(buffer) { Level = 0, };
         try
         {
@@ -79,7 +123,7 @@ public static class NetHelper
         finally
         {
             writer.Dispose();
-            arrayPool.Return(buffer);
+            ReturnBuffer(buffer);
         }
     }
 

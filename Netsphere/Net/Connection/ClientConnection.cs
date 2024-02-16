@@ -79,7 +79,7 @@ public sealed partial class ClientConnection : Connection
             return NetResult.Canceled;
         }
 
-        if (!BlockService.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }
@@ -130,7 +130,7 @@ public sealed partial class ClientConnection : Connection
         }
 
         dataId = dataId != 0 ? dataId : NetHelper.GetDataId<TSend, TReceive>();
-        if (!BlockService.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var owner))
         {
             return new(NetResult.SerializationError);
         }
@@ -179,7 +179,7 @@ public sealed partial class ClientConnection : Connection
             }
         }
 
-        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
         {
             response.Return();
             return new(NetResult.DeserializationError);
@@ -387,7 +387,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!NetHelper.TrySerialize(packet, out var owner))
         {
             return (NetResult.SerializationError, default);
         }
