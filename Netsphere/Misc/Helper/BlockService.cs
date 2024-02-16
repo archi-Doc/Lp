@@ -8,15 +8,13 @@ public static class BlockService
 {
     public const int StandardBlockSize = 32 * 1024; // 32KB
 
-    public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
-
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {
         var arrayOwner = ByteArrayPool.Default.Rent(StandardBlockSize);
         try
         {
             var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
-            TinyhandSerializer.Serialize(ref writer, value, SerializerOptions);
+            TinyhandSerializer.Serialize(ref writer, value, TinyhandSerializerOptions.Standard);
 
             writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
             if (isInitialBuffer)
@@ -40,8 +38,8 @@ public static class BlockService
     }
 
     public static bool TryDeserialize<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value)
-        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, SerializerOptions);
+        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
     public static bool TryDeserialize<T>(ByteArrayPool.ReadOnlyMemoryOwner owner, [MaybeNullWhen(false)] out T value)
-        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, SerializerOptions);
+        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 }

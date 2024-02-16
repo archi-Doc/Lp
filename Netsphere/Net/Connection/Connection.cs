@@ -253,7 +253,7 @@ public abstract class Connection : IDisposable
             return false;
         }
 
-        return TinyhandHelper.ValidateAndVerify(token);
+        return NetHelper.ValidateAndVerify(token);
     }
 
     public void Close()
