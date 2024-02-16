@@ -7,7 +7,7 @@ using Netsphere.Server;
 namespace Netsphere.Block;
 
 [TinyhandObject]
-public partial record ConnectionAgreementBlock : IBlock
+public partial record ConnectionAgreementBlock
 {
     public static readonly ConnectionAgreementBlock Default = new();
     internal const ulong DataId = 0x54074a0294a59b25;
@@ -24,8 +24,6 @@ public partial record ConnectionAgreementBlock : IBlock
         this.StreamBufferSize = options.StreamBufferSize;
         this.AllowBidirectionalConnection = options.AllowBidirectionalConnection;
     }
-
-    public uint BlockId => 0x95843fb5;
 
     [Key(0)]
     public uint MaxTransmissions { get; set; }

@@ -3,7 +3,7 @@
 namespace Netsphere.Block;
 
 [TinyhandObject]
-public partial class TestBlock : IBlock, IEquatable<TestBlock>
+public partial class TestBlock : IEquatable<TestBlock>
 {
     public const int DataMax = 4_000_000;
 
@@ -31,8 +31,6 @@ public partial class TestBlock : IBlock, IEquatable<TestBlock>
 
     [Key(2)]
     public byte[] Data { get; set; } = Array.Empty<byte>();
-
-    public uint BlockId => 0xd75af226;
 
     public override string ToString()
         => $"TestBlock: {this.N}, {this.Message}, Size:{this.Data.Length}, Hash:{Arc.Crypto.FarmHash.Hash64(this.Data).To4Hex()}";

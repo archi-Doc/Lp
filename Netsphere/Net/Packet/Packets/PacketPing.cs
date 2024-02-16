@@ -5,13 +5,11 @@ using Netsphere.Block;
 namespace Netsphere.Packet;
 
 [TinyhandObject]
-public sealed partial class PacketPing : IPacket, IBlock
+public sealed partial class PacketPing : IPacket
 {
     public const int MaxMessageLength = 32;
 
     public static PacketType PacketType => PacketType.Ping;
-
-    public uint BlockId => (uint)PacketType;
 
     public PacketPing()
     {
@@ -30,11 +28,9 @@ public sealed partial class PacketPing : IPacket, IBlock
 }
 
 [TinyhandObject]
-public sealed partial class PacketPingResponse : IPacket, IBlock
+public sealed partial class PacketPingResponse : IPacket
 {
     public static PacketType PacketType => PacketType.PingResponse;
-
-    public uint BlockId => (uint)PacketType;
 
     public PacketPingResponse()
     {
