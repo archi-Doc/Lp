@@ -458,4 +458,15 @@ public sealed partial class ClientConnection : Connection
 
         return result.Result;
     }
+
+    /*public async Task<NetResult> InvokeBidirectional(ulong dataId)
+    {
+        if (!this.Agreement.AllowBidirectionalConnection)
+        {
+            return NetResult.NotAuthorized;
+        }
+
+        var r = await this.RpcSendAndReceive(ByteArrayPool.MemoryOwner.Empty, dataId).ConfigureAwait(false);
+        return r.Result;
+    }*/
 }

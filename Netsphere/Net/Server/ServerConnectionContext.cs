@@ -21,6 +21,8 @@ public class ExampleConnectionContext : ServerConnectionContext
 
 public class ServerConnectionContext
 {
+    #region Service
+
     public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
 
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
@@ -68,6 +70,8 @@ public class ServerConnectionContext
         this.ServerConnection = serverConnection;
     }
 
+    #endregion
+
     #region FieldAndProperty
 
     public IServiceProvider? ServiceProvider { get; }
@@ -84,7 +88,7 @@ public class ServerConnectionContext
     public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
         => this.ServerConnection.Agreement;
 
-    public virtual bool InvokeBidirectional(ulong dataId)
+    /*public virtual bool InvokeBidirectional(ulong dataId)
     {
         if (dataId == 1)
         {
@@ -94,7 +98,7 @@ public class ServerConnectionContext
         }
 
         return false;
-    }
+    }*/
 
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -129,7 +133,8 @@ public class ServerConnectionContext
                         {
                             transmissionContext.ForceSendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.Closed);
                         }
-                        else */if (result == NetResult.Success)
+                        else */
+                        if (result == NetResult.Success)
                         {// Success
                             transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
                         }
@@ -181,6 +186,23 @@ public class ServerConnectionContext
             Task.Run(() => this.InvokeRPC(transmissionContext));
             return;
         }
+
+        /*else if (transmissionContext.DataKind == 2)
+        {// Bidirectional
+            NetResult result;
+            if (this.InvokeBidirectional(transmissionContext.DataId))
+            {// Accepted
+                result = NetResult.Success;
+            }
+            else
+            {// Rejected
+                result = NetResult.NotAuthorized;
+            }
+
+            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+            transmissionContext.Return();
+            return;
+        }*/
 
         /*if (!this.InvokeCustom(transmissionContext))
         {

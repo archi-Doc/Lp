@@ -173,7 +173,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal void PrepareBidirectional(ServerConnection serverConnection)
+    internal ClientConnection PrepareBidirectional(ServerConnection serverConnection)
     {
         lock (this.clientConnections.SyncObject)
         {
@@ -192,6 +192,7 @@ public class ConnectionTerminal
             this.clientConnections.OpenListChain.AddLast(connection);
             this.clientConnections.OpenEndPointChain.Add(serverConnection.DestinationEndPoint, connection);
             connection.ResponseSystemMics = Mics.GetSystem();
+            return connection;
         }
     }
 

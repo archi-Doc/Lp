@@ -61,6 +61,6 @@ public sealed partial class ServerConnection : Connection
         where TContext : ServerConnectionContext
         => (TContext)this.context;
 
-    public void PrepareBidirectional()
+    public ClientConnection PrepareBidirectional()
         => this.ConnectionTerminal.PrepareBidirectional(this);
 }
