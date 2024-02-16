@@ -26,12 +26,12 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
             return;
         }
 
-        var token = new NetRequestToken();
+        var token = new RequirementToken();
         authority.SignToken(token);
         var st = token.ToString();
         this.consoleService.WriteLine(st);
 
-        if (NetRequestToken.TryParse(st, out var token2))
+        if (RequirementToken.TryParse(st, out var token2))
         {
             this.consoleService.WriteLine($"{token.Equals(token2)}: {token2.ToString()}");
         }
