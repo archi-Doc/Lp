@@ -24,6 +24,7 @@ public sealed partial class ClientConnection : Connection
         : base(serverConnection)
     {
         this.context = this.NetBase.NewClientConnectionContext(this);
+        this.BidirectionalConnection = serverConnection;
     }
 
     #region FieldAndProperty
@@ -50,6 +51,8 @@ public sealed partial class ClientConnection : Connection
     public override bool IsClient => true;
 
     public override bool IsServer => false;
+
+    public ServerConnection? BidirectionalConnection { get; private set; }
 
     private ClientConnectionContext context;
 
@@ -320,7 +323,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (!this.Agreement.CheckStreamLength(maxLength))
+        if (!this.Requirements.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -354,7 +357,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled, default);
         }
 
-        if (!this.Agreement.CheckStreamLength(maxLength))
+        if (!this.Requirements.CheckStreamLength(maxLength))
         {
             return new(NetResult.StreamLengthLimit, default);
         }
@@ -453,7 +456,7 @@ public sealed partial class ClientConnection : Connection
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {
-            this.Agreement.Accept(result.Value);
+            this.Requirements.Accept(result.Value);
         }
 
         return result.Result;

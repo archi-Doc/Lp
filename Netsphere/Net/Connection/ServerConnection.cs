@@ -23,6 +23,7 @@ public sealed partial class ServerConnection : Connection
         : base(clientConnection)
     {
         this.context = this.NetBase.NewServerConnectionContext(this);
+        this.BidirectionalConnection = clientConnection;
     }
 
     #region FieldAndProperty
@@ -50,6 +51,8 @@ public sealed partial class ServerConnection : Connection
 
     public override bool IsServer => true;
 
+    public ClientConnection? BidirectionalConnection { get; private set; }
+
     private ServerConnectionContext context;
 
     #endregion
@@ -62,5 +65,12 @@ public sealed partial class ServerConnection : Connection
         => (TContext)this.context;
 
     public ClientConnection PrepareBidirectional()
-        => this.ConnectionTerminal.PrepareBidirectional(this);
+    {
+        if (this.BidirectionalConnection is null)
+        {
+            this.BidirectionalConnection = this.ConnectionTerminal.PrepareBidirectional(this);
+        }
+
+        return this.BidirectionalConnection;
+    }
 }

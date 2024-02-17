@@ -242,7 +242,7 @@ internal sealed partial class SendTransmission : IDisposable
             }
             else
             {// Multiple genes
-                if (info.NumberOfGenes > this.Connection.Agreement.MaxBlockGenes)
+                if (info.NumberOfGenes > this.Connection.Requirements.MaxBlockGenes)
                 {
                     return NetResult.BlockSizeLimit;
                 }
@@ -301,7 +301,7 @@ internal sealed partial class SendTransmission : IDisposable
             this.genes = new();
 
             var info = NetHelper.CalculateGene(maxLength);
-            var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
+            var bufferGenes = Math.Min(this.Connection.Requirements.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
             this.genes.GeneSerialListChain.Resize(bufferGenes);
             this.MaxReceivePosition = bufferGenes;
         }

@@ -55,7 +55,7 @@ public class CustomConnectionContext : ServerConnectionContext
 
     public override ConnectionRequirements RequestAgreement(ConnectionRequirements agreement)
     {// Accept the request
-        agreement.Accept(this.ServerConnection.Agreement);
+        agreement.Accept(this.ServerConnection.Requirements);
         return agreement;
     }
 }

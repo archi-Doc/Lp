@@ -15,7 +15,7 @@ public class ExampleConnectionContext : ServerConnectionContext
 
     public override ConnectionRequirements RequestAgreement(ConnectionRequirements agreement)
     {
-        return this.ServerConnection.Agreement;
+        return this.ServerConnection.Requirements;
     }
 }
 
@@ -86,7 +86,7 @@ public class ServerConnectionContext
     #endregion
 
     public virtual ConnectionRequirements RequestAgreement(ConnectionRequirements agreement)
-        => this.ServerConnection.Agreement;
+        => this.ServerConnection.Requirements;
 
     /*public virtual bool InvokeBidirectional(ulong dataId)
     {
@@ -278,9 +278,9 @@ SendNoNetService:
         transmissionContext.Return();
 
         var response = this.RequestAgreement(t);
-        if (response != this.ServerConnection.Agreement)
+        if (response != this.ServerConnection.Requirements)
         {
-            this.ServerConnection.Agreement.Accept(response);
+            this.ServerConnection.Requirements.Accept(response);
         }
 
         transmissionContext.SendAndForget(response, ConnectionRequirements.DataId);

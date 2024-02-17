@@ -120,7 +120,7 @@ public sealed class TransmissionContext
         {
             return (NetResult.Canceled, default);
         }
-        else if (!this.ServerConnection.Agreement.CheckStreamLength(maxLength))
+        else if (!this.ServerConnection.Requirements.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -173,7 +173,7 @@ public sealed class TransmissionContext
         {
             return false;
         }
-        else if (!this.ServerConnection.Agreement.CheckStreamLength(maxLength))
+        else if (!this.ServerConnection.Requirements.CheckStreamLength(maxLength))
         {
             return false;
         }
