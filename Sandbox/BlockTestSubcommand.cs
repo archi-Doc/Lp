@@ -45,8 +45,8 @@ public class BlockTestSubcommand : ISimpleCommandAsync
         {
             if (connection is not null)
             {
-                var testBlock = TestBlock.Create(4_000_000); // 100_000
-                var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
+                var testBlock = NetTestBlock.Create(4_000_000); // 100_000
+                var r = await connection.SendAndReceive<NetTestBlock, NetTestBlock>(testBlock);
                 if (r.IsSuccess)
                 {
                     await Console.Out.WriteLineAsync(testBlock.Equals(r.Value).ToString());

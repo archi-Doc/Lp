@@ -9,14 +9,21 @@ namespace Netsphere;
 public sealed partial class ServerConnection : Connection
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint")]
-    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
+    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "DestinationEndPoint")]
+    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "DestinationEndPoint")]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
     internal ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
         this.context = this.NetBase.NewServerConnectionContext(this);
+    }
+
+    internal ServerConnection(ClientConnection clientConnection)
+        : base(clientConnection)
+    {
+        this.context = this.NetBase.NewServerConnectionContext(this);
+        this.BidirectionalConnection = clientConnection;
     }
 
     #region FieldAndProperty
@@ -44,6 +51,8 @@ public sealed partial class ServerConnection : Connection
 
     public override bool IsServer => true;
 
+    public ClientConnection? BidirectionalConnection { get; private set; }
+
     private ServerConnectionContext context;
 
     #endregion
@@ -54,4 +63,14 @@ public sealed partial class ServerConnection : Connection
     public TContext GetContext<TContext>()
         where TContext : ServerConnectionContext
         => (TContext)this.context;
+
+    public ClientConnection PrepareBidirectional()
+    {
+        if (this.BidirectionalConnection is null)
+        {
+            this.BidirectionalConnection = this.ConnectionTerminal.PrepareBidirectional(this);
+        }
+
+        return this.BidirectionalConnection;
+    }
 }

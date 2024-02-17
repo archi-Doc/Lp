@@ -113,7 +113,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
         sw.Stop();
 
-        var record = new IBenchmarkService.ReportRecord()
+        var record = new RemoteBenchRecord()
         {
             SuccessCount = successCount,
             FailureCount = failureCount,

@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
-
 namespace Netsphere.Server;
 
 public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 {
-    public virtual ulong DataId => BlockService.GetId<TSend, TReceive>();
+    public ulong DataId
+        => NetHelper.GetDataId<TSend, TReceive>();
 
     public virtual TReceive? RespondAsync(TSend value) => default;
 

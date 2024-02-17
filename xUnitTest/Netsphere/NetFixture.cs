@@ -30,7 +30,7 @@ public class NetFixture : IDisposable
                 context.AddSingleton<NullFilter>();
             });
 
-        var options = new NetsphereOptions();
+        var options = new NetOptions();
         options.EnableAlternative = true;
         options.NodeName = "Test";
 

@@ -55,7 +55,7 @@ public class Program
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
             })
-            .SetupOptions<NetsphereOptions>((context, options) =>
+            .SetupOptions<NetOptions>((context, options) =>
             {// NetsphereOptions
                 options.NodeName = "test";
                 options.EnableEssential = true;
@@ -65,7 +65,7 @@ public class Program
 
         // Netsphere
         var unit = builder.Build();
-        var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
+        var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
         await unit.Run(options, true);
 

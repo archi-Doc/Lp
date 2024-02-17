@@ -15,14 +15,14 @@ public class AuthoritySubcommandInfo : ISimpleCommandAsync<AuthoritySubcommandNa
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var authority = await this.Control.AuthorityVault.GetAuthority(option.Name);
+        var authority = await this.Control.AuthorityVault.GetAuthority(option.AuthorityName);
         if (authority != null)
         {
-            this.logger.TryGet()?.Log($"{option.Name}: {authority.ToString()}");
+            this.logger.TryGet()?.Log($"{option.AuthorityName}: {authority.ToString()}");
         }
         else
         {
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotAvailable, option.Name);
+            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotAvailable, option.AuthorityName);
         }
     }
 

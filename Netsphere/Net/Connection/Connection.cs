@@ -50,11 +50,17 @@ public abstract class Connection : IDisposable
         this.PacketTerminal = packetTerminal;
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
-        this.Node = node;
-        this.EndPoint = endPoint;
+        this.DestinationNode = node;
+        this.DestinationEndPoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
         this.minimumRtt = 0;
+    }
+
+    public Connection(Connection connection)
+        : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndPoint)
+    {
+        this.Initialize(connection.Requirements, connection.embryo);
     }
 
     #region FieldAndProperty
@@ -62,6 +68,8 @@ public abstract class Connection : IDisposable
     public CancellationToken CancellationToken => this.NetBase.CancellationToken;
 
     public NetBase NetBase { get; }
+
+    public NetTerminal NetTerminal => this.ConnectionTerminal.NetTerminal;
 
     internal ConnectionTerminal ConnectionTerminal { get; }
 
@@ -72,14 +80,14 @@ public abstract class Connection : IDisposable
     public string ConnectionIdText
         => ((ushort)this.ConnectionId).ToString("x4");
 
-    public NetNode Node { get; }
+    public NetNode DestinationNode { get; }
 
-    public NetEndPoint EndPoint { get; }
+    public NetEndPoint DestinationEndPoint { get; }
 
     public ulong Salt
         => this.embryo.Salt;
 
-    public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
+    public ConnectionRequirements Requirements { get; private set; } = ConnectionRequirements.Default;
 
     public abstract ConnectionState State { get; }
 
@@ -245,7 +253,7 @@ public abstract class Connection : IDisposable
             return false;
         }
 
-        return TinyhandHelper.ValidateAndVerify(token);
+        return NetHelper.ValidateAndVerify(token);
     }
 
     public void Close()
@@ -315,7 +323,7 @@ Retry:
                 return default;
             }
 
-            if (this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
+            if (this.SendTransmissionsCount >= this.Requirements.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -448,9 +456,9 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionAgreementBlock agreement, Embryo embryo)
+    internal void Initialize(ConnectionRequirements agreement, Embryo embryo)
     {
-        this.Agreement = agreement;
+        this.Requirements = agreement;
         this.embryo = embryo;
     }
 
@@ -505,7 +513,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, default);
+        this.PacketTerminal.AddSendPacket(this.DestinationEndPoint.EndPoint, owner, default);
     }
 
     internal void SendCloseFrame()
@@ -724,7 +732,7 @@ Wait:
                     return;
                 }
 
-                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+                if (transmissionMode == 0 && totalGenes <= this.Requirements.MaxBlockGenes)
                 {// Block mode
                     transmission.SetState_Receiving(totalGenes);
                 }
@@ -734,7 +742,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
+                    if (!this.Requirements.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -755,12 +763,12 @@ Wait:
                 }
 
                 // New transmission
-                if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
+                if (this.receiveReceivedList.Count >= this.Requirements.MaxTransmissions)
                 {// Maximum number reached.
                     return;
                 }
 
-                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+                if (transmissionMode == 0 && totalGenes <= this.Requirements.MaxBlockGenes)
                 {// Block mode
                     transmission = new(this, transmissionId, default);
                     transmission.SetState_Receiving(totalGenes);
@@ -771,7 +779,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
+                    if (!this.Requirements.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -918,7 +926,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -954,7 +962,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -982,7 +990,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -1035,7 +1043,7 @@ Wait:
             connectionString = "Client";
         }
 
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)

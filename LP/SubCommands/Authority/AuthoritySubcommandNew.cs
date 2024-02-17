@@ -8,17 +8,29 @@ namespace LP.Subcommands;
 [SimpleCommand("new")]
 public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public AuthoritySubcommandNew(ILogger<AuthoritySubcommandNew> logger, Control control)
+    public AuthoritySubcommandNew(ILogger<AuthoritySubcommandNew> logger, AuthorityVault authorityVault, Seedphrase seedphrase)
     {
-        this.Control = control;
         this.logger = logger;
+        this.authorityVault = authorityVault;
+        this.seedphrase = seedphrase;
     }
 
     public async Task RunAsync(AuthoritySubcommandNewOptions option, string[] args)
     {
-        var seconds = option.Seconds < 0 ? 0 : option.Seconds;
-        var authorityInfo = new Authority(option.Seedphrase, option.Lifetime, Mics.FromSeconds(seconds));
-        var result = this.Control.AuthorityVault.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
+        byte[]? seed = default;
+        if (option.Seedphrase is not null)
+        {
+            seed = this.seedphrase.TryGetSeed(option.Seedphrase);
+            if (seed is null)
+            {
+                this.logger.TryGet()?.Log(Hashed.Seedphrase.Invalid, option.Seedphrase);
+                return;
+            }
+        }
+
+        var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
+        var authorityInfo = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
+        var result = this.authorityVault.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
 
         if (result == AuthorityResult.Success)
         {
@@ -30,9 +42,9 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
         }
     }
 
-    public Control Control { get; set; }
-
-    private ILogger<AuthoritySubcommandNew> logger;
+    private readonly ILogger logger;
+    private readonly AuthorityVault authorityVault;
+    private readonly Seedphrase seedphrase;
 }
 
 public record AuthoritySubcommandNewOptions
@@ -50,7 +62,7 @@ public record AuthoritySubcommandNewOptions
     public AuthorityLifetime Lifetime { get; init; }
 
     [SimpleOption("seconds", Description = "Lifetime in seconds")]
-    public int Seconds { get; init; }
+    public int LifetimeInSeconds { get; init; }
 
     public override string ToString() => $"{this.Name}";
 }

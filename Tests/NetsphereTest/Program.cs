@@ -86,11 +86,11 @@ public class Program
         var builder = new NetControl.Builder()
             .Preload(context =>
             {
-                var original = context.GetOrCreateOptions<NetsphereOptions>();
+                var original = context.GetOrCreateOptions<NetOptions>();
                 // original.EnableAlternative = true;
                 // original.Port = 49152;
 
-                NetsphereOptions? options = default;
+                NetOptions? options = default;
                 if (context.Arguments.TryGetOption("ns", out var nsArg))
                 {
                     SimpleParser.TryParseOptions(nsArg.UnwrapBracket(), out options, original);
@@ -174,7 +174,7 @@ public class Program
             goto RunAsync;
         }
 
-        var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
+        var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
         options.EnableAlternative = false;
         await Console.Out.WriteLineAsync(options.ToString());

@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 
 namespace Netsphere.Crypto;
 
-public static class Aes256
+/*public static class Aes256
 {
     public const int KeyBits = 256;
     public const int IVBits = 128;
@@ -52,4 +52,4 @@ public static class Aes128
     public static Aes NoPadding { get; }
 
     public static Aes PKCS7 { get; }
-}
+}*/

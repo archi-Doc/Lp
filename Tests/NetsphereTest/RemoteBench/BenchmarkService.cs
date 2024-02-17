@@ -24,7 +24,7 @@ public class BenchmarkServiceImpl : IBenchmarkService
         return NetResult.Success;
     }
 
-    public async NetTask Report(IBenchmarkService.ReportRecord record)
+    public async NetTask Report(RemoteBenchRecord record)
     {
         // await Console.Out.WriteLineAsync(record.ToString());
     }

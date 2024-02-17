@@ -6,7 +6,8 @@ namespace Netsphere.Server;
 
 public abstract class SyncResponder<TSend, TReceive> : INetResponder
 {
-    public virtual ulong DataId => BlockService.GetId<TSend, TReceive>();
+    public ulong DataId
+        => NetHelper.GetDataId<TSend, TReceive>();
 
     public virtual TReceive? RespondSync(TSend value) => default;
 

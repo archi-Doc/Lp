@@ -2,7 +2,6 @@
 
 global using Arc.Threading;
 global using CrystalData;
-global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;

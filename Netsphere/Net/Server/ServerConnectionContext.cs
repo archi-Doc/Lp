@@ -13,14 +13,16 @@ public class ExampleConnectionContext : ServerConnectionContext
     {
     }
 
-    public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    public override ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements agreement)
     {
-        return this.Connection.Agreement;
+        return this.ServerConnection.Requirements;
     }
 }
 
 public class ServerConnectionContext
 {
+    #region Service
+
     public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
 
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
@@ -65,8 +67,10 @@ public class ServerConnectionContext
     {
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
-        this.Connection = serverConnection;
+        this.ServerConnection = serverConnection;
     }
+
+    #endregion
 
     #region FieldAndProperty
 
@@ -74,18 +78,25 @@ public class ServerConnectionContext
 
     public NetTerminal NetTerminal { get; }
 
-    public ServerConnection Connection { get; }
+    public ServerConnection ServerConnection { get; }
 
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
 
     #endregion
 
-    public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
-        => this.Connection.Agreement;
+    public virtual ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements requirements)
+        => this.ServerConnection.Requirements;
 
-    /*public virtual bool InvokeCustom(TransmissionContext transmissionContext)
+    /*public virtual bool InvokeBidirectional(ulong dataId)
     {
+        if (dataId == 1)
+        {
+            this.ServerConnection.PrepareBidirectional();
+            _ = Task.Run(() => { });
+            return true;
+        }
+
         return false;
     }*/
 
@@ -98,7 +109,7 @@ public class ServerConnectionContext
             return;
         }
 
-        var transmissionContext = new TransmissionContext(this.Connection, receiveTransmission.TransmissionId, 1, dataId, default);
+        var transmissionContext = new TransmissionContext(this.ServerConnection, receiveTransmission.TransmissionId, 1, dataId, default);
         if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
         {
             transmissionContext.Return();
@@ -122,7 +133,8 @@ public class ServerConnectionContext
                         {
                             transmissionContext.ForceSendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.Closed);
                         }
-                        else */if (result == NetResult.Success)
+                        else */
+                        if (result == NetResult.Success)
                         {// Success
                             transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
                         }
@@ -155,7 +167,7 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.DataId == ConnectionAgreementBlock.DataId)
+            if (transmissionContext.DataId == ConnectionRequirements.DataId)
             {
                 this.AgreementRequested(transmissionContext);
             }
@@ -174,6 +186,23 @@ public class ServerConnectionContext
             Task.Run(() => this.InvokeRPC(transmissionContext));
             return;
         }
+
+        /*else if (transmissionContext.DataKind == 2)
+        {// Bidirectional
+            NetResult result;
+            if (this.InvokeBidirectional(transmissionContext.DataId))
+            {// Accepted
+                result = NetResult.Success;
+            }
+            else
+            {// Rejected
+                result = NetResult.NotAuthorized;
+            }
+
+            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+            transmissionContext.Return();
+            return;
+        }*/
 
         /*if (!this.InvokeCustom(transmissionContext))
         {
@@ -197,7 +226,7 @@ public class ServerConnectionContext
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
             try
             {
-                if (transmissionContext.Connection.IsClosedOrDisposed)
+                if (transmissionContext.ServerConnection.IsClosedOrDisposed)
                 {
                 }
                 else if (!transmissionContext.IsSent)
@@ -240,7 +269,7 @@ SendNoNetService:
 
     private bool AgreementRequested(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<ConnectionAgreementBlock>(transmissionContext.Owner.Memory.Span, out var t))
+        if (!TinyhandSerializer.TryDeserialize<ConnectionRequirements>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
             return false;
@@ -248,13 +277,13 @@ SendNoNetService:
 
         transmissionContext.Return();
 
-        var response = this.RequestAgreement(t);
-        if (response != this.Connection.Agreement)
+        var response = this.RespondConnectionRequirements(t);
+        if (response != this.ServerConnection.Requirements)
         {
-            this.Connection.Agreement.Update(response);
+            this.ServerConnection.Requirements.Accept(response);
         }
 
-        transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);
+        transmissionContext.SendAndForget(response, ConnectionRequirements.DataId);
         return true;
     }
 

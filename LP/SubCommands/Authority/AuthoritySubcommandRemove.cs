@@ -16,15 +16,15 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var result = this.Control.AuthorityVault.RemoveAuthority(option.Name);
+        var result = this.Control.AuthorityVault.RemoveAuthority(option.AuthorityName);
 
         if (result == AuthorityResult.Success)
         {
-            this.logger.TryGet()?.Log(Hashed.Authority.Removed, option.Name);
+            this.logger.TryGet()?.Log(Hashed.Authority.Removed, option.AuthorityName);
         }
         else if (result == AuthorityResult.NotFound)
         {
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, option.Name);
+            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, option.AuthorityName);
         }
     }
 
@@ -35,6 +35,6 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
 
 public record AuthoritySubcommandNameOptions
 {
-    [SimpleOption("name", Description = "Key name", Required = true)]
-    public string Name { get; init; } = string.Empty;
+    [SimpleOption("name", Description = "Authority name", Required = true)]
+    public string AuthorityName { get; init; } = string.Empty;
 }

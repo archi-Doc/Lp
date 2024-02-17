@@ -10,7 +10,7 @@ namespace Netsphere.Crypto;
 /// Signature: ECDsa, secp256r1.
 /// </summary>
 [TinyhandObject]
-public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<SignaturePrivateKey>
+public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<SignaturePrivateKey>
 {
     #region Unique
 

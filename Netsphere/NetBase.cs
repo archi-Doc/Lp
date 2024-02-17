@@ -27,7 +27,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public CancellationToken CancellationToken => this.Core.CancellationToken;
 
-    public NetsphereOptions NetsphereOptions { get; private set; }
+    public NetOptions NetsphereOptions { get; private set; }
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
@@ -81,7 +81,7 @@ public class NetBase : UnitBase, IUnitPreparable
         }
     }
 
-    public void SetOptions(NetsphereOptions netsphereOptions)
+    public void SetOptions(NetOptions netsphereOptions)
     {
         this.NetsphereOptions = netsphereOptions;
     }

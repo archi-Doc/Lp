@@ -38,8 +38,8 @@ public class SandboxSubcommand : ISimpleCommandAsync
         {
             if (connection is not null)
             {
-                var testBlock = TestBlock.Create(1000);
-                var r = await connection.SendAndReceive<TestBlock, TestBlock>(testBlock);
+                var testBlock = NetTestBlock.Create(1000);
+                var r = await connection.SendAndReceive<NetTestBlock, NetTestBlock>(testBlock);
                 Debug.Assert(testBlock.Equals(r.Value));
             }
         }

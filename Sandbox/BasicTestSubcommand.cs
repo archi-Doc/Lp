@@ -5,8 +5,6 @@ using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Block;
-using Netsphere.Net;
-using Netsphere.Packet;
 using Netsphere.Responder;
 using Netsphere.Server;
 using SimpleCommandLine;
@@ -53,10 +51,10 @@ public class CustomConnectionContext : ServerConnectionContext
         }
     }*/
 
-    public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    public override ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements requirements)
     {// Accept the request
-        agreement.Update(this.Connection.Agreement);
-        return agreement;
+        requirements.Accept(this.ServerConnection.Requirements);
+        return requirements;
     }
 }
 

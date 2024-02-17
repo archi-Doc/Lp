@@ -10,14 +10,21 @@ namespace Netsphere;
 public sealed partial class ClientConnection : Connection
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint")]
-    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
+    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "DestinationEndPoint")]
+    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "DestinationEndPoint")]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
     internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
         this.context = this.NetBase.NewClientConnectionContext(this);
+    }
+
+    internal ClientConnection(ServerConnection serverConnection)
+        : base(serverConnection)
+    {
+        this.context = this.NetBase.NewClientConnectionContext(this);
+        this.BidirectionalConnection = serverConnection;
     }
 
     #region FieldAndProperty
@@ -44,6 +51,8 @@ public sealed partial class ClientConnection : Connection
     public override bool IsClient => true;
 
     public override bool IsServer => false;
+
+    public ServerConnection? BidirectionalConnection { get; private set; }
 
     private ClientConnectionContext context;
 
@@ -73,7 +82,7 @@ public sealed partial class ClientConnection : Connection
             return NetResult.Canceled;
         }
 
-        if (!BlockService.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var owner))
         {
             return NetResult.SerializationError;
         }
@@ -123,8 +132,8 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled);
         }
 
-        dataId = dataId != 0 ? dataId : BlockService.GetId<TSend, TReceive>();
-        if (!BlockService.TrySerialize(data, out var owner))
+        dataId = dataId != 0 ? dataId : NetHelper.GetDataId<TSend, TReceive>();
+        if (!NetHelper.TrySerialize(data, out var owner))
         {
             return new(NetResult.SerializationError);
         }
@@ -173,7 +182,7 @@ public sealed partial class ClientConnection : Connection
             }
         }
 
-        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
         {
             response.Return();
             return new(NetResult.DeserializationError);
@@ -314,7 +323,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (!this.Agreement.CheckStreamLength(maxLength))
+        if (!this.Requirements.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -348,7 +357,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled, default);
         }
 
-        if (!this.Agreement.CheckStreamLength(maxLength))
+        if (!this.Requirements.CheckStreamLength(maxLength))
         {
             return new(NetResult.StreamLengthLimit, default);
         }
@@ -381,7 +390,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (!NetHelper.TrySerialize(packet, out var owner))
         {
             return (NetResult.SerializationError, default);
         }
@@ -441,15 +450,26 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> RequestAgreement(ConnectionAgreementBlock agreement)
+    public async Task<NetResult> RequestAgreement(ConnectionRequirements agreement)
     {
-        var result = await this.SendAndReceive<ConnectionAgreementBlock, ConnectionAgreementBlock>(agreement, ConnectionAgreementBlock.DataId).ConfigureAwait(false);
+        var result = await this.SendAndReceive<ConnectionRequirements, ConnectionRequirements>(agreement, ConnectionRequirements.DataId).ConfigureAwait(false);
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {
-            this.Agreement.Update(result.Value);
+            this.Requirements.Accept(result.Value);
         }
 
         return result.Result;
     }
+
+    /*public async Task<NetResult> InvokeBidirectional(ulong dataId)
+    {
+        if (!this.Agreement.AllowBidirectionalConnection)
+        {
+            return NetResult.NotAuthorized;
+        }
+
+        var r = await this.RpcSendAndReceive(ByteArrayPool.MemoryOwner.Empty, dataId).ConfigureAwait(false);
+        return r.Result;
+    }*/
 }

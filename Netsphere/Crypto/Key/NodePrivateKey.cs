@@ -10,7 +10,7 @@ namespace Netsphere.Crypto;
 /// Encryption: ECDiffieHellman, secp256r1.
 /// </summary>
 [TinyhandObject]
-public sealed partial class NodePrivateKey : PrivateKey, IEquatable<NodePrivateKey>
+public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePrivateKey>
 {
     #region Unique
 

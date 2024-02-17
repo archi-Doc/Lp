@@ -65,7 +65,7 @@ public sealed partial class PacketTerminal
     public int MaxResendCount { get; set; }
 
     private readonly NetBase netBase;
-    private readonly NetsphereOptions options;
+    private readonly NetOptions options;
     private readonly NetStats netStats;
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;

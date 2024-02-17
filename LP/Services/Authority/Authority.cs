@@ -8,17 +8,18 @@ namespace LP.T3CS;
 [TinyhandObject]
 public sealed partial class Authority
 {
-    public Authority(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
+    private const int MinimumSeedLength = 32;
+
+    public Authority(byte[]? seed, AuthorityLifetime lifetime, long lifeMics)
     {
-        if (seedPhrase == null)
+        if (seed == null || seed.Length < MinimumSeedLength)
         {
-            this.seed = new byte[32]; // 32 bytes
+            this.seed = new byte[MinimumSeedLength];
             RandomVault.Crypto.NextBytes(this.seed);
         }
         else
         {
-            var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
-            this.seed = Sha3Helper.Get256_ByteArray(Sha3Helper.Get256_ByteArray(utf8));
+            this.seed = seed;
         }
 
         this.Lifetime = lifetime;
@@ -39,10 +40,11 @@ public sealed partial class Authority
         proof.SignProof<T>(privateKey, proofMics);
     }
 
-    public void SignToken(AuthenticationToken token)
+    public void SignToken<T>(T token)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
     {
         var privateKey = this.GetOrCreatePrivateKey();
-        Netsphere.TinyhandHelper.Sign(token, privateKey);
+        NetHelper.Sign(token, privateKey);
     }
 
     /*public void SignToken(Credit credit, Token token)
@@ -118,6 +120,9 @@ public sealed partial class Authority
         => this.privateKeyCache.Cache(credit, privateKey);
 
     private ObjectCache<Credit, SignaturePrivateKey> privateKeyCache = new(10);
+
+    public string UnsafeToString()
+        => this.GetOrCreatePrivateKey().UnsafeToString() ?? string.Empty;
 
     public override string ToString()
         => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";

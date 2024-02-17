@@ -23,7 +23,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
     public async Task RunAsync(CreateCreditOptions options, string[] args)
     {
         this.logger.TryGet()?.Log(string.Empty);
-        using (var authorized = await this.authorizedTerminalFactory.Create<IMergerService>(this.terminal, this.nestedcommand.Node, options.Authority, this.logger))
+        using (var authorized = await this.authorizedTerminalFactory.Create<IMergerService>(this.terminal, this.nestedcommand.Node, options.AuthorityName, this.logger))
         {
             if (authorized == null)
             {
@@ -66,5 +66,5 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
 public record CreateCreditOptions
 {
     [SimpleOption("authority", Description = "Authority name", Required = true)]
-    public string Authority { get; init; } = string.Empty;
+    public string AuthorityName { get; init; } = string.Empty;
 }

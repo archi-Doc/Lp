@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
@@ -165,11 +166,34 @@ public class ConnectionTerminal
         {// ConnectionStateCode
             newConnection.Goshujin = this.clientConnections;
             this.clientConnections.OpenListChain.AddLast(newConnection);
-            this.clientConnections.OpenEndPointChain.Add(newConnection.EndPoint, newConnection);
+            this.clientConnections.OpenEndPointChain.Add(newConnection.DestinationEndPoint, newConnection);
             newConnection.ResponseSystemMics = Mics.GetSystem();
         }
 
         return newConnection;
+    }
+
+    internal ClientConnection PrepareBidirectional(ServerConnection serverConnection)
+    {
+        lock (this.clientConnections.SyncObject)
+        {
+            if (this.clientConnections.ConnectionIdChain.TryGetValue(serverConnection.ConnectionId, out var connection))
+            {
+                // ConnectionStateCode
+                this.clientConnections.ClosedListChain.Remove(connection);//
+                this.clientConnections.ClosedEndPointChain.Remove(connection);
+                connection.ClosedSystemMics = 0;
+            }
+            else
+            {
+                connection = new ClientConnection(serverConnection);
+            }
+
+            this.clientConnections.OpenListChain.AddLast(connection);
+            this.clientConnections.OpenEndPointChain.Add(serverConnection.DestinationEndPoint, connection);
+            connection.ResponseSystemMics = Mics.GetSystem();
+            return connection;
+        }
     }
 
     internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
@@ -208,7 +232,7 @@ public class ConnectionTerminal
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
             this.serverConnections.OpenListChain.AddLast(connection);
-            this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
+            this.serverConnections.OpenEndPointChain.Add(connection.DestinationEndPoint, connection);
             connection.ResponseSystemMics = Mics.GetSystem();
         }
 
@@ -383,13 +407,13 @@ public class ConnectionTerminal
                     connection.ClosedSystemMics = 0;
 
                     this.serverConnections.OpenListChain.AddLast(connection);
-                    this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
+                    this.serverConnections.OpenEndPointChain.Add(connection.DestinationEndPoint, connection);
                     connection.ResponseSystemMics = Mics.GetSystem();
                 }
             }
 
             if (connection is not null &&
-                connection.EndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndPoint.EndPointEquals(endPoint))
             {
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
@@ -403,7 +427,7 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.EndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndPoint.EndPointEquals(endPoint))
             {
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
@@ -422,7 +446,7 @@ public class ConnectionTerminal
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
 
-        g.ClosedEndPointChain.Add(connection.EndPoint, connection);
+        g.ClosedEndPointChain.Add(connection.DestinationEndPoint, connection);
         g.ClosedListChain.AddLast(connection);
         connection.ClosedSystemMics = Mics.GetSystem();
     }
@@ -434,7 +458,7 @@ public class ConnectionTerminal
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
 
-        g.ClosedEndPointChain.Add(connection.EndPoint, connection);
+        g.ClosedEndPointChain.Add(connection.DestinationEndPoint, connection);
         g.ClosedListChain.AddLast(connection);
         connection.ClosedSystemMics = Mics.GetSystem();
     }

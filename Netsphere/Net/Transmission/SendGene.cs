@@ -107,10 +107,10 @@ internal partial class SendGene
 
         if (NetConstants.LogLowLevelNet)
         {
-            connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.EndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
+            connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
         }
 
-        netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet); // Incremented
+        netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, this.Packet); // Incremented
         this.SentMics = currentMics;
         if (this.CurrentState == State.Initial)
         {// First send

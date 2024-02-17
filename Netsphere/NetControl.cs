@@ -56,8 +56,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddTransient<NetStatsMachine>();
 
                 // Subcommands
-                context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.NetCleanSubcommand));
             });
         }
     }
@@ -69,7 +67,7 @@ public class NetControl : UnitBase, IUnitPreparable
         {
         }
 
-        public async Task Run(NetsphereOptions options, bool allowUnsafeConnection, Func<ServerConnection, ServerConnectionContext>? newServerConnectionContext = null, Func<ClientConnection, ClientConnectionContext>? newClientConnectionContext = null)
+        public async Task Run(NetOptions options, bool allowUnsafeConnection, Func<ServerConnection, ServerConnectionContext>? newServerConnectionContext = null, Func<ClientConnection, ClientConnectionContext>? newClientConnectionContext = null)
         {
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetOptions(options);

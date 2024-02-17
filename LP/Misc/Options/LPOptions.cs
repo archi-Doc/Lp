@@ -40,7 +40,7 @@ public partial record LPOptions
     public string NodeName { get; init; } = string.Empty;
 
     [SimpleOption("ns", Description = "Netsphere option")]
-    public NetsphereOptions NetsphereOptions { get; init; } = default!;
+    public NetOptions NetsphereOptions { get; init; } = default!;
 
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
