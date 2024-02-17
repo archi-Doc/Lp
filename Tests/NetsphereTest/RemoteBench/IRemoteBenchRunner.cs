@@ -41,7 +41,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 
         var serverConnection = transmissionContext.ServerConnection;
         var connectionContext = serverConnection.GetContext();
-        var clientConnection = (ClientConnection)serverConnection.GetBidirectional();
+        var clientConnection = serverConnection.PrepareBidirectional();
 
         var data = new byte[100];
         int successCount = 0;
