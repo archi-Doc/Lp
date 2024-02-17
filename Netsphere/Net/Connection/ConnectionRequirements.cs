@@ -66,6 +66,9 @@ public partial record ConnectionRequirements
     [Key(4)]
     public bool AllowBidirectionalConnection { get; set; }
 
+    [Key(5)]
+    public int ConnectionAliveSeconds { get; set; } = 5
+
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }
 
