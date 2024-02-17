@@ -13,7 +13,7 @@ public class ExampleConnectionContext : ServerConnectionContext
     {
     }
 
-    public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    public override ConnectionRequirements RequestAgreement(ConnectionRequirements agreement)
     {
         return this.ServerConnection.Agreement;
     }
@@ -85,7 +85,7 @@ public class ServerConnectionContext
 
     #endregion
 
-    public virtual ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    public virtual ConnectionRequirements RequestAgreement(ConnectionRequirements agreement)
         => this.ServerConnection.Agreement;
 
     /*public virtual bool InvokeBidirectional(ulong dataId)
@@ -167,7 +167,7 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.DataId == ConnectionAgreementBlock.DataId)
+            if (transmissionContext.DataId == ConnectionRequirements.DataId)
             {
                 this.AgreementRequested(transmissionContext);
             }
@@ -269,7 +269,7 @@ SendNoNetService:
 
     private bool AgreementRequested(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<ConnectionAgreementBlock>(transmissionContext.Owner.Memory.Span, out var t))
+        if (!TinyhandSerializer.TryDeserialize<ConnectionRequirements>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
             return false;
@@ -283,7 +283,7 @@ SendNoNetService:
             this.ServerConnection.Agreement.Accept(response);
         }
 
-        transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);
+        transmissionContext.SendAndForget(response, ConnectionRequirements.DataId);
         return true;
     }
 

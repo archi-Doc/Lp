@@ -6,16 +6,16 @@ using Netsphere.Server;
 namespace Netsphere.Block;
 
 [TinyhandObject]
-public partial record ConnectionAgreementBlock
+public partial record ConnectionRequirements
 {
-    public static readonly ConnectionAgreementBlock Default = new();
+    public static readonly ConnectionRequirements Default = new();
     internal const ulong DataId = 0x54074a0294a59b25;
 
-    public ConnectionAgreementBlock()
+    public ConnectionRequirements()
     {
     }
 
-    public ConnectionAgreementBlock(ServerOptions options)
+    public ConnectionRequirements(ServerOptions options)
     {
         this.MaxTransmissions = options.MaxTransmissions;
         this.MaxBlockSize = options.MaxBlockSize;
@@ -79,7 +79,7 @@ public partial record ConnectionAgreementBlock
     private long maxStreamLength;
     private int streamBufferSize;
 
-    public void Accept(ConnectionAgreementBlock target)
+    public void Accept(ConnectionRequirements target)
     {
         if (target.MaxTransmissions > this.MaxTransmissions)
         {

@@ -53,7 +53,7 @@ public class CustomConnectionContext : ServerConnectionContext
         }
     }*/
 
-    public override ConnectionAgreementBlock RequestAgreement(ConnectionAgreementBlock agreement)
+    public override ConnectionRequirements RequestAgreement(ConnectionRequirements agreement)
     {// Accept the request
         agreement.Accept(this.ServerConnection.Agreement);
         return agreement;

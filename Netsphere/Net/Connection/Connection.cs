@@ -87,7 +87,7 @@ public abstract class Connection : IDisposable
     public ulong Salt
         => this.embryo.Salt;
 
-    public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
+    public ConnectionRequirements Agreement { get; private set; } = ConnectionRequirements.Default;
 
     public abstract ConnectionState State { get; }
 
@@ -456,7 +456,7 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionAgreementBlock agreement, Embryo embryo)
+    internal void Initialize(ConnectionRequirements agreement, Embryo embryo)
     {
         this.Agreement = agreement;
         this.embryo = embryo;

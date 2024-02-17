@@ -447,9 +447,9 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> RequestAgreement(ConnectionAgreementBlock agreement)
+    public async Task<NetResult> RequestAgreement(ConnectionRequirements agreement)
     {
-        var result = await this.SendAndReceive<ConnectionAgreementBlock, ConnectionAgreementBlock>(agreement, ConnectionAgreementBlock.DataId).ConfigureAwait(false);
+        var result = await this.SendAndReceive<ConnectionRequirements, ConnectionRequirements>(agreement, ConnectionRequirements.DataId).ConfigureAwait(false);
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {

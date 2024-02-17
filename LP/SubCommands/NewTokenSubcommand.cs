@@ -27,7 +27,7 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
             return;
         }
 
-        var token = new CertificateToken<ConnectionAgreementBlock>(new ConnectionAgreementBlock());
+        var token = new CertificateToken<ConnectionRequirements>(new ConnectionRequirements());
         authority.SignToken(token);
         var st = token.ToString();
         this.consoleService.WriteLine(st);
