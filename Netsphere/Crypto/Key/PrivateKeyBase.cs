@@ -4,13 +4,13 @@ namespace Netsphere.Crypto;
 
 #pragma warning disable SA1401
 
-public abstract partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
+public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateKeyBase>
 {
-    public PrivateKey()
+    public PrivateKeyBase()
     {
     }
 
-    protected PrivateKey(KeyClass keyClass, byte[] x, byte[] y, byte[] d)
+    protected PrivateKeyBase(KeyClass keyClass, byte[] x, byte[] y, byte[] d)
     {
         this.x = x;
         this.y = y;
@@ -64,7 +64,7 @@ public abstract partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return true;
     }
 
-    public bool Equals(PrivateKey? other)
+    public bool Equals(PrivateKeyBase? other)
     {
         if (other == null)
         {
