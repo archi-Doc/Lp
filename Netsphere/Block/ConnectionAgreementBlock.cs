@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Netsphere.Net;
 using Netsphere.Server;
 
 namespace Netsphere.Block;
@@ -80,7 +79,7 @@ public partial record ConnectionAgreementBlock
     private long maxStreamLength;
     private int streamBufferSize;
 
-    public void Update(ConnectionAgreementBlock target)
+    public void Accept(ConnectionAgreementBlock target)
     {
         if (target.MaxTransmissions > this.MaxTransmissions)
         {

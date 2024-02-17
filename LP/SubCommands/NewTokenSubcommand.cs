@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using LP.T3CS;
+using Netsphere.Block;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -26,15 +27,15 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
             return;
         }
 
-        var token = new RequirementToken();
+        var token = new CertificateToken<ConnectionAgreementBlock>(new ConnectionAgreementBlock());
         authority.SignToken(token);
         var st = token.ToString();
         this.consoleService.WriteLine(st);
 
-        if (RequirementToken.TryParse(st, out var token2))
+        /*if (RequirementToken.TryParse(st, out var token2))
         {
             this.consoleService.WriteLine($"{token.Equals(token2)}: {token2.ToString()}");
-        }
+        }*/
     }
 
     private readonly IConsoleService consoleService;

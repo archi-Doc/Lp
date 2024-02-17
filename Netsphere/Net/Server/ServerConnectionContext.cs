@@ -280,7 +280,7 @@ SendNoNetService:
         var response = this.RequestAgreement(t);
         if (response != this.ServerConnection.Agreement)
         {
-            this.ServerConnection.Agreement.Update(response);
+            this.ServerConnection.Agreement.Accept(response);
         }
 
         transmissionContext.SendAndForget(response, ConnectionAgreementBlock.DataId);

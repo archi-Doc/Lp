@@ -453,7 +453,7 @@ public sealed partial class ClientConnection : Connection
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {
-            this.Agreement.Update(result.Value);
+            this.Agreement.Accept(result.Value);
         }
 
         return result.Result;
