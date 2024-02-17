@@ -3,15 +3,15 @@
 namespace Netsphere.Block;
 
 [TinyhandObject]
-public partial class TestBlock : IEquatable<TestBlock>
+public partial class NetTestBlock : IEquatable<NetTestBlock>
 {
     public const int DataMax = 4_000_000;
 
-    public static TestBlock Create(int size = DataMax)
+    public static NetTestBlock Create(int size = DataMax)
     {
         size = size < DataMax ? size : DataMax;
 
-        var testBlock = new TestBlock();
+        var testBlock = new NetTestBlock();
         testBlock.N = 10;
         testBlock.Message = "Test message";
         testBlock.Data = new byte[size];
@@ -35,7 +35,7 @@ public partial class TestBlock : IEquatable<TestBlock>
     public override string ToString()
         => $"TestBlock: {this.N}, {this.Message}, Size:{this.Data.Length}, Hash:{Arc.Crypto.FarmHash.Hash64(this.Data).To4Hex()}";
 
-    public bool Equals(TestBlock? other)
+    public bool Equals(NetTestBlock? other)
     {
         if (other is null)
         {

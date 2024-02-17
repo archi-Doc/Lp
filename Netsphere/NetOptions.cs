@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Netsphere;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record NetsphereOptions
+public partial record NetOptions
 {
     [SimpleOption("address", Description = "Global IP address")]
     public string Address { get; set; } = string.Empty;
