@@ -3,7 +3,7 @@ using Arc.Unit;
 
 namespace LP.NetServices;
 
-public class RemoteBenchBroker
+/*public class RemoteBenchBroker
 {
     public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger)
     {
@@ -133,4 +133,4 @@ public class RemoteBenchBroker
     private readonly ILogger logger;
     private int total;
     private int concurrent;
-}
+}*/

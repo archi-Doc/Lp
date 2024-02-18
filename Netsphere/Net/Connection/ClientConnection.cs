@@ -52,7 +52,7 @@ public sealed partial class ClientConnection : Connection
 
     public override bool IsServer => false;
 
-    public ServerConnection? BidirectionalConnection { get; private set; }
+    public ServerConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.serverConnections.SyncObject)
 
     private ClientConnectionContext context;
 
@@ -472,4 +472,16 @@ public sealed partial class ClientConnection : Connection
         var r = await this.RpcSendAndReceive(ByteArrayPool.MemoryOwner.Empty, dataId).ConfigureAwait(false);
         return r.Result;
     }*/
+
+    public ServerConnection PrepareBidirectional()
+    {
+        if (this.BidirectionalConnection is { } connection)
+        {
+            return connection;
+        }
+        else
+        {
+            return this.ConnectionTerminal.PrepareBidirectional(this);
+        }
+    }
 }

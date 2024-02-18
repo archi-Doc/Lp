@@ -1,9 +1,8 @@
-﻿using System.Diagnostics;
-using Netsphere.Server;
+﻿using Netsphere.Server;
 
 namespace LP.NetServices;
 
-[NetServiceFilter<TestFilter>(Order = 1)]
+/*[NetServiceFilter<TestFilter>(Order = 1)]
 [NetServiceFilter<TestFilterB>(Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
@@ -81,4 +80,4 @@ public class TestFilter2 : IServiceFilter
     {
         await next(context);
     }
-}
+}*/

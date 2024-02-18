@@ -9,17 +9,15 @@ namespace LP.NetServices;
 [NetServiceObject]
 public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 {
-    public RemoteBenchRunnerImpl(ILogger<RemoteBenchRunnerImpl> logger, RemoteBenchBroker remoteBenchBroker, NetTerminal netTerminal)
+    public RemoteBenchRunnerImpl(ILogger<RemoteBenchRunnerImpl> logger, NetTerminal netTerminal)
     {
         this.logger = logger;
-        this.remoteBenchBroker = remoteBenchBroker;
         this.netTerminal = netTerminal;
     }
 
     #region FieldAndProperty
 
     private readonly ILogger logger;
-    private readonly RemoteBenchBroker remoteBenchBroker;
     private readonly NetTerminal netTerminal;
 
     #endregion
@@ -36,6 +34,20 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             concurrent = 25;
         }
 
+        _ = Task.Run(() => this.RunBenchmark(total, concurrent));
+        return NetResult.Success;
+    }
+
+    void INetServiceHandler.OnConnected()
+    {
+    }
+
+    void INetServiceHandler.OnDisconnected()
+    {
+    }
+
+    private async Task RunBenchmark(int total, int concurrent)
+    {
         var transmissionContext = TransmissionContext.Current;
         this.logger.TryGet()?.Log($"Benchmark {transmissionContext.ServerConnection.DestinationNode.ToString()}, Total/Concurrent: {total}/{concurrent}");
 
@@ -109,20 +121,10 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             AverageLatency = (int)(totalLatency / totalCount),
         };
 
-        var service =clientConnection.GetService<IBenchmarkService>();
+        var service = clientConnection.GetService<IBenchmarkService>();
         await service.Report(record);
 
         this.logger.TryGet()?.Log(record.ToString());
-
-        return NetResult.Success;
-    }
-
-    void INetServiceHandler.OnConnected()
-    {
-    }
-
-    void INetServiceHandler.OnDisconnected()
-    {
     }
 }
 

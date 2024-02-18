@@ -5,13 +5,15 @@ using Tinyhand;
 namespace LP.NetServices;
 
 [NetServiceInterface]
-public partial interface IRemoteBenchHost : INetService
+public interface IRemoteBenchHost : INetService
 {
-    public NetTask<byte[]?> Pingpong(byte[] data);
+    NetTask<byte[]?> Pingpong(byte[] data);
 
-    public NetTask<ulong> GetHash(byte[] data);
+    NetTask<ulong> GetHash(byte[] data);
 
-    public NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength);
+    NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength);
 
-    public NetTask Report(RemoteBenchRecord record);
+    NetTask<NetResult> Register();
+
+    NetTask Report(RemoteBenchRecord record);
 }

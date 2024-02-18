@@ -192,6 +192,33 @@ public class ConnectionTerminal
             this.clientConnections.OpenListChain.AddLast(connection);
             this.clientConnections.OpenEndPointChain.Add(serverConnection.DestinationEndPoint, connection);
             connection.ResponseSystemMics = Mics.GetSystem();
+
+            serverConnection.BidirectionalConnection = connection;
+            return connection;
+        }
+    }
+
+    internal ServerConnection PrepareBidirectional(ClientConnection clientConnection)
+    {
+        lock (this.serverConnections.SyncObject)
+        {
+            if (this.serverConnections.ConnectionIdChain.TryGetValue(clientConnection.ConnectionId, out var connection))
+            {
+                // ConnectionStateCode
+                this.serverConnections.ClosedListChain.Remove(connection);//
+                this.serverConnections.ClosedEndPointChain.Remove(connection);
+                connection.ClosedSystemMics = 0;
+            }
+            else
+            {
+                connection = new ServerConnection(clientConnection);
+            }
+
+            this.serverConnections.OpenListChain.AddLast(connection);
+            this.serverConnections.OpenEndPointChain.Add(clientConnection.DestinationEndPoint, connection);
+            connection.ResponseSystemMics = Mics.GetSystem();
+
+            clientConnection.BidirectionalConnection = connection;
             return connection;
         }
     }

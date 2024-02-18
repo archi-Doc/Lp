@@ -43,13 +43,15 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 return;
             }
 
-            var service = connection.GetService<IBenchmarkService>();
+            var serverConnection = connection.PrepareBidirectional();
+            var service = connection.GetService<IRemoteBenchHost>();
             if (await service.Register() == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Register: Success");
             }
             else
             {
+                serverConnection.Close();
                 this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }
@@ -57,8 +59,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             // connection.RequestAgreement();
             // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
             // connection.InvokeBidirectional(Tinyhand.TinyhandHelper.GetFullNameId<IBenchmarkService>());
-
-            var result = service.Register();
         }
 
         while (true)

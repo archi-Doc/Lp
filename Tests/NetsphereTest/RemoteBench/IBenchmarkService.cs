@@ -1,10 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Tinyhand;
-
 namespace LP.NetServices;
 
-[NetServiceInterface]
+/*[NetServiceInterface]
 public interface IBenchmarkService : INetService
 {
     public NetTask<byte[]?> Pingpong(byte[] data);
@@ -18,4 +16,4 @@ public interface IBenchmarkService : INetService
     public NetTask<NetResult> Start(int total, int concurrent);
 
     public NetTask Report(RemoteBenchRecord record);
-}
+}*/

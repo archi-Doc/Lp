@@ -51,7 +51,7 @@ public sealed partial class ServerConnection : Connection
 
     public override bool IsServer => true;
 
-    public ClientConnection? BidirectionalConnection { get; private set; }
+    public ClientConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.clientConnections.SyncObject)
 
     private ServerConnectionContext context;
 
@@ -66,11 +66,13 @@ public sealed partial class ServerConnection : Connection
 
     public ClientConnection PrepareBidirectional()
     {
-        if (this.BidirectionalConnection is null)
+        if (this.BidirectionalConnection is { } connection)
         {
-            this.BidirectionalConnection = this.ConnectionTerminal.PrepareBidirectional(this);
+            return connection;
         }
-
-        return this.BidirectionalConnection;
+        else
+        {
+            return this.ConnectionTerminal.PrepareBidirectional(this);
+        }
     }
 }
