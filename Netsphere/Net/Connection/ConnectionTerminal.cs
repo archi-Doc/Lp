@@ -305,6 +305,7 @@ public class ConnectionTerminal
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
         {
+            ServerConnection? bidirectionalConnection;
             lock (g.SyncObject)
             {
                 if (connection.State == Connection.ConnectionState.Open)
@@ -319,11 +320,24 @@ public class ConnectionTerminal
                     this.CloseClientConnection(g, clientConnection);
                     // connection.ResetFlowControl(); // -> ProcessSend()
                 }
+
+                bidirectionalConnection = clientConnection.BidirectionalConnection;
+                if (bidirectionalConnection is not null)
+                {
+                    clientConnection.BidirectionalConnection = default;
+                    bidirectionalConnection.BidirectionalConnection = default;
+                }
+            }
+
+            if (bidirectionalConnection is not null)
+            {
+                this.CloseInternal(bidirectionalConnection, sendCloseFrame);
             }
         }
         else if (connection is ServerConnection serverConnection &&
             serverConnection.Goshujin is { } g2)
         {
+            ClientConnection? bidirectionalConnection;
             lock (g2.SyncObject)
             {
                 if (connection.State == Connection.ConnectionState.Open)
@@ -338,6 +352,18 @@ public class ConnectionTerminal
                     this.CloseServerConnection(g2, serverConnection);
                     // connection.ResetFlowControl(); // -> ProcessSend()
                 }
+
+                bidirectionalConnection = serverConnection.BidirectionalConnection;
+                if (bidirectionalConnection is not null)
+                {
+                    serverConnection.BidirectionalConnection = default;
+                    bidirectionalConnection.BidirectionalConnection = default;
+                }
+            }
+
+            if (bidirectionalConnection is not null)
+            {
+                this.CloseInternal(bidirectionalConnection, sendCloseFrame);
             }
         }
     }
