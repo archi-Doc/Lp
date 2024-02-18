@@ -13,15 +13,12 @@ public partial record ConnectionAgreement
 
     public ConnectionAgreement()
     {
-    }
-
-    public ConnectionAgreement(ServerOptions options)
-    {
-        this.MaxTransmissions = options.MaxTransmissions;
-        this.MaxBlockSize = options.MaxBlockSize;
-        this.MaxStreamLength = options.MaxStreamLength;
-        this.StreamBufferSize = options.StreamBufferSize;
-        this.AllowBidirectionalConnection = options.AllowBidirectionalConnection;
+        this.MaxTransmissions = 4;
+        this.MaxBlockSize = 4 * 1024 * 1024; // 4MB
+        this.MaxStreamLength = 0; // Disabled
+        this.StreamBufferSize = 8 * 1024 * 1024; // 8MB
+        this.AllowBidirectionalConnection = false;
+        this.ConnectionAliveSeconds = 5;
     }
 
     [Key(0)]
@@ -67,13 +64,10 @@ public partial record ConnectionAgreement
     public bool AllowBidirectionalConnection { get; set; }
 
     [Key(5)]
-    public int ConnectionAliveSeconds { get; set; } = 5
+    public int ConnectionAliveSeconds { get; set; }
 
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }
-
-    /*[IgnoreMember]
-    public int MaxStreamGenes { get; private set; }*/
 
     [IgnoreMember]
     public int StreamBufferGenes { get; private set; }
@@ -82,17 +76,10 @@ public partial record ConnectionAgreement
     private long maxStreamLength;
     private int streamBufferSize;
 
-    public void Accept(ConnectionAgreement target)
+    public void AcceptAll(ConnectionAgreement target)
     {
-        if (target.MaxTransmissions > this.MaxTransmissions)
-        {
-            this.MaxTransmissions = target.MaxTransmissions;
-        }
-
-        if (target.MaxBlockSize > this.MaxBlockSize)
-        {
-            this.MaxBlockSize = target.MaxBlockSize;
-        }
+        this.MaxTransmissions = Math.Max(this.MaxTransmissions, target.MaxTransmissions);
+        this.MaxBlockSize = Math.Max(this.MaxBlockSize, target.MaxBlockSize);
 
         if (target.MaxStreamLength == -1)
         {
@@ -103,10 +90,9 @@ public partial record ConnectionAgreement
             this.MaxStreamLength = target.MaxStreamLength;
         }
 
-        if (target.StreamBufferSize > this.StreamBufferSize)
-        {
-            this.StreamBufferSize = target.StreamBufferSize;
-        }
+        this.StreamBufferSize = Math.Max(this.StreamBufferSize, target.StreamBufferSize);
+        this.AllowBidirectionalConnection |= target.AllowBidirectionalConnection;
+        this.ConnectionAliveSeconds = Math.Max(this.ConnectionAliveSeconds, target.ConnectionAliveSeconds);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

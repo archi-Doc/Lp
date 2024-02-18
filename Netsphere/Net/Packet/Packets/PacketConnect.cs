@@ -58,11 +58,11 @@ internal partial class PacketConnectResponse : IPacket
         this.ServerSalt2 = RandomVault.Crypto.NextUInt64();
     }
 
-    public PacketConnectResponse(ServerOptions options)
+    public PacketConnectResponse(ConnectionAgreement agreement)
         : this()
     {
         // this.Success = true;
-        this.Agreement = new(options);
+        this.Agreement = agreement;
     }
 
     /*[Key(0)]

@@ -160,7 +160,7 @@ public class Control : ILogInformation
                 netBase.SetOptions(options.NetsphereOptions);
 
                 netBase.AllowUnsafeConnection = true; // betacode
-                netBase.ServerOptions = netBase.ServerOptions with { MaxStreamLength = 100_000_000, }; // betacode
+                netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
             });
 
             this.SetupOptions<CrystalizerOptions>((context, options) =>
