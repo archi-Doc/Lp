@@ -87,7 +87,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
                         }
 
-                        var service = connection.GetService<IBenchmarkService>();
+                        var service = connection.GetService<IRemoteBenchHost>();
                         sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
@@ -130,7 +130,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                 return;
 
             }
-            var service = terminal.GetService<IBenchmarkService>();
+            var service = terminal.GetService<IRemoteBenchHost>();
             await service.Report(record);
         }
 

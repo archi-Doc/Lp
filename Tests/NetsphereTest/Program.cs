@@ -110,14 +110,11 @@ public class Program
                 context.AddCommand(typeof(RemoteBenchSubcommand));
 
                 // NetService
-                context.AddSingleton<BenchmarkServiceImpl>();
                 context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
-                context.AddSingleton<LP.NetServices.TestFilterB>();
 
                 // Other
-                context.AddSingleton<RemoteBenchBroker>();
 
                 // Resolver
                 context.ClearLoggerResolver();
@@ -181,7 +178,7 @@ public class Program
         await unit.Run(options, true);
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<IBenchmarkService>();
+        netControl.Services.Register<IRemoteBenchRunner>();
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Tinyhand;
+using Netsphere.Crypto;
+using Netsphere.Net;
 
 namespace LP.NetServices;
 
@@ -13,7 +14,7 @@ public interface IRemoteBenchHost : INetService
 
     NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength);
 
-    NetTask<NetResult> Register();
+    NetTask<NetResult> Register(CertificateToken<ConnectionAgreement> token);
 
     NetTask Report(RemoteBenchRecord record);
 }

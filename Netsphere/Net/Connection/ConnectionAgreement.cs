@@ -1,9 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Netsphere.Server;
 
-namespace Netsphere.Block;
+namespace Netsphere;
 
 [TinyhandObject]
 public partial record ConnectionAgreement

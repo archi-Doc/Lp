@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Netsphere.Block;
 using Netsphere.Net;
 
 namespace Netsphere.Server;

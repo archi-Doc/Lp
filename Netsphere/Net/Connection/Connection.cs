@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
 using Arc.Unit;
-using Netsphere.Block;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;

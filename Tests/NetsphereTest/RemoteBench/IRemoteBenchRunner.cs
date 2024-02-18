@@ -79,7 +79,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
                             return;
                         }
 
-                        var service = t.GetService<IBenchmarkService>();
+                        var service = t.GetService<IRemoteBenchHost>();
                         sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
@@ -121,7 +121,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             AverageLatency = (int)(totalLatency / totalCount),
         };
 
-        var service = clientConnection.GetService<IBenchmarkService>();
+        var service = clientConnection.GetService<IRemoteBenchHost>();
         await service.Report(record);
 
         this.logger.TryGet()?.Log(record.ToString());

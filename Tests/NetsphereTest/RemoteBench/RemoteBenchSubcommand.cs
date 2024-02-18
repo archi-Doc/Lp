@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -10,11 +11,10 @@ namespace NetsphereTest;
 [SimpleCommand("remotebench")]
 public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 {
-    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl, RemoteBenchBroker remoteBenchBroker)
+    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.netControl = netControl;
-        this.remoteBenchBroker = remoteBenchBroker;
     }
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
@@ -43,9 +43,14 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 return;
             }
 
+            var privateKey = SignaturePrivateKey.Create();
+            var agreement = connection.Agreement with { AllowBidirectionalConnection = true, };
+            var token = new CertificateToken<ConnectionAgreement>(agreement);
+            token.Sign(privateKey);
+
             var serverConnection = connection.PrepareBidirectional();
             var service = connection.GetService<IRemoteBenchHost>();
-            if (await service.Register() == NetResult.Success)
+            if (await service.Register(token) == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Register: Success");
             }
@@ -61,7 +66,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             // connection.InvokeBidirectional(Tinyhand.TinyhandHelper.GetFullNameId<IBenchmarkService>());
         }
 
-        while (true)
+        /*while (true)
         {
             this.logger.TryGet()?.Log($"Waiting...");
             if (await this.remoteBenchBroker.Wait() == false)
@@ -72,7 +77,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
             this.logger.TryGet()?.Log($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
             await this.remoteBenchBroker.Process(netControl.NetTerminal, node);
-        }
+        }*/
     }
 
     private async Task TestPingpong(NetNode node)
@@ -87,7 +92,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var sw = Stopwatch.StartNew();
-            var service = connection.GetService<IBenchmarkService>();
+            var service = connection.GetService<IRemoteBenchHost>();
             for (var i = 0; i < N; i++)
             {
                 await service.Pingpong([0, 1, 2,]);
@@ -101,7 +106,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     private NetControl netControl { get; set; }
     private ILogger logger;
-    private RemoteBenchBroker remoteBenchBroker;
 }
 
 public record RemoteBenchOptions

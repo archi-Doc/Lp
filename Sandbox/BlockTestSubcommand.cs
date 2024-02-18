@@ -4,7 +4,6 @@ using System.Diagnostics;
 using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
-using Netsphere.Block;
 using SimpleCommandLine;
 
 namespace Sandbox;

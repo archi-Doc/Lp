@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.Block;
+namespace Netsphere.Misc;
 
 [TinyhandObject]
 public partial class NetTestBlock : IEquatable<NetTestBlock>
