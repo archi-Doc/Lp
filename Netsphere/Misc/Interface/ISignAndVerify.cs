@@ -14,4 +14,6 @@ public interface ISignAndVerify : IValidatable
     byte[] Signature { get; set; }
 
     long SignedMics { get; set; }
+
+    ulong Salt { get; set; }
 }

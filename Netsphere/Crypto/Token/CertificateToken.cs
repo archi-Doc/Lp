@@ -20,8 +20,9 @@ public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<Cer
         this.Target = default!;
     }
 
-    public CertificateToken(T target)
+    public CertificateToken(ulong salt, T target)
     {
+        this.Salt = salt;
         this.Target = target;
     }
 
@@ -42,6 +43,9 @@ public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<Cer
     public long SignedMics { get; set; }
 
     [Key(4)]
+    public ulong Salt { get; set; }
+
+    [Key(5)]
     public T Target { get; set; }
 
     #endregion

@@ -8,3 +8,8 @@ namespace Netsphere;
 public interface INetService
 {
 }
+
+public interface IBidirectionalService
+{
+    void CreateBidirectional();
+}

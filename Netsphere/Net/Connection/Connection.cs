@@ -245,14 +245,22 @@ public abstract class Connection : IDisposable
         }
     }
 
-    public bool ValidateAndVerify(AuthenticationToken token)
+    public bool Sign<T>(T value, SignaturePrivateKey privateKey)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
     {
-        if (token.Salt != this.Salt)
+        value.Salt = this.Salt;
+        return value.Sign(privateKey);
+    }
+
+    public bool ValidateAndVerify<T>(T value)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+    {
+        if (value.Salt != this.Salt)
         {
             return false;
         }
 
-        return NetHelper.ValidateAndVerify(token);
+        return NetHelper.ValidateAndVerify(value);
     }
 
     public void Close()

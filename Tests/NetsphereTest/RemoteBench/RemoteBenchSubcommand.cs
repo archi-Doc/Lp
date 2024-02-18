@@ -44,9 +44,10 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var privateKey = SignaturePrivateKey.Create();
-            var agreement = connection.Agreement with { AllowBidirectionalConnection = true, };
-            var token = new CertificateToken<ConnectionAgreement>(agreement);
-            token.Sign(privateKey);
+            var agreement = connection.Agreement with { AllowBidirectionalConnection = true, ConnectionAliveSeconds = 300, };
+            var token = new CertificateToken<ConnectionAgreement>(connection.Salt, agreement);
+            connection.Sign(token, privateKey);
+            connection.ValidateAndVerify(token);
 
             var serverConnection = connection.PrepareBidirectional();
             var service = connection.GetService<IRemoteBenchHost>();

@@ -12,12 +12,12 @@ public partial record ConnectionAgreement
 
     public ConnectionAgreement()
     {
-        this.MaxTransmissions = 4;
+        this.MaxTransmissions = 4; // 4 transmissions
         this.MaxBlockSize = 4 * 1024 * 1024; // 4MB
         this.MaxStreamLength = 0; // Disabled
         this.StreamBufferSize = 8 * 1024 * 1024; // 8MB
-        this.AllowBidirectionalConnection = false;
-        this.ConnectionAliveSeconds = 5;
+        this.AllowBidirectionalConnection = false; // Bidirectional communication is not allowed
+        this.ConnectionAliveSeconds = 5; // 5 seconds
     }
 
     [Key(0)]
