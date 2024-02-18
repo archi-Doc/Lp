@@ -60,7 +60,7 @@ public abstract class Connection : IDisposable
     public Connection(Connection connection)
         : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndPoint)
     {
-        this.Initialize(connection.Requirements, connection.embryo);
+        this.Initialize(connection.Agreement, connection.embryo);
     }
 
     #region FieldAndProperty
@@ -87,7 +87,7 @@ public abstract class Connection : IDisposable
     public ulong Salt
         => this.embryo.Salt;
 
-    public ConnectionRequirements Requirements { get; private set; } = ConnectionRequirements.Default;
+    public ConnectionAgreement Agreement { get; private set; } = ConnectionAgreement.Default;
 
     public abstract ConnectionState State { get; }
 
@@ -323,7 +323,7 @@ Retry:
                 return default;
             }
 
-            if (this.SendTransmissionsCount >= this.Requirements.MaxTransmissions)
+            if (this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -456,9 +456,9 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionRequirements agreement, Embryo embryo)
+    internal void Initialize(ConnectionAgreement agreement, Embryo embryo)
     {
-        this.Requirements = agreement;
+        this.Agreement = agreement;
         this.embryo = embryo;
     }
 
@@ -732,7 +732,7 @@ Wait:
                     return;
                 }
 
-                if (transmissionMode == 0 && totalGenes <= this.Requirements.MaxBlockGenes)
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
                 {// Block mode
                     transmission.SetState_Receiving(totalGenes);
                 }
@@ -742,7 +742,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (!this.Requirements.CheckStreamLength(maxStreamLength))
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -763,12 +763,12 @@ Wait:
                 }
 
                 // New transmission
-                if (this.receiveReceivedList.Count >= this.Requirements.MaxTransmissions)
+                if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
                     return;
                 }
 
-                if (transmissionMode == 0 && totalGenes <= this.Requirements.MaxBlockGenes)
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
                 {// Block mode
                     transmission = new(this, transmissionId, default);
                     transmission.SetState_Receiving(totalGenes);
@@ -779,7 +779,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (!this.Requirements.CheckStreamLength(maxStreamLength))
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }

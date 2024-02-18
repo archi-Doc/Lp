@@ -13,9 +13,9 @@ public class ExampleConnectionContext : ServerConnectionContext
     {
     }
 
-    public override ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements agreement)
+    public override ConnectionAgreement RespondConnectionAgreement(ConnectionAgreement agreement)
     {
-        return this.ServerConnection.Requirements;
+        return this.ServerConnection.Agreement;
     }
 }
 
@@ -85,8 +85,8 @@ public class ServerConnectionContext
 
     #endregion
 
-    public virtual ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements requirements)
-        => this.ServerConnection.Requirements;
+    public virtual ConnectionAgreement RespondConnectionAgreement(ConnectionAgreement agreement)
+        => this.ServerConnection.Agreement;
 
     /*public virtual bool InvokeBidirectional(ulong dataId)
     {
@@ -167,7 +167,7 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.DataId == ConnectionRequirements.DataId)
+            if (transmissionContext.DataId == ConnectionAgreement.DataId)
             {
                 this.AgreementRequested(transmissionContext);
             }
@@ -269,7 +269,7 @@ SendNoNetService:
 
     private bool AgreementRequested(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<ConnectionRequirements>(transmissionContext.Owner.Memory.Span, out var t))
+        if (!TinyhandSerializer.TryDeserialize<ConnectionAgreement>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
             return false;
@@ -277,13 +277,13 @@ SendNoNetService:
 
         transmissionContext.Return();
 
-        var response = this.RespondConnectionRequirements(t);
-        if (response != this.ServerConnection.Requirements)
+        var response = this.RespondConnectionAgreement(t);
+        if (response != this.ServerConnection.Agreement)
         {
-            this.ServerConnection.Requirements.Accept(response);
+            this.ServerConnection.Agreement.Accept(response);
         }
 
-        transmissionContext.SendAndForget(response, ConnectionRequirements.DataId);
+        transmissionContext.SendAndForget(response, ConnectionAgreement.DataId);
         return true;
     }
 

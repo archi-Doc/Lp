@@ -135,7 +135,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = -1;
 
         var info = NetHelper.CalculateGene(maxLength);
-        var bufferGenes = Math.Min(this.Connection.Requirements.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
+        var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
 
         this.genes = new();
         this.genes.DataPositionListChain.Resize(bufferGenes);
@@ -274,7 +274,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {// Fast Ack
             if (completeFlag)
             {
-                if (this.Connection.Requirements.MaxTransmissions < 10)
+                if (this.Connection.Agreement.MaxTransmissions < 10)
                 {// Instant
                     this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack {this.totalGene}");
 

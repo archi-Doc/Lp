@@ -323,7 +323,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (!this.Requirements.CheckStreamLength(maxLength))
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -357,7 +357,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled, default);
         }
 
-        if (!this.Requirements.CheckStreamLength(maxLength))
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return new(NetResult.StreamLengthLimit, default);
         }
@@ -450,13 +450,13 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> RequestAgreement(ConnectionRequirements agreement)
+    public async Task<NetResult> RequestAgreement(ConnectionAgreement agreement)
     {
-        var result = await this.SendAndReceive<ConnectionRequirements, ConnectionRequirements>(agreement, ConnectionRequirements.DataId).ConfigureAwait(false);
+        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(agreement, ConnectionAgreement.DataId).ConfigureAwait(false);
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {
-            this.Requirements.Accept(result.Value);
+            this.Agreement.Accept(result.Value);
         }
 
         return result.Result;

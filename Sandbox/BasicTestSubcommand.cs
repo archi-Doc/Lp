@@ -51,10 +51,10 @@ public class CustomConnectionContext : ServerConnectionContext
         }
     }*/
 
-    public override ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements requirements)
+    public override ConnectionAgreement RespondConnectionAgreement(ConnectionAgreement agreement)
     {// Accept the request
-        requirements.Accept(this.ServerConnection.Requirements);
-        return requirements;
+        agreement.Accept(this.ServerConnection.Agreement);
+        return agreement;
     }
 }
 

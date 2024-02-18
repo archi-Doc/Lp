@@ -53,7 +53,7 @@ internal partial class PacketConnectResponse : IPacket
 
     public PacketConnectResponse()
     {
-        this.Agreement = ConnectionRequirements.Default;
+        this.Agreement = ConnectionAgreement.Default;
         this.ServerSalt = RandomVault.Crypto.NextUInt64();
         this.ServerSalt2 = RandomVault.Crypto.NextUInt64();
     }
@@ -75,5 +75,5 @@ internal partial class PacketConnectResponse : IPacket
     public ulong ServerSalt2 { get; set; }
 
     [Key(3)]
-    public ConnectionRequirements Agreement { get; set; }
+    public ConnectionAgreement Agreement { get; set; }
 }
