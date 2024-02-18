@@ -20,9 +20,8 @@ public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<Cer
         this.Target = default!;
     }
 
-    public CertificateToken(ulong salt, T target)
+    public CertificateToken(T target)
     {
-        this.Salt = salt;
         this.Target = target;
     }
 
