@@ -5,7 +5,7 @@ namespace Netsphere;
 /// <summary>
 /// Represents a result of network transmission.
 /// </summary>
-public enum NetResult
+public enum NetResult : byte
 {
     Success,
     UnknownException,

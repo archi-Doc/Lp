@@ -306,11 +306,18 @@ SendNoNetService:
         TinyhandSerializer.TryDeserialize<CertificateToken<ConnectionAgreement>>(transmissionContext.Owner.Memory.Span, out var token);
         transmissionContext.Return();
 
+        if (token?.Target.EnableBidirectionalConnection == false)
+        {
+            transmissionContext.SendAndForget(false, ConnectionAgreement.BidirectionalId);
+            return;
+        }
+
         _ = Task.Run(() =>
         {
             var result = this.RespondConnectBidirectionally(token);
             if (result)
             {
+                this.ServerConnection.Agreement.EnableBidirectionalConnection = true;
             }
 
             transmissionContext.SendAndForget(result, ConnectionAgreement.BidirectionalId);

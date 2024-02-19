@@ -804,6 +804,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!Netsphere.NetHelper.TryDeserialize<{method.GetParameterTypes()}>(context.Owner, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                ssb.AppendLine("context.Return();");
                 ssb.AppendLine("return;");
             }
         }

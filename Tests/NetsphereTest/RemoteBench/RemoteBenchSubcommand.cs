@@ -55,7 +55,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var privateKey = SignaturePrivateKey.Create();
-            var agreement = connection.Agreement with { AllowBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
+            var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
             var token = new CertificateToken<ConnectionAgreement>(agreement);
             connection.SignWithSalt(token, privateKey);
             connection.ValidateAndVerifyWithSalt(token);
@@ -71,7 +71,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             var r = await service.UpdateAgreement(token);
             await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-            if (await service.ConnectBidirectionally(token))
+            if (await service.ConnectBidirectionally(token) == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Register: Success");
             }

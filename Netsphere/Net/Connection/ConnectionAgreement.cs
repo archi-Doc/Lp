@@ -19,7 +19,7 @@ public partial record ConnectionAgreement
         this.MaxBlockSize = 4 * 1024 * 1024; // 4MB
         this.MaxStreamLength = 0; // Disabled
         this.StreamBufferSize = 8 * 1024 * 1024; // 8MB
-        this.AllowBidirectionalConnection = false; // Bidirectional communication is not allowed
+        this.EnableBidirectionalConnection = false; // Bidirectional communication is not allowed
         this.MinimumConnectionRetentionSeconds = 5; // 5 seconds
     }
 
@@ -63,7 +63,7 @@ public partial record ConnectionAgreement
     }
 
     [Key(4)]
-    public bool AllowBidirectionalConnection { get; set; }
+    public bool EnableBidirectionalConnection { get; set; }
 
     [Key(5)]
     public int MinimumConnectionRetentionSeconds { get; set; }
@@ -93,7 +93,7 @@ public partial record ConnectionAgreement
         }
 
         this.StreamBufferSize = Math.Max(this.StreamBufferSize, target.StreamBufferSize);
-        this.AllowBidirectionalConnection |= target.AllowBidirectionalConnection;
+        this.EnableBidirectionalConnection |= target.EnableBidirectionalConnection;
         this.MinimumConnectionRetentionSeconds = Math.Max(this.MinimumConnectionRetentionSeconds, target.MinimumConnectionRetentionSeconds);
     }
 

@@ -27,6 +27,21 @@ public static class NetHelper
     private static void ReturnBuffer(byte[] buffer)
         => arrayPool.Return(buffer);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool TryDeserializeNetResult(ReadOnlySpan<byte> span, out NetResult value)
+    {
+        if (span.Length == 1)
+        {
+            value = (NetResult)span[0];
+            return true;
+        }
+        else
+        {
+            value = default;
+            return false;
+        }
+    }
+
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {
         var buffer = RentBuffer();

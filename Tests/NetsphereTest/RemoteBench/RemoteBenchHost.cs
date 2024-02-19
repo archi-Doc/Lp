@@ -39,24 +39,24 @@ public class RemoteBenchHostImpl : IRemoteBenchHost
         return default;
     }
 
-    public async NetTask<bool> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    public async NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {
         if (token is null ||
            !TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return false;
+            return NetResult.NotAuthorized;
         }
 
-        return true;
+        return NetResult.Success;
     }
 
-    public async NetTask<bool> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    public async NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
         if (!TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return false;
+            return NetResult.NotAuthorized;
         }
 
-        return true;
+        return NetResult.Success;
     }
 }
