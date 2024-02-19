@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
 
@@ -449,9 +450,21 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> RequestAgreement(ConnectionAgreement agreement)
+    public async Task<NetResult> UpdateAgreement(ConnectionAgreement agreement)
     {
-        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(agreement, ConnectionAgreement.DataId).ConfigureAwait(false);
+        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(agreement, ConnectionAgreement.UpdateId).ConfigureAwait(false);
+        if (result.Result == NetResult.Success &&
+            result.Value is not null)
+        {
+            this.Agreement.AcceptAll(result.Value);
+        }
+
+        return result.Result;
+    }
+
+    public async NetTask<ConnectionAgreement?> InternalUpdateAgreement(CertificateToken<ConnectionAgreement>? token)
+    {
+        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(agreement, ConnectionAgreement.UpdateId).ConfigureAwait(false);
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {

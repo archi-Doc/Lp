@@ -6,7 +6,7 @@ using Netsphere.Net;
 namespace LP.NetServices;
 
 [NetServiceInterface]
-public interface IRemoteBenchHost : INetService
+public interface IRemoteBenchHost : INetService, INetServiceBidirectional
 {
     NetTask<byte[]?> Pingpong(byte[] data);
 

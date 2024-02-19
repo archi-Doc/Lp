@@ -46,8 +46,8 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             var privateKey = SignaturePrivateKey.Create();
             var agreement = connection.Agreement with { AllowBidirectionalConnection = true, ConnectionAliveSeconds = 300, };
             var token = new CertificateToken<ConnectionAgreement>(agreement);
-            connection.Sign(token, privateKey);
-            connection.ValidateAndVerify(token);
+            connection.SignWithSalt(token, privateKey);
+            connection.ValidateAndVerifyWithSalt(token);
 
             var serverConnection = connection.PrepareBidirectional();
             var service = connection.GetService<IRemoteBenchHost>();
@@ -61,6 +61,8 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }
+
+            var r = await service.OpenBidirectional(token);
 
             // connection.RequestAgreement();
             // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();

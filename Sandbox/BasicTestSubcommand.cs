@@ -50,7 +50,7 @@ public class CustomConnectionContext : ServerConnectionContext
         }
     }*/
 
-    public override ConnectionAgreement RespondConnectionAgreement(ConnectionAgreement agreement)
+    public override ConnectionAgreement RespondUpdateAgreement(ConnectionAgreement agreement)
     {// Accept the request
         agreement.AcceptAll(this.ServerConnection.Agreement);
         return agreement;

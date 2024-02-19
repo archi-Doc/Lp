@@ -26,7 +26,7 @@ internal class RemoteControlServiceImpl : RemoteControlService
     public async NetTask Authenticate(AuthenticationToken token)
     {// NetTask<NetResult> is recommended.
         if (TransmissionContext.Current.ServerConnection.DestinationEndPoint.IsPrivateOrLocalLoopbackAddress() &&
-            TransmissionContext.Current.ServerConnection.ValidateAndVerify(token) &&
+            TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
             token.PublicKey.Equals(this.control.LPBase.RemotePublicKey))
         {
             this.token = token;

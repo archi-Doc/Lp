@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
 using Netsphere.Net;
 
 namespace Netsphere.Server;
@@ -12,9 +13,14 @@ public class ExampleConnectionContext : ServerConnectionContext
     {
     }
 
-    public override ConnectionAgreement RespondConnectionAgreement(ConnectionAgreement agreement)
-    {
-        return this.ServerConnection.Agreement;
+    public override NetResult RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    {// Accept all agreement.
+        return NetResult.Success;
+    }
+
+    public override NetResult RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    {// Enable bidirectional connection.
+        return NetResult.Success;
     }
 }
 
@@ -84,8 +90,11 @@ public class ServerConnectionContext
 
     #endregion
 
-    public virtual ConnectionAgreement RespondConnectionAgreement(ConnectionAgreement agreement)
-        => this.ServerConnection.Agreement;
+    public virtual NetResult RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
+        => NetResult.NotAuthorized;
+
+    public virtual NetResult RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+        => NetResult.NotAuthorized;
 
     /*public virtual bool InvokeBidirectional(ulong dataId)
     {
@@ -166,9 +175,13 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.DataId == ConnectionAgreement.DataId)
+            if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
             {
-                this.AgreementRequested(transmissionContext);
+                this.UpdateAgreement(transmissionContext);
+            }
+            else if (transmissionContext.DataId == ConnectionAgreement.BidirectionalId)
+            {
+                this.ConnectBidirectionally(transmissionContext);
             }
             else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
@@ -266,23 +279,41 @@ SendNoNetService:
         return;
     }
 
-    private bool AgreementRequested(TransmissionContext transmissionContext)
+    private bool UpdateAgreement(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<ConnectionAgreement>(transmissionContext.Owner.Memory.Span, out var t))
+        if (!TinyhandSerializer.TryDeserialize<CertificateToken<ConnectionAgreement>>(transmissionContext.Owner.Memory.Span, out var token))
         {
             transmissionContext.Return();
             return false;
         }
 
         transmissionContext.Return();
-
-        var response = this.RespondConnectionAgreement(t);
-        if (response != this.ServerConnection.Agreement)
+        if (!this.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            this.ServerConnection.Agreement.AcceptAll(response);
+            return false;
         }
 
-        transmissionContext.SendAndForget(response, ConnectionAgreement.DataId);
+        var result = this.RespondUpdateAgreement(token.Target);
+        if (result == NetResult.Success)
+        {
+            this.ServerConnection.Agreement.AcceptAll(token.Target);
+        }
+
+        transmissionContext.SendAndForget(result, ConnectionAgreement.UpdateId);
+        return true;
+    }
+
+    private bool ConnectBidirectionally(TransmissionContext transmissionContext)
+    {
+        TinyhandSerializer.TryDeserialize<CertificateToken<ConnectionAgreement>>(transmissionContext.Owner.Memory.Span, out var token);
+        transmissionContext.Return();
+
+        var result = this.RespondConnectBidirectionally(token);
+        if (result == NetResult.Success)
+        {
+        }
+
+        transmissionContext.SendAndForget(result, ConnectionAgreement.BidirectionalId);
         return true;
     }
 

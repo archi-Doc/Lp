@@ -22,7 +22,7 @@ public class AuthorizedService : IAuthorizedService
 {
     public async NetTask<NetResult> Authenticate(AuthenticationToken token)
     {
-        if (TransmissionContext.Current.ServerConnection.ValidateAndVerify(token))
+        if (TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
             this.AuthenticationKey = token.PublicKey;
             this.Authenticated = true;

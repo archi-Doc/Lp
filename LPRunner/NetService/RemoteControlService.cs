@@ -23,7 +23,7 @@ internal class RemoteControlService : IRemoteControlService
 
     public async NetTask Authenticate(AuthenticationToken token)
     {
-        if (TransmissionContext.Current.ServerConnection.ValidateAndVerify(token) &&
+        if (TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
             token.PublicKey.Equals(this.information.RemotePublicKey))
         {
             this.token = token;

@@ -8,7 +8,8 @@ namespace Netsphere;
 public partial record ConnectionAgreement
 {
     public static readonly ConnectionAgreement Default = new();
-    internal const ulong DataId = 0x54074a0294a59b25;
+    internal const ulong UpdateId = 0x54074a0294a59b25;
+    internal const ulong BidirectionalId = 0x7432bf385bf192da;
 
     public ConnectionAgreement()
     {
