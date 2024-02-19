@@ -87,8 +87,6 @@ public class Program
             .Preload(context =>
             {
                 var original = context.GetOrCreateOptions<NetOptions>();
-                // original.EnableAlternative = true;
-                // original.Port = 49152;
 
                 NetOptions? options = default;
                 if (context.Arguments.TryGetOption("ns", out var nsArg))
@@ -173,9 +171,9 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
-        options.EnableAlternative = false;
+        options.EnableAlternative = true;
         await Console.Out.WriteLineAsync(options.ToString());
-        await unit.Run(options, true);
+        await unit.Run(options, true, x => new TestConnectionContext(x));
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
         netControl.Services.Register<IRemoteBenchRunner>();

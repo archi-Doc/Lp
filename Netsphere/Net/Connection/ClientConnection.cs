@@ -450,9 +450,22 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> UpdateAgreement(ConnectionAgreement agreement)
+    public async Task<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
-        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(agreement, ConnectionAgreement.UpdateId).ConfigureAwait(false);
+        var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>, NetResult>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
+        if (r.Result == NetResult.Success &&
+            r.Value == NetResult.Success)
+        {
+            this.Agreement.AcceptAll(token.Target);
+            this.ApplyAgreement();
+        }
+
+        return r.Result;
+    }
+
+    /*public async NetTask<ConnectionAgreement?> InternalUpdateAgreement(CertificateToken<ConnectionAgreement>? token)
+    {
+        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
         if (result.Result == NetResult.Success &&
             result.Value is not null)
         {
@@ -460,19 +473,7 @@ public sealed partial class ClientConnection : Connection
         }
 
         return result.Result;
-    }
-
-    public async NetTask<ConnectionAgreement?> InternalUpdateAgreement(CertificateToken<ConnectionAgreement>? token)
-    {
-        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(agreement, ConnectionAgreement.UpdateId).ConfigureAwait(false);
-        if (result.Result == NetResult.Success &&
-            result.Value is not null)
-        {
-            this.Agreement.AcceptAll(result.Value);
-        }
-
-        return result.Result;
-    }
+    }*/
 
     /*public async Task<NetResult> InvokeBidirectional(ulong dataId)
     {

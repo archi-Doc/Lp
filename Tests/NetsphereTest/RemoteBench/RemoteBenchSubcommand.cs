@@ -19,8 +19,19 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetNode.TryParse(options.Node, out var node))
+        /*if (!NetNode.TryParse(options.Node, out var node))
         {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
+            return;
+        }*/
+
+        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
+        {
+            return;
+        }
+
+        var node = await this.netControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        if (node is null)
+        {
             return;
         }
 
@@ -44,10 +55,12 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var privateKey = SignaturePrivateKey.Create();
-            var agreement = connection.Agreement with { AllowBidirectionalConnection = true, ConnectionAliveSeconds = 300, };
+            var agreement = connection.Agreement with { AllowBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
             var token = new CertificateToken<ConnectionAgreement>(agreement);
             connection.SignWithSalt(token, privateKey);
             connection.ValidateAndVerifyWithSalt(token);
+
+            var r = await connection.UpdateAgreement(token);
 
             var serverConnection = connection.PrepareBidirectional();
             var service = connection.GetService<IRemoteBenchHost>();
@@ -62,7 +75,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 return;
             }
 
-            var r = await service.OpenBidirectional(token);
+            var r2 = await service.OpenBidirectional(token);
 
             // connection.RequestAgreement();
             // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();

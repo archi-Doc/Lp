@@ -187,6 +187,7 @@ public class ConnectionTerminal
             else
             {
                 connection = new ClientConnection(serverConnection);
+                connection.Goshujin = this.clientConnections;
             }
 
             this.clientConnections.OpenListChain.AddLast(connection);
@@ -212,6 +213,7 @@ public class ConnectionTerminal
             else
             {
                 connection = new ServerConnection(clientConnection);
+                connection.Goshujin = this.serverConnections;
             }
 
             this.serverConnections.OpenListChain.AddLast(connection);

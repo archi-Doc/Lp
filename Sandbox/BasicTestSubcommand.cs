@@ -49,12 +49,6 @@ public class CustomConnectionContext : ServerConnectionContext
             }
         }
     }*/
-
-    public override ConnectionAgreement RespondUpdateAgreement(ConnectionAgreement agreement)
-    {// Accept the request
-        agreement.AcceptAll(this.ServerConnection.Agreement);
-        return agreement;
-    }
 }
 
 [SimpleCommand("basic")]

@@ -15,11 +15,22 @@ public class ExampleConnectionContext : ServerConnectionContext
 
     public override NetResult RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {// Accept all agreement.
+        if (!this.ServerConnection.ValidateAndVerifyWithSalt(token))
+        {
+            return NetResult.NotAuthorized;
+        }
+
         return NetResult.Success;
     }
 
     public override NetResult RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {// Enable bidirectional connection.
+        if (token is null ||
+            !this.ServerConnection.ValidateAndVerifyWithSalt(token))
+        {
+            return NetResult.NotAuthorized;
+        }
+
         return NetResult.Success;
     }
 }
@@ -95,18 +106,6 @@ public class ServerConnectionContext
 
     public virtual NetResult RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
         => NetResult.NotAuthorized;
-
-    /*public virtual bool InvokeBidirectional(ulong dataId)
-    {
-        if (dataId == 1)
-        {
-            this.ServerConnection.PrepareBidirectional();
-            _ = Task.Run(() => { });
-            return true;
-        }
-
-        return false;
-    }*/
 
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -279,42 +278,42 @@ SendNoNetService:
         return;
     }
 
-    private bool UpdateAgreement(TransmissionContext transmissionContext)
+    private void UpdateAgreement(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<CertificateToken<ConnectionAgreement>>(transmissionContext.Owner.Memory.Span, out var token))
         {
             transmissionContext.Return();
-            return false;
+            return;
         }
 
         transmissionContext.Return();
-        if (!this.ServerConnection.ValidateAndVerifyWithSalt(token))
-        {
-            return false;
-        }
 
-        var result = this.RespondUpdateAgreement(token.Target);
-        if (result == NetResult.Success)
+        _ = Task.Run(() =>
         {
-            this.ServerConnection.Agreement.AcceptAll(token.Target);
-        }
+            var result = this.RespondUpdateAgreement(token);
+            if (result == NetResult.Success)
+            {
+                //this.ServerConnection.Agreement.AcceptAll(token.Target);
+            }
 
-        transmissionContext.SendAndForget(result, ConnectionAgreement.UpdateId);
-        return true;
+            transmissionContext.SendAndForget(result, ConnectionAgreement.UpdateId);
+        });
     }
 
-    private bool ConnectBidirectionally(TransmissionContext transmissionContext)
+    private void ConnectBidirectionally(TransmissionContext transmissionContext)
     {
         TinyhandSerializer.TryDeserialize<CertificateToken<ConnectionAgreement>>(transmissionContext.Owner.Memory.Span, out var token);
         transmissionContext.Return();
 
-        var result = this.RespondConnectBidirectionally(token);
-        if (result == NetResult.Success)
+        _ = Task.Run(() =>
         {
-        }
+            var result = this.RespondConnectBidirectionally(token);
+            if (result == NetResult.Success)
+            {
+            }
 
-        transmissionContext.SendAndForget(result, ConnectionAgreement.BidirectionalId);
-        return true;
+            transmissionContext.SendAndForget(result, ConnectionAgreement.BidirectionalId);
+        });
     }
 
     private ServiceMethod? TryGetServiceMethod(ulong dataId)

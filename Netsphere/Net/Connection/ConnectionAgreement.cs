@@ -11,6 +11,8 @@ public partial record ConnectionAgreement
     internal const ulong UpdateId = 0x54074a0294a59b25;
     internal const ulong BidirectionalId = 0x7432bf385bf192da;
 
+    // public static ConnectionAgreement New() => Default with { };
+
     public ConnectionAgreement()
     {
         this.MaxTransmissions = 4; // 4 transmissions
@@ -18,7 +20,7 @@ public partial record ConnectionAgreement
         this.MaxStreamLength = 0; // Disabled
         this.StreamBufferSize = 8 * 1024 * 1024; // 8MB
         this.AllowBidirectionalConnection = false; // Bidirectional communication is not allowed
-        this.ConnectionAliveSeconds = 5; // 5 seconds
+        this.MinimumConnectionRetentionSeconds = 5; // 5 seconds
     }
 
     [Key(0)]
@@ -64,7 +66,7 @@ public partial record ConnectionAgreement
     public bool AllowBidirectionalConnection { get; set; }
 
     [Key(5)]
-    public int ConnectionAliveSeconds { get; set; }
+    public int MinimumConnectionRetentionSeconds { get; set; }
 
     [IgnoreMember]
     public int MaxBlockGenes { get; private set; }
@@ -92,7 +94,7 @@ public partial record ConnectionAgreement
 
         this.StreamBufferSize = Math.Max(this.StreamBufferSize, target.StreamBufferSize);
         this.AllowBidirectionalConnection |= target.AllowBidirectionalConnection;
-        this.ConnectionAliveSeconds = Math.Max(this.ConnectionAliveSeconds, target.ConnectionAliveSeconds);
+        this.MinimumConnectionRetentionSeconds = Math.Max(this.MinimumConnectionRetentionSeconds, target.MinimumConnectionRetentionSeconds);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

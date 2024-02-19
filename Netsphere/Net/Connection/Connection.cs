@@ -140,6 +140,8 @@ public abstract class Connection : IDisposable
         }
     }
 
+    public long ConnectionRetentionMics { get; set; }
+
     internal ILogger Logger { get; }
 
     internal int SendTransmissionsCount
@@ -182,6 +184,36 @@ public abstract class Connection : IDisposable
     internal int Taichi = 1;
 
     #endregion
+
+    public void ApplyAgreement()
+    {
+        var min = this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
+        if (this.ConnectionRetentionMics < min)
+        {
+            this.ConnectionRetentionMics = min;
+        }
+    }
+
+    public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+    {
+        value.Salt = this.Salt;
+        return value.Sign(privateKey);
+    }
+
+    public bool ValidateAndVerifyWithSalt<T>(T value)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+    {
+        if (value.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return NetHelper.ValidateAndVerify(value);
+    }
+
+    public void Close()
+        => this.Dispose();
 
     internal void ResetTaichi()
         => this.Taichi = 1;
@@ -244,27 +276,6 @@ public abstract class Connection : IDisposable
             }
         }
     }
-
-    public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        value.Salt = this.Salt;
-        return value.Sign(privateKey);
-    }
-
-    public bool ValidateAndVerifyWithSalt<T>(T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        if (value.Salt != this.Salt)
-        {
-            return false;
-        }
-
-        return NetHelper.ValidateAndVerify(value);
-    }
-
-    public void Close()
-        => this.Dispose();
 
     /*internal SendTransmission? TryCreateSendTransmission()
     {
@@ -467,6 +478,7 @@ Wait:
     {
         this.Agreement = agreement;
         this.embryo = embryo;
+        this.ApplyAgreement();
     }
 
     internal void AddRtt(int rttMics)
