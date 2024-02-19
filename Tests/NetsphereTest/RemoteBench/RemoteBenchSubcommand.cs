@@ -67,13 +67,16 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
             var service = connection.GetService<IRemoteBenchHost>();
-            if (await service.Register(token) == NetResult.Success)
+
+            var r = await service.UpdateAgreement(token);
+            await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+
+            if (await service.ConnectBidirectionally(token))
             {
                 this.logger.TryGet()?.Log($"Register: Success");
             }
             else
             {
-                serverConnection.Close();
                 this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }

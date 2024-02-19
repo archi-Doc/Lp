@@ -13,10 +13,10 @@ public interface INetService
 
 public interface INetServiceAgreement
 {
-    NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token);
+    NetTask<bool> UpdateAgreement(CertificateToken<ConnectionAgreement> token);
 }
 
 public interface INetServiceBidirectional
 {
-    NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token);
+    NetTask<bool> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token);
 }
