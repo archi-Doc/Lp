@@ -14,8 +14,8 @@ public class ServiceMethod
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
-    // NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
-    // NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    public const string ConnectBidirectionallyName = "Netsphere.INetServiceBidirectional.ConnectBidirectionally(Netsphere.Crypto.CertificateToken<Netsphere.ConnectionAgreement>)";
+    public const string UpdateAgreementName = "Netsphere.INetServiceAgreement.UpdateAgreement(Netsphere.Crypto.CertificateToken<Netsphere.ConnectionAgreement>)";
 
     public enum Type
     {
@@ -26,6 +26,13 @@ public class ServiceMethod
         ReceiveStream,
         SendStream,
         SendStreamAndReceive,
+    }
+
+    public enum MethodKind
+    {
+        Other,
+        UpdateAgreement,
+        ConnectBidirectionally,
     }
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
@@ -100,6 +107,15 @@ public class ServiceMethod
             }
         }
 
+        if (method.FullName == UpdateAgreementName)
+        {
+            serviceMethod.Kind = MethodKind.UpdateAgreement;
+        }
+        else if (method.FullName == ConnectBidirectionallyName)
+        {
+            serviceMethod.Kind = MethodKind.ConnectBidirectionally;
+        }
+
         return serviceMethod;
     }
 
@@ -131,6 +147,8 @@ public class ServiceMethod
     public Type ReturnType { get; private set; }
 
     public string StreamTypeArgument { get; private set; } = string.Empty;
+
+    public MethodKind Kind { get; private set; }
 
     public string GetParameters()
     {// int a1, string a2
