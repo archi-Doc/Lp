@@ -64,7 +64,7 @@ public sealed partial class ServerConnection : Connection
         where TContext : ServerConnectionContext
         => (TContext)this.context;
 
-    public ClientConnection PrepareBidirectional()
+    public ClientConnection PrepareBidirectionally()
     {
         if (this.BidirectionalConnection is { } connection)
         {
@@ -72,7 +72,7 @@ public sealed partial class ServerConnection : Connection
         }
         else
         {
-            return this.ConnectionTerminal.PrepareBidirectional(this);
+            return this.ConnectionTerminal.PrepareBidirectionally(this);
         }
     }
 }

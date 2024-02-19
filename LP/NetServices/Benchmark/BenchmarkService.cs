@@ -18,7 +18,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
     public async NetTask<NetResult> Register()
     {
         this.remoteBenchBroker.Register(TransmissionContext.Current.ServerConnection.DestinationNode);
-        TransmissionContext.Current.ServerConnection.PrepareBidirectional();
+        TransmissionContext.Current.ServerConnection.PrepareBidirectionally();
         return NetResult.Success;
     }
 

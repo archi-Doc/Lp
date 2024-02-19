@@ -452,12 +452,24 @@ public sealed partial class ClientConnection : Connection
 
     public async Task<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
-        var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>, NetResult>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
-        if (r.Result == NetResult.Success &&
-            r.Value == NetResult.Success)
+        var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>, bool>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
+        if (r.Result == NetResult.Success && r.Value)
         {
             this.Agreement.AcceptAll(token.Target);
             this.ApplyAgreement();
+        }
+
+        return r.Result;
+    }
+
+    public async Task<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    {
+        this.PrepareBidirectionally(); // Create the ServerConnection in advance, as packets may not arrive in order.
+
+        var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>?, bool>(token, ConnectionAgreement.BidirectionalId).ConfigureAwait(false);
+        if (r.Result == NetResult.Success && r.Value)
+        {
+            this.Agreement.AllowBidirectionalConnection = true;
         }
 
         return r.Result;
@@ -486,7 +498,7 @@ public sealed partial class ClientConnection : Connection
         return r.Result;
     }*/
 
-    public ServerConnection PrepareBidirectional()
+    public ServerConnection PrepareBidirectionally()
     {
         if (this.BidirectionalConnection is { } connection)
         {
@@ -494,7 +506,7 @@ public sealed partial class ClientConnection : Connection
         }
         else
         {
-            return this.ConnectionTerminal.PrepareBidirectional(this);
+            return this.ConnectionTerminal.PrepareBidirectionally(this);
         }
     }
 }

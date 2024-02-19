@@ -60,9 +60,12 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             connection.SignWithSalt(token, privateKey);
             connection.ValidateAndVerifyWithSalt(token);
 
-            var r = await connection.UpdateAgreement(token);
+            // var r = await connection.UpdateAgreement(token);
+            // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-            var serverConnection = connection.PrepareBidirectional();
+            // var r = await connection.ConnectBidirectionally(token);
+            // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+
             var service = connection.GetService<IRemoteBenchHost>();
             if (await service.Register(token) == NetResult.Success)
             {
@@ -75,7 +78,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 return;
             }
 
-            var r2 = await service.OpenBidirectional(token);
+            var r2 = await service.ConnectBidirectionally(token);
 
             // connection.RequestAgreement();
             // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();

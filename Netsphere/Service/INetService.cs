@@ -18,5 +18,5 @@ public interface INetServiceAgreement
 
 public interface INetServiceBidirectional
 {
-    NetTask<NetResult> OpenBidirectional(CertificateToken<ConnectionAgreement>? token);
+    NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token);
 }

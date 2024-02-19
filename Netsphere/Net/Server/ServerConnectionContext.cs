@@ -13,25 +13,25 @@ public class ExampleConnectionContext : ServerConnectionContext
     {
     }
 
-    public override NetResult RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    public override bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {// Accept all agreement.
         if (!this.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return NetResult.NotAuthorized;
+            return false;
         }
 
-        return NetResult.Success;
+        return true;
     }
 
-    public override NetResult RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    public override bool RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {// Enable bidirectional connection.
         if (token is null ||
             !this.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return NetResult.NotAuthorized;
+            return false;
         }
 
-        return NetResult.Success;
+        return true;
     }
 }
 
@@ -101,11 +101,11 @@ public class ServerConnectionContext
 
     #endregion
 
-    public virtual NetResult RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
-        => NetResult.NotAuthorized;
+    public virtual bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
+        => false;
 
-    public virtual NetResult RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
-        => NetResult.NotAuthorized;
+    public virtual bool RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+        => false;
 
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -291,9 +291,10 @@ SendNoNetService:
         _ = Task.Run(() =>
         {
             var result = this.RespondUpdateAgreement(token);
-            if (result == NetResult.Success)
+            if (result)
             {
-                //this.ServerConnection.Agreement.AcceptAll(token.Target);
+                this.ServerConnection.Agreement.AcceptAll(token.Target);
+                this.ServerConnection.ApplyAgreement();
             }
 
             transmissionContext.SendAndForget(result, ConnectionAgreement.UpdateId);
@@ -308,7 +309,7 @@ SendNoNetService:
         _ = Task.Run(() =>
         {
             var result = this.RespondConnectBidirectionally(token);
-            if (result == NetResult.Success)
+            if (result)
             {
             }
 

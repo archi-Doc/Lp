@@ -173,7 +173,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal ClientConnection PrepareBidirectional(ServerConnection serverConnection)
+    internal ClientConnection PrepareBidirectionally(ServerConnection serverConnection)
     {
         lock (this.clientConnections.SyncObject)
         {
@@ -199,7 +199,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal ServerConnection PrepareBidirectional(ClientConnection clientConnection)
+    internal ServerConnection PrepareBidirectionally(ClientConnection clientConnection)
     {
         lock (this.serverConnections.SyncObject)
         {
