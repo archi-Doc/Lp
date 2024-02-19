@@ -14,6 +14,8 @@ public class ServiceMethod
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
+    // NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    // NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
 
     public enum Type
     {
@@ -120,7 +122,7 @@ public class ServiceMethod
 
     public string IdString => $"0x{this.Id:x}ul";
 
-    public string MethodString => $"Method_{this.MethodId:x}";
+    public string MethodString => $"Method_{this.Id:x}";
 
     public WithNullable<NetsphereObject>? ReturnObject { get; internal set; }
 

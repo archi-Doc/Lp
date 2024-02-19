@@ -113,7 +113,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         RandomVault.Pseudo.NextBytes(data);
 
         var sw = Stopwatch.StartNew();
-        var response = await service.GetHash(data).ResponseAsync;
+        var response = await ((IRemoteBenchService)service).GetHash(data).ResponseAsync;
         sw.Stop();
 
         Console.WriteLine(response);

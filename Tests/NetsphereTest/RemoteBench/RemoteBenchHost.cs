@@ -4,15 +4,10 @@ using Netsphere.Server;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchHostImpl : IRemoteBenchHost
+public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 {
     public RemoteBenchHostImpl()
     {
-    }
-
-    public async NetTask<NetResult> Register()
-    {
-        return NetResult.NoNetService;
     }
 
     public async NetTask<NetResult> Start(int total, int concurrent)
@@ -29,7 +24,7 @@ public class RemoteBenchHostImpl : IRemoteBenchHost
         return data;
     }
 
-    public async NetTask<ulong> GetHash(byte[] data)
+    async NetTask<ulong> IRemoteBenchService.GetHash(byte[] data)
     {
         return 0;
     }
