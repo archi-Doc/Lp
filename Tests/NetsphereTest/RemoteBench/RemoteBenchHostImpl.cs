@@ -35,10 +35,18 @@ public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 
     public async NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {
+        var context = TransmissionContext.Current;
         if (token is null ||
-           !TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
+           !context.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
             return NetResult.NotAuthorized;
+        }
+
+        var clientConnection = context.ServerConnection.PrepareBidirectionalConnection();
+        var service = clientConnection.GetService<IRemoteBenchRunner>();
+        if (service is not null)
+        {
+            var result = await service.Start(100, 10);
         }
 
         return NetResult.Success;

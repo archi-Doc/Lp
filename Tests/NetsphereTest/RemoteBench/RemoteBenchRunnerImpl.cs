@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Unit;
+using NetsphereTest;
 
 namespace LP.NetServices;
 
@@ -51,7 +52,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
         this.logger.TryGet()?.Log($"Benchmark {transmissionContext.ServerConnection.DestinationNode.ToString()}, Total/Concurrent: {total}/{concurrent}");
 
         var serverConnection = transmissionContext.ServerConnection;
-        var connectionContext = serverConnection.GetContext();
+        var connectionContext = serverConnection.GetContext<TestConnectionContext>();
         var clientConnection = serverConnection.PrepareBidirectionalConnection();
 
         var data = new byte[100];
@@ -124,5 +125,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
         await service.Report(record);
 
         this.logger.TryGet()?.Log(record.ToString());
+
+        connectionContext.Terminate();
     }
 }

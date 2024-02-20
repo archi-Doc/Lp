@@ -47,39 +47,53 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
         // await this.TestPingpong(node);
 
-        using (var connection = await this.netControl.NetTerminal.TryConnect(node))
+        var connection = await this.netControl.NetTerminal.TryConnect(node);
+        if (connection is null)
         {
-            if (connection is null)
-            {
-                return;
-            }
+            return;
+        }
 
-            var privateKey = SignaturePrivateKey.Create();
-            var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
-            var token = new CertificateToken<ConnectionAgreement>(agreement);
-            connection.SignWithSalt(token, privateKey);
-            connection.ValidateAndVerifyWithSalt(token);
+        var privateKey = SignaturePrivateKey.Create();
+        var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
+        var token = new CertificateToken<ConnectionAgreement>(agreement);
+        connection.SignWithSalt(token, privateKey);
+        connection.ValidateAndVerifyWithSalt(token);
 
-            // var r = await connection.UpdateAgreement(token);
-            // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+        // var r = await connection.UpdateAgreement(token);
+        // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-            // var r = await connection.ConnectBidirectionally(token);
-            // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+        // var r = await connection.ConnectBidirectionally(token);
+        // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-            var service = connection.GetService<IRemoteBenchHost>();
+        var service = connection.GetService<IRemoteBenchHost>();
 
-            // var r = await service.UpdateAgreement(token);
-            // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+        // var r = await service.UpdateAgreement(token);
+        // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-            if (await service.ConnectBidirectionally(token) == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log($"Register: Success");
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"Register: Failure");
-                return;
-            }
+        if (await service.ConnectBidirectionally(token) == NetResult.Success)
+        {
+            this.logger.TryGet()?.Log($"Register: Success");
+        }
+        else
+        {
+            this.logger.TryGet()?.Log($"Register: Failure");
+            return;
+        }
+
+        var serverConnection = connection.BidirectionalConnection;
+        if (serverConnection is null)
+        {
+            return;
+        }
+
+        var context = serverConnection.GetContext<TestConnectionContext>();
+
+        try
+        {
+            await Task.Delay(10_000, context.CancellationToken);
+        }
+        catch
+        {
         }
 
         /*while (true)
