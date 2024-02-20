@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
-using Arc.Unit;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -34,7 +32,7 @@ public abstract class Connection : IDisposable
         NoReuse,
     }
 
-    public enum ConnectionState
+    public enum State
     {
         Open,
         Closed,
@@ -53,6 +51,7 @@ public abstract class Connection : IDisposable
 
         this.smoothedRtt = DefaultRtt;
         this.minimumRtt = 0;
+        this.UpdateLastEventMics();
     }
 
     public Connection(Connection connection)
@@ -87,23 +86,23 @@ public abstract class Connection : IDisposable
 
     public ConnectionAgreement Agreement { get; private set; } = ConnectionAgreement.Default;
 
-    public ConnectionState State { get; internal set; }
+    public State CurrentState { get; private set; }
 
     public abstract bool IsClient { get; }
 
     public abstract bool IsServer { get; }
 
     public bool IsOpen
-        => this.State == ConnectionState.Open;
+        => this.CurrentState == State.Open;
 
     public bool IsClosed
-        => this.State == ConnectionState.Closed;
+        => this.CurrentState == State.Closed;
 
     public bool IsDisposed
-        => this.State == ConnectionState.Disposed;
+        => this.CurrentState == State.Disposed;
 
     public bool IsClosedOrDisposed
-        => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
+        => this.CurrentState == State.Closed || this.CurrentState == State.Disposed;
 
     public int SmoothedRtt
         => this.smoothedRtt;
@@ -146,7 +145,7 @@ public abstract class Connection : IDisposable
     internal int SendTransmissionsCount
         => this.sendTransmissions.Count;
 
-    internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
+    internal long LastEventMics { get; private set; } // When any packet, including an Ack, is received, it's updated to the latest time.
 
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
@@ -183,6 +182,13 @@ public abstract class Connection : IDisposable
     internal int Taichi = 1;
 
     #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ChangeState(State state)
+    {
+        this.CurrentState = state;
+        this.UpdateLastEventMics();
+    }
 
     public void ApplyAgreement()
     {
@@ -227,7 +233,11 @@ public abstract class Connection : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void UpdateLatestAckMics()
+    internal void UpdateLastEventMics()
+        => this.LastEventMics = Mics.FastSystem;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateLatestAckMics()//
         => this.latestAckMics = Mics.FastSystem;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -590,7 +600,7 @@ Wait:
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// endPoint: Checked
-        if (this.State == ConnectionState.Disposed)
+        if (this.CurrentState == State.Disposed)
         {
             return;
         }
@@ -622,7 +632,7 @@ Wait:
                 return;
             }
 
-            this.ResponseSystemMics = Mics.FastSystem;
+            this.LastEventMics = Mics.FastSystem;
 
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
@@ -1032,13 +1042,8 @@ Wait:
     }
 
     internal void DisposeActual()
-    {// lock (this.Goshujin.SyncObject)
-        this.Logger.TryGet(LogLevel.Debug)?.Log($"{this.ConnectionIdText} Dispose actual, SendCloseFrame {this.State == ConnectionState.Open}");
-
-        if (this.State == ConnectionState.Open)
-        {
-            this.SendCloseFrame();
-        }
+    {
+        // this.Logger.TryGet(LogLevel.Debug)?.Log($"{this.ConnectionIdText} Dispose actual");
 
         lock (this.syncAes)
         {
@@ -1046,7 +1051,7 @@ Wait:
             this.aes1?.Dispose();
         }
 
-        this.CloseTransmission();
+        // this.CloseTransmission();
     }
 
     public override string ToString()
