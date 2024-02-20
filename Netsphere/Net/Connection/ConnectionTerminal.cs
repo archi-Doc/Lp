@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
+using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
@@ -62,48 +62,68 @@ public class ConnectionTerminal
     {
         var systemCurrentMics = Mics.GetSystem();
 
+        (UnorderedMap<NetEndPoint, ClientConnection>.Node[] Nodes, int Max) client;
         lock (this.clientConnections.SyncObject)
         {
-            // Close unused client connections
-            while (this.clientConnections.OpenListChain.First is { } clientConnection &&
-                clientConnection.ResponseSystemMics + NetConstants.ConnectionOpenToClosedMics < systemCurrentMics)
-            {
-                clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+            client = this.clientConnections.DestinationEndPointChain.UnsafeGetNodes();
+        }
 
-                clientConnection.SendCloseFrame();
-                this.CloseClientConnection(this.clientConnections, clientConnection);
-                clientConnection.CloseTransmission();
-            }
-
-            // Dispose closed client connections
-            while (this.clientConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + NetConstants.ConnectionClosedToDisposalMics < systemCurrentMics)
+        for (var i = 0; i < client.Max; i++)
+        {
+            if (client.Nodes[i].Value is { } clientConnection)
             {
-                // Console.WriteLine($"Disposed: {connection.ToString()}");
-                connection.Goshujin = null;
-                connection.DisposeActual();
+                Debug.Assert(!clientConnection.IsDisposed);
+                if (clientConnection.IsOpen)
+                {
+                    if (clientConnection.ResponseSystemMics + clientConnection.ConnectionRetentionMics < systemCurrentMics)
+                    {// Open -> Closed
+                        clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+
+                        clientConnection.SendCloseFrame();
+                        this.CloseClientConnection(this.clientConnections, clientConnection);
+                        clientConnection.CloseTransmission();
+                    }
+                }
+                else if (clientConnection.IsClosed)
+                {// Closed -> Dispose
+                    if (clientConnection.ResponseSystemMics + NetConstants.ConnectionClosedToDisposalMics < systemCurrentMics)
+                    {
+                        clientConnection.Goshujin = null;
+                        clientConnection.DisposeActual();
+                    }
+                }
             }
         }
 
+        (UnorderedMap<NetEndPoint, ServerConnection>.Node[] Nodes, int Max) server;
         lock (this.serverConnections.SyncObject)
         {
-            // Close unused server connections
-            while (this.serverConnections.OpenListChain.First is { } serverConnection &&
-                serverConnection.ResponseSystemMics + NetConstants.ConnectionOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
-            {
-                serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
-                serverConnection.SendCloseFrame();
-                this.CloseServerConnection(this.serverConnections, serverConnection);
-                serverConnection.CloseTransmission();
-            }
+            server = this.serverConnections.DestinationEndPointChain.UnsafeGetNodes();
+        }
 
-            // Dispose closed server connections
-            while (this.serverConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + NetConstants.ConnectionClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
+        for (var i = 0; i < server.Max; i++)
+        {
+            if (server.Nodes[i].Value is { } serverConnection)
             {
-                // Console.WriteLine($"Disposed: {connection.ToString()}");
-                connection.Goshujin = null;
-                connection.DisposeActual();
+                Debug.Assert(!serverConnection.IsDisposed);
+                if (serverConnection.IsOpen)
+                {
+                    if (serverConnection.ResponseSystemMics + serverConnection.ConnectionRetentionMics < systemCurrentMics)
+                    {// Open -> Closed
+                        serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
+                        serverConnection.SendCloseFrame();
+                        this.CloseServerConnection(this.serverConnections, serverConnection);
+                        serverConnection.CloseTransmission();
+                    }
+                }
+                else if (serverConnection.IsClosed)
+                {// Closed -> Dispose
+                    if (serverConnection.ResponseSystemMics + NetConstants.ConnectionClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
+                    {
+                        serverConnection.Goshujin = null;
+                        serverConnection.DisposeActual();
+                    }
+                }
             }
         }
     }

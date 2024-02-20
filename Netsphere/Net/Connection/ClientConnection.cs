@@ -11,10 +11,7 @@ namespace Netsphere;
 public sealed partial class ClientConnection : Connection, IClientConnectionInternal
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "DestinationEndPoint")]
-    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "DestinationEndPoint")]
-    [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
-    [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
+    [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
     internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
@@ -29,25 +26,6 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     }
 
     #region FieldAndProperty
-
-    public override ConnectionState State
-    {
-        get
-        {
-            if (this.OpenEndPointLink.IsLinked)
-            {
-                return ConnectionState.Open;
-            }
-            else if (this.ClosedEndPointLink.IsLinked)
-            {
-                return ConnectionState.Closed;
-            }
-            else
-            {
-                return ConnectionState.Disposed;
-            }
-        }
-    }
 
     public override bool IsClient => true;
 

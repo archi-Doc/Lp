@@ -36,7 +36,6 @@ public abstract class Connection : IDisposable
 
     public enum ConnectionState
     {
-        Created,
         Open,
         Closed,
         Disposed,
@@ -88,7 +87,7 @@ public abstract class Connection : IDisposable
 
     public ConnectionAgreement Agreement { get; private set; } = ConnectionAgreement.Default;
 
-    public abstract ConnectionState State { get; }
+    public ConnectionState State { get; internal set; }
 
     public abstract bool IsClient { get; }
 
@@ -147,8 +146,8 @@ public abstract class Connection : IDisposable
     internal int SendTransmissionsCount
         => this.sendTransmissions.Count;
 
-    internal long ClosedSystemMics;
     internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
+
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
