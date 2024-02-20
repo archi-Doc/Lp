@@ -46,7 +46,7 @@ public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
         var service = clientConnection.GetService<IRemoteBenchRunner>();
         if (service is not null)
         {
-            var result = await service.Start(100, 10);
+            var result = await service.Start(10_000, 20);
         }
 
         return NetResult.Success;
