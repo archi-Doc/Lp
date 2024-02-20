@@ -171,7 +171,6 @@ public abstract class Connection : IDisposable
     private int rttvar; // Rtt variation (mics)
     private int sendCount;
     private int resendCount;
-    private long latestAckMics;
 
     // Ack
     internal long AckMics; // lock(AckBuffer.syncObject)
@@ -234,10 +233,6 @@ public abstract class Connection : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateLastEventMics()
         => this.LastEventMics = Mics.FastSystem;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void UpdateLatestAckMics()//
-        => this.latestAckMics = Mics.FastSystem;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ICongestionControl GetCongestionControl()
@@ -570,7 +565,7 @@ Wait:
         var transmission = node.Value;
         Debug.Assert(transmission.SendNode == node);
 
-        if (Mics.FastSystem - this.latestAckMics > NetConstants.TransmissionTimeoutMics)
+        if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
         {// Timeout
             this.CloseTransmission();
             this.Dispose();
@@ -678,7 +673,7 @@ Wait:
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
-                        this.UpdateLatestAckMics();
+                        this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckRama();
                     }
                     else
@@ -705,7 +700,7 @@ Wait:
 
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
-                        this.UpdateLatestAckMics();
+                        this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckBlock(maxReceivePosition, successiveReceivedPosition, span, numberOfPairs);
                     }
                     else
