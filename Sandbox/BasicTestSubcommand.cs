@@ -213,6 +213,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
 
                 Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
+
+                // await Task.Delay(12_000);
             }
         }
 
