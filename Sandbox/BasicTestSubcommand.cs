@@ -91,7 +91,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");*/
 
-        var netNode = await netTerminal.UnsafeGetNetNodeAsync(netAddress);
+        var netNode = await netTerminal.UnsafeGetNetNode(netAddress);
         if (netNode is null)
         {
             return;

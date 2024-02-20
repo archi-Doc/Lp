@@ -29,14 +29,6 @@ public sealed class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
-            /*var udp = core.socket.UnsafeUdpClient;
-            if (udp == null)
-            {
-                return;
-            }
-
-            udp.Client.Blocking = false;*/
-
             ByteArrayPool.Owner? arrayOwner = null;
             while (!core.IsTerminated)
             {
@@ -103,9 +95,6 @@ public sealed class NetSocket
         }
         catch
         {
-            // this.Logger?.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
-            // throw new PanicException();
-
             return false;
         }
 

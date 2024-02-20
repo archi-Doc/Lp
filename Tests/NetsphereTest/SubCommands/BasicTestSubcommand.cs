@@ -22,7 +22,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        var node = await this.NetControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        var node = await this.NetControl.NetTerminal.UnsafeGetNetNode(address);
         if (node is null)
         {
             return;

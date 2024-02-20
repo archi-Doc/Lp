@@ -29,7 +29,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        var node = await this.netControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        var node = await this.netControl.NetTerminal.UnsafeGetNetNode(address);
         if (node is null)
         {
             return;
