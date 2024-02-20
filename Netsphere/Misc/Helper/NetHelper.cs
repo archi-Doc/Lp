@@ -42,6 +42,14 @@ public static class NetHelper
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SerializeNetResult(NetResult value, out ByteArrayPool.MemoryOwner owner)
+    {
+        var buffer = RentBuffer();
+        buffer[0] = (byte)value;
+        owner = new ByteArrayPool.MemoryOwner(buffer, 0, 1);
+    }
+
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {
         var buffer = RentBuffer();

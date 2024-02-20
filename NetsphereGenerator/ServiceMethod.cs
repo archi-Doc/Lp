@@ -14,12 +14,14 @@ public class ServiceMethod
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
+    public const string NetResultName = "Netsphere.NetResult";
     public const string ConnectBidirectionallyName = "Netsphere.INetServiceBidirectional.ConnectBidirectionally(Netsphere.Crypto.CertificateToken<Netsphere.ConnectionAgreement>)";
     public const string UpdateAgreementName = "Netsphere.INetServiceAgreement.UpdateAgreement(Netsphere.Crypto.CertificateToken<Netsphere.ConnectionAgreement>)";
 
     public enum Type
     {
         Other,
+        NetResult,
         ByteArray,
         MemoryOwner,
         ReadOnlyMemoryOwner,
@@ -262,6 +264,7 @@ public class ServiceMethod
 
     private static Type NameToType(string? name) => name switch
     {
+        NetResultName => Type.NetResult,
         ByteArrayName => Type.ByteArray,
         MemoryOwnerName => Type.MemoryOwner,
         ReadOnlyMemoryOwnerName => Type.ReadOnlyMemoryOwner,

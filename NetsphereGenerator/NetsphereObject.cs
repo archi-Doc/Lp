@@ -511,7 +511,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     return;
                 }
 
-                if (method.ParameterType == ServiceMethod.Type.ByteArray)
+                if (method.ParameterType == ServiceMethod.Type.NetResult)
+                {
+                    ssb.AppendLine($"NetHelper.SerializeNetResult(a1, out var owner);");
+                }
+                else if (method.ParameterType == ServiceMethod.Type.ByteArray)
                 {
                     ssb.AppendLine($"var owner = new {ServiceMethod.MemoryOwnerName}(a1);");
                 }
@@ -529,7 +533,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    using (var scopeSerialize = ssb.ScopeBrace($"if (!Netsphere.NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
+                    using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
                     {
                         AppendReturn("NetResult.SerializationError");
                     }
@@ -557,7 +561,17 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     }
 
                     ssb.AppendLine();
-                    if (method.ReturnType == ServiceMethod.Type.ByteArray)
+                    if (method.ReturnType == ServiceMethod.Type.NetResult)
+                    {
+                        using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))"))
+                        {
+                            AppendReturn("NetResult.DeserializationError");
+                        }
+
+                        ssb.AppendLine();
+                        ssb.AppendLine("response.Value.Return();");
+                    }
+                    else if (method.ReturnType == ServiceMethod.Type.ByteArray)
                     {
                         ssb.AppendLine("var result = response.Value.Memory.ToArray();");
                         ssb.AppendLine("response.Value.Return();");
@@ -789,7 +803,16 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_MethodCore(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
-        if (method.ParameterType == ServiceMethod.Type.ByteArray)
+        if (method.ParameterType == ServiceMethod.Type.NetResult)
+        {
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(context.Owner, out var value))"))
+            {
+                ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                ssb.AppendLine("context.Return();");
+                ssb.AppendLine("return;");
+            }
+        }
+        else if (method.ParameterType == ServiceMethod.Type.ByteArray)
         {// byte[]
             ssb.AppendLine("var value = context.Owner.Memory.ToArray();");
         }
@@ -812,7 +835,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!Netsphere.NetHelper.TryDeserialize<{method.GetParameterTypes()}>(context.Owner, out var value))"))
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes()}>(context.Owner, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationError;");
                 ssb.AppendLine("context.Return();");
@@ -859,6 +882,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {// NetTask
             ssb.AppendLine($"context.Owner = {ServiceMethod.MemoryOwnerName}.Empty;");
         }
+        else if (method.ReturnType == ServiceMethod.Type.NetResult)
+        {
+            ssb.AppendLine($"NetHelper.SerializeNetResult(result, out var owner2);");
+            ssb.AppendLine("context.Owner = owner2;");
+        }
         else if (method.ReturnType == ServiceMethod.Type.ByteArray)
         {// byte[] result;
             ssb.AppendLine($"context.Owner = result != null ? new {ServiceMethod.MemoryOwnerName}(result) : default;");
@@ -878,7 +906,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {// Other
-            using (var scopeSerialize = ssb.ScopeBrace($"if (Netsphere.NetHelper.TrySerialize(result, out var owner2))"))
+            using (var scopeSerialize = ssb.ScopeBrace($"if (NetHelper.TrySerialize(result, out var owner2))"))
             {
                 ssb.AppendLine("context.Owner = owner2;");
             }
