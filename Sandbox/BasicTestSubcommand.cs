@@ -77,6 +77,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.Responders.Register(TestStreamResponder.Instance);
         this.NetControl.Services.Register<TestService>();
 
+        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
+
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
@@ -214,7 +216,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
 
-                // await Task.Delay(12_000);
+                await Task.Delay(20_000);
             }
         }
 

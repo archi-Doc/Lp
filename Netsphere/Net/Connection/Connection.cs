@@ -8,7 +8,6 @@ using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using static Netsphere.Net.AckBuffer;
 
 #pragma warning disable SA1202
 #pragma warning disable SA1214
@@ -176,7 +175,7 @@ public abstract class Connection : IDisposable
 
     // Ack
     internal long AckMics; // lock(AckBuffer.syncObject)
-    internal Queue<ReceiveTransmissionAndAckGene>? AckQueue; // lock(AckBuffer.syncObject)
+    internal Queue<AckBuffer.ReceiveTransmissionAndAckGene>? AckQueue; // lock(AckBuffer.syncObject)
 
     // Connection lost
     internal int Taichi = 1;
