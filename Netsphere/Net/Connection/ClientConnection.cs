@@ -483,11 +483,11 @@ public sealed partial class ClientConnection : Connection
         return r.Result;
     }
 
-    public async NetTask<NetResult> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
+    public async Task<ServiceResponse<NetResult>> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return NetResult.SerializationError;
+            return new (NetResult.SerializationError, NetResult.SerializationError);
         }
 
         var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
@@ -497,12 +497,12 @@ public sealed partial class ClientConnection : Connection
         {
             if (response.Result != NetResult.Success)
             {
-                return response.Result;
+                return new(response.Result, response.Result);
             }
 
             if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
             {
-                return NetResult.DeserializationError;
+                return new(NetResult.DeserializationError, NetResult.DeserializationError);
             }
 
             if (result == NetResult.Success)
@@ -511,7 +511,7 @@ public sealed partial class ClientConnection : Connection
                 this.ApplyAgreement();
             }
 
-            return result;
+            return new(result, result);
         }
         finally
         {

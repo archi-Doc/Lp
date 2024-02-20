@@ -485,6 +485,12 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine($"return new {taskString}(Core());");
             ssb.AppendLine();
 
+            if (method.Kind == ServiceMethod.MethodKind.UpdateAgreement)
+            {
+                ssb.AppendLine($"Task<ServiceResponse{genericString}> Core() => this.ClientConnection.InternalUpdateAgreement({method.IdString}, a1);");
+                return;
+            }
+
             using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {
                 if (method.ReturnType == ServiceMethod.Type.SendStream)
