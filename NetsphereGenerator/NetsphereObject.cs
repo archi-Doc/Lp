@@ -878,6 +878,23 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }*/
 
         ssb.AppendLine("context.Return();");
+
+        if (method.Kind == ServiceMethod.MethodKind.UpdateAgreement)
+        {
+            using (var scopeIf = ssb.ScopeBrace($"if (result == NetResult.Success)"))
+            {
+                ssb.AppendLine("context.ServerConnection.Agreement.AcceptAll(value.Target);");
+                ssb.AppendLine("context.ServerConnection.ApplyAgreement();");
+            }
+        }
+        else if (method.Kind == ServiceMethod.MethodKind.ConnectBidirectionally)
+        {
+            using (var scopeIf = ssb.ScopeBrace($"if (result == NetResult.Success)"))
+            {
+                ssb.AppendLine("context.ServerConnection.Agreement.EnableBidirectionalConnection = true;");
+            }
+        }
+
         if (method.ReturnObject == null)
         {// NetTask
             ssb.AppendLine($"context.Owner = {ServiceMethod.MemoryOwnerName}.Empty;");
