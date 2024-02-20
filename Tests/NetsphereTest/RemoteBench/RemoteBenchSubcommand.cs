@@ -38,7 +38,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         await Console.Out.WriteLineAsync("Wait about 3 seconds for the execution environment to stabilize.");
         try
         {
-            await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
+            // await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
         }
         catch
         {
@@ -68,8 +68,8 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
             var service = connection.GetService<IRemoteBenchHost>();
 
-            var r = await service.UpdateAgreement(token);
-            await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+            // var r = await service.UpdateAgreement(token);
+            // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
             if (await service.ConnectBidirectionally(token) == NetResult.Success)
             {
@@ -80,12 +80,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
                 this.logger.TryGet()?.Log($"Register: Failure");
                 return;
             }
-
-            var r2 = await service.ConnectBidirectionally(token);
-
-            // connection.RequestAgreement();
-            // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
-            // connection.InvokeBidirectional(Tinyhand.TinyhandHelper.GetFullNameId<IBenchmarkService>());
         }
 
         /*while (true)
