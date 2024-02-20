@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
-using Netsphere.Server;
 
 namespace Netsphere;
 
@@ -11,7 +10,6 @@ public class NetBase : UnitBase, IUnitPreparable
         : base(context)
     {
         this.UnitLogger = logger;
-        this.ServerOptions = new();
 
         this.NetsphereOptions = new();
         this.NetsphereOptions.NodeName = System.Environment.OSVersion.ToString();
@@ -31,7 +29,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
-    public ServerOptions ServerOptions { get; set; }
+    public ConnectionAgreement DefaultAgreement { get; set; } = ConnectionAgreement.Default;
 
     public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
 

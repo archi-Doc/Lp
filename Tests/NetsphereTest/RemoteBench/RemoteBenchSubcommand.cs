@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -10,24 +11,34 @@ namespace NetsphereTest;
 [SimpleCommand("remotebench")]
 public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 {
-    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl, RemoteBenchBroker remoteBenchBroker)
+    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.netControl = netControl;
-        this.remoteBenchBroker = remoteBenchBroker;
     }
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetNode.TryParse(options.Node, out var node))
+        /*if (!NetNode.TryParse(options.Node, out var node))
         {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
+            return;
+        }*/
+
+        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
+        {
+            return;
+        }
+
+        var node = await this.netControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        if (node is null)
+        {
             return;
         }
 
         await Console.Out.WriteLineAsync("Wait about 3 seconds for the execution environment to stabilize.");
         try
         {
-            await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
+            // await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
         }
         catch
         {
@@ -36,32 +47,56 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
         // await this.TestPingpong(node);
 
-        using (var connection = await this.netControl.NetTerminal.TryConnect(node))
+        var connection = await this.netControl.NetTerminal.TryConnect(node);
+        if (connection is null)
         {
-            if (connection is null)
-            {
-                return;
-            }
-
-            var service = connection.GetService<IBenchmarkService>();
-            if (await service.Register() == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log($"Register: Success");
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"Register: Failure");
-                return;
-            }
-
-            // connection.RequestAgreement();
-            // connection.CreateBidirectionalService<IRemoteBenchHost, IRemoteBenchRunner>();
-            // connection.InvokeBidirectional(Tinyhand.TinyhandHelper.GetFullNameId<IBenchmarkService>());
-
-            var result = service.Register();
+            return;
         }
 
-        while (true)
+        var privateKey = SignaturePrivateKey.Create();
+        var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
+        var token = new CertificateToken<ConnectionAgreement>(agreement);
+        connection.SignWithSalt(token, privateKey);
+        connection.ValidateAndVerifyWithSalt(token);
+
+        // var r = await connection.UpdateAgreement(token);
+        // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+
+        // var r = await connection.ConnectBidirectionally(token);
+        // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+
+        var service = connection.GetService<IRemoteBenchHost>();
+
+        // var r = await service.UpdateAgreement(token);
+        // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
+
+        if (await service.ConnectBidirectionally(token) == NetResult.Success)
+        {
+            this.logger.TryGet()?.Log($"Register: Success");
+        }
+        else
+        {
+            this.logger.TryGet()?.Log($"Register: Failure");
+            return;
+        }
+
+        var serverConnection = connection.BidirectionalConnection;
+        if (serverConnection is null)
+        {
+            return;
+        }
+
+        var context = serverConnection.GetContext<TestConnectionContext>();
+
+        try
+        {
+            await Task.Delay(10_000, context.CancellationToken);
+        }
+        catch
+        {
+        }
+
+        /*while (true)
         {
             this.logger.TryGet()?.Log($"Waiting...");
             if (await this.remoteBenchBroker.Wait() == false)
@@ -72,7 +107,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
             this.logger.TryGet()?.Log($"Benchmark {node.ToString()}, Total/Concurrent: {this.remoteBenchBroker.Total}/{this.remoteBenchBroker.Concurrent}");
             await this.remoteBenchBroker.Process(netControl.NetTerminal, node);
-        }
+        }*/
     }
 
     private async Task TestPingpong(NetNode node)
@@ -87,7 +122,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var sw = Stopwatch.StartNew();
-            var service = connection.GetService<IBenchmarkService>();
+            var service = connection.GetService<IRemoteBenchHost>();
             for (var i = 0; i < N; i++)
             {
                 await service.Pingpong([0, 1, 2,]);
@@ -101,7 +136,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     private NetControl netControl { get; set; }
     private ILogger logger;
-    private RemoteBenchBroker remoteBenchBroker;
 }
 
 public record RemoteBenchOptions

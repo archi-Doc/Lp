@@ -42,6 +42,9 @@ public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<Cer
     public long SignedMics { get; set; }
 
     [Key(4)]
+    public ulong Salt { get; set; }
+
+    [Key(5)]
     public T Target { get; set; }
 
     #endregion

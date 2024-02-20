@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
 using Arc.Unit;
-using Netsphere.Block;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -37,7 +36,6 @@ public abstract class Connection : IDisposable
 
     public enum ConnectionState
     {
-        Created,
         Open,
         Closed,
         Disposed,
@@ -60,7 +58,7 @@ public abstract class Connection : IDisposable
     public Connection(Connection connection)
         : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndPoint)
     {
-        this.Initialize(connection.Requirements, connection.embryo);
+        this.Initialize(connection.Agreement, connection.embryo);
     }
 
     #region FieldAndProperty
@@ -87,9 +85,9 @@ public abstract class Connection : IDisposable
     public ulong Salt
         => this.embryo.Salt;
 
-    public ConnectionRequirements Requirements { get; private set; } = ConnectionRequirements.Default;
+    public ConnectionAgreement Agreement { get; private set; } = ConnectionAgreement.Default;
 
-    public abstract ConnectionState State { get; }
+    public ConnectionState State { get; internal set; }
 
     public abstract bool IsClient { get; }
 
@@ -141,13 +139,15 @@ public abstract class Connection : IDisposable
         }
     }
 
+    public long ConnectionRetentionMics { get; set; }
+
     internal ILogger Logger { get; }
 
     internal int SendTransmissionsCount
         => this.sendTransmissions.Count;
 
-    internal long ClosedSystemMics;
     internal long ResponseSystemMics; // When any packet, including an Ack, is received, it's updated to the latest time.
+
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
@@ -183,6 +183,36 @@ public abstract class Connection : IDisposable
     internal int Taichi = 1;
 
     #endregion
+
+    public void ApplyAgreement()
+    {
+        var min = this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
+        if (this.ConnectionRetentionMics < min)
+        {
+            this.ConnectionRetentionMics = min;
+        }
+    }
+
+    public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+    {
+        value.Salt = this.Salt;
+        return value.Sign(privateKey);
+    }
+
+    public bool ValidateAndVerifyWithSalt<T>(T value)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+    {
+        if (value.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return NetHelper.ValidateAndVerify(value);
+    }
+
+    public void Close()
+        => this.Dispose();
 
     internal void ResetTaichi()
         => this.Taichi = 1;
@@ -245,19 +275,6 @@ public abstract class Connection : IDisposable
             }
         }
     }
-
-    public bool ValidateAndVerify(AuthenticationToken token)
-    {
-        if (token.Salt != this.Salt)
-        {
-            return false;
-        }
-
-        return NetHelper.ValidateAndVerify(token);
-    }
-
-    public void Close()
-        => this.Dispose();
 
     /*internal SendTransmission? TryCreateSendTransmission()
     {
@@ -323,7 +340,7 @@ Retry:
                 return default;
             }
 
-            if (this.SendTransmissionsCount >= this.Requirements.MaxTransmissions)
+            if (this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -456,10 +473,11 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionRequirements agreement, Embryo embryo)
+    internal void Initialize(ConnectionAgreement agreement, Embryo embryo)
     {
-        this.Requirements = agreement;
+        this.Agreement = agreement;
         this.embryo = embryo;
+        this.ApplyAgreement();
     }
 
     internal void AddRtt(int rttMics)
@@ -732,7 +750,7 @@ Wait:
                     return;
                 }
 
-                if (transmissionMode == 0 && totalGenes <= this.Requirements.MaxBlockGenes)
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
                 {// Block mode
                     transmission.SetState_Receiving(totalGenes);
                 }
@@ -742,7 +760,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (!this.Requirements.CheckStreamLength(maxStreamLength))
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }
@@ -763,12 +781,12 @@ Wait:
                 }
 
                 // New transmission
-                if (this.receiveReceivedList.Count >= this.Requirements.MaxTransmissions)
+                if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
                     return;
                 }
 
-                if (transmissionMode == 0 && totalGenes <= this.Requirements.MaxBlockGenes)
+                if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
                 {// Block mode
                     transmission = new(this, transmissionId, default);
                     transmission.SetState_Receiving(totalGenes);
@@ -779,7 +797,7 @@ Wait:
                     span = span.Slice(sizeof(int) + sizeof(uint)); // 8
                     dataId = BitConverter.ToUInt64(span);
 
-                    if (!this.Requirements.CheckStreamLength(maxStreamLength))
+                    if (!this.Agreement.CheckStreamLength(maxStreamLength))
                     {
                         return;
                     }

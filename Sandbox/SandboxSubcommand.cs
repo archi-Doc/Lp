@@ -3,8 +3,7 @@
 using System.Diagnostics;
 using Arc.Unit;
 using Netsphere;
-using Netsphere.Block;
-using Netsphere.Packet;
+using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace Sandbox;

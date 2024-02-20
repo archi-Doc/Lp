@@ -14,16 +14,27 @@ public class ServiceMethod
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
+    public const string NetResultName = "Netsphere.NetResult";
+    public const string ConnectBidirectionallyName = "Netsphere.INetServiceBidirectional.ConnectBidirectionally(Netsphere.Crypto.CertificateToken<Netsphere.ConnectionAgreement>)";
+    public const string UpdateAgreementName = "Netsphere.INetServiceAgreement.UpdateAgreement(Netsphere.Crypto.CertificateToken<Netsphere.ConnectionAgreement>)";
 
     public enum Type
     {
         Other,
+        NetResult,
         ByteArray,
         MemoryOwner,
         ReadOnlyMemoryOwner,
         ReceiveStream,
         SendStream,
         SendStreamAndReceive,
+    }
+
+    public enum MethodKind
+    {
+        Other,
+        UpdateAgreement,
+        ConnectBidirectionally,
     }
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
@@ -98,6 +109,15 @@ public class ServiceMethod
             }
         }
 
+        if (method.FullName == UpdateAgreementName)
+        {
+            serviceMethod.Kind = MethodKind.UpdateAgreement;
+        }
+        else if (method.FullName == ConnectBidirectionallyName)
+        {
+            serviceMethod.Kind = MethodKind.ConnectBidirectionally;
+        }
+
         return serviceMethod;
     }
 
@@ -120,7 +140,7 @@ public class ServiceMethod
 
     public string IdString => $"0x{this.Id:x}ul";
 
-    public string MethodString => $"Method_{this.MethodId:x}";
+    public string MethodString => $"Method_{this.Id:x}";
 
     public WithNullable<NetsphereObject>? ReturnObject { get; internal set; }
 
@@ -129,6 +149,8 @@ public class ServiceMethod
     public Type ReturnType { get; private set; }
 
     public string StreamTypeArgument { get; private set; } = string.Empty;
+
+    public MethodKind Kind { get; private set; }
 
     public string GetParameters()
     {// int a1, string a2
@@ -242,6 +264,7 @@ public class ServiceMethod
 
     private static Type NameToType(string? name) => name switch
     {
+        NetResultName => Type.NetResult,
         ByteArrayName => Type.ByteArray,
         MemoryOwnerName => Type.MemoryOwner,
         ReadOnlyMemoryOwnerName => Type.ReadOnlyMemoryOwner,

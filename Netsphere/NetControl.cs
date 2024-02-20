@@ -16,7 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Misc;
-using Netsphere.Server;
+using Netsphere.Responder;
 using Netsphere.Stats;
 
 namespace Netsphere;

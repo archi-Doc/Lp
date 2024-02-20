@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
+using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
@@ -62,48 +62,68 @@ public class ConnectionTerminal
     {
         var systemCurrentMics = Mics.GetSystem();
 
+        (UnorderedMap<NetEndPoint, ClientConnection>.Node[] Nodes, int Max) client;
         lock (this.clientConnections.SyncObject)
         {
-            // Close unused client connections
-            while (this.clientConnections.OpenListChain.First is { } clientConnection &&
-                clientConnection.ResponseSystemMics + NetConstants.ConnectionOpenToClosedMics < systemCurrentMics)
-            {
-                clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+            client = this.clientConnections.DestinationEndPointChain.UnsafeGetNodes();
+        }
 
-                clientConnection.SendCloseFrame();
-                this.CloseClientConnection(this.clientConnections, clientConnection);
-                clientConnection.CloseTransmission();
-            }
-
-            // Dispose closed client connections
-            while (this.clientConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + NetConstants.ConnectionClosedToDisposalMics < systemCurrentMics)
+        for (var i = 0; i < client.Max; i++)
+        {
+            if (client.Nodes[i].Value is { } clientConnection)
             {
-                // Console.WriteLine($"Disposed: {connection.ToString()}");
-                connection.Goshujin = null;
-                connection.DisposeActual();
+                Debug.Assert(!clientConnection.IsDisposed);
+                if (clientConnection.IsOpen)
+                {
+                    if (clientConnection.ResponseSystemMics + clientConnection.ConnectionRetentionMics < systemCurrentMics)
+                    {// Open -> Closed
+                        clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+
+                        clientConnection.SendCloseFrame();
+                        this.CloseClientConnection(this.clientConnections, clientConnection);
+                        clientConnection.CloseTransmission();
+                    }
+                }
+                else if (clientConnection.IsClosed)
+                {// Closed -> Dispose
+                    if (clientConnection.ResponseSystemMics + NetConstants.ConnectionClosedToDisposalMics < systemCurrentMics)
+                    {
+                        clientConnection.Goshujin = null;
+                        clientConnection.DisposeActual();
+                    }
+                }
             }
         }
 
+        (UnorderedMap<NetEndPoint, ServerConnection>.Node[] Nodes, int Max) server;
         lock (this.serverConnections.SyncObject)
         {
-            // Close unused server connections
-            while (this.serverConnections.OpenListChain.First is { } serverConnection &&
-                serverConnection.ResponseSystemMics + NetConstants.ConnectionOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
-            {
-                serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
-                serverConnection.SendCloseFrame();
-                this.CloseServerConnection(this.serverConnections, serverConnection);
-                serverConnection.CloseTransmission();
-            }
+            server = this.serverConnections.DestinationEndPointChain.UnsafeGetNodes();
+        }
 
-            // Dispose closed server connections
-            while (this.serverConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + NetConstants.ConnectionClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
+        for (var i = 0; i < server.Max; i++)
+        {
+            if (server.Nodes[i].Value is { } serverConnection)
             {
-                // Console.WriteLine($"Disposed: {connection.ToString()}");
-                connection.Goshujin = null;
-                connection.DisposeActual();
+                Debug.Assert(!serverConnection.IsDisposed);
+                if (serverConnection.IsOpen)
+                {
+                    if (serverConnection.ResponseSystemMics + serverConnection.ConnectionRetentionMics < systemCurrentMics)
+                    {// Open -> Closed
+                        serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
+                        serverConnection.SendCloseFrame();
+                        this.CloseServerConnection(this.serverConnections, serverConnection);
+                        serverConnection.CloseTransmission();
+                    }
+                }
+                else if (serverConnection.IsClosed)
+                {// Closed -> Dispose
+                    if (serverConnection.ResponseSystemMics + NetConstants.ConnectionClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
+                    {
+                        serverConnection.Goshujin = null;
+                        serverConnection.DisposeActual();
+                    }
+                }
             }
         }
     }
@@ -173,7 +193,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal ClientConnection PrepareBidirectional(ServerConnection serverConnection)
+    internal ClientConnection PrepareBidirectionalConnection(ServerConnection serverConnection)
     {
         lock (this.clientConnections.SyncObject)
         {
@@ -187,11 +207,40 @@ public class ConnectionTerminal
             else
             {
                 connection = new ClientConnection(serverConnection);
+                connection.Goshujin = this.clientConnections;
             }
 
             this.clientConnections.OpenListChain.AddLast(connection);
             this.clientConnections.OpenEndPointChain.Add(serverConnection.DestinationEndPoint, connection);
             connection.ResponseSystemMics = Mics.GetSystem();
+
+            serverConnection.BidirectionalConnection = connection;
+            return connection;
+        }
+    }
+
+    internal ServerConnection PrepareBidirectionalConnection(ClientConnection clientConnection)
+    {
+        lock (this.serverConnections.SyncObject)
+        {
+            if (this.serverConnections.ConnectionIdChain.TryGetValue(clientConnection.ConnectionId, out var connection))
+            {
+                // ConnectionStateCode
+                this.serverConnections.ClosedListChain.Remove(connection);//
+                this.serverConnections.ClosedEndPointChain.Remove(connection);
+                connection.ClosedSystemMics = 0;
+            }
+            else
+            {
+                connection = new ServerConnection(clientConnection);
+                connection.Goshujin = this.serverConnections;
+            }
+
+            this.serverConnections.OpenListChain.AddLast(connection);
+            this.serverConnections.OpenEndPointChain.Add(clientConnection.DestinationEndPoint, connection);
+            connection.ResponseSystemMics = Mics.GetSystem();
+
+            clientConnection.BidirectionalConnection = connection;
             return connection;
         }
     }
@@ -278,6 +327,7 @@ public class ConnectionTerminal
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
         {
+            ServerConnection? bidirectionalConnection;
             lock (g.SyncObject)
             {
                 if (connection.State == Connection.ConnectionState.Open)
@@ -292,11 +342,24 @@ public class ConnectionTerminal
                     this.CloseClientConnection(g, clientConnection);
                     // connection.ResetFlowControl(); // -> ProcessSend()
                 }
+
+                bidirectionalConnection = clientConnection.BidirectionalConnection;
+                if (bidirectionalConnection is not null)
+                {
+                    clientConnection.BidirectionalConnection = default;
+                    bidirectionalConnection.BidirectionalConnection = default;
+                }
+            }
+
+            if (bidirectionalConnection is not null)
+            {
+                this.CloseInternal(bidirectionalConnection, sendCloseFrame);
             }
         }
         else if (connection is ServerConnection serverConnection &&
             serverConnection.Goshujin is { } g2)
         {
+            ClientConnection? bidirectionalConnection;
             lock (g2.SyncObject)
             {
                 if (connection.State == Connection.ConnectionState.Open)
@@ -311,6 +374,18 @@ public class ConnectionTerminal
                     this.CloseServerConnection(g2, serverConnection);
                     // connection.ResetFlowControl(); // -> ProcessSend()
                 }
+
+                bidirectionalConnection = serverConnection.BidirectionalConnection;
+                if (bidirectionalConnection is not null)
+                {
+                    serverConnection.BidirectionalConnection = default;
+                    bidirectionalConnection.BidirectionalConnection = default;
+                }
+            }
+
+            if (bidirectionalConnection is not null)
+            {
+                this.CloseInternal(bidirectionalConnection, sendCloseFrame);
             }
         }
     }

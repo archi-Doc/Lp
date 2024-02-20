@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere;
-using Netsphere.Server;
 
 namespace LP.NetServices;
 
@@ -18,7 +17,7 @@ internal class BenchmarkServiceImpl : IBenchmarkService
     public async NetTask<NetResult> Register()
     {
         this.remoteBenchBroker.Register(TransmissionContext.Current.ServerConnection.DestinationNode);
-        TransmissionContext.Current.ServerConnection.PrepareBidirectional();
+        TransmissionContext.Current.ServerConnection.PrepareBidirectionalConnection();
         return NetResult.Success;
     }
 

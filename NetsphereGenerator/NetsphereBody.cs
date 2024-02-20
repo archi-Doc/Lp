@@ -6,7 +6,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 #pragma warning disable RS2008
-#pragma warning disable SA1306 // Field names should begin with lower-case letter
 #pragma warning disable SA1310 // Field names should not contain underscore
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1117 // Parameters should be on same line or separate lines
@@ -29,6 +28,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string ServiceFilterBaseName = "IServiceFilterBase";
     public const string ServiceFilterInvokeName = "Invoke";
     public const string ServiceFilterSetArgumentsName = "SetArguments";
+    public const string IClientConnectionInternalName = "Netsphere.Internal.IClientConnectionInternal";
 
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "NSG001", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
@@ -333,7 +333,6 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ssb.AddUsing("System.Runtime.CompilerServices");
         ssb.AddUsing("Arc.Unit");
         ssb.AddUsing("Netsphere");
-        ssb.AddUsing("Netsphere.Server");
 
         ssb.AppendLine("#nullable enable", false);
         ssb.AppendLine("#pragma warning disable CS1591", false);

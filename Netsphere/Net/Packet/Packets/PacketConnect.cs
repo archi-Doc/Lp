@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
 using Netsphere.Crypto;
-using Netsphere.Server;
 
 namespace Netsphere.Packet;
 
@@ -53,16 +51,16 @@ internal partial class PacketConnectResponse : IPacket
 
     public PacketConnectResponse()
     {
-        this.Agreement = ConnectionRequirements.Default;
+        this.Agreement = ConnectionAgreement.Default;
         this.ServerSalt = RandomVault.Crypto.NextUInt64();
         this.ServerSalt2 = RandomVault.Crypto.NextUInt64();
     }
 
-    public PacketConnectResponse(ServerOptions options)
+    public PacketConnectResponse(ConnectionAgreement agreement)
         : this()
     {
         // this.Success = true;
-        this.Agreement = new(options);
+        this.Agreement = agreement;
     }
 
     /*[Key(0)]
@@ -75,5 +73,5 @@ internal partial class PacketConnectResponse : IPacket
     public ulong ServerSalt2 { get; set; }
 
     [Key(3)]
-    public ConnectionRequirements Agreement { get; set; }
+    public ConnectionAgreement Agreement { get; set; }
 }

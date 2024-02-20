@@ -41,7 +41,7 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
     public long SignedMics { get; set; }
 
     [Key(3)]
-    public ulong Salt { get; private set; }
+    public ulong Salt { get; set; }
 
     #endregion
 
@@ -51,10 +51,6 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
     public bool Validate()
     {
         if (this.SignedMics == 0)
-        {
-            return false;
-        }
-        else if (this.Salt == 0)
         {
             return false;
         }

@@ -87,8 +87,6 @@ public class Program
             .Preload(context =>
             {
                 var original = context.GetOrCreateOptions<NetOptions>();
-                // original.EnableAlternative = true;
-                // original.Port = 49152;
 
                 NetOptions? options = default;
                 if (context.Arguments.TryGetOption("ns", out var nsArg))
@@ -110,14 +108,13 @@ public class Program
                 context.AddCommand(typeof(RemoteBenchSubcommand));
 
                 // NetService
-                context.AddSingleton<BenchmarkServiceImpl>();
+                context.AddSingleton<RemoteBenchHostImpl>();
+                context.AddSingleton<RemoteBenchRunnerImpl>();
                 context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
-                context.AddSingleton<LP.NetServices.TestFilterB>();
 
                 // Other
-                context.AddSingleton<RemoteBenchBroker>();
 
                 // Resolver
                 context.ClearLoggerResolver();
@@ -176,12 +173,13 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
-        options.EnableAlternative = false;
+        options.EnableAlternative = true;
         await Console.Out.WriteLineAsync(options.ToString());
-        await unit.Run(options, true);
+        await unit.Run(options, true, x => new TestConnectionContext(x));
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<IBenchmarkService>();
+        netControl.Services.Register<IRemoteBenchHost>();
+        netControl.Services.Register<IRemoteBenchRunner>();
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with

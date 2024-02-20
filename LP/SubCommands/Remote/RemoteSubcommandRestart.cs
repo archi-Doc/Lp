@@ -44,7 +44,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
             var token = new AuthenticationToken(connection.Salt);
             authority.SignToken(token);
-            if (!connection.ValidateAndVerify(token))
+            if (!connection.ValidateAndVerifyWithSalt(token))
             {
                 return;
             }

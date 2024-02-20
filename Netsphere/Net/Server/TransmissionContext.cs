@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
 using Netsphere.Net;
 
 #pragma warning disable SA1401
 
-namespace Netsphere.Server;
+namespace Netsphere;
 
 public sealed class TransmissionContext
 {
@@ -120,7 +119,7 @@ public sealed class TransmissionContext
         {
             return (NetResult.Canceled, default);
         }
-        else if (!this.ServerConnection.Requirements.CheckStreamLength(maxLength))
+        else if (!this.ServerConnection.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -146,6 +145,78 @@ public sealed class TransmissionContext
 
         return (NetResult.Success, new SendStream(transmission, maxLength, dataId));
     }
+
+    /*public async NetTask<NetResult> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
+    {
+        if (!NetHelper.TrySerialize(a1, out var owner))
+        {
+            return NetResult.SerializationError;
+        }
+
+        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
+        owner.Return();
+
+        try
+        {
+            if (response.Result != NetResult.Success)
+            {
+                return response.Result;
+            }
+
+            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
+            {
+                return NetResult.DeserializationError;
+            }
+
+            if (result == NetResult.Success)
+            {
+                this.Agreement.AcceptAll(a1.Target);
+                this.ApplyAgreement();
+            }
+
+            return result;
+        }
+        finally
+        {
+            response.Value.Return();
+        }
+    }
+
+    public async NetTask<NetResult> InternalConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
+    {
+        if (!NetHelper.TrySerialize(a1, out var owner))
+        {
+            return NetResult.SerializationError;
+        }
+
+        this.PrepareBidirectionally(); // Create the ServerConnection in advance, as packets may not arrive in order.
+        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
+        owner.Return();
+
+        try
+        {
+            if (response.Result != NetResult.Success)
+            {
+                return response.Result;
+            }
+
+            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
+            {
+                return NetResult.DeserializationError;
+            }
+
+            if (result == NetResult.Success)
+            {
+                this.Agreement.EnableBidirectionalConnection = true;
+            }
+
+            return result;
+        }
+        finally
+        {
+            response.Value.Return();
+        }
+    }*/
 
     /*public (NetResult Result, ReceiveStream? Stream) ReceiveStream(long maxLength)
     {
@@ -173,7 +244,7 @@ public sealed class TransmissionContext
         {
             return false;
         }
-        else if (!this.ServerConnection.Requirements.CheckStreamLength(maxLength))
+        else if (!this.ServerConnection.Agreement.CheckStreamLength(maxLength))
         {
             return false;
         }

@@ -20,8 +20,6 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
-using Netsphere.Logging;
-using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace LP;
@@ -160,7 +158,7 @@ public class Control : ILogInformation
                 netBase.SetOptions(options.NetsphereOptions);
 
                 netBase.AllowUnsafeConnection = true; // betacode
-                netBase.ServerOptions = netBase.ServerOptions with { MaxStreamLength = 100_000_000, }; // betacode
+                netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
             });
 
             this.SetupOptions<CrystalizerOptions>((context, options) =>

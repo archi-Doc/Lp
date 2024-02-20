@@ -1,19 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
+using Netsphere.Crypto;
+using Netsphere.Internal;
 using Netsphere.Net;
 using Netsphere.Packet;
 
 namespace Netsphere;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class ClientConnection : Connection
+public sealed partial class ClientConnection : Connection, IClientConnectionInternal
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "DestinationEndPoint")]
-    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "DestinationEndPoint")]
-    [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
-    [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
+    [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
     internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
@@ -29,30 +27,11 @@ public sealed partial class ClientConnection : Connection
 
     #region FieldAndProperty
 
-    public override ConnectionState State
-    {
-        get
-        {
-            if (this.OpenEndPointLink.IsLinked)
-            {
-                return ConnectionState.Open;
-            }
-            else if (this.ClosedEndPointLink.IsLinked)
-            {
-                return ConnectionState.Closed;
-            }
-            else
-            {
-                return ConnectionState.Disposed;
-            }
-        }
-    }
-
     public override bool IsClient => true;
 
     public override bool IsServer => false;
 
-    public ServerConnection? BidirectionalConnection { get; private set; }
+    public ServerConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.serverConnections.SyncObject)
 
     private ClientConnectionContext context;
 
@@ -323,7 +302,7 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.Canceled, default);
         }
 
-        if (!this.Requirements.CheckStreamLength(maxLength))
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return (NetResult.StreamLengthLimit, default);
         }
@@ -357,7 +336,7 @@ public sealed partial class ClientConnection : Connection
             return new(NetResult.Canceled, default);
         }
 
-        if (!this.Requirements.CheckStreamLength(maxLength))
+        if (!this.Agreement.CheckStreamLength(maxLength))
         {
             return new(NetResult.StreamLengthLimit, default);
         }
@@ -450,26 +429,120 @@ public sealed partial class ClientConnection : Connection
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> RequestAgreement(ConnectionRequirements agreement)
+    public async Task<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
-        var result = await this.SendAndReceive<ConnectionRequirements, ConnectionRequirements>(agreement, ConnectionRequirements.DataId).ConfigureAwait(false);
-        if (result.Result == NetResult.Success &&
-            result.Value is not null)
+        var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>, bool>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
+        if (r.Result == NetResult.Success && r.Value)
         {
-            this.Requirements.Accept(result.Value);
+            this.Agreement.AcceptAll(token.Target);
+            this.ApplyAgreement();
         }
 
-        return result.Result;
+        return r.Result;
     }
 
-    /*public async Task<NetResult> InvokeBidirectional(ulong dataId)
+    public async Task<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {
-        if (!this.Agreement.AllowBidirectionalConnection)
+        this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
+
+        var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>?, bool>(token, ConnectionAgreement.BidirectionalId).ConfigureAwait(false);
+        if (r.Result == NetResult.Success)
         {
-            return NetResult.NotAuthorized;
+            if (r.Value)
+            {
+                this.Agreement.EnableBidirectionalConnection = true;
+                return NetResult.Success;
+            }
+            else
+            {
+                return NetResult.NotAuthorized;
+            }
         }
 
-        var r = await this.RpcSendAndReceive(ByteArrayPool.MemoryOwner.Empty, dataId).ConfigureAwait(false);
         return r.Result;
-    }*/
+    }
+
+    async Task<ServiceResponse<NetResult>> IClientConnectionInternal.UpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
+    {
+        if (!NetHelper.TrySerialize(a1, out var owner))
+        {
+            return new(NetResult.SerializationError, NetResult.SerializationError);
+        }
+
+        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
+        owner.Return();
+
+        try
+        {
+            if (response.Result != NetResult.Success)
+            {
+                return new(response.Result, response.Result);
+            }
+
+            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
+            {
+                return new(NetResult.DeserializationError, NetResult.DeserializationError);
+            }
+
+            if (result == NetResult.Success)
+            {
+                this.Agreement.AcceptAll(a1.Target);
+                this.ApplyAgreement();
+            }
+
+            return new(result, result);
+        }
+        finally
+        {
+            response.Value.Return();
+        }
+    }
+
+    async Task<ServiceResponse<NetResult>> IClientConnectionInternal.ConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
+    {
+        if (!NetHelper.TrySerialize(a1, out var owner))
+        {
+            return new(NetResult.SerializationError, NetResult.SerializationError);
+        }
+
+        this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
+        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
+        owner.Return();
+
+        try
+        {
+            if (response.Result != NetResult.Success)
+            {
+                return new(response.Result, response.Result);
+            }
+
+            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
+            {
+                return new(NetResult.DeserializationError, NetResult.DeserializationError);
+            }
+
+            if (result == NetResult.Success)
+            {
+                this.Agreement.EnableBidirectionalConnection = true;
+            }
+
+            return new(result, result);
+        }
+        finally
+        {
+            response.Value.Return();
+        }
+    }
+
+    public ServerConnection PrepareBidirectionalConnection()
+    {
+        if (this.BidirectionalConnection is { } connection)
+        {
+            return connection;
+        }
+        else
+        {
+            return this.ConnectionTerminal.PrepareBidirectionalConnection(this);
+        }
+    }
 }

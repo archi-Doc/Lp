@@ -2,7 +2,6 @@
 
 using LP.T3CS;
 using Netsphere.Crypto;
-using Netsphere.Server;
 
 namespace Netsphere;
 
@@ -22,7 +21,7 @@ public class AuthorizedService : IAuthorizedService
 {
     public async NetTask<NetResult> Authenticate(AuthenticationToken token)
     {
-        if (TransmissionContext.Current.ServerConnection.ValidateAndVerify(token))
+        if (TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
             this.AuthenticationKey = token.PublicKey;
             this.Authenticated = true;

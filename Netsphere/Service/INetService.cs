@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace Netsphere;
 
 /// <summary>
@@ -7,4 +9,14 @@ namespace Netsphere;
 /// </summary>
 public interface INetService
 {
+}
+
+public interface INetServiceAgreement
+{
+    NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token);
+}
+
+public interface INetServiceBidirectional
+{
+    NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token);
 }

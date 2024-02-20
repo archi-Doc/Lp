@@ -4,9 +4,7 @@ using System.Diagnostics;
 using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
-using Netsphere.Block;
 using Netsphere.Responder;
-using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace Sandbox;
@@ -50,12 +48,6 @@ public class CustomConnectionContext : ServerConnectionContext
             }
         }
     }*/
-
-    public override ConnectionRequirements RespondConnectionRequirements(ConnectionRequirements requirements)
-    {// Accept the request
-        requirements.Accept(this.ServerConnection.Requirements);
-        return requirements;
-    }
 }
 
 [SimpleCommand("basic")]
@@ -221,6 +213,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
 
                 Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
+
+                // await Task.Delay(12_000);
             }
         }
 

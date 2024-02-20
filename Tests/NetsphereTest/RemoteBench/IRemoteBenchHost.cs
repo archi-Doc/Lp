@@ -1,17 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Tinyhand;
-
 namespace LP.NetServices;
 
 [NetServiceInterface]
-public partial interface IRemoteBenchHost : INetService
+public interface IRemoteBenchHost : IRemoteBenchService, INetServiceBidirectional, INetServiceAgreement
 {
-    public NetTask<byte[]?> Pingpong(byte[] data);
+    NetTask<byte[]?> Pingpong(byte[] data);
 
-    public NetTask<ulong> GetHash(byte[] data);
+    NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength);
 
-    public NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength);
+    NetTask Report(RemoteBenchRecord record);
+}
 
-    public NetTask Report(RemoteBenchRecord record);
+[NetServiceInterface]
+public interface IRemoteBenchService : INetService
+{
+    NetTask<ulong> GetHash(byte[] data);
 }

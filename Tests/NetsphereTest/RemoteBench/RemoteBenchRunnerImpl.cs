@@ -1,16 +1,28 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using System.Diagnostics;
 using Arc.Unit;
+using NetsphereTest;
 
 namespace LP.NetServices;
 
-/*public class RemoteBenchBroker
+[NetServiceObject]
+public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 {
-    public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger)
+    public RemoteBenchRunnerImpl(ILogger<RemoteBenchRunnerImpl> logger, NetTerminal netTerminal)
     {
         this.logger = logger;
+        this.netTerminal = netTerminal;
     }
 
-    public void Start(int total, int concurrent)
+    #region FieldAndProperty
+
+    private readonly ILogger logger;
+    private readonly NetTerminal netTerminal;
+
+    #endregion
+
+    public async NetTask<NetResult> Start(int total, int concurrent)
     {
         if (total == 0)
         {
@@ -22,54 +34,52 @@ namespace LP.NetServices;
             concurrent = 25;
         }
 
-        Volatile.Write(ref this.total, total);
-        Volatile.Write(ref this.concurrent, concurrent);
-        this.pulseEvent.Pulse();
+        _ = Task.Run(() => this.RunBenchmark(total, concurrent));
+        return NetResult.Success;
     }
 
-    public async Task<bool> Wait()
+    void INetServiceHandler.OnConnected()
     {
-        try
-        {
-            await this.pulseEvent.WaitAsync(TimeSpan.FromMinutes(10), ThreadCore.Root.CancellationToken);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
-    public async Task Process(NetTerminal terminal, NetNode node)
+    void INetServiceHandler.OnDisconnected()
     {
+    }
+
+    private async Task RunBenchmark(int total, int concurrent)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        this.logger.TryGet()?.Log($"Benchmark {transmissionContext.ServerConnection.DestinationNode.ToString()}, Total/Concurrent: {total}/{concurrent}");
+
+        var serverConnection = transmissionContext.ServerConnection;
+        var connectionContext = serverConnection.GetContext<TestConnectionContext>();
+        var clientConnection = serverConnection.PrepareBidirectionalConnection();
+
         var data = new byte[100];
         int successCount = 0;
         int failureCount = 0;
         long totalLatency = 0;
 
-        var total = this.total;
-        var concurrent = this.concurrent;
-
         // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
         // ThreadPool.SetMinThreads(3000, ioMin);
 
         var sw = Stopwatch.StartNew();
-        var array = new Task[this.concurrent];
-        for (int i = 0; i < this.concurrent; i++)
+        var array = new Task[concurrent];
+        for (int i = 0; i < concurrent; i++)
         {
             array[i] = Task.Run(async () =>
             {
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = await terminal.TryConnect(node, Connection.ConnectMode.NoReuse))
+                    using (var t = await this.netTerminal.TryConnect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse))
                     {
                         if (t is null)
                         {
                             return;
                         }
 
-                        var service = t.GetService<IBenchmarkService>();
+                        var service = t.GetService<IRemoteBenchHost>();
                         sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
@@ -111,26 +121,11 @@ namespace LP.NetServices;
             AverageLatency = (int)(totalLatency / totalCount),
         };
 
-        using (var t = await terminal.TryConnect(node, Connection.ConnectMode.NoReuse))
-        {
-            if (t is null)
-            {
-                return;
-            }
-
-            var service = t.GetService<IBenchmarkService>();
-            await service.Report(record);
-        }
+        var service = clientConnection.GetService<IRemoteBenchHost>();
+        await service.Report(record);
 
         this.logger.TryGet()?.Log(record.ToString());
+
+        connectionContext.Terminate();
     }
-
-    public int Total => this.total;
-
-    public int Concurrent => this.concurrent;
-
-    private readonly AsyncPulseEvent pulseEvent = new();
-    private readonly ILogger logger;
-    private int total;
-    private int concurrent;
-}*/
+}
