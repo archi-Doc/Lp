@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Packet;
-using Netsphere.Server;
 
 namespace Netsphere.Net;
 

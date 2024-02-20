@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Packet;
-using Netsphere.Server;
 
 namespace Netsphere;
 
@@ -64,7 +63,7 @@ public sealed partial class ServerConnection : Connection
         where TContext : ServerConnectionContext
         => (TContext)this.context;
 
-    public ClientConnection PrepareBidirectionally()
+    public ClientConnection PrepareBidirectionalConnection()
     {
         if (this.BidirectionalConnection is { } connection)
         {
@@ -72,7 +71,7 @@ public sealed partial class ServerConnection : Connection
         }
         else
         {
-            return this.ConnectionTerminal.PrepareBidirectionally(this);
+            return this.ConnectionTerminal.PrepareBidirectionalConnection(this);
         }
     }
 }

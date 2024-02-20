@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Crypto;
 using Netsphere.Net;
 
 #pragma warning disable SA1401
 
-namespace Netsphere.Server;
+namespace Netsphere;
 
 public sealed class TransmissionContext
 {

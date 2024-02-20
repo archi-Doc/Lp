@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using Netsphere.Net;
 
-namespace Netsphere.Server;
+namespace Netsphere;
 
 public class ExampleConnectionContext : ServerConnectionContext
 {

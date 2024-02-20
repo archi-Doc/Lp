@@ -482,14 +482,19 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         using (var scopeMethod = ssb.ScopeBrace($"public {taskString} {method.SimpleName}({method.GetParameters()})"))
         {
-            ssb.AppendLine($"return new {taskString}(Core());");
-            ssb.AppendLine();
-
             if (method.Kind == ServiceMethod.MethodKind.UpdateAgreement)
             {
-                ssb.AppendLine($"Task<ServiceResponse{genericString}> Core() => this.ClientConnection.InternalUpdateAgreement({method.IdString}, a1);");
+                ssb.AppendLine($"return new {taskString}((({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).UpdateAgreement({method.IdString}, a1));");
                 return;
             }
+            else if (method.Kind == ServiceMethod.MethodKind.ConnectBidirectionally)
+            {
+                ssb.AppendLine($"return new {taskString}((({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).ConnectBidirectionally({method.IdString}, a1));");
+                return;
+            }
+
+            ssb.AppendLine($"return new {taskString}(Core());");
+            ssb.AppendLine();
 
             using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {

@@ -1,13 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
+using Netsphere.Internal;
 using Netsphere.Net;
 using Netsphere.Packet;
 
 namespace Netsphere;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class ClientConnection : Connection
+public sealed partial class ClientConnection : Connection, IClientConnectionInternal
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
     [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "DestinationEndPoint")]
@@ -464,7 +465,7 @@ public sealed partial class ClientConnection : Connection
 
     public async Task<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {
-        this.PrepareBidirectionally(); // Create the ServerConnection in advance, as packets may not arrive in order.
+        this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
 
         var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>?, bool>(token, ConnectionAgreement.BidirectionalId).ConfigureAwait(false);
         if (r.Result == NetResult.Success)
@@ -483,11 +484,11 @@ public sealed partial class ClientConnection : Connection
         return r.Result;
     }
 
-    public async Task<ServiceResponse<NetResult>> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
+    async Task<ServiceResponse<NetResult>> IClientConnectionInternal.UpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return new (NetResult.SerializationError, NetResult.SerializationError);
+            return new(NetResult.SerializationError, NetResult.SerializationError);
         }
 
         var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
@@ -519,14 +520,14 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async NetTask<NetResult> InternalConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
+    async Task<ServiceResponse<NetResult>> IClientConnectionInternal.ConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return NetResult.SerializationError;
+            return new(NetResult.SerializationError, NetResult.SerializationError);
         }
 
-        this.PrepareBidirectionally(); // Create the ServerConnection in advance, as packets may not arrive in order.
+        this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
         var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
         owner.Return();
 
@@ -534,12 +535,12 @@ public sealed partial class ClientConnection : Connection
         {
             if (response.Result != NetResult.Success)
             {
-                return response.Result;
+                return new(response.Result, response.Result);
             }
 
             if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
             {
-                return NetResult.DeserializationError;
+                return new(NetResult.DeserializationError, NetResult.DeserializationError);
             }
 
             if (result == NetResult.Success)
@@ -547,7 +548,7 @@ public sealed partial class ClientConnection : Connection
                 this.Agreement.EnableBidirectionalConnection = true;
             }
 
-            return result;
+            return new(result, result);
         }
         finally
         {
@@ -555,30 +556,7 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    /*public async NetTask<ConnectionAgreement?> InternalUpdateAgreement(CertificateToken<ConnectionAgreement>? token)
-    {
-        var result = await this.SendAndReceive<ConnectionAgreement, ConnectionAgreement>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
-        if (result.Result == NetResult.Success &&
-            result.Value is not null)
-        {
-            this.Agreement.AcceptAll(result.Value);
-        }
-
-        return result.Result;
-    }*/
-
-    /*public async Task<NetResult> InvokeBidirectional(ulong dataId)
-    {
-        if (!this.Agreement.AllowBidirectionalConnection)
-        {
-            return NetResult.NotAuthorized;
-        }
-
-        var r = await this.RpcSendAndReceive(ByteArrayPool.MemoryOwner.Empty, dataId).ConfigureAwait(false);
-        return r.Result;
-    }*/
-
-    public ServerConnection PrepareBidirectionally()
+    public ServerConnection PrepareBidirectionalConnection()
     {
         if (this.BidirectionalConnection is { } connection)
         {
@@ -586,7 +564,7 @@ public sealed partial class ClientConnection : Connection
         }
         else
         {
-            return this.ConnectionTerminal.PrepareBidirectionally(this);
+            return this.ConnectionTerminal.PrepareBidirectionalConnection(this);
         }
     }
 }

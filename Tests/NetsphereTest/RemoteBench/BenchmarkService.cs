@@ -1,6 +1,4 @@
-﻿using Netsphere.Server;
-
-namespace LP.NetServices;
+﻿namespace LP.NetServices;
 
 /*[NetServiceFilter<TestFilter>(Order = 1)]
 [NetServiceFilter<TestFilterB>(Order = 1)]

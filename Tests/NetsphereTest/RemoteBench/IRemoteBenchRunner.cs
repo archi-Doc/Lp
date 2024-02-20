@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using Arc.Unit;
-using Netsphere.Server;
 
 namespace LP.NetServices;
 
@@ -53,7 +52,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 
         var serverConnection = transmissionContext.ServerConnection;
         var connectionContext = serverConnection.GetContext();
-        var clientConnection = serverConnection.PrepareBidirectionally();
+        var clientConnection = serverConnection.PrepareBidirectionalConnection();
 
         var data = new byte[100];
         int successCount = 0;

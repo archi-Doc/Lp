@@ -20,8 +20,6 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
-using Netsphere.Logging;
-using Netsphere.Server;
 using SimpleCommandLine;
 
 namespace LP;
