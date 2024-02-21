@@ -12,7 +12,6 @@ public class NodeKeySubcommand : SimpleCommandGroup<NodeKeySubcommand>
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(NodeKeySubcommandInfo));
         group.AddCommand(typeof(NodeKeySubcommandNew));
-        group.AddCommand(typeof(NodeKeySubcommandSet));
     }
 
     public NodeKeySubcommand(UnitContext context)

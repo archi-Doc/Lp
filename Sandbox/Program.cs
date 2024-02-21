@@ -29,11 +29,6 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
-        {
-            var st = privateKey.UnsafeToString();
-        }
-
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
@@ -74,6 +69,13 @@ public class Program
         var unit = builder.Build();
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
+
+        var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
+        if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
+        {
+            netBase.SetNodePrivateKey(privateKey);
+        }
+
         await unit.Run(options, true);
 
         var parserOptions = SimpleParserOptions.Standard with
