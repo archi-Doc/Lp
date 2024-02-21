@@ -7,14 +7,12 @@ namespace LP.NetServices;
 [NetServiceObject]
 public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 {
-    public RemoteBenchHostImpl()
+    public RemoteBenchHostImpl(RemoteBenchBroker broker)
     {
+        this.broker = broker;
     }
 
-    public async NetTask<NetResult> Start(int total, int concurrent)
-    {
-        return NetResult.Success;
-    }
+    private readonly RemoteBenchBroker broker;
 
     public async NetTask Report(RemoteBenchRecord record)
     {
@@ -27,11 +25,40 @@ public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 
     async NetTask<ulong> IRemoteBenchService.GetHash(byte[] data)
     {
-        return 0;
+        return FarmHash.Hash64(data);
     }
 
     public async NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
     {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.ReceiveStream;
+
+        var buffer = new byte[100_000];
+        var hash = new FarmHash();
+        hash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                break;
+            }
+        }
+
         return default;
     }
 
@@ -45,11 +72,7 @@ public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
         }
 
         var clientConnection = context.ServerConnection.PrepareBidirectionalConnection();
-        var service = clientConnection.GetService<IRemoteBenchRunner>();
-        if (service is not null)
-        {
-            // var result = await service.Start(10_000, 20);
-        }
+        this.broker.Register(clientConnection);
 
         return NetResult.Success;
     }

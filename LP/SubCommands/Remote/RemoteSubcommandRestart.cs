@@ -49,7 +49,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            var service = connection.GetService<RemoteControlService>();
+            var service = connection.GetService<IRemoteControlService>();
             var response = await service.Authenticate(token).ResponseAsync;
             var result = response.Result;
             this.logger.TryGet()?.Log($"Authenticate: {result}");

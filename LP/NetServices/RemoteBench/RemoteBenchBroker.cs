@@ -2,7 +2,7 @@
 
 namespace LP.NetServices;
 
-internal class RemoteBenchBroker
+public class RemoteBenchBroker
 {
     public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger, NetTerminal terminal)
     {
@@ -10,19 +10,20 @@ internal class RemoteBenchBroker
         this.terminal = terminal;
     }
 
-    public void Register(NetNode? node)
-    {
-        if (node == null)
-        {
-            return;
-        }
+    private readonly ILogger logger;
+    private readonly NetTerminal terminal;
 
+    private readonly object syncObject = new();
+    private Dictionary<ulong, ClientConnection?> connections = new();
+
+    public void Register(ClientConnection clientConnection)
+    {
         lock (this.syncObject)
         {
-            this.nodes[node] = null;
+            this.connections.TryAdd(clientConnection.ConnectionId, clientConnection);
         }
 
-        this.logger.TryGet()?.Log($"Registered: {node.ToString()}");
+        this.logger.TryGet()?.Log($"Registered: {clientConnection.ToString()}");
     }
 
     public void Start(int total, int concurrent)
@@ -54,7 +55,7 @@ internal class RemoteBenchBroker
                     return;
                 }
 
-                var service = connection.GetService<IBenchmarkService>();
+                var service = connection.GetService<IRemoteBenchRunner>();
                 var result = await service.Start(total, concurrent);
                 if (result == NetResult.Success)
                 {
@@ -121,10 +122,4 @@ internal class RemoteBenchBroker
             this.logger.TryGet()?.Log($"Total: Success/Failure {successCount}/{failureCount}, {elapsedMilliseconds} ms, {countPerSecond} c/s, latency {averageLatency} ms");
         }
     }
-
-    private ILogger logger;
-    private NetTerminal terminal;
-
-    private object syncObject = new();
-    private Dictionary<NetNode, RemoteBenchRecord?> nodes = new();
 }

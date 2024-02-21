@@ -56,8 +56,8 @@ public class Control : ILogInformation
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
-                context.AddTransient<NetServices.BenchmarkServiceImpl>();
                 context.AddSingleton<NetServices.RemoteBenchBroker>();
+                context.AddSingleton<NetServices.RemoteBenchHostImpl>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
@@ -394,7 +394,7 @@ public class Control : ILogInformation
 
         if (this.LPBase.TestFeatures)
         {
-            this.NetControl.Services.Register<IBenchmarkService>();
+            this.NetControl.Services.Register<IRemoteBenchHost>();
         }
 
         this.MergerProvider = new();
