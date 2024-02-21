@@ -1,19 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Netsphere.Crypto;
 using Netsphere.Net;
+
+#pragma warning disable SA1202
 
 namespace Netsphere;
 
-public class ExampleConnectionContext : ServerConnectionContext
+internal class ExampleConnectionContext : ServerConnectionContext
 {
     public ExampleConnectionContext(ServerConnection serverConnection)
         : base(serverConnection)
     {
     }
 
-    public override bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    /*public override bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {// Accept all agreement.
         if (!this.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
@@ -32,7 +33,7 @@ public class ExampleConnectionContext : ServerConnectionContext
         }
 
         return true;
-    }
+    }*/
 }
 
 public class ServerConnectionContext
@@ -101,11 +102,11 @@ public class ServerConnectionContext
 
     #endregion
 
-    public virtual bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    /*public virtual bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
         => false;
 
     public virtual bool RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
-        => false;
+        => false;*/
 
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -136,11 +137,6 @@ public class ServerConnectionContext
                     if (!transmissionContext.IsSent)
                     {
                         var result = transmissionContext.Result;
-                        /*if (transmissionContext.Connection.IsClosedOrDisposed)
-                        {
-                            transmissionContext.ForceSendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.Closed);
-                        }
-                        else */
                         if (result == NetResult.Success)
                         {// Success
                             transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
@@ -170,7 +166,7 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
+            /*if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
             {
                 this.UpdateAgreement(transmissionContext);
             }
@@ -178,7 +174,8 @@ public class ServerConnectionContext
             {
                 this.ConnectBidirectionally(transmissionContext);
             }
-            else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
+            else */
+            if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }
@@ -193,23 +190,6 @@ public class ServerConnectionContext
             Task.Run(() => this.InvokeRPC(transmissionContext));
             return;
         }
-
-        /*else if (transmissionContext.DataKind == 2)
-        {// Bidirectional
-            NetResult result;
-            if (this.InvokeBidirectional(transmissionContext.DataId))
-            {// Accepted
-                result = NetResult.Success;
-            }
-            else
-            {// Rejected
-                result = NetResult.NotAuthorized;
-            }
-
-            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
-            transmissionContext.Return();
-            return;
-        }*/
 
         /*if (!this.InvokeCustom(transmissionContext))
         {
@@ -270,7 +250,7 @@ SendNoNetService:
         return;
     }
 
-    private void UpdateAgreement(TransmissionContext transmissionContext)
+    /*private void UpdateAgreement(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<CertificateToken<ConnectionAgreement>>(transmissionContext.Owner.Memory.Span, out var token))
         {
@@ -308,7 +288,7 @@ SendNoNetService:
 
             transmissionContext.SendAndForget(result, ConnectionAgreement.BidirectionalId);
         });
-    }
+    }*/
 
     private ServiceMethod? TryGetServiceMethod(ulong dataId)
     {
