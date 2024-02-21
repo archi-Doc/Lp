@@ -190,18 +190,4 @@ public static class NetHelper
         var lastGeneSize = (uint)(size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength));
         return (lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, FirstGeneFrame.MaxGeneLength, lastGeneSize);
     }
-
-    public static bool TryParseFromEnvironmentVariable<T>(string variable, [MaybeNullWhen(false)] out T value)
-        where T : IStringConvertible<T>
-    {
-        if (Environment.GetEnvironmentVariable(variable) is { } source)
-        {
-            return T.TryParse(source, out value);
-        }
-        else
-        {
-            value = default;
-            return false;
-        }
-    }
 }
