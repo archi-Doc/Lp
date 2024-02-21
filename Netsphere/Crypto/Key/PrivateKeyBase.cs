@@ -1,11 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
+
 namespace Netsphere.Crypto;
 
 #pragma warning disable SA1401
 
 public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateKeyBase>
 {
+    internal const int UnsafeStringLength = 96; // 3 + Base64.Url.GetEncodedLength(1 + KeyHelper.PrivateKeyLength) + 3 + 1 + Base64.Url.GetEncodedLength(1 + KeyHelper.PublicKeyHalfLength) + 1
+
     public PrivateKeyBase()
     {
     }
@@ -89,6 +93,29 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
 
     public string UnsafeToString()
     {
+        Span<char> span = stackalloc char[UnsafeStringLength];
+        this.UnsafeTryFormat(span, out _);
+        return span.ToString();
+
+        /*Span<byte> privateSpan = stackalloc byte[1 + KeyHelper.PrivateKeyLength]; // scoped
+        privateSpan[0] = this.keyValue;
+        this.d.CopyTo(privateSpan.Slice(1));
+
+        Span<byte> publicSpan = stackalloc byte[1 + KeyHelper.PublicKeyHalfLength];
+        publicSpan[0] = KeyHelper.ToPublicKeyValue(this.keyValue);
+        this.x.CopyTo(publicSpan.Slice(1));
+
+        return $"!!!{Base64.Url.FromByteArrayToString(privateSpan)}!!!({Base64.Url.FromByteArrayToString(publicSpan)})";*/
+    }
+
+    public bool UnsafeTryFormat(Span<char> destination, out int written)
+    {
+        if (destination.Length < UnsafeStringLength)
+        {
+            written = 0;
+            return false;
+        }
+
         Span<byte> privateSpan = stackalloc byte[1 + KeyHelper.PrivateKeyLength]; // scoped
         privateSpan[0] = this.keyValue;
         this.d.CopyTo(privateSpan.Slice(1));
@@ -97,6 +124,28 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
         publicSpan[0] = KeyHelper.ToPublicKeyValue(this.keyValue);
         this.x.CopyTo(publicSpan.Slice(1));
 
-        return $"!!!{Base64.Url.FromByteArrayToString(privateSpan)}!!!({Base64.Url.FromByteArrayToString(publicSpan)})";
+        Span<char> span = destination;
+        span[0] = '!';
+        span[1] = '!';
+        span[2] = '!';
+        span = span.Slice(3);
+
+        Base64.Url.FromByteArrayToSpan(privateSpan, span, out var w);
+        span = span.Slice(w);
+
+        span[0] = '!';
+        span[1] = '!';
+        span[2] = '!';
+        span[3] = '(';
+        span = span.Slice(4);
+
+        Base64.Url.FromByteArrayToSpan(publicSpan, span, out w);
+        span = span.Slice(w);
+        span[0] = ')';
+        span = span.Slice(1);
+
+        Debug.Assert(span.Length == 0);
+        written = UnsafeStringLength;
+        return true;
     }
 }

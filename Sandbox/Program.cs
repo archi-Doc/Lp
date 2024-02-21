@@ -6,6 +6,7 @@ global using Tinyhand;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
+using Netsphere.Crypto;
 using Netsphere.Logging;
 using SimpleCommandLine;
 
@@ -26,6 +27,11 @@ public class Program
             e.Cancel = true;
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
+
+        if (NetHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
+        {
+            var st = privateKey.UnsafeToString();
+        }
 
         var builder = new NetControl.Builder()
             .Configure(context =>

@@ -3,6 +3,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
+#pragma warning disable SA1204
+
 namespace Netsphere.Crypto;
 
 /// <summary>
@@ -10,7 +12,7 @@ namespace Netsphere.Crypto;
 /// Encryption: ECDiffieHellman, secp256r1.
 /// </summary>
 [TinyhandObject]
-public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePrivateKey>
+public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePrivateKey>, IStringConvertible<NodePrivateKey>
 {
     #region Unique
 
@@ -23,11 +25,18 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
 
     private ECDiffieHellman? ecdh;
 
-    public static bool TryParse(string base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
+    public static int MaxStringLength => UnsafeStringLength;
+
+    public int GetStringLength() => UnsafeStringLength;
+
+    public bool TryFormat(Span<char> destination, out int written)
+        => this.UnsafeTryFormat(destination, out written);
+
+    public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
     {
         privateKey = null;
 
-        ReadOnlySpan<char> span = base64url.Trim().AsSpan();
+        ReadOnlySpan<char> span = base64url.Trim();
         if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
         {// !!!abc
             return false;

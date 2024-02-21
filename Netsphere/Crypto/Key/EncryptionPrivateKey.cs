@@ -2,6 +2,8 @@
 
 using System.Security.Cryptography;
 
+#pragma warning disable SA1204
+
 namespace Netsphere.Crypto;
 
 /// <summary>

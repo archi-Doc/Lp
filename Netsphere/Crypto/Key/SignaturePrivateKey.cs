@@ -1,7 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Security.Cryptography;
-using System.Text;
+
+#pragma warning disable SA1204
 
 namespace Netsphere.Crypto;
 
