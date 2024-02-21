@@ -19,31 +19,29 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        /*if (!NetNode.TryParse(options.Node, out var node))
+        if (!NetNode.TryParse(options.Node, out var node))
         {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
-            return;
-        }*/
+            if (!NetAddress.TryParse(this.logger, options.Node, out var address))
+            {
+                return;
+            }
 
-        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
-        {
-            return;
+            node = await this.netControl.NetTerminal.UnsafeGetNetNode(address);
+            if (node is null)
+            {
+                return;
+            }
         }
 
-        var node = await this.netControl.NetTerminal.UnsafeGetNetNodeAsync(address);
-        if (node is null)
-        {
-            return;
-        }
-
-        await Console.Out.WriteLineAsync("Wait about 3 seconds for the execution environment to stabilize.");
+        /*await Console.Out.WriteLineAsync("Wait about 3 seconds for the execution environment to stabilize.");
         try
         {
-            // await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
+            await Task.Delay(3_000, ThreadCore.Root.CancellationToken);
         }
         catch
         {
             return;
-        }
+        }*/
 
         // await this.TestPingpong(node);
 
@@ -90,7 +88,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
         try
         {
-            await Task.Delay(10_000, context.CancellationToken);
+            await ThreadCore.Root.Delay(TimeSpan.FromMinutes(5)).WaitAsync(context.CancellationToken);
         }
         catch
         {

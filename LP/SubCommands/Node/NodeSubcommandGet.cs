@@ -21,7 +21,7 @@ public class NodeSubcommandGet : ISimpleCommandAsync<NodeSubcommandGetOptions>
             return;
         }
 
-        var node = await this.Control.NetControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        var node = await this.Control.NetControl.NetTerminal.UnsafeGetNetNode(address);
         if (node is not null)
         {
             this.logger.TryGet()?.Log($"{node.ToString()}");

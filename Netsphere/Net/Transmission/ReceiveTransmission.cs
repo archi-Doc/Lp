@@ -268,6 +268,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
             }
         }
 
+        this.Connection.UpdateLastEventMics();
+
         // Send Ack
         if (this.Mode == NetTransmissionMode.Rama)
         {// Fast Ack

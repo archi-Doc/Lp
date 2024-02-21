@@ -153,7 +153,7 @@ public partial class RunnerMachine : Machine
             return NetResult.NoNodeInformation;
         }
 
-        var node = await this.netControl.NetTerminal.UnsafeGetNetNodeAsync(address);
+        var node = await this.netControl.NetTerminal.UnsafeGetNetNode(address);
         if (node is null)
         {
             return NetResult.NoNodeInformation;

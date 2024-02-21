@@ -47,7 +47,7 @@ internal class RemoteControlService : IRemoteControlService
         }
 
         var netTerminal = this.netControl.NetTerminal;
-        var netNode = await netTerminal.UnsafeGetNetNodeAsync(address);
+        var netNode = await netTerminal.UnsafeGetNetNode(address);
         if (netNode is null)
         {
             return NetResult.NoNodeInformation;

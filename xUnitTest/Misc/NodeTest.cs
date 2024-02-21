@@ -187,7 +187,7 @@ public class NodeTest
     {
         var key = NodePrivateKey.Create();
 
-        var port = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
+        var port = (ushort)r.NextInt32(NetConstants.MinPort, NetConstants.MaxPort);
         if (type == 0)
         {// IPv4
             var address4 = r.NextUInt32();
@@ -208,5 +208,5 @@ public class NodeTest
         }
     }
 
-    private NetAddress CreateAddress(string address) => new NetAddress(IPAddress.Parse(address), NetControl.MinPort);
+    private NetAddress CreateAddress(string address) => new NetAddress(IPAddress.Parse(address), NetConstants.MinPort);
 }

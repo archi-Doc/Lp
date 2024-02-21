@@ -458,7 +458,7 @@ public class Control : ILogInformation
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
         // Vault
-        this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
+        this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodePrivateKey());
         await this.Vault.SaveAsync();
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
@@ -639,7 +639,7 @@ public class Control : ILogInformation
             return;
         }
 
-        if (!this.NetControl.NetBase.SetNodeKey(key))
+        if (!this.NetControl.NetBase.SetNodePrivateKey(key))
         {
             await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyPath);
             return;

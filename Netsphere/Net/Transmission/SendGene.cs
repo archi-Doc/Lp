@@ -43,7 +43,7 @@ internal partial class SendGene
 
     public bool CanSend
         => this.SendTransmission.Mode != NetTransmissionMode.Disposed &&
-        this.SendTransmission.Connection.State == Connection.ConnectionState.Open;
+        this.SendTransmission.Connection.CurrentState == Connection.State.Open;
 
     public bool CanResend
         => (Mics.FastSystem - this.SentMics) > this.SendTransmission.Connection.MinimumRtt;

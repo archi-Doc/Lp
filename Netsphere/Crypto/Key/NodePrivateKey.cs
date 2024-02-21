@@ -3,6 +3,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
+#pragma warning disable SA1204
+
 namespace Netsphere.Crypto;
 
 /// <summary>
@@ -10,7 +12,7 @@ namespace Netsphere.Crypto;
 /// Encryption: ECDiffieHellman, secp256r1.
 /// </summary>
 [TinyhandObject]
-public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePrivateKey>
+public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePrivateKey>, IStringConvertible<NodePrivateKey>
 {
     #region Unique
 
@@ -23,46 +25,25 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
 
     private ECDiffieHellman? ecdh;
 
-    public static bool TryParse(string base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
+    public static int MaxStringLength => UnsafeStringLength;
+
+    public int GetStringLength() => UnsafeStringLength;
+
+    public bool TryFormat(Span<char> destination, out int written)
+        => this.UnsafeTryFormat(destination, out written);
+
+    public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
     {
-        privateKey = null;
-
-        ReadOnlySpan<char> span = base64url.Trim().AsSpan();
-        if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
-        {// !!!abc
-            return false;
-        }
-
-        span = span.Slice(KeyHelper.PrivateKeyBrace.Length);
-        var bracePosition = span.IndexOf(KeyHelper.PrivateKeyBrace);
-        if (bracePosition <= 0)
-        {// abc!!!
-            return false;
-        }
-
-        var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
-        if (privateBytes == null || privateBytes.Length != (KeyHelper.PrivateKeyLength + 1))
+        if (TryParseKey(KeyClass.Node_Encryption, base64url, out var key))
         {
+            privateKey = new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
+            return true;
+        }
+        else
+        {
+            privateKey = default;
             return false;
         }
-
-        ECParameters key = default;
-        key.Curve = KeyHelper.ECCurve;
-        key.D = privateBytes[1..(KeyHelper.PrivateKeyLength + 1)];
-        try
-        {
-            using (var ecdh = ECDiffieHellman.Create(key))
-            {
-                key = ecdh.ExportParameters(true);
-            }
-        }
-        catch
-        {
-            return false;
-        }
-
-        privateKey = new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
-        return true;
     }
 
     public static NodePrivateKey Create()

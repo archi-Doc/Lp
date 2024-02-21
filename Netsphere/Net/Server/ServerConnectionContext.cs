@@ -155,10 +155,6 @@ public class ServerConnectionContext
                 {
                 }
             }
-            catch (NetException netException)
-            {// NetException
-                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)netException.Result);
-            }
             catch
             {// Unknown exception
                 transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownException);
@@ -256,10 +252,6 @@ public class ServerConnectionContext
             catch
             {
             }
-        }
-        catch (NetException netException)
-        {// NetException
-            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)netException.Result);
         }
         catch
         {// Unknown exception

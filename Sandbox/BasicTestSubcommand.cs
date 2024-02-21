@@ -77,6 +77,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.Responders.Register(TestStreamResponder.Instance);
         this.NetControl.Services.Register<TestService>();
 
+        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
+
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
@@ -89,14 +91,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");*/
 
-        var netNode = await netTerminal.UnsafeGetNetNodeAsync(netAddress);
+        var netNode = await netTerminal.UnsafeGetNetNode(netAddress);
         if (netNode is null)
         {
             return;
         }
 
         this.NetControl.NewServerConnectionContext = connection => new CustomConnectionContext(connection);
-        // this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 100_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
         // netTerminal.SetDeliveryFailureRatioForTest(0.03);
@@ -214,7 +215,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
                 Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
 
-                // await Task.Delay(12_000);
+                await Task.Delay(20_000);
             }
         }
 

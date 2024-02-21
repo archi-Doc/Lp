@@ -2,29 +2,28 @@
 
 namespace Netsphere;
 
-internal static class NetConstants
+public static class NetConstants
 {
-    public const bool LogLowLevelNet = true;
-    public const int AckDelayMics = 10_000; // 10ms
-    public const long ConnectionOpenToClosedMics = 5_000_000; // 5s
-    public const long ConnectionClosedToDisposalMics = 10_000_000; // 10s
-    public const int TransmissionTimeoutMics = 5_000_000; // 5s
-    public const int TransmissionDisposalMics = 5_000_000; // 5s
-    public const int FlowControlDisposalMics = 1_000_000; // 1s
-    public const int DefaultRetransmissionTimeoutMics = 500_000; // 500ms
+    public const int MaxPacketLength = 1432; // 1500 - 60 - 8 = 1432 bytes
+    public const int MinPort = 49152; // Ephemeral port 49152 - 60999
+    public const int MaxPort = 60999;
 
-    public const int SendIntervalMilliseconds = 1;
-    public const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
-    public const int SendCapacityPerRound = 50;
-    public const int InitialSendStreamDelayMilliseconds = 100;
-    public const int MaxSendStreamDelayMilliseconds = 1_000;
-    public const int InitialReceiveStreamDelayMilliseconds = 100;
-    public const int MaxReceiveStreamDelayMilliseconds = 1_000;
+    internal const bool LogLowLevelNet = true;
+    internal const int AckDelayMics = 10_000; // 10ms
+    internal const long ConnectionClosedToDisposalMics = 10_000_000; // 10s
+    internal const int TransmissionTimeoutMics = 5_000_000; // 5s
+    internal const int TransmissionDisposalMics = 5_000_000; // 5s
 
-    public const int DefaultSendBufferSize = 1024 * 1024;
+    internal const int DefaultRetransmissionTimeoutMics = 500_000; // 500ms
+    internal const int SendIntervalMilliseconds = 1;
+    internal const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
+    internal const int SendCapacityPerRound = 50;
+    internal const int InitialSendStreamDelayMilliseconds = 100;
+    internal const int MaxSendStreamDelayMilliseconds = 1_000;
+    internal const int InitialReceiveStreamDelayMilliseconds = 100;
+    internal const int MaxReceiveStreamDelayMilliseconds = 1_000;
 
-    public static readonly long MicsPerRound = Mics.FromMilliseconds(1);
-    public static readonly double MicsPerRoundRev = 1d / MicsPerRound;
-    public static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
-    public static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
+    internal static readonly long MicsPerRound = Mics.FromMilliseconds(1);
+    internal static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
+    internal static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
 }

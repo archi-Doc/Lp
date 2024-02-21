@@ -90,7 +90,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             }
 
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            netBase.SetNodeKey(information.NodeKey);
+            netBase.SetNodePrivateKey(information.NodeKey);
 
             var options = new NetOptions();
             options.Port = information.RunnerPort;

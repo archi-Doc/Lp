@@ -1,4 +1,6 @@
-﻿using Netsphere.Crypto;
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using Netsphere.Crypto;
 
 namespace LP.NetServices;
 
@@ -46,7 +48,7 @@ public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
         var service = clientConnection.GetService<IRemoteBenchRunner>();
         if (service is not null)
         {
-            var result = await service.Start(10_000, 20);
+            // var result = await service.Start(10_000, 20);
         }
 
         return NetResult.Success;

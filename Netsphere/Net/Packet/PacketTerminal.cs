@@ -51,7 +51,7 @@ public sealed partial class PacketTerminal
     public PacketTerminal(NetBase netBase, NetStats netStats, NetTerminal netTerminal, ILogger<PacketTerminal> logger)
     {
         this.netBase = netBase;
-        this.options = this.netBase.NetsphereOptions;
+        this.options = this.netBase.NetOptions;
         this.netStats = netStats;
         this.netTerminal = netTerminal;
         this.logger = logger;
@@ -316,7 +316,7 @@ public sealed partial class PacketTerminal
 
     internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {
-        if (dataToBeMoved.Span.Length > NetControl.MaxPacketLength)
+        if (dataToBeMoved.Span.Length > NetConstants.MaxPacketLength)
         {
             return;
         }

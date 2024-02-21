@@ -1,7 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
-using System.Text;
+using Arc.Crypto;
+
+#pragma warning disable SA1204
 
 namespace Netsphere.Crypto;
 
@@ -10,11 +13,32 @@ namespace Netsphere.Crypto;
 /// Signature: ECDsa, secp256r1.
 /// </summary>
 [TinyhandObject]
-public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<SignaturePrivateKey>
+public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<SignaturePrivateKey>, IStringConvertible<SignaturePrivateKey>
 {
     #region Unique
 
     private ECDsa? ecdsa;
+
+    public static int MaxStringLength => UnsafeStringLength;
+
+    public int GetStringLength() => UnsafeStringLength;
+
+    public bool TryFormat(Span<char> destination, out int written)
+        => this.UnsafeTryFormat(destination, out written);
+
+    public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out SignaturePrivateKey privateKey)
+    {
+        if (TryParseKey(KeyClass.T3CS_Signature, base64url, out var key))
+        {
+            privateKey = new SignaturePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
+            return true;
+        }
+        else
+        {
+            privateKey = default;
+            return false;
+        }
+    }
 
     public static SignaturePrivateKey Create()
     {

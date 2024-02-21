@@ -158,7 +158,7 @@ public class Program
             })
             .SetupOptions<ConsoleLoggerOptions>((context, options) =>
             {
-                options.Formatter.EnableColor = false; // tempcode
+                options.Formatter.EnableColor = false;
                 options.EnableBuffering = true;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
             });

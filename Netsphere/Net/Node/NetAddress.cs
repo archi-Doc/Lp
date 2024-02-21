@@ -298,7 +298,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
-        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
+        if (this.Port < NetConstants.MinPort || this.Port > NetConstants.MaxPort)
         {
             return false;
         }

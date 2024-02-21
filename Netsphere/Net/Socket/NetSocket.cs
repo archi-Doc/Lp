@@ -29,14 +29,6 @@ public sealed class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
-            /*var udp = core.socket.UnsafeUdpClient;
-            if (udp == null)
-            {
-                return;
-            }
-
-            udp.Client.Blocking = false;*/
-
             ByteArrayPool.Owner? arrayOwner = null;
             while (!core.IsTerminated)
             {
@@ -52,7 +44,7 @@ public sealed class NetSocket
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
-                    if (received <= NetControl.MaxPacketLength)
+                    if (received <= NetConstants.MaxPacketLength)
                     {// nspi
                         core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
                         if (arrayOwner.Count > 1)
@@ -103,9 +95,6 @@ public sealed class NetSocket
         }
         catch
         {
-            // this.Logger?.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
-            // throw new PanicException();
-
             return false;
         }
 

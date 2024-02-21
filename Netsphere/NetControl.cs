@@ -10,8 +10,6 @@ global using Arc.Unit;
 global using BigMachines;
 global using Tinyhand;
 global using ValueLink;
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using Netsphere.Machines;
@@ -23,11 +21,6 @@ namespace Netsphere;
 
 public class NetControl : UnitBase, IUnitPreparable
 {
-    public const int MaxPacketLength = 1432; // 1500 - 60 - 8 = 1432 bytes
-    public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
-    public const int MinPort = 49152; // Ephemeral port 49152 - 60999
-    public const int MaxPort = 60999;
-
     public class Builder : UnitBuilder<Unit>
     {
         public Builder()
@@ -37,14 +30,11 @@ public class NetControl : UnitBase, IUnitPreparable
             {
                 // Main services
                 context.AddSingleton<NetControl>();
-                // context.AddSingleton<ServerOptions>();
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
-                // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
-                // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Stream logger
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(IdFileLogger<>), typeof(IdFileLoggerFactory<>)));
@@ -101,7 +91,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
         this.NetTerminal = netTerminal;
         this.NetTerminal.Initialize(this.Responders, this.Services, false);
-        if (this.NetBase.NetsphereOptions.EnableAlternative)
+        if (this.NetBase.NetOptions.EnableAlternative)
         {// For debugging
             this.Alternative = new(context, unitLogger, netBase, netStats);
             this.Alternative.Initialize(this.Responders, this.Services, true);
@@ -142,10 +132,5 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public void Prepare(UnitMessage.Prepare message)
     {
-    }
-
-    private void Dump(ILog logger)
-    {
-        logger.Log($"Dump:");
     }
 }

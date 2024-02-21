@@ -182,7 +182,7 @@ internal sealed partial class SendTransmission : IDisposable
             }
 
             var info = NetHelper.CalculateGene(block.Span.Length);
-            this.Connection.UpdateLatestAckMics();
+            this.Connection.UpdateLastEventMics();
             this.sentTcs = sentTcs;
 
             var span = block.Span;
@@ -292,7 +292,7 @@ internal sealed partial class SendTransmission : IDisposable
                 return NetResult.Closed;
             }
 
-            this.Connection.UpdateLatestAckMics();
+            this.Connection.UpdateLastEventMics();
             this.Mode = NetTransmissionMode.Stream;
             this.Connection.CreateCongestionControl();
             this.sentTcs = sentTcs;

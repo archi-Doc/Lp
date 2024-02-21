@@ -28,7 +28,7 @@ public class BlockTestSubcommand : ISimpleCommandAsync
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        var netNode = await netTerminal.UnsafeGetNetNodeAsync(NetAddress.Alternative);
+        var netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative);
         // this.NetControl.NetBase.DefaultSendTimeout = TimeSpan.FromSeconds(5);
         if (netNode is null)
         {

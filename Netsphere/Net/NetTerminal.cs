@@ -82,7 +82,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal.SetReceiveTransmissionGapForTest(gap);
     }
 
-    public async Task<NetNode?> UnsafeGetNetNodeAsync(NetAddress address)
+    public async Task<NetNode?> UnsafeGetNetNode(NetAddress address)
     {
         var t = await this.PacketTerminal.SendAndReceive<PacketGetInformation, PacketGetInformationResponse>(address, new()).ConfigureAwait(false);
         if (t.Value is null)
@@ -100,7 +100,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         if (this.Port == 0)
         {
-            this.Port = this.NetBase.NetsphereOptions.Port;
+            this.Port = this.NetBase.NetOptions.Port;
         }
 
         if (!this.IsAlternative)
