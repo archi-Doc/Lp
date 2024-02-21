@@ -198,7 +198,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
     private void Prepare()
     {
         // Load NetsphereOptions.Nodes
-        var nodes = this.netBase.NetsphereOptions.Nodes;
+        var nodes = this.netBase.NetsphereOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (NetAddress.TryParse(x, out var address))

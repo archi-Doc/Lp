@@ -53,8 +53,8 @@ public class NetBase : UnitBase, IUnitPreparable
     public void Prepare(UnitMessage.Prepare message)
     {
         // Set port number
-        if (this.NetsphereOptions.Port < NetControl.MinPort ||
-            this.NetsphereOptions.Port > NetControl.MaxPort)
+        if (this.NetsphereOptions.Port < NetConstants.MinPort ||
+            this.NetsphereOptions.Port > NetConstants.MaxPort)
         {
             var showWarning = false;
             if (this.NetsphereOptions.Port != 0)
@@ -62,10 +62,10 @@ public class NetBase : UnitBase, IUnitPreparable
                 showWarning = true;
             }
 
-            this.NetsphereOptions.Port = RandomVault.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
+            this.NetsphereOptions.Port = RandomVault.Pseudo.NextInt32(NetConstants.MinPort, NetConstants.MaxPort + 1);
             if (showWarning)
             {
-                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
+                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetConstants.MinPort} and {NetConstants.MaxPort}");
                 this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetsphereOptions.Port}");
             }
         }

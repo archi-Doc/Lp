@@ -316,7 +316,7 @@ public sealed partial class PacketTerminal
 
     internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {
-        if (dataToBeMoved.Span.Length > NetControl.MaxPacketLength)
+        if (dataToBeMoved.Span.Length > NetConstants.MaxPacketLength)
         {
             return;
         }

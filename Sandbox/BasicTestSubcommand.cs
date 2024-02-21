@@ -98,7 +98,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         this.NetControl.NewServerConnectionContext = connection => new CustomConnectionContext(connection);
-        // this.NetControl.NetBase.ServerOptions = this.NetControl.NetBase.ServerOptions with { MaxStreamLength = 100_000_000, };
 
         // netTerminal.PacketTerminal.MaxResendCount = 0;
         // netTerminal.SetDeliveryFailureRatioForTest(0.03);

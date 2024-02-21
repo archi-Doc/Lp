@@ -44,7 +44,7 @@ public sealed class NetSocket
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
-                    if (received <= NetControl.MaxPacketLength)
+                    if (received <= NetConstants.MaxPacketLength)
                     {// nspi
                         core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
                         if (arrayOwner.Count > 1)

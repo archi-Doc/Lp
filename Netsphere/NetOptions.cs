@@ -16,8 +16,8 @@ public partial record NetOptions
     [SimpleOption("nodename", Description = "Name of this node")]
     public string NodeName { get; set; } = string.Empty;
 
-    [SimpleOption("node", Description = "Node addresses to connect")]
-    public string Nodes { get; set; } = string.Empty;
+    [SimpleOption("nodelist", Description = "Node addresses to connect")]
+    public string NodeList { get; set; } = string.Empty;
 
     [SimpleOption("essential", Description = "Enable essential network function")]
     public bool EnableEssential { get; set; } = true;
