@@ -34,44 +34,16 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
 
     public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
     {
-        privateKey = null;
-
-        ReadOnlySpan<char> span = base64url.Trim();
-        if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
-        {// !!!abc
-            return false;
-        }
-
-        span = span.Slice(KeyHelper.PrivateKeyBrace.Length);
-        var bracePosition = span.IndexOf(KeyHelper.PrivateKeyBrace);
-        if (bracePosition <= 0)
-        {// abc!!!
-            return false;
-        }
-
-        var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
-        if (privateBytes == null || privateBytes.Length != (KeyHelper.PrivateKeyLength + 1))
+        if (TryParseKey(KeyClass.Node_Encryption, base64url, out var key))
         {
+            privateKey = new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
+            return true;
+        }
+        else
+        {
+            privateKey = default;
             return false;
         }
-
-        ECParameters key = default;
-        key.Curve = KeyHelper.ECCurve;
-        key.D = privateBytes[1..(KeyHelper.PrivateKeyLength + 1)];
-        try
-        {
-            using (var ecdh = ECDiffieHellman.Create(key))
-            {
-                key = ecdh.ExportParameters(true);
-            }
-        }
-        catch
-        {
-            return false;
-        }
-
-        privateKey = new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
-        return true;
     }
 
     public static NodePrivateKey Create()

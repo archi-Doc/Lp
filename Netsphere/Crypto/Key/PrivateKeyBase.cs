@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Security.Cryptography;
 
 namespace Netsphere.Crypto;
 
@@ -22,6 +23,50 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
 
         var yTilde = KeyHelper.CurveInstance.CompressY(this.y);
         this.keyValue = KeyHelper.CreatePrivateKeyValue(keyClass, yTilde);
+    }
+
+    protected static bool TryParseKey(KeyClass keyClass, ReadOnlySpan<char> base64url, out ECParameters key)
+    {
+        key = default;
+        ReadOnlySpan<char> span = base64url.Trim();
+        if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
+        {// !!!abc
+            return false;
+        }
+
+        span = span.Slice(KeyHelper.PrivateKeyBrace.Length);
+        var bracePosition = span.IndexOf(KeyHelper.PrivateKeyBrace);
+        if (bracePosition <= 0)
+        {// abc!!!
+            return false;
+        }
+
+        var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
+        if (privateBytes == null || privateBytes.Length != (KeyHelper.PrivateKeyLength + 1))
+        {
+            return false;
+        }
+
+        if (KeyHelper.GetKeyClass(privateBytes[0]) != keyClass)
+        {
+            return false;
+        }
+
+        key.Curve = KeyHelper.ECCurve;
+        key.D = privateBytes[1..(KeyHelper.PrivateKeyLength + 1)];
+        try
+        {
+            using (var ecdh = ECDiffieHellman.Create(key))
+            {
+                key = ecdh.ExportParameters(true);
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        return true;
     }
 
     #region FieldAndProperty
@@ -108,7 +153,7 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
         return $"!!!{Base64.Url.FromByteArrayToString(privateSpan)}!!!({Base64.Url.FromByteArrayToString(publicSpan)})";*/
     }
 
-    public bool UnsafeTryFormat(Span<char> destination, out int written)
+    protected bool UnsafeTryFormat(Span<char> destination, out int written)
     {
         if (destination.Length < UnsafeStringLength)
         {
