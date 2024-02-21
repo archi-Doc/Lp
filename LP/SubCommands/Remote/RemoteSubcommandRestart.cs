@@ -34,7 +34,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
         // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
         this.logger.TryGet()?.Log($"Start");
-        using (var connection = await this.terminal.TryConnect(nodeInformation))
+        using (var connection = await this.terminal.Connect(nodeInformation))
         {
             if (connection == null)
             {

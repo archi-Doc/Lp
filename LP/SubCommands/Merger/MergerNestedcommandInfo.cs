@@ -26,7 +26,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
         }*/
 
         this.logger.TryGet()?.Log(string.Empty);
-        using (var terminal = await this.terminal.TryConnect(this.nestedcommand.Node))
+        using (var terminal = await this.terminal.Connect(this.nestedcommand.Node))
         {
             if (terminal == null)
             {

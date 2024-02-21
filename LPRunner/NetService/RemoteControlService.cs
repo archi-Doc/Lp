@@ -53,7 +53,7 @@ internal class RemoteControlService : IRemoteControlService
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = await netTerminal.TryConnect(netNode))
+        using (var terminal = await netTerminal.Connect(netNode))
         {
             if (terminal is null)
             {

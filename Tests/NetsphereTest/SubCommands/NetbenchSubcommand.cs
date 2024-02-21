@@ -29,7 +29,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         }
 
         // node = NetNode.Alternative;
-        using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
+        using (var connection = await this.NetControl.NetTerminal.Connect(node))
         {
             if (connection is null)
             {
@@ -159,7 +159,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         var count = 0;
         for (var j = 0; j < N; j++)
         {
-            using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
+            using (var connection = await this.NetControl.NetTerminal.Connect(node))
             {
                 if (connection is null)
                 {
@@ -210,7 +210,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         {
             for (var j = 0; j < (Total / Concurrent); j++)
             {
-                using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
+                using (var connection = await this.NetControl.NetTerminal.Connect(node))
                 {
                     if (connection is null)
                     {

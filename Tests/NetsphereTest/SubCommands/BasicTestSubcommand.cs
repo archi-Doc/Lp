@@ -32,7 +32,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
+        using (var terminal = await this.NetControl.NetTerminal.Connect(node))
         {
             if (terminal is null)
             {

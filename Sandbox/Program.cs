@@ -3,6 +3,7 @@
 global using Arc.Threading;
 global using CrystalData;
 global using Tinyhand;
+using Arc.Crypto;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -28,7 +29,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        if (NetHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
+        if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
         {
             var st = privateKey.UnsafeToString();
         }

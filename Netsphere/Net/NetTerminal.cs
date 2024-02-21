@@ -93,7 +93,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
+    public Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
         => this.ConnectionTerminal.TryConnect(node, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)

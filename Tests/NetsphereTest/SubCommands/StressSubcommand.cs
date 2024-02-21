@@ -79,7 +79,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                 for (var j = 0; j < (options.Total / options.Concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var connection = await this.NetControl.NetTerminal.TryConnect(node))
+                    using (var connection = await this.NetControl.NetTerminal.Connect(node))
                     {
                         if (connection is null)
                         {
@@ -123,7 +123,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
             AverageLatency = (int)(totalLatency / (successCount + failureCount)),
         };
 
-        using (var terminal = await this.NetControl.NetTerminal.TryConnect(node))
+        using (var terminal = await this.NetControl.NetTerminal.Connect(node))
         {
             if (terminal is null)
             {

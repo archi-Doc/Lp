@@ -159,7 +159,7 @@ public partial class RunnerMachine : Machine
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = await this.netControl.NetTerminal.TryConnect(node))
+        using (var terminal = await this.netControl.NetTerminal.Connect(node))
         {
             if (terminal is null)
             {

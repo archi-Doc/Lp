@@ -72,7 +72,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = await this.netTerminal.TryConnect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse))
+                    using (var t = await this.netTerminal.Connect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse))
                     {
                         if (t is null)
                         {

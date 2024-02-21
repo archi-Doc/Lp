@@ -24,7 +24,7 @@ public class BasicNetTest
         var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
         result.Result.Is(NetResult.Success);
 
-        using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))
+        using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative))
         {
             if (connection is null)
             {

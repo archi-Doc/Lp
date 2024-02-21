@@ -47,7 +47,7 @@ internal class RemoteBenchBroker
         async void StartNode(NetNode node)
         {
             this.logger.TryGet()?.Log($"StartNode: {node.ToString()}");
-            using (var connection = await this.terminal.TryConnect(node))
+            using (var connection = await this.terminal.Connect(node))
             {
                 if (connection is null)
                 {
