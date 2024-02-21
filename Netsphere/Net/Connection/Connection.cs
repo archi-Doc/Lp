@@ -117,7 +117,7 @@ public abstract class Connection : IDisposable
 
     // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + 40_000; // + NetConstants.AckDelayMics;
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics;
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
@@ -279,28 +279,6 @@ public abstract class Connection : IDisposable
             }
         }
     }
-
-    /*internal SendTransmission? TryCreateSendTransmission()
-    {
-        lock (this.sendTransmissions.SyncObject)
-        {
-            if (this.NumberOfSendTransmissions >= this.Agreement.MaxTransmissions)
-            {
-                return default;
-            }
-
-            uint transmissionId;
-            do
-            {
-                transmissionId = RandomVault.Pseudo.NextUInt32();
-            }
-            while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
-
-            var sendTransmission = new SendTransmission(this, transmissionId);
-            sendTransmission.Goshujin = this.sendTransmissions;
-            return sendTransmission;
-        }
-    }*/
 
     internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
     {
@@ -1037,15 +1015,11 @@ Wait:
 
     internal void DisposeActual()
     {
-        // this.Logger.TryGet(LogLevel.Debug)?.Log($"{this.ConnectionIdText} Dispose actual");
-
         lock (this.syncAes)
         {
             this.aes0?.Dispose();
             this.aes1?.Dispose();
         }
-
-        // this.CloseTransmission();
     }
 
     public override string ToString()
