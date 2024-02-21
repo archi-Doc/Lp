@@ -11,8 +11,8 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         this.UnitLogger = logger;
 
-        this.NetsphereOptions = new();
-        this.NetsphereOptions.NodeName = System.Environment.OSVersion.ToString();
+        this.NetOptions = new();
+        this.NetOptions.NodeName = System.Environment.OSVersion.ToString();
         this.NewServerConnectionContext = connection => new ServerConnectionContext(connection);
         this.NewClientConnectionContext = connection => new ClientConnectionContext(connection);
     }
@@ -25,7 +25,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public CancellationToken CancellationToken => this.Core.CancellationToken;
 
-    public NetOptions NetsphereOptions { get; private set; }
+    public NetOptions NetOptions { get; private set; }
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
@@ -41,32 +41,25 @@ public class NetBase : UnitBase, IUnitPreparable
 
     internal Func<ClientConnection, ClientConnectionContext> NewClientConnectionContext { get; set; }
 
-    public class LogFlag
-    {
-        public bool FlowControl { get; set; }
-    }
-
-    public LogFlag Log { get; } = new();
-
     #endregion
 
     public void Prepare(UnitMessage.Prepare message)
     {
         // Set port number
-        if (this.NetsphereOptions.Port < NetConstants.MinPort ||
-            this.NetsphereOptions.Port > NetConstants.MaxPort)
+        if (this.NetOptions.Port < NetConstants.MinPort ||
+            this.NetOptions.Port > NetConstants.MaxPort)
         {
             var showWarning = false;
-            if (this.NetsphereOptions.Port != 0)
+            if (this.NetOptions.Port != 0)
             {
                 showWarning = true;
             }
 
-            this.NetsphereOptions.Port = RandomVault.Pseudo.NextInt32(NetConstants.MinPort, NetConstants.MaxPort + 1);
+            this.NetOptions.Port = RandomVault.Pseudo.NextInt32(NetConstants.MinPort, NetConstants.MaxPort + 1);
             if (showWarning)
             {
                 this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetConstants.MinPort} and {NetConstants.MaxPort}");
-                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetsphereOptions.Port}");
+                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetOptions.Port}");
             }
         }
 
@@ -81,10 +74,10 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public void SetOptions(NetOptions netsphereOptions)
     {
-        this.NetsphereOptions = netsphereOptions;
+        this.NetOptions = netsphereOptions;
     }
 
-    public bool SetNodeKey(NodePrivateKey privateKey)
+    public bool SetNodePrivateKey(NodePrivateKey privateKey)
     {
         try
         {
@@ -100,10 +93,8 @@ public class NetBase : UnitBase, IUnitPreparable
         }
     }
 
-    public byte[] SerializeNodeKey()
+    public byte[] SerializeNodePrivateKey()
     {
         return TinyhandSerializer.Serialize(this.NodePrivateKey);
     }
-
-    public override string ToString() => $"NetBase: {this.NetsphereOptions.NodeName}";
 }

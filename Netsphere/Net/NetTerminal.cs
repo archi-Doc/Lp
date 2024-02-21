@@ -100,7 +100,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         if (this.Port == 0)
         {
-            this.Port = this.NetBase.NetsphereOptions.Port;
+            this.Port = this.NetBase.NetOptions.Port;
         }
 
         if (!this.IsAlternative)

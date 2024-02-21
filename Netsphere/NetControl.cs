@@ -91,7 +91,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
         this.NetTerminal = netTerminal;
         this.NetTerminal.Initialize(this.Responders, this.Services, false);
-        if (this.NetBase.NetsphereOptions.EnableAlternative)
+        if (this.NetBase.NetOptions.EnableAlternative)
         {// For debugging
             this.Alternative = new(context, unitLogger, netBase, netStats);
             this.Alternative.Initialize(this.Responders, this.Services, true);

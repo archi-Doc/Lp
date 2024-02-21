@@ -36,7 +36,7 @@ public class NodeKeySubcommandSet : ISimpleCommand<NodeKeySubcommandSetOptions>
             return;
         }
 
-        this.netBase.SetNodeKey(nodeKey);
+        this.netBase.SetNodePrivateKey(nodeKey);
         this.logger.TryGet()?.Log(Hashed.Subcommands.NodeKey.Changed, nodeKey.ToPublicKey().ToString());
     }
 

@@ -80,7 +80,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     public NetNode GetMyNetNode()
     {
-        var address = new NetAddress(this.MyIpv4Address.Address, this.MyIpv6Address.Address, (ushort)this.netBase.NetsphereOptions.Port);
+        var address = new NetAddress(this.MyIpv4Address.Address, this.MyIpv6Address.Address, (ushort)this.netBase.NetOptions.Port);
         return new(address, this.netBase.NodePublicKey);
     }
 

@@ -61,7 +61,7 @@ public class ExternalServiceImpl : IExternalService
 {
     public ExternalServiceImpl(NetBase netBase)
     {
-        Console.WriteLine($"ext ctor {netBase.NetsphereOptions.ToString()}");
+        Console.WriteLine($"ext ctor {netBase.NetOptions.ToString()}");
     }
 
     public async NetTask<int> IncrementExternal(int x)
