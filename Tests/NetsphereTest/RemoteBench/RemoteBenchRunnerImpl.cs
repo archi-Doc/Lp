@@ -126,6 +126,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 
         this.logger.TryGet()?.Log(record.ToString());
 
-        connectionContext.Terminate();
+        serverConnection.Close();
+        // connectionContext.Terminate();
     }
 }
