@@ -16,7 +16,7 @@ public class FilterTest
     [Fact]
     public async Task Test1()
     {
-        using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative, Connection.ConnectMode.NoReuse))
+        using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse))
         {
             if (connection is null)
             {
@@ -53,7 +53,7 @@ public class FilterTest
     [Fact]
     public async Task Test1Reuse()
     {
-        using (var connection = await this.NetControl.NetTerminal.TryConnect(NetNode.Alternative))
+        using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative))
         {
             if (connection is null)
             {

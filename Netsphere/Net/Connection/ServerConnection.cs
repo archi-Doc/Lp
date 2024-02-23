@@ -5,7 +5,7 @@ using Netsphere.Packet;
 namespace Netsphere;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class ServerConnection : Connection
+public sealed partial class ServerConnection : Connection, IEquatable<ServerConnection>, IComparable<ServerConnection>
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
     [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
@@ -50,6 +50,40 @@ public sealed partial class ServerConnection : Connection
         else
         {
             return this.ConnectionTerminal.PrepareBidirectionalConnection(this);
+        }
+    }
+
+    public bool Equals(ServerConnection? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return this.ConnectionId == other.ConnectionId;
+    }
+
+    public override int GetHashCode()
+        => (int)this.ConnectionId;
+
+    public int CompareTo(ServerConnection? other)
+    {
+        if (other is null)
+        {
+            return 1;
+        }
+
+        if (this.ConnectionId < other.ConnectionId)
+        {
+            return -1;
+        }
+        else if (this.ConnectionId > other.ConnectionId)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
         }
     }
 }

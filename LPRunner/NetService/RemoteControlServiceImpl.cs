@@ -10,9 +10,9 @@ using Netsphere.Crypto;
 namespace LP.NetServices;
 
 [NetServiceObject]
-internal class RemoteControlService : IRemoteControlService
+internal class RemoteControlServiceImpl : IRemoteControlService
 {// Remote -> LPRunner
-    public RemoteControlService(ILogger<RemoteControlService> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
+    public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
     {
         this.logger = logger;
         this.netControl = netControl;
@@ -53,7 +53,7 @@ internal class RemoteControlService : IRemoteControlService
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = await netTerminal.TryConnect(netNode))
+        using (var terminal = await netTerminal.Connect(netNode))
         {
             if (terminal is null)
             {
@@ -83,7 +83,7 @@ internal class RemoteControlService : IRemoteControlService
         }
     }
 
-    private ILogger<RemoteControlService> logger;
+    private ILogger<RemoteControlServiceImpl> logger;
     private NetControl netControl;
     private BigMachine bigMachine;
     private RunnerInformation information;

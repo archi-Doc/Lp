@@ -8,7 +8,7 @@ using Netsphere.Packet;
 namespace Netsphere;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class ClientConnection : Connection, IClientConnectionInternal
+public sealed partial class ClientConnection : Connection, IClientConnectionInternal, IEquatable<ClientConnection>, IComparable<ClientConnection>
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
     [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
@@ -429,7 +429,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, stream);
     }
 
-    public async Task<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    /*public async Task<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
         var r = await this.SendAndReceive<CertificateToken<ConnectionAgreement>, bool>(token, ConnectionAgreement.UpdateId).ConfigureAwait(false);
         if (r.Result == NetResult.Success && r.Value)
@@ -460,7 +460,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         return r.Result;
-    }
+    }*/
 
     async Task<ServiceResponse<NetResult>> IClientConnectionInternal.UpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
@@ -543,6 +543,40 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         else
         {
             return this.ConnectionTerminal.PrepareBidirectionalConnection(this);
+        }
+    }
+
+    public bool Equals(ClientConnection? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return this.ConnectionId == other.ConnectionId;
+    }
+
+    public override int GetHashCode()
+        => (int)this.ConnectionId;
+
+    public int CompareTo(ClientConnection? other)
+    {
+        if (other is null)
+        {
+            return 1;
+        }
+
+        if (this.ConnectionId < other.ConnectionId)
+        {
+            return -1;
+        }
+        else if (this.ConnectionId > other.ConnectionId)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
         }
     }
 }

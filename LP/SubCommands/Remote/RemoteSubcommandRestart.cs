@@ -34,7 +34,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
         // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
         this.logger.TryGet()?.Log($"Start");
-        using (var connection = await this.terminal.TryConnect(nodeInformation))
+        using (var connection = await this.terminal.Connect(nodeInformation))
         {
             if (connection == null)
             {
@@ -49,7 +49,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            var service = connection.GetService<RemoteControlService>();
+            var service = connection.GetService<IRemoteControlService>();
             var response = await service.Authenticate(token).ResponseAsync;
             var result = response.Result;
             this.logger.TryGet()?.Log($"Authenticate: {result}");

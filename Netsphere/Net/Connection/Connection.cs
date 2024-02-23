@@ -26,8 +26,8 @@ public abstract class Connection : IDisposable
 
     public enum ConnectMode
     {
-        ReuseClosed,
-        Shared,
+        ReuseIfAvailable,
+        ReuseOnly,
         NoReuse,
     }
 
@@ -61,7 +61,7 @@ public abstract class Connection : IDisposable
 
     #region FieldAndProperty
 
-    public CancellationToken CancellationToken => this.NetBase.CancellationToken;
+    public CancellationToken CancellationToken => this.CancellationTokenSource.Token;
 
     public NetBase NetBase { get; }
 
@@ -117,7 +117,7 @@ public abstract class Connection : IDisposable
 
     // this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + NetConstants.AckDelayMics; // 10ms
     public int RetransmissionTimeout
-        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + 40_000; // + NetConstants.AckDelayMics;
+        => this.smoothedRtt + (this.smoothedRtt >> 2) + (this.rttvar << 2) + NetConstants.AckDelayMics;
 
     public int TaichiTimeout
         => this.RetransmissionTimeout * this.Taichi;
@@ -149,6 +149,28 @@ public abstract class Connection : IDisposable
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
+
+    private CancellationTokenSource? cts;
+
+    private CancellationTokenSource CancellationTokenSource
+    {
+        get
+        {
+            while (true)
+            {
+                if (this.cts is not null)
+                {
+                    return this.cts;
+                }
+
+                var t = new CancellationTokenSource();
+                if (Interlocked.CompareExchange(ref this.cts, t, null) == null)
+                {
+                    return t;
+                }
+            }
+        }
+    }
 
     private Embryo embryo;
 
@@ -184,8 +206,26 @@ public abstract class Connection : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ChangeState(State state)
     {
+        if (this.CurrentState == state)
+        {
+            if (this.CurrentState == State.Open)
+            {
+                this.UpdateLastEventMics();
+            }
+
+            return;
+        }
+
         this.CurrentState = state;
         this.UpdateLastEventMics();
+
+        if (state == State.Open)
+        {
+        }
+        else if (state == State.Closed)
+        {
+            this.CancellationTokenSource.Cancel();
+        }
     }
 
     public void ApplyAgreement()
@@ -279,28 +319,6 @@ public abstract class Connection : IDisposable
             }
         }
     }
-
-    /*internal SendTransmission? TryCreateSendTransmission()
-    {
-        lock (this.sendTransmissions.SyncObject)
-        {
-            if (this.NumberOfSendTransmissions >= this.Agreement.MaxTransmissions)
-            {
-                return default;
-            }
-
-            uint transmissionId;
-            do
-            {
-                transmissionId = RandomVault.Pseudo.NextUInt32();
-            }
-            while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
-
-            var sendTransmission = new SendTransmission(this, transmissionId);
-            sendTransmission.Goshujin = this.sendTransmissions;
-            return sendTransmission;
-        }
-    }*/
 
     internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
     {
@@ -1037,15 +1055,11 @@ Wait:
 
     internal void DisposeActual()
     {
-        // this.Logger.TryGet(LogLevel.Debug)?.Log($"{this.ConnectionIdText} Dispose actual");
-
         lock (this.syncAes)
         {
             this.aes0?.Dispose();
             this.aes1?.Dispose();
         }
-
-        // this.CloseTransmission();
     }
 
     public override string ToString()

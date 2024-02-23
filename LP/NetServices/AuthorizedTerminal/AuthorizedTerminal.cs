@@ -25,7 +25,7 @@ public class AuthorizedTerminalFactory
         }
 
         // Terminal
-        var connection = await terminal.TryConnect(node);
+        var connection = await terminal.Connect(node);
         if (connection == null)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, node.ToString());

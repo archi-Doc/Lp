@@ -3,6 +3,7 @@
 global using Arc.Threading;
 global using CrystalData;
 global using Tinyhand;
+using Arc.Crypto;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -27,11 +28,6 @@ public class Program
             e.Cancel = true;
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
-
-        if (NetHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
-        {
-            var st = privateKey.UnsafeToString();
-        }
 
         var builder = new NetControl.Builder()
             .Configure(context =>
@@ -73,6 +69,13 @@ public class Program
         var unit = builder.Build();
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
+
+        var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
+        if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
+        {
+            netBase.SetNodePrivateKey(privateKey);
+        }
+
         await unit.Run(options, true);
 
         var parserOptions = SimpleParserOptions.Standard with

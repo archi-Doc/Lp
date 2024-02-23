@@ -20,16 +20,27 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
         this.logger.TryGet()?.Log("New node key");
 
         NodePrivateKey nodeKey;
-        if (string.IsNullOrEmpty(options.Seedphrase))
+        var phrase = options.Seedphrase?.Trim();
+        if (string.IsNullOrEmpty(phrase))
         {
-            nodeKey = NodePrivateKey.Create();
+            phrase = this.seedPhrase.Create();
+            var seed = this.seedPhrase.TryGetSeed(phrase);
+            if (seed is not null)
+            {
+                this.userInterfaceService.WriteLine($"Seedphrase: {phrase}");
+                nodeKey = NodePrivateKey.Create(seed);
+            }
+            else
+            {
+                nodeKey = NodePrivateKey.Create();
+            }
         }
         else
         {
-            var seed = this.seedPhrase.TryGetSeed(options.Seedphrase);
+            var seed = this.seedPhrase.TryGetSeed(phrase);
             if (seed == null)
             {
-                this.logger.TryGet()?.Log(Hashed.Seedphrase.Invalid, options.Seedphrase);
+                this.userInterfaceService.WriteLine(Hashed.Seedphrase.Invalid, phrase);
                 return;
             }
 

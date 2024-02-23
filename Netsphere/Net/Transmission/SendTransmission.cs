@@ -442,15 +442,11 @@ Exit:
     {
         this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama {this.GeneSerialMax}");
 
-        // int sentCount = 0;
-        // long sentAccumulated = 0;
         if (this.gene0 is not null)
         {
             if (this.gene0.CurrentState == SendGene.State.Sent)
             {// Exclude resent genes as they do not allow for accurate RTT measurement.
                 this.Connection.AddRtt((int)(Mics.FastSystem - this.gene0.SentMics));
-                // sentCount++;
-                // sentAccumulated += this.gene0.SentMics;
             }
 
             this.gene0.Dispose(true);

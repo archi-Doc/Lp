@@ -4,6 +4,15 @@ namespace LP;
 
 public static class IUserInterfaceServiceExtention
 {
+    public static void WriteLine(this IUserInterfaceService service, ulong hash)
+        => service.WriteLine(HashedString.Get(hash));
+
+    public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1)
+        => service.WriteLine(HashedString.Get(hash, obj1));
+
+    public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
+        => service.WriteLine(HashedString.Get(hash, obj1, obj2));
+
     public static Task<bool?> RequestYesOrNo(this IUserInterfaceService viewService, ulong hash)
         => viewService.RequestYesOrNo(HashedString.Get(hash));
 

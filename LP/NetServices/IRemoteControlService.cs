@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace LP.NetServices;
 
 [NetServiceInterface]
-public interface RemoteControlService : INetService
+public interface IRemoteControlService : INetService
 {
     public NetTask Authenticate(AuthenticationToken token);
 
@@ -13,7 +13,7 @@ public interface RemoteControlService : INetService
 }
 
 [NetServiceObject]
-internal class RemoteControlServiceImpl : RemoteControlService
+internal class RemoteControlServiceImpl : IRemoteControlService
 {// LPRunner -> Container
     // This class is unsafe.
     public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, Control control)

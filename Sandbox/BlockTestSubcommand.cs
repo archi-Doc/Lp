@@ -41,7 +41,7 @@ public class BlockTestSubcommand : ISimpleCommandAsync
         this.NetControl.NetTerminal.PacketTerminal.MaxResendCount = 10;
         //this.NetControl.Alternative!.SetDeliveryFailureRatio(0.05d);
         this.NetControl.Alternative!.PacketTerminal.MaxResendCount = 10;
-        using (var connection = await netTerminal.TryConnect(netNode))
+        using (var connection = await netTerminal.Connect(netNode))
         {
             if (connection is not null)
             {

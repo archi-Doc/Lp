@@ -11,8 +11,6 @@ public partial record ConnectionAgreement
     internal const ulong UpdateId = 0x54074a0294a59b25;
     internal const ulong BidirectionalId = 0x7432bf385bf192da;
 
-    // public static ConnectionAgreement New() => Default with { };
-
     public ConnectionAgreement()
     {
         this.MaxTransmissions = 4; // 4 transmissions

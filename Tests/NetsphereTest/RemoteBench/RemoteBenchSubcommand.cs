@@ -45,7 +45,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
         // await this.TestPingpong(node);
 
-        var connection = await this.netControl.NetTerminal.TryConnect(node);
+        var connection = await this.netControl.NetTerminal.Connect(node);
         if (connection is null)
         {
             return;
@@ -88,7 +88,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
         try
         {
-            await ThreadCore.Root.Delay(TimeSpan.FromMinutes(5)).WaitAsync(context.CancellationToken);
+            await ThreadCore.Root.Delay(TimeSpan.FromMinutes(5)).WaitAsync(connection.CancellationToken);
         }
         catch
         {
@@ -112,7 +112,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
     {
         const int N = 100;
 
-        using (var connection = await this.netControl.NetTerminal.TryConnect(node))
+        using (var connection = await this.netControl.NetTerminal.Connect(node))
         {
             if (connection is null)
             {
