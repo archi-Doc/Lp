@@ -152,8 +152,13 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
+    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
+        if (!this.NetTerminal.IsActive)
+        {
+            return null;
+        }
+
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
         {
             return null;

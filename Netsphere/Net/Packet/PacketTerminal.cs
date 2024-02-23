@@ -237,7 +237,11 @@ public sealed partial class PacketTerminal
         {// Packet types (0-127), Client -> Server
             if (packetType == PacketType.Connect)
             {// PacketConnect
-                if (!this.options.EnableServer)
+                if (!this.netTerminal.IsActive)
+                {
+                    return;
+                }
+                else if (!this.options.EnableServer)
                 {
                     return;
                 }

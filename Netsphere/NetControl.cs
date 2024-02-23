@@ -130,7 +130,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     #endregion
 
-    public void Prepare(UnitMessage.Prepare message)
+    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
     }
 }
