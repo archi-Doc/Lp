@@ -37,6 +37,7 @@ public class RemoteBenchBroker
         {
             this.records.Clear();
             array = this.connections.ToArray();
+            this.connections.Clear();
             foreach (var x in array)
             {
                 this.records[x] = default;
@@ -46,10 +47,11 @@ public class RemoteBenchBroker
         Task[] tasks = new Task[array.Length];
         for (var i = 0; i < array.Length; i++)
         {
-            tasks[i] = Task.Run(() => Process(array[i]));
+            var c = array[i];
+            tasks[i] = Task.Run(() => Process(c));
         }
 
-        async void Process(ClientConnection clientConnection)
+        async Task Process(ClientConnection clientConnection)
         {
             var service = clientConnection.GetService<IRemoteBenchRunner>();
             var result = await service.Start(total, concurrent);
@@ -77,8 +79,6 @@ public class RemoteBenchBroker
                             continue;
                         }
                     }
-
-                    this.connections.Clear();
 
                     var count = 0;
                     long successCount = 0;
