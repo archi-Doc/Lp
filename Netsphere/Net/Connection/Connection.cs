@@ -26,8 +26,8 @@ public abstract class Connection : IDisposable
 
     public enum ConnectMode
     {
-        ReuseClosed,
-        Shared,
+        ReuseIfAvailable,
+        ReuseOnly,
         NoReuse,
     }
 
@@ -208,6 +208,11 @@ public abstract class Connection : IDisposable
     {
         if (this.CurrentState == state)
         {
+            if (this.CurrentState == State.Open)
+            {
+                this.UpdateLastEventMics();
+            }
+
             return;
         }
 

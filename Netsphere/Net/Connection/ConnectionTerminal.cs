@@ -78,7 +78,7 @@ public class ConnectionTerminal
                 {
                     if (clientConnection.LastEventMics + clientConnection.ConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
-                        clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close unused");
+                        clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close (unused)");
 
                         clientConnection.SendCloseFrame();
                         clientConnection.CloseTransmission();
@@ -122,7 +122,7 @@ public class ConnectionTerminal
                 {
                     if (serverConnection.LastEventMics + serverConnection.ConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
-                        serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close unused");
+                        serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close (unused)");
 
                         serverConnection.SendCloseFrame();
                         serverConnection.CloseTransmission();
@@ -152,7 +152,7 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
+    public async Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
         {
@@ -161,7 +161,7 @@ public class ConnectionTerminal
 
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == Connection.ConnectMode.Shared)
+            if (mode == Connection.ConnectMode.ReuseOnly)
             {// Attempt to share connections that have already been created and are open.
                 if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -171,7 +171,7 @@ public class ConnectionTerminal
                 return null;
             }
 
-            if (mode == Connection.ConnectMode.ReuseClosed)
+            if (mode == Connection.ConnectMode.ReuseIfAvailable)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
                 {
