@@ -255,7 +255,7 @@ public sealed partial class PacketTerminal
 
                     Task.Run(() =>
                     {
-                        var packet = new PacketConnectResponse(this.netBase.DefaultAgreement with { }); // Create a new instance.
+                        var packet = new PacketConnectResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.AddSendPacket(endPoint, owner, default);
