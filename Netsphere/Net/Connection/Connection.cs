@@ -207,7 +207,7 @@ public abstract class Connection : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ChangeState(State state)
-    {
+    {//sync?
         if (this.CurrentState == state)
         {
             if (this.CurrentState == State.Open)

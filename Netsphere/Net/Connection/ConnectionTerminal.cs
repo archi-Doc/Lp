@@ -82,7 +82,7 @@ public class ConnectionTerminal
 
                         clientConnection.SendCloseFrame();
                         clientConnection.CloseTransmission();
-                        clientConnection.ChangeState(Connection.State.Closed);
+                        clientConnection.ChangeState(Connection.State.Closed);//sync?
                     }
                 }
                 else if (clientConnection.IsClosed)
@@ -170,6 +170,7 @@ public class ConnectionTerminal
             {// Attempt to share connections that have already been created and are open.
                 if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
                 {
+                    connection.IncrementOpenCount();
                     return connection;
                 }
 
