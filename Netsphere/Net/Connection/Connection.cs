@@ -137,7 +137,9 @@ public abstract class Connection : IDisposable
         }
     }
 
-    public long ConnectionRetentionMics { get; set; }
+    // public long ConnectionRetentionMics { get; set; }
+
+    public long ConnectionRetentionMics => this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
 
     internal ILogger Logger { get; }
 
@@ -231,10 +233,10 @@ public abstract class Connection : IDisposable
     public void ApplyAgreement()
     {
         var min = this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
-        if (this.ConnectionRetentionMics < min)
+        /*if (this.ConnectionRetentionMics < min)
         {
             this.ConnectionRetentionMics = min;
-        }
+        }*/
     }
 
     public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
