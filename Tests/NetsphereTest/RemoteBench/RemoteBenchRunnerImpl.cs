@@ -7,7 +7,7 @@ using NetsphereTest;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
+public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
 {
     public RemoteBenchRunnerImpl(ILogger<RemoteBenchRunnerImpl> logger, NetTerminal netTerminal)
     {
@@ -79,7 +79,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
                             return;
                         }
 
-                        var service = t.GetService<IRemoteBenchHost>();
+                        var service = t.GetService<RemoteBenchHost>();
                         sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
@@ -121,7 +121,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             AverageLatency = (int)(totalLatency / totalCount),
         };
 
-        var service = clientConnection.GetService<IRemoteBenchHost>();
+        var service = clientConnection.GetService<RemoteBenchHost>();
         await service.Report(record);
 
         this.logger.TryGet()?.Log(record.ToString());

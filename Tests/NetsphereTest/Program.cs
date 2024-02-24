@@ -178,8 +178,8 @@ public class Program
         await unit.Run(options, true, x => new TestConnectionContext(x));
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<IRemoteBenchHost>();
-        netControl.Services.Register<IRemoteBenchRunner>();
+        netControl.Services.Register<RemoteBenchHost>();
+        netControl.Services.Register<RemoteBenchRunner>();
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with

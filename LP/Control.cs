@@ -394,7 +394,7 @@ public class Control : ILogInformation
 
         if (this.LPBase.TestFeatures)
         {
-            this.NetControl.Services.Register<IRemoteBenchHost>();
+            this.NetControl.Services.Register<RemoteBenchHost>();
         }
 
         this.MergerProvider = new();

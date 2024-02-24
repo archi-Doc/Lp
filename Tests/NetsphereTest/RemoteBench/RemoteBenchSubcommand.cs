@@ -63,7 +63,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         // var r = await connection.ConnectBidirectionally(token);
         // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-        var service = connection.GetService<IRemoteBenchHost>();
+        var service = connection.GetService<RemoteBenchHost>();
 
         // var r = await service.UpdateAgreement(token);
         // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
@@ -120,7 +120,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var sw = Stopwatch.StartNew();
-            var service = connection.GetService<IRemoteBenchHost>();
+            var service = connection.GetService<RemoteBenchHost>();
             for (var i = 0; i < N; i++)
             {
                 await service.Pingpong([0, 1, 2,]);

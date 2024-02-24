@@ -53,7 +53,7 @@ public class RemoteBenchBroker
 
         async Task Process(ClientConnection clientConnection)
         {
-            var service = clientConnection.GetService<IRemoteBenchRunner>();
+            var service = clientConnection.GetService<RemoteBenchRunner>();
             var result = await service.Start(total, concurrent);
             if (result == NetResult.Success)
             {
@@ -90,8 +90,6 @@ public class RemoteBenchBroker
                     {
                         if (x.Value is not null)
                         {
-                            this.connections.Add(x.Key);
-
                             count++;
                             successCount += x.Value.SuccessCount;
                             failureCount += x.Value.FailureCount;
