@@ -124,7 +124,7 @@ public class RemoteBenchBroker
     {
         lock (this.syncObject)
         {
-            this.records.TryAdd(clientConnection, record);
+            this.records[clientConnection] = record;
         }
     }
 }
