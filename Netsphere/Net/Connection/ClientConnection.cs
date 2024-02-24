@@ -524,6 +524,11 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             if (result == NetResult.Success)
             {
                 this.Agreement.EnableBidirectionalConnection = true;
+                if (a1 is not null)
+                {
+                    this.Agreement.AcceptAll(a1.Target);
+                    this.ApplyAgreement();
+                }
             }
 
             return new(result, result);
