@@ -354,11 +354,6 @@ public class ConnectionTerminal
                 }
 
                 bidirectionalConnection = clientConnection.BidirectionalConnection;
-                if (bidirectionalConnection is not null)
-                {
-                    clientConnection.BidirectionalConnection = default;
-                    bidirectionalConnection.BidirectionalConnection = default;
-                }
             }
 
             if (bidirectionalConnection is not null)
@@ -385,11 +380,6 @@ public class ConnectionTerminal
                 }
 
                 bidirectionalConnection = serverConnection.BidirectionalConnection;
-                if (bidirectionalConnection is not null)
-                {
-                    serverConnection.BidirectionalConnection = default;
-                    bidirectionalConnection.BidirectionalConnection = default;
-                }
             }
 
             if (bidirectionalConnection is not null)
