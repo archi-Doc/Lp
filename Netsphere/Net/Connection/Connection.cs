@@ -207,7 +207,7 @@ public abstract class Connection : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ChangeState(State state)
-    {//sync?
+    {// lock (this.clientConnections.SyncObject) or lock (this.serverConnections.SyncObject)
         if (this.CurrentState == state)
         {
             if (this.CurrentState == State.Open)
@@ -1055,7 +1055,7 @@ Wait:
         this.ConnectionTerminal.CloseInternal(this, true);
     }
 
-    internal void DisposeActual()
+    internal void ReleaseResource()
     {
         lock (this.syncAes)
         {
