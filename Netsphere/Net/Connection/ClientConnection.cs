@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Internal;
 using Netsphere.Net;
@@ -32,6 +33,8 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     public override bool IsServer => false;
 
     public ServerConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.serverConnections.SyncObject)
+
+    private int openCount;
 
     private ClientConnectionContext context;
 
@@ -583,5 +586,17 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         {
             return 0;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void IncrementOpenCountInternal()
+    {// lock (this.clientConnections.SyncObject)
+        this.openCount++;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int DecrementOpenCountInternal()
+    {// lock (this.clientConnections.SyncObject)
+        return this.openCount > 0 ? --this.openCount : 0;
     }
 }

@@ -206,7 +206,7 @@ public abstract class Connection : IDisposable
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ChangeState(State state)
+    internal void ChangeStateInternal(State state)
     {// lock (this.clientConnections.SyncObject) or lock (this.serverConnections.SyncObject)
         if (this.CurrentState == state)
         {
@@ -408,13 +408,13 @@ Wait:
             while (this.receiveDisposedList.First is { } node)
             {
                 var transmission = node.Value;
-                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionDisposalMics)
+                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionDisposalMics)
                 {
                     break;
                 }
 
                 node.List.Remove(node);
-                transmission.ReceivedDisposedNode = null;
+                transmission.ReceivedOrDisposedNode = null;
                 transmission.Goshujin = null;
             }
 
@@ -422,14 +422,14 @@ Wait:
             while (this.receiveReceivedList.First is { } node)
             {
                 var transmission = node.Value;
-                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionTimeoutMics)
+                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionTimeoutMics)
                 {
                     break;
                 }
 
                 node.List.Remove(node);
                 transmission.DisposeTransmission();
-                transmission.ReceivedDisposedNode = null;
+                transmission.ReceivedOrDisposedNode = null;
                 transmission.Goshujin = null;
             }
 
@@ -444,8 +444,8 @@ Wait:
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
-            receiveTransmission.ReceivedDisposedMics = currentMics;
-            receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+            receiveTransmission.ReceivedOrDisposedMics = currentMics;
+            receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
         }
@@ -475,16 +475,16 @@ Wait:
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
-                transmission.ReceivedDisposedMics = Mics.FastSystem; // Disposed mics
-                if (transmission.ReceivedDisposedNode is { } node)
+                transmission.ReceivedOrDisposedMics = Mics.FastSystem; // Disposed mics
+                if (transmission.ReceivedOrDisposedNode is { } node)
                 {// ReceivedList -> DisposedList
                     node.List.Remove(node);
-                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
-                    Debug.Assert(transmission.ReceivedDisposedNode.List != null);
+                    transmission.ReceivedOrDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                    Debug.Assert(transmission.ReceivedOrDisposedNode.List != null);
                 }
                 else
                 {// -> DisposedList
-                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                    transmission.ReceivedOrDisposedNode = this.receiveDisposedList.AddLast(transmission);
                 }
 
                 // transmission.Goshujin = null; // Delay the release to return ACK even after the receive transmission has ended.
@@ -835,8 +835,8 @@ Wait:
                 }
 
                 transmission.Goshujin = this.receiveTransmissions;
-                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
-                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
+                transmission.ReceivedOrDisposedMics = Mics.FastSystem; // Received mics
+                transmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(transmission);
             }
         }
 
@@ -887,10 +887,10 @@ Wait:
             }
 
             // ReceiveTransmissionsCode
-            if (transmission.ReceivedDisposedNode is { } node &&
+            if (transmission.ReceivedOrDisposedNode is { } node &&
                 node.List == this.receiveReceivedList)
             {
-                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
+                transmission.ReceivedOrDisposedMics = Mics.FastSystem; // Received mics
                 this.receiveReceivedList.MoveToLast(node);
             }
         }
@@ -1059,8 +1059,17 @@ Wait:
     {
         lock (this.syncAes)
         {
-            this.aes0?.Dispose();
-            this.aes1?.Dispose();
+            if (this.aes0 is not null)
+            {
+                this.aes0.Dispose();
+                this.aes0 = default;
+            }
+
+            if (this.aes1 is not null)
+            {
+                this.aes1.Dispose();
+                this.aes1 = default;
+            }
         }
     }
 
@@ -1135,10 +1144,10 @@ Wait:
             {
                 x.DisposeTransmission();
 
-                if (x.ReceivedDisposedNode is { } node)
+                if (x.ReceivedOrDisposedNode is { } node)
                 {
                     node.List.Remove(node);
-                    x.ReceivedDisposedNode = null;
+                    x.ReceivedOrDisposedNode = null;
                 }
 
                 // x.Goshujin = null;

@@ -80,6 +80,9 @@ public class ConnectionTerminal
                     {// Open -> Closed
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close (unused)");
                         clientToChange.Enqueue(clientConnection);
+
+                        clientConnection.SendCloseFrame();
+                        clientConnection.CloseTransmission();
                     }
                 }
                 else if (clientConnection.IsClosed)
@@ -99,13 +102,11 @@ public class ConnectionTerminal
             {
                 if (clientConnection.IsOpen)
                 {// Open -> Closed
-                    clientConnection.SendCloseFrame();
-                    clientConnection.CloseTransmission();
-                    clientConnection.ChangeState(Connection.State.Closed);
+                    clientConnection.ChangeStateInternal(Connection.State.Closed);
                 }
                 else if (clientConnection.IsClosed)
                 {// Closed -> Dispose
-                    clientConnection.ChangeState(Connection.State.Disposed);
+                    clientConnection.ChangeStateInternal(Connection.State.Disposed);
                     clientConnection.ReleaseResource();
                     clientConnection.Goshujin = null;
                 }
@@ -130,6 +131,9 @@ public class ConnectionTerminal
                     {// Open -> Closed
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close (unused)");
                         serverToChange.Enqueue(serverConnection);
+
+                        serverConnection.SendCloseFrame();
+                        serverConnection.CloseTransmission();
                     }
                 }
                 else if (serverConnection.IsClosed)
@@ -149,13 +153,11 @@ public class ConnectionTerminal
             {
                 if (serverConnection.IsOpen)
                 {// Open -> Closed
-                    serverConnection.SendCloseFrame();
-                    serverConnection.CloseTransmission();
-                    serverConnection.ChangeState(Connection.State.Closed);
+                    serverConnection.ChangeStateInternal(Connection.State.Closed);
                 }
                 else if (serverConnection.IsClosed)
                 {// Closed -> Dispose
-                    serverConnection.ChangeState(Connection.State.Disposed);
+                    serverConnection.ChangeStateInternal(Connection.State.Disposed);
                     serverConnection.ReleaseResource();
                     serverConnection.Goshujin = null;
                 }
@@ -177,24 +179,20 @@ public class ConnectionTerminal
 
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == Connection.ConnectMode.ReuseOnly)
-            {// Attempt to share connections that have already been created and are open.
-                if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
-                {
-                    connection.IncrementOpenCount();
-                    return connection;
-                }
-
-                return null;
-            }
-
-            if (mode == Connection.ConnectMode.ReuseIfAvailable)
-            {// Attempt to reuse connections that have already been closed and are awaiting disposal.
+            if (mode == Connection.ConnectMode.ReuseIfAvailable ||
+                mode == Connection.ConnectMode.ReuseOnly)
+            {// Attempts to reuse a connection that has already been connected or disconnected (but not yet disposed).
                 if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
                 {
                     Debug.Assert(!connection.IsDisposed);
-                    connection.ChangeState(Connection.State.Open);
+                    connection.IncrementOpenCountInternal();
+                    connection.ChangeStateInternal(Connection.State.Open);
                     return connection;
+                }
+
+                if (mode == Connection.ConnectMode.ReuseOnly)
+                {
+                    return default;
                 }
             }
         }
@@ -228,7 +226,8 @@ public class ConnectionTerminal
         {
             if (this.clientConnections.ConnectionIdChain.TryGetValue(serverConnection.ConnectionId, out var connection))
             {
-                connection.ChangeState(Connection.State.Open);
+                connection.IncrementOpenCountInternal();
+                connection.ChangeStateInternal(Connection.State.Open);
             }
             else
             {
@@ -247,7 +246,7 @@ public class ConnectionTerminal
         {
             if (this.serverConnections.ConnectionIdChain.TryGetValue(clientConnection.ConnectionId, out var connection))
             {
-                connection.ChangeState(Connection.State.Open);
+                connection.ChangeStateInternal(Connection.State.Open);
             }
             else
             {
@@ -351,7 +350,7 @@ public class ConnectionTerminal
                         clientConnection.SendCloseFrame();
                     }
 
-                    clientConnection.ChangeState(Connection.State.Closed);
+                    clientConnection.ChangeStateInternal(Connection.State.Closed);
                 }
 
                 bidirectionalConnection = clientConnection.BidirectionalConnection;
@@ -382,7 +381,7 @@ public class ConnectionTerminal
                         serverConnection.SendCloseFrame();
                     }
 
-                    serverConnection.ChangeState(Connection.State.Closed);
+                    serverConnection.ChangeStateInternal(Connection.State.Closed);
                 }
 
                 bidirectionalConnection = serverConnection.BidirectionalConnection;
@@ -486,8 +485,8 @@ public class ConnectionTerminal
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
 
                 if (connection?.CurrentState == Connection.State.Closed)
-                {// Reopen
-                    connection.ChangeState(Connection.State.Open);
+                {// Reopen (Closed -> Open)
+                    connection.ChangeStateInternal(Connection.State.Open);
                 }
             }
 

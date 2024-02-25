@@ -47,8 +47,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
 #pragma warning disable SA1401 // Fields should be private
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
-    internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedDisposedNode;
-    internal long ReceivedDisposedMics;
+    internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedOrDisposedNode;
+    internal long ReceivedOrDisposedMics;
     internal Queue<int>? AckGene; // lock(AckBuffer.syncObject)
 #pragma warning restore SA1401 // Fields should be private
 
