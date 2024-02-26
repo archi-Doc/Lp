@@ -185,7 +185,7 @@ public class ConnectionTerminal
                 if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
                 {
                     Debug.Assert(!connection.IsDisposed);
-                    connection.IncrementOpenCountInternal();
+                    connection.IncrementOpenCount();
                     connection.ChangeStateInternal(Connection.State.Open);
                     return connection;
                 }
@@ -214,6 +214,7 @@ public class ConnectionTerminal
         newConnection.AddRtt(t.RttMics);
         lock (this.clientConnections.SyncObject)
         {// ConnectionStateCode
+            newConnection.IncrementOpenCount();
             newConnection.Goshujin = this.clientConnections;
         }
 
@@ -226,7 +227,7 @@ public class ConnectionTerminal
         {
             if (this.clientConnections.ConnectionIdChain.TryGetValue(serverConnection.ConnectionId, out var connection))
             {
-                connection.IncrementOpenCountInternal();
+                connection.IncrementOpenCount();
                 connection.ChangeStateInternal(Connection.State.Open);
             }
             else
@@ -341,6 +342,7 @@ public class ConnectionTerminal
             ServerConnection? bidirectionalConnection;
             lock (g.SyncObject)
             {
+                clientConnection.ResetOpenCountl();
                 if (connection.CurrentState == Connection.State.Open)
                 {// Open -> Close
                     connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");

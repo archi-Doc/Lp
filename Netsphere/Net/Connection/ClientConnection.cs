@@ -40,6 +40,14 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     #endregion
 
+    public override void Dispose()
+    {
+        if (this.DecrementOpenCount() <= 0)
+        {
+            base.Dispose();
+        }
+    }
+
     public ClientConnectionContext GetContext()
         => this.context;
 
@@ -589,14 +597,20 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void IncrementOpenCountInternal()
-    {// lock (this.clientConnections.SyncObject)
-        this.openCount++;
+    internal void IncrementOpenCount()
+    {
+        Interlocked.Increment(ref this.openCount);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int DecrementOpenCountInternal()
-    {// lock (this.clientConnections.SyncObject)
-        return this.openCount > 0 ? --this.openCount : 0;
+    internal int DecrementOpenCount()
+    {
+        return Interlocked.Decrement(ref this.openCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ResetOpenCountl()
+    {
+        Volatile.Write(ref this.openCount, 0);
     }
 }

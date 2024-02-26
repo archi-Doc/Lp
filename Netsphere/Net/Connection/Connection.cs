@@ -587,8 +587,7 @@ Wait:
 
         if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
         {// Timeout
-            this.CloseTransmission();
-            this.Dispose();
+            this.ConnectionTerminal.CloseInternal(this, true);
             return ProcessSendResult.Complete;
         }
 
@@ -1050,7 +1049,7 @@ Wait:
     }
 
     /// <inheritdoc/>
-    public void Dispose()
+    public virtual void Dispose()
     {// Close the connection, but defer actual disposal for reuse.
         this.ConnectionTerminal.CloseInternal(this, true);
     }
