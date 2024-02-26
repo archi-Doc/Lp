@@ -26,7 +26,7 @@ public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
     {
         if (total == 0)
         {
-            total = 1_000;
+            total = 10_000;
         }
 
         if (concurrent == 0)
@@ -72,7 +72,7 @@ public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
                 for (var j = 0; j < (total / concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var t = await this.netTerminal.Connect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.ReuseIfAvailable))
+                    using (var t = await this.netTerminal.Connect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse))
                     {
                         if (t is null)
                         {
