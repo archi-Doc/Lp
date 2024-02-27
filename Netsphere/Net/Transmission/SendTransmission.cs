@@ -320,7 +320,7 @@ internal sealed partial class SendTransmission : IDisposable
             var delay = NetConstants.InitialSendStreamDelayMilliseconds;
 
 Loop:
-            if (this.Connection.IsClosedOrDisposed)
+            if (!this.Connection.IsActive)
             {
                 return NetResult.Closed;
             }
@@ -331,7 +331,7 @@ Loop:
 
                 try
                 {
-                    await Task.Delay(delay, this.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     delay = Math.Min(delay << 1, NetConstants.MaxSendStreamDelayMilliseconds);
                 }
                 catch

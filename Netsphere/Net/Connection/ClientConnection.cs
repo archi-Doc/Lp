@@ -61,7 +61,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return StaticNetService.CreateClient<TService>(this);
     }
 
-    public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0)
+    public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
         if (!this.IsActive)
         {
@@ -92,7 +92,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
             try
             {
-                result = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -107,7 +107,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend data, ulong dataId = 0)
+    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
         if (!this.IsActive)
         {
@@ -147,7 +147,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);
@@ -206,7 +206,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result, 0, default);
@@ -258,7 +258,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
             try
             {
-                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                 if (response.IsFailure || !response.Received.IsEmpty)
                 {// Failure or not stream.
                     receiveTransmission.Dispose();
@@ -384,7 +384,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
             try
             {
-                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                 if (response.IsFailure || !response.Received.IsEmpty)
                 {// Failure or not stream.
                     receiveTransmission.Dispose();

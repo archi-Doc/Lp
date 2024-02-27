@@ -37,7 +37,7 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(connection.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);
