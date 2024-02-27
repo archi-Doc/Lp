@@ -386,7 +386,7 @@ Retry:
 Wait:
         try
         {
-            await Task.Delay(NetConstants.CreateTransmissionDelay, this.CancellationToken).ConfigureAwait(false);
+            await Task.Delay(NetConstants.CreateTransmissionDelay).ConfigureAwait(false);
         }
         catch
         {// Cancelled
@@ -1131,6 +1131,11 @@ Wait:
         {
             foreach (var x in this.sendTransmissions)
             {
+                if (x.IsDisposed)
+                {
+                    continue;
+                }
+
                 x.DisposeTransmission();
                 // x.Goshujin = null;
             }

@@ -45,6 +45,9 @@ internal sealed partial class ReceiveTransmission : IDisposable
     public int SuccessiveReceivedPosition
         => this.successiveReceivedPosition;
 
+    internal bool IsDisposed
+        => this.Mode == NetTransmissionMode.Disposed;
+
 #pragma warning disable SA1401 // Fields should be private
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
     internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedOrDisposedNode;
@@ -71,6 +74,11 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     internal void DisposeTransmission()
     {
+        if (this.IsDisposed)
+        {
+            return;
+        }
+
         lock (this.syncObject)
         {
             this.DisposeInternal();
@@ -79,7 +87,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     internal void DisposeInternal()
     {
-        if (this.Mode == NetTransmissionMode.Disposed)
+        if (this.IsDisposed)
         {
             return;
         }
@@ -458,7 +466,7 @@ Abort:
 
     internal void ProcessAbort()
     {
-        if (this.Mode != NetTransmissionMode.Disposed)
+        if (!this.IsDisposed)
         {
             this.Dispose();
         }
