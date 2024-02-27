@@ -527,12 +527,30 @@ public class ConnectionTerminal
     {
         while (true)
         {
+            ClientConnection[] clients;
             lock (this.clientConnections.SyncObject)
             {
-                var clients = this.clientConnections.ToArray();
+                clients = this.clientConnections.ToArray();
+            }
+
+            foreach (var x in clients)
+            {
+                x.TerminateInternal();
+            }
+
+            lock (this.clientConnections.SyncObject)
+            {
                 foreach (var x in clients)
                 {
-                    x.TerminateInternal();
+                    if (x.IsClosed)
+                    {
+                        x.ReleaseResource();
+                        x.Goshujin = null;
+                    }
+                    else if (x.IsDisposed)
+                    {
+                        x.Goshujin = null;
+                    }
                 }
             }
 

@@ -1142,7 +1142,65 @@ Wait:
 
     internal void TerminateInternal()
     {
+        Queue<SendTransmission>? sendQueue = default;
+        lock (this.sendTransmissions.SyncObject)
+        {
+            foreach (var x in this.sendTransmissions)
+            {
+                if (x.Mode == NetTransmissionMode.Stream ||
+                    x.Mode == NetTransmissionMode.StreamCompleted)
+                {
+                    x.DisposeTransmission();
+                }
 
+                if (x.IsDisposed)
+                {
+                    sendQueue ??= new();
+                    sendQueue.Enqueue(x);
+                }
+            }
+
+            if (sendQueue is not null)
+            {
+                while (sendQueue.TryDequeue(out var t))
+                {
+                    t.Goshujin = default;
+                }
+            }
+        }
+
+        Queue<ReceiveTransmission>? receiveQueue = default;
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            foreach (var x in this.receiveTransmissions)
+            {
+                if (x.Mode == NetTransmissionMode.Stream ||
+                    x.Mode == NetTransmissionMode.StreamCompleted)
+                {
+                    x.DisposeTransmission();
+                }
+
+                if (x.IsDisposed)
+                {
+                    receiveQueue ??= new();
+                    receiveQueue.Enqueue(x);
+                }
+            }
+
+            if (receiveQueue is not null)
+            {
+                while (receiveQueue.TryDequeue(out var t))
+                {
+                    t.Goshujin = default;
+                }
+            }
+        }
+
+        if (this.sendTransmissions.Count == 0 &&
+            this.receiveTransmissions.Count == 0)
+        {
+            this.ChangeStateInternal(State.Disposed
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
