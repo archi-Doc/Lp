@@ -63,13 +63,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return NetResult.Closed;
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return NetResult.Canceled;
         }
 
         if (!NetHelper.TrySerialize(data, out var owner))
@@ -113,13 +109,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend data, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return new(NetResult.Closed);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return new(NetResult.Canceled);
         }
 
         dataId = dataId != 0 ? dataId : NetHelper.GetDataId<TSend, TReceive>();
@@ -184,13 +176,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return new(NetResult.Closed, 0, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return new(NetResult.Canceled, 0, default);
         }
 
         NetResponse response;
@@ -240,13 +228,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, ReceiveStream? Stream)> RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
         }
 
         NetResponse response;
@@ -304,13 +288,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
         }
 
         if (!this.Agreement.CheckStreamLength(maxLength))
@@ -338,13 +318,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return new(NetResult.Canceled, default);
         }
 
         if (!this.Agreement.CheckStreamLength(maxLength))
@@ -371,13 +347,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, ReceiveStream? Stream)> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
         }
 
         if (!NetHelper.TrySerialize(packet, out var owner))

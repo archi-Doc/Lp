@@ -91,6 +91,9 @@ public abstract class Connection : IDisposable
 
     public abstract bool IsServer { get; }
 
+    public bool IsActive
+        => this.NetTerminal.IsActive && this.CurrentState == State.Open;
+
     public bool IsOpen
         => this.CurrentState == State.Open;
 
@@ -351,8 +354,7 @@ public abstract class Connection : IDisposable
     internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout)
     {
 Retry:
-        if (this.CancellationToken.IsCancellationRequested ||
-            timeout < TimeSpan.Zero)
+        if (!this.IsActive || timeout < TimeSpan.Zero)
         {
             return default;
         }

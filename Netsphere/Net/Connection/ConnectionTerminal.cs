@@ -29,6 +29,8 @@ public class ConnectionTerminal
         this.logger = this.NetTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
     }
 
+    #region FieldAndProperty
+
     public NetBase NetBase { get; }
 
     internal IServiceProvider ServiceProvider { get; }
@@ -57,6 +59,8 @@ public class ConnectionTerminal
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
+
+    #endregion
 
     public void Clean()
     {
