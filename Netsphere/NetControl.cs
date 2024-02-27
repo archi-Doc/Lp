@@ -77,6 +77,9 @@ public class NetControl : UnitBase, IUnitPreparable
             this.Context.SendPrepare(new());
             await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
+
+        public Task Terminate()
+            => this.Context.SendTerminateAsync(new());
     }
 
     public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal)
@@ -130,7 +133,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     #endregion
 
-    public void Prepare(UnitMessage.Prepare message)
+    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
     }
 }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Internal;
 using Netsphere.Net;
@@ -33,9 +34,23 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public ServerConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.serverConnections.SyncObject)
 
+    public CancellationToken CancellationToken => this.cts.Token;
+
+    private CancellationTokenSource cts = new();
+
+    private int openCount;
+
     private ClientConnectionContext context;
 
     #endregion
+
+    public override void Dispose()
+    {
+        if (this.DecrementOpenCount() <= 0)
+        {
+            base.Dispose();
+        }
+    }
 
     public ClientConnectionContext GetContext()
         => this.context;
@@ -50,15 +65,11 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return StaticNetService.CreateClient<TService>(this);
     }
 
-    public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0)
+    public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return NetResult.Closed;
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return NetResult.Canceled;
         }
 
         if (!NetHelper.TrySerialize(data, out var owner))
@@ -85,7 +96,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
             try
             {
-                result = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -100,15 +111,11 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend data, ulong dataId = 0)
+    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return new(NetResult.Closed);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return new(NetResult.Canceled);
         }
 
         dataId = dataId != 0 ? dataId : NetHelper.GetDataId<TSend, TReceive>();
@@ -144,7 +151,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);
@@ -173,13 +180,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return new(NetResult.Closed, 0, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return new(NetResult.Canceled, 0, default);
         }
 
         NetResponse response;
@@ -207,7 +210,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
                 try
                 {
-                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result, 0, default);
@@ -229,13 +232,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, ReceiveStream? Stream)> RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
         }
 
         NetResponse response;
@@ -263,7 +262,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
             try
             {
-                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                 if (response.IsFailure || !response.Received.IsEmpty)
                 {// Failure or not stream.
                     receiveTransmission.Dispose();
@@ -293,13 +292,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
         }
 
         if (!this.Agreement.CheckStreamLength(maxLength))
@@ -327,13 +322,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return new(NetResult.Canceled, default);
         }
 
         if (!this.Agreement.CheckStreamLength(maxLength))
@@ -360,13 +351,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, ReceiveStream? Stream)> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
     {
-        if (this.IsClosedOrDisposed)
+        if (!this.IsActive)
         {
             return (NetResult.Closed, default);
-        }
-        else if (this.CancellationToken.IsCancellationRequested)
-        {
-            return (NetResult.Canceled, default);
         }
 
         if (!NetHelper.TrySerialize(packet, out var owner))
@@ -401,7 +388,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
             try
             {
-                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout, this.CancellationToken).ConfigureAwait(false);
+                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
                 if (response.IsFailure || !response.Received.IsEmpty)
                 {// Failure or not stream.
                     receiveTransmission.Dispose();
@@ -524,6 +511,11 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             if (result == NetResult.Success)
             {
                 this.Agreement.EnableBidirectionalConnection = true;
+                if (a1 is not null)
+                {
+                    this.Agreement.AcceptAll(a1.Target);
+                    this.ApplyAgreement();
+                }
             }
 
             return new(result, result);
@@ -577,6 +569,41 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         else
         {
             return 0;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void IncrementOpenCount()
+    {
+        Interlocked.Increment(ref this.openCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int DecrementOpenCount()
+    {
+        return Interlocked.Decrement(ref this.openCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ResetOpenCountl()
+    {
+        Volatile.Write(ref this.openCount, 0);
+    }
+
+    internal override void OnStateChanged()
+    {
+        if (this.CurrentState == State.Open)
+        {// Reopen
+            this.cts.Dispose();
+            this.cts = new();
+        }
+        else if (this.CurrentState == State.Closed)
+        {// Close
+            this.cts.Cancel();
+        }
+        else
+        {// Disposed
+            this.cts.Dispose();
         }
     }
 }

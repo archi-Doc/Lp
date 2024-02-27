@@ -61,8 +61,6 @@ public abstract class Connection : IDisposable
 
     #region FieldAndProperty
 
-    public CancellationToken CancellationToken => this.CancellationTokenSource.Token;
-
     public NetBase NetBase { get; }
 
     public NetTerminal NetTerminal => this.ConnectionTerminal.NetTerminal;
@@ -90,6 +88,9 @@ public abstract class Connection : IDisposable
     public abstract bool IsClient { get; }
 
     public abstract bool IsServer { get; }
+
+    public bool IsActive
+        => this.NetTerminal.IsActive && this.CurrentState == State.Open;
 
     public bool IsOpen
         => this.CurrentState == State.Open;
@@ -137,7 +138,9 @@ public abstract class Connection : IDisposable
         }
     }
 
-    public long ConnectionRetentionMics { get; set; }
+    // public long ConnectionRetentionMics { get; set; }
+
+    public long ConnectionRetentionMics => this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
 
     internal ILogger Logger { get; }
 
@@ -149,28 +152,6 @@ public abstract class Connection : IDisposable
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
-
-    private CancellationTokenSource? cts;
-
-    private CancellationTokenSource CancellationTokenSource
-    {
-        get
-        {
-            while (true)
-            {
-                if (this.cts is not null)
-                {
-                    return this.cts;
-                }
-
-                var t = new CancellationTokenSource();
-                if (Interlocked.CompareExchange(ref this.cts, t, null) == null)
-                {
-                    return t;
-                }
-            }
-        }
-    }
 
     private Embryo embryo;
 
@@ -204,8 +185,8 @@ public abstract class Connection : IDisposable
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ChangeState(State state)
-    {
+    internal void ChangeStateInternal(State state)
+    {// lock (this.clientConnections.SyncObject) or lock (this.serverConnections.SyncObject)
         if (this.CurrentState == state)
         {
             if (this.CurrentState == State.Open)
@@ -218,23 +199,15 @@ public abstract class Connection : IDisposable
 
         this.CurrentState = state;
         this.UpdateLastEventMics();
-
-        if (state == State.Open)
-        {
-        }
-        else if (state == State.Closed)
-        {
-            this.CancellationTokenSource.Cancel();
-        }
     }
 
     public void ApplyAgreement()
     {
         var min = this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
-        if (this.ConnectionRetentionMics < min)
+        /*if (this.ConnectionRetentionMics < min)
         {
             this.ConnectionRetentionMics = min;
-        }
+        }*/
     }
 
     public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
@@ -349,8 +322,7 @@ public abstract class Connection : IDisposable
     internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout)
     {
 Retry:
-        if (this.CancellationToken.IsCancellationRequested ||
-            timeout < TimeSpan.Zero)
+        if (!this.IsActive || timeout < TimeSpan.Zero)
         {
             return default;
         }
@@ -382,7 +354,7 @@ Retry:
 Wait:
         try
         {
-            await Task.Delay(NetConstants.CreateTransmissionDelay, this.CancellationToken).ConfigureAwait(false);
+            await Task.Delay(NetConstants.CreateTransmissionDelay).ConfigureAwait(false);
         }
         catch
         {// Cancelled
@@ -406,13 +378,13 @@ Wait:
             while (this.receiveDisposedList.First is { } node)
             {
                 var transmission = node.Value;
-                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionDisposalMics)
+                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionDisposalMics)
                 {
                     break;
                 }
 
                 node.List.Remove(node);
-                transmission.ReceivedDisposedNode = null;
+                transmission.ReceivedOrDisposedNode = null;
                 transmission.Goshujin = null;
             }
 
@@ -420,14 +392,14 @@ Wait:
             while (this.receiveReceivedList.First is { } node)
             {
                 var transmission = node.Value;
-                if (currentMics < transmission.ReceivedDisposedMics + NetConstants.TransmissionTimeoutMics)
+                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionTimeoutMics)
                 {
                     break;
                 }
 
                 node.List.Remove(node);
                 transmission.DisposeTransmission();
-                transmission.ReceivedDisposedNode = null;
+                transmission.ReceivedOrDisposedNode = null;
                 transmission.Goshujin = null;
             }
 
@@ -442,8 +414,8 @@ Wait:
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
-            receiveTransmission.ReceivedDisposedMics = currentMics;
-            receiveTransmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+            receiveTransmission.ReceivedOrDisposedMics = currentMics;
+            receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
         }
@@ -473,16 +445,16 @@ Wait:
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
-                transmission.ReceivedDisposedMics = Mics.FastSystem; // Disposed mics
-                if (transmission.ReceivedDisposedNode is { } node)
+                transmission.ReceivedOrDisposedMics = Mics.FastSystem; // Disposed mics
+                if (transmission.ReceivedOrDisposedNode is { } node)
                 {// ReceivedList -> DisposedList
                     node.List.Remove(node);
-                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
-                    Debug.Assert(transmission.ReceivedDisposedNode.List != null);
+                    transmission.ReceivedOrDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                    Debug.Assert(transmission.ReceivedOrDisposedNode.List != null);
                 }
                 else
                 {// -> DisposedList
-                    transmission.ReceivedDisposedNode = this.receiveDisposedList.AddLast(transmission);
+                    transmission.ReceivedOrDisposedNode = this.receiveDisposedList.AddLast(transmission);
                 }
 
                 // transmission.Goshujin = null; // Delay the release to return ACK even after the receive transmission has ended.
@@ -585,8 +557,7 @@ Wait:
 
         if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
         {// Timeout
-            this.CloseTransmission();
-            this.Dispose();
+            this.ConnectionTerminal.CloseInternal(this, true);
             return ProcessSendResult.Complete;
         }
 
@@ -833,8 +804,8 @@ Wait:
                 }
 
                 transmission.Goshujin = this.receiveTransmissions;
-                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
-                transmission.ReceivedDisposedNode = this.receiveReceivedList.AddLast(transmission);
+                transmission.ReceivedOrDisposedMics = Mics.FastSystem; // Received mics
+                transmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(transmission);
             }
         }
 
@@ -885,10 +856,10 @@ Wait:
             }
 
             // ReceiveTransmissionsCode
-            if (transmission.ReceivedDisposedNode is { } node &&
+            if (transmission.ReceivedOrDisposedNode is { } node &&
                 node.List == this.receiveReceivedList)
             {
-                transmission.ReceivedDisposedMics = Mics.FastSystem; // Received mics
+                transmission.ReceivedOrDisposedMics = Mics.FastSystem; // Received mics
                 this.receiveReceivedList.MoveToLast(node);
             }
         }
@@ -1048,17 +1019,26 @@ Wait:
     }
 
     /// <inheritdoc/>
-    public void Dispose()
+    public virtual void Dispose()
     {// Close the connection, but defer actual disposal for reuse.
         this.ConnectionTerminal.CloseInternal(this, true);
     }
 
-    internal void DisposeActual()
+    internal void ReleaseResource()
     {
         lock (this.syncAes)
         {
-            this.aes0?.Dispose();
-            this.aes1?.Dispose();
+            if (this.aes0 is not null)
+            {
+                this.aes0.Dispose();
+                this.aes0 = default;
+            }
+
+            if (this.aes1 is not null)
+            {
+                this.aes1.Dispose();
+                this.aes1 = default;
+            }
         }
     }
 
@@ -1119,6 +1099,11 @@ Wait:
         {
             foreach (var x in this.sendTransmissions)
             {
+                if (x.IsDisposed)
+                {
+                    continue;
+                }
+
                 x.DisposeTransmission();
                 // x.Goshujin = null;
             }
@@ -1133,10 +1118,10 @@ Wait:
             {
                 x.DisposeTransmission();
 
-                if (x.ReceivedDisposedNode is { } node)
+                if (x.ReceivedOrDisposedNode is { } node)
                 {
                     node.List.Remove(node);
-                    x.ReceivedDisposedNode = null;
+                    x.ReceivedOrDisposedNode = null;
                 }
 
                 // x.Goshujin = null;
@@ -1148,6 +1133,11 @@ Wait:
             this.receiveReceivedList.Clear();
             this.receiveDisposedList.Clear();
         }
+    }
+
+    internal void TerminateInternal()
+    {
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

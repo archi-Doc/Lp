@@ -49,6 +49,9 @@ internal sealed partial class SendTransmission : IDisposable
 
     public int GeneSerialMax { get; private set; }
 
+    internal bool IsDisposed
+        => this.Mode == NetTransmissionMode.Disposed;
+
     internal TaskCompletionSource<NetResult>? SentTcs
         => this.sentTcs;
 
@@ -86,7 +89,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal void DisposeInternal()
     {// lock (this.syncObject)
         // Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()} {this.GeneSerialMax}");
-        if (this.Mode == NetTransmissionMode.Disposed)
+        if (this.IsDisposed)
         {
             return;
         }
@@ -317,7 +320,7 @@ internal sealed partial class SendTransmission : IDisposable
             var delay = NetConstants.InitialSendStreamDelayMilliseconds;
 
 Loop:
-            if (this.Connection.IsClosedOrDisposed)
+            if (!this.Connection.IsActive)
             {
                 return NetResult.Closed;
             }
@@ -328,7 +331,7 @@ Loop:
 
                 try
                 {
-                    await Task.Delay(delay, this.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     delay = Math.Min(delay << 1, NetConstants.MaxSendStreamDelayMilliseconds);
                 }
                 catch

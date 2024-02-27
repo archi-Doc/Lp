@@ -237,7 +237,11 @@ public sealed partial class PacketTerminal
         {// Packet types (0-127), Client -> Server
             if (packetType == PacketType.Connect)
             {// PacketConnect
-                if (!this.options.EnableServer)
+                if (!this.netTerminal.IsActive)
+                {
+                    return;
+                }
+                else if (!this.options.EnableServer)
                 {
                     return;
                 }
@@ -251,7 +255,7 @@ public sealed partial class PacketTerminal
 
                     Task.Run(() =>
                     {
-                        var packet = new PacketConnectResponse(this.netBase.DefaultAgreement with { }); // Create a new instance.
+                        var packet = new PacketConnectResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.AddSendPacket(endPoint, owner, default);

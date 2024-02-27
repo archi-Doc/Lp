@@ -51,7 +51,7 @@ internal partial class PacketConnectResponse : IPacket
 
     public PacketConnectResponse()
     {
-        this.Agreement = ConnectionAgreement.Default;
+        this.Agreement = ConnectionAgreement.Default with { }; // Create a new instance.
         this.ServerSalt = RandomVault.Crypto.NextUInt64();
         this.ServerSalt2 = RandomVault.Crypto.NextUInt64();
     }
@@ -60,7 +60,7 @@ internal partial class PacketConnectResponse : IPacket
         : this()
     {
         // this.Success = true;
-        this.Agreement = agreement;
+        this.Agreement = agreement with { }; // Create a new instance.
     }
 
     /*[Key(0)]

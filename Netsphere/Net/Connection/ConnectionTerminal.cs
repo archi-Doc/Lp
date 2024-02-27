@@ -29,6 +29,8 @@ public class ConnectionTerminal
         this.logger = this.NetTerminal.UnitLogger.GetLogger<ConnectionTerminal>();
     }
 
+    #region FieldAndProperty
+
     public NetBase NetBase { get; }
 
     internal IServiceProvider ServiceProvider { get; }
@@ -58,12 +60,14 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
+    #endregion
+
     public void Clean()
     {
         var systemCurrentMics = Mics.GetSystem();
 
         (UnorderedMap<NetEndPoint, ClientConnection>.Node[] Nodes, int Max) client;
-        Queue<ClientConnection> clientToDispose = new();
+        Queue<ClientConnection> clientToChange = new();
         lock (this.clientConnections.SyncObject)
         {
             client = this.clientConnections.DestinationEndPointChain.UnsafeGetNodes();
@@ -79,17 +83,18 @@ public class ConnectionTerminal
                     if (clientConnection.LastEventMics + clientConnection.ConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close (unused)");
+                        clientToChange.Enqueue(clientConnection);
 
                         clientConnection.SendCloseFrame();
                         clientConnection.CloseTransmission();
-                        clientConnection.ChangeState(Connection.State.Closed);
                     }
                 }
                 else if (clientConnection.IsClosed)
-                {// Closed -> Dispose queue
+                {// Closed -> Dispose
                     if (clientConnection.LastEventMics + NetConstants.ConnectionClosedToDisposalMics < systemCurrentMics)
                     {
-                        clientToDispose.Enqueue(clientConnection);
+                        clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Disposed");
+                        clientToChange.Enqueue(clientConnection);
                     }
                 }
             }
@@ -97,18 +102,23 @@ public class ConnectionTerminal
 
         lock (this.clientConnections.SyncObject)
         {
-            while (clientToDispose.TryDequeue(out var clientConnection))
-            {// Dispose
-                clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Disposed");
-
-                clientConnection.Goshujin = null;
-                clientConnection.ChangeState(Connection.State.Disposed);
-                clientConnection.DisposeActual();
+            while (clientToChange.TryDequeue(out var clientConnection))
+            {
+                if (clientConnection.IsOpen)
+                {// Open -> Closed
+                    clientConnection.ChangeStateInternal(Connection.State.Closed);
+                }
+                else if (clientConnection.IsClosed)
+                {// Closed -> Dispose
+                    clientConnection.ChangeStateInternal(Connection.State.Disposed);
+                    clientConnection.ReleaseResource();
+                    clientConnection.Goshujin = null;
+                }
             }
         }
 
         (UnorderedMap<NetEndPoint, ServerConnection>.Node[] Nodes, int Max) server;
-        Queue<ServerConnection> serverToDispose = new();
+        Queue<ServerConnection> serverToChange = new();
         lock (this.serverConnections.SyncObject)
         {
             server = this.serverConnections.DestinationEndPointChain.UnsafeGetNodes();
@@ -118,22 +128,24 @@ public class ConnectionTerminal
         {
             if (server.Nodes[i].Value is { } serverConnection)
             {
+                Debug.Assert(!serverConnection.IsDisposed);
                 if (serverConnection.IsOpen)
                 {
                     if (serverConnection.LastEventMics + serverConnection.ConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close (unused)");
+                        serverToChange.Enqueue(serverConnection);
 
                         serverConnection.SendCloseFrame();
                         serverConnection.CloseTransmission();
-                        serverConnection.ChangeState(Connection.State.Closed);
                     }
                 }
                 else if (serverConnection.IsClosed)
-                {// Closed -> Dispose queue
+                {// Closed -> Dispose
                     if (serverConnection.LastEventMics + NetConstants.ConnectionClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
                     {
-                        serverToDispose.Enqueue(serverConnection);
+                        serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Disposed");
+                        serverToChange.Enqueue(serverConnection);
                     }
                 }
             }
@@ -141,19 +153,29 @@ public class ConnectionTerminal
 
         lock (this.serverConnections.SyncObject)
         {
-            while (serverToDispose.TryDequeue(out var serverConnection))
-            {// Dispose
-                serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Disposed");
-
-                serverConnection.Goshujin = null;
-                serverConnection.ChangeState(Connection.State.Disposed);
-                serverConnection.DisposeActual();
+            while (serverToChange.TryDequeue(out var serverConnection))
+            {
+                if (serverConnection.IsOpen)
+                {// Open -> Closed
+                    serverConnection.ChangeStateInternal(Connection.State.Closed);
+                }
+                else if (serverConnection.IsClosed)
+                {// Closed -> Dispose
+                    serverConnection.ChangeStateInternal(Connection.State.Disposed);
+                    serverConnection.ReleaseResource();
+                    serverConnection.Goshujin = null;
+                }
             }
         }
     }
 
-    public async Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
+    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
+        if (!this.NetTerminal.IsActive)
+        {
+            return null;
+        }
+
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
         {
             return null;
@@ -161,23 +183,20 @@ public class ConnectionTerminal
 
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == Connection.ConnectMode.ReuseOnly)
-            {// Attempt to share connections that have already been created and are open.
-                if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
-                {
-                    return connection;
-                }
-
-                return null;
-            }
-
-            if (mode == Connection.ConnectMode.ReuseIfAvailable)
-            {// Attempt to reuse connections that have already been closed and are awaiting disposal.
+            if (mode == Connection.ConnectMode.ReuseIfAvailable ||
+                mode == Connection.ConnectMode.ReuseOnly)
+            {// Attempts to reuse a connection that has already been connected or disconnected (but not yet disposed).
                 if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
                 {
                     Debug.Assert(!connection.IsDisposed);
-                    connection.ChangeState(Connection.State.Open);
+                    connection.IncrementOpenCount();
+                    connection.ChangeStateInternal(Connection.State.Open);
                     return connection;
+                }
+
+                if (mode == Connection.ConnectMode.ReuseOnly)
+                {
+                    return default;
                 }
             }
         }
@@ -199,6 +218,7 @@ public class ConnectionTerminal
         newConnection.AddRtt(t.RttMics);
         lock (this.clientConnections.SyncObject)
         {// ConnectionStateCode
+            newConnection.IncrementOpenCount();
             newConnection.Goshujin = this.clientConnections;
         }
 
@@ -211,7 +231,8 @@ public class ConnectionTerminal
         {
             if (this.clientConnections.ConnectionIdChain.TryGetValue(serverConnection.ConnectionId, out var connection))
             {
-                connection.ChangeState(Connection.State.Open);
+                connection.IncrementOpenCount();
+                connection.ChangeStateInternal(Connection.State.Open);
             }
             else
             {
@@ -230,7 +251,7 @@ public class ConnectionTerminal
         {
             if (this.serverConnections.ConnectionIdChain.TryGetValue(clientConnection.ConnectionId, out var connection))
             {
-                connection.ChangeState(Connection.State.Open);
+                connection.ChangeStateInternal(Connection.State.Open);
             }
             else
             {
@@ -325,6 +346,7 @@ public class ConnectionTerminal
             ServerConnection? bidirectionalConnection;
             lock (g.SyncObject)
             {
+                clientConnection.ResetOpenCountl();
                 if (connection.CurrentState == Connection.State.Open)
                 {// Open -> Close
                     connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");
@@ -334,7 +356,7 @@ public class ConnectionTerminal
                         clientConnection.SendCloseFrame();
                     }
 
-                    clientConnection.ChangeState(Connection.State.Closed);
+                    clientConnection.ChangeStateInternal(Connection.State.Closed);
                 }
 
                 bidirectionalConnection = clientConnection.BidirectionalConnection;
@@ -365,7 +387,7 @@ public class ConnectionTerminal
                         serverConnection.SendCloseFrame();
                     }
 
-                    serverConnection.ChangeState(Connection.State.Closed);
+                    serverConnection.ChangeStateInternal(Connection.State.Closed);
                 }
 
                 bidirectionalConnection = serverConnection.BidirectionalConnection;
@@ -469,8 +491,8 @@ public class ConnectionTerminal
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
 
                 if (connection?.CurrentState == Connection.State.Closed)
-                {// Reopen
-                    connection.ChangeState(Connection.State.Open);
+                {// Reopen (Closed -> Open)
+                    connection.ChangeStateInternal(Connection.State.Open);
                 }
             }
 
@@ -499,5 +521,46 @@ public class ConnectionTerminal
     internal void SetReceiveTransmissionGapForTest(uint gap)
     {
         this.ReceiveTransmissionGap = gap;
+    }
+
+    internal async Task Terminate(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            lock (this.clientConnections.SyncObject)
+            {
+                var clients = this.clientConnections.ToArray();
+                foreach (var x in clients)
+                {
+                    x.TerminateInternal();
+                }
+            }
+
+            lock (this.serverConnections.SyncObject)
+            {
+                var servers = this.serverConnections.ToArray();
+                foreach (var x in servers)
+                {
+                    x.TerminateInternal();
+                }
+            }
+
+            if (this.clientConnections.Count == 0 &&
+                this.serverConnections.Count == 0)
+            {
+                return;
+            }
+            else
+            {
+                try
+                {
+                    await Task.Delay(100, cancellationToken);
+                }
+                catch
+                {
+                    return;
+                }
+            }
+        }
     }
 }

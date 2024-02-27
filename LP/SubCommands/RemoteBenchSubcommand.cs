@@ -10,11 +10,10 @@ namespace LP.Subcommands;
 [SimpleCommand("remotebench")]
 internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 {
-    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, IUserInterfaceService userInterfaceService, NetControl netControl, RemoteBenchBroker remoteBenchBroker)
+    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, IUserInterfaceService userInterfaceService, RemoteBenchBroker remoteBenchBroker)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.netControl = netControl;
         this.remoteBenchBroker = remoteBenchBroker;
     }
 
@@ -24,7 +23,6 @@ internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         this.remoteBenchBroker.Start(options.Total, options.Concurrent);
     }
 
-    private NetControl netControl;
     private RemoteBenchBroker remoteBenchBroker;
     private ILogger<RemoteBenchSubcommand> logger;
     private IUserInterfaceService userInterfaceService;
@@ -33,7 +31,7 @@ internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 public record RemoteBenchOptions
 {
     [SimpleOption("total", Description = "Total")]
-    public int Total { get; init; } = 1_000;
+    public int Total { get; init; } = 10_000;
 
     [SimpleOption("concurrent", Description = "Concurrent")]
     public int Concurrent { get; init; } = 25;

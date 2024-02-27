@@ -42,17 +42,21 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.Information = mergerInformation;
     }
 
-    public void Prepare(UnitMessage.Prepare message)
+    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         this.Check();
         this.logger.TryGet()?.Log(this.Information.ToString());
     }
 
-    public async Task RunAsync(UnitMessage.RunAsync message)
+    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
     {
     }
 
-    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
+    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    {
+    }
+
+    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Merger terminated");
     }

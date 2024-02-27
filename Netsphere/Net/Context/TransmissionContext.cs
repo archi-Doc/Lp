@@ -56,13 +56,9 @@ public sealed class TransmissionContext
 
     public NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
     {
-        if (this.ServerConnection.IsClosedOrDisposed)
+        if (!this.ServerConnection.IsActive)
         {
             return NetResult.Closed;
-        }
-        else if (this.ServerConnection.CancellationToken.IsCancellationRequested)
-        {
-            return default;
         }
         else if (this.IsSent)
         {
@@ -82,13 +78,9 @@ public sealed class TransmissionContext
 
     public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
     {
-        if (this.ServerConnection.IsClosedOrDisposed)
+        if (!this.ServerConnection.IsActive)
         {
             return NetResult.Closed;
-        }
-        else if (this.ServerConnection.CancellationToken.IsCancellationRequested)
-        {
-            return default;
         }
         else if (this.IsSent)
         {
@@ -115,7 +107,7 @@ public sealed class TransmissionContext
 
     public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
-        if (this.ServerConnection.CancellationToken.IsCancellationRequested)
+        if (!this.ServerConnection.IsActive)
         {
             return (NetResult.Canceled, default);
         }
@@ -240,7 +232,7 @@ public sealed class TransmissionContext
 
     internal bool CreateReceiveStream(ReceiveTransmission receiveTransmission, long maxLength)
     {
-        if (this.ServerConnection.CancellationToken.IsCancellationRequested)
+        if (!this.ServerConnection.IsActive)
         {
             return false;
         }

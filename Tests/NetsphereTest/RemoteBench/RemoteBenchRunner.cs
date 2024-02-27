@@ -6,7 +6,7 @@ using Arc.Unit;
 namespace LP.NetServices;
 
 [NetServiceInterface]
-public partial interface IRemoteBenchRunner : INetService
+public partial interface RemoteBenchRunner : INetService
 {
     NetTask<NetResult> Start(int total, int concurrent);
 }

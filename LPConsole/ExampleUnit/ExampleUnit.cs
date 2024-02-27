@@ -46,7 +46,7 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger = logger;
     }
 
-    public void Prepare(UnitMessage.Prepare message)
+    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         // Load strings
         var asm = System.Reflection.Assembly.GetExecutingAssembly();
@@ -62,12 +62,16 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log("Example unit prepared");
     }
 
-    public async Task RunAsync(UnitMessage.RunAsync message)
+    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Example unit running");
+        this.logger.TryGet()?.Log("Example unit started");
     }
 
-    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
+    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    {
+    }
+
+    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Example unit terminated");
     }

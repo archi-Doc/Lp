@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
+public class RemoteBenchHostImpl : RemoteBenchHost, IRemoteBenchService
 {
     public RemoteBenchHostImpl(RemoteBenchBroker broker)
     {
@@ -16,6 +16,16 @@ public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 
     public async NetTask Report(RemoteBenchRecord record)
     {
+        var context = TransmissionContext.Current;
+        if (context.ServerConnection.BidirectionalConnection is { } connection)
+        {
+            this.broker.Report(connection, record);
+            context.Result = NetResult.Success;
+        }
+        else
+        {
+            context.Result = NetResult.InvalidOperation;
+        }
     }
 
     public async NetTask<byte[]?> Pingpong(byte[] data)

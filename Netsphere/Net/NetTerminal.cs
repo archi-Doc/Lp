@@ -8,12 +8,18 @@ using Netsphere.Stats;
 
 namespace Netsphere;
 
-public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
+public class NetTerminal
 {
     public const double DefaultResponseTimeoutInSeconds = 2d;
 
+    public enum State
+    {
+        Initial,
+        Active,
+        Shutdown,
+    }
+
     public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
-        : base(unitContext)
     {
         this.UnitLogger = unitLogger;
         this.NetBase = netBase;
@@ -31,6 +37,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public CancellationToken CancellationToken
         => ThreadCore.Root.CancellationToken;
+
+    public State CurrentState { get; private set; }
+
+    public bool IsActive => this.CurrentState == State.Active;
 
     public NetBase NetBase { get; }
 
@@ -94,7 +104,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
-        => this.ConnectionTerminal.TryConnect(node, mode);
+        => this.ConnectionTerminal.Connect(node, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
@@ -118,6 +128,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)
     {
+        this.CurrentState = State.Active;
+
         var core = message.ParentCore;
         await this.NetSender.StartAsync(core);
         this.netCleaner.Start(core);
@@ -125,6 +137,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message)
     {
+        // Close all connections
+        this.CurrentState = State.Shutdown;
+
+        await this.ConnectionTerminal.Terminate().ConfigureAwait(false);
+
         this.NetSender.Stop();
         this.netCleaner.Stop();
     }

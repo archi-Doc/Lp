@@ -25,7 +25,7 @@ public class SendStream : SendStreamBase
         {
             try
             {
-                result = await tcs.Task.WaitAsync(this.SendTransmission.Connection.CancellationToken).WaitAsync(cancellationToken).ConfigureAwait(false);
+                result = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
