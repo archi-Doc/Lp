@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
+using System.Runtime.CompilerServices;
 using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -22,38 +24,41 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new NetControl.Builder()
-            .SetupOptions<NetOptions>((context, options) =>
-            {// NetsphereOptions
-                options.NodeName = "Test server";
-                options.Port = 49152;
-                options.EnableEssential = true;
-                options.EnableServer = true;
-            });
+        var builder = new NetControl.Builder();
 
         // Netsphere
         var unit = builder.Build();
-        var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
-        await Console.Out.WriteLineAsync(options.ToString());
+        await unit.Run(new NetOptions(), true);
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<TestService>();
-
-        await unit.Run(options, true);
-
-        await Console.Out.WriteLineAsync();
-        await Console.Out.WriteLineAsync("Server started.");
-        await Console.Out.WriteLineAsync("Ctrl+C to exit.");
-        await Console.Out.WriteLineAsync();
-
-        while (await ThreadCore.Root.Delay(1_000))
-        {
-        }
+        await Test(netControl);
 
         await unit.Terminate();
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+    }
+
+    private static async Task Test(NetControl netControl)
+    {
+        var node = await netControl.NetTerminal.UnsafeGetNetNode(new(IPAddress.Loopback, 49152));
+        if (node is null)
+        {
+            await Console.Out.WriteLineAsync("No connection");
+            return;
+        }
+
+        using (var connection = await netControl.NetTerminal.Connect(node))
+        {
+            if (connection is not null)
+            {
+                var service = connection.GetService<TestService>();
+
+                var source = "Nupo";
+                var destination = await service.DoubleString(source);
+                await Console.Out.WriteLineAsync($"{source} -> {destination}");
+            }
+        }
     }
 }

@@ -51,7 +51,6 @@ public sealed partial class PacketTerminal
     public PacketTerminal(NetBase netBase, NetStats netStats, NetTerminal netTerminal, ILogger<PacketTerminal> logger)
     {
         this.netBase = netBase;
-        this.options = this.netBase.NetOptions;
         this.netStats = netStats;
         this.netTerminal = netTerminal;
         this.logger = logger;
@@ -65,7 +64,6 @@ public sealed partial class PacketTerminal
     public int MaxResendCount { get; set; }
 
     private readonly NetBase netBase;
-    private readonly NetOptions options;
     private readonly NetStats netStats;
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
@@ -241,7 +239,7 @@ public sealed partial class PacketTerminal
                 {
                     return;
                 }
-                else if (!this.options.EnableServer)
+                else if (!this.netBase.NetOptions.EnableServer)
                 {
                     return;
                 }
@@ -264,11 +262,11 @@ public sealed partial class PacketTerminal
                     return;
                 }
             }
-            else if (this.options.EnableEssential)
+            else if (this.netBase.NetOptions.EnableEssential)
             {
                 if (packetType == PacketType.Ping)
                 {// PacketPing
-                    var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.options.NodeName);
+                    var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
 

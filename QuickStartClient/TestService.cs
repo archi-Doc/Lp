@@ -10,7 +10,6 @@ public interface TestService : INetService
     NetTask<string?> DoubleString(string source);
 }
 
-[NetServiceObject]
 internal class TestServiceImpl : TestService
 {
     async NetTask<string?> TestService.DoubleString(string source)
