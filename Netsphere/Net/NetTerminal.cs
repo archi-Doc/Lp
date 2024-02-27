@@ -104,8 +104,19 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
-        => this.ConnectionTerminal.Connect(node, mode);
+    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
+        => this.ConnectionTerminal.Connect(destination, mode);
+
+    public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
+    {
+        var netNode = await this.UnsafeGetNetNode(destination).ConfigureAwait(false);
+        if (netNode is null)
+        {
+            return default;
+        }
+
+        return await this.Connect(netNode, mode).ConfigureAwait(false);
+    }
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {

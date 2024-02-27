@@ -4,8 +4,9 @@ using Netsphere;
 
 namespace QuickStart;
 
-[NetServiceInterface]
-public interface ITestService : INetService
+[NetServiceInterface] // Annotate NetServiceInterface attribute.
+public interface ITestService : INetService // The interface for NetService must inherit from INetService.
 {
-    NetTask<string?> DoubleString(string input);
+    NetTask<string?> DoubleString(string input); // Declare the service method.
+    // Ensure that both arguments and return values are serializable by Tinyhand serializer, and the return type must be NetTask or NetTask<T>.
 }
