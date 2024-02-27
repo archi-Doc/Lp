@@ -141,6 +141,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         // Close all connections
         this.CurrentState = State.Shutdown;
 
+        await this.ConnectionTerminal.Terminate().ConfigureAwait(false);
+
         this.NetSender.Stop();
         this.netCleaner.Stop();
     }

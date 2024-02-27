@@ -522,4 +522,45 @@ public class ConnectionTerminal
     {
         this.ReceiveTransmissionGap = gap;
     }
+
+    internal async Task Terminate(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            lock (this.clientConnections.SyncObject)
+            {
+                var clients = this.clientConnections.ToArray();
+                foreach (var x in clients)
+                {
+                    x.TerminateInternal();
+                }
+            }
+
+            lock (this.serverConnections.SyncObject)
+            {
+                var servers = this.serverConnections.ToArray();
+                foreach (var x in servers)
+                {
+                    x.TerminateInternal();
+                }
+            }
+
+            if (this.clientConnections.Count == 0 &&
+                this.serverConnections.Count == 0)
+            {
+                return;
+            }
+            else
+            {
+                try
+                {
+                    await Task.Delay(100, cancellationToken);
+                }
+                catch
+                {
+                    return;
+                }
+            }
+        }
+    }
 }

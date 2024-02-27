@@ -61,8 +61,6 @@ public abstract class Connection : IDisposable
 
     #region FieldAndProperty
 
-    public CancellationToken CancellationToken => this.CancellationTokenSource.Token;
-
     public NetBase NetBase { get; }
 
     public NetTerminal NetTerminal => this.ConnectionTerminal.NetTerminal;
@@ -155,28 +153,6 @@ public abstract class Connection : IDisposable
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
 
-    private CancellationTokenSource? cts;
-
-    private CancellationTokenSource CancellationTokenSource
-    {
-        get
-        {
-            while (true)
-            {
-                if (this.cts is not null)
-                {
-                    return this.cts;
-                }
-
-                var t = new CancellationTokenSource();
-                if (Interlocked.CompareExchange(ref this.cts, t, null) == null)
-                {
-                    return t;
-                }
-            }
-        }
-    }
-
     private Embryo embryo;
 
     // lock (this.syncAes)
@@ -223,14 +199,6 @@ public abstract class Connection : IDisposable
 
         this.CurrentState = state;
         this.UpdateLastEventMics();
-
-        if (state == State.Open)
-        {
-        }
-        else if (state == State.Closed)
-        {
-            this.CancellationTokenSource.Cancel();
-        }
     }
 
     public void ApplyAgreement()
@@ -1165,6 +1133,11 @@ Wait:
             this.receiveReceivedList.Clear();
             this.receiveDisposedList.Clear();
         }
+    }
+
+    internal void TerminateInternal()
+    {
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

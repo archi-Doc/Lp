@@ -87,6 +87,8 @@ public class Program
 
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
+        await unit.Terminate();
+
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)

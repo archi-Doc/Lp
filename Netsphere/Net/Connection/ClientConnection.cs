@@ -34,6 +34,10 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public ServerConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.serverConnections.SyncObject)
 
+    public CancellationToken CancellationToken => this.cts.Token;
+
+    private CancellationTokenSource cts = new();
+
     private int openCount;
 
     private ClientConnectionContext context;
@@ -584,5 +588,22 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     internal void ResetOpenCountl()
     {
         Volatile.Write(ref this.openCount, 0);
+    }
+
+    internal override void OnStateChanged()
+    {
+        if (this.CurrentState == State.Open)
+        {// Reopen
+            this.cts.Dispose();
+            this.cts = new();
+        }
+        else if (this.CurrentState == State.Closed)
+        {// Close
+            this.cts.Cancel();
+        }
+        else
+        {// Disposed
+            this.cts.Dispose();
+        }
     }
 }
