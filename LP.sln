@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetsphereGenerator", "Netsp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LPRunner", "LPRunner\LPRunner.csproj", "{65743477-7D52-460A-95A7-A905A370A015}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickStartServer", "QuickStartServer\QuickStartServer.csproj", "{376C6C85-9344-4190-A2D8-354C6FCD6699}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{65743477-7D52-460A-95A7-A905A370A015}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65743477-7D52-460A-95A7-A905A370A015}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65743477-7D52-460A-95A7-A905A370A015}.Release|Any CPU.Build.0 = Release|Any CPU
+		{376C6C85-9344-4190-A2D8-354C6FCD6699}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{376C6C85-9344-4190-A2D8-354C6FCD6699}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{376C6C85-9344-4190-A2D8-354C6FCD6699}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{376C6C85-9344-4190-A2D8-354C6FCD6699}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
