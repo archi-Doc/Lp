@@ -471,7 +471,7 @@ public class Control : ILogInformation
         this.BigMachine.Start(null);
         this.RunMachines();
 
-        await context.SendRunAsync(new(this.Core));
+        await context.SendStartAsync(new(this.Core));
 
         this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);

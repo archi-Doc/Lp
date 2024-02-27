@@ -8,7 +8,7 @@ using Netsphere.Stats;
 
 namespace Netsphere;
 
-public class NetTerminal
+public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const double DefaultResponseTimeoutInSeconds = 2d;
 
@@ -20,6 +20,7 @@ public class NetTerminal
     }
 
     public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+        : base(unitContext)
     {
         this.UnitLogger = unitLogger;
         this.NetBase = netBase;
@@ -126,7 +127,7 @@ public class NetTerminal
         this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
     }
 
-    async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)
+    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
     {
         this.CurrentState = State.Active;
 
@@ -135,12 +136,16 @@ public class NetTerminal
         this.netCleaner.Start(core);
     }
 
-    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message)
+    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    {
+    }
+
+    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
     {
         // Close all connections
         this.CurrentState = State.Shutdown;
 
-        await this.ConnectionTerminal.Terminate().ConfigureAwait(false);
+        await this.ConnectionTerminal.Terminate(cancellationToken).ConfigureAwait(false);
 
         this.NetSender.Stop();
         this.netCleaner.Stop();

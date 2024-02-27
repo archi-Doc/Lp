@@ -75,7 +75,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             this.Context.SendPrepare(new());
-            await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
+            await this.Context.SendStartAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
 
         public Task Terminate()

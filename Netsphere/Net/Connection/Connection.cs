@@ -199,6 +199,7 @@ public abstract class Connection : IDisposable
 
         this.CurrentState = state;
         this.UpdateLastEventMics();
+        this.OnStateChanged();
     }
 
     public void ApplyAgreement()
@@ -1133,6 +1134,10 @@ Wait:
             this.receiveReceivedList.Clear();
             this.receiveDisposedList.Clear();
         }
+    }
+
+    internal virtual void OnStateChanged()
+    {
     }
 
     internal void TerminateInternal()
