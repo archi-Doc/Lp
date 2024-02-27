@@ -29,6 +29,10 @@ public class Program
                 options.Port = 49152;
                 options.EnableEssential = true;
                 options.EnableServer = true;
+            })
+            .ConfigureSerivice(context =>
+            {
+                context.AddService<ITestService>();
             });
 
         // Netsphere
@@ -37,13 +41,12 @@ public class Program
         await Console.Out.WriteLineAsync(options.ToString());
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<TestService>();
+        netControl.Services.Register<ITestService>();
 
         await unit.Run(options, true);
 
         await Console.Out.WriteLineAsync();
-        await Console.Out.WriteLineAsync("Server started.");
-        await Console.Out.WriteLineAsync("Ctrl+C to exit.");
+        await Console.Out.WriteLineAsync("Server: Ctrl+C to exit");
         await Console.Out.WriteLineAsync();
 
         while (await ThreadCore.Root.Delay(1_000))

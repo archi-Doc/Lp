@@ -53,7 +53,7 @@ public class Program
         {
             if (connection is not null)
             {
-                var service = connection.GetService<TestService>();
+                var service = connection.GetService<ITestService>();
 
                 var source = "Nupo";
                 var destination = await service.DoubleString(source);

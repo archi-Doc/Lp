@@ -5,13 +5,13 @@ using Netsphere;
 namespace QuickStart;
 
 [NetServiceInterface]
-public interface TestService : INetService
+public interface ITestService : INetService
 {
     NetTask<string?> DoubleString(string source);
 }
 
-internal class TestServiceImpl : TestService
+internal class TestServiceImpl : ITestService
 {
-    async NetTask<string?> TestService.DoubleString(string source)
+    async NetTask<string?> ITestService.DoubleString(string source)
         => source + source;
 }
