@@ -10,7 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Netsphere\Netsphere.csproj" />
     <ProjectReference Include="..\..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
-    <ProjectReference Include="..\NetsphereExternal\NetsphereExternal.csproj" />
   </ItemGroup>
 
   <ItemGroup>

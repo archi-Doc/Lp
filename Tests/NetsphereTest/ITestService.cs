@@ -56,30 +56,6 @@ public class TestServiceImpl2 : TestServiceImpl
     }
 }
 
-[NetServiceObject]
-public class ExternalServiceImpl : IExternalService
-{
-    public ExternalServiceImpl(NetBase netBase)
-    {
-        Console.WriteLine($"ext ctor {netBase.NetOptions.ToString()}");
-    }
-
-    public async NetTask<int> IncrementExternal(int x)
-    {
-        Console.WriteLine($"IncrementExternal {x} -> {x + 1}");
-        return x + 1;
-    }
-
-    public async NetTask SendExternal(int x)
-    {
-    }
-
-    public NetTask<NetResult> SendExternal(int x, string y)
-    {
-        throw new NotImplementedException();
-    }
-}
-
 public class ParentClass
 {
     [NetServiceObject]

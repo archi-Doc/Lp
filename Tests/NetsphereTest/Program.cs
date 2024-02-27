@@ -110,7 +110,6 @@ public class Program
                 // NetService
                 context.AddSingleton<RemoteBenchHostImpl>();
                 context.AddSingleton<RemoteBenchRunnerImpl>();
-                context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
 
