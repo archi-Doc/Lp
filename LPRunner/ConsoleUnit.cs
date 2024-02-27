@@ -178,15 +178,20 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger = logger;
     }
 
-    public void Prepare(UnitMessage.Prepare message)
+    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
     }
 
-    public async Task RunAsync(UnitMessage.RunAsync message)
+    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
     {
     }
 
-    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
+    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    {
+        throw new NotImplementedException();
+    }
+
+    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
     {
     }
 

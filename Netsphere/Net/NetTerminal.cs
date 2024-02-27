@@ -8,7 +8,7 @@ using Netsphere.Stats;
 
 namespace Netsphere;
 
-public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
+public class NetTerminal
 {
     public const double DefaultResponseTimeoutInSeconds = 2d;
 
@@ -20,7 +20,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
-        : base(unitContext)
     {
         this.UnitLogger = unitLogger;
         this.NetBase = netBase;
