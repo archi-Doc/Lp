@@ -7,12 +7,12 @@ namespace QuickStart;
 [NetServiceInterface]
 public interface ITestService : INetService
 {
-    NetTask<string?> DoubleString(string source);
+    NetTask<string?> DoubleString(string input);
 }
 
 [NetServiceObject]
 internal class TestServiceImpl : ITestService
 {
-    async NetTask<string?> ITestService.DoubleString(string source)
-        => source + source;
+    async NetTask<string?> ITestService.DoubleString(string input)
+        => input + input;
 }
