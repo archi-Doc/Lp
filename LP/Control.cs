@@ -362,10 +362,11 @@ public class Control : ILogInformation
 
             try
             {// Start, Main loop
-                await control.RunAsync(this.Context);
+                await control.StartAsync(this.Context);
 
                 await control.MainAsync();
 
+                this.Context.SendStop(new());
                 await control.TerminateAsync(this.Context);
                 await control.SaveAsync(this.Context);
                 control.Terminate(false);
@@ -466,7 +467,7 @@ public class Control : ILogInformation
         await this.Crystalizer.SaveAllAndTerminate();
     }
 
-    public async Task RunAsync(UnitContext context)
+    public async Task StartAsync(UnitContext context)
     {
         this.BigMachine.Start(null);
         this.RunMachines();

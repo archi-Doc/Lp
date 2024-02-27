@@ -147,6 +147,10 @@ public abstract class Connection : IDisposable
     internal int SendTransmissionsCount
         => this.sendTransmissions.Count;
 
+    internal bool IsEmpty
+        => this.sendTransmissions.Count == 0 &&
+        this.receiveTransmissions.Count == 0;
+
     internal long LastEventMics { get; private set; } // When any packet, including an Ack, is received, it's updated to the latest time.
 
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
@@ -1025,7 +1029,22 @@ Wait:
         this.ConnectionTerminal.CloseInternal(this, true);
     }
 
-    internal void ReleaseResource()
+    public override string ToString()
+    {
+        var connectionString = "Connection";
+        if (this is ServerConnection)
+        {
+            connectionString = "Server";
+        }
+        else if (this is ClientConnection)
+        {
+            connectionString = "Client";
+        }
+
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
+    }
+
+    protected void ReleaseResource()
     {
         lock (this.syncAes)
         {
@@ -1041,21 +1060,6 @@ Wait:
                 this.aes1 = default;
             }
         }
-    }
-
-    public override string ToString()
-    {
-        var connectionString = "Connection";
-        if (this is ServerConnection)
-        {
-            connectionString = "Server";
-        }
-        else if (this is ClientConnection)
-        {
-            connectionString = "Client";
-        }
-
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
@@ -1138,6 +1142,10 @@ Wait:
 
     internal virtual void OnStateChanged()
     {
+        if (this.CurrentState == State.Disposed)
+        {
+            this.ReleaseResource();
+        }
     }
 
     internal void TerminateInternal()
@@ -1149,7 +1157,7 @@ Wait:
             {
                 if (x.Mode == NetTransmissionMode.Stream ||
                     x.Mode == NetTransmissionMode.StreamCompleted)
-                {
+                {// Terminate stream transmission.
                     x.DisposeTransmission();
                 }
 
@@ -1176,7 +1184,7 @@ Wait:
             {
                 if (x.Mode == NetTransmissionMode.Stream ||
                     x.Mode == NetTransmissionMode.StreamCompleted)
-                {
+                {// Terminate stream transmission.
                     x.DisposeTransmission();
                 }
 
@@ -1194,12 +1202,6 @@ Wait:
                     t.Goshujin = default;
                 }
             }
-        }
-
-        if (this.sendTransmissions.Count == 0 &&
-            this.receiveTransmissions.Count == 0)
-        {
-            this.ChangeStateInternal(State.Disposed
         }
     }
 
