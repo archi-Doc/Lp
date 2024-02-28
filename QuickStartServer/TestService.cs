@@ -4,15 +4,18 @@ using Netsphere;
 
 namespace QuickStart;
 
-[NetServiceInterface]
-public interface ITestService : INetService
+// Define an interface shared between the client and server.
+[NetServiceInterface] // Annotate NetServiceInterface attribute.
+public interface ITestService : INetService // An interface for NetService must inherit from INetService.
 {
-    NetTask<string?> DoubleString(string input);
+    NetTask<string?> DoubleString(string input); // Declare the service method.
+    // Ensure that both arguments and return values are serializable by Tinyhand serializer, and the return type must be NetTask or NetTask<T>.
 }
 
-[NetServiceObject]
+// On the server side, define a class that implements the interface and annotate it with NetServiceObject attribute.
+[NetServiceObject] // Annotate NetServiceObject attribute.
 internal class TestServiceImpl : ITestService
 {
     async NetTask<string?> ITestService.DoubleString(string input)
-        => input + input;
+        => input + input; // Simply repeat a string twice and return it.
 }

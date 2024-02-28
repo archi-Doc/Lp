@@ -22,38 +22,27 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new NetControl.Builder()
+        var builder = new NetControl.Builder() // Create a NetControl builder.
             .SetupOptions<NetOptions>((context, options) =>
-            {// NetsphereOptions
+            {// Modify NetOptions.
                 options.NodeName = "Test server";
-                options.Port = 49152;
-                options.EnableEssential = true;
+                options.Port = 49152; // Specify the port number.
+                options.EnableEssential = true; // Required when using functions such as UnsafeGetNetNode() or Ping.
                 options.EnableServer = true;
             })
             .ConfigureSerivice(context =>
-            {
+            {// Register the services provided by the server.
                 context.AddService<ITestService>();
             });
 
-        // Netsphere
-        var unit = builder.Build();
+        var unit = builder.Build(); // Create a unit that provides network functionality.
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
-        await Console.Out.WriteLineAsync(options.ToString());
+        await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
 
-        var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<ITestService>();
-
-        await unit.Run(options, true);
-
-        await Console.Out.WriteLineAsync();
+        await unit.Run(options, true); // Execute the created unit with the specified options.
         await Console.Out.WriteLineAsync("Server: Ctrl+C to exit");
-        await Console.Out.WriteLineAsync();
-
-        while (await ThreadCore.Root.Delay(1_000))
-        {
-        }
-
-        await unit.Terminate();
+        await ThreadCore.Root.Delay(100_000); // Wait until the server shuts down.
+        await unit.Terminate(); // Perform the termination process for the unit.
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
