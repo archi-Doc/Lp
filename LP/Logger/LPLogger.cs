@@ -43,8 +43,8 @@ public class LPLogger
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        // context.SetOutput<FileLogger<DebugLoggerOptions>>();
-                        context.SetOutput<EmptyLogger>();
+                        context.SetOutput<FileLogger<DebugLoggerOptions>>();
+                        // context.SetOutput<EmptyLogger>();
                         return;
                     }
 
