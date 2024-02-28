@@ -262,10 +262,10 @@ public sealed partial class PacketTerminal
                     return;
                 }
             }
-            else if (this.netBase.NetOptions.EnableEssential)
-            {
-                if (packetType == PacketType.Ping)
-                {// PacketPing
+            else if (packetType == PacketType.Ping)
+            {// PacketPing
+                if (this.netBase.NetOptions.EnableEssential)
+                {
                     var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
@@ -274,16 +274,20 @@ public sealed partial class PacketTerminal
                     {
                         // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
                     }
-
-                    return;
                 }
-                else if (packetType == PacketType.GetInformation)
-                {// PacketGetInformation
+
+                return;
+            }
+            else if (packetType == PacketType.GetInformation)
+            {// PacketGetInformation
+                if (this.netBase.AllowUnsafeConnection)
+                {
                     var packet = new PacketGetInformationResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
-                    return;
                 }
+
+                return;
             }
         }
         else if (packetUInt16 < 255)

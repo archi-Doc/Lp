@@ -95,6 +95,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public async Task<NetNode?> UnsafeGetNetNode(NetAddress address)
     {
+        if (!this.NetBase.AllowUnsafeConnection)
+        {
+            return null;
+        }
+
         var t = await this.PacketTerminal.SendAndReceive<PacketGetInformation, PacketGetInformationResponse>(address, new()).ConfigureAwait(false);
         if (t.Value is null)
         {

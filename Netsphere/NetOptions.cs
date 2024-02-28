@@ -7,14 +7,14 @@ namespace Netsphere;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record NetOptions
 {
+    [SimpleOption("nodename", Description = "Name of this node")]
+    public string NodeName { get; set; } = string.Empty;
+
     [SimpleOption("address", Description = "Global IP address")]
     public string Address { get; set; } = string.Empty;
 
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
-
-    [SimpleOption("nodename", Description = "Name of this node")]
-    public string NodeName { get; set; } = string.Empty;
 
     [SimpleOption("nodelist", Description = "Node addresses to connect")]
     public string NodeList { get; set; } = string.Empty;

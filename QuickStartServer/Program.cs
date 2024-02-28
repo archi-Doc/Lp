@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -27,7 +28,7 @@ public class Program
             {// Modify NetOptions.
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
-                options.EnableEssential = true; // Required when using functions such as UnsafeGetNetNode() or Ping.
+                options.EnableEssential = true; // Required when using functions such as Ping.
                 options.EnableServer = true;
             })
             .ConfigureSerivice(context =>
@@ -40,7 +41,12 @@ public class Program
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
 
         await unit.Run(options, true); // Execute the created unit with the specified options.
-        await Console.Out.WriteLineAsync("Server: Ctrl+C to exit");
+
+        var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
+        var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
+
+        await Console.Out.WriteLineAsync($"Server: {node.ToString()}");
+        await Console.Out.WriteLineAsync("Ctrl+C to exit");
         await ThreadCore.Root.Delay(100_000); // Wait until the server shuts down.
         await unit.Terminate(); // Perform the termination process for the unit.
 
