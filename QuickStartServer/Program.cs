@@ -14,7 +14,7 @@ public class Program
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+            ThreadCore.Root.TerminationEvent.WaitOne(2_000); // Wait until the termination process is complete (#1).
         };
 
         Console.CancelKeyPress += (s, e) =>
@@ -28,7 +28,7 @@ public class Program
             {// Modify NetOptions.
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
-                options.PrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Private key
+                options.PrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.
                 options.EnableEssential = true; // Required when using functions such as Ping.
                 options.EnableServer = true;
             })
@@ -45,9 +45,9 @@ public class Program
         var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
         var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
 
-        await Console.Out.WriteLineAsync($"Server: {node.ToString()}");
+        await Console.Out.WriteLineAsync($"{options.NodeName}: {node.ToString()}");
         await Console.Out.WriteLineAsync("Ctrl+C to exit");
-        await ThreadCore.Root.Delay(100_000); // Wait until the server shuts down.
+        await ThreadCore.Root.Delay(Timeout.InfiniteTimeSpan); // Wait until the server shuts down.
         await unit.Terminate(); // Perform the termination process for the unit.
 
         ThreadCore.Root.Terminate();
