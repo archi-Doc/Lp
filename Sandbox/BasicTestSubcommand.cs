@@ -217,13 +217,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
         }
 
-        var connection2 = await netTerminal.Connect(netNode);
-        if (connection2 is not null)
-        {
-            var service = connection2.GetService<TestService>();
-            _ = service.GetHash([1, 2, 3,]);
-        }
-
         /*using (var connection = await netTerminal.TryConnect(netNode))
         {// Reuse connection
             if (connection is not null)
