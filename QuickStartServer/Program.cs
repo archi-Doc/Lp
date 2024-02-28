@@ -28,6 +28,7 @@ public class Program
             {// Modify NetOptions.
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
+                options.PrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Private key
                 options.EnableEssential = true; // Required when using functions such as Ping.
                 options.EnableServer = true;
             })
@@ -38,10 +39,9 @@ public class Program
 
         var unit = builder.Build(); // Create a unit that provides network functionality.
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
-        await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
-
         await unit.Run(options, true); // Execute the created unit with the specified options.
 
+        await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
         var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
         var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
 
