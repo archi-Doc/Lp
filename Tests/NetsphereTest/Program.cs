@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using LP.NetServices;
 using SimpleCommandLine;
+using Arc.Crypto;
+using Netsphere.Crypto;
 
 namespace NetsphereTest;
 
@@ -79,8 +81,7 @@ public class Program
         }
 
         // Secrets
-        const string secretName = "netsphere_secrets";
-        var testSecret = Environment.GetEnvironmentVariable(secretName);
+        // CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("k", out var privateKey);
 
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
@@ -145,6 +146,14 @@ public class Program
                         context.SetOutput<ConsoleLogger>();
                     }
                 });
+            })
+            .SetupOptions<NetOptions>((context, options) =>
+            {
+                if (!string.IsNullOrEmpty(options.PrivateKey) &&
+                Environment.GetEnvironmentVariable("privatekey") is { } privateKey)
+                {
+                    options.PrivateKey = privateKey;
+                }
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions

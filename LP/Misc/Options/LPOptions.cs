@@ -50,25 +50,4 @@ public partial record LPOptions
 
     [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
     public long Lifespan { get; init; }
-
-    /*public bool TryLoad()
-    {
-        if (!string.IsNullOrEmpty(this.Options))
-        {
-            try
-            {
-                var utf8 = File.ReadAllBytes(this.Options);
-                var writer = default(TinyhandWriter);
-                TinyhandTreeConverter.FromUtf8ToBinary(utf8, ref writer);
-                var reader = new TinyhandReader(writer.FlushAndGetReadOnlySequence());
-                this.Deserialize(ref reader, TinyhandSerializerOptions.Standard);
-                return true;
-            }
-            catch
-            {
-            }
-        }
-
-        return false;
-    }*/
 }

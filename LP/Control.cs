@@ -289,7 +289,14 @@ public class Control : ILogInformation
                     }
                 }
 
-                options.NetsphereOptions.EnableServer = true;
+                var netOptions = options.NetsphereOptions;
+                if (string.IsNullOrEmpty(netOptions.PrivateKey) &&
+                Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
+                {
+                    netOptions.PrivateKey = privateKey;
+                }
+
+                netOptions.EnableServer = true;
                 context.SetOptions(options);
             }
         }
