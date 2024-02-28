@@ -86,7 +86,6 @@ public class ConnectionTerminal
                         clientToChange.Enqueue(clientConnection);
 
                         clientConnection.SendCloseFrame();
-                        clientConnection.CloseTransmission();
                     }
                 }
                 else if (clientConnection.IsClosed)
@@ -95,6 +94,8 @@ public class ConnectionTerminal
                     {
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Disposed");
                         clientToChange.Enqueue(clientConnection);
+
+                        clientConnection.CloseAllTransmission();
                     }
                 }
             }
@@ -136,7 +137,6 @@ public class ConnectionTerminal
                         serverToChange.Enqueue(serverConnection);
 
                         serverConnection.SendCloseFrame();
-                        serverConnection.CloseTransmission();
                     }
                 }
                 else if (serverConnection.IsClosed)
@@ -145,6 +145,8 @@ public class ConnectionTerminal
                     {
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Disposed");
                         serverToChange.Enqueue(serverConnection);
+
+                        serverConnection.CloseAllTransmission();
                     }
                 }
             }
@@ -336,7 +338,7 @@ public class ConnectionTerminal
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)
     {
-        connection.CloseTransmission(); // Dispose transmissions because the connection is closing.
+        connection.CloseSendTransmission();
 
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)

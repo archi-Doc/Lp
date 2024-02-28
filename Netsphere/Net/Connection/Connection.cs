@@ -370,43 +370,48 @@ Wait:
         goto Retry;
     }
 
+    internal void CleanReceiveTransmission()
+    {// lock (this.receiveTransmissions.SyncObject)
+        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
+
+        // Release receive transmissions that have elapsed a certain time after being disposed.
+        var currentMics = Mics.FastSystem;
+        while (this.receiveDisposedList.First is { } node)
+        {
+            var transmission = node.Value;
+            if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionDisposalMics)
+            {
+                break;
+            }
+
+            node.List.Remove(node);
+            transmission.ReceivedOrDisposedNode = null;
+            transmission.Goshujin = null;
+        }
+
+        // Release receive transmissions that have elapsed a certain time since the last data reception.
+        while (this.receiveReceivedList.First is { } node)
+        {
+            var transmission = node.Value;
+            if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionTimeoutMics)
+            {
+                break;
+            }
+
+            node.List.Remove(node);
+            transmission.DisposeTransmission();
+            transmission.ReceivedOrDisposedNode = null;
+            transmission.Goshujin = null;
+        }
+    }
+
     internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
         transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
 
         lock (this.receiveTransmissions.SyncObject)
         {
-            Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
-
-            // Release receive transmissions that have elapsed a certain time after being disposed.
-            var currentMics = Mics.FastSystem;
-            while (this.receiveDisposedList.First is { } node)
-            {
-                var transmission = node.Value;
-                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionDisposalMics)
-                {
-                    break;
-                }
-
-                node.List.Remove(node);
-                transmission.ReceivedOrDisposedNode = null;
-                transmission.Goshujin = null;
-            }
-
-            // Release receive transmissions that have elapsed a certain time since the last data reception.
-            while (this.receiveReceivedList.First is { } node)
-            {
-                var transmission = node.Value;
-                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionTimeoutMics)
-                {
-                    break;
-                }
-
-                node.List.Remove(node);
-                transmission.DisposeTransmission();
-                transmission.ReceivedOrDisposedNode = null;
-                transmission.Goshujin = null;
-            }
+            this.CleanReceiveTransmission();
 
             if (this.IsClosedOrDisposed)
             {
@@ -419,7 +424,7 @@ Wait:
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
-            receiveTransmission.ReceivedOrDisposedMics = currentMics;
+            receiveTransmission.ReceivedOrDisposedMics = Mics.FastSystem;
             receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
@@ -778,6 +783,8 @@ Wait:
                     return;
                 }
 
+                this.CleanReceiveTransmission();//tempcode
+
                 // New transmission
                 if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
@@ -1098,7 +1105,7 @@ Wait:
         return result;
     }
 
-    internal void CloseTransmission()
+    internal void CloseAllTransmission()
     {
         lock (this.sendTransmissions.SyncObject)
         {
@@ -1137,6 +1144,26 @@ Wait:
             this.receiveTransmissions.TransmissionIdChain.Clear();
             this.receiveReceivedList.Clear();
             this.receiveDisposedList.Clear();
+        }
+    }
+
+    internal void CloseSendTransmission()
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            foreach (var x in this.sendTransmissions)
+            {
+                if (x.IsDisposed)
+                {
+                    continue;
+                }
+
+                x.DisposeTransmission();
+                // x.Goshujin = null;
+            }
+
+            // Since it's within a lock statement, manually clear it.
+            this.sendTransmissions.TransmissionIdChain.Clear();
         }
     }
 
