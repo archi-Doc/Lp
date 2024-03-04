@@ -82,14 +82,21 @@ public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
                         var service = t.GetService<RemoteBenchHost>();
                         sw2.Restart();
 
-                        var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
-                        if (response.IsSuccess)
+                        try
                         {
-                            Interlocked.Increment(ref successCount);
+                            var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
+                            if (response.IsSuccess)
+                            {
+                                Interlocked.Increment(ref successCount);
+                            }
+                            else
+                            {
+                                Interlocked.Increment(ref failureCount);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            Interlocked.Increment(ref failureCount);
+                            await Console.Out.WriteLineAsync(ex.ToString());
                         }
 
                         sw2.Stop();
