@@ -83,8 +83,7 @@ public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
                         var service = t.GetService<RemoteBenchHost>();
                         sw2.Restart();
 
-                        Interlocked.Increment(ref successCount);
-                        /*var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
+                        var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
                         if (response.IsSuccess)
                         {
                             Interlocked.Increment(ref successCount);
@@ -92,7 +91,7 @@ public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
                         else
                         {
                             Interlocked.Increment(ref failureCount);
-                        }*/
+                        }
 
                         sw2.Stop();
                         Interlocked.Add(ref totalLatency, sw2.ElapsedMilliseconds);
