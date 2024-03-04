@@ -82,7 +82,7 @@ internal class NoCongestionControl : ICongestionControl
 
                 gene = firstNode.Value;
                 gene.SendTransmission.Connection.DoubleTaichi();
-                // Console.WriteLine($"Resend(timeout): {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
+                Console.WriteLine($"Resend(timeout): {gene.GeneSerial}/{gene.SendTransmission.GeneSerialMax}");
                 if (!gene.Resend_NotThreadSafe(netSender, addition++))
                 {// Cannot send
                     this.genesInFlight.RemoveNode(firstNode);
