@@ -128,7 +128,7 @@ public class Control : ILogInformation
                     options.Path = Path.Combine(context.RootDirectory, logfile);
                 }
 
-                options.MaxLogCapacity = 20;
+                options.MaxLogCapacity = 100;
                 options.Formatter.TimestampFormat = "mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
