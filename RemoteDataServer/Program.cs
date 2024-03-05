@@ -55,17 +55,11 @@ public class Program
 
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
         await Console.Out.WriteLineAsync();
-        var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
-        var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
 
         // NtpCorrection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<Netsphere.Misc.NtpCorrection>();
         var offset = await ntpCorrection.SendAndReceiveOffset();
         UnitLogger.SetTimeOffset(offset);
-
-        await Console.Out.WriteLineAsync($"{options.NodeName}: {node.ToString()}");
-        await Console.Out.WriteLineAsync("Ctrl+C to exit");
-        await Console.Out.WriteLineAsync();
 
         var parserOptions = SimpleParserOptions.Standard with
         {
