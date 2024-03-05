@@ -5,7 +5,7 @@ namespace Netsphere;
 [NetServiceInterface]
 public interface IRemoteData : INetService
 {
-    NetTask<ReceiveStream> Get(string identifier);
+    NetTask<ReceiveStream?> Get(string identifier);
 
-    NetTask<SendStream> Put(long maxLength);
+    NetTask<SendStream?> Put(long maxLength);
 }
