@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-#pragma warning disable SA1208 // System using directives should be placed before other using directives
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 global using System.Net;
@@ -16,7 +15,6 @@ using Netsphere.Machines;
 using Netsphere.Misc;
 using Netsphere.Responder;
 using Netsphere.Stats;
-using static Netsphere.NetControl;
 
 namespace Netsphere;
 

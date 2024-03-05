@@ -7,11 +7,8 @@ global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using Netsphere.Logging;
 using LP.NetServices;
 using SimpleCommandLine;
-using Arc.Crypto;
-using Netsphere.Crypto;
 using Netsphere.Misc;
 
 namespace NetsphereTest;
@@ -173,12 +170,7 @@ public class Program
             });
 
         Console.WriteLine(string.Join(' ', args));
-
         var unit = builder.Build(args);
-        if (args[0] == "udpsend" || args[0] == "udprecv")
-        {
-            goto RunAsync;
-        }
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
@@ -190,13 +182,12 @@ public class Program
         netControl.Services.Register<RemoteBenchHost>();
         netControl.Services.Register<RemoteBenchRunner>();
 
-        // NtpConnection
+        // NtpCorrection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
         var offset = await ntpCorrection.SendAndReceiveOffset();
         await Console.Out.WriteLineAsync($"NtpCorrection {offset.ToString()}");
         UnitLogger.SetTimeOffset(offset);
 
-RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = unit.Context.ServiceProvider,
