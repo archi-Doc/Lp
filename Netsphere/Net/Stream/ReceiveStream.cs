@@ -27,6 +27,8 @@ public class ReceiveStream
 
     public long ReceivedLength { get; internal set; }
 
+    internal int CurrentGene { get; set; }
+
     internal int CurrentPosition { get; set; }
 
     #endregion

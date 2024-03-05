@@ -474,11 +474,7 @@ Abort:
 
     internal async Task<(NetResult Result, int Written)> ProcessReceive(ReceiveStream stream, Memory<byte> buffer, CancellationToken cancellationToken)
     {
-        if (buffer.Length < FollowingGeneFrame.MaxGeneLength)
-        {
-            throw new ArgumentException(nameof(buffer));
-        }
-        else if (stream.State != StreamState.Receiving)
+        if (stream.State != StreamState.Receiving)
         {
             return (NetResult.Completed, 0);
         }
@@ -501,47 +497,66 @@ Abort:
                     return (NetResult.Closed, written);
                 }
 
-                while (chain.Get(stream.CurrentPosition) is { } gene)
+                while (chain.Get(stream.CurrentGene) is { } gene)
                 {
-                    if (remaining < FollowingGeneFrame.MaxGeneLength)
+                    if (remaining == 0)
                     {
                         return (NetResult.Success, written);
                     }
                     else if (!gene.IsReceived)
-                    {
-                        if (this.totalGene < 0 ||
-                            stream.CurrentPosition < this.totalGene)
+                    {//
+                        if (stream.CurrentGene >= this.totalGene)
                         {
-                            break;
-                        }
-                    }
 
-                    var length = gene.Packet.Span.Length;
-                    if (length > 0)
-                    {
-                        if (stream.CurrentPosition == 0)
-                        {// First gene
-                            length -= 12;
-                            gene.Packet.Span.Slice(12).CopyTo(buffer.Span);
                         }
                         else
                         {
-                            gene.Packet.Span.CopyTo(buffer.Span);
+
+                        }
+                        break;
+
+                        /*if (this.totalGene < 0 ||
+                            stream.CurrentGene < this.totalGene)
+                        {
+                            break;
+                        }*/
+                    }
+
+                    var originalLength = gene.Packet.Span.Length;
+                    if (originalLength > 0)
+                    {
+                        var length = originalLength;
+                        if (stream.CurrentGene == 0 &&
+                            stream.CurrentPosition < 12)
+                        {// First gene
+                            stream.CurrentPosition = 12;
                         }
 
+                        length -= stream.CurrentPosition;
+                        if (length > remaining)
+                        {
+                            length = remaining;
+                        }
+
+                        gene.Packet.Span.Slice(stream.CurrentPosition, length).CopyTo(buffer.Span);
                         buffer = buffer.Slice(length);
                         written += length;
                         remaining -= length;
                         stream.ReceivedLength += length;
+                        stream.CurrentPosition += length;
                     }
 
-                    stream.CurrentPosition++;
-                    gene.Dispose();
+                    if (stream.CurrentPosition >= originalLength)
+                    {
+                        stream.CurrentGene++;
+                        stream.CurrentPosition = 0;
+                        gene.Dispose();
 
-                    chain.Remove(gene);
-                    chain.Add(gene);
+                        chain.Remove(gene);
+                        chain.Add(gene);
+                    }
 
-                    if (length == 0)
+                    if (originalLength == 0)
                     {// Complete
                         gene.Goshujin = default;
                         this.DisposeInternal();
