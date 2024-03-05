@@ -39,7 +39,7 @@ public class RemoteDataCommand : ISimpleCommandAsync
 
             var remoteData = connection.GetService<IRemoteData>();
 
-            var sendStream = await remoteData.Put(100);
+            var sendStream = await remoteData.Put("test.txt", 100);
             if (sendStream is null)
             {
                 return;

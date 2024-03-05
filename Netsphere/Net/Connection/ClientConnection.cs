@@ -290,11 +290,16 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, stream);
     }
 
-    public async Task<(NetResult Result, SendStream? Stream)> SendStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
+    public async Task<(NetResult Result, SendStream? Stream)> SendBlockAndStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
             return (NetResult.SerializationError, default);
+        }
+
+        if (owner.Memory.Length > this.Agreement.MaxBlockSize)
+        {
+            return (NetResult.BlockSizeLimit, default);
         }
 
         try

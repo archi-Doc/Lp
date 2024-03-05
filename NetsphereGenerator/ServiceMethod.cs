@@ -97,12 +97,12 @@ public class ServiceMethod
         if (serviceMethod.ReturnType == Type.SendStream ||
             serviceMethod.ReturnType == Type.SendStreamAndReceive)
         {
-            if (method.Method_Parameters.Length > 1 || method.Method_Parameters.Length == 0)
+            if (/*method.Method_Parameters.Length > 1 || */method.Method_Parameters.Length == 0)
             {
                 method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
                 return null;
             }
-            else if (method.Method_Parameters[0] != "long")
+            else if (method.Method_Parameters[method.Method_Parameters.Length - 1] != "long")
             {
                 method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
                 return null;
@@ -171,14 +171,15 @@ public class ServiceMethod
         return sb.ToString();
     }
 
-    public string GetParameterNames(string name)
+    public string GetParameterNames(string name, int decrement)
     {// string.Empty, a1, (a1, a2)
         var parameters = this.method.Method_Parameters;
-        if (parameters.Length == 0)
+        var length = parameters.Length - decrement;
+        if (length <= 0)
         {
             return string.Empty;
         }
-        else if (parameters.Length == 1)
+        else if (length == 1)
         {
             return name + "1";
         }
@@ -186,7 +187,7 @@ public class ServiceMethod
         {
             var sb = new StringBuilder();
             sb.Append("(");
-            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (i != 0)
                 {

@@ -500,13 +500,29 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             {
                 if (method.ReturnType == ServiceMethod.Type.SendStream)
                 {
-                    ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
+                    if (method.ParameterLength <= 1)
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStream(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
+                    }
+
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                     return;
                 }
                 else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
                 {
-                    ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    if (method.ParameterLength <= 1)
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    }
+
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                     return;
                 }
@@ -533,7 +549,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
+                    using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName, 0)}, out var owner))"))
                     {
                         AppendReturn("NetResult.SerializationError");
                     }
