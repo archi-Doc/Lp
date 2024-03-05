@@ -38,4 +38,14 @@ public abstract class SendStreamBase
             return this.SendTransmission.ProcessSend(this, buffer, cancellationToken);
         }
     }
+
+    public Task<NetResult> SendData<TSend>(TSend data, CancellationToken cancellationToken = default)
+    {
+        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        {
+            return Task.FromResult(NetResult.SerializationError);
+        }
+
+        return this.Send(owner.Memory, cancellationToken);
+    }
 }

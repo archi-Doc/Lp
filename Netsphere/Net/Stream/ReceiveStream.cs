@@ -36,4 +36,32 @@ public class ReceiveStream
 
     public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
         => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
+
+    public async Task<NetResultValue<TReceive>> ReceiveData<TReceive>(CancellationToken cancellationToken = default)
+    {
+        var buffer = NetHelper.RentBuffer();
+        try
+        {
+            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int))).ConfigureAwait(false);
+            if (result != NetResult.Success)
+            {
+                return new(result);
+            }
+            else if (written != sizeof(int))
+            {
+                return new(NetResult.DeserializationError);
+            }
+
+            var length = BitConverter.ToInt32(buffer);
+            if (length > this.ReceiveTransmission.Connection.Agreement.MaxBlockSize)
+            {
+
+            }
+        }
+        finally
+        {
+            NetHelper.ReturnBuffer(buffer);
+        }
+
+    }
 }

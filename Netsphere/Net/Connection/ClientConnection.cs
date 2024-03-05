@@ -290,12 +290,6 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, stream);
     }
 
-    public async Task Test()
-    {
-        var receiveStream = default(ReceiveStream);
-        receiveStream.Receive()
-    }
-
     public async Task<(NetResult Result, SendStream? Stream)> SendStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))

@@ -21,10 +21,10 @@ public static class NetHelper
 
     private static ArrayPool<byte> arrayPool { get; } = ArrayPool<byte>.Create(BufferLength, BufferMax);
 
-    private static byte[] RentBuffer()
+    internal static byte[] RentBuffer()
         => arrayPool.Rent(BufferLength);
 
-    private static void ReturnBuffer(byte[] buffer)
+    internal static void ReturnBuffer(byte[] buffer)
         => arrayPool.Return(buffer);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
