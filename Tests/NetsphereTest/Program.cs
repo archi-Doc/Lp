@@ -12,6 +12,7 @@ using LP.NetServices;
 using SimpleCommandLine;
 using Arc.Crypto;
 using Netsphere.Crypto;
+using Netsphere.Misc;
 
 namespace NetsphereTest;
 
@@ -188,6 +189,12 @@ public class Program
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
         netControl.Services.Register<RemoteBenchHost>();
         netControl.Services.Register<RemoteBenchRunner>();
+
+        // NtpConnection
+        var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
+        var timespan = await ntpCorrection.GetOffset();
+        await Console.Out.WriteLineAsync($"NtpCorrection {timespan.ToString()}");
+        UnitLogger.SetTimeOffset(timespan);
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
