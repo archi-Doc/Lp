@@ -51,9 +51,9 @@ public class CustomConnectionContext : ServerConnectionContext
 }
 
 [SimpleCommand("basic")]
-public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
+public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public BasicTestSubcommand(ILogger<BasicTestSubcommand> logger, NetControl netControl)
+    public BasicTestCommand(ILogger<BasicTestCommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
@@ -351,7 +351,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public NetControl NetControl { get; set; }
 
-    private ILogger<BasicTestSubcommand> logger;
+    private ILogger<BasicTestCommand> logger;
 }
 
 public record BasicTestOptions

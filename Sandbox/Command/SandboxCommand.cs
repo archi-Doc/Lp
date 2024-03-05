@@ -9,9 +9,9 @@ using SimpleCommandLine;
 namespace Sandbox;
 
 [SimpleCommand("sandbox")]
-public class SandboxSubcommand : ISimpleCommandAsync
+public class SandboxCommand : ISimpleCommandAsync
 {
-    public SandboxSubcommand(ILogger<SandboxSubcommand> logger, NetControl netControl)
+    public SandboxCommand(ILogger<SandboxCommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
@@ -46,5 +46,5 @@ public class SandboxSubcommand : ISimpleCommandAsync
 
     public NetControl NetControl { get; set; }
 
-    private ILogger<SandboxSubcommand> logger;
+    private ILogger<SandboxCommand> logger;
 }

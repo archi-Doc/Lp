@@ -973,4 +973,22 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         return null;
     }
+
+    internal bool IsReturnTypeArgument_NotNullable()
+    {
+        if (this.symbol is IMethodSymbol ms &&
+            ms.ReturnType is INamedTypeSymbol nts)
+        {
+            if (nts.TypeArguments.Length > 0)
+            {
+                var ta = nts.TypeArguments[0];
+                if (ta.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

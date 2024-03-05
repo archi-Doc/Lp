@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using Arc.Crypto;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Misc;
@@ -10,9 +9,9 @@ using SimpleCommandLine;
 namespace Sandbox;
 
 [SimpleCommand("block")]
-public class BlockTestSubcommand : ISimpleCommandAsync
+public class BlockTestCommand : ISimpleCommandAsync
 {
-    public BlockTestSubcommand(ILogger<BlockTestSubcommand> logger, NetControl netControl)
+    public BlockTestCommand(ILogger<BlockTestCommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;

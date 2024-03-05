@@ -39,13 +39,28 @@ public abstract class SendStreamBase
         }
     }
 
-    public Task<NetResult> SendData<TSend>(TSend data, CancellationToken cancellationToken = default)
+    public async Task<NetResult> SendBlock<TSend>(TSend data, CancellationToken cancellationToken = default)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
-            return Task.FromResult(NetResult.SerializationError);
+            return NetResult.SerializationError;
         }
 
-        return this.Send(owner.Memory, cancellationToken);
+        if (owner.Memory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
+        {
+            return NetResult.BlockSizeLimit;
+        }
+
+        NetResult result;
+        try
+        {
+            result = await this.Send(owner.Memory, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            owner.Return();
+        }
+
+        return result;
     }
 }

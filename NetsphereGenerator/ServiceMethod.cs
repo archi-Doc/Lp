@@ -73,18 +73,18 @@ public class ServiceMethod
         if (returnObject.Generics_Arguments.Length > 0)
         {
             serviceMethod.ReturnObject = returnObject.TypeObjectWithNullable?.Generics_ArgumentsWithNullable[0];
-            if (serviceMethod.ReturnObject is { } rt)
+            if (serviceMethod.ReturnObject?.Object is { } rt)
             {
-                if (rt.Object.Kind.IsReferenceType() &&
-                rt.Nullable == Arc.Visceral.NullableAnnotation.NotAnnotated)
+                if (rt.Kind.IsReferenceType() &&
+                method.IsReturnTypeArgument_NotNullable())
                 {
-                    method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.Object.LocalName);
+                    method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.LocalName);
                 }
 
-                serviceMethod.ReturnType = NameToType(rt.Object.OriginalDefinition?.FullName);
+                serviceMethod.ReturnType = NameToType(rt.OriginalDefinition?.FullName);
                 if (serviceMethod.ReturnType == Type.SendStreamAndReceive)
                 {
-                    serviceMethod.StreamTypeArgument = rt.Object.Generics_Arguments[0].FullName;
+                    serviceMethod.StreamTypeArgument = rt.Generics_Arguments[0].FullName;
                 }
             }
         }

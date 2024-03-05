@@ -33,9 +33,10 @@ public class Program
             .Configure(context =>
             {
                 // Command
-                context.AddCommand(typeof(SandboxSubcommand));
-                context.AddCommand(typeof(BasicTestSubcommand));
-                context.AddCommand(typeof(BlockTestSubcommand));
+                context.AddCommand(typeof(SandboxCommand));
+                context.AddCommand(typeof(BasicTestCommand));
+                context.AddCommand(typeof(BlockTestCommand));
+                context.AddCommand(typeof(RemoteDataCommand));
 
                 context.AddLoggerResolver(context =>
                 {// Logger
