@@ -41,8 +41,7 @@ public class Program
             {// Modify NetOptions
                 options.NodeName = "RemoteDataServer";
                 options.Port = 50000; // Specify the port number.
-                options.PrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.
-                options.EnableEssential = true; // Required when using functions such as Ping.
+                options.EnableEssential = false; // Required when using functions such as Ping.
                 options.EnableServer = true;
             })
             .ConfigureSerivice(context =>
