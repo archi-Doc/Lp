@@ -86,7 +86,6 @@ public class ConnectionTerminal
                         clientToChange.Enqueue(clientConnection);
 
                         clientConnection.SendCloseFrame();
-                        clientConnection.CloseTransmission();
                     }
                 }
                 else if (clientConnection.IsClosed)
@@ -95,6 +94,8 @@ public class ConnectionTerminal
                     {
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Disposed");
                         clientToChange.Enqueue(clientConnection);
+
+                        clientConnection.CloseAllTransmission();
                     }
                 }
             }
@@ -111,7 +112,6 @@ public class ConnectionTerminal
                 else if (clientConnection.IsClosed)
                 {// Closed -> Dispose
                     clientConnection.ChangeStateInternal(Connection.State.Disposed);
-                    clientConnection.ReleaseResource();
                     clientConnection.Goshujin = null;
                 }
             }
@@ -137,7 +137,6 @@ public class ConnectionTerminal
                         serverToChange.Enqueue(serverConnection);
 
                         serverConnection.SendCloseFrame();
-                        serverConnection.CloseTransmission();
                     }
                 }
                 else if (serverConnection.IsClosed)
@@ -146,6 +145,8 @@ public class ConnectionTerminal
                     {
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Disposed");
                         serverToChange.Enqueue(serverConnection);
+
+                        serverConnection.CloseAllTransmission();
                     }
                 }
             }
@@ -162,7 +163,6 @@ public class ConnectionTerminal
                 else if (serverConnection.IsClosed)
                 {// Closed -> Dispose
                     serverConnection.ChangeStateInternal(Connection.State.Disposed);
-                    serverConnection.ReleaseResource();
                     serverConnection.Goshujin = null;
                 }
             }
@@ -338,7 +338,7 @@ public class ConnectionTerminal
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)
     {
-        connection.CloseTransmission(); // Dispose transmissions because the connection is closing.
+        connection.CloseSendTransmission();
 
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
@@ -527,21 +527,69 @@ public class ConnectionTerminal
     {
         while (true)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            ClientConnection[] clients;
             lock (this.clientConnections.SyncObject)
             {
-                var clients = this.clientConnections.ToArray();
+                clients = this.clientConnections.ToArray();
+            }
+
+            foreach (var x in clients)
+            {
+                x.TerminateInternal();
+            }
+
+            lock (this.clientConnections.SyncObject)
+            {
                 foreach (var x in clients)
                 {
-                    x.TerminateInternal();
+                    if (x.IsEmpty)
+                    {
+                        if (x.IsOpen)
+                        {
+                            x.ChangeStateInternal(Connection.State.Closed);
+                        }
+
+                        if (x.IsClosed)
+                        {
+                            x.ChangeStateInternal(Connection.State.Disposed);
+                        }
+
+                        x.Goshujin = null;
+                    }
                 }
+            }
+
+            ServerConnection[] servers;
+            lock (this.serverConnections.SyncObject)
+            {
+                servers = this.serverConnections.ToArray();
+            }
+
+            foreach (var x in servers)
+            {
+                x.TerminateInternal();
             }
 
             lock (this.serverConnections.SyncObject)
             {
-                var servers = this.serverConnections.ToArray();
                 foreach (var x in servers)
                 {
-                    x.TerminateInternal();
+                    if (x.IsEmpty)
+                    {
+                        if (x.IsOpen)
+                        {
+                            x.ChangeStateInternal(Connection.State.Closed);
+                        }
+
+                        if (x.IsClosed)
+                        {
+                            x.ChangeStateInternal(Connection.State.Disposed);
+                        }
+
+                        x.Goshujin = null;
+                    }
                 }
             }
 
@@ -554,7 +602,7 @@ public class ConnectionTerminal
             {
                 try
                 {
-                    await Task.Delay(100, cancellationToken);
+                    await Task.Delay(NetConstants.TerminateTerminalDelayMilliseconds, cancellationToken);
                 }
                 catch
                 {

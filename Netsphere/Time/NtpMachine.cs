@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using Netsphere.Misc;
 
 namespace Netsphere.Machines;
@@ -41,7 +42,7 @@ public partial class NtpMachine : Machine
         }
 
         this.ntpCorrection.LastCorrectedMics = Mics.GetUtcNow();
-        await this.ntpCorrection.CorrectAsync(this.CancellationToken).ConfigureAwait(false);
+        await this.ntpCorrection.Correct(this.CancellationToken).ConfigureAwait(false);
 
         var timeoffset = this.ntpCorrection.GetTimeoffset();
         if (timeoffset.TimeoffsetCount == 0)
@@ -55,6 +56,8 @@ public partial class NtpMachine : Machine
         corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);
         this.logger.TryGet()?.Log($"Corrected {corrected}, {correctedNow.ToString()}");
 
+        UnitLogger.SetTimeOffset(this.ntpCorrection.GetTimeoffset);
+
         this.TimeUntilRun = TimeSpan.FromHours(1);
         return StateResult.Continue;
     }
@@ -63,7 +66,7 @@ public partial class NtpMachine : Machine
     protected async Task<StateResult> SafeHoldMode(StateParameter parameter)
     {
         this.logger?.TryGet(LogLevel.Warning)?.Log($"Safe-hold mode");
-        if (await this.ntpCorrection.CheckConnectionAsync(this.CancellationToken).ConfigureAwait(false))
+        if (await this.ntpCorrection.CheckConnection(this.CancellationToken).ConfigureAwait(false))
         {
             this.ntpCorrection.ResetHostnames();
             this.ChangeState(State.Initial);

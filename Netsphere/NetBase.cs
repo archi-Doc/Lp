@@ -75,6 +75,14 @@ public class NetBase : UnitBase, IUnitPreparable
     public void SetOptions(NetOptions netsphereOptions)
     {
         this.NetOptions = netsphereOptions;
+
+        if (!string.IsNullOrEmpty(this.NetOptions.PrivateKey) &&
+            NodePrivateKey.TryParse(this.NetOptions.PrivateKey, out var privateKey))
+        {
+            this.SetNodePrivateKey(privateKey);
+        }
+
+        this.NetOptions.PrivateKey = string.Empty; // Erase
     }
 
     public bool SetNodePrivateKey(NodePrivateKey privateKey)

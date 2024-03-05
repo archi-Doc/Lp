@@ -113,6 +113,12 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
         sw.Stop();
 
+        var totalCount = successCount + failureCount;
+        if (totalCount == 0)
+        {
+            totalCount = 1;
+        }
+
         var record = new RemoteBenchRecord()
         {
             SuccessCount = successCount,
@@ -120,7 +126,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
             Concurrent = options.Concurrent,
             ElapsedMilliseconds = sw.ElapsedMilliseconds,
             CountPerSecond = (int)((successCount + failureCount) * 1000 / sw.ElapsedMilliseconds),
-            AverageLatency = (int)(totalLatency / (successCount + failureCount)),
+            AverageLatency = (int)(totalLatency / totalCount),
         };
 
         using (var terminal = await this.NetControl.NetTerminal.Connect(node))

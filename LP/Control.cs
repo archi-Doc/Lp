@@ -128,7 +128,7 @@ public class Control : ILogInformation
                     options.Path = Path.Combine(context.RootDirectory, logfile);
                 }
 
-                options.MaxLogCapacity = 5;
+                options.MaxLogCapacity = 100;
                 options.Formatter.TimestampFormat = "mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
@@ -289,7 +289,14 @@ public class Control : ILogInformation
                     }
                 }
 
-                options.NetsphereOptions.EnableServer = true;
+                var netOptions = options.NetsphereOptions;
+                if (string.IsNullOrEmpty(netOptions.PrivateKey) &&
+                Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
+                {
+                    netOptions.PrivateKey = privateKey;
+                }
+
+                netOptions.EnableServer = true;
                 context.SetOptions(options);
             }
         }
@@ -362,10 +369,11 @@ public class Control : ILogInformation
 
             try
             {// Start, Main loop
-                await control.RunAsync(this.Context);
+                await control.StartAsync(this.Context);
 
                 await control.MainAsync();
 
+                this.Context.SendStop(new());
                 await control.TerminateAsync(this.Context);
                 await control.SaveAsync(this.Context);
                 control.Terminate(false);
@@ -466,12 +474,12 @@ public class Control : ILogInformation
         await this.Crystalizer.SaveAllAndTerminate();
     }
 
-    public async Task RunAsync(UnitContext context)
+    public async Task StartAsync(UnitContext context)
     {
         this.BigMachine.Start(null);
         this.RunMachines();
 
-        await context.SendRunAsync(new(this.Core));
+        await context.SendStartAsync(new(this.Core));
 
         this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);

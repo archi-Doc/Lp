@@ -147,6 +147,10 @@ public abstract class Connection : IDisposable
     internal int SendTransmissionsCount
         => this.sendTransmissions.Count;
 
+    internal bool IsEmpty
+        => this.sendTransmissions.Count == 0 &&
+        this.receiveTransmissions.Count == 0;
+
     internal long LastEventMics { get; private set; } // When any packet, including an Ack, is received, it's updated to the latest time.
 
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
@@ -199,6 +203,7 @@ public abstract class Connection : IDisposable
 
         this.CurrentState = state;
         this.UpdateLastEventMics();
+        this.OnStateChanged();
     }
 
     public void ApplyAgreement()
@@ -365,43 +370,48 @@ Wait:
         goto Retry;
     }
 
+    internal void CleanReceiveTransmission()
+    {// lock (this.receiveTransmissions.SyncObject)
+        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
+
+        // Release receive transmissions that have elapsed a certain time after being disposed.
+        var currentMics = Mics.FastSystem;
+        while (this.receiveDisposedList.First is { } node)
+        {
+            var transmission = node.Value;
+            if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionDisposalMics)
+            {
+                break;
+            }
+
+            node.List.Remove(node);
+            transmission.ReceivedOrDisposedNode = null;
+            transmission.Goshujin = null;
+        }
+
+        // Release receive transmissions that have elapsed a certain time since the last data reception.
+        while (this.receiveReceivedList.First is { } node)
+        {
+            var transmission = node.Value;
+            if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionTimeoutMics)
+            {
+                break;
+            }
+
+            node.List.Remove(node);
+            transmission.DisposeTransmission();
+            transmission.ReceivedOrDisposedNode = null;
+            transmission.Goshujin = null;
+        }
+    }
+
     internal ReceiveTransmission? TryCreateReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
     {
         transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
 
         lock (this.receiveTransmissions.SyncObject)
         {
-            Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
-
-            // Release receive transmissions that have elapsed a certain time after being disposed.
-            var currentMics = Mics.FastSystem;
-            while (this.receiveDisposedList.First is { } node)
-            {
-                var transmission = node.Value;
-                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionDisposalMics)
-                {
-                    break;
-                }
-
-                node.List.Remove(node);
-                transmission.ReceivedOrDisposedNode = null;
-                transmission.Goshujin = null;
-            }
-
-            // Release receive transmissions that have elapsed a certain time since the last data reception.
-            while (this.receiveReceivedList.First is { } node)
-            {
-                var transmission = node.Value;
-                if (currentMics < transmission.ReceivedOrDisposedMics + NetConstants.TransmissionTimeoutMics)
-                {
-                    break;
-                }
-
-                node.List.Remove(node);
-                transmission.DisposeTransmission();
-                transmission.ReceivedOrDisposedNode = null;
-                transmission.Goshujin = null;
-            }
+            this.CleanReceiveTransmission();
 
             if (this.IsClosedOrDisposed)
             {
@@ -414,7 +424,7 @@ Wait:
             }
 
             receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
-            receiveTransmission.ReceivedOrDisposedMics = currentMics;
+            receiveTransmission.ReceivedOrDisposedMics = Mics.FastSystem;
             receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
             receiveTransmission.Goshujin = this.receiveTransmissions;
             return receiveTransmission;
@@ -773,6 +783,8 @@ Wait:
                     return;
                 }
 
+                this.CleanReceiveTransmission();//tempcode
+
                 // New transmission
                 if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
                 {// Maximum number reached.
@@ -1024,7 +1036,22 @@ Wait:
         this.ConnectionTerminal.CloseInternal(this, true);
     }
 
-    internal void ReleaseResource()
+    public override string ToString()
+    {
+        var connectionString = "Connection";
+        if (this is ServerConnection)
+        {
+            connectionString = "Server";
+        }
+        else if (this is ClientConnection)
+        {
+            connectionString = "Client";
+        }
+
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
+    }
+
+    protected void ReleaseResource()
     {
         lock (this.syncAes)
         {
@@ -1040,21 +1067,6 @@ Wait:
                 this.aes1 = default;
             }
         }
-    }
-
-    public override string ToString()
-    {
-        var connectionString = "Connection";
-        if (this is ServerConnection)
-        {
-            connectionString = "Server";
-        }
-        else if (this is ClientConnection)
-        {
-            connectionString = "Client";
-        }
-
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
@@ -1093,7 +1105,7 @@ Wait:
         return result;
     }
 
-    internal void CloseTransmission()
+    internal void CloseAllTransmission()
     {
         lock (this.sendTransmissions.SyncObject)
         {
@@ -1135,9 +1147,89 @@ Wait:
         }
     }
 
+    internal void CloseSendTransmission()
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            foreach (var x in this.sendTransmissions)
+            {
+                if (x.IsDisposed)
+                {
+                    continue;
+                }
+
+                x.DisposeTransmission();
+                // x.Goshujin = null;
+            }
+
+            // Since it's within a lock statement, manually clear it.
+            this.sendTransmissions.TransmissionIdChain.Clear();
+        }
+    }
+
+    internal virtual void OnStateChanged()
+    {
+        if (this.CurrentState == State.Disposed)
+        {
+            this.ReleaseResource();
+        }
+    }
+
     internal void TerminateInternal()
     {
+        Queue<SendTransmission>? sendQueue = default;
+        lock (this.sendTransmissions.SyncObject)
+        {
+            foreach (var x in this.sendTransmissions)
+            {
+                if (x.Mode == NetTransmissionMode.Stream ||
+                    x.Mode == NetTransmissionMode.StreamCompleted)
+                {// Terminate stream transmission.
+                    x.DisposeTransmission();
+                }
 
+                if (x.IsDisposed)
+                {
+                    sendQueue ??= new();
+                    sendQueue.Enqueue(x);
+                }
+            }
+
+            if (sendQueue is not null)
+            {
+                while (sendQueue.TryDequeue(out var t))
+                {
+                    t.Goshujin = default;
+                }
+            }
+        }
+
+        Queue<ReceiveTransmission>? receiveQueue = default;
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            foreach (var x in this.receiveTransmissions)
+            {
+                if (x.Mode == NetTransmissionMode.Stream ||
+                    x.Mode == NetTransmissionMode.StreamCompleted)
+                {// Terminate stream transmission.
+                    x.DisposeTransmission();
+                }
+
+                if (x.IsDisposed)
+                {
+                    receiveQueue ??= new();
+                    receiveQueue.Enqueue(x);
+                }
+            }
+
+            if (receiveQueue is not null)
+            {
+                while (receiveQueue.TryDequeue(out var t))
+                {
+                    t.Goshujin = default;
+                }
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

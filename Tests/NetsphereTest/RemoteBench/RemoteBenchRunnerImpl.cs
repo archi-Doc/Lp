@@ -76,7 +76,8 @@ public class RemoteBenchRunnerImpl : RemoteBenchRunner, INetServiceHandler
                     {
                         if (t is null)
                         {
-                            return;
+                            Interlocked.Increment(ref failureCount);
+                            continue;
                         }
 
                         var service = t.GetService<RemoteBenchHost>();

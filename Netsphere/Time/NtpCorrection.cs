@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 
@@ -63,7 +64,7 @@ public sealed partial class NtpCorrection : UnitBase, IUnitPreparable
         Time.SetNtpCorrection(this);
     }
 
-    public async Task CorrectAsync(CancellationToken cancellationToken)
+    public async Task Correct(CancellationToken cancellationToken)
     {
 Retry:
         string[] hostnames;
@@ -87,7 +88,29 @@ Retry:
         }
     }
 
-    public async Task<bool> CheckConnectionAsync(CancellationToken cancellationToken)
+    public async Task<TimeSpan> GetOffset(CancellationToken cancellationToken = default)
+    {
+        string? hostname;
+        lock (this.syncObject)
+        {
+            hostname = this.goshujin.RoundtripMillisecondsChain.First?.HostnameValue;
+        }
+
+        if (string.IsNullOrEmpty(hostname))
+        {
+            return default;
+        }
+
+        var packet = await this.SendAndReceivePacket(hostname, cancellationToken).ConfigureAwait(false);
+        if (packet is null)
+        {
+            return default;
+        }
+
+        return packet.TimeOffset;
+    }
+
+    public async Task<bool> CheckConnection(CancellationToken cancellationToken)
     {
         if (this.hostNames.Length == 0)
         {
@@ -163,6 +186,27 @@ Retry:
                 x.RetrievedMics = 0;
             }
         }
+    }
+
+    private async Task<NtpPacket?> SendAndReceivePacket(string hostname, CancellationToken cancellationToken)
+    {
+        using (var client = new UdpClient())
+        {
+            try
+            {
+                client.Connect(hostname, 123);
+                var packet = NtpPacket.CreateSendPacket();
+                await client.SendAsync(packet.PacketData, cancellationToken).ConfigureAwait(false);
+                var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                packet = new NtpPacket(result.Buffer);
+                return packet;
+            }
+            catch
+            {
+            }
+        }
+
+        return default;
     }
 
     private async ValueTask Process(string hostname, CancellationToken cancellationToken)

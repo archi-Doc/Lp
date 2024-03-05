@@ -20,6 +20,12 @@ public sealed class ServiceControl
         this.Register(serviceId);
     }
 
+    public void Register(Type serviceType)
+    {
+        var serviceId = ServiceTypeToId(serviceType);
+        this.Register(serviceId);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Register(uint serviceId)
     {
@@ -46,4 +52,8 @@ public sealed class ServiceControl
     private static uint ServiceTypeToId<TService>()
         where TService : INetService
         => (uint)Arc.Crypto.FarmHash.Hash64(typeof(TService).FullName ?? string.Empty);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static uint ServiceTypeToId(Type serviceType)
+        => (uint)Arc.Crypto.FarmHash.Hash64(serviceType.FullName ?? string.Empty);
 }

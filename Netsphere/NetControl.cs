@@ -16,6 +16,7 @@ using Netsphere.Machines;
 using Netsphere.Misc;
 using Netsphere.Responder;
 using Netsphere.Stats;
+using static Netsphere.NetControl;
 
 namespace Netsphere;
 
@@ -35,6 +36,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
+                context.AddSingleton<ServiceControl>();
 
                 // Stream logger
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(IdFileLogger<>), typeof(IdFileLoggerFactory<>)));
@@ -45,9 +47,46 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<NetStatsMachine>();
 
-                // Subcommands
+                var customContext = context.GetCustomContext<UnitNetsphereContext>();
+                foreach (var x in this.actions)
+                {
+                    x(customContext);
+                }
             });
         }
+
+        public Builder ConfigureSerivice(Action<IUnitNetsphereContext> @delegate)
+        {
+            this.actions.Add(@delegate);
+            return this;
+        }
+
+        public new Builder AddBuilder(UnitBuilder unitBuilder)
+        {
+            base.AddBuilder(unitBuilder);
+            return this;
+        }
+
+        public new Builder Preload(Action<IUnitPreloadContext> @delegate)
+        {
+            base.Preload(@delegate);
+            return this;
+        }
+
+        public new Builder Configure(Action<IUnitConfigurationContext> configureDelegate)
+        {
+            base.Configure(configureDelegate);
+            return this;
+        }
+
+        public new Builder SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+            where TOptions : class
+        {
+            base.SetupOptions(@delegate);
+            return this;
+        }
+
+        private readonly List<Action<IUnitNetsphereContext>> actions = new();
     }
 
     public class Unit : BuiltUnit
@@ -75,7 +114,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             this.Context.SendPrepare(new());
-            await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
+            await this.Context.SendStartAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
 
         public Task Terminate()
@@ -91,6 +130,12 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetStats = netStats;
         this.Responders = new();
         this.Services = new();
+
+        var netsphereContext = context.ServiceProvider.GetRequiredService<UnitNetsphereContext>();
+        foreach (var x in netsphereContext.Services)
+        {
+            this.Services.Register(x);
+        }
 
         this.NetTerminal = netTerminal;
         this.NetTerminal.Initialize(this.Responders, this.Services, false);

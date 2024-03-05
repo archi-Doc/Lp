@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
 using Netsphere.Crypto;
+using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -132,8 +133,8 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         }
     }
 
-    private NetControl netControl { get; set; }
-    private ILogger logger;
+    private readonly NetControl netControl;
+    private readonly ILogger logger;
 }
 
 public record RemoteBenchOptions

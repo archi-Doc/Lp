@@ -10,6 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using LP.NetServices;
 using SimpleCommandLine;
+using Arc.Crypto;
+using Netsphere.Crypto;
+using Netsphere.Misc;
 
 namespace NetsphereTest;
 
@@ -79,8 +82,7 @@ public class Program
         }
 
         // Secrets
-        const string secretName = "netsphere_secrets";
-        var testSecret = Environment.GetEnvironmentVariable(secretName);
+        // CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("k", out var privateKey);
 
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
@@ -110,7 +112,6 @@ public class Program
                 // NetService
                 context.AddSingleton<RemoteBenchHostImpl>();
                 context.AddSingleton<RemoteBenchRunnerImpl>();
-                context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
 
@@ -122,7 +123,7 @@ public class Program
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        // context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();//tempcode
                         return;
                     }
 
@@ -146,6 +147,14 @@ public class Program
                         context.SetOutput<ConsoleLogger>();
                     }
                 });
+            })
+            .SetupOptions<NetOptions>((context, options) =>
+            {
+                if (!string.IsNullOrEmpty(options.PrivateKey) &&
+                Environment.GetEnvironmentVariable("privatekey") is { } privateKey)
+                {
+                    options.PrivateKey = privateKey;
+                }
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
@@ -180,6 +189,12 @@ public class Program
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
         netControl.Services.Register<RemoteBenchHost>();
         netControl.Services.Register<RemoteBenchRunner>();
+
+        // NtpConnection
+        var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
+        var timespan = await ntpCorrection.GetOffset();
+        await Console.Out.WriteLineAsync($"NtpCorrection {timespan.ToString()}");
+        UnitLogger.SetTimeOffset(timespan);
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
