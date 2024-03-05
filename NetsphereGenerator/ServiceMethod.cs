@@ -203,14 +203,16 @@ public class ServiceMethod
         }
     }
 
-    public string GetParameterTypes()
+    public string GetParameterTypes(int decrement)
     {// (int, string)
         var parameters = this.method.Method_Parameters;
-        if (parameters.Length == 0)
+        var length = parameters.Length - decrement;
+
+        if (length <= 0)
         {
             return string.Empty;
         }
-        else if (parameters.Length == 1)
+        else if (length == 1)
         {
             return parameters[0];
         }
@@ -218,7 +220,7 @@ public class ServiceMethod
         {
             var sb = new StringBuilder();
             sb.Append("(");
-            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (i != 0)
                 {
@@ -233,21 +235,23 @@ public class ServiceMethod
         }
     }
 
-    public string GetTupleNames(string name)
+    public string GetTupleNames(string name, int decrement)
     {// value, value.Item1, value.Item2
         var parameters = this.method.Method_Parameters;
-        if (parameters.Length == 0)
+        var length = parameters.Length - decrement;
+
+        if (length <= 0)
         {
             return string.Empty;
         }
-        else if (parameters.Length == 1)
+        else if (length == 1)
         {
             return name;
         }
         else
         {
             var sb = new StringBuilder();
-            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (i != 0)
                 {
