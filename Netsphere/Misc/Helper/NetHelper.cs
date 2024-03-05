@@ -79,11 +79,62 @@ public static class NetHelper
         }
     }
 
+    public static bool TrySerializeWithLength<T>(T value, out ByteArrayPool.MemoryOwner owner)
+    {
+        var buffer = RentBuffer();
+        try
+        {
+            var writer = new TinyhandWriter(buffer);
+            writer.Advance(4); // sizeof(int)
+            TinyhandSerializer.Serialize(ref writer, value, TinyhandSerializerOptions.Standard);
+
+            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+            BitConverter.TryWriteBytes(array, arrayLength - sizeof(int));
+            if (isInitialBuffer)
+            {
+                owner = new ByteArrayPool.MemoryOwner(buffer, 0, arrayLength);
+                return true;
+            }
+            else
+            {
+                ReturnBuffer(buffer);
+                owner = new ByteArrayPool.MemoryOwner(array);
+                return true;
+            }
+        }
+        catch
+        {
+            ReturnBuffer(buffer);
+            owner = default;
+            return false;
+        }
+    }
+
     public static bool TryDeserialize<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
     public static bool TryDeserialize<T>(ByteArrayPool.ReadOnlyMemoryOwner owner, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
+
+    public static bool TryDeserializeWithLength<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value, out int length)
+    {
+        value = default;
+        length = 0;
+        var span = owner.Memory.Span;
+        if (span.Length < sizeof(int))
+        {
+            return false;
+        }
+
+        length = BitConverter.ToInt32(span);
+        span = span.Slice(sizeof(int));
+        if (span.Length < length)
+        {
+            return false;
+        }
+
+        return TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
+    }
 
     public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
         where T : ITinyhandSerialize<T>, ISignAndVerify
