@@ -192,9 +192,9 @@ public class Program
 
         // NtpConnection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
-        var timespan = await ntpCorrection.GetOffset();
-        await Console.Out.WriteLineAsync($"NtpCorrection {timespan.ToString()}");
-        UnitLogger.SetTimeOffset(timespan);
+        var offset = await ntpCorrection.SendAndReceiveOffset();
+        await Console.Out.WriteLineAsync($"NtpCorrection {offset.ToString()}");
+        UnitLogger.SetTimeOffset(offset);
 
 RunAsync:
         var parserOptions = SimpleParserOptions.Standard with

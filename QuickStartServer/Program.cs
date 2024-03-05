@@ -25,7 +25,7 @@ public class Program
 
         var builder = new NetControl.Builder() // Create a NetControl builder.
             .SetupOptions<NetOptions>((context, options) =>
-            {// Modify NetOptions.
+            {// Modify NetOptions
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
                 options.PrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.

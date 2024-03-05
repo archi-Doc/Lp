@@ -88,7 +88,7 @@ Retry:
         }
     }
 
-    public async Task<TimeSpan> GetOffset(CancellationToken cancellationToken = default)
+    public async Task<TimeSpan> SendAndReceiveOffset(CancellationToken cancellationToken = default)
     {
         string? hostname;
         lock (this.syncObject)
@@ -136,7 +136,7 @@ Retry:
         return true;
     }
 
-    public (long MeanTimeoffset, int TimeoffsetCount) GetTimeoffset()
+    public (long MeanTimeoffset, int TimeoffsetCount) GetTimeOffset()
         => (this.meanTimeoffset, this.timeoffsetCount);
 
     public bool TryGetCorrectedUtcNow(out DateTime utcNow)

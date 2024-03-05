@@ -35,6 +35,7 @@ public partial class NtpMachine : Machine
         {// Already correctedd
             corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);
             this.logger.TryGet()?.Log($"Already corrected {corrected}, {correctedNow.ToString()}");
+            this.SetLoggerTimeOffset();
 
             var ts = Mics.ToTimeSpan(Mics.FromHours(1) - dif);
             this.TimeUntilRun = ts;
@@ -44,7 +45,7 @@ public partial class NtpMachine : Machine
         this.ntpCorrection.LastCorrectedMics = Mics.GetUtcNow();
         await this.ntpCorrection.Correct(this.CancellationToken).ConfigureAwait(false);
 
-        var timeoffset = this.ntpCorrection.GetTimeoffset();
+        var timeoffset = this.ntpCorrection.GetTimeOffset();
         if (timeoffset.TimeoffsetCount == 0)
         {
             this.ChangeState(State.SafeHoldMode, false);
@@ -52,11 +53,10 @@ public partial class NtpMachine : Machine
         }
 
         this.logger.TryGet()?.Log($"Timeoffset {timeoffset.MeanTimeoffset} ms [{timeoffset.TimeoffsetCount}]");
+        this.SetLoggerTimeOffset();
 
         corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);
         this.logger.TryGet()?.Log($"Corrected {corrected}, {correctedNow.ToString()}");
-
-        UnitLogger.SetTimeOffset(this.ntpCorrection.GetTimeoffset);
 
         this.TimeUntilRun = TimeSpan.FromHours(1);
         return StateResult.Continue;
@@ -74,6 +74,12 @@ public partial class NtpMachine : Machine
         }
 
         return StateResult.Continue;
+    }
+
+    private void SetLoggerTimeOffset()
+    {
+        var offset = this.ntpCorrection.GetTimeOffset();
+        UnitLogger.SetTimeOffset(TimeSpan.FromMilliseconds(offset.MeanTimeoffset));
     }
 
     private ILogger<NtpMachine> logger;
