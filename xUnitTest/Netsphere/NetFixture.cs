@@ -28,6 +28,11 @@ public class NetFixture : IDisposable
 
                 // ServiceFilter
                 context.AddSingleton<NullFilter>();
+            })
+            .ConfigureSerivice(context =>
+            {
+                context.AddService<IBasicService>();
+                context.AddService<IFilterTestService>();
             });
 
         var options = new NetOptions();
