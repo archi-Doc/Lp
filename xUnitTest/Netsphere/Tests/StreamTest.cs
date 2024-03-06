@@ -10,44 +10,55 @@ namespace xUnitTest.NetsphereTest;
 [Collection(NetFixtureCollection.Name)]
 public class StreamTest
 {
+    private readonly int[] dataLength = [0, 1, 10, 111, 300, 1_000, 1_372, 1_373, 1_400, 3_000, 10_000, 100_000, 1_000_000, 1_500_000, 2_000_000, ];
+    private readonly byte[][] dataArray;
+
     public StreamTest(NetFixture netFixture)
     {
-        this.NetFixture = netFixture;
+        this.netFixture = netFixture;
+
+        this.dataArray = new byte[this.dataLength.Length][];
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            var r = new Xoshiro256StarStar((ulong)i);
+            this.dataArray[i] = new byte[this.dataLength[i]];
+            r.NextBytes(this.dataArray[i]);
+        }
     }
+
+    private readonly NetFixture netFixture;
 
     [Fact]
     public async Task Test1()
     {
-        using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative))
+        using (var connection = await this.netFixture.NetControl.NetTerminal.Connect(NetNode.Alternative))
         {
+            connection.IsNotNull();
             if (connection is null)
             {
                 return;
             }
 
-            var basicService = connection.GetService<IBasicService>();
-            var task = await basicService.SendInt(1).ResponseAsync;
-            task.Result.Is(NetResult.Success);
-
-            var task2 = await basicService.IncrementInt(2).ResponseAsync;
-            task2.Result.Is(NetResult.Success);
-            task2.Value.Is(3);
-
-            task2 = await basicService.SumInt(3, 4).ResponseAsync;
-            task2.Result.Is(NetResult.Success);
-            task2.Value.Is(7);
-
-            for (var i = 0; i < 10_000; i += 1_000)
+            var service = connection.GetService<IStreamService>();
+            service.IsNotNull();
+            if (service is null)
             {
-                var array = new byte[i];
-                RandomVault.Pseudo.NextBytes(array);
-                var memory = await connection.SendAndReceive<Memory<byte>, Memory<byte>>(array.AsMemory());
-                memory.Value.Span.SequenceEqual(array).IsTrue();
+                return;
             }
+
+            await this.TestPingPing(service);
         }
     }
 
-    public NetFixture NetFixture { get; }
-
-    public NetControl NetControl => this.NetFixture.NetControl;
+    private async Task TestPingPing(IStreamService service)
+    {
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            if (this.dataArray[i].Length <= NetFixture.MaxBlockSize)
+            {
+                var r = await service.Pingpong(this.dataArray[i]).ResponseAsync;
+                r.Value!.SequenceEqual(this.dataArray[i]).IsTrue();
+            }
+        }
+    }
 }

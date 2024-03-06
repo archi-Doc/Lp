@@ -16,7 +16,10 @@ public class NetFixtureCollection : ICollectionFixture<NetFixture>
 
 public class NetFixture : IDisposable
 {
-    public const int MaximumResponseTime = 2000;
+    public const int MaxBlockSize = 1_000_000;
+    public const long MaxStreamLength = 4_000_000;
+    public const int StreamBufferSize = 1_000_000;
+    public const int MinimumConnectionRetentionSeconds = 1_000_000;
 
     public NetFixture()
     {
@@ -33,6 +36,7 @@ public class NetFixture : IDisposable
             {
                 context.AddService<IBasicService>();
                 context.AddService<IFilterTestService>();
+                context.AddService<IStreamService>();
             });
 
         var options = new NetOptions();
@@ -45,6 +49,10 @@ public class NetFixture : IDisposable
         this.unit.Run(options, true).Wait();
 
         this.NetControl = this.unit.Context.ServiceProvider.GetRequiredService<NetControl>();
+        this.NetControl.NetBase.DefaultAgreement.MaxBlockSize = MaxBlockSize;
+        this.NetControl.NetBase.DefaultAgreement.MaxStreamLength = MaxStreamLength;
+        this.NetControl.NetBase.DefaultAgreement.StreamBufferSize = StreamBufferSize;
+        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = MinimumConnectionRetentionSeconds;
     }
 
     public void Dispose()
