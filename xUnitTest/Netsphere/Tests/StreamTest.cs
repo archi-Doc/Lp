@@ -2,7 +2,6 @@
 
 using Arc.Crypto;
 using Netsphere;
-using Netsphere.Packet;
 using Xunit;
 
 namespace xUnitTest.NetsphereTest;
@@ -10,8 +9,9 @@ namespace xUnitTest.NetsphereTest;
 [Collection(NetFixtureCollection.Name)]
 public class StreamTest
 {
-    private readonly int[] dataLength = [0, 1, 10, 111, 300, 1_000, 1_372, 1_373, 1_400, 3_000, 10_000, 100_000, 1_000_000, 1_500_000, 2_000_000, ];
+    private readonly int[] dataLength = [0, 1, 10, 111, 300, 1_000, 1_372, 1_373, 1_400, 3_000, 10_000, 100_000, 1_000_000, 1_500_000, 2_000_000,];
     private readonly byte[][] dataArray;
+    private readonly int maxLength;
 
     public StreamTest(NetFixture netFixture)
     {
@@ -20,10 +20,12 @@ public class StreamTest
         this.dataArray = new byte[this.dataLength.Length][];
         for (var i = 0; i < this.dataLength.Length; i++)
         {
-            var r = new Xoshiro256StarStar((ulong)i);
+            var r = new Xoshiro256StarStar((ulong)this.dataLength[i]);
             this.dataArray[i] = new byte[this.dataLength[i]];
             r.NextBytes(this.dataArray[i]);
         }
+
+        this.maxLength = this.dataLength[this.dataLength.Length - 1];
     }
 
     private readonly NetFixture netFixture;
@@ -47,6 +49,9 @@ public class StreamTest
             }
 
             await this.TestPingPing(service);
+            await this.TestGetHash(service);
+            await this.TestGet(service);
+            await this.TestGet2(service);
         }
     }
 
@@ -58,6 +63,95 @@ public class StreamTest
             {
                 var r = await service.Pingpong(this.dataArray[i]).ResponseAsync;
                 r.Value!.SequenceEqual(this.dataArray[i]).IsTrue();
+            }
+        }
+    }
+
+    private async Task TestGetHash(IStreamService service)
+    {
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            if (this.dataArray[i].Length <= NetFixture.MaxBlockSize)
+            {
+                var r = await service.GetHash(this.dataArray[i]).ResponseAsync;
+                r.Value.Is(FarmHash.Hash64(this.dataArray[i]));
+            }
+        }
+    }
+
+    private async Task TestGet(IStreamService service)
+    {
+        var buffer = new byte[this.maxLength];
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            var stream = await service.Get("test", this.dataLength[i]);
+            stream.IsNotNull();
+            if (stream is null)
+            {
+                break;
+            }
+
+            var memory = buffer.AsMemory();
+            var written = 0;
+            while (true)
+            {
+                var r = await stream.Receive(memory);
+                if (r.Result == NetResult.Success)
+                {
+                    memory = memory.Slice(r.Written);
+                    written += r.Written;
+                }
+                else if (r.Result == NetResult.Completed)
+                {
+                    written += r.Written;
+                    buffer.AsSpan(0, written).SequenceEqual(this.dataArray[i]).IsTrue();
+                    break;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+        }
+    }
+
+    private async Task TestGet2(IStreamService service)
+    {
+        var buffer = new byte[10_000];
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            if (this.dataLength[i] > 10_000)
+            {
+                break;
+            }
+
+            var stream = await service.Get("test", this.dataLength[i]);
+            stream.IsNotNull();
+            if (stream is null)
+            {
+                break;
+            }
+
+            var memory = buffer.AsMemory();
+            var written = 0;
+            while (true)
+            {
+                var r = await stream.Receive(memory.Slice(0, 4));
+                if (r.Result == NetResult.Success)
+                {
+                    memory = memory.Slice(r.Written);
+                    written += r.Written;
+                }
+                else if (r.Result == NetResult.Completed)
+                {
+                    written += r.Written;
+                    buffer.AsSpan(0, written).SequenceEqual(this.dataArray[i]).IsTrue();
+                    break;
+                }
+                else
+                {
+                    throw new Exception();
+                }
             }
         }
     }

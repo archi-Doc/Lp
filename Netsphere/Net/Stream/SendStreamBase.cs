@@ -29,10 +29,6 @@ public abstract class SendStreamBase
         {
             return Task.FromResult(NetResult.Completed);
         }
-        else if (buffer.Length == 0)
-        {
-            return Task.FromResult(NetResult.Success);
-        }
         else
         {
             return this.SendTransmission.ProcessSend(this, buffer, cancellationToken);

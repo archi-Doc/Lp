@@ -281,10 +281,10 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             }
         }
 
-        if (response.Additional == 0)
+        /*if (response.Additional == 0)
         {// No stream
             return ((NetResult)response.DataId, default);
-        }
+        }*/
 
         var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
         return new(NetResult.Success, stream);
