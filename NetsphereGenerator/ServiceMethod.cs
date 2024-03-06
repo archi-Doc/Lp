@@ -73,18 +73,18 @@ public class ServiceMethod
         if (returnObject.Generics_Arguments.Length > 0)
         {
             serviceMethod.ReturnObject = returnObject.TypeObjectWithNullable?.Generics_ArgumentsWithNullable[0];
-            if (serviceMethod.ReturnObject is { } rt)
+            if (serviceMethod.ReturnObject?.Object is { } rt)
             {
-                if (rt.Object.Kind.IsReferenceType() &&
-                rt.Nullable == Arc.Visceral.NullableAnnotation.NotAnnotated)
+                if (rt.Kind.IsReferenceType() &&
+                method.IsReturnTypeArgument_NotNullable())
                 {
-                    method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.Object.LocalName);
+                    method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.LocalName);
                 }
 
-                serviceMethod.ReturnType = NameToType(rt.Object.OriginalDefinition?.FullName);
+                serviceMethod.ReturnType = NameToType(rt.OriginalDefinition?.FullName);
                 if (serviceMethod.ReturnType == Type.SendStreamAndReceive)
                 {
-                    serviceMethod.StreamTypeArgument = rt.Object.Generics_Arguments[0].FullName;
+                    serviceMethod.StreamTypeArgument = rt.Generics_Arguments[0].FullName;
                 }
             }
         }
@@ -97,12 +97,12 @@ public class ServiceMethod
         if (serviceMethod.ReturnType == Type.SendStream ||
             serviceMethod.ReturnType == Type.SendStreamAndReceive)
         {
-            if (method.Method_Parameters.Length > 1 || method.Method_Parameters.Length == 0)
+            if (/*method.Method_Parameters.Length > 1 || */method.Method_Parameters.Length == 0)
             {
                 method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
                 return null;
             }
-            else if (method.Method_Parameters[0] != "long")
+            else if (method.Method_Parameters[method.Method_Parameters.Length - 1] != "long")
             {
                 method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamParam, method.Location);
                 return null;
@@ -171,14 +171,15 @@ public class ServiceMethod
         return sb.ToString();
     }
 
-    public string GetParameterNames(string name)
+    public string GetParameterNames(string name, int decrement)
     {// string.Empty, a1, (a1, a2)
         var parameters = this.method.Method_Parameters;
-        if (parameters.Length == 0)
+        var length = parameters.Length - decrement;
+        if (length <= 0)
         {
             return string.Empty;
         }
-        else if (parameters.Length == 1)
+        else if (length == 1)
         {
             return name + "1";
         }
@@ -186,7 +187,7 @@ public class ServiceMethod
         {
             var sb = new StringBuilder();
             sb.Append("(");
-            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (i != 0)
                 {
@@ -202,14 +203,16 @@ public class ServiceMethod
         }
     }
 
-    public string GetParameterTypes()
+    public string GetParameterTypes(int decrement)
     {// (int, string)
         var parameters = this.method.Method_Parameters;
-        if (parameters.Length == 0)
+        var length = parameters.Length - decrement;
+
+        if (length <= 0)
         {
             return string.Empty;
         }
-        else if (parameters.Length == 1)
+        else if (length == 1)
         {
             return parameters[0];
         }
@@ -217,7 +220,7 @@ public class ServiceMethod
         {
             var sb = new StringBuilder();
             sb.Append("(");
-            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (i != 0)
                 {
@@ -232,21 +235,23 @@ public class ServiceMethod
         }
     }
 
-    public string GetTupleNames(string name)
+    public string GetTupleNames(string name, int decrement)
     {// value, value.Item1, value.Item2
         var parameters = this.method.Method_Parameters;
-        if (parameters.Length == 0)
+        var length = parameters.Length - decrement;
+
+        if (length <= 0)
         {
             return string.Empty;
         }
-        else if (parameters.Length == 1)
+        else if (length == 1)
         {
             return name;
         }
         else
         {
             var sb = new StringBuilder();
-            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (i != 0)
                 {

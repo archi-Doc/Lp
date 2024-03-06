@@ -27,6 +27,8 @@ public class ReceiveStream
 
     public long ReceivedLength { get; internal set; }
 
+    internal int CurrentGene { get; set; }
+
     internal int CurrentPosition { get; set; }
 
     #endregion
@@ -36,4 +38,58 @@ public class ReceiveStream
 
     public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
         => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
+
+    public async Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default)
+    {
+        var buffer = NetHelper.RentBuffer();
+        try
+        {
+            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);//
+            if (result != NetResult.Success)
+            {
+                return new(result);
+            }
+            else if (written != sizeof(int))
+            {
+                return new(NetResult.DeserializationError);
+            }
+
+            var length = BitConverter.ToInt32(buffer);
+            if (length > this.ReceiveTransmission.Connection.Agreement.MaxBlockSize)
+            {
+                return new(NetResult.BlockSizeLimit);
+            }
+
+            var memory = buffer.AsMemory(sizeof(int));
+            if (memory.Length > length)
+            {
+                memory = memory.Slice(0, length);
+            }
+            else
+            {
+                memory = new byte[length];
+            }
+
+            (result, written) = await this.Receive(memory, cancellationToken).ConfigureAwait(false);
+            if (result != NetResult.Success)
+            {
+                return new(result);
+            }
+            else if (written != length)
+            {
+                return new(NetResult.DeserializationError);
+            }
+
+            if (!NetHelper.TryDeserializeWithLength<TReceive>(memory.Span, out var value, out _))
+            {
+                return new(NetResult.DeserializationError);
+            }
+
+            return new(NetResult.Success, value);
+        }
+        finally
+        {
+            NetHelper.ReturnBuffer(buffer);
+        }
+    }
 }

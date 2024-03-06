@@ -18,10 +18,7 @@ public class FilterTest
     {
         using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse))
         {
-            if (connection is null)
-            {
-                return;
-            }
+            connection.IsNotNull();
 
             var service = connection.GetService<IFilterTestService>();
             var task = await service.NoFilter(1).ResponseAsync;

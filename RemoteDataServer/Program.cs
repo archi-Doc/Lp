@@ -1,11 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
-using Arc.Threading;
-using Microsoft.Extensions.DependencyInjection;
-using Netsphere;
+#pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-namespace QuickStart;
+global using System.Net;
+global using Arc.Crypto;
+global using Arc.Threading;
+global using Arc.Unit;
+global using BigMachines;
+global using Netsphere;
+global using Tinyhand;
+global using ValueLink;
+using Microsoft.Extensions.DependencyInjection;
+using SimpleCommandLine;
+
+namespace RemoteDataServer;
 
 public class Program
 {
@@ -24,32 +32,45 @@ public class Program
         };
 
         var builder = new NetControl.Builder() // Create a NetControl builder.
+            .Configure(context =>
+            {
+                // Command
+                context.AddCommand(typeof(DefaultCommand));
+            })
             .SetupOptions<NetOptions>((context, options) =>
             {// Modify NetOptions
-                options.NodeName = "Test server";
-                options.Port = 49152; // Specify the port number.
-                options.PrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.
-                options.EnableEssential = true; // Required when using functions such as Ping.
+                options.NodeName = "RemoteDataServer";
+                options.Port = 50000; // Specify the port number.
+                options.EnableEssential = false; // Required when using functions such as Ping.
                 options.EnableServer = true;
             })
             .ConfigureSerivice(context =>
             {// Register the services provided by the server.
-                context.AddService<ITestService>();
+                // context.AddService<ITestService>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
-        await unit.Run(options, true); // Execute the created unit with the specified options.
+        await unit.Run(options, false); // Execute the created unit with the specified options.
 
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
-        var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
-        var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
+        await Console.Out.WriteLineAsync();
 
-        await Console.Out.WriteLineAsync($"{options.NodeName}: {node.ToString()}");
-        await Console.Out.WriteLineAsync("Ctrl+C to exit");
-        await ThreadCore.Root.Delay(Timeout.InfiniteTimeSpan); // Wait until the server shuts down.
+        // NtpCorrection
+        var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<Netsphere.Misc.NtpCorrection>();
+        var offset = await ntpCorrection.SendAndReceiveOffset();
+        UnitLogger.SetTimeOffset(offset);
+
+        var parserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = unit.Context.ServiceProvider,
+            RequireStrictCommandName = false,
+            RequireStrictOptionName = false,
+        };
+
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
+
         await unit.Terminate(); // Perform the termination process for the unit.
-
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).

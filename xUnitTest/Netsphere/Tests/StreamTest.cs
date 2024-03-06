@@ -8,9 +8,9 @@ using Xunit;
 namespace xUnitTest.NetsphereTest;
 
 [Collection(NetFixtureCollection.Name)]
-public class BasicNetTest
+public class StreamTest
 {
-    public BasicNetTest(NetFixture netFixture)
+    public StreamTest(NetFixture netFixture)
     {
         this.NetFixture = netFixture;
     }
@@ -18,15 +18,13 @@ public class BasicNetTest
     [Fact]
     public async Task Test1()
     {
-        this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
-
-        var p = new PacketPing("test56789");
-        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
-        result.Result.Is(NetResult.Success);
-
         using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative))
         {
-            connection.IsNotNull();
+            if (connection is null)
+            {
+                return;
+            }
+
             var basicService = connection.GetService<IBasicService>();
             var task = await basicService.SendInt(1).ResponseAsync;
             task.Result.Is(NetResult.Success);

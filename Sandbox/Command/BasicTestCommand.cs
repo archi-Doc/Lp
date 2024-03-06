@@ -51,9 +51,9 @@ public class CustomConnectionContext : ServerConnectionContext
 }
 
 [SimpleCommand("basic")]
-public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
+public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public BasicTestSubcommand(ILogger<BasicTestSubcommand> logger, NetControl netControl)
+    public BasicTestCommand(ILogger<BasicTestCommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
@@ -111,23 +111,24 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 var service = connection.GetService<TestService>();
                 var pingpong = await service.Pingpong([1, 2, 3,]);
 
-                /*var agreement = TinyhandSerializer.Clone(connection.Agreement);
-                agreement.MaxStreamLength = 100_000_000;
-                var agreementResult = await connection.RequestAgreement(agreement);
-
-                var response = await service.ReceiveData("test", 123_000).ResponseAsync;
+                /*var response = await service.ReceiveData("test", 123_000).ResponseAsync;
                 if (response.Value is not null)
                 {
                     await this.ProcessReceiveStream(response.Value);
                 }*/
 
-                /*var stream = await service.SendData(123_000);
+                var result = await service.UpdateAgreement(new(connection.Agreement with
+                {
+                    MaxStreamLength = 100_000_000,
+                }));
+
+                var stream = await service.SendData(123_000);
                 if (stream is not null)
                 {
                     await this.ProcessSendStream(stream, 123_000);
                 }
 
-                await Console.Out.WriteLineAsync("SendData2");
+                /*await Console.Out.WriteLineAsync("SendData2");
                 var stream2 = await service.SendData2(123_000);
                 if (stream2 is not null)
                 {
@@ -351,7 +352,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public NetControl NetControl { get; set; }
 
-    private ILogger<BasicTestSubcommand> logger;
+    private ILogger<BasicTestCommand> logger;
 }
 
 public record BasicTestOptions

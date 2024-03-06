@@ -500,13 +500,29 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             {
                 if (method.ReturnType == ServiceMethod.Type.SendStream)
                 {
-                    ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
+                    if (method.ParameterLength <= 1)
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStream(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
+                    }
+
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                     return;
                 }
                 else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
                 {
-                    ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    if (method.ParameterLength <= 1)
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                    }
+
                     ssb.AppendLine("return new(response.Stream, response.Result);");
                     return;
                 }
@@ -533,7 +549,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
+                    using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName, 0)}, out var owner))"))
                     {
                         AppendReturn("NetResult.SerializationError");
                     }
@@ -831,11 +847,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         else if (method.ReturnType == ServiceMethod.Type.SendStream ||
             method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
         {
-            ssb.AppendLine("var value = context.ReceiveStream.MaxStreamLength;");
         }
         else
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes()}>(context.Owner, out var value))"))
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.Owner, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationError;");
                 ssb.AppendLine("context.Return();");
@@ -844,9 +859,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
 
         ssb.AppendLine();
-
-        // Backend
-        // ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
 
         // Set ServerContext
         /*if (this.NetServiceBase != null)
@@ -867,15 +879,30 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             prefix = "var result = ";
         }
 
-        // task
-        // ssb.AppendLine($"var task = (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
-        ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")}).ValueAsync.ConfigureAwait(false);");
-        // ssb.AppendLine($"{prefix}await task.ValueAsync.ConfigureAwait(false);");
-
-        /*if (method.ReturnObject == null)
+        if (method.ReturnType == ServiceMethod.Type.SendStream ||
+            method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
         {
-            ssb.AppendLine("var result = NetResult.Success;");
-        }*/
+            if (method.ParameterLength > 1)
+            {
+                ssb.AppendLine($"var rr = await context.ReceiveStream.ReceiveBlock<{method.GetParameterTypes(1)}>().ConfigureAwait(false);");
+                using (var scopeIf = ssb.ScopeBrace("if (rr.IsFailure)"))
+                {
+                    ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                    ssb.AppendLine("context.Return();");
+                    ssb.AppendLine("return;");
+                }
+
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.ReceiveStream.MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+            }
+            else
+            {
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}(context.ReceiveStream.MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+            }
+        }
+        else
+        {
+            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
+        }
 
         ssb.AppendLine("context.Return();");
 
@@ -972,5 +999,23 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
 
         return null;
+    }
+
+    internal bool IsReturnTypeArgument_NotNullable()
+    {
+        if (this.symbol is IMethodSymbol ms &&
+            ms.ReturnType is INamedTypeSymbol nts)
+        {
+            if (nts.TypeArguments.Length > 0)
+            {
+                var ta = nts.TypeArguments[0];
+                if (ta.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

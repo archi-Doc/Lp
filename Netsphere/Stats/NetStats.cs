@@ -112,7 +112,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
             this.MyIpv4Address.ReportAddress(priority, result.Address);
         }
 
-        this.logger.TryGet()?.Log(result.ToString());
+        // this.logger.TryGet()?.Log(result.ToString());
     }
 
     public string Dump()
