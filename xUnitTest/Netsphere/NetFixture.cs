@@ -32,6 +32,8 @@ public class NetFixture : IDisposable
 
         var options = new NetOptions();
         options.EnableAlternative = true;
+        options.EnableEssential = true;
+        options.EnableServer = true;
         options.NodeName = "Test";
 
         this.unit = builder.Build();
