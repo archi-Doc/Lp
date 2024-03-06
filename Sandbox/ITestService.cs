@@ -3,11 +3,12 @@
 using System.Diagnostics;
 using Arc.Crypto;
 using Netsphere;
+using Netsphere.Crypto;
 
 namespace Sandbox;
 
 [NetServiceInterface]
-public interface TestService : INetService
+public interface TestService : INetService, INetServiceAgreement
 {
     public NetTask<byte[]?> Pingpong(byte[] data);
 
@@ -91,5 +92,10 @@ public class TestServiceImpl : TestService
         var context = TransmissionContext.Current;
         context.ServerConnection.Close();
         return default;
+    }
+
+    public async NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    {
+        return NetResult.Success;
     }
 }

@@ -142,11 +142,11 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.totalGene = -1;
 
         var info = NetHelper.CalculateGene(maxLength);
-        var bufferGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
+        var numberOfGenes = Math.Min(this.Connection.Agreement.StreamBufferGenes, info.NumberOfGenes + 1); // +1 for last complete gene.
 
         this.genes = new();
-        this.genes.DataPositionListChain.Resize(bufferGenes);
-        for (var i = 0; i < bufferGenes; i++)
+        this.genes.DataPositionListChain.Resize(numberOfGenes);
+        for (var i = 0; i < numberOfGenes; i++)
         {
             var gene = new ReceiveGene(this);
             gene.Goshujin = this.genes;
@@ -484,13 +484,13 @@ Abort:
         int lastMaxReceivedPosition;
         while (true)
         {
-            if (this.Mode != NetTransmissionMode.Stream)
-            {
-                return (NetResult.Completed, written);
-            }
-
             lock (this.syncObject)
             {
+                if (this.Mode != NetTransmissionMode.Stream)
+                {
+                    return (NetResult.Completed, written);
+                }
+
                 var chain = this.genes?.DataPositionListChain;
                 if (chain is null)
                 {
@@ -504,63 +504,56 @@ Abort:
                         return (NetResult.Success, written);
                     }
                     else if (!gene.IsReceived)
-                    {//
-                        if (stream.CurrentGene >= this.totalGene)
-                        {
-
+                    {
+                        if (stream.ReceivedLength >= stream.MaxStreamLength)
+                        {// Complete
+                            this.DisposeInternal();
+                            goto Complete;
                         }
                         else
-                        {
-
-                        }
-                        break;
-
-                        /*if (this.totalGene < 0 ||
-                            stream.CurrentGene < this.totalGene)
-                        {
+                        {// Wait for data arrival.
                             break;
-                        }*/
+                        }
                     }
 
                     var originalLength = gene.Packet.Span.Length;
-                    if (originalLength > 0)
-                    {
-                        var length = originalLength;
-                        if (stream.CurrentGene == 0 &&
-                            stream.CurrentPosition < 12)
-                        {// First gene
-                            stream.CurrentPosition = 12;
-                        }
-
-                        length -= stream.CurrentPosition;
-                        if (length > remaining)
-                        {
-                            length = remaining;
-                        }
-
-                        gene.Packet.Span.Slice(stream.CurrentPosition, length).CopyTo(buffer.Span);
-                        buffer = buffer.Slice(length);
-                        written += length;
-                        remaining -= length;
-                        stream.ReceivedLength += length;
-                        stream.CurrentPosition += length;
+                    var length = originalLength;
+                    if (originalLength == 0)
+                    {// Complete
+                        gene.Dispose();
+                        gene.Goshujin = default;
+                        this.DisposeInternal();
+                        goto Complete;
                     }
+
+                    if (stream.CurrentGene == 0 &&
+                        stream.CurrentPosition < 12)
+                    {// First gene
+                        stream.CurrentPosition = 12;
+                    }
+
+                    length -= stream.CurrentPosition;
+                    if (length > remaining)
+                    {
+                        length = remaining;
+                    }
+
+                    gene.Packet.Span.Slice(stream.CurrentPosition, length).CopyTo(buffer.Span);
+                    buffer = buffer.Slice(length);
+                    written += length;
+                    remaining -= length;
+                    stream.ReceivedLength += length;
+                    stream.CurrentPosition += length;
 
                     if (stream.CurrentPosition >= originalLength)
                     {
+                        Debug.Assert(stream.CurrentPosition == originalLength);
                         stream.CurrentGene++;
                         stream.CurrentPosition = 0;
                         gene.Dispose();
 
                         chain.Remove(gene);
                         chain.Add(gene);
-                    }
-
-                    if (originalLength == 0)
-                    {// Complete
-                        gene.Goshujin = default;
-                        this.DisposeInternal();
-                        goto Complete;
                     }
                 }
 
@@ -589,10 +582,6 @@ Abort:
                 {
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     delay = Math.Min(delay << 1, NetConstants.MaxReceiveStreamDelayMilliseconds);
-                }
-                catch (TimeoutException)
-                {
-                    return (NetResult.Timeout, written);
                 }
                 catch
                 {
