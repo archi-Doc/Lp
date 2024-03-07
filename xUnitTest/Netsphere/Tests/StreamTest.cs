@@ -177,9 +177,6 @@ public class StreamTest
                 memory = memory.Slice(length);
 
                 var r = await stream.Send(buffer.AsMemory(0, length));
-                if (r != NetResult.Success)
-                {
-                }
                 r.Is(NetResult.Success);
             }
 

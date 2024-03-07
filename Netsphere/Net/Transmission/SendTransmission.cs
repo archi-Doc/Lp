@@ -315,6 +315,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal async Task<NetResult> ProcessSend(SendStreamBase stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
         var addSend = false;
+        var originalLength = buffer.Length;
         while (true)
         {
             var delay = NetConstants.InitialSendStreamDelayMilliseconds;
@@ -326,7 +327,7 @@ Loop:
             }
 
             if (this.GeneSerialMax >= this.MaxReceivePosition)
-            {
+            {//
                 SendKnockFrame();
 
                 try
@@ -392,7 +393,7 @@ Loop:
                     this.GeneSerialMax++;
                     stream.RemainingLength -= size;
                     stream.SentLength += size;
-                    if (buffer.Length == 0 || stream.RemainingLength == 0)
+                    if (originalLength == 0 || stream.RemainingLength == 0)
                     {// Complete
                         this.Mode = NetTransmissionMode.StreamCompleted;
                         goto Exit;
