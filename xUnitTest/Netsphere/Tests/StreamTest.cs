@@ -48,10 +48,11 @@ public class StreamTest
                 return;
             }
 
-            await this.TestPingPing(service);
-            await this.TestGetHash(service);
+            /*await this.TestPingPing(service);
+            await this.TestGetHash(service);d
             await this.TestGet(service);
-            await this.TestGet2(service);
+            await this.TestGet2(service);*/
+            await this.TestPutAndGetHash(service);
         }
     }
 
@@ -153,6 +154,37 @@ public class StreamTest
                     throw new Exception();
                 }
             }
+        }
+    }
+
+    private async Task TestPutAndGetHash(IStreamService service)
+    {
+        var buffer = new byte[12_345];
+        for (var i = 12; i < this.dataLength.Length; i++)
+        {
+            var stream = await service.PutAndGetHash(this.dataLength[i]);
+            stream.IsNotNull();
+            if (stream is null)
+            {
+                break;
+            }
+
+            var memory = this.dataArray[i].AsMemory();
+            while (!memory.IsEmpty)
+            {
+                var length = Math.Min(buffer.Length, memory.Length);
+                memory.Slice(0, length).CopyTo(buffer);
+                memory = memory.Slice(length);
+
+                var r = await stream.Send(buffer.AsMemory(0, length));
+                if (r != NetResult.Success)
+                {
+                }
+                r.Is(NetResult.Success);
+            }
+
+            var r2 = await stream.CompleteAndReceive();
+            r2.Value.Is(FarmHash.Hash64(this.dataArray[i]));
         }
     }
 }
