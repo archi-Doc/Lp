@@ -327,7 +327,7 @@ Loop:
             }
 
             if (this.GeneSerialMax >= this.MaxReceivePosition)
-            {//
+            {
                 SendKnockFrame();
 
                 try
@@ -345,11 +345,6 @@ Loop:
 
             lock (this.syncObject)
             {
-                if (this.Connection.IsClosedOrDisposed)
-                {
-                    return NetResult.Closed;
-                }
-
                 // Recalculate
                 var chain = this.genes?.GeneSerialListChain;
                 if (chain is null)

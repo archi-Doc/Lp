@@ -40,7 +40,7 @@ public class StreamServiceImpl : IStreamService
         var buffer = new byte[length];
         r.NextBytes(buffer);
 
-        var (_, stream) = TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+        var (_, stream) = TransmissionContext.Current.GetSendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
         if (stream is not null)
         {
@@ -59,7 +59,11 @@ public class StreamServiceImpl : IStreamService
     public async NetTask<SendStreamAndReceive<ulong>?> PutAndGetHash(long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.ReceiveStream;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -96,7 +100,11 @@ public class StreamServiceImpl : IStreamService
     async NetTask<SendStream?> IStreamService.Put2(ulong hash, long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.ReceiveStream;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();

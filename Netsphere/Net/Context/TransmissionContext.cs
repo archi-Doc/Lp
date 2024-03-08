@@ -37,8 +37,8 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
-    public ReceiveStream ReceiveStream
-        => this.receiveStream ?? throw new InvalidOperationException();
+    public ReceiveStream? GetReceiveStream()
+        => this.receiveStream;
 
     private ReceiveStream? receiveStream;
 
@@ -105,7 +105,7 @@ public sealed class TransmissionContext
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
     {
         if (!this.ServerConnection.IsActive)
         {

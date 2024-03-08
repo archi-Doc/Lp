@@ -486,7 +486,11 @@ Abort:
         {
             lock (this.syncObject)
             {
-                if (this.Mode != NetTransmissionMode.Stream)
+                if (!this.Connection.IsActive)
+                {
+                    return (NetResult.Closed, written);
+                }
+                else if (this.Mode != NetTransmissionMode.Stream)
                 {
                     return (NetResult.Completed, written);
                 }
@@ -566,7 +570,7 @@ Abort:
             var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
             while (this.successiveReceivedPosition == lastMaxReceivedPosition)
             {
-                if (this.Connection.IsClosedOrDisposed)
+                if (!this.Connection.IsActive)
                 {
                     return (NetResult.Closed, written);
                 }
