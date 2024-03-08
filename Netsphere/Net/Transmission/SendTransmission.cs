@@ -340,6 +340,11 @@ Loop:
                     return NetResult.Canceled;
                 }
 
+                if (this.Connection.CloseIfTransmissionHasTimedOut())
+                {
+                    return NetResult.Closed;
+                }
+
                 goto Loop;
             }
 

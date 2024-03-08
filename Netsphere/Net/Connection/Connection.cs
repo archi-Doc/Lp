@@ -149,6 +149,19 @@ public abstract class Connection : IDisposable
         => this.sendTransmissions.Count == 0 &&
         this.receiveTransmissions.Count == 0;
 
+    internal bool CloseIfTransmissionHasTimedOut()
+    {
+        if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
+        {// Timeout
+            this.ConnectionTerminal.CloseInternal(this, true);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     internal long LastEventMics { get; private set; } // When any packet, including an Ack, is received, it's updated to the latest time.
 
     internal ICongestionControl? CongestionControl; // ConnectionTerminal.SyncSend
@@ -619,8 +632,6 @@ Wait:
                 return;
             }
 
-            this.LastEventMics = Mics.FastSystem;
-
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
@@ -629,14 +640,17 @@ Wait:
             }
             else if (frameType == FrameType.Ack)
             {// Ack
+                this.UpdateLastEventMics();
                 this.ProcessReceive_Ack(endPoint, owner);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
+                this.UpdateLastEventMics();
                 this.ProcessReceive_FirstGene(endPoint, owner);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
+                this.UpdateLastEventMics();
                 this.ProcessReceive_FollowingGene(endPoint, owner);
             }
             else if (frameType == FrameType.Knock)

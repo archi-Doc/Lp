@@ -51,8 +51,9 @@ public class StreamTest
             /*await this.TestPingPing(service);
             await this.TestGetHash(service);d
             await this.TestGet(service);
-            await this.TestGet2(service);*/
-            await this.TestPutAndGetHash(service);
+            await this.TestGet2(service);
+            await this.TestPutAndGetHash(service);*/
+            await this.TestPut2(service);
         }
     }
 
@@ -182,6 +183,23 @@ public class StreamTest
 
             var r2 = await stream.CompleteAndReceive();
             r2.Value.Is(FarmHash.Hash64(this.dataArray[i]));
+        }
+    }
+
+    private async Task TestPut2(IStreamService service)
+    {
+        for (var i = 1; i < this.dataLength.Length; i++)
+        {
+            var hash = FarmHash.Hash64(this.dataArray[i]);
+            var stream = await service.Put2(hash, this.dataLength[i]);
+            stream.IsNotNull();
+            if (stream is null)
+            {
+                break;
+            }
+
+            var result = await stream.Send(this.dataArray[i]);
+            result = await stream.Complete();
         }
     }
 }

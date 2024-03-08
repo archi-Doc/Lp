@@ -116,7 +116,7 @@ public static class NetHelper
     public static bool TryDeserialize<T>(ByteArrayPool.ReadOnlyMemoryOwner owner, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    public static bool TryDeserializeWithLength<T>(ReadOnlySpan<byte> span, [MaybeNullWhen(false)] out T value, out int length)
+    /*public static bool TryDeserializeWithLength<T>(ReadOnlySpan<byte> span, [MaybeNullWhen(false)] out T value, out int length)
     {
         value = default;
         length = 0;
@@ -133,7 +133,7 @@ public static class NetHelper
         }
 
         return TinyhandSerializer.TryDeserialize<T>(span, out value, TinyhandSerializerOptions.Standard);
-    }
+    }*/
 
     public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
         where T : ITinyhandSerialize<T>, ISignAndVerify

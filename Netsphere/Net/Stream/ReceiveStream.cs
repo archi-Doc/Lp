@@ -80,7 +80,7 @@ public class ReceiveStream
                 return new(NetResult.DeserializationError);
             }
 
-            if (!NetHelper.TryDeserializeWithLength<TReceive>(memory.Span, out var value, out _))
+            if (!TinyhandSerializer.TryDeserialize<TReceive>(memory.Span, out var value))
             {
                 return new(NetResult.DeserializationError);
             }

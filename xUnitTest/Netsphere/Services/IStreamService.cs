@@ -106,6 +106,8 @@ public class StreamServiceImpl : IStreamService
             return default;
         }
 
+        return default;
+
         var buffer = new byte[100];
         var farmHash = new FarmHash();
         farmHash.HashInitialize();

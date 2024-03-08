@@ -896,7 +896,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
             else
             {
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}(context.GetReceiveStream()!.MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
         }
         else
