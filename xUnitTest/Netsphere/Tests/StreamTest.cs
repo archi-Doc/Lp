@@ -160,7 +160,7 @@ public class StreamTest
     private async Task TestPutAndGetHash(IStreamService service)
     {
         var buffer = new byte[12_345];
-        for (var i = 12; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var stream = await service.PutAndGetHash(this.dataLength[i]);
             stream.IsNotNull();

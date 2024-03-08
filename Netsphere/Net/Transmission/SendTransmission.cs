@@ -398,6 +398,10 @@ Loop:
                         this.Mode = NetTransmissionMode.StreamCompleted;
                         goto Exit;
                     }
+                    else if (buffer.Length == 0)
+                    {// Exit the loop and proceed to transmission because the buffer is empty.
+                        goto Exit;
+                    }
                 }
             }
 
