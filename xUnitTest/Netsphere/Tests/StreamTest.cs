@@ -199,7 +199,7 @@ public class StreamTest
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            result = await sendStream.Complete();
+            var resultValue = await sendStream.CompleteAndReceive();
         }
     }
 }

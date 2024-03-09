@@ -52,7 +52,7 @@ public class RemoteDataCommand : ISimpleCommandAsync
             }
 
             result = await sendStream.Send(Encoding.UTF8.GetBytes("test string"));
-            result = await sendStream.Complete();
+            var resultValue = await sendStream.CompleteAndReceive();
 
             var receiveStream = await remoteData.Get("test.txt");
             if (receiveStream is null)

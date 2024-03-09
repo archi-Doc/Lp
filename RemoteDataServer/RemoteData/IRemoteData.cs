@@ -7,7 +7,7 @@ public interface IRemoteData : INetService
 {
     NetTask<ReceiveStream?> Get(string identifier);
 
-    NetTask<SendStream?> Put(string identifier, long maxLength);
+    NetTask<SendStreamAndReceive<NetResult>?> Put(string identifier, long maxLength);
 
-    NetTask<SendStream?> Put2(string identifier, ulong hash, long maxLength);
+    NetTask<SendStreamAndReceive<NetResult>?> Put2(string identifier, ulong hash, long maxLength);
 }

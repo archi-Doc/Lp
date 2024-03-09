@@ -86,6 +86,10 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         id: "NSG014", title: "SendStream param", messageFormat: "Method that returns SendStream type must be declared as 'Method(long maxLength)''",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor Error_SendStreamRemoved = new DiagnosticDescriptor(
+        id: "NSG015", title: "SendStream removed", messageFormat: "SendStream is not supported (use SendStreamAndReceive instead)",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
     public NetsphereBody(SourceProductionContext context)
         : base(context)
     {

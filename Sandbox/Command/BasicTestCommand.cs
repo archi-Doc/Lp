@@ -254,11 +254,11 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            result = await sendStream.Complete();
+            var resultValue = await sendStream.CompleteAndReceive();
         }
     }
 
-    private async Task TestStream(ClientConnection connection, int size)
+    /*private async Task TestStream(ClientConnection connection, int size)
     {
         var buffer = new byte[size];
         RandomVault.Pseudo.NextBytes(buffer);
@@ -271,7 +271,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             var result2 = await r.Stream.Send(buffer);
             await r.Stream.Complete();
         }
-    }
+    }*/
 
     private async Task TestStream2(ClientConnection connection, int size)
     {

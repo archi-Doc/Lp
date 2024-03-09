@@ -18,9 +18,9 @@ public interface TestService : INetService, INetServiceAgreement
 
     public NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength);
 
-    public NetTask<SendStream?> SendData2(long maxLength);
+    // public NetTask<SendStream?> SendData2(long maxLength);
 
-    public NetTask<SendStream?> Put2(ulong hash, long maxLength);
+    public NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 }
 
 [NetServiceObject]
@@ -105,7 +105,7 @@ public class TestServiceImpl : TestService
         return NetResult.Success;
     }
 
-    public async NetTask<SendStream?> Put2(ulong hash, long maxLength)
+    public async NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
@@ -115,6 +115,7 @@ public class TestServiceImpl : TestService
         }
 
         transmissionContext.Result = NetResult.InvalidOperation;
+        transmissionContext.SendAndForget(NetResult.Success);
         return default;
 
         var buffer = new byte[100];
