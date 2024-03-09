@@ -191,15 +191,15 @@ public class StreamTest
         for (var i = 1; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
-            var stream = await service.Put2(hash, this.dataLength[i]);
-            stream.IsNotNull();
-            if (stream is null)
+            var sendStream = await service.Put2(hash, this.dataLength[i]);
+            sendStream.IsNotNull();
+            if (sendStream is null)
             {
                 break;
             }
 
-            var result = await stream.Send(this.dataArray[i]);
-            result = await stream.Complete();
+            var result = await sendStream.Send(this.dataArray[i]);
+            result = await sendStream.Complete();
         }
     }
 }

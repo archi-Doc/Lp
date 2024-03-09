@@ -45,7 +45,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<NetStatsMachine>();
 
-                var customContext = context.GetCustomContext<UnitNetsphereContext>();
+                var customContext = context.GetCustomContext<NetsphereUnitContext>();
                 foreach (var x in this.actions)
                 {
                     x(customContext);
@@ -53,7 +53,7 @@ public class NetControl : UnitBase, IUnitPreparable
             });
         }
 
-        public Builder ConfigureSerivice(Action<IUnitNetsphereContext> @delegate)
+        public Builder ConfigureSerivice(Action<INetsphereUnitContext> @delegate)
         {
             this.actions.Add(@delegate);
             return this;
@@ -84,7 +84,7 @@ public class NetControl : UnitBase, IUnitPreparable
             return this;
         }
 
-        private readonly List<Action<IUnitNetsphereContext>> actions = new();
+        private readonly List<Action<INetsphereUnitContext>> actions = new();
     }
 
     public class Unit : BuiltUnit
@@ -129,7 +129,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Responders = new();
         this.Services = new();
 
-        var netsphereContext = context.ServiceProvider.GetRequiredService<UnitNetsphereContext>();
+        var netsphereContext = context.ServiceProvider.GetRequiredService<NetsphereUnitContext>();
         foreach (var x in netsphereContext.Services)
         {
             this.Services.Register(x);

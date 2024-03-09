@@ -2,7 +2,7 @@
 
 namespace Netsphere;
 
-public interface IUnitNetsphereContext
+public interface INetsphereUnitContext
 {
     void AddService<TService>()
         where TService : INetService;

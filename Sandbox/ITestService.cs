@@ -19,6 +19,8 @@ public interface TestService : INetService, INetServiceAgreement
     public NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength);
 
     public NetTask<SendStream?> SendData2(long maxLength);
+
+    public NetTask<SendStream?> Put2(ulong hash, long maxLength);
 }
 
 [NetServiceObject]
@@ -101,5 +103,45 @@ public class TestServiceImpl : TestService
     public async NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
         return NetResult.Success;
+    }
+
+    public async NetTask<SendStream?> Put2(ulong hash, long maxLength)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
+
+        transmissionContext.Result = NetResult.InvalidOperation;
+        return default;
+
+        var buffer = new byte[100];
+        var farmHash = new FarmHash();
+        farmHash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                farmHash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                break;
+            }
+        }
+
+        return default;
     }
 }

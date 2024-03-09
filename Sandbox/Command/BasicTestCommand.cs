@@ -50,14 +50,25 @@ public class CustomConnectionContext : ServerConnectionContext
     }*/
 }
 
-[SimpleCommand("basic")]
+[SimpleCommand("basic", Default = true)]
 public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 {
     public BasicTestCommand(ILogger<BasicTestCommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
+
+        this.dataArray = new byte[this.dataLength.Length][];
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            var r = new Xoshiro256StarStar((ulong)this.dataLength[i]);
+            this.dataArray[i] = new byte[this.dataLength[i]];
+            r.NextBytes(this.dataArray[i]);
+        }
     }
+
+    private readonly int[] dataLength = [0, 1, 10, 111, 300, 1_000, 1_372, 1_373, 1_400, 3_000, 10_000, 100_000, 1_000_000, 1_500_000, 2_000_000,];
+    private readonly byte[][] dataArray;
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
@@ -122,11 +133,13 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                     MaxStreamLength = 100_000_000,
                 }));
 
-                var stream = await service.SendData(123_000);
+                await this.TestPut2(service);
+
+                /*var stream = await service.SendData(123_000);
                 if (stream is not null)
                 {
                     await this.ProcessSendStream(stream, 123_000);
-                }
+                }*/
 
                 /*await Console.Out.WriteLineAsync("SendData2");
                 var stream2 = await service.SendData2(123_000);
@@ -227,6 +240,22 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 Console.WriteLine(result2?.Length.ToString());
             }
         }*/
+    }
+
+    private async Task TestPut2(TestService service)
+    {
+        for (var i = 1; i < this.dataLength.Length; i++)
+        {
+            var hash = FarmHash.Hash64(this.dataArray[i]);
+            var sendStream = await service.Put2(hash, this.dataLength[i]);
+            if (sendStream is null)
+            {
+                break;
+            }
+
+            var result = await sendStream.Send(this.dataArray[i]);
+            result = await sendStream.Complete();
+        }
     }
 
     private async Task TestStream(ClientConnection connection, int size)

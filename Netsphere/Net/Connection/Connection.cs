@@ -640,17 +640,14 @@ Wait:
             }
             else if (frameType == FrameType.Ack)
             {// Ack
-                this.UpdateLastEventMics();
                 this.ProcessReceive_Ack(endPoint, owner);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.UpdateLastEventMics();
                 this.ProcessReceive_FirstGene(endPoint, owner);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.UpdateLastEventMics();
                 this.ProcessReceive_FollowingGene(endPoint, owner);
             }
             else if (frameType == FrameType.Knock)
@@ -829,6 +826,7 @@ Wait:
             }
         }
 
+        this.UpdateLastEventMics();
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
 
         if (transmission.Mode == NetTransmissionMode.Stream)
@@ -884,6 +882,7 @@ Wait:
             }
         }
 
+        this.UpdateLastEventMics();
         transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 

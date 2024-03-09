@@ -344,6 +344,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         var result = transmissionAndTimeout.Transmission.SendStream(maxLength, tcs);
         if (result != NetResult.Success)
         {
