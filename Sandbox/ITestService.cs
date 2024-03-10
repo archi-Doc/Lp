@@ -115,7 +115,7 @@ public class TestServiceImpl : TestService
         }
 
         transmissionContext.Result = NetResult.InvalidOperation;
-        transmissionContext.SendAndForget(NetResult.Success);
+        // transmissionContext.SendAndForget(NetResult.Success);
         return default;
 
         var buffer = new byte[100];
