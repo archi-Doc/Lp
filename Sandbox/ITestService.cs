@@ -111,12 +111,12 @@ public class TestServiceImpl : TestService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        // if (stream is null)
+        if (stream is null)
         {
             return default;
         }
 
-        transmissionContext.Result = NetResult.InvalidOperation;
+        // transmissionContext.Result = NetResult.InvalidOperation;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
 
         var buffer = new byte[100];
@@ -157,14 +157,13 @@ public class TestServiceImpl : TestService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
+        // if (stream is null)
         {
             return default;
         }
 
-        // transmissionContext.Result = NetResult.NotFound;
+        transmissionContext.Result = NetResult.NotFound;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
-        return default;
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();

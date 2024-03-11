@@ -33,8 +33,8 @@ public class ReceiveStream
 
     #endregion
 
-    public void Abort()
-        => this.ReceiveTransmission.ProcessAbort();
+    public void Dispose()
+        => this.ReceiveTransmission.ProcessDispose();
 
     public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
         => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);

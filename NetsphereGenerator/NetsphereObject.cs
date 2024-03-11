@@ -819,7 +819,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(context.Owner, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationError;");
-                ssb.AppendLine("context.Return();");
+                // ssb.AppendLine("context.Return();"); -> try-finally
                 ssb.AppendLine("return;");
             }
         }
@@ -848,7 +848,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.Owner, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationError;");
-                ssb.AppendLine("context.Return();");
+                // ssb.AppendLine("context.Return();"); -> try-finally
                 ssb.AppendLine("return;");
             }
         }
@@ -883,7 +883,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 using (var scopeIf = ssb.ScopeBrace("if (rr.IsFailure)"))
                 {
                     ssb.AppendLine("context.Result = NetResult.DeserializationError;");
-                    ssb.AppendLine("context.Return();");
+                    // ssb.AppendLine("context.Return();"); -> try-finally
                     ssb.AppendLine("return;");
                 }
 
@@ -899,7 +899,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
         }
 
-        ssb.AppendLine("context.Return();");
+        // ssb.AppendLine("context.Return();"); -> try-finally
 
         if (method.Kind == ServiceMethod.MethodKind.UpdateAgreement)
         {
