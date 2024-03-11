@@ -298,7 +298,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         RandomVault.Pseudo.NextBytes(buffer);
         var hash = FarmHash.Hash64(buffer);
 
-        var r = await connection.SendStreamAndReceive<ulong>(size, hash);
+        var r = connection.SendStreamAndReceive<ulong>(size, hash);
         Debug.Assert(r.Result == NetResult.Success);
         if (r.Stream is not null)
         {

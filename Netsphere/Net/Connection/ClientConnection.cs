@@ -61,9 +61,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public TService GetService<TService>()
         where TService : INetService
-    {
-        return StaticNetService.CreateClient<TService>(this);
-    }
+        => StaticNetService.CreateClient<TService>(this);
 
     public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
@@ -355,9 +353,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return (NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
     }*/
 
-    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
-        var r = this.InternalSendStream(maxLength, dataId);
+        var r = this.PrepareSendStream(maxLength);
         if (r.SendTransmission is null)
         {
             return (r.Result, default);
@@ -366,9 +364,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, new SendStream(r.SendTransmission, maxLength, dataId));
     }
 
-    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStreamAndReceive<TReceive>? Stream) SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
     {
-        var r = await this.InternalSendStream(maxLength, dataId);
+        var r = this.PrepareSendStream(maxLength);
         if (r.SendTransmission is null)
         {
             return (r.Result, default);
@@ -377,7 +375,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, new SendStreamAndReceive<TReceive>(r.SendTransmission, maxLength, dataId));
     }
 
-    public async Task<(NetResult Result, SendStream? Stream)> SendBlockStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
+    public async Task<(NetResult Result, SendStream? Stream)> SendBlockAndStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
@@ -391,13 +389,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         try
         {
-            var (result, stream) = await this.SendStream(owner.Memory.Length + maxLength, dataId).ConfigureAwait(false);
+            var (result, stream) = this.SendStream(owner.Memory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
             }
 
-            result = await stream.Send(owner.Memory);
+            result = await stream.Send(owner.Memory).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -411,36 +409,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    /*public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
-    {
-        if (!this.IsActive)
-        {
-            return (NetResult.Closed, default);
-        }
-
-        if (!this.Agreement.CheckStreamLength(maxLength))
-        {
-            return new(NetResult.StreamLengthLimit, default);
-        }
-
-        var timeout = this.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
-        if (transmissionAndTimeout.Transmission is null)
-        {
-            return new(NetResult.NoTransmission, default);
-        }
-
-        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
-        if (result != NetResult.Success)
-        {
-            transmissionAndTimeout.Transmission.Dispose();
-            return new(result, default);
-        }
-
-        return new(NetResult.Success, new SendStreamAndReceive<TReceive>(transmissionAndTimeout.Transmission, maxLength, dataId));
-    }*/
-
-    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendBlockStreamAndReceive<TSend, TReceive>(TSend data, long maxLength, ulong dataId = 0)
+    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendBlockAndStreamAndReceive<TSend, TReceive>(TSend data, long maxLength, ulong dataId = 0)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
@@ -454,13 +423,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         try
         {
-            var (result, stream) = await this.SendStreamAndReceive<TReceive>(owner.Memory.Length + maxLength, dataId).ConfigureAwait(false);
+            var (result, stream) = this.SendStreamAndReceive<TReceive>(owner.Memory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
             }
 
-            result = await stream.Send(owner.Memory);
+            result = await stream.Send(owner.Memory).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -733,7 +702,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    private (NetResult Result, SendTransmission? SendTransmission) InternalSendStream(long maxLength, ulong dataId)
+    private (NetResult Result, SendTransmission? SendTransmission) PrepareSendStream(long maxLength)
     {
         if (!this.IsActive)
         {

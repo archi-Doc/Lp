@@ -502,11 +502,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     if (method.ParameterLength <= 1)
                     {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendStream(a1, {method.IdString}).ConfigureAwait(false);");
+                        ssb.AppendLine($"var response = this.ClientConnection.SendStream(a1, {method.IdString});");
                     }
                     else
                     {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockStream(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStream(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
                     }
 
                     ssb.AppendLine("return new(response.Stream, response.Result);");
@@ -516,11 +516,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     if (method.ParameterLength <= 1)
                     {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString}).ConfigureAwait(false);");
+                        ssb.AppendLine($"var response = this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString});");
                     }
                     else
                     {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockStreamAndReceive<{method.GetParameterTypes(1)}, {method.StreamTypeArgument}>(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
+                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStreamAndReceive<{method.GetParameterTypes(1)}, {method.StreamTypeArgument}>(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
                     }
 
                     ssb.AppendLine("return new(response.Stream, response.Result);");
