@@ -357,31 +357,24 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
     {
-        if (!this.IsActive)
+        var r = await this.InternalSendStream(maxLength, dataId);
+        if (r.SendTransmission is null)
         {
-            return (NetResult.Closed, default);
+            return (r.Result, default);
         }
 
-        if (!this.Agreement.CheckStreamLength(maxLength))
+        return new(NetResult.Success, new SendStream(r.SendTransmission, maxLength, dataId));
+    }
+
+    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
+    {
+        var r = await this.InternalSendStream(maxLength, dataId);
+        if (r.SendTransmission is null)
         {
-            return new(NetResult.StreamLengthLimit, default);
+            return (r.Result, default);
         }
 
-        var timeout = this.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
-        if (transmissionAndTimeout.Transmission is null)
-        {
-            return new(NetResult.NoTransmission, default);
-        }
-
-        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
-        if (result != NetResult.Success)
-        {
-            transmissionAndTimeout.Transmission.Dispose();
-            return new(result, default);
-        }
-
-        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
+        return new(NetResult.Success, new SendStreamAndReceive<TReceive>(r.SendTransmission, maxLength, dataId));
     }
 
     public async Task<(NetResult Result, SendStream? Stream)> SendBlockStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
@@ -418,7 +411,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
+    /*public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
     {
         if (!this.IsActive)
         {
@@ -445,7 +438,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         return new(NetResult.Success, new SendStreamAndReceive<TReceive>(transmissionAndTimeout.Transmission, maxLength, dataId));
-    }
+    }*/
 
     public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendBlockStreamAndReceive<TSend, TReceive>(TSend data, long maxLength, ulong dataId = 0)
     {
@@ -738,5 +731,34 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             this.cts.Dispose();
             this.ReleaseResource();
         }
+    }
+
+    private async Task<(NetResult Result, SendTransmission? SendTransmission)> InternalSendStream(long maxLength, ulong dataId)
+    {
+        if (!this.IsActive)
+        {
+            return (NetResult.Closed, default);
+        }
+
+        if (!this.Agreement.CheckStreamLength(maxLength))
+        {
+            return new(NetResult.StreamLengthLimit, default);
+        }
+
+        var timeout = this.NetBase.DefaultSendTimeout;
+        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
+        if (transmissionAndTimeout.Transmission is null)
+        {
+            return new(NetResult.NoTransmission, default);
+        }
+
+        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
+        if (result != NetResult.Success)
+        {
+            transmissionAndTimeout.Transmission.Dispose();
+            return new(result, default);
+        }
+
+        return new(NetResult.Success, transmissionAndTimeout.Transmission);
     }
 }
