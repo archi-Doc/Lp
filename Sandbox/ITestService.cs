@@ -20,6 +20,8 @@ public interface TestService : INetService, INetServiceAgreement
 
     // public NetTask<SendStream?> SendData2(long maxLength);
 
+    public NetTask<SendStream?> Put(ulong hash, long maxLength);
+
     public NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 }
 
@@ -105,7 +107,7 @@ public class TestServiceImpl : TestService
         return NetResult.Success;
     }
 
-    public async NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength)
+    public async NetTask<SendStream?> Put(ulong hash, long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
@@ -115,8 +117,22 @@ public class TestServiceImpl : TestService
         }
 
         transmissionContext.Result = NetResult.NotFound;
-        // transmissionContext.SendAndForget(NetResult.Success);
+        // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+
         return default;
+    }
+
+        public async NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
+
+        // transmissionContext.Result = NetResult.NotFound;
+        // transmissionContext.SendAndForget(NetResult.InvalidOperation);
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();

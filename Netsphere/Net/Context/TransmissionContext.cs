@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Net;
 
 #pragma warning disable SA1401
@@ -63,6 +64,11 @@ public sealed class TransmissionContext
         else if (this.IsSent)
         {
             return NetResult.InvalidOperation;
+        }
+
+        if (typeof(TSend) == typeof(NetResult))
+        {
+            return this.SendAndForget(ByteArrayPool.MemoryOwner.Empty, Unsafe.As<TSend, ulong>(ref data));
         }
 
         if (!NetHelper.TrySerialize(data, out var owner))
