@@ -355,6 +355,69 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return (NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
     }*/
 
+    public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
+    {
+        if (!this.IsActive)
+        {
+            return (NetResult.Closed, default);
+        }
+
+        if (!this.Agreement.CheckStreamLength(maxLength))
+        {
+            return new(NetResult.StreamLengthLimit, default);
+        }
+
+        var timeout = this.NetBase.DefaultSendTimeout;
+        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
+        if (transmissionAndTimeout.Transmission is null)
+        {
+            return new(NetResult.NoTransmission, default);
+        }
+
+        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
+        if (result != NetResult.Success)
+        {
+            transmissionAndTimeout.Transmission.Dispose();
+            return new(result, default);
+        }
+
+        return new(NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
+    }
+
+    public async Task<(NetResult Result, SendStream? Stream)> SendBlockStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
+    {
+        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        {
+            return (NetResult.SerializationError, default);
+        }
+
+        if (owner.Memory.Length > this.Agreement.MaxBlockSize)
+        {
+            return (NetResult.BlockSizeLimit, default);
+        }
+
+        try
+        {
+            var (result, stream) = await this.SendStream(owner.Memory.Length + maxLength, dataId).ConfigureAwait(false);
+            if (result != NetResult.Success || stream is null)
+            {
+                return (result, default);
+            }
+
+            result = await stream.Send(owner.Memory);
+            if (result != NetResult.Success)
+            {
+                return (result, default);
+            }
+
+            return (result, stream);
+        }
+        finally
+        {
+            owner.Return();
+        }
+    }
+
     public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
     {
         if (!this.IsActive)

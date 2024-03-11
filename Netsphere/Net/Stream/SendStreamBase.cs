@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace Netsphere.Net;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -58,5 +60,72 @@ public abstract class SendStreamBase
         }
 
         return result;
+    }
+
+    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
+    {
+        if (this.IsComplete)
+        {
+            return new(NetResult.Completed);
+        }
+
+        if (this.SendTransmission.Mode != NetTransmissionMode.StreamCompleted)
+        {
+            await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+        }
+
+        try
+        {
+            this.IsComplete = true;
+
+            NetResponse response;
+            var connection = this.SendTransmission.Connection;
+            // var timeout = connection.NetBase.DefaultSendTimeout;
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
+            {
+                if (receiveTransmission is null)
+                {
+                    return new(NetResult.NoTransmission);
+                }
+
+                try
+                {
+                    response = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    if (response.IsFailure)
+                    {
+                        return new(response.Result);
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    return new(NetResult.Timeout);
+                }
+                catch
+                {
+                    return new(NetResult.Canceled);
+                }
+            }
+
+            if (typeof(TReceive) == typeof(NetResult))
+            {// In the current implementation, the value of NetResult is assigned to DataId.
+                response.Return();
+                var netResult = (NetResult)response.DataId;
+                return new(NetResult.Success, Unsafe.As<NetResult, TReceive>(ref netResult));
+            }
+
+            if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
+            {
+                response.Return();
+                return new(NetResult.DeserializationError);
+            }
+
+            response.Return();
+            return new(NetResult.Success, receive);
+        }
+        finally
+        {
+            this.SendTransmission.Dispose();
+        }
     }
 }
