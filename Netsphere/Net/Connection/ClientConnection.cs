@@ -560,11 +560,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
                 return new(response.Result, response.Result);
             }
 
-            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
-            {
-                return new(NetResult.DeserializationError, NetResult.DeserializationError);
-            }
-
+            NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);
             if (result == NetResult.Success)
             {
                 this.Agreement.AcceptAll(a1.Target);
@@ -597,11 +593,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
                 return new(response.Result, response.Result);
             }
 
-            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
-            {
-                return new(NetResult.DeserializationError, NetResult.DeserializationError);
-            }
-
+            NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);
             if (result == NetResult.Success)
             {
                 this.Agreement.EnableBidirectionalConnection = true;

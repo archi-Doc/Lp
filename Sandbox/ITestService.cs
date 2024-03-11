@@ -111,13 +111,44 @@ public class TestServiceImpl : TestService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
+        // if (stream is null)
         {
             return default;
         }
 
-        // transmissionContext.Result = NetResult.NotFound;
-        transmissionContext.SendAndForget(NetResult.InvalidOperation);
+        transmissionContext.Result = NetResult.InvalidOperation;
+        // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+
+        var buffer = new byte[100];
+        var farmHash = new FarmHash();
+        farmHash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                farmHash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                break;
+            }
+        }
+
+        var hash2 = BitConverter.ToUInt64(farmHash.HashFinal());
+        if (hash == hash2)
+        {
+            transmissionContext.Result = NetResult.Success;
+        }
 
         return default;
     }
@@ -133,6 +164,7 @@ public class TestServiceImpl : TestService
 
         // transmissionContext.Result = NetResult.NotFound;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+        return default;
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();

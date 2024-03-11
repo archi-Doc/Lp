@@ -579,12 +579,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     ssb.AppendLine();
                     if (method.ReturnType == ServiceMethod.Type.NetResult)
                     {
-                        using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))"))
-                        {
-                            AppendReturn("NetResult.DeserializationError");
-                        }
-
-                        ssb.AppendLine();
+                        ssb.AppendLine("NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);");
                         ssb.AppendLine("response.Value.Return();");
                     }
                     else if (method.ReturnType == ServiceMethod.Type.ByteArray)
@@ -933,8 +928,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else if (method.ReturnType == ServiceMethod.Type.NetResult)
         {
-            ssb.AppendLine($"NetHelper.SerializeNetResult(result, out var owner2);");
-            ssb.AppendLine("context.Owner = owner2;");
+            ssb.AppendLine("context.Result = result;");
+            // ssb.AppendLine($"NetHelper.SerializeNetResult(result, out var owner2);");
+            // ssb.AppendLine("context.Owner = owner2;");
         }
         else if (method.ReturnType == ServiceMethod.Type.ByteArray)
         {// byte[] result;

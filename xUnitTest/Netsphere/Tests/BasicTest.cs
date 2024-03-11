@@ -46,6 +46,13 @@ public class BasicTest
                 var memory = await connection.SendAndReceive<Memory<byte>, Memory<byte>>(array.AsMemory());
                 memory.Value.Span.SequenceEqual(array).IsTrue();
             }
+
+            var r = await basicService.TestResult().ResponseAsync;
+            r.Result.Is(NetResult.InvalidOperation);
+
+            var r2 = await basicService.TestResult2().ResponseAsync;
+            r2.Result.Is(NetResult.StreamLengthLimit);
+            r2.Value.Is(NetResult.StreamLengthLimit);
         }
     }
 
