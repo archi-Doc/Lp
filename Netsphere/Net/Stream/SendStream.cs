@@ -18,7 +18,10 @@ public class SendStream : SendStreamBase
             return NetResult.Completed;
         }
 
-        await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+        if (this.SendTransmission.Mode != NetTransmissionMode.StreamCompleted)
+        {
+            await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+        }
 
         var result = NetResult.Success;
         if (this.SendTransmission.SentTcs is { } tcs)

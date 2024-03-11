@@ -4,7 +4,7 @@ using System.Collections.Frozen;
 
 namespace Netsphere;
 
-public class UnitNetsphereContext : IUnitNetsphereContext, IUnitCustomContext
+internal class NetsphereUnitContext : INetsphereUnitContext, IUnitCustomContext
 {
     void IUnitCustomContext.Configure(IUnitConfigurationContext context)
     {
@@ -12,7 +12,7 @@ public class UnitNetsphereContext : IUnitNetsphereContext, IUnitCustomContext
         context.SetOptions(this);
     }
 
-    void IUnitNetsphereContext.AddService<TService>()
+    void INetsphereUnitContext.AddService<TService>()
     {
         this.services.Add(typeof(TService));
     }

@@ -15,11 +15,11 @@ public interface IStreamService : INetService, INetServiceAgreement
 
     public NetTask<ReceiveStream?> Get(string name, long length);
 
-    public NetTask<SendStream?> Put(long maxLength);
+    public NetTask<SendStreamAndReceive<NetResult>?> Put(long maxLength);
 
     public NetTask<SendStreamAndReceive<ulong>?> PutAndGetHash(long maxLength);
 
-    public NetTask<SendStream?> Put2(ulong hash, long maxLength);
+    public NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 }
 
 [NetServiceObject]
@@ -40,7 +40,7 @@ public class StreamServiceImpl : IStreamService
         var buffer = new byte[length];
         r.NextBytes(buffer);
 
-        var (_, stream) = TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+        var (_, stream) = TransmissionContext.Current.GetSendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
         if (stream is not null)
         {
@@ -51,7 +51,7 @@ public class StreamServiceImpl : IStreamService
         return default;
     }
 
-    public async NetTask<SendStream?> Put(long maxLength)
+    public async NetTask<SendStreamAndReceive<NetResult>?> Put(long maxLength)
     {
         return default;
     }
@@ -59,7 +59,11 @@ public class StreamServiceImpl : IStreamService
     public async NetTask<SendStreamAndReceive<ulong>?> PutAndGetHash(long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.ReceiveStream;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -93,10 +97,16 @@ public class StreamServiceImpl : IStreamService
     public async NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
         => NetResult.Success;
 
-    async NetTask<SendStream?> IStreamService.Put2(ulong hash, long maxLength)
+    async NetTask<SendStreamAndReceive<NetResult>?> IStreamService.Put2(ulong hash, long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.ReceiveStream;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
+
+        // return default;
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();

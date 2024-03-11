@@ -138,9 +138,7 @@ public abstract class Connection : IDisposable
         }
     }
 
-    // public long ConnectionRetentionMics { get; set; }
-
-    public long ConnectionRetentionMics => this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
+    public long ConnectionRetentionMics { get; set; }
 
     internal ILogger Logger { get; }
 
@@ -150,6 +148,19 @@ public abstract class Connection : IDisposable
     internal bool IsEmpty
         => this.sendTransmissions.Count == 0 &&
         this.receiveTransmissions.Count == 0;
+
+    internal bool CloseIfTransmissionHasTimedOut()
+    {
+        if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
+        {// Timeout
+            this.ConnectionTerminal.CloseInternal(this, true);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     internal long LastEventMics { get; private set; } // When any packet, including an Ack, is received, it's updated to the latest time.
 
@@ -208,11 +219,7 @@ public abstract class Connection : IDisposable
 
     public void ApplyAgreement()
     {
-        var min = this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
-        /*if (this.ConnectionRetentionMics < min)
-        {
-            this.ConnectionRetentionMics = min;
-        }*/
+        this.ConnectionRetentionMics = (long)this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
     }
 
     public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
@@ -625,8 +632,6 @@ Wait:
                 return;
             }
 
-            this.LastEventMics = Mics.FastSystem;
-
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
@@ -821,6 +826,7 @@ Wait:
             }
         }
 
+        this.UpdateLastEventMics();
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
 
         if (transmission.Mode == NetTransmissionMode.Stream)
@@ -876,6 +882,7 @@ Wait:
             }
         }
 
+        this.UpdateLastEventMics();
         transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 

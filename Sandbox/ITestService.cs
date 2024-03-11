@@ -18,7 +18,11 @@ public interface TestService : INetService, INetServiceAgreement
 
     public NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength);
 
-    public NetTask<SendStream?> SendData2(long maxLength);
+    // public NetTask<SendStream?> SendData2(long maxLength);
+
+    public NetTask<SendStream?> Put(ulong hash, long maxLength);
+
+    public NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 }
 
 [NetServiceObject]
@@ -41,7 +45,7 @@ public class TestServiceImpl : TestService
 
         // TransmissionContext.Current.Result = NetResult.AlreadySent;
 
-        var (_, stream) = TransmissionContext.Current.SendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+        var (_, stream) = TransmissionContext.Current.GetSendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
 
         if (stream is not null)
         {
@@ -55,7 +59,11 @@ public class TestServiceImpl : TestService
     public async NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.ReceiveStream;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -97,5 +105,60 @@ public class TestServiceImpl : TestService
     public async NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
         return NetResult.Success;
+    }
+
+    public async NetTask<SendStream?> Put(ulong hash, long maxLength)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
+
+        transmissionContext.Result = NetResult.NotFound;
+        // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+
+        return default;
+    }
+
+        public async NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
+
+        // transmissionContext.Result = NetResult.NotFound;
+        // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+
+        var buffer = new byte[100];
+        var farmHash = new FarmHash();
+        farmHash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                farmHash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                break;
+            }
+        }
+
+        return default;
     }
 }

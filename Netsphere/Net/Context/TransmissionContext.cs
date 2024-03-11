@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Net;
 
 #pragma warning disable SA1401
@@ -37,8 +38,8 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
-    public ReceiveStream ReceiveStream
-        => this.receiveStream ?? throw new InvalidOperationException();
+    public ReceiveStream? GetReceiveStream()
+        => this.receiveStream;
 
     private ReceiveStream? receiveStream;
 
@@ -54,28 +55,6 @@ public sealed class TransmissionContext
         }
     }
 
-    public NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
-    {
-        if (!this.ServerConnection.IsActive)
-        {
-            return NetResult.Closed;
-        }
-        else if (this.IsSent)
-        {
-            return NetResult.InvalidOperation;
-        }
-
-        var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
-        if (transmission is null)
-        {
-            return NetResult.NoTransmission;
-        }
-
-        this.IsSent = true;
-        var result = transmission.SendBlock(0, dataId, toBeShared, default);
-        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
-    }
-
     public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
     {
         if (!this.ServerConnection.IsActive)
@@ -85,6 +64,11 @@ public sealed class TransmissionContext
         else if (this.IsSent)
         {
             return NetResult.InvalidOperation;
+        }
+
+        if (typeof(TSend) == typeof(NetResult))
+        {
+            return this.SendAndForget(ByteArrayPool.MemoryOwner.Empty, Unsafe.As<TSend, ulong>(ref data));
         }
 
         if (!NetHelper.TrySerialize(data, out var owner))
@@ -105,7 +89,7 @@ public sealed class TransmissionContext
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
-    public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
     {
         if (!this.ServerConnection.IsActive)
         {
@@ -229,6 +213,28 @@ public sealed class TransmissionContext
         this.receiveTransmission = default;
         return (NetResult.Success, stream);
     }*/
+
+    internal NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
+    {
+        if (!this.ServerConnection.IsActive)
+        {
+            return NetResult.Closed;
+        }
+        else if (this.IsSent)
+        {
+            return NetResult.InvalidOperation;
+        }
+
+        var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
+        if (transmission is null)
+        {
+            return NetResult.NoTransmission;
+        }
+
+        this.IsSent = true;
+        var result = transmission.SendBlock(0, dataId, toBeShared, default);
+        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
+    }
 
     internal bool CreateReceiveStream(ReceiveTransmission receiveTransmission, long maxLength)
     {

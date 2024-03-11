@@ -7,7 +7,7 @@ public class RemoteDataImpl : IRemoteData
 {
     public async NetTask<ReceiveStream?> Get(string identifier)
     {
-        (_, var stream) = TransmissionContext.Current.SendStream(100);
+        (_, var stream) = TransmissionContext.Current.GetSendStream(100);
         if (stream is not null)
         {
             await stream.Send(default);
@@ -17,15 +17,20 @@ public class RemoteDataImpl : IRemoteData
         return default;
     }
 
-    public async NetTask<SendStream?> Put(string identifier, long maxLength)
+    public async NetTask<SendStreamAndReceive<NetResult>?> Put(string identifier, long maxLength)
     {
-        var stream = TransmissionContext.Current.ReceiveStream;
+        var stream = TransmissionContext.Current.GetReceiveStream();
+        if (stream is null)
+        {
+            return default;
+        }
+
         await stream.Receive(default);
 
         return default;
     }
 
-    public NetTask<SendStream?> Put2(string identifier, ulong hash, long maxLength)
+    public NetTask<SendStreamAndReceive<NetResult>?> Put2(string identifier, ulong hash, long maxLength)
     {
         throw new NotImplementedException();
     }

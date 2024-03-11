@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Net;
 
 namespace Netsphere;
@@ -18,7 +19,10 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
             return new(NetResult.Completed);
         }
 
-        await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+        if (this.SendTransmission.Mode != NetTransmissionMode.StreamCompleted)
+        {
+            await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+        }
 
         try
         {
@@ -51,6 +55,13 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
                 {
                     return new(NetResult.Canceled);
                 }
+            }
+
+            if (typeof(TReceive) == typeof(NetResult))
+            {// In the current implementation, the value of NetResult is assigned to DataId.
+                response.Return();
+                var netResult = (NetResult)response.DataId;
+                return new(NetResult.Success, Unsafe.As<NetResult, TReceive>(ref netResult));
             }
 
             if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))

@@ -44,7 +44,7 @@ public class ReceiveStream
         var buffer = NetHelper.RentBuffer();
         try
         {
-            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);//
+            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return new(result);
@@ -80,7 +80,7 @@ public class ReceiveStream
                 return new(NetResult.DeserializationError);
             }
 
-            if (!NetHelper.TryDeserializeWithLength<TReceive>(memory.Span, out var value, out _))
+            if (!TinyhandSerializer.TryDeserialize<TReceive>(memory.Span, out var value))
             {
                 return new(NetResult.DeserializationError);
             }

@@ -252,8 +252,14 @@ internal class NetSender
                     // this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual");
                 }
 
-                ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
-                item.MemoryOwner.Return();
+                try
+                {
+                    ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
+                }
+                finally
+                {
+                    item.MemoryOwner.Return();
+                }
             }
         }
         else
@@ -277,8 +283,14 @@ internal class NetSender
                     // this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual");
                 }
 
-                ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
-                item.MemoryOwner.Return();
+                try
+                {
+                    ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
+                }
+                finally
+                {
+                    item.MemoryOwner.Return();
+                }
             }
         }
         else

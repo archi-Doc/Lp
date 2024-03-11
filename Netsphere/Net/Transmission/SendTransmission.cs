@@ -315,6 +315,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal async Task<NetResult> ProcessSend(SendStreamBase stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
         var addSend = false;
+        var originalLength = buffer.Length;
         while (true)
         {
             var delay = NetConstants.InitialSendStreamDelayMilliseconds;
@@ -339,16 +340,16 @@ Loop:
                     return NetResult.Canceled;
                 }
 
+                if (this.Connection.CloseIfTransmissionHasTimedOut())
+                {
+                    return NetResult.Closed;
+                }
+
                 goto Loop;
             }
 
             lock (this.syncObject)
             {
-                if (this.Connection.IsClosedOrDisposed)
-                {
-                    return NetResult.Closed;
-                }
-
                 // Recalculate
                 var chain = this.genes?.GeneSerialListChain;
                 if (chain is null)
@@ -392,9 +393,13 @@ Loop:
                     this.GeneSerialMax++;
                     stream.RemainingLength -= size;
                     stream.SentLength += size;
-                    if (buffer.Length == 0 || stream.RemainingLength == 0)
+                    if (originalLength == 0 || stream.RemainingLength == 0)
                     {// Complete
                         this.Mode = NetTransmissionMode.StreamCompleted;
+                        goto Exit;
+                    }
+                    else if (buffer.Length == 0)
+                    {// Exit the loop and proceed to transmission because the buffer is empty.
                         goto Exit;
                     }
                 }

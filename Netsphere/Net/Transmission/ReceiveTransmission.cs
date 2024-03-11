@@ -486,7 +486,11 @@ Abort:
         {
             lock (this.syncObject)
             {
-                if (this.Mode != NetTransmissionMode.Stream)
+                if (!this.Connection.IsActive)
+                {
+                    return (NetResult.Closed, written);
+                }
+                else if (this.Mode != NetTransmissionMode.Stream)
                 {
                     return (NetResult.Completed, written);
                 }
@@ -499,21 +503,18 @@ Abort:
 
                 while (chain.Get(stream.CurrentGene) is { } gene)
                 {
-                    if (remaining == 0)
+                    if (stream.ReceivedLength >= stream.MaxStreamLength)
+                    {// Complete
+                        this.DisposeInternal();
+                        goto Complete;
+                    }
+                    else if (remaining == 0)
                     {
                         return (NetResult.Success, written);
                     }
                     else if (!gene.IsReceived)
-                    {
-                        if (stream.ReceivedLength >= stream.MaxStreamLength)
-                        {// Complete
-                            this.DisposeInternal();
-                            goto Complete;
-                        }
-                        else
-                        {// Wait for data arrival.
-                            break;
-                        }
+                    {// Wait for data arrival.
+                        break;
                     }
 
                     var originalLength = gene.Packet.Span.Length;
@@ -569,7 +570,7 @@ Abort:
             var delay = NetConstants.InitialReceiveStreamDelayMilliseconds;
             while (this.successiveReceivedPosition == lastMaxReceivedPosition)
             {
-                if (this.Connection.IsClosedOrDisposed)
+                if (!this.Connection.IsActive)
                 {
                     return (NetResult.Closed, written);
                 }

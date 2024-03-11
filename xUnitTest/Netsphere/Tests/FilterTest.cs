@@ -16,7 +16,7 @@ public class FilterTest
     [Fact]
     public async Task Test1()
     {
-        using (var connection = await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse))
+        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse))!)
         {
             connection.IsNotNull();
 
