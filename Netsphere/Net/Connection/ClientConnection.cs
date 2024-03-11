@@ -357,7 +357,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStream? Stream)> SendStream(long maxLength, ulong dataId = 0)
     {
-        var r = await this.InternalSendStream(maxLength, dataId);
+        var r = this.InternalSendStream(maxLength, dataId);
         if (r.SendTransmission is null)
         {
             return (r.Result, default);
@@ -733,7 +733,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    private async Task<(NetResult Result, SendTransmission? SendTransmission)> InternalSendStream(long maxLength, ulong dataId)
+    private (NetResult Result, SendTransmission? SendTransmission) InternalSendStream(long maxLength, ulong dataId)
     {
         if (!this.IsActive)
         {
@@ -745,20 +745,19 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return new(NetResult.StreamLengthLimit, default);
         }
 
-        var timeout = this.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
-        if (transmissionAndTimeout.Transmission is null)
+        var transmission = this.TryCreateSendTransmission();
+        if (transmission is null)
         {
             return new(NetResult.NoTransmission, default);
         }
 
-        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
+        var result = transmission.SendStream(maxLength, default);
         if (result != NetResult.Success)
         {
-            transmissionAndTimeout.Transmission.Dispose();
+            transmission.Dispose();
             return new(result, default);
         }
 
-        return new(NetResult.Success, transmissionAndTimeout.Transmission);
+        return new(NetResult.Success, transmission);
     }
 }
