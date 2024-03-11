@@ -255,7 +255,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.Complete();
+            var resultValue = await sendStream.CompleteSend();
             await Console.Out.WriteLineAsync(resultValue.ToString());
         }
 
@@ -272,7 +272,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.CompleteAndReceive();
+            var resultValue = await sendStream.CompleteSendAndReceive();
             await Console.Out.WriteLineAsync(resultValue.ToString());
         }
     }
@@ -288,7 +288,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         if (r.Stream is not null)
         {
             var result2 = await r.Stream.Send(buffer);
-            await r.Stream.Complete();
+            await r.Stream.CompleteSend();
         }
     }*/
 
@@ -303,7 +303,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         if (r.Stream is not null)
         {
             var r2 = await r.Stream.Send(buffer);
-            var r3 = await r.Stream.CompleteAndReceive();
+            var r3 = await r.Stream.CompleteSendAndReceive();
             Debug.Assert(r3.Value == hash);
         }
     }
@@ -384,7 +384,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         var hash = FarmHash.Hash64(buffer);
 
         var r2 = await stream.Send(buffer);
-        var r3 = await stream.CompleteAndReceive();
+        var r3 = await stream.CompleteSendAndReceive();
         Debug.Assert(r3.Value == hash);
     }
 
@@ -395,7 +395,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         var hash = FarmHash.Hash64(buffer);
 
         var r2 = await stream.Send(buffer);
-        var r3 = await stream.Complete();
+        var r3 = await stream.CompleteSend();
     }
 
     public NetControl NetControl { get; set; }

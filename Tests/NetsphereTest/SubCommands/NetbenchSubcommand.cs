@@ -98,7 +98,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         }
 
         await stream.Send(data);
-        var response = await stream.CompleteAndReceive();
+        var response = await stream.CompleteSendAndReceive();
 
         sw.Stop();
 

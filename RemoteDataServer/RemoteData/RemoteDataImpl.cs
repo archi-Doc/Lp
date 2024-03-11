@@ -11,7 +11,7 @@ public class RemoteDataImpl : IRemoteData
         if (stream is not null)
         {
             await stream.Send(default);
-            await stream.Complete();
+            await stream.CompleteSend();
         }
 
         return default;

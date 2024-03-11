@@ -45,7 +45,7 @@ public class StreamServiceImpl : IStreamService
         if (stream is not null)
         {
             await stream.Send(buffer);
-            await stream.Complete();
+            await stream.CompleteSend();
         }
 
         return default;

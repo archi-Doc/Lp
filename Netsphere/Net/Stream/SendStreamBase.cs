@@ -80,7 +80,6 @@ public abstract class SendStreamBase
 
             NetResponse response;
             var connection = this.SendTransmission.Connection;
-            // var timeout = connection.NetBase.DefaultSendTimeout;
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
             using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
             {
@@ -96,10 +95,6 @@ public abstract class SendStreamBase
                     {
                         return new(response.Result);
                     }
-                }
-                catch (TimeoutException)
-                {
-                    return new(NetResult.Timeout);
                 }
                 catch
                 {

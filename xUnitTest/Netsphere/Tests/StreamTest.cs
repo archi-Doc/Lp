@@ -181,7 +181,7 @@ public class StreamTest
                 r.Is(NetResult.Success);
             }
 
-            var r2 = await stream.CompleteAndReceive();
+            var r2 = await stream.CompleteSendAndReceive();
             r2.Value.Is(FarmHash.Hash64(this.dataArray[i]));
         }
     }
@@ -199,7 +199,7 @@ public class StreamTest
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.CompleteAndReceive();
+            var resultValue = await sendStream.CompleteSendAndReceive();
         }
     }
 }

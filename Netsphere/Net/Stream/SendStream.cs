@@ -11,7 +11,7 @@ public class SendStream : SendStreamBase
     {
     }
 
-    public async Task<NetResult> Complete(CancellationToken cancellationToken = default)
+    public async Task<NetResult> CompleteSend(CancellationToken cancellationToken = default)
     {
         var resultAndValue = await this.InternalComplete<NetResult>(cancellationToken).ConfigureAwait(false);
         if (resultAndValue.IsFailure)
