@@ -26,4 +26,7 @@ public readonly struct NetResultValue<TValue>
 
     public readonly NetResult Result;
     public readonly TValue? Value;
+
+    public override string ToString()
+        => $"Result: {this.Result.ToString()}, Value: {this.Value?.ToString()}";
 }

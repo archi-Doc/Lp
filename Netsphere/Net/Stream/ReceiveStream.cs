@@ -44,7 +44,7 @@ public class ReceiveStream
         var buffer = NetHelper.RentBuffer();
         try
         {
-            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);//
+            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return new(result);

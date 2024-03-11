@@ -114,7 +114,7 @@ public class TestServiceImpl : TestService
             return default;
         }
 
-        transmissionContext.Result = NetResult.InvalidOperation;
+        transmissionContext.Result = NetResult.NotFound;
         // transmissionContext.SendAndForget(NetResult.Success);
         return default;
 
