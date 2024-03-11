@@ -326,7 +326,11 @@ Loop:
                 return NetResult.Closed;
             }
 
-            if (this.GeneSerialMax >= this.MaxReceivePosition)
+            if (this.MaxReceivePosition == 0)
+            {// MaxReceivePosition becomes 0 if the server's ReceiveTransmission is disposed.
+                return NetResult.Canceled;
+            }
+            else if (this.GeneSerialMax >= this.MaxReceivePosition)
             {
                 SendKnockFrame();
 

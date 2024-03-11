@@ -271,7 +271,6 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 break;
             }
 
-            await Task.Delay(100);
             var result = await sendStream.Send(this.dataArray[i]);
             await Console.Out.WriteLineAsync(result.ToString());
             var resultValue = await sendStream.CompleteSendAndReceive();

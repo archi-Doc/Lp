@@ -157,12 +157,12 @@ public class TestServiceImpl : TestService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        // if (stream is null)
+        if (stream is null)
         {
             return default;
         }
 
-        transmissionContext.Result = NetResult.NotFound;
+        // transmissionContext.Result = NetResult.NotFound;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
 
         var buffer = new byte[100];
@@ -188,6 +188,12 @@ public class TestServiceImpl : TestService
             {
                 break;
             }
+        }
+
+        var hash2 = BitConverter.ToUInt64(farmHash.HashFinal());
+        if (hash == hash2)
+        {
+            transmissionContext.Result = NetResult.Success;
         }
 
         return default;

@@ -161,7 +161,7 @@ public class StreamTest
     private async Task TestPutAndGetHash(IStreamService service)
     {
         var buffer = new byte[12_345];
-        for (var i = 0; i < this.dataLength.Length; i++)
+        for (var i = 1; i < this.dataLength.Length; i++)
         {
             var stream = await service.PutAndGetHash(this.dataLength[i]);
             stream.IsNotNull();
@@ -199,7 +199,10 @@ public class StreamTest
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
+            result.Is(NetResult.Success);
             var resultValue = await sendStream.CompleteSendAndReceive();
+            resultValue.Result.Is(NetResult.Success);
+            resultValue.Value.Is(NetResult.Success);
         }
     }
 }

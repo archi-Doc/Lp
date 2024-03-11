@@ -133,6 +133,12 @@ public class StreamServiceImpl : IStreamService
             }
         }
 
+        var hash2 = BitConverter.ToUInt64(farmHash.HashFinal());
+        if (hash == hash2)
+        {
+            transmissionContext.Result = NetResult.Success;
+        }
+
         return default;
     }
 }

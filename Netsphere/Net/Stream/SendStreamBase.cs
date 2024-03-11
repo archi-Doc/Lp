@@ -71,7 +71,11 @@ public abstract class SendStreamBase
 
         if (this.SendTransmission.Mode != NetTransmissionMode.StreamCompleted)
         {
-            await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+            var result = await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+            if (result != NetResult.Success)
+            {
+                return new(result);
+            }
         }
 
         try
