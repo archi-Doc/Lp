@@ -43,6 +43,8 @@ public sealed class TransmissionContext
 
     private ReceiveStream? receiveStream;
 
+    private SendStream? sendStream;
+
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,6 +89,16 @@ public sealed class TransmissionContext
 
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
     {
+        if (this.sendStream is not null)
+        {
+            if (this.sendStream.RemainingLength < maxLength)
+            {// Insufficient length.
+                return (NetResult.InvalidOperation, default);
+            }
+
+            return (NetResult.Success, this.sendStream);
+        }
+
         if (!this.ServerConnection.IsActive)
         {
             return (NetResult.Canceled, default);
@@ -115,7 +127,7 @@ public sealed class TransmissionContext
             return (result, default);
         }
 
-        return (NetResult.Success, new SendStream(transmission, maxLength, dataId));
+        return (NetResult.Success, new SendStream(transmission, maxLength, dataId));/
     }
 
     /*public async NetTask<NetResult> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
