@@ -45,7 +45,7 @@ public class StreamServiceImpl : IStreamService
         if (stream is not null)
         {
             await stream.Send(buffer);
-            await stream.Complete();
+            await stream.CompleteSend();
         }
 
         return default;
@@ -60,10 +60,6 @@ public class StreamServiceImpl : IStreamService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
-        {
-            return default;
-        }
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -131,6 +127,12 @@ public class StreamServiceImpl : IStreamService
             {
                 break;
             }
+        }
+
+        var hash2 = BitConverter.ToUInt64(farmHash.HashFinal());
+        if (hash == hash2)
+        {
+            transmissionContext.Result = NetResult.Success;
         }
 
         return default;

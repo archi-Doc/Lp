@@ -331,6 +331,34 @@ public abstract class Connection : IDisposable
         }
     }
 
+    internal SendTransmission? TryCreateSendTransmission()
+    {
+        if (!this.IsActive)
+        {
+            return default;
+        }
+
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.IsClosedOrDisposed ||
+                this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
+            {
+                return default;
+            }
+
+            uint transmissionId;
+            do
+            {
+                transmissionId = RandomVault.Pseudo.NextUInt32();
+            }
+            while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+
+            var sendTransmission = new SendTransmission(this, transmissionId);
+            sendTransmission.Goshujin = this.sendTransmissions;
+            return sendTransmission;
+        }
+    }
+
     internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout)
     {
 Retry:
@@ -426,7 +454,7 @@ Wait:
             }
 
             if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
-            {
+            {//
                 return default;
             }
 

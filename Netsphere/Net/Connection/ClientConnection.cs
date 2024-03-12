@@ -61,9 +61,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public TService GetService<TService>()
         where TService : INetService
-    {
-        return StaticNetService.CreateClient<TService>(this);
-    }
+        => StaticNetService.CreateClient<TService>(this);
 
     public async Task<NetResult> Send<TSend>(TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
@@ -178,118 +176,6 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, receive);
     }
 
-    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
-    {
-        if (!this.IsActive)
-        {
-            return new(NetResult.Closed, 0, default);
-        }
-
-        NetResponse response;
-        var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
-        {
-            if (transmissionAndTimeout.Transmission is null)
-            {
-                return new(NetResult.NoTransmission, 0, default);
-            }
-
-            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
-            if (result != NetResult.Success)
-            {
-                return new(result, 0, default);
-            }
-
-            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs))
-            {
-                if (receiveTransmission is null)
-                {
-                    return new(NetResult.NoTransmission, 0, default);
-                }
-
-                try
-                {
-                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
-                    if (response.IsFailure)
-                    {
-                        return new(response.Result, 0, default);
-                    }
-                }
-                catch (TimeoutException)
-                {
-                    return new(NetResult.Timeout, 0, default);
-                }
-                catch
-                {
-                    return new(NetResult.Canceled, 0, default);
-                }
-            }
-        }
-
-        return new(NetResult.Success, response.DataId, response.Received);
-    }
-
-    public async Task<(NetResult Result, ReceiveStream? Stream)> RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
-    {
-        if (!this.IsActive)
-        {
-            return (NetResult.Closed, default);
-        }
-
-        NetResponse response;
-        ReceiveTransmission? receiveTransmission;
-        var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
-        {
-            if (transmissionAndTimeout.Transmission is null)
-            {
-                return (NetResult.NoTransmission, default);
-            }
-
-            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
-            if (result != NetResult.Success)
-            {
-                return (result, default);
-            }
-
-            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs);
-            if (receiveTransmission is null)
-            {
-                return (NetResult.NoTransmission, default);
-            }
-
-            try
-            {
-                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
-                if (response.IsFailure || !response.Received.IsEmpty)
-                {// Failure or not stream.
-                    receiveTransmission.Dispose();
-                    return new(response.Result, default);
-                }
-            }
-            catch (TimeoutException)
-            {
-                receiveTransmission.Dispose();
-                return (NetResult.Timeout, default);
-            }
-            catch
-            {
-                receiveTransmission.Dispose();
-                return (NetResult.Canceled, default);
-            }
-        }
-
-        /*if (response.Additional == 0)
-        {// No stream
-            return ((NetResult)response.DataId, default);
-        }*/
-
-        var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
-        return new(NetResult.Success, stream);
-    }
-
     /*public async Task<(NetResult Result, SendStream? Stream)> SendBlockAndStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
@@ -355,36 +241,29 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return (NetResult.Success, new SendStream(transmissionAndTimeout.Transmission, maxLength, dataId));
     }*/
 
-    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStream? Stream) SendStream(long maxLength, ulong dataId = 0)
     {
-        if (!this.IsActive)
+        var r = this.PrepareSendStream(maxLength);
+        if (r.SendTransmission is null)
         {
-            return (NetResult.Closed, default);
+            return (r.Result, default);
         }
 
-        if (!this.Agreement.CheckStreamLength(maxLength))
-        {
-            return new(NetResult.StreamLengthLimit, default);
-        }
-
-        var timeout = this.NetBase.DefaultSendTimeout;
-        var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false);
-        if (transmissionAndTimeout.Transmission is null)
-        {
-            return new(NetResult.NoTransmission, default);
-        }
-
-        var result = transmissionAndTimeout.Transmission.SendStream(maxLength, default);
-        if (result != NetResult.Success)
-        {
-            transmissionAndTimeout.Transmission.Dispose();
-            return new(result, default);
-        }
-
-        return new(NetResult.Success, new SendStreamAndReceive<TReceive>(transmissionAndTimeout.Transmission, maxLength, dataId));
+        return new(NetResult.Success, new SendStream(r.SendTransmission, maxLength, dataId));
     }
 
-    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendBlockStreamAndReceive<TSend, TReceive>(TSend data, long maxLength, ulong dataId = 0)
+    public (NetResult Result, SendStreamAndReceive<TReceive>? Stream) SendStreamAndReceive<TReceive>(long maxLength, ulong dataId = 0)
+    {
+        var r = this.PrepareSendStream(maxLength);
+        if (r.SendTransmission is null)
+        {
+            return (r.Result, default);
+        }
+
+        return new(NetResult.Success, new SendStreamAndReceive<TReceive>(r.SendTransmission, maxLength, dataId));
+    }
+
+    public async Task<(NetResult Result, SendStream? Stream)> SendBlockAndStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
@@ -398,13 +277,47 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         try
         {
-            var (result, stream) = await this.SendStreamAndReceive<TReceive>(owner.Memory.Length + maxLength, dataId).ConfigureAwait(false);
+            var (result, stream) = this.SendStream(owner.Memory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
             }
 
-            result = await stream.Send(owner.Memory);
+            result = await stream.Send(owner.Memory).ConfigureAwait(false);
+            if (result != NetResult.Success)
+            {
+                return (result, default);
+            }
+
+            return (result, stream);
+        }
+        finally
+        {
+            owner.Return();
+        }
+    }
+
+    public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendBlockAndStreamAndReceive<TSend, TReceive>(TSend data, long maxLength, ulong dataId = 0)
+    {
+        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        {
+            return (NetResult.SerializationError, default);
+        }
+
+        if (owner.Memory.Length > this.Agreement.MaxBlockSize)
+        {
+            return (NetResult.BlockSizeLimit, default);
+        }
+
+        try
+        {
+            var (result, stream) = this.SendStreamAndReceive<TReceive>(owner.Memory.Length + maxLength, dataId);
+            if (result != NetResult.Success || stream is null)
+            {
+                return (result, default);
+            }
+
+            result = await stream.Send(owner.Memory).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -518,6 +431,118 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return r.Result;
     }*/
 
+    async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> IClientConnectionInternal.RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
+    {
+        if (!this.IsActive)
+        {
+            return new(NetResult.Closed, 0, default);
+        }
+
+        NetResponse response;
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        {
+            if (transmissionAndTimeout.Transmission is null)
+            {
+                return new(NetResult.NoTransmission, 0, default);
+            }
+
+            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
+            if (result != NetResult.Success)
+            {
+                return new(result, 0, default);
+            }
+
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs))
+            {
+                if (receiveTransmission is null)
+                {
+                    return new(NetResult.NoTransmission, 0, default);
+                }
+
+                try
+                {
+                    response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
+                    if (response.IsFailure)
+                    {
+                        return new(response.Result, 0, default);
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    return new(NetResult.Timeout, 0, default);
+                }
+                catch
+                {
+                    return new(NetResult.Canceled, 0, default);
+                }
+            }
+        }
+
+        return new(NetResult.Success, response.DataId, response.Received);
+    }
+
+    async Task<(NetResult Result, ReceiveStream? Stream)> IClientConnectionInternal.RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
+    {
+        if (!this.IsActive)
+        {
+            return (NetResult.Closed, default);
+        }
+
+        NetResponse response;
+        ReceiveTransmission? receiveTransmission;
+        var timeout = this.NetBase.DefaultSendTimeout;
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        {
+            if (transmissionAndTimeout.Transmission is null)
+            {
+                return (NetResult.NoTransmission, default);
+            }
+
+            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
+            if (result != NetResult.Success)
+            {
+                return (result, default);
+            }
+
+            var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs);
+            if (receiveTransmission is null)
+            {
+                return (NetResult.NoTransmission, default);
+            }
+
+            try
+            {
+                response = await tcs.Task.WaitAsync(transmissionAndTimeout.Timeout).ConfigureAwait(false);
+                if (response.IsFailure || !response.Received.IsEmpty)
+                {// Failure or not stream.
+                    receiveTransmission.Dispose();
+                    return new(response.Result, default);
+                }
+            }
+            catch (TimeoutException)
+            {
+                receiveTransmission.Dispose();
+                return (NetResult.Timeout, default);
+            }
+            catch
+            {
+                receiveTransmission.Dispose();
+                return (NetResult.Canceled, default);
+            }
+        }
+
+        /*if (response.Additional == 0)
+        {// No stream
+            return ((NetResult)response.DataId, default);
+        }*/
+
+        var stream = new ReceiveStream(receiveTransmission, response.DataId, response.Additional);
+        return new(NetResult.Success, stream);
+    }
+
     async Task<ServiceResponse<NetResult>> IClientConnectionInternal.UpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
@@ -525,7 +550,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return new(NetResult.SerializationError, NetResult.SerializationError);
         }
 
-        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
+        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
         owner.Return();
 
         try
@@ -535,11 +560,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
                 return new(response.Result, response.Result);
             }
 
-            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
-            {
-                return new(NetResult.DeserializationError, NetResult.DeserializationError);
-            }
-
+            NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);
             if (result == NetResult.Success)
             {
                 this.Agreement.AcceptAll(a1.Target);
@@ -562,7 +583,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
-        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
+        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
         owner.Return();
 
         try
@@ -572,11 +593,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
                 return new(response.Result, response.Result);
             }
 
-            if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
-            {
-                return new(NetResult.DeserializationError, NetResult.DeserializationError);
-            }
-
+            NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);
             if (result == NetResult.Success)
             {
                 this.Agreement.EnableBidirectionalConnection = true;
@@ -675,5 +692,33 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             this.cts.Dispose();
             this.ReleaseResource();
         }
+    }
+
+    private (NetResult Result, SendTransmission? SendTransmission) PrepareSendStream(long maxLength)
+    {
+        if (!this.IsActive)
+        {
+            return (NetResult.Closed, default);
+        }
+
+        if (!this.Agreement.CheckStreamLength(maxLength))
+        {
+            return new(NetResult.StreamLengthLimit, default);
+        }
+
+        var transmission = this.TryCreateSendTransmission();
+        if (transmission is null)
+        {
+            return new(NetResult.NoTransmission, default);
+        }
+
+        var result = transmission.SendStream(maxLength, default);
+        if (result != NetResult.Success)
+        {
+            transmission.Dispose();
+            return new(result, default);
+        }
+
+        return new(NetResult.Success, transmission);
     }
 }

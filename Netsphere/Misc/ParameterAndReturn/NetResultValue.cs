@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace Netsphere;
 
 /// <summary>
@@ -17,7 +19,14 @@ public readonly struct NetResultValue<TValue>
     public NetResultValue(NetResult result)
     {
         this.Result = result;
-        this.Value = default;
+        if (typeof(TValue) == typeof(NetResult))
+        {
+            this.Value = Unsafe.As<NetResult, TValue>(ref result);
+        }
+        else
+        {
+            this.Value = default;
+        }
     }
 
     public bool IsFailure => this.Result != NetResult.Success;

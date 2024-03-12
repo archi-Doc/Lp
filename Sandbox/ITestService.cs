@@ -50,7 +50,7 @@ public class TestServiceImpl : TestService
         if (stream is not null)
         {
             await stream.Send(buffer);
-            await stream.Complete();
+            await stream.CompleteSend();
         }
 
         return default;
@@ -116,8 +116,39 @@ public class TestServiceImpl : TestService
             return default;
         }
 
-        transmissionContext.Result = NetResult.NotFound;
+        // transmissionContext.Result = NetResult.InvalidOperation;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+
+        var buffer = new byte[100];
+        var farmHash = new FarmHash();
+        farmHash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                farmHash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                break;
+            }
+        }
+
+        var hash2 = BitConverter.ToUInt64(farmHash.HashFinal());
+        if (hash == hash2)
+        {
+            transmissionContext.Result = NetResult.Success;
+        }
 
         return default;
     }
@@ -157,6 +188,12 @@ public class TestServiceImpl : TestService
             {
                 break;
             }
+        }
+
+        var hash2 = BitConverter.ToUInt64(farmHash.HashFinal());
+        if (hash == hash2)
+        {
+            transmissionContext.Result = NetResult.Success;
         }
 
         return default;

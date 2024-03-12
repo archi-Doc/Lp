@@ -133,8 +133,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                     MaxStreamLength = 100_000_000,
                 }));
 
-                await this.TestPut(service);
-                // await this.TestPut2(service);
+                // await this.TestPut(service);
+                await this.TestPut2(service);
 
                 /*var stream = await service.SendData(123_000);
                 if (stream is not null)
@@ -255,11 +255,11 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.Complete();
+            var resultValue = await sendStream.CompleteSend();
             await Console.Out.WriteLineAsync(resultValue.ToString());
         }
-
     }
+
     private async Task TestPut2(TestService service)
     {
         for (var i = 1; i < this.dataLength.Length; i++)
@@ -272,7 +272,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.CompleteAndReceive();
+            await Console.Out.WriteLineAsync(result.ToString());
+            var resultValue = await sendStream.CompleteSendAndReceive();
             await Console.Out.WriteLineAsync(resultValue.ToString());
         }
     }
@@ -288,7 +289,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         if (r.Stream is not null)
         {
             var result2 = await r.Stream.Send(buffer);
-            await r.Stream.Complete();
+            await r.Stream.CompleteSend();
         }
     }*/
 
@@ -298,12 +299,12 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         RandomVault.Pseudo.NextBytes(buffer);
         var hash = FarmHash.Hash64(buffer);
 
-        var r = await connection.SendStreamAndReceive<ulong>(size, hash);
+        var r = connection.SendStreamAndReceive<ulong>(size, hash);
         Debug.Assert(r.Result == NetResult.Success);
         if (r.Stream is not null)
         {
             var r2 = await r.Stream.Send(buffer);
-            var r3 = await r.Stream.CompleteAndReceive();
+            var r3 = await r.Stream.CompleteSendAndReceive();
             Debug.Assert(r3.Value == hash);
         }
     }
@@ -384,7 +385,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         var hash = FarmHash.Hash64(buffer);
 
         var r2 = await stream.Send(buffer);
-        var r3 = await stream.CompleteAndReceive();
+        var r3 = await stream.CompleteSendAndReceive();
         Debug.Assert(r3.Value == hash);
     }
 
@@ -395,7 +396,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         var hash = FarmHash.Hash64(buffer);
 
         var r2 = await stream.Send(buffer);
-        var r3 = await stream.Complete();
+        var r3 = await stream.CompleteSend();
     }
 
     public NetControl NetControl { get; set; }

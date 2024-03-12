@@ -11,38 +11,16 @@ public class SendStream : SendStreamBase
     {
     }
 
-    public async Task<NetResult> Complete(CancellationToken cancellationToken = default)
+    public async Task<NetResult> CompleteSend(CancellationToken cancellationToken = default)
     {
-        if (this.IsComplete)
+        var resultAndValue = await this.InternalComplete<NetResult>(cancellationToken).ConfigureAwait(false);
+        if (resultAndValue.IsFailure)
         {
-            return NetResult.Completed;
+            return resultAndValue.Result;
         }
-
-        if (this.SendTransmission.Mode != NetTransmissionMode.StreamCompleted)
+        else
         {
-            await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken);
+            return resultAndValue.Value;
         }
-
-        var result = NetResult.Success;
-        if (this.SendTransmission.SentTcs is { } tcs)
-        {
-            try
-            {
-                result = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (TimeoutException)
-            {
-                return NetResult.Timeout;
-            }
-            catch
-            {
-                return NetResult.Canceled;
-            }
-        }
-
-        this.SendTransmission.Dispose();
-        this.IsComplete = true;
-
-        return result;
     }
 }

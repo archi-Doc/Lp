@@ -120,7 +120,7 @@ public class ServerConnectionContext
         var transmissionContext = new TransmissionContext(this.ServerConnection, receiveTransmission.TransmissionId, 1, dataId, default);
         if (!transmissionContext.CreateReceiveStream(receiveTransmission, maxStreamLength))
         {
-            transmissionContext.Return();
+            transmissionContext.ReturnAndDisposeStream();
             receiveTransmission.Dispose();
             return;
         }
@@ -136,6 +136,7 @@ public class ServerConnectionContext
                 {
                     if (!transmissionContext.IsSent)
                     {
+                        transmissionContext.CheckReceiveStream();
                         var result = transmissionContext.Result;
                         if (result == NetResult.Success)
                         {// Success
@@ -157,7 +158,7 @@ public class ServerConnectionContext
             }
             finally
             {
-                transmissionContext.Return();
+                transmissionContext.ReturnAndDisposeStream();
             }
         });
     }
@@ -181,7 +182,7 @@ public class ServerConnectionContext
             }
             else
             {
-                transmissionContext.Return();
+                transmissionContext.ReturnAndDisposeStream();
                 return;
             }
         }
@@ -218,6 +219,7 @@ public class ServerConnectionContext
                 }
                 else if (!transmissionContext.IsSent)
                 {
+                    transmissionContext.CheckReceiveStream();
                     var result = transmissionContext.Result;
                     if (result == NetResult.Success)
                     {// Success
@@ -239,14 +241,14 @@ public class ServerConnectionContext
         }
         finally
         {
-            transmissionContext.Return();
+            transmissionContext.ReturnAndDisposeStream();
         }
 
         return;
 
 SendNoNetService:
         transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
-        transmissionContext.Return();
+        transmissionContext.ReturnAndDisposeStream();
         return;
     }
 

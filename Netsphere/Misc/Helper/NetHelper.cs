@@ -28,6 +28,19 @@ public static class NetHelper
         => arrayPool.Return(buffer);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void DeserializeNetResult(ulong dataId, ReadOnlySpan<byte> span, out NetResult value)
+    {
+        if (span.Length == 1)
+        {
+            value = (NetResult)span[0];
+        }
+        else
+        {
+            value = (NetResult)dataId;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryDeserializeNetResult(ReadOnlySpan<byte> span, out NetResult value)
     {
         if (span.Length == 1)

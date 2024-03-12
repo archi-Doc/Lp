@@ -38,21 +38,17 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
-    public ReceiveStream? GetReceiveStream()
-        => this.receiveStream;
+    public ReceiveStream GetReceiveStream()
+        => this.receiveStream ?? throw new InvalidOperationException();
 
     private ReceiveStream? receiveStream;
 
     #endregion
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Return()
     {
         this.Owner = this.Owner.Return();
-        if (this.receiveStream is not null)
-        {
-            this.receiveStream.Abort();
-            this.receiveStream = default;
-        }
     }
 
     public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
@@ -90,7 +86,7 @@ public sealed class TransmissionContext
     }
 
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
-    {
+    {/
         if (!this.ServerConnection.IsActive)
         {
             return (NetResult.Canceled, default);
@@ -255,16 +251,23 @@ public sealed class TransmissionContext
         return true;
     }
 
-    /*internal NetResult ForceSendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void CheckReceiveStream()
     {
-        var transmission = this.Connection.TryCreateSendTransmission(this.TransmissionId);
-        if (transmission is null)
-        {
-            return NetResult.NoTransmission;
+        if (this.receiveStream is { } stream &&
+            stream.ReceiveTransmission.Mode != NetTransmissionMode.Disposed)
+        {// Not completed
+            this.Result = NetResult.NotReceived;
         }
+    }
 
-        this.IsSent = true;
-        var result = transmission.SendBlock(0, dataId, toBeShared, default);
-        return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
-    }*/
+    internal void ReturnAndDisposeStream()
+    {
+        this.Return();
+        if (this.receiveStream is not null)
+        {
+            this.receiveStream.Dispose();
+            this.receiveStream = default;
+        }
+    }
 }

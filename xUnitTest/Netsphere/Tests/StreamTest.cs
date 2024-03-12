@@ -48,12 +48,12 @@ public class StreamTest
                 return;
             }
 
-            /*await this.TestPingPing(service);
-            await this.TestGetHash(service);d
+            // await this.TestPingPing(service);
+            // await this.TestGetHash(service);
             await this.TestGet(service);
-            await this.TestGet2(service);
-            await this.TestPutAndGetHash(service);*/
-            await this.TestPut2(service);
+            // await this.TestGet2(service);
+            // await this.TestPutAndGetHash(service);
+            // await this.TestPut2(service);
         }
     }
 
@@ -161,7 +161,7 @@ public class StreamTest
     private async Task TestPutAndGetHash(IStreamService service)
     {
         var buffer = new byte[12_345];
-        for (var i = 0; i < this.dataLength.Length; i++)
+        for (var i = 1; i < this.dataLength.Length; i++)
         {
             var stream = await service.PutAndGetHash(this.dataLength[i]);
             stream.IsNotNull();
@@ -181,14 +181,14 @@ public class StreamTest
                 r.Is(NetResult.Success);
             }
 
-            var r2 = await stream.CompleteAndReceive();
+            var r2 = await stream.CompleteSendAndReceive();
             r2.Value.Is(FarmHash.Hash64(this.dataArray[i]));
         }
     }
 
     private async Task TestPut2(IStreamService service)
     {
-        for (var i = 1; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
             var sendStream = await service.Put2(hash, this.dataLength[i]);
@@ -199,7 +199,10 @@ public class StreamTest
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.CompleteAndReceive();
+            result.Is(NetResult.Success);
+            var resultValue = await sendStream.CompleteSendAndReceive();
+            resultValue.Result.Is(NetResult.Success);
+            resultValue.Value.Is(NetResult.Success);
         }
     }
 }

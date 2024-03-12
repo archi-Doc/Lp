@@ -464,7 +464,7 @@ Abort:
         toBeMoved = default;
     }
 
-    internal void ProcessAbort()
+    internal void ProcessDispose()
     {
         if (!this.IsDisposed)
         {

@@ -94,12 +94,13 @@ public class ServiceMethod
             serviceMethod.ParameterType = NameToType(method.Method_Parameters[0]);
         }
 
-        if (serviceMethod.ReturnType == Type.SendStream)
+        /*if (serviceMethod.ReturnType == Type.SendStream)
         {
             method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamRemoved, method.Location);
             return null;
         }
-        else if (serviceMethod.ReturnType == Type.SendStreamAndReceive)
+        else */if (serviceMethod.ReturnType == Type.SendStream ||
+            serviceMethod.ReturnType == Type.SendStreamAndReceive)
         {
             if (/*method.Method_Parameters.Length > 1 || */method.Method_Parameters.Length == 0)
             {

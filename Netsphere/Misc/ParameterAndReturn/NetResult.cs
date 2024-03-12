@@ -22,6 +22,7 @@ public enum NetResult : byte
     NoNetwork,
     NoNetService,
     NoTransmission,
+    NotReceived,
     NotAuthorized,
     NotFound,
 }
