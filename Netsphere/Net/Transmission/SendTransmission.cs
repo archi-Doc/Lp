@@ -312,10 +312,9 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal async Task<NetResult> ProcessSend(SendStreamBase stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+    internal async Task<NetResult> ProcessSend(SendStreamBase stream, ReadOnlyMemory<byte> buffer, bool complete, CancellationToken cancellationToken)
     {
         var addSend = false;
-        var originalLength = buffer.Length;
         while (true)
         {
             var delay = NetConstants.InitialSendStreamDelayMilliseconds;
@@ -397,13 +396,18 @@ Loop:
                     this.GeneSerialMax++;
                     stream.RemainingLength -= size;
                     stream.SentLength += size;
-                    if (originalLength == 0 || stream.RemainingLength == 0)
+                    if (stream.RemainingLength == 0)
                     {// Complete
                         this.Mode = NetTransmissionMode.StreamCompleted;
                         goto Exit;
                     }
                     else if (buffer.Length == 0)
                     {// Exit the loop and proceed to transmission because the buffer is empty.
+                        if (complete)
+                        {// Complete
+                            this.Mode = NetTransmissionMode.StreamCompleted;
+                        }
+
                         goto Exit;
                     }
                 }

@@ -188,7 +188,7 @@ public class StreamTest
 
     private async Task TestPut2(IStreamService service)
     {
-        for (var i = 1; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
             var sendStream = await service.Put2(hash, this.dataLength[i]);

@@ -33,7 +33,7 @@ public abstract class SendStreamBase
         }
         else
         {
-            return this.SendTransmission.ProcessSend(this, buffer, cancellationToken);
+            return this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken);
         }
     }
 
@@ -69,9 +69,11 @@ public abstract class SendStreamBase
             return new(NetResult.Completed);
         }
 
-        if (this.SendTransmission.Mode != NetTransmissionMode.StreamCompleted)
+        var mode = this.SendTransmission.Mode;
+        if (mode != NetTransmissionMode.StreamCompleted &&
+            mode != NetTransmissionMode.Disposed)
         {
-            var result = await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+            var result = await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, true, cancellationToken).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return new(result);
