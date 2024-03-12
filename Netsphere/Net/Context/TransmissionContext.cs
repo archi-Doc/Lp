@@ -38,8 +38,8 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
-    public ReceiveStream? GetReceiveStream()
-        => this.receiveStream;
+    public ReceiveStream GetReceiveStream()
+        => this.receiveStream ?? throw new InvalidOperationException();
 
     private ReceiveStream? receiveStream;
 
@@ -86,7 +86,7 @@ public sealed class TransmissionContext
     }
 
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
-    {
+    {/
         if (!this.ServerConnection.IsActive)
         {
             return (NetResult.Canceled, default);
