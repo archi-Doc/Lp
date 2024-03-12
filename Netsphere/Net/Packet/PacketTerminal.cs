@@ -133,7 +133,7 @@ public sealed partial class PacketTerminal
             }
             catch
             {
-                return new(NetResult.DeserializationError, default, 0);
+                return new(NetResult.DeserializationFailed, default, 0);
             }
             finally
             {

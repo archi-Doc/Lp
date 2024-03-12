@@ -41,7 +41,7 @@ public abstract class SendStreamBase
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
-            return NetResult.SerializationError;
+            return NetResult.SerializationFailed;
         }
 
         if (owner.Memory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
@@ -118,7 +118,7 @@ public abstract class SendStreamBase
             if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
             {
                 response.Return();
-                return new(NetResult.DeserializationError);
+                return new(NetResult.DeserializationFailed);
             }
 
             response.Return();

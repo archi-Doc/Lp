@@ -240,7 +240,7 @@ internal sealed partial class SendTransmission : IDisposable
                 }
                 else
                 {
-                    return NetResult.UnknownException;
+                    return NetResult.UnknownError;
                 }
             }
             else
@@ -285,7 +285,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTcs)
+    internal NetResult SendStream(long maxLength)
     {
         lock (this.syncObject)
         {
@@ -298,7 +298,7 @@ internal sealed partial class SendTransmission : IDisposable
             this.Connection.UpdateLastEventMics();
             this.Mode = NetTransmissionMode.Stream;
             this.Connection.CreateCongestionControl();
-            this.sentTcs = sentTcs;
+            // this.sentTcs = sentTcs;
 
             this.GeneSerialMax = 0;
             this.genes = new();

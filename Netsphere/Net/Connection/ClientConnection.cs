@@ -72,7 +72,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         if (!NetHelper.TrySerialize(data, out var owner))
         {
-            return NetResult.SerializationError;
+            return NetResult.SerializationFailed;
         }
 
         var timeout = this.NetBase.DefaultSendTimeout;
@@ -119,7 +119,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         dataId = dataId != 0 ? dataId : NetHelper.GetDataId<TSend, TReceive>();
         if (!NetHelper.TrySerialize(data, out var owner))
         {
-            return new(NetResult.SerializationError);
+            return new(NetResult.SerializationFailed);
         }
 
         NetResponse response;
@@ -169,7 +169,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
         {
             response.Return();
-            return new(NetResult.DeserializationError);
+            return new(NetResult.DeserializationFailed);
         }
 
         response.Return();
@@ -267,7 +267,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
-            return (NetResult.SerializationError, default);
+            return (NetResult.SerializationFailed, default);
         }
 
         if (owner.Memory.Length > this.Agreement.MaxBlockSize)
@@ -301,7 +301,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
-            return (NetResult.SerializationError, default);
+            return (NetResult.SerializationFailed, default);
         }
 
         if (owner.Memory.Length > this.Agreement.MaxBlockSize)
@@ -340,7 +340,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         if (!NetHelper.TrySerialize(packet, out var owner))
         {
-            return (NetResult.SerializationError, default);
+            return (NetResult.SerializationFailed, default);
         }
 
         NetResponse response;
@@ -547,7 +547,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return new(NetResult.SerializationError, NetResult.SerializationError);
+            return new(NetResult.SerializationFailed, NetResult.SerializationFailed);
         }
 
         var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
@@ -579,7 +579,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return new(NetResult.SerializationError, NetResult.SerializationError);
+            return new(NetResult.SerializationFailed, NetResult.SerializationFailed);
         }
 
         this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
@@ -712,7 +712,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return new(NetResult.NoTransmission, default);
         }
 
-        var result = transmission.SendStream(maxLength, default);
+        var result = transmission.SendStream(maxLength);
         if (result != NetResult.Success)
         {
             transmission.Dispose();

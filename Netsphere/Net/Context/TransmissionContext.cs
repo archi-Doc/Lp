@@ -69,7 +69,7 @@ public sealed class TransmissionContext
 
         if (!NetHelper.TrySerialize(data, out var owner))
         {
-            return NetResult.SerializationError;
+            return NetResult.SerializationFailed;
         }
 
         var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
@@ -86,7 +86,7 @@ public sealed class TransmissionContext
     }
 
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
-    {/
+    {
         if (!this.ServerConnection.IsActive)
         {
             return (NetResult.Canceled, default);
@@ -106,9 +106,9 @@ public sealed class TransmissionContext
             return (NetResult.NoTransmission, default);
         }
 
-        var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        // var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         this.IsSent = true;
-        var result = transmission.SendStream(maxLength, tcs);
+        var result = transmission.SendStream(maxLength);
         if (result != NetResult.Success)
         {
             transmission.Dispose();
