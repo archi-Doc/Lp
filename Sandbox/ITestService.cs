@@ -118,6 +118,7 @@ public class TestServiceImpl : TestService
 
         // transmissionContext.Result = NetResult.InvalidOperation;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+        // return default;
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();
@@ -148,6 +149,10 @@ public class TestServiceImpl : TestService
         if (hash == hash2)
         {
             transmissionContext.Result = NetResult.Success;
+        }
+        else
+        {
+            transmissionContext.Result = NetResult.InvalidData;
         }
 
         return default;

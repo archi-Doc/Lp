@@ -133,8 +133,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                     MaxStreamLength = 100_000_000,
                 }));
 
-                // await this.TestPut(service);
-                await this.TestPut2(service);
+                await this.TestPut(service);
+                // await this.TestPut2(service);
 
                 /*var stream = await service.SendData(123_000);
                 if (stream is not null)
@@ -256,13 +256,13 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
             var result = await sendStream.Send(this.dataArray[i]);
             var resultValue = await sendStream.CompleteSend();
-            await Console.Out.WriteLineAsync(resultValue.ToString());
+            await Console.Out.WriteLineAsync($"{result.ToString()}, {resultValue.ToString()}");
         }
     }
 
     private async Task TestPut2(TestService service)
     {
-        for (var i = 1; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
             var sendStream = await service.Put2(hash, this.dataLength[i]);

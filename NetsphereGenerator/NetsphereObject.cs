@@ -551,7 +551,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName, 0)}, out var owner))"))
                     {
-                        AppendReturn("NetResult.SerializationError");
+                        AppendReturn("NetResult.SerializationFailed");
                     }
                 }
 
@@ -599,7 +599,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     {
                         using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
                         {
-                            AppendReturn("NetResult.DeserializationError");
+                            AppendReturn("NetResult.DeserializationFailed");
                         }
 
                         ssb.AppendLine();
@@ -818,7 +818,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(context.Owner, out var value))"))
             {
-                ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
                 // ssb.AppendLine("context.Return();"); -> try-finally
                 ssb.AppendLine("return;");
             }
@@ -847,7 +847,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {
             using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.Owner, out var value))"))
             {
-                ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
                 // ssb.AppendLine("context.Return();"); -> try-finally
                 ssb.AppendLine("return;");
             }
@@ -882,7 +882,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 ssb.AppendLine($"var rr = await context.GetReceiveStream()!.ReceiveBlock<{method.GetParameterTypes(1)}>().ConfigureAwait(false);");
                 using (var scopeIf = ssb.ScopeBrace("if (rr.IsFailure)"))
                 {
-                    ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                    ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
                     // ssb.AppendLine("context.Return();"); -> try-finally
                     ssb.AppendLine("return;");
                 }
@@ -959,7 +959,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             using (var scopeElse = ssb.ScopeBrace("else"))
             {
                 ssb.AppendLine("context.Owner = default;");
-                ssb.AppendLine("context.Result = NetResult.SerializationError;");
+                ssb.AppendLine("context.Result = NetResult.SerializationFailed;");
             }
         }
 

@@ -38,9 +38,6 @@ public sealed class TransmissionContext
 
     public bool IsSent { get; private set; }
 
-    public ReceiveStream GetReceiveStream()
-        => this.receiveStream ?? throw new InvalidOperationException();
-
     private ReceiveStream? receiveStream;
 
     private SendStream? sendStream;
@@ -87,6 +84,9 @@ public sealed class TransmissionContext
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
+    public ReceiveStream GetReceiveStream()
+        => this.receiveStream ?? throw new InvalidOperationException();
+
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
     {
         if (this.sendStream is not null)
@@ -118,7 +118,6 @@ public sealed class TransmissionContext
             return (NetResult.NoTransmission, default);
         }
 
-        // var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         this.IsSent = true;
         var result = transmission.SendStream(maxLength);
         if (result != NetResult.Success)
@@ -127,14 +126,15 @@ public sealed class TransmissionContext
             return (result, default);
         }
 
-        return (NetResult.Success, new SendStream(transmission, maxLength, dataId));/
+        this.sendStream = new SendStream(transmission, maxLength, dataId);
+        return (NetResult.Success, this.sendStream);
     }
 
     /*public async NetTask<NetResult> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return NetResult.SerializationError;
+            return NetResult.SerializationFailed;
         }
 
         var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
@@ -149,7 +149,7 @@ public sealed class TransmissionContext
 
             if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
             {
-                return NetResult.DeserializationError;
+                return NetResult.DeserializationFailed;
             }
 
             if (result == NetResult.Success)
@@ -170,7 +170,7 @@ public sealed class TransmissionContext
     {
         if (!NetHelper.TrySerialize(a1, out var owner))
         {
-            return NetResult.SerializationError;
+            return NetResult.SerializationFailed;
         }
 
         this.PrepareBidirectionally(); // Create the ServerConnection in advance, as packets may not arrive in order.
@@ -186,7 +186,7 @@ public sealed class TransmissionContext
 
             if (!NetHelper.TryDeserializeNetResult(response.Value.Memory.Span, out var result))
             {
-                return NetResult.DeserializationError;
+                return NetResult.DeserializationFailed;
             }
 
             if (result == NetResult.Success)

@@ -87,7 +87,7 @@ public abstract class SendStreamBase
             NetResponse response;
             var connection = this.SendTransmission.Connection;
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))/
+            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
             {
                 if (receiveTransmission is null)
                 {

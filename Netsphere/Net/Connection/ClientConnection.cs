@@ -180,7 +180,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
-            return (NetResult.SerializationError, default);
+            return (NetResult.SerializationFailed, default);
         }
 
         if (owner.Memory.Length > this.Agreement.MaxBlockSize)

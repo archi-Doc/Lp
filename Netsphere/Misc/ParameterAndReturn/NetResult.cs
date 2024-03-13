@@ -8,11 +8,12 @@ namespace Netsphere;
 public enum NetResult : byte
 {
     Success,
+    Completed,
     UnknownError,
     Timeout,
     Canceled,
     Closed,
-    Completed,
+    InvalidData,
     InvalidOperation,
     SerializationFailed,
     DeserializationFailed,
