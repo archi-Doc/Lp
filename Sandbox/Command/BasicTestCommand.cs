@@ -133,8 +133,9 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                     MaxStreamLength = 100_000_000,
                 }));
 
-                await this.TestPut(service);
+                // await this.TestPut(service);
                 // await this.TestPut2(service);
+                await this.TestGet(service);
 
                 /*var stream = await service.SendData(123_000);
                 if (stream is not null)
@@ -275,6 +276,42 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             await Console.Out.WriteLineAsync(result.ToString());
             var resultValue = await sendStream.CompleteSendAndReceive();
             await Console.Out.WriteLineAsync(resultValue.ToString());
+        }
+    }
+
+    private async Task TestGet(TestService service)
+    {
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            var stream = await service.Get("test", this.dataLength[i]);
+            if (stream is null)
+            {
+                break;
+            }
+
+            var buffer = new byte[this.dataLength[i]];
+            var memory = buffer.AsMemory();
+            var written = 0;
+            while (true)
+            {
+                var r = await stream.Receive(memory);
+                if (r.Result == NetResult.Success)
+                {
+                    memory = memory.Slice(r.Written);
+                    written += r.Written;
+                }
+                else if (r.Result == NetResult.Completed)
+                {
+                    written += r.Written;
+                    var result = buffer.AsSpan(0, written).SequenceEqual(this.dataArray[i]);
+                    Console.WriteLine(result.ToString());
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine(r.Result.ToString());
+                }
+            }
         }
     }
 
