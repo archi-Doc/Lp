@@ -86,6 +86,11 @@ public abstract class SendStreamBase
 
             NetResponse response;
             var connection = this.SendTransmission.Connection;
+            if (connection.IsServer)
+            {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already used.
+                return new(NetResult.Success);
+            }
+
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
             using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
             {

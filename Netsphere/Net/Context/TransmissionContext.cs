@@ -112,21 +112,21 @@ public sealed class TransmissionContext
             return (NetResult.InvalidOperation, default);
         }
 
-        var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
-        if (transmission is null)
+        var sendTransmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
+        if (sendTransmission is null)
         {
             return (NetResult.NoTransmission, default);
         }
 
         this.IsSent = true;
-        var result = transmission.SendStream(maxLength);
+        var result = sendTransmission.SendStream(maxLength);
         if (result != NetResult.Success)
         {
-            transmission.Dispose();
+            sendTransmission.Dispose();
             return (result, default);
         }
 
-        this.sendStream = new SendStream(transmission, maxLength, dataId);
+        this.sendStream = new SendStream(sendTransmission, maxLength, dataId);
         return (NetResult.Success, this.sendStream);
     }
 

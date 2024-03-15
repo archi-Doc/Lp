@@ -466,6 +466,52 @@ Wait:
         }
     }
 
+    /*internal ReceiveTransmission? TryCreateOrReuseReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
+    {
+        transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
+
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            // this.CleanReceiveTransmission();
+
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
+            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
+            {
+                if (receiveTransmission.Mode == NetTransmissionMode.Initial)
+                {
+                    receiveTransmission.Reset(receivedTcs);
+                    return receiveTransmission;
+                }
+                else if (receiveTransmission.Mode == NetTransmissionMode.Disposed)
+                {
+                    receiveTransmission.ReceivedOrDisposedMics = Mics.FastSystem;
+                    if (receiveTransmission.ReceivedOrDisposedNode is { } node)
+                    {
+                        node.List.Remove(node);
+                    }
+
+                    receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+                    receiveTransmission.Reset(receivedTcs);
+                    return receiveTransmission;
+                }
+                else
+                {
+                    return default;
+                }
+            }
+
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
+            receiveTransmission.ReceivedOrDisposedMics = Mics.FastSystem;
+            receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+            receiveTransmission.Goshujin = this.receiveTransmissions;
+            return receiveTransmission;
+        }
+    }*/
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool RemoveTransmission(SendTransmission transmission)
     {
