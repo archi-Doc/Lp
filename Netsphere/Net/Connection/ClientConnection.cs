@@ -510,6 +510,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
             if (result != NetResult.Success)
             {
+                receiveTransmission.Dispose();
                 return (result, default);
             }
 

@@ -120,7 +120,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 var success = 0;
 
                 var service = connection.GetService<TestService>();
-                var pingpong = await service.Pingpong([1, 2, 3,]);
+                // var pingpong = await service.Pingpong([1, 2, 3,]);
 
                 /*var response = await service.ReceiveData("test", 123_000).ResponseAsync;
                 if (response.Value is not null)

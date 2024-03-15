@@ -88,6 +88,7 @@ public abstract class SendStreamBase
             var connection = this.SendTransmission.Connection;
             if (connection.IsServer)
             {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already used.
+                //await Task.Delay(100);
                 return new(NetResult.Success);
             }
 
