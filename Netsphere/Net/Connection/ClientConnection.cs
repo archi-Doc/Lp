@@ -500,17 +500,17 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
                 return (NetResult.NoTransmission, default);
             }
 
-            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
-            if (result != NetResult.Success)
-            {
-                return (result, default);
-            }
-
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
             receiveTransmission = this.TryCreateReceiveTransmission(transmissionAndTimeout.Transmission.TransmissionId, tcs);
             if (receiveTransmission is null)
             {
                 return (NetResult.NoTransmission, default);
+            }
+
+            var result = transmissionAndTimeout.Transmission.SendBlock(1, dataId, data, default);
+            if (result != NetResult.Success)
+            {
+                return (result, default);
             }
 
             try

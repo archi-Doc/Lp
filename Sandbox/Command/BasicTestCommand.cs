@@ -88,7 +88,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.Responders.Register(TestStreamResponder.Instance);
         this.NetControl.Services.Register<TestService>();
 
-        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
+        // this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -281,7 +281,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
     private async Task TestGet(TestService service)
     {
-        for (var i = 0; i < this.dataLength.Length; i++)
+        // for (var i = 0; i < this.dataLength.Length; i++)
+        for (var i = 10; i <= 10; i++)
         {
             var stream = await service.Get("test", this.dataLength[i]);
             if (stream is null)
@@ -310,6 +311,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 else
                 {
                     Console.WriteLine(r.Result.ToString());
+                    break;
                 }
             }
         }
