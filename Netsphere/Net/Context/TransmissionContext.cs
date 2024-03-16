@@ -276,10 +276,17 @@ public sealed class TransmissionContext
     internal void ReturnAndDisposeStream()
     {
         this.Return();
+
         if (this.receiveStream is not null)
         {
             this.receiveStream.Dispose();
             this.receiveStream = default;
+        }
+
+        if (this.sendStream is not null)
+        {
+            this.sendStream.Dispose();
+            this.sendStream = default;
         }
     }
 }

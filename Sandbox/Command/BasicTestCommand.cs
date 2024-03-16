@@ -281,8 +281,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
     private async Task TestGet(TestService service)
     {
-        // for (var i = 0; i < this.dataLength.Length; i++)
-        for (var i = 10; i <= 10; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var stream = await service.Get("test", this.dataLength[i]);
             if (stream is null)
