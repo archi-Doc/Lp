@@ -863,7 +863,7 @@ Wait:
                     return;
                 }
 
-                this.CleanReceiveTransmission();//tempcode
+                this.CleanReceiveTransmission();
 
                 // New transmission
                 if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)
