@@ -30,9 +30,10 @@ internal sealed partial class SendTransmission : IDisposable
      */
 
     public SendTransmission(Connection connection, uint transmissionId)
-    {
+    {// lock (Connection.sendTransmissions.SyncObject)
         this.Connection = connection;
         this.TransmissionId = transmissionId;
+        this.AckedNode = this.Connection.AddAckedNode(this);
     }
 
     #region FieldAndProperty
@@ -56,8 +57,13 @@ internal sealed partial class SendTransmission : IDisposable
         => this.sentTcs;
 
 #pragma warning disable SA1401 // Fields should be private
+
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
     internal int MaxReceivePosition;
+
+    internal UnorderedLinkedList<SendTransmission>.Node AckedNode; // lock (Connection.sendTransmissions.SyncObject)
+    internal long AckedMics;
+
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();

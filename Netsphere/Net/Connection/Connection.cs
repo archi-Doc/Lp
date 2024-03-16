@@ -177,6 +177,7 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
+    private UnorderedLinkedList<SendTransmission> sendAckedList = new();
 
     // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
@@ -199,6 +200,19 @@ public abstract class Connection : IDisposable
     internal int Taichi = 1;
 
     #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateAckedNode(SendTransmission sendTransmission)
+    {// lock (Connection.sendTransmissions.SyncObject)
+        sendTransmission.AckedMics = Mics.FastSystem;
+        this.sendAckedList.MoveToLast(sendTransmission.AckedNode);
+    }
+
+    internal UnorderedLinkedList<SendTransmission>.Node AddAckedNode(SendTransmission sendTransmission)
+    {// lock (Connection.sendTransmissions.SyncObject)
+        sendTransmission.AckedMics = Mics.FastSystem;
+        return this.sendAckedList.AddLast(sendTransmission);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ChangeStateInternal(State state)
@@ -752,6 +766,7 @@ Wait:
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
+                        this.UpdateAckedNode(t);
                         this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckRama();
                     }
