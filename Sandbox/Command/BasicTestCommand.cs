@@ -246,7 +246,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
     private async Task TestPut(TestService service)
     {
-        for (var i = 1; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
             var sendStream = await service.Put(hash, this.dataLength[i]);

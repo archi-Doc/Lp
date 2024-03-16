@@ -162,28 +162,12 @@ internal sealed partial class SendTransmission : IDisposable
                         {
                             if (!gene.Send_NotThreadSafe(netSender, 0))
                             {// Cannot send
-                                break; // ProcessSendResult.Complete;
+                                return ProcessSendResult.Complete;
                             }
 
-                            if (this.sendGeneSerial >= this.GeneSerialMax)
-                            {
-                                break; // ProcessSendResult.Complete;
-                            }
-                            else
-                            {
-                                return ProcessSendResult.Remaining;
-                            }
-
-                            // return this.sendGeneSerial >= this.GeneSerialMax ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
+                            return this.sendGeneSerial >= this.GeneSerialMax ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
                         }
                     }
-                }
-
-                if (this.Mode == NetTransmissionMode.StreamCompleted &&
-                    this.sentTcs is { } sentTcs)
-                {
-                    sentTcs.SetResult(NetResult.Success);
-                    this.sentTcs = default;
                 }
 
                 return ProcessSendResult.Complete;
