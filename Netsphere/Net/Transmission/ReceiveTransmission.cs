@@ -113,6 +113,12 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
+    internal void Reset(TaskCompletionSource<NetResponse>? receivedTcs)
+    {
+        this.Mode = NetTransmissionMode.Initial;
+        this.receivedTcs = receivedTcs;
+    }
+
     internal void SetState_Receiving(int totalGene)
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
         if (totalGene <= NetHelper.RamaGenes)

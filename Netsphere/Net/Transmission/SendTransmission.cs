@@ -30,9 +30,10 @@ internal sealed partial class SendTransmission : IDisposable
      */
 
     public SendTransmission(Connection connection, uint transmissionId)
-    {
+    {// lock (Connection.sendTransmissions.SyncObject)
         this.Connection = connection;
         this.TransmissionId = transmissionId;
+        this.AckedNode = this.Connection.AddAckedNode(this);
     }
 
     #region FieldAndProperty
@@ -56,8 +57,13 @@ internal sealed partial class SendTransmission : IDisposable
         => this.sentTcs;
 
 #pragma warning disable SA1401 // Fields should be private
+
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
     internal int MaxReceivePosition;
+
+    internal UnorderedLinkedList<SendTransmission>.Node AckedNode; // lock (Connection.sendTransmissions.SyncObject)
+    internal long AckedMics;
+
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly object syncObject = new();
@@ -74,6 +80,11 @@ internal sealed partial class SendTransmission : IDisposable
 
     public void Dispose()
     {
+        if (this.IsDisposed)
+        {
+            return;
+        }
+
         this.Connection.RemoveTransmission(this);
         this.DisposeTransmission();
     }
@@ -240,7 +251,7 @@ internal sealed partial class SendTransmission : IDisposable
                 }
                 else
                 {
-                    return NetResult.UnknownException;
+                    return NetResult.UnknownError;
                 }
             }
             else
@@ -285,7 +296,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal NetResult SendStream(long maxLength, TaskCompletionSource<NetResult>? sentTcs)
+    internal NetResult SendStream(long maxLength)
     {
         lock (this.syncObject)
         {
@@ -298,7 +309,7 @@ internal sealed partial class SendTransmission : IDisposable
             this.Connection.UpdateLastEventMics();
             this.Mode = NetTransmissionMode.Stream;
             this.Connection.CreateCongestionControl();
-            this.sentTcs = sentTcs;
+            this.sentTcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             this.GeneSerialMax = 0;
             this.genes = new();
@@ -455,7 +466,7 @@ Exit:
     }
 
     internal void ProcessReceive_AckRamaInternal()
-    {
+    {// lock (this.syncObject)
         this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama {this.GeneSerialMax}");
 
         if (this.gene0 is not null)

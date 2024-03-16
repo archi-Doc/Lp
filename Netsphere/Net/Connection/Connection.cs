@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -176,6 +177,7 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
+    private UnorderedLinkedList<SendTransmission> sendAckedList = new();
 
     // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
@@ -198,6 +200,19 @@ public abstract class Connection : IDisposable
     internal int Taichi = 1;
 
     #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateAckedNode(SendTransmission sendTransmission)
+    {// lock (Connection.sendTransmissions.SyncObject)
+        sendTransmission.AckedMics = Mics.FastSystem;
+        this.sendAckedList.MoveToLast(sendTransmission.AckedNode);
+    }
+
+    internal UnorderedLinkedList<SendTransmission>.Node AddAckedNode(SendTransmission sendTransmission)
+    {// lock (Connection.sendTransmissions.SyncObject)
+        sendTransmission.AckedMics = Mics.FastSystem;
+        return this.sendAckedList.AddLast(sendTransmission);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ChangeStateInternal(State state)
@@ -454,7 +469,7 @@ Wait:
             }
 
             if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
-            {//
+            {
                 return default;
             }
 
@@ -465,6 +480,52 @@ Wait:
             return receiveTransmission;
         }
     }
+
+    /*internal ReceiveTransmission? TryCreateOrReuseReceiveTransmission(uint transmissionId, TaskCompletionSource<NetResponse>? receivedTcs)
+    {
+        transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
+
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            // this.CleanReceiveTransmission();
+
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
+            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var receiveTransmission))
+            {
+                if (receiveTransmission.Mode == NetTransmissionMode.Initial)
+                {
+                    receiveTransmission.Reset(receivedTcs);
+                    return receiveTransmission;
+                }
+                else if (receiveTransmission.Mode == NetTransmissionMode.Disposed)
+                {
+                    receiveTransmission.ReceivedOrDisposedMics = Mics.FastSystem;
+                    if (receiveTransmission.ReceivedOrDisposedNode is { } node)
+                    {
+                        node.List.Remove(node);
+                    }
+
+                    receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+                    receiveTransmission.Reset(receivedTcs);
+                    return receiveTransmission;
+                }
+                else
+                {
+                    return default;
+                }
+            }
+
+            receiveTransmission = new ReceiveTransmission(this, transmissionId, receivedTcs);
+            receiveTransmission.ReceivedOrDisposedMics = Mics.FastSystem;
+            receiveTransmission.ReceivedOrDisposedNode = this.receiveReceivedList.AddLast(receiveTransmission);
+            receiveTransmission.Goshujin = this.receiveTransmissions;
+            return receiveTransmission;
+        }
+    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool RemoveTransmission(SendTransmission transmission)
@@ -705,6 +766,7 @@ Wait:
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
+                        this.UpdateAckedNode(t);
                         this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckRama();
                     }
@@ -816,7 +878,7 @@ Wait:
                     return;
                 }
 
-                this.CleanReceiveTransmission();//tempcode
+                this.CleanReceiveTransmission();
 
                 // New transmission
                 if (this.receiveReceivedList.Count >= this.Agreement.MaxTransmissions)

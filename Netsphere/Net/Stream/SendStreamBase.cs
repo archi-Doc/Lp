@@ -25,6 +25,9 @@ public abstract class SendStreamBase
 
     public long SentLength { get; internal set; }
 
+    public void Dispose()
+        => this.SendTransmission.Dispose();
+
     public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
         if (this.IsComplete)
@@ -41,7 +44,7 @@ public abstract class SendStreamBase
     {
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
-            return NetResult.SerializationError;
+            return NetResult.SerializationFailed;
         }
 
         if (owner.Memory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
@@ -84,10 +87,21 @@ public abstract class SendStreamBase
         {
             this.IsComplete = true;
 
-            NetResponse response;
             var connection = this.SendTransmission.Connection;
+            if (connection.IsServer)
+            {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already consumed.
+                var result = NetResult.Success;
+                if (this.SendTransmission.SentTcs is { } sentTcs)
+                {
+                    result = await sentTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                return new(result);
+            }
+
+            NetResponse response;
             var tcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))/
+            using (var receiveTransmission = connection.TryCreateReceiveTransmission(this.SendTransmission.TransmissionId, tcs))
             {
                 if (receiveTransmission is null)
                 {
@@ -118,7 +132,7 @@ public abstract class SendStreamBase
             if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
             {
                 response.Return();
-                return new(NetResult.DeserializationError);
+                return new(NetResult.DeserializationFailed);
             }
 
             response.Return();

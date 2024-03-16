@@ -48,12 +48,12 @@ public class StreamTest
                 return;
             }
 
-            // await this.TestPingPing(service);
-            // await this.TestGetHash(service);
+            await this.TestPingPing(service);
+            await this.TestGetHash(service);
             await this.TestGet(service);
-            // await this.TestGet2(service);
-            // await this.TestPutAndGetHash(service);
-            // await this.TestPut2(service);
+            await this.TestGet2(service);
+            await this.TestPutAndGetHash(service);
+            await this.TestPut2(service);
         }
     }
 

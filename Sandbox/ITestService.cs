@@ -10,19 +10,19 @@ namespace Sandbox;
 [NetServiceInterface]
 public interface TestService : INetService, INetServiceAgreement
 {
-    public NetTask<byte[]?> Pingpong(byte[] data);
+    NetTask<byte[]?> Pingpong(byte[] data);
 
-    public NetTask<ulong> GetHash(byte[] data);
+    NetTask<ulong> GetHash(byte[] data);
 
-    public NetTask<ReceiveStream?> ReceiveData(string name, long length);
+    NetTask<ReceiveStream?> ReceiveData(string name, long length);
 
-    public NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength);
+    NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength);
 
-    // public NetTask<SendStream?> SendData2(long maxLength);
+    NetTask<SendStream?> Put(ulong hash, long maxLength);
 
-    public NetTask<SendStream?> Put(ulong hash, long maxLength);
+    NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 
-    public NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
+    NetTask<ReceiveStream?> Get(string name, long length);
 }
 
 [NetServiceObject]
@@ -118,6 +118,7 @@ public class TestServiceImpl : TestService
 
         // transmissionContext.Result = NetResult.InvalidOperation;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
+        // return default;
 
         var buffer = new byte[100];
         var farmHash = new FarmHash();
@@ -148,6 +149,10 @@ public class TestServiceImpl : TestService
         if (hash == hash2)
         {
             transmissionContext.Result = NetResult.Success;
+        }
+        else
+        {
+            transmissionContext.Result = NetResult.InvalidData;
         }
 
         return default;
@@ -194,6 +199,24 @@ public class TestServiceImpl : TestService
         if (hash == hash2)
         {
             transmissionContext.Result = NetResult.Success;
+        }
+
+        return default;
+    }
+
+    public async NetTask<ReceiveStream?> Get(string name, long length)
+    {
+        length = Math.Min(length, MaxStreamLength);
+        var r = new Xoshiro256StarStar((ulong)length);
+        var buffer = new byte[length];
+        r.NextBytes(buffer);
+
+        var (_, stream) = TransmissionContext.Current.GetSendStream(length, Arc.Crypto.FarmHash.Hash64(buffer));
+
+        if (stream is not null)
+        {
+            await stream.Send(buffer);
+            await stream.CompleteSend();
         }
 
         return default;

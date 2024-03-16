@@ -51,7 +51,7 @@ public class ReceiveStream
             }
             else if (written != sizeof(int))
             {
-                return new(NetResult.DeserializationError);
+                return new(NetResult.DeserializationFailed);
             }
 
             var length = BitConverter.ToInt32(buffer);
@@ -78,12 +78,12 @@ public class ReceiveStream
             }
             else if (written != length)
             {
-                return new(NetResult.DeserializationError);
+                return new(NetResult.DeserializationFailed);
             }
 
             if (!TinyhandSerializer.TryDeserialize<TReceive>(memory.Span, out var value))
             {
-                return new(NetResult.DeserializationError);
+                return new(NetResult.DeserializationFailed);
             }
 
             return new(NetResult.Success, value);

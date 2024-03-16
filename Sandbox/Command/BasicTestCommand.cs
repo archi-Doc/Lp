@@ -88,7 +88,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.Responders.Register(TestStreamResponder.Instance);
         this.NetControl.Services.Register<TestService>();
 
-        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
+        // this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -120,7 +120,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 var success = 0;
 
                 var service = connection.GetService<TestService>();
-                var pingpong = await service.Pingpong([1, 2, 3,]);
+                // var pingpong = await service.Pingpong([1, 2, 3,]);
 
                 /*var response = await service.ReceiveData("test", 123_000).ResponseAsync;
                 if (response.Value is not null)
@@ -134,7 +134,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 }));
 
                 // await this.TestPut(service);
-                await this.TestPut2(service);
+                // await this.TestPut2(service);
+                await this.TestGet(service);
 
                 /*var stream = await service.SendData(123_000);
                 if (stream is not null)
@@ -245,7 +246,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
     private async Task TestPut(TestService service)
     {
-        for (var i = 1; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
             var sendStream = await service.Put(hash, this.dataLength[i]);
@@ -256,13 +257,13 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
             var result = await sendStream.Send(this.dataArray[i]);
             var resultValue = await sendStream.CompleteSend();
-            await Console.Out.WriteLineAsync(resultValue.ToString());
+            await Console.Out.WriteLineAsync($"{result.ToString()}, {resultValue.ToString()}");
         }
     }
 
     private async Task TestPut2(TestService service)
     {
-        for (var i = 1; i < this.dataLength.Length; i++)
+        for (var i = 0; i < this.dataLength.Length; i++)
         {
             var hash = FarmHash.Hash64(this.dataArray[i]);
             var sendStream = await service.Put2(hash, this.dataLength[i]);
@@ -275,6 +276,43 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             await Console.Out.WriteLineAsync(result.ToString());
             var resultValue = await sendStream.CompleteSendAndReceive();
             await Console.Out.WriteLineAsync(resultValue.ToString());
+        }
+    }
+
+    private async Task TestGet(TestService service)
+    {
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            var stream = await service.Get("test", this.dataLength[i]);
+            if (stream is null)
+            {
+                break;
+            }
+
+            var buffer = new byte[this.dataLength[i]];
+            var memory = buffer.AsMemory();
+            var written = 0;
+            while (true)
+            {
+                var r = await stream.Receive(memory);
+                if (r.Result == NetResult.Success)
+                {
+                    memory = memory.Slice(r.Written);
+                    written += r.Written;
+                }
+                else if (r.Result == NetResult.Completed)
+                {
+                    written += r.Written;
+                    var result = buffer.AsSpan(0, written).SequenceEqual(this.dataArray[i]);
+                    Console.WriteLine(result.ToString());
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine(r.Result.ToString());
+                    break;
+                }
+            }
         }
     }
 
