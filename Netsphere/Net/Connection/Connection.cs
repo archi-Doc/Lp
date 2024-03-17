@@ -205,13 +205,14 @@ public abstract class Connection : IDisposable
     internal void UpdateAckedNode(SendTransmission sendTransmission)
     {// lock (Connection.sendTransmissions.SyncObject)
         sendTransmission.AckedMics = Mics.FastSystem;
-        this.sendAckedList.MoveToLast(sendTransmission.AckedNode);
-    }
-
-    internal UnorderedLinkedList<SendTransmission>.Node AddAckedNode(SendTransmission sendTransmission)
-    {// lock (Connection.sendTransmissions.SyncObject)
-        sendTransmission.AckedMics = Mics.FastSystem;
-        return this.sendAckedList.AddLast(sendTransmission);
+        if (sendTransmission.AckedNode is null)
+        {
+            sendTransmission.AckedNode = this.sendAckedList.AddLast(sendTransmission);
+        }
+        else
+        {
+            this.sendAckedList.MoveToLast(sendTransmission.AckedNode);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -418,6 +419,25 @@ Wait:
 
         timeout -= NetConstants.CreateTransmissionDelay;
         goto Retry;
+    }
+
+    internal void CleanSendTransmission()
+    {// lock (this.sendTransmissions.SyncObject)
+        // Release send transmissions that have elapsed a certain time since the last ack.
+        var currentMics = Mics.FastSystem;//
+        while (this.sendAckedList.First is { } node)
+        {
+            var transmission = node.Value;
+            if (currentMics < transmission.AckedMics + NetConstants.TransmissionTimeoutMics)
+            {
+                break;
+            }
+
+            node.List.Remove(node);
+            transmission.DisposeTransmission();
+            transmission.AckedNode = null;
+            transmission.Goshujin = null;
+        }
     }
 
     internal void CleanReceiveTransmission()
@@ -766,7 +786,7 @@ Wait:
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
-                        this.UpdateAckedNode(t);
+                        this.UpdateAckedNode(transmission);//
                         this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckRama();
                     }
@@ -794,6 +814,7 @@ Wait:
 
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
+                        this.UpdateAckedNode(transmission);
                         this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckBlock(maxReceivePosition, successiveReceivedPosition, span, numberOfPairs);
                     }
