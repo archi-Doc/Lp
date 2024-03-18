@@ -9,22 +9,22 @@ namespace RemoteDataServer;
 [SimpleCommand("default", Default = true)]
 public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 {
-    public DefaultCommand(ILogger<DefaultCommandOptions> logger, NetControl netControl, RemoteDataImpl remoteData)
+    public DefaultCommand(ILogger<DefaultCommandOptions> logger, NetControl netControl, RemoteData remoteDataBroker)
     {
         this.logger = logger;
         this.netControl = netControl;
-        this.remoteData = remoteData;
+        this.remoteDataBroker = remoteDataBroker;
     }
 
     public async Task RunAsync(DefaultCommandOptions options, string[] args)
     {
         this.PrepareNodePrivateKey(options);
         // await this.PrepareNodeAddress();
-        this.remoteData.Initialize(options.Directory);
+        this.remoteDataBroker.Initialize(options.Directory);
 
         await Console.Out.WriteLineAsync($"{this.netControl.NetBase.NetOptions.NodeName}");
         await Console.Out.WriteLineAsync($"Node: {this.netControl.NetStats.GetMyNetNode().ToString()}");
-        await Console.Out.WriteLineAsync($"Directory: {this.remoteData.Directory}");
+        await Console.Out.WriteLineAsync($"Directory: {this.remoteDataBroker.Directory}");
         await Console.Out.WriteLineAsync("Ctrl+C to exit");
         await Console.Out.WriteLineAsync();
 
@@ -58,7 +58,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private readonly NetControl netControl;
     private readonly ILogger logger;
-    private readonly RemoteDataImpl remoteData;
+    private readonly RemoteData remoteDataBroker;
 }
 
 public record DefaultCommandOptions

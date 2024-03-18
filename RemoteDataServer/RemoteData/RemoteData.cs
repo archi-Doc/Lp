@@ -2,10 +2,9 @@
 
 namespace RemoteDataServer;
 
-[NetServiceObject]
-public class RemoteDataImpl : IRemoteData
+public class RemoteData
 {
-    public RemoteDataImpl(UnitOptions unitOptions)
+    public RemoteData(UnitOptions unitOptions)
     {
         this.baseDirectory = string.IsNullOrEmpty(unitOptions.DataDirectory) ?
             unitOptions.RootDirectory : unitOptions.DataDirectory;
@@ -45,18 +44,38 @@ public class RemoteDataImpl : IRemoteData
     {
         var transmissionContext = TransmissionContext.Current;
         this.ThrowIfNotInitialized();
-        var path = this.GetPath(identifier);
+        var path = this.IdentifierToPath(identifier);
         if (path is null)
         {
             transmissionContext.Result = NetResult.NotFound;
             return default;
         }
 
-        (_, var stream) = TransmissionContext.Current.GetSendStream(100);
-        if (stream is not null)
+        try
         {
-            await stream.Send(default);
-            await stream.CompleteSend();
+            using (var fs = File.OpenRead(path))
+            {
+                (_, var sendStream) = transmissionContext.GetSendStream(100);
+                if (sendStream is null)
+                {
+                    transmissionContext.Result = NetResult.NotFound;
+                    return default;
+                }
+
+                var b = new byte[1024];
+                int length;
+                while ((length = await fs.ReadAsync(b)) > 0)
+                {
+                    await sendStream.Send(b.AsMemory(0, length));
+                }
+
+                await sendStream.CompleteSend();
+            }
+        }
+        catch
+        {
+            transmissionContext.Result = NetResult.NotFound;
+            return default;
         }
 
         return default;
@@ -77,7 +96,7 @@ public class RemoteDataImpl : IRemoteData
         return default;
     }
 
-    private string? GetPath(string identifier)
+    private string? IdentifierToPath(string identifier)
     {
         if (string.IsNullOrEmpty(identifier))
         {
@@ -98,9 +117,4 @@ public class RemoteDataImpl : IRemoteData
             throw new InvalidOperationException();
         }
     }
-
-    /*public NetTask<SendStreamAndReceive<NetResult>?> Put2(string identifier, ulong hash, long maxLength)
-    {
-        throw new NotImplementedException();
-    }*/
 }
