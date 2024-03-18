@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere;
+namespace RemoteDataServer;
 
 [NetServiceInterface]
 public interface IRemoteData : INetService
@@ -9,5 +9,5 @@ public interface IRemoteData : INetService
 
     NetTask<SendStreamAndReceive<NetResult>?> Put(string identifier, long maxLength);
 
-    NetTask<SendStreamAndReceive<NetResult>?> Put2(string identifier, ulong hash, long maxLength);
+    // NetTask<SendStreamAndReceive<NetResult>?> Put2(string identifier, ulong hash, long maxLength);
 }
