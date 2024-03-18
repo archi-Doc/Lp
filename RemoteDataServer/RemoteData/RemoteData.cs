@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace RemoteDataServer;
 
 public class RemoteData
@@ -16,28 +18,29 @@ public class RemoteData
 
     public string Directory { get; private set; } = string.Empty;
 
+    public SignaturePublicKey RemotePublicKey { get; set; }
+
     private readonly string baseDirectory;
 
     #endregion
 
     public void Initialize(string directory)
     {
-        if (string.IsNullOrEmpty(directory))
-        {
-            this.Directory = this.baseDirectory;
-        }
-        else if (Path.IsPathRooted(directory))
-        {// Contains a root.
-            this.Directory = directory;
-        }
-        else
-        {
-            this.Directory = Path.Combine(this.baseDirectory, directory);
-        }
-
+        this.Directory = UnitHelper.CombineDirectory(this.baseDirectory, directory);
         System.IO.Directory.CreateDirectory(this.Directory);
 
         this.Initialized = true;
+    }
+
+    public async NetTask<NetResult> UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    {
+        var transmissionContext = TransmissionContext.Current;
+        if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))
+        {
+            return NetResult.NotAuthorized;
+        }
+
+        return NetResult.Success;
     }
 
     public async NetTask<ReceiveStream?> Get(string identifier)

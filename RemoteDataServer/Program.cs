@@ -35,7 +35,7 @@ public class Program
             .Configure(context =>
             {
                 context.AddSingleton<RemoteData>();
-                context.AddTransient<RemoteDataBroker>();
+                context.AddTransient<IRemoteData, RemoteDataBroker>();
 
                 // Command
                 context.AddCommand(typeof(DefaultCommand));
@@ -49,20 +49,21 @@ public class Program
             })
             .ConfigureSerivice(context =>
             {// Register the services provided by the server.
-                // context.AddService<ITestService>();
+                context.AddService<IRemoteData>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         await unit.Run(options, false); // Execute the created unit with the specified options.
 
-        await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
-        await Console.Out.WriteLineAsync();
-
         // NtpCorrection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<Netsphere.Misc.NtpCorrection>();
         var offset = await ntpCorrection.SendAndReceiveOffset();
         UnitLogger.SetTimeOffset(offset);
+        await Console.Out.WriteLineAsync($"Corrected: {offset.ToString()}");
+
+        await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
+        await Console.Out.WriteLineAsync();
 
         var parserOptions = SimpleParserOptions.Standard with
         {
