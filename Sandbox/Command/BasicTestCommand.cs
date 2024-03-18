@@ -120,7 +120,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 var success = 0;
 
                 var service = connection.GetService<TestService>();
-                // var pingpong = await service.Pingpong([1, 2, 3,]);
+                var pingpong = await service.Pingpong([1, 2, 3,]);
 
                 /*var response = await service.ReceiveData("test", 123_000).ResponseAsync;
                 if (response.Value is not null)
@@ -134,8 +134,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 }));
 
                 // await this.TestPut(service);
-                // await this.TestPut2(service);
-                await this.TestGet(service);
+                await this.TestPut2(service);
+               //  await this.TestGet(service);
 
                 /*var stream = await service.SendData(123_000);
                 if (stream is not null)
