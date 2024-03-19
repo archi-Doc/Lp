@@ -17,8 +17,6 @@ public abstract class SendStreamBase
 
     internal SendTransmission SendTransmission { get; }
 
-    public bool IsComplete { get; protected set; }
-
     public ulong DataId { get; protected set; }
 
     public long RemainingLength { get; internal set; }
@@ -30,7 +28,7 @@ public abstract class SendStreamBase
 
     public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (this.IsComplete)
+        if (this.SendTransmission.Mode == NetTransmissionMode.StreamCompleted)
         {
             return NetResult.Completed;
         }
@@ -39,7 +37,7 @@ public abstract class SendStreamBase
             var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
             if (result != NetResult.Success &&
                 result != NetResult.Completed)
-            {
+            {xx
                 this.Dispose();
             }
 
