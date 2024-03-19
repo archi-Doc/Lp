@@ -96,5 +96,8 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
             this.x.AsSpan().SequenceEqual(other.x);
     }
 
+    public override string ToString()
+        => this.ToPublicKey().ToString();
+
     #endregion
 }

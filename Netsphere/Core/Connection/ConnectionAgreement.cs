@@ -118,7 +118,6 @@ public partial record ConnectionAgreement
     /// <returns><see langword="true"/>; The agreement is within the target.</returns>
     public bool IsInclusive(ConnectionAgreement target)
     {
-
         if (this.MaxTransmissions > target.MaxTransmissions)
         {
             return false;

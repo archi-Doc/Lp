@@ -161,5 +161,8 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
             this.x.AsSpan().SequenceEqual(other.x);
     }
 
+    public override string ToString()
+        => this.ToPublicKey().ToString();
+
     #endregion
 }

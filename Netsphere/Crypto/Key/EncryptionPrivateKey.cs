@@ -89,5 +89,8 @@ public sealed partial class EncryptionPrivateKey : PrivateKeyBase, IEquatable<En
             this.x.AsSpan().SequenceEqual(other.x);
     }
 
+    public override string ToString()
+        => this.ToPublicKey().ToString();
+
     #endregion
 }

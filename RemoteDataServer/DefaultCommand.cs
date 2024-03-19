@@ -43,7 +43,6 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
             this.netControl.NetBase.SetNodePrivateKey(privateKey);
         }
 
-        options.RemotePublicKey = "(BL2vjUcmAUU7U64PQV2yzwAHnAqVi7-9vaiD2HPw4fi-)"; // Test
         if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
         {
             this.remoteData.RemotePublicKey = publicKey;
