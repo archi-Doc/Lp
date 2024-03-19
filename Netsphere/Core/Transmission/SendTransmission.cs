@@ -398,6 +398,7 @@ Loop:
                         this.CreateFollowingPacket(this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
                     }
 
+                    // Console.WriteLine($"packet: {size}");
                     gene.SetSend(owner);
                     gene.Goshujin = this.genes;
                     chain.Add(gene);
