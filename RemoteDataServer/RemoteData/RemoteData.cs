@@ -10,6 +10,10 @@ public class RemoteData
     {
         this.baseDirectory = string.IsNullOrEmpty(unitOptions.DataDirectory) ?
             unitOptions.RootDirectory : unitOptions.DataDirectory;
+        this.limitAreement = new ConnectionAgreement() with
+        {
+            MaxStreamLength = 100,
+        };
     }
 
     #region FieldAndProperty
@@ -20,6 +24,7 @@ public class RemoteData
 
     public SignaturePublicKey RemotePublicKey { get; set; }
 
+    private readonly ConnectionAgreement limitAreement;
     private readonly string baseDirectory;
 
     #endregion
@@ -36,8 +41,17 @@ public class RemoteData
     {
         var transmissionContext = TransmissionContext.Current;
         if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))
-        {
+        {// Invalid token
             return NetResult.NotAuthorized;
+        }
+        else if (!token.PublicKey.Equals(this.RemotePublicKey))
+        {// Invalid public key
+            return NetResult.NotAuthorized;
+        }
+
+        if (!token.Target.IsInclusive(this.limitAreement))
+        {
+            return NetResult.Refused;
         }
 
         return NetResult.Success;
