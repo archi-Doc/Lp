@@ -92,8 +92,8 @@ public abstract class SendStreamBase
             {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already consumed.
                 var result = NetResult.Success;
                 if (this.SendTransmission.SentTcs is { } sentTcs)
-                {
-                    result = await sentTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                {//
+                    result = await sentTcs.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
                 }
 
                 return new(result);
