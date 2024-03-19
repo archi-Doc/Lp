@@ -443,7 +443,7 @@ Exit:
         return NetResult.Success;
 
         void SendKnockFrame()
-        {
+        {// KnockFrameCode
             Span<byte> frame = stackalloc byte[KnockFrame.Length];
             var span = frame;
             BitConverter.TryWriteBytes(span, (ushort)FrameType.Knock);

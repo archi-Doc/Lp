@@ -33,6 +33,9 @@ public class ReceiveStream : IDisposable
 
     #endregion
 
+    public void Cancel()
+        => this.Dispose();
+
     public void Dispose()
         => this.ReceiveTransmission.ProcessDispose();
 

@@ -32,7 +32,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         get
         {
             if (this.genes is null)
-            {
+            {// Disposed (Canceled)
                 return 0;
             }
             else

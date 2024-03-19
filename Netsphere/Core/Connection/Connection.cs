@@ -659,7 +659,7 @@ Wait:
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
-    {// Close, Ack
+    {// Close, Ack, Knock
         if (!this.CreatePacket(frame, out var owner))
         {
             return;
@@ -1041,7 +1041,7 @@ Wait:
     }
 
     internal void ProcessReceive_KnockResponse(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
-    {
+    {// KnockResponseFrameCode
         var span = toBeShared.Span;
         if (span.Length < (KnockResponseFrame.Length - 2))
         {

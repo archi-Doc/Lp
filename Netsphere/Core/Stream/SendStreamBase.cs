@@ -28,15 +28,22 @@ public abstract class SendStreamBase
     public void Dispose()
         => this.SendTransmission.Dispose();
 
-    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
         if (this.IsComplete)
         {
-            return Task.FromResult(NetResult.Completed);
+            return NetResult.Completed;
         }
         else
         {
-            return this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken);
+            var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
+            if (result != NetResult.Success &&
+                result != NetResult.Completed)
+            {
+                this.Dispose();
+            }
+
+            return result;
         }
     }
 
