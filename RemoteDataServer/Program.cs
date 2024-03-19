@@ -35,7 +35,7 @@ public class Program
             .Configure(context =>
             {
                 context.AddSingleton<RemoteData>();
-                context.AddTransient<IRemoteData, RemoteDataBroker>();
+                context.AddTransient<RemoteDataBroker>();
 
                 // Command
                 context.AddCommand(typeof(DefaultCommand));

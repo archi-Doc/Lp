@@ -37,10 +37,12 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
         if (NodePrivateKey.TryParse(options.NodePrivateKey, out var privateKey))
         {
             this.netControl.NetBase.SetNodePrivateKey(privateKey);
+            this.netControl.NetTerminal.SetNodeKey(privateKey);
         }
         else if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePrivateKeyName, out privateKey))
         {
             this.netControl.NetBase.SetNodePrivateKey(privateKey);
+            this.netControl.NetTerminal.SetNodeKey(privateKey);
         }
 
         if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))

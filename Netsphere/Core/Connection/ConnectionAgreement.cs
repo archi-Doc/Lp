@@ -28,7 +28,7 @@ public partial record ConnectionAgreement
     public uint MaxTransmissions { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum block size in megabytes.
+    /// Gets or sets the maximum block size in bytes.
     /// </summary>
     [Key(1)]
     public int MaxBlockSize
@@ -43,7 +43,7 @@ public partial record ConnectionAgreement
     }
 
     /// <summary>
-    /// Gets or sets the maximum stream length in megabytes.
+    /// Gets or sets the maximum stream length in bytes.
     /// </summary>
     [Key(2)]
     public long MaxStreamLength
@@ -58,7 +58,7 @@ public partial record ConnectionAgreement
     }
 
     /// <summary>
-    /// Gets or sets the stream buffer size in megabytes.
+    /// Gets or sets the stream buffer size in bytes.
     /// </summary>
     [Key(3)]
     public int StreamBufferSize

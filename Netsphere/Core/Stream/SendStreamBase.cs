@@ -109,8 +109,8 @@ public abstract class SendStreamBase
                 }
 
                 try
-                {
-                    response = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                {//
+                    response = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);

@@ -16,7 +16,7 @@ public class RemoteData
             unitOptions.RootDirectory : unitOptions.DataDirectory;
         this.limitAreement = new ConnectionAgreement() with
         {
-            MaxStreamLength = 100,
+            MaxStreamLength = 100_000_000,
         };
     }
 
@@ -130,7 +130,7 @@ public class RemoteData
         try
         {
             using var fileStream = File.Create(path);
-            using var receiveStream = TransmissionContext.Current.GetReceiveStream();
+            using var receiveStream = transmissionContext.GetReceiveStream();
 
             var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
             try
@@ -140,6 +140,7 @@ public class RemoteData
                     (result, var written) = await receiveStream.Receive(buffer).ConfigureAwait(false);
                     if (written == 0)
                     {// Completed or error.
+                        transmissionContext.SendAndForget(NetResult.Success);
                         break;
                     }
                     else
@@ -159,9 +160,14 @@ public class RemoteData
             return default;
         }
 
-        if (result != NetResult.Completed)
+        if (result == NetResult.Completed)
+        {// Complete
+            transmissionContext.Result = NetResult.Success;
+        }
+        else
         {
             Arc.Unit.PathHelper.TryDeleteFile(path);
+            transmissionContext.Result = result;
         }
 
         return default;

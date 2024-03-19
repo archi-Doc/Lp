@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
@@ -240,7 +241,7 @@ public static class NetHelper
         return text;
     }
 
-    public static async Task<(ClientConnection? Connection, TService? Service)> TryGetStreamService<TService>(NetTerminal netTerminal, string node, string remotePrivateKey, int maxStreamLength)
+    public static async Task<(ClientConnection? Connection, TService? Service)> TryGetStreamService<TService>(NetTerminal netTerminal, string node, string remotePrivateKey, long maxStreamLength)
         where TService : INetService, INetServiceAgreement
     {
         // 1st: netNode, 2nd: EnvironmentVariable 'netnode'
@@ -271,7 +272,7 @@ public static class NetHelper
 
         var agreement = connection.Agreement with { MaxStreamLength = maxStreamLength, };
         var token = new CertificateToken<ConnectionAgreement>(agreement);
-        if (!token.Sign(signaturePrivateKey))
+        if (!connection.SignWithSalt(token, signaturePrivateKey))
         {
             connection.Dispose();
             return default;
