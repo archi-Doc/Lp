@@ -25,7 +25,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
         await Console.Out.WriteLineAsync($"{this.netControl.NetBase.NetOptions.NodeName}");
         await Console.Out.WriteLineAsync($"Node: {this.netControl.NetStats.GetMyNetNode().ToString()}");
         await Console.Out.WriteLineAsync($"Remote key: {this.remoteData.RemotePublicKey.ToString()}");
-        await Console.Out.WriteLineAsync($"Directory: {this.remoteData.Directory}");
+        await Console.Out.WriteLineAsync($"Directory: {this.remoteData.DataDirectory}");
         await Console.Out.WriteLineAsync("Ctrl+C to exit");
         await Console.Out.WriteLineAsync();
 

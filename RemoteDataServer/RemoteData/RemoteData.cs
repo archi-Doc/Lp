@@ -24,7 +24,7 @@ public class RemoteData
 
     public bool Initialized { get; private set; }
 
-    public string Directory { get; private set; } = string.Empty;
+    public string DataDirectory { get; private set; } = string.Empty;
 
     public SignaturePublicKey RemotePublicKey { get; set; }
 
@@ -35,8 +35,8 @@ public class RemoteData
 
     public void Initialize(string directory)
     {
-        this.Directory = PathHelper.CombineDirectory(this.baseDirectory, directory);
-        System.IO.Directory.CreateDirectory(this.Directory);
+        this.DataDirectory = PathHelper.CombineDirectory(this.baseDirectory, directory);
+        Directory.CreateDirectory(this.DataDirectory);
 
         this.Initialized = true;
     }
@@ -95,6 +95,10 @@ public class RemoteData
                 }
 
                 await sendStream.CompleteSend().ConfigureAwait(false);
+            }
+            catch
+            {
+                sendStream.Dispose();// error
             }
             finally
             {
@@ -174,7 +178,7 @@ public class RemoteData
             return null;
         }
 
-        return Path.Combine(this.Directory, identifier);
+        return Path.Combine(this.DataDirectory, identifier);
     }
 
     private void ThrowIfNotInitialized()

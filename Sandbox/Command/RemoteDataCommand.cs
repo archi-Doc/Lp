@@ -1,11 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
-using System.Globalization;
 using System.Text;
 using Arc.Unit;
 using Netsphere;
-using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace Sandbox;
@@ -45,13 +42,7 @@ public class RemoteDataCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = await sendStream.SendBlock<string>("test.txt");
-            if (result != NetResult.Success)
-            {
-                return;
-            }
-
-            result = await sendStream.Send(Encoding.UTF8.GetBytes("test string"));
+            var result = await sendStream.Send(Encoding.UTF8.GetBytes("test string"));
             var resultValue = await sendStream.CompleteSendAndReceive();
 
             var receiveStream = await remoteData.Get("test.txt");
