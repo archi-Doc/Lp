@@ -6,7 +6,7 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public class ReceiveStream
+public class ReceiveStream : IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {

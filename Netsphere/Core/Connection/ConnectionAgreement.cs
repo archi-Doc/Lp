@@ -127,9 +127,16 @@ public partial record ConnectionAgreement
         {
             return false;
         }
-        else if (this.MaxStreamLength > target.MaxStreamLength)
+        else if (target.MaxStreamLength >= 0)
         {
-            return false;
+            if (this.MaxStreamLength < 0)
+            {
+                return false;
+            }
+            else if (this.MaxStreamLength > target.MaxStreamLength)
+            {
+                return false;
+            }
         }
         else if (this.StreamBufferSize > target.StreamBufferSize)
         {
