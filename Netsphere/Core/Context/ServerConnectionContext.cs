@@ -319,8 +319,9 @@ SendNoNetService:
                     {
                         backendInstance = serviceInfo.CreateBackend(this);
                     }
-                    catch
+                    catch (Exception e)
                     {
+                        Console.WriteLine(e.ToString());
                         return null;
                     }
 

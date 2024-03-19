@@ -32,7 +32,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         get
         {
             if (this.genes is null)
-            {
+            {// Disposed (Canceled)
                 return 0;
             }
             else
@@ -160,9 +160,8 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
-    internal void ProcessReceive_Gene(/*int geneSerial, */int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
     {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
-        var geneSerial = dataPosition;
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
@@ -171,7 +170,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
-                this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, geneSerial);
+                this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, dataPosition);
                 return;
             }
             else if (this.Mode == NetTransmissionMode.Initial)
@@ -181,17 +180,17 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             if (this.Mode == NetTransmissionMode.Rama)
             {// Single send/recv
-                if (geneSerial == 0)
+                if (dataPosition == 0)
                 {
                     this.gene0 ??= new(this);
                     this.gene0.SetRecv(toBeShared);
                 }
-                else if (geneSerial == 1)
+                else if (dataPosition == 1)
                 {
                     this.gene1 ??= new(this);
                     this.gene1.SetRecv(toBeShared);
                 }
-                else if (geneSerial == 2)
+                else if (dataPosition == 2)
                 {
                     this.gene2 ??= new(this);
                     this.gene2.SetRecv(toBeShared);
@@ -315,7 +314,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, geneSerial);
+            this.Connection.ConnectionTerminal.AckQueue.AckBlock(this.Connection, this, dataPosition);
         }
 
         if (completeFlag)
@@ -505,6 +504,10 @@ Abort:
                 if (chain is null)
                 {
                     return (NetResult.Closed, written);
+                }
+
+                if (remaining > 1000)
+                {
                 }
 
                 while (chain.Get(stream.CurrentGene) is { } gene)

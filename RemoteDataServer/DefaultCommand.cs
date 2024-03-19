@@ -9,35 +9,49 @@ namespace RemoteDataServer;
 [SimpleCommand("default", Default = true)]
 public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 {
-    public DefaultCommand(ILogger<DefaultCommandOptions> logger, NetControl netControl)
+    public DefaultCommand(ILogger<DefaultCommandOptions> logger, NetControl netControl, RemoteData remoteDataBroker)
     {
         this.logger = logger;
         this.netControl = netControl;
+        this.remoteData = remoteDataBroker;
     }
 
     public async Task RunAsync(DefaultCommandOptions options, string[] args)
     {
-        this.PrepareNodePrivateKey(options);
+        this.PrepareKey(options);
         // await this.PrepareNodeAddress();
+        this.remoteData.Initialize(options.Directory);
 
         await Console.Out.WriteLineAsync($"{this.netControl.NetBase.NetOptions.NodeName}");
         await Console.Out.WriteLineAsync($"Node: {this.netControl.NetStats.GetMyNetNode().ToString()}");
-        await Console.Out.WriteLineAsync($"Directory: {options.Directory}");
+        await Console.Out.WriteLineAsync($"Remote key: {this.remoteData.RemotePublicKey.ToString()}");
+        await Console.Out.WriteLineAsync($"Directory: {this.remoteData.DataDirectory}");
         await Console.Out.WriteLineAsync("Ctrl+C to exit");
         await Console.Out.WriteLineAsync();
 
         await ThreadCore.Root.Delay(Timeout.InfiniteTimeSpan); // Wait until the server shuts down.
     }
 
-    private void PrepareNodePrivateKey(DefaultCommandOptions options)
+    private void PrepareKey(DefaultCommandOptions options)
     {
         if (NodePrivateKey.TryParse(options.NodePrivateKey, out var privateKey))
         {
             this.netControl.NetBase.SetNodePrivateKey(privateKey);
+            this.netControl.NetTerminal.SetNodeKey(privateKey);
         }
         else if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePrivateKeyName, out privateKey))
         {
             this.netControl.NetBase.SetNodePrivateKey(privateKey);
+            this.netControl.NetTerminal.SetNodeKey(privateKey);
+        }
+
+        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        {
+            this.remoteData.RemotePublicKey = publicKey;
+        }
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
+        {
+            this.remoteData.RemotePublicKey = publicKey;
         }
     }
 
@@ -56,6 +70,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private readonly NetControl netControl;
     private readonly ILogger logger;
+    private readonly RemoteData remoteData;
 }
 
 public record DefaultCommandOptions
@@ -65,4 +80,7 @@ public record DefaultCommandOptions
 
     [SimpleOption("nodeprivatekey", Description = "Node private key")]
     public string NodePrivateKey { get; init; } = string.Empty;
+
+    [SimpleOption("remotepublickey", Description = "Remote public key")]
+    public string RemotePublicKey { get; set; } = string.Empty;
 }

@@ -205,13 +205,16 @@ public abstract class Connection : IDisposable
     internal void UpdateAckedNode(SendTransmission sendTransmission)
     {// lock (Connection.sendTransmissions.SyncObject)
         sendTransmission.AckedMics = Mics.FastSystem;
-        this.sendAckedList.MoveToLast(sendTransmission.AckedNode);
-    }
+        this.sendTransmissions.AckedListChain.AddLast(sendTransmission);
 
-    internal UnorderedLinkedList<SendTransmission>.Node AddAckedNode(SendTransmission sendTransmission)
-    {// lock (Connection.sendTransmissions.SyncObject)
-        sendTransmission.AckedMics = Mics.FastSystem;
-        return this.sendAckedList.AddLast(sendTransmission);
+        /*if (sendTransmission.AckedNode is null)
+        {
+            sendTransmission.AckedNode = this.sendAckedList.AddLast(sendTransmission);
+        }
+        else
+        {
+            this.sendAckedList.MoveToLast(sendTransmission.AckedNode);
+        }*/
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -320,32 +323,6 @@ public abstract class Connection : IDisposable
         }
     }
 
-    internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
-    {
-        lock (this.sendTransmissions.SyncObject)
-        {
-            if (this.IsClosedOrDisposed)
-            {
-                return default;
-            }
-
-            /* To maintain consistency with the number of SendTransmission on the client side, limit the number of ReceiveTransmission in ProcessReceive_FirstGene().
-            if (this.NumberOfSendTransmissions >= this.Agreement.MaxTransmissions)
-            {
-                return default;
-            }*/
-
-            if (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId))
-            {
-                return default;
-            }
-
-            var sendTransmission = new SendTransmission(this, transmissionId);
-            sendTransmission.Goshujin = this.sendTransmissions;
-            return sendTransmission;
-        }
-    }
-
     internal SendTransmission? TryCreateSendTransmission()
     {
         if (!this.IsActive)
@@ -367,6 +344,32 @@ public abstract class Connection : IDisposable
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+
+            var sendTransmission = new SendTransmission(this, transmissionId);
+            sendTransmission.Goshujin = this.sendTransmissions;
+            return sendTransmission;
+        }
+    }
+
+    internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.IsClosedOrDisposed)
+            {
+                return default;
+            }
+
+            /* To maintain consistency with the number of SendTransmission on the client side, limit the number of ReceiveTransmission in ProcessReceive_FirstGene().
+            if (this.NumberOfSendTransmissions >= this.Agreement.MaxTransmissions)
+            {
+                return default;
+            }*/
+
+            if (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId))
+            {
+                return default;
+            }
 
             var sendTransmission = new SendTransmission(this, transmissionId);
             sendTransmission.Goshujin = this.sendTransmissions;
@@ -418,6 +421,37 @@ Wait:
 
         timeout -= NetConstants.CreateTransmissionDelay;
         goto Retry;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void CleanTransmission()
+    {
+        if (this.sendTransmissions.Count > 0)
+        {
+            lock (this.sendTransmissions.SyncObject)
+            {
+                this.CleanSendTransmission();
+            }
+        }
+    }
+
+    internal void CleanSendTransmission()
+    {// lock (this.sendTransmissions.SyncObject)
+        // Release send transmissions that have elapsed a certain time since the last ack.
+        var currentMics = Mics.FastSystem;
+        while (this.sendAckedList.First is { } node)
+        {
+            var transmission = node.Value;
+            if (currentMics < transmission.AckedMics + NetConstants.TransmissionTimeoutMics)
+            {
+                break;
+            }
+
+            transmission.DisposeTransmission();
+            // node.List.Remove(node);
+            // transmission.AckedNode = null;
+            transmission.Goshujin = null;
+        }
     }
 
     internal void CleanReceiveTransmission()
@@ -625,7 +659,7 @@ Wait:
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
-    {// Close, Ack
+    {// Close, Ack, Knock
         if (!this.CreatePacket(frame, out var owner))
         {
             return;
@@ -766,7 +800,7 @@ Wait:
                 {// Rama (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
-                        this.UpdateAckedNode(t);
+                        this.UpdateAckedNode(transmission);
                         this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckRama();
                     }
@@ -794,6 +828,7 @@ Wait:
 
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
+                        this.UpdateAckedNode(transmission);
                         this.UpdateLastEventMics();
                         transmission.ProcessReceive_AckBlock(maxReceivePosition, successiveReceivedPosition, span, numberOfPairs);
                     }
@@ -1006,7 +1041,7 @@ Wait:
     }
 
     internal void ProcessReceive_KnockResponse(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
-    {
+    {// KnockResponseFrameCode
         var span = toBeShared.Span;
         if (span.Length < (KnockResponseFrame.Length - 2))
         {

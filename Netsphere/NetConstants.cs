@@ -4,7 +4,12 @@ namespace Netsphere;
 
 public static class NetConstants
 {
+    public const string NetNodeName = "netnode";
     public const string NodePrivateKeyName = "nodeprivatekey";
+    public const string NodePublicKeyName = "nodepublickey";
+    public const string RemotePrivateKeyName = "remoteprivatekey";
+    public const string RemotePublicKeyName = "remotepublickey";
+
     public const int MaxPacketLength = 1432; // 1500 - 60 - 8 = 1432 bytes
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;

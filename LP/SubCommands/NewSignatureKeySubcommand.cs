@@ -5,10 +5,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("new")]
-public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
+[SimpleCommand("new-signature-key")]
+public class NewSignatureKeySubcommand : ISimpleCommand<NodeKeySubcommandNewOptions>
 {
-    public NodeKeySubcommandNew(ILogger<NodeKeySubcommandNew> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
+    public NewSignatureKeySubcommand(ILogger<NewSignatureKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -17,9 +17,9 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
 
     public void Run(NodeKeySubcommandNewOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New node key");
+        this.logger.TryGet()?.Log("New signature key");
 
-        NodePrivateKey key;
+        SignaturePrivateKey key;
         var phrase = options.Seedphrase?.Trim();
         if (string.IsNullOrEmpty(phrase))
         {
@@ -28,11 +28,11 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
             if (seed is not null)
             {
                 this.userInterfaceService.WriteLine($"Seedphrase: {phrase}");
-                key = NodePrivateKey.Create(seed);
+                key = SignaturePrivateKey.Create(seed);
             }
             else
             {
-                key = NodePrivateKey.Create();
+                key = SignaturePrivateKey.Create();
             }
         }
         else
@@ -44,7 +44,7 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
                 return;
             }
 
-            key = NodePrivateKey.Create(seed);
+            key = SignaturePrivateKey.Create(seed);
         }
 
         this.userInterfaceService.WriteLine(key.UnsafeToString());
@@ -54,10 +54,4 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Seedphrase seedPhrase;
-}
-
-public record NodeKeySubcommandNewOptions
-{
-    [SimpleOption("seed", Description = "Seedphrase")]
-    public string? Seedphrase { get; init; }
 }

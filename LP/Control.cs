@@ -84,6 +84,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.MergerSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RevealAuthoritySubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.NewSignatureKeySubcommand));
 
                 // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);

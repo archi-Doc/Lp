@@ -21,9 +21,15 @@ public partial record ConnectionAgreement
         this.MinimumConnectionRetentionSeconds = 5; // 5 seconds
     }
 
+    /// <summary>
+    /// Gets or sets the maximum transmissions per connection.
+    /// </summary>
     [Key(0)]
     public uint MaxTransmissions { get; set; }
 
+    /// <summary>
+    /// Gets or sets the maximum block size in bytes.
+    /// </summary>
     [Key(1)]
     public int MaxBlockSize
     {
@@ -36,6 +42,9 @@ public partial record ConnectionAgreement
         }
     }
 
+    /// <summary>
+    /// Gets or sets the maximum stream length in bytes.
+    /// </summary>
     [Key(2)]
     public long MaxStreamLength
     {
@@ -48,6 +57,9 @@ public partial record ConnectionAgreement
         }
     }
 
+    /// <summary>
+    /// Gets or sets the stream buffer size in bytes.
+    /// </summary>
     [Key(3)]
     public int StreamBufferSize
     {
@@ -60,6 +72,9 @@ public partial record ConnectionAgreement
         }
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable bidirectional connections.
+    /// </summary>
     [Key(4)]
     public bool EnableBidirectionalConnection { get; set; }
 
@@ -93,6 +108,49 @@ public partial record ConnectionAgreement
         this.StreamBufferSize = Math.Max(this.StreamBufferSize, target.StreamBufferSize);
         this.EnableBidirectionalConnection |= target.EnableBidirectionalConnection;
         this.MinimumConnectionRetentionSeconds = Math.Max(this.MinimumConnectionRetentionSeconds, target.MinimumConnectionRetentionSeconds);
+    }
+
+    /// <summary>
+    /// Determines whether the agreement is within the range compared to the target.<br/>
+    /// Returns <see langword="true"/> if it is within the range.
+    /// </summary>
+    /// <param name="target">The comparand.</param>
+    /// <returns><see langword="true"/>; The agreement is within the target.</returns>
+    public bool IsInclusive(ConnectionAgreement target)
+    {
+        if (this.MaxTransmissions > target.MaxTransmissions)
+        {
+            return false;
+        }
+        else if (this.MaxBlockSize > target.MaxBlockSize)
+        {
+            return false;
+        }
+        else if (target.MaxStreamLength >= 0)
+        {
+            if (this.MaxStreamLength < 0)
+            {
+                return false;
+            }
+            else if (this.MaxStreamLength > target.MaxStreamLength)
+            {
+                return false;
+            }
+        }
+        else if (this.StreamBufferSize > target.StreamBufferSize)
+        {
+            return false;
+        }
+        else if (this.EnableBidirectionalConnection && !target.EnableBidirectionalConnection)
+        {
+            return false;
+        }
+        else if (this.MinimumConnectionRetentionSeconds > target.MinimumConnectionRetentionSeconds)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

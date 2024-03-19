@@ -98,6 +98,8 @@ public class ConnectionTerminal
                         clientConnection.CloseAllTransmission();
                     }
                 }
+
+                clientConnection.CleanTransmission();
             }
         }
 
@@ -149,6 +151,8 @@ public class ConnectionTerminal
                         serverConnection.CloseAllTransmission();
                     }
                 }
+
+                serverConnection.CleanTransmission();
             }
         }
 

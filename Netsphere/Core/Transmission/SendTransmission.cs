@@ -29,11 +29,12 @@ internal sealed partial class SendTransmission : IDisposable
      *  (Server) : Initial -> Receive -> (Invoke) -> Send/Receive Ack -> tcs / Disposed
      */
 
+    [Link(Type = ChainType.LinkedList, Name = "AckedList")]
     public SendTransmission(Connection connection, uint transmissionId)
     {// lock (Connection.sendTransmissions.SyncObject)
         this.Connection = connection;
         this.TransmissionId = transmissionId;
-        this.AckedNode = this.Connection.AddAckedNode(this);
+        this.AckedMics = Mics.FastSystem;
     }
 
     #region FieldAndProperty
@@ -61,7 +62,7 @@ internal sealed partial class SendTransmission : IDisposable
     internal UnorderedLinkedList<SendTransmission>.Node? SendNode; // lock (ConnectionTerminal.SyncSend)
     internal int MaxReceivePosition;
 
-    internal UnorderedLinkedList<SendTransmission>.Node AckedNode; // lock (Connection.sendTransmissions.SyncObject)
+    // internal UnorderedLinkedList<SendTransmission>.Node? AckedNode; // lock (Connection.sendTransmissions.SyncObject)
     internal long AckedMics;
 
 #pragma warning restore SA1401 // Fields should be private
@@ -397,6 +398,7 @@ Loop:
                         this.CreateFollowingPacket(this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
                     }
 
+                    // Console.WriteLine($"packet: {size}");
                     gene.SetSend(owner);
                     gene.Goshujin = this.genes;
                     chain.Add(gene);
@@ -441,7 +443,7 @@ Exit:
         return NetResult.Success;
 
         void SendKnockFrame()
-        {
+        {// KnockFrameCode
             Span<byte> frame = stackalloc byte[KnockFrame.Length];
             var span = frame;
             BitConverter.TryWriteBytes(span, (ushort)FrameType.Knock);

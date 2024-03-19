@@ -123,6 +123,12 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return await this.Connect(netNode, mode).ConfigureAwait(false);
     }
 
+    public void SetNodeKey(NodePrivateKey nodePrivateKey)
+    {
+        this.NodePrivateKey = nodePrivateKey;
+        this.NodePublicKey = nodePrivateKey.ToPublicKey();
+    }
+
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         if (this.Port == 0)

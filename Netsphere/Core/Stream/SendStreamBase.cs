@@ -17,8 +17,6 @@ public abstract class SendStreamBase
 
     internal SendTransmission SendTransmission { get; }
 
-    public bool IsComplete { get; protected set; }
-
     public ulong DataId { get; protected set; }
 
     public long RemainingLength { get; internal set; }
@@ -28,15 +26,22 @@ public abstract class SendStreamBase
     public void Dispose()
         => this.SendTransmission.Dispose();
 
-    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (this.IsComplete)
+        if (this.SendTransmission.Mode == NetTransmissionMode.StreamCompleted)
         {
-            return Task.FromResult(NetResult.Completed);
+            return NetResult.Completed;
         }
         else
         {
-            return this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken);
+            var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
+            if (result != NetResult.Success &&
+                result != NetResult.Completed)
+            {xx
+                this.Dispose();
+            }
+
+            return result;
         }
     }
 
@@ -92,8 +97,8 @@ public abstract class SendStreamBase
             {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already consumed.
                 var result = NetResult.Success;
                 if (this.SendTransmission.SentTcs is { } sentTcs)
-                {
-                    result = await sentTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                {//
+                    result = await sentTcs.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
                 }
 
                 return new(result);
@@ -109,8 +114,8 @@ public abstract class SendStreamBase
                 }
 
                 try
-                {
-                    response = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                {//
+                    response = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
                     if (response.IsFailure)
                     {
                         return new(response.Result);

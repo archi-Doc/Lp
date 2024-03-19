@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
@@ -238,6 +239,53 @@ public static class NetHelper
         }
 
         return text;
+    }
+
+    public static async Task<(ClientConnection? Connection, TService? Service)> TryGetStreamService<TService>(NetTerminal netTerminal, string node, string remotePrivateKey, long maxStreamLength)
+        where TService : INetService, INetServiceAgreement
+    {
+        // 1st: netNode, 2nd: EnvironmentVariable 'netnode'
+        if (!NetNode.TryParse(node, out var netNode))
+        {
+            if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NetNodeName, out netNode))
+            {
+                return default;
+            }
+        }
+
+        // 1st: remotePrivateKey, 2nd: EnvironmentVariable 'remoteprivatekey'
+        if (!SignaturePrivateKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
+        {
+            if (!CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(NetConstants.RemotePrivateKeyName, out signaturePrivateKey))
+            {
+                return default;
+            }
+        }
+
+        var connection = await netTerminal.Connect(netNode).ConfigureAwait(false);
+        if (connection == null)
+        {
+            return default;
+        }
+
+        var service = connection.GetService<TService>();
+
+        var agreement = connection.Agreement with { MaxStreamLength = maxStreamLength, };
+        var token = new CertificateToken<ConnectionAgreement>(agreement);
+        if (!connection.SignWithSalt(token, signaturePrivateKey))
+        {
+            connection.Dispose();
+            return default;
+        }
+
+        var result = await service.UpdateAgreement(token).ValueAsync.ConfigureAwait(false);
+        if (result != NetResult.Success)
+        {
+            connection.Dispose();
+            return default;
+        }
+
+        return (connection, service);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
