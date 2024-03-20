@@ -14,4 +14,5 @@ internal readonly struct PacketHeader
     public readonly ushort Engagement; // 2 bytes
     public readonly PacketType PacketType; // 2 bytes
     public readonly ulong Id; // 8 bytes, Packet id / Connection id
+    // Frame
 }

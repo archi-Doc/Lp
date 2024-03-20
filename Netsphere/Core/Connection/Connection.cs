@@ -743,7 +743,7 @@ Wait:
             return;
         }
 
-        if (packetType == PacketType.Encrypted || packetType == PacketType.EncryptedResponse)
+        if (packetType == PacketType.Protected || packetType == PacketType.ProtectedResponse)
         {
             if (!this.TryDecryptCbc(salt, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
@@ -1072,7 +1072,7 @@ Wait:
             return false;
         }
 
-        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
+        var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
@@ -1108,7 +1108,7 @@ Wait:
     {
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
-        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
+        var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
@@ -1137,7 +1137,7 @@ Wait:
 
     internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
     {
-        var packetType = this is ClientConnection ? PacketType.Encrypted : PacketType.EncryptedResponse;
+        var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var span = owner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 

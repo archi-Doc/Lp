@@ -692,6 +692,23 @@ Exit:
         }
     }
 
+    /*internal void SendStreamFrame(StreamFrameType streamFrameType)
+    {
+        Debug.Assert(this.Mode == NetTransmissionMode.Stream);
+
+        Span<byte> frame = stackalloc byte[StreamFrame.Length];
+        var span = frame;
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Stream);
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, this.TransmissionId);
+        span = span.Slice(sizeof(uint));
+        BitConverter.TryWriteBytes(span, (ushort)streamFrameType);
+        span = span.Slice(sizeof(ushort));
+        this.Connection.SendPriorityFrame(frame);
+
+        this.Mode = NetTransmissionMode.StreamCompleted;
+    }*/
+
     private void CreateFirstPacket(ushort transmissionMode, int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);

@@ -24,29 +24,50 @@ public abstract class SendStreamBase
     public long SentLength { get; internal set; }
 
     public void Dispose()
-        => this.SendTransmission.Dispose();
+    {
+        this.SendTransmission.Dispose();
+    }
+
+    public void Cancel()
+    {
+        this.SendTransmission.SendStreamFrame(Packet.StreamFrameType.Cancel);
+        this.SendTransmission.Dispose();
+    }
 
     public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (this.SendTransmission.Mode == NetTransmissionMode.StreamCompleted)
-        {
-            return NetResult.Completed;
-        }
-        else
-        {
-            var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success &&
-                result != NetResult.Completed)
-            {xx
-                this.Dispose();
-            }
+        /* if (!this.SendTransmission.Connection.IsActive)
+        {// -> this.SendTransmission.ProcessSend()
+            return NetResult.Closed;
+        }*/
 
-            return result;
+        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
+        {
+            return NetResult.InvalidOperation;
         }
+
+        var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
+        if (result != NetResult.Success &&
+            result != NetResult.Completed)
+        {//
+            this.Dispose();
+        }
+
+        return result;
     }
 
     public async Task<NetResult> SendBlock<TSend>(TSend data, CancellationToken cancellationToken = default)
     {
+        /* if (!this.SendTransmission.Connection.IsActive)
+        {// -> this.SendTransmission.ProcessSend()
+            return NetResult.Closed;
+        }
+
+        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
+        {// -> this.Send()
+            return NetResult.InvalidOperation;
+        }*/
+
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
             return NetResult.SerializationFailed;
@@ -72,12 +93,20 @@ public abstract class SendStreamBase
 
     protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
     {
-        if (this.IsComplete)
+        if (!this.SendTransmission.Connection.IsActive)
         {
-            return new(NetResult.Completed);
+            return new(NetResult.Closed);
         }
 
-        var mode = this.SendTransmission.Mode;
+        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
+        {
+            return new(NetResult.InvalidOperation);
+        }
+
+        this.SendTransmission.Connection.SendStreamFrame(this.SendTransmission.TransmissionId, Packet.StreamFrameType.Complete);
+        this.SendTransmission.Mode = NetTransmissionMode.StreamCompleted;
+
+        /*var mode = this.SendTransmission.Mode;
         if (mode != NetTransmissionMode.StreamCompleted &&
             mode != NetTransmissionMode.Disposed)
         {
@@ -86,7 +115,7 @@ public abstract class SendStreamBase
             {
                 return new(result);
             }
-        }
+        }*/
 
         try
         {
