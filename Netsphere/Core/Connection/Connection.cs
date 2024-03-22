@@ -984,12 +984,6 @@ Wait:
         span = span.Slice(sizeof(uint));
         var transmissionControl = (TransmissionControl)BitConverter.ToUInt16(span);
         span = span.Slice(sizeof(ushort)); // 2
-        /*var geneSerial = BitConverter.ToInt32(span);
-        span = span.Slice(sizeof(int));
-        if (geneSerial == 0)
-        {
-            return;
-        }*/
 
         var dataPosition = BitConverter.ToInt32(span);
         if (dataPosition == 0)
@@ -1015,7 +1009,7 @@ Wait:
         }
 
         this.UpdateLastEventMics();
-        transmission.ProcessReceive_Gene(/*geneSerial, */dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
+        transmission.ProcessReceive_Gene(dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
     internal void ProcessReceive_Knock(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)

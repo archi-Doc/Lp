@@ -166,7 +166,7 @@ public class RemoteData
         }
         else
         {
-            Arc.Unit.PathHelper.TryDeleteFile(path);
+            PathHelper.TryDeleteFile(path);
             transmissionContext.Result = result;
         }
 
