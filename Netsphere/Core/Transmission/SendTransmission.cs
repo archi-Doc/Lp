@@ -726,6 +726,9 @@ Exit:
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
+        BitConverter.TryWriteBytes(span, (ushort)TransmissionControl.Default); // TransmissionControl
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
         span = span.Slice(sizeof(int));
 
@@ -759,6 +762,9 @@ Exit:
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
+        BitConverter.TryWriteBytes(span, (ushort)TransmissionControl.Default); // TransmissionControl
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
         span = span.Slice(sizeof(int));
 
@@ -785,6 +791,9 @@ Exit:
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, (ushort)TransmissionControl.Default); // TransmissionControl
+        span = span.Slice(sizeof(ushort));
 
         // BitConverter.TryWriteBytes(span, geneSerial); // GeneSerial
         // span = span.Slice(sizeof(int));

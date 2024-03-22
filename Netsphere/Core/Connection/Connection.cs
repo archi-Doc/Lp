@@ -857,6 +857,8 @@ Wait:
         span = span.Slice(sizeof(ushort)); // 2
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint)); // 4
+        var transmissionControl = (TransmissionControl)BitConverter.ToUInt16(span);
+        span = span.Slice(sizeof(ushort)); // 2
         var rttHint = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int)); // 4
         var totalGenes = BitConverter.ToInt32(span);
@@ -952,7 +954,9 @@ Wait:
         }
 
         this.UpdateLastEventMics();
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
+
+        // FirstGeneFrameCode (DataKind + DataId + Data...)
+        transmission.ProcessReceive_Gene(0, toBeShared.Slice(16));
 
         if (transmission.Mode == NetTransmissionMode.Stream)
         {// Invoke stream
@@ -975,8 +979,11 @@ Wait:
             return;
         }
 
+        // FollowingGeneFrameCode
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
+        var transmissionControl = (TransmissionControl)BitConverter.ToUInt16(span);
+        span = span.Slice(sizeof(ushort)); // 2
         /*var geneSerial = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int));
         if (geneSerial == 0)
