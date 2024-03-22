@@ -484,7 +484,7 @@ Abort:
         int written = 0;
         if (this.Mode != NetTransmissionMode.Stream)
         {
-            return (NetResult.Completed, written);
+            return (NetResult.Closed, written);
         }
 
         int remaining = buffer.Length;
@@ -499,7 +499,7 @@ Abort:
                 }
                 else if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return (NetResult.Completed, written);
+                    return (NetResult.Closed, written);
                 }
 
                 var chain = this.genes?.DataPositionListChain;
@@ -594,7 +594,7 @@ Abort:
                 }
                 else if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return (NetResult.Completed, written);
+                    return (NetResult.Closed, written);
                 }
 
                 try
@@ -604,7 +604,7 @@ Abort:
                 }
                 catch
                 {
-                    return (NetResult.Canceled, written);
+                    return (NetResult.Timeout, written);
                 }
             }
         }

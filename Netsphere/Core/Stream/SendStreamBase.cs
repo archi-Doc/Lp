@@ -41,6 +41,33 @@ public abstract class SendStreamBase
         this.SendTransmission.Dispose();
     }
 
+    internal async Task<NetResult> SendInternal(DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+    {
+        /* if (!this.SendTransmission.Connection.IsActive)
+        {// -> this.SendTransmission.ProcessSend()
+            return NetResult.Closed;
+        }*/
+
+        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
+        {
+            return NetResult.Closed;
+        }
+
+        var result = await this.SendTransmission.ProcessSend(this, dataControl, buffer, cancellationToken).ConfigureAwait(false);
+        if (result != NetResult.Success)
+        {// Error
+            this.DisposeImmediately();
+        }
+        else if (dataControl == DataControl.Complete)
+        {
+        }
+        else if (dataControl == DataControl.Cancel)
+        {
+        }
+
+        return result;
+    }
+
     public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
         /* if (!this.SendTransmission.Connection.IsActive)
@@ -98,7 +125,7 @@ public abstract class SendStreamBase
         return result;
     }
 
-    protected async Task<NetResult> SendControl(DataControl transmissionControl, CancellationToken cancellationToken)
+    protected async Task<NetResult> SendControl(DataControl dataControl, CancellationToken cancellationToken)
     {
         /* if (!this.SendTransmission.Connection.IsActive)
         {// -> this.SendTransmission.ProcessSend()
@@ -110,7 +137,7 @@ public abstract class SendStreamBase
             return NetResult.InvalidOperation;
         }
 
-        var result = await this.SendTransmission.ProcessSend(this, transmissionControl, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        var result = await this.SendTransmission.ProcessSend(this, dataControl, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
         return result;
     }
 

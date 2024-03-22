@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Netsphere.Net;
 
 namespace Netsphere;
@@ -36,12 +37,25 @@ public class ReceiveStream // : IDisposable
         this.DisposeImmediately();
     }
 
+    /*public void Dispose()
+    {
+        this.DisposeImmediately();
+    }*/
+
     public async Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
         var r = await this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken).ConfigureAwait(false);
         if (r.Result != NetResult.Success)
         {
-            this.Cancel();
+            if (r.Result == NetResult.Completed ||
+                r.Result == NetResult.Canceled)
+            {
+                Debug.Assert(this.ReceiveTransmission.Mode == NetTransmissionMode.Disposed);
+            }
+            else
+            {
+                this.Cancel();
+            }
         }
 
         return r;

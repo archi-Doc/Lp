@@ -324,7 +324,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal async Task<NetResult> ProcessSend(SendStreamBase stream, DataControl transmissionControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+    internal async Task<NetResult> ProcessSend(SendStreamBase stream, DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
         var addSend = false;
         while (true)
@@ -352,7 +352,7 @@ Loop:
                 }
                 catch
                 {
-                    return NetResult.Canceled;
+                    return NetResult.Timeout;
                 }
 
                 if (this.Connection.CloseIfTransmissionHasTimedOut())
@@ -382,7 +382,7 @@ Loop:
                     if (this.GeneSerialMax == 0)
                     {// First gene
                         size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
-                        this.CreateFirstPacket_Stream(transmissionControl, stream.RemainingLength, stream.DataId, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFirstPacket_Stream(dataControl, stream.RemainingLength, stream.DataId, buffer.Slice(0, size).Span, out owner);
                     }
                     else
                     {// Following gene
@@ -395,7 +395,7 @@ Loop:
                             size = Math.Min(buffer.Length, (int)stream.RemainingLength);
                         }
 
-                        this.CreateFollowingPacket(transmissionControl, this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFollowingPacket(dataControl, this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
                     }
 
                     // Console.WriteLine($"packet: {size}");
@@ -410,8 +410,8 @@ Loop:
                     stream.RemainingLength -= size;
                     stream.SentLength += size;
                     if (stream.RemainingLength == 0 ||
-                        transmissionControl == DataControl.Complete ||
-                        transmissionControl == DataControl.Cancel)
+                        dataControl == DataControl.Complete ||
+                        dataControl == DataControl.Cancel)
                     {// Complete or Cancel
                         this.Mode = NetTransmissionMode.StreamCompleted;
                         goto Exit;
@@ -719,7 +719,7 @@ Exit:
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)DataControl.Valid); // TransmissionControl
+        BitConverter.TryWriteBytes(span, (ushort)DataControl.Valid); // DataControl
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
@@ -738,7 +738,7 @@ Exit:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFirstPacket_Stream(DataControl transmissionControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket_Stream(DataControl dataControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -755,7 +755,7 @@ Exit:
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)transmissionControl); // TransmissionControl
+        BitConverter.TryWriteBytes(span, (ushort)dataControl); // DataControl
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
@@ -771,7 +771,7 @@ Exit:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(DataControl transmissionControl, int dataPosition, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(DataControl dataControl, int dataPosition, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 
@@ -785,7 +785,7 @@ Exit:
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)transmissionControl); // TransmissionControl
+        BitConverter.TryWriteBytes(span, (ushort)dataControl); // DataControl
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, dataPosition); // DataPosition
