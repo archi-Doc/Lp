@@ -2,9 +2,10 @@
 
 namespace Netsphere.Net;
 
-public enum TransmissionControl : ushort
+public enum DataControl : ushort
 {
-    Default,
+    Initial,
+    Received,
     Complete,
     Cancel,
 }

@@ -37,7 +37,7 @@ public abstract class SendStreamBase
 
     public async Task Cancel(CancellationToken cancellationToken = default)
     {
-        var result = await this.SendTransmission.ProcessSend(this, TransmissionControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        var result = await this.SendTransmission.ProcessSend(this, DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
         this.SendTransmission.Dispose();
     }
 
@@ -53,7 +53,7 @@ public abstract class SendStreamBase
             return NetResult.InvalidOperation;
         }
 
-        var result = await this.SendTransmission.ProcessSend(this, TransmissionControl.Default, buffer, cancellationToken).ConfigureAwait(false);
+        var result = await this.SendTransmission.ProcessSend(this, DataControl.Default, buffer, cancellationToken).ConfigureAwait(false);
         if (result != NetResult.Success &&
             result != NetResult.Completed)
         {//
@@ -98,7 +98,7 @@ public abstract class SendStreamBase
         return result;
     }
 
-    protected async Task<NetResult> SendControl(TransmissionControl transmissionControl, CancellationToken cancellationToken)
+    protected async Task<NetResult> SendControl(DataControl transmissionControl, CancellationToken cancellationToken)
     {
         /* if (!this.SendTransmission.Connection.IsActive)
         {// -> this.SendTransmission.ProcessSend()
@@ -114,7 +114,7 @@ public abstract class SendStreamBase
         return result;
     }
 
-    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(TransmissionControl transmissionControl, CancellationToken cancellationToken)
+    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(DataControl transmissionControl, CancellationToken cancellationToken)
     {
         if (!this.SendTransmission.Connection.IsActive)
         {

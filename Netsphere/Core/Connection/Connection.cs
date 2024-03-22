@@ -857,7 +857,7 @@ Wait:
         span = span.Slice(sizeof(ushort)); // 2
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint)); // 4
-        var transmissionControl = (TransmissionControl)BitConverter.ToUInt16(span);
+        var dataControl = (DataControl)BitConverter.ToUInt16(span);
         span = span.Slice(sizeof(ushort)); // 2
         var rttHint = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int)); // 4
@@ -956,7 +956,7 @@ Wait:
         this.UpdateLastEventMics();
 
         // FirstGeneFrameCode (DataKind + DataId + Data...)
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(16));
+        transmission.ProcessReceive_Gene(dataControl, 0, toBeShared.Slice(16));
 
         if (transmission.Mode == NetTransmissionMode.Stream)
         {// Invoke stream
@@ -982,7 +982,7 @@ Wait:
         // FollowingGeneFrameCode
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        var transmissionControl = (TransmissionControl)BitConverter.ToUInt16(span);
+        var dataControl = (DataControl)BitConverter.ToUInt16(span);
         span = span.Slice(sizeof(ushort)); // 2
 
         var dataPosition = BitConverter.ToInt32(span);
@@ -1009,7 +1009,7 @@ Wait:
         }
 
         this.UpdateLastEventMics();
-        transmission.ProcessReceive_Gene(dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
+        transmission.ProcessReceive_Gene(dataControl, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
     internal void ProcessReceive_Knock(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
