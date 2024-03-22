@@ -285,7 +285,7 @@ public sealed class TransmissionContext
 
         if (this.sendStream is not null)
         {
-            this.sendStream.Dispose();
+            this.sendStream.DisposeImmediately();
             this.sendStream = default;
         }
     }

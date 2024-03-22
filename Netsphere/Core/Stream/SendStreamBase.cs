@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Netsphere.Net;
 
@@ -23,14 +25,19 @@ public abstract class SendStreamBase
 
     public long SentLength { get; internal set; }
 
-    public void Dispose()
+    internal void DisposeImmediately()
     {
+        if (this.SendTransmission.Mode == NetTransmissionMode.Stream)
+        {
+
+        }
+
         this.SendTransmission.Dispose();
     }
 
-    public void Cancel()
+    public async Task Cancel()
     {
-        this.SendTransmission.SendStreamFrame(Packet.StreamFrameType.Cancel);
+        var result = await this.SendTransmission.ProcessSend(this, TransmissionControl.Cancel, ReadOnlyMemory<byte>.Empty, default).ConfigureAwait(false);
         this.SendTransmission.Dispose();
     }
 
@@ -46,11 +53,11 @@ public abstract class SendStreamBase
             return NetResult.InvalidOperation;
         }
 
-        var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
+        var result = await this.SendTransmission.ProcessSend(this, TransmissionControl.Default, buffer, cancellationToken).ConfigureAwait(false);
         if (result != NetResult.Success &&
             result != NetResult.Completed)
         {//
-            this.Dispose();
+            this.DisposeImmediately();
         }
 
         return result;

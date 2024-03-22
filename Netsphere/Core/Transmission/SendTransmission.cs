@@ -214,7 +214,7 @@ internal sealed partial class SendTransmission : IDisposable
                     this.GeneSerialMax = info.NumberOfGenes;
                     this.gene0 = new(this);
 
-                    this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span, out var owner);
+                    this.CreateFirstPacket_Block(info.NumberOfGenes, dataKind, dataId, span, out var owner);
                     this.gene0.SetSend(owner);
                 }
                 else if (info.NumberOfGenes == 2)
@@ -223,12 +223,12 @@ internal sealed partial class SendTransmission : IDisposable
                     this.gene0 = new(this);
                     this.gene1 = new(this);
 
-                    this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                    this.CreateFirstPacket_Block(info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                     this.gene0.SetSend(owner);
 
                     span = span.Slice((int)info.FirstGeneSize);
                     Debug.Assert(span.Length == info.LastGeneSize);
-                    this.CreateFollowingPacket(1, span, out owner);
+                    this.CreateFollowingPacket(TransmissionControl.Default, 1, span, out owner);
                     this.gene1.SetSend(owner);
                 }
                 else if (info.NumberOfGenes == 3)
@@ -238,16 +238,16 @@ internal sealed partial class SendTransmission : IDisposable
                     this.gene1 = new(this);
                     this.gene2 = new(this);
 
-                    this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                    this.CreateFirstPacket_Block(info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                     this.gene0.SetSend(owner);
 
                     span = span.Slice((int)info.FirstGeneSize);
-                    this.CreateFollowingPacket(1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
+                    this.CreateFollowingPacket(TransmissionControl.Default, 1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
                     this.gene1.SetSend(owner);
 
                     span = span.Slice(FollowingGeneFrame.MaxGeneLength);
                     Debug.Assert(span.Length == info.LastGeneSize);
-                    this.CreateFollowingPacket(2, span, out owner);
+                    this.CreateFollowingPacket(TransmissionControl.Default, 2, span, out owner);
                     this.gene2.SetSend(owner);
                 }
                 else
@@ -270,7 +270,7 @@ internal sealed partial class SendTransmission : IDisposable
                 this.genes.GeneSerialListChain.Resize(info.NumberOfGenes);
 
                 var firstGene = new SendGene(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket_Block(info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 firstGene.SetSend(owner);
                 span = span.Slice((int)info.FirstGeneSize);
                 firstGene.Goshujin = this.genes;
@@ -280,7 +280,7 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : FollowingGeneFrame.MaxGeneLength);
                     var gene = new SendGene(this);
-                    this.CreateFollowingPacket(i, span.Slice(0, size), out owner);
+                    this.CreateFollowingPacket(TransmissionControl.Default, i, span.Slice(0, size), out owner);
                     gene.SetSend(owner);
 
                     span = span.Slice(size);
@@ -324,7 +324,7 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal async Task<NetResult> ProcessSend(SendStreamBase stream, ReadOnlyMemory<byte> buffer, bool complete, CancellationToken cancellationToken)
+    internal async Task<NetResult> ProcessSend(SendStreamBase stream, TransmissionControl transmissionControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
         var addSend = false;
         while (true)
@@ -382,7 +382,7 @@ Loop:
                     if (this.GeneSerialMax == 0)
                     {// First gene
                         size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
-                        this.CreateFirstPacket(1, stream.RemainingLength, stream.DataId, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFirstPacket_Stream(transmissionControl, stream.RemainingLength, stream.DataId, buffer.Slice(0, size).Span, out owner);
                     }
                     else
                     {// Following gene
@@ -395,7 +395,7 @@ Loop:
                             size = Math.Min(buffer.Length, (int)stream.RemainingLength);
                         }
 
-                        this.CreateFollowingPacket(this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
+                        this.CreateFollowingPacket(transmissionControl, this.GeneSerialMax, buffer.Slice(0, size).Span, out owner);
                     }
 
                     // Console.WriteLine($"packet: {size}");
@@ -409,18 +409,11 @@ Loop:
                     this.GeneSerialMax++;
                     stream.RemainingLength -= size;
                     stream.SentLength += size;
-                    if (stream.RemainingLength == 0)
-                    {// Complete
+                    if (stream.RemainingLength == 0 ||
+                        transmissionControl == TransmissionControl.Complete ||
+                        transmissionControl == TransmissionControl.Cancel)
+                    {// Complete or Cancel
                         this.Mode = NetTransmissionMode.StreamCompleted;
-                        goto Exit;
-                    }
-                    else if (buffer.Length == 0)
-                    {// Exit the loop and proceed to transmission because the buffer is empty.
-                        if (complete)
-                        {// Complete
-                            this.Mode = NetTransmissionMode.StreamCompleted;
-                        }
-
                         goto Exit;
                     }
                 }
@@ -709,7 +702,7 @@ Exit:
         this.Mode = NetTransmissionMode.StreamCompleted;
     }*/
 
-    private void CreateFirstPacket(ushort transmissionMode, int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket_Block(int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -720,7 +713,7 @@ Exit:
         BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, transmissionMode); // TransmissionMode
+        BitConverter.TryWriteBytes(span, (ushort)TransmissionMode.Block); // TransmissionMode
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
@@ -745,7 +738,7 @@ Exit:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFirstPacket(ushort transmissionMode, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket_Stream(TransmissionControl transmissionControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -756,13 +749,13 @@ Exit:
         BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, transmissionMode); // TransmissionMode
+        BitConverter.TryWriteBytes(span, (ushort)TransmissionMode.Stream); // TransmissionMode
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)TransmissionControl.Default); // TransmissionControl
+        BitConverter.TryWriteBytes(span, (ushort)transmissionControl); // TransmissionControl
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
@@ -778,7 +771,7 @@ Exit:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(/*int geneSerial, */int dataPosition, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(TransmissionControl transmissionControl, int dataPosition, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 
@@ -792,11 +785,8 @@ Exit:
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)TransmissionControl.Default); // TransmissionControl
+        BitConverter.TryWriteBytes(span, (ushort)transmissionControl); // TransmissionControl
         span = span.Slice(sizeof(ushort));
-
-        // BitConverter.TryWriteBytes(span, geneSerial); // GeneSerial
-        // span = span.Slice(sizeof(int));
 
         BitConverter.TryWriteBytes(span, dataPosition); // DataPosition
         span = span.Slice(sizeof(int));

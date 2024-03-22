@@ -98,7 +98,7 @@ public class RemoteData
             }
             catch
             {
-                sendStream.Dispose();// error
+                sendStream.Cancel();
             }
             finally
             {
