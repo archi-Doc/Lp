@@ -12,5 +12,5 @@ public class SendStreamAndReceive<TReceive> : SendStreamBase
     }
 
     public Task<NetResultValue<TReceive>> CompleteSendAndReceive(CancellationToken cancellationToken = default)
-        => this.InternalComplete<TReceive>(DataControl.Complete, cancellationToken);
+        => this.InternalComplete<TReceive>(cancellationToken);
 }

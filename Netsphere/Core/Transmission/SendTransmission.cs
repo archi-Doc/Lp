@@ -2,6 +2,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using Arc.Collections;
 using Netsphere.Packet;
 
@@ -324,8 +326,62 @@ internal sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
+    internal bool TrySendControl(SendStreamBase stream, DataControl dataControl)
+    {
+        if (!this.Connection.IsActive)
+        {
+            return false;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.Mode != NetTransmissionMode.Stream)
+            {
+                return false;
+            }
+            else
+            {// Stream -> StreamCompleted
+                this.Mode = NetTransmissionMode.StreamCompleted;
+            }
+
+            var chain = this.genes?.GeneSerialListChain;
+            if (chain is null)
+            {
+                return false;
+            }
+
+            if (this.GeneSerialMax >= this.MaxReceivePosition || !chain.CanAdd)
+            {
+                return false;
+            }
+
+            var gene = new SendGene(this);
+            ByteArrayPool.MemoryOwner owner;
+            if (this.GeneSerialMax == 0)
+            {// First gene
+                this.CreateFirstPacket_Stream(dataControl, 0, stream.DataId, ReadOnlySpan<byte>.Empty, out owner);
+            }
+            else
+            {// Following gene
+                this.CreateFollowingPacket(dataControl, this.GeneSerialMax, ReadOnlySpan<byte>.Empty, out owner);
+            }
+
+            gene.SetSend(owner);
+            gene.Goshujin = this.genes;
+            chain.Add(gene);
+        }
+
+        this.Connection.AddSend(this);
+        return true;
+    }
+
     internal async Task<NetResult> ProcessSend(SendStreamBase stream, DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
+        if (this.Mode != NetTransmissionMode.Stream)
+        {
+            return NetResult.Closed;
+        }
+
         var addSend = false;
         while (true)
         {
@@ -365,7 +421,11 @@ Loop:
 
             lock (this.syncObject)
             {
-                // Recalculate
+                if (this.Mode != NetTransmissionMode.Stream)
+                {
+                    return NetResult.Closed;
+                }
+
                 var chain = this.genes?.GeneSerialListChain;
                 if (chain is null)
                 {

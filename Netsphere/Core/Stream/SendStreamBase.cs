@@ -25,35 +25,23 @@ public abstract class SendStreamBase
 
     public long SentLength { get; internal set; }
 
-    internal void DisposeImmediately(bool sendControl)
+    internal void DisposeImmediately()
     {
-        if (sendControl &&
-            this.SendTransmission.Mode == NetTransmissionMode.Stream)
+        if (this.SendTransmission.Mode == NetTransmissionMode.Stream)
         {
-
+            this.SendTransmission.TrySendControl(this, DataControl.Cancel); // Stream -> StreamCompleted
         }
 
-        this.SendTransmission.Dispose();
+        // this.SendTransmission.Dispose(); // Delay the disposal of SendTransmission until the transmission is complete.
     }
 
     public async Task Cancel(CancellationToken cancellationToken = default)
     {
         var result = await this.SendTransmission.ProcessSend(this, DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
-        this.SendTransmission.Dispose();
     }
 
     internal async Task<NetResult> SendInternal(DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
-        /* if (!this.SendTransmission.Connection.IsActive)
-        {// -> this.SendTransmission.ProcessSend()
-            return NetResult.Closed;
-        }*/
-
-        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
-        {
-            return NetResult.Closed;
-        }
-
         var result = await this.SendTransmission.ProcessSend(this, dataControl, buffer, cancellationToken).ConfigureAwait(false);
         if (result != NetResult.Success)
         {// Error
@@ -68,16 +56,6 @@ public abstract class SendStreamBase
 
     public async Task<NetResult> SendBlock<TSend>(TSend data, CancellationToken cancellationToken = default)
     {
-        /* if (!this.SendTransmission.Connection.IsActive)
-        {// -> this.SendTransmission.ProcessSend()
-            return NetResult.Closed;
-        }
-
-        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
-        {// -> this.Send()
-            return NetResult.InvalidOperation;
-        }*/
-
         if (!NetHelper.TrySerializeWithLength(data, out var owner))
         {
             return NetResult.SerializationFailed;
@@ -101,13 +79,8 @@ public abstract class SendStreamBase
         return result;
     }
 
-    protected async Task<NetResult> SendControl(DataControl dataControl, CancellationToken cancellationToken)
+    /*protected async Task<NetResult> SendControl(DataControl dataControl, CancellationToken cancellationToken)
     {
-        /* if (!this.SendTransmission.Connection.IsActive)
-        {// -> this.SendTransmission.ProcessSend()
-            return NetResult.Closed;
-        }*/
-
         if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
         {
             return NetResult.InvalidOperation;
@@ -115,42 +88,25 @@ public abstract class SendStreamBase
 
         var result = await this.SendTransmission.ProcessSend(this, dataControl, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
         return result;
-    }
+    }*/
 
-    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(DataControl dataControl, CancellationToken cancellationToken)
+    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
     {
-        if (!this.SendTransmission.Connection.IsActive)
-        {
-            return new(NetResult.Closed);
+        var result = await this.SendTransmission.ProcessSend(this, DataControl.Complete, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        if (result != NetResult.Success)
+        {// Error
+            this.DisposeImmediately();
+            return new(result);
         }
 
-        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
-        {
-            return new(NetResult.InvalidOperation);
-        }
-
-        this.SendTransmission.Connection.SendStreamFrame(this.SendTransmission.TransmissionId, Packet.StreamFrameType.Complete);
-        this.SendTransmission.Mode = NetTransmissionMode.StreamCompleted;
-
-        /*var mode = this.SendTransmission.Mode;
-        if (mode != NetTransmissionMode.StreamCompleted &&
-            mode != NetTransmissionMode.Disposed)
-        {
-            var result = await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, true, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success)
-            {
-                return new(result);
-            }
-        }*/
+        // Stream -> StreamCompleted
 
         try
         {
-            this.IsComplete = true;
-
             var connection = this.SendTransmission.Connection;
             if (connection.IsServer)
             {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already consumed.
-                var result = NetResult.Success;
+                result = NetResult.Success;
                 if (this.SendTransmission.SentTcs is { } sentTcs)
                 {//
                     result = await sentTcs.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);

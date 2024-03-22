@@ -7,7 +7,7 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public class ReceiveStream // : IDisposable
+public class ReceiveStream : IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -32,15 +32,10 @@ public class ReceiveStream // : IDisposable
 
     #endregion
 
-    public void Cancel()
+    public void Dispose()
     {
         this.DisposeImmediately();
     }
-
-    /*public void Dispose()
-    {
-        this.DisposeImmediately();
-    }*/
 
     public async Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
@@ -54,7 +49,7 @@ public class ReceiveStream // : IDisposable
             }
             else
             {
-                this.Cancel();
+                this.Dispose();
             }
         }
 
@@ -73,14 +68,14 @@ public class ReceiveStream // : IDisposable
             }
             else if (written != sizeof(int))
             {
-                this.Cancel();
+                this.Dispose();
                 return new(NetResult.DeserializationFailed);
             }
 
             var length = BitConverter.ToInt32(buffer);
             if (length > this.ReceiveTransmission.Connection.Agreement.MaxBlockSize)
             {
-                this.Cancel();
+                this.Dispose();
                 return new(NetResult.BlockSizeLimit);
             }
 
@@ -101,13 +96,13 @@ public class ReceiveStream // : IDisposable
             }
             else if (written != length)
             {
-                this.Cancel();
+                this.Dispose();
                 return new(NetResult.DeserializationFailed);
             }
 
             if (!TinyhandSerializer.TryDeserialize<TReceive>(memory.Span, out var value))
             {
-                this.Cancel();
+                this.Dispose();
                 return new(NetResult.DeserializationFailed);
             }
 
