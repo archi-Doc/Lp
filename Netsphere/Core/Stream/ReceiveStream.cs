@@ -36,9 +36,6 @@ public class ReceiveStream : IDisposable
     public void Cancel()
         => this.Dispose();
 
-    public void Dispose()
-        => this.ReceiveTransmission.ProcessDispose();
-
     public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
         => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
 
@@ -95,5 +92,10 @@ public class ReceiveStream : IDisposable
         {
             NetHelper.ReturnBuffer(buffer);
         }
+    }
+
+    internal void DisposeImmediately()
+    {
+        this.ReceiveTransmission.ProcessDispose();
     }
 }

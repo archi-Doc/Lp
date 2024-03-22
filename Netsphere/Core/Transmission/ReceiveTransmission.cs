@@ -267,9 +267,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
                     }
                     else if (this.Mode == NetTransmissionMode.Stream)
                     {
-                        if (toBeShared.Memory.Length == 0)
+                        if (dataControl == DataControl.Complete ||
+                            dataControl == DataControl.Cancel)
                         {
-                            this.totalGene = dataPosition;
+                            this.totalGene = dataPosition;//
                         }
                     }
                 }
