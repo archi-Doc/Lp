@@ -9,11 +9,11 @@ public enum NetResult : byte
 {
     Success,
     Completed,
-    Refused,
     UnknownError,
     Timeout,
     Canceled,
     Closed,
+    Refused,
     InvalidData,
     InvalidOperation,
     SerializationFailed,

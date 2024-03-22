@@ -53,7 +53,7 @@ public abstract class SendStreamBase
             return NetResult.InvalidOperation;
         }
 
-        var result = await this.SendTransmission.ProcessSend(this, DataControl.Default, buffer, cancellationToken).ConfigureAwait(false);
+        var result = await this.SendTransmission.ProcessSend(this, DataControl.Valid, buffer, cancellationToken).ConfigureAwait(false);
         if (result != NetResult.Success &&
             result != NetResult.Completed)
         {//
@@ -114,7 +114,7 @@ public abstract class SendStreamBase
         return result;
     }
 
-    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(DataControl transmissionControl, CancellationToken cancellationToken)
+    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(DataControl dataControl, CancellationToken cancellationToken)
     {
         if (!this.SendTransmission.Connection.IsActive)
         {

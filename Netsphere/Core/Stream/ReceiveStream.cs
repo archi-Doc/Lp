@@ -6,7 +6,7 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public class ReceiveStream : IDisposable
+public class ReceiveStream // : IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -16,8 +16,6 @@ public class ReceiveStream : IDisposable
     }
 
     #region FieldAndProperty
-
-    public StreamState State { get; internal set; }
 
     internal ReceiveTransmission ReceiveTransmission { get; }
 
@@ -34,10 +32,20 @@ public class ReceiveStream : IDisposable
     #endregion
 
     public void Cancel()
-        => this.Dispose();
+    {
+        this.DisposeImmediately();
+    }
 
-    public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
+    public async Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        var r = await this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken).ConfigureAwait(false);
+        if (r.Result != NetResult.Success)
+        {
+            this.Cancel();
+        }
+
+        return r;
+    }
 
     public async Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default)
     {
@@ -51,12 +59,14 @@ public class ReceiveStream : IDisposable
             }
             else if (written != sizeof(int))
             {
+                this.Cancel();
                 return new(NetResult.DeserializationFailed);
             }
 
             var length = BitConverter.ToInt32(buffer);
             if (length > this.ReceiveTransmission.Connection.Agreement.MaxBlockSize)
             {
+                this.Cancel();
                 return new(NetResult.BlockSizeLimit);
             }
 
@@ -71,18 +81,19 @@ public class ReceiveStream : IDisposable
             }
 
             (result, written) = await this.Receive(memory, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success &&
-                result != NetResult.Completed)
+            if (result != NetResult.Success)
             {
                 return new(result);
             }
             else if (written != length)
             {
+                this.Cancel();
                 return new(NetResult.DeserializationFailed);
             }
 
             if (!TinyhandSerializer.TryDeserialize<TReceive>(memory.Span, out var value))
             {
+                this.Cancel();
                 return new(NetResult.DeserializationFailed);
             }
 

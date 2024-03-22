@@ -5,7 +5,7 @@ namespace Netsphere.Net;
 public enum DataControl : ushort
 {
     Initial,
-    Received,
+    Valid,
     Complete,
     Cancel,
 }
