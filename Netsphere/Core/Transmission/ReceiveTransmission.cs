@@ -528,13 +528,13 @@ Abort:
 
                     var originalLength = gene.Packet.Span.Length;
                     var length = originalLength;
-                    if (originalLength == 0)
+                    /*if (originalLength == 0)
                     {// Complete
                         gene.Dispose();
                         gene.Goshujin = default;
                         this.DisposeInternal();
                         goto Complete;
-                    }
+                    }*/*/
 
                     if (stream.CurrentGene == 0 &&
                         stream.CurrentPosition < 12)

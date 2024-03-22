@@ -50,7 +50,7 @@ public class TestServiceImpl : TestService
         if (stream is not null)
         {
             await stream.Send(buffer);
-            await stream.CompleteSend();
+            await stream.Complete();
         }
 
         return default;
@@ -216,7 +216,7 @@ public class TestServiceImpl : TestService
         if (stream is not null)
         {
             await stream.Send(buffer);
-            await stream.CompleteSend();
+            await stream.Complete();
         }
 
         return default;

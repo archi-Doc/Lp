@@ -94,11 +94,11 @@ public class RemoteData
                     await sendStream.Send(buffer.AsMemory(0, length)).ConfigureAwait(false);
                 }
 
-                await sendStream.CompleteSend().ConfigureAwait(false);
+                await sendStream.Complete().ConfigureAwait(false);
             }
             catch
             {
-                sendStream.Cancel();
+                await sendStream.Cancel();
             }
             finally
             {
