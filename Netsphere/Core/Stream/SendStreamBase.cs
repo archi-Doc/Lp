@@ -25,9 +25,10 @@ public abstract class SendStreamBase
 
     public long SentLength { get; internal set; }
 
-    internal void DisposeImmediately()
+    internal void DisposeImmediately(bool sendControl)
     {
-        if (this.SendTransmission.Mode == NetTransmissionMode.Stream)
+        if (sendControl &&
+            this.SendTransmission.Mode == NetTransmissionMode.Stream)
         {
 
         }
@@ -58,37 +59,12 @@ public abstract class SendStreamBase
         {// Error
             this.DisposeImmediately();
         }
-        else if (dataControl == DataControl.Complete)
-        {
-        }
-        else if (dataControl == DataControl.Cancel)
-        {
-        }
 
         return result;
     }
 
-    public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-    {
-        /* if (!this.SendTransmission.Connection.IsActive)
-        {// -> this.SendTransmission.ProcessSend()
-            return NetResult.Closed;
-        }*/
-
-        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
-        {
-            return NetResult.InvalidOperation;
-        }
-
-        var result = await this.SendTransmission.ProcessSend(this, DataControl.Valid, buffer, cancellationToken).ConfigureAwait(false);
-        if (result != NetResult.Success &&
-            result != NetResult.Completed)
-        {//
-            this.DisposeImmediately();
-        }
-
-        return result;
-    }
+    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        => this.SendInternal(DataControl.Valid, buffer, cancellationToken);
 
     public async Task<NetResult> SendBlock<TSend>(TSend data, CancellationToken cancellationToken = default)
     {
