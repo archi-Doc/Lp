@@ -334,7 +334,7 @@ public abstract class Connection : IDisposable
         {
             if (this.IsClosedOrDisposed ||
                 this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
-            {
+            {//
                 return default;
             }
 

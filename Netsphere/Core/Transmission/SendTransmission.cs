@@ -403,6 +403,7 @@ Loop:
 
                 try
                 {
+                    // await Console.Out.WriteLineAsync($"Delay {this.MaxReceivePosition}/{this.GeneSerialMax}");
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     delay = Math.Min(delay << 1, NetConstants.MaxSendStreamDelayMilliseconds);
                 }
@@ -474,6 +475,10 @@ Loop:
                         dataControl == DataControl.Cancel)
                     {// Complete or Cancel
                         this.Mode = NetTransmissionMode.StreamCompleted;
+                        goto Exit;
+                    }
+                    else if (buffer.Length == 0)
+                    {
                         goto Exit;
                     }
                 }

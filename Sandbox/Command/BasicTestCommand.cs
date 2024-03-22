@@ -88,7 +88,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.Responders.Register(TestStreamResponder.Instance);
         this.NetControl.Services.Register<TestService>();
 
-        // this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
+        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
