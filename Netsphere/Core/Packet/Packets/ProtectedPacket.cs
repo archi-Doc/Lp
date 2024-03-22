@@ -4,7 +4,7 @@ namespace Netsphere.Packet;
 
 #pragma warning disable CS0649
 
-internal readonly struct PacketProtected
+internal readonly struct ProtectedPacket
 {// Protected = Salt + Encrypted + Checksum
     public const int Length = 10;
 

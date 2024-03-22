@@ -5,25 +5,25 @@ using Netsphere.Crypto;
 namespace Netsphere.Packet;
 
 [TinyhandObject]
-public partial class PacketGetInformation : IPacket
+public partial class GetInformationPacket : IPacket
 {
     public static PacketType PacketType => PacketType.GetInformation;
 
-    public PacketGetInformation()
+    public GetInformationPacket()
     {
     }
 }
 
 [TinyhandObject]
-public partial class PacketGetInformationResponse : IPacket
+public partial class GetInformationPacketResponse : IPacket
 {
     public static PacketType PacketType => PacketType.GetInformationResponse;
 
-    public PacketGetInformationResponse()
+    public GetInformationPacketResponse()
     {
     }
 
-    public PacketGetInformationResponse(NodePublicKey publicKey)
+    public GetInformationPacketResponse(NodePublicKey publicKey)
     {
         this.PublicKey = publicKey;
     }

@@ -206,8 +206,8 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new PacketConnect(0, this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
-        var t = await this.packetTerminal.SendAndReceive<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
+        var packet = new ConnectPacket(0, this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
             return default;
@@ -268,7 +268,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
@@ -285,7 +285,7 @@ public class ConnectionTerminal
         return connection;
     }
 
-    internal bool PrepareServerSide(NetEndPoint endPoint, PacketConnect p, PacketConnectResponse p2)
+    internal bool PrepareServerSide(NetEndPoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, p.ClientPublicKey);
@@ -308,7 +308,7 @@ public class ConnectionTerminal
         return true;
     }
 
-    internal void CreateEmbryo(byte[] material, PacketConnect p, PacketConnectResponse p2, out ulong connectionId, out Embryo embryo)
+    internal void CreateEmbryo(byte[] material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
     {// ClientSalt, ServerSalt, Material, ClientSalt2, ServerSalt2
         Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + KeyHelper.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
         var span = buffer;

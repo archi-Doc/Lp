@@ -3,17 +3,17 @@
 namespace Netsphere.Packet;
 
 [TinyhandObject]
-public sealed partial class PacketPing : IPacket
+public sealed partial class PingPacket : IPacket
 {
     public const int MaxMessageLength = 32;
 
     public static PacketType PacketType => PacketType.Ping;
 
-    public PacketPing()
+    public PingPacket()
     {
     }
 
-    public PacketPing(string message)
+    public PingPacket(string message)
     {
         this.Message = message;
     }
@@ -26,22 +26,22 @@ public sealed partial class PacketPing : IPacket
 }
 
 [TinyhandObject]
-public sealed partial class PacketPingResponse : IPacket
+public sealed partial class PingPacketResponse : IPacket
 {
     public static PacketType PacketType => PacketType.PingResponse;
 
-    public PacketPingResponse()
+    public PingPacketResponse()
     {
     }
 
-    public PacketPingResponse(NetAddress address, string message)
+    public PingPacketResponse(NetAddress address, string message)
     {
         this.Address = address;
         this.Message = message;
     }
 
     [Key(0, AddProperty = "Message", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
-    [MaxLength(PacketPing.MaxMessageLength)]
+    [MaxLength(PingPacket.MaxMessageLength)]
     private string _message = string.Empty;
 
     [Key(1)]

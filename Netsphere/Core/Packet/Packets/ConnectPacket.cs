@@ -5,15 +5,15 @@ using Netsphere.Crypto;
 namespace Netsphere.Packet;
 
 [TinyhandObject]
-internal partial class PacketConnect : IPacket
+internal partial class ConnectPacket : IPacket
 {
     public static PacketType PacketType => PacketType.Connect;
 
-    public PacketConnect()
+    public ConnectPacket()
     {
     }
 
-    public PacketConnect(ushort engagement, NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
+    public ConnectPacket(ushort engagement, NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
     {
         this.Engagement = engagement;
         this.ClientPublicKey = clientPublicKey;
@@ -45,18 +45,18 @@ internal partial class PacketConnect : IPacket
 }
 
 [TinyhandObject]
-internal partial class PacketConnectResponse : IPacket
+internal partial class ConnectPacketResponse : IPacket
 {
     public static PacketType PacketType => PacketType.ConnectResponse;
 
-    public PacketConnectResponse()
+    public ConnectPacketResponse()
     {
         this.Agreement = ConnectionAgreement.Default with { }; // Create a new instance.
         this.ServerSalt = RandomVault.Crypto.NextUInt64();
         this.ServerSalt2 = RandomVault.Crypto.NextUInt64();
     }
 
-    public PacketConnectResponse(ConnectionAgreement agreement)
+    public ConnectPacketResponse(ConnectionAgreement agreement)
         : this()
     {
         // this.Success = true;

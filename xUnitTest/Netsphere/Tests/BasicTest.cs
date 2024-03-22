@@ -20,8 +20,8 @@ public class BasicTest
     {
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
 
-        var p = new PacketPing("test56789");
-        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PacketPing, PacketPingResponse>(NetAddress.Alternative, p);
+        var p = new PingPacket("test56789");
+        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(NetAddress.Alternative, p);
         result.Result.Is(NetResult.Success);
 
         using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative))!)

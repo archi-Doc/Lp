@@ -234,7 +234,7 @@ public sealed partial class PacketTerminal
         if (packetUInt16 < 127)
         {// Packet types (0-127), Client -> Server
             if (packetType == PacketType.Connect)
-            {// PacketConnect
+            {// ConnectPacket
                 if (!this.netTerminal.IsActive)
                 {
                     return;
@@ -244,7 +244,7 @@ public sealed partial class PacketTerminal
                     return;
                 }
 
-                if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
+                if (TinyhandSerializer.TryDeserialize<ConnectPacket>(span, out var p))
                 {
                     if (p.ServerPublicKeyChecksum != this.netTerminal.NodePublicKey.GetHashCode())
                     {// Public Key does not match
@@ -253,7 +253,7 @@ public sealed partial class PacketTerminal
 
                     Task.Run(() =>
                     {
-                        var packet = new PacketConnectResponse(this.netBase.DefaultAgreement);
+                        var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.AddSendPacket(endPoint, owner, default);
@@ -263,10 +263,10 @@ public sealed partial class PacketTerminal
                 }
             }
             else if (packetType == PacketType.Ping)
-            {// PacketPing
+            {// PingPacket
                 if (this.netBase.NetOptions.EnableEssential)
                 {
-                    var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netBase.NetOptions.NodeName);
+                    var packet = new PingPacketResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
 
@@ -279,10 +279,10 @@ public sealed partial class PacketTerminal
                 return;
             }
             else if (packetType == PacketType.GetInformation)
-            {// PacketGetInformation
+            {// GetInformationPacket
                 if (this.netBase.AllowUnsafeConnection)
                 {
-                    var packet = new PacketGetInformationResponse(this.netTerminal.NodePublicKey);
+                    var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
                 }

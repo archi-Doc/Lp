@@ -94,8 +94,8 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        /*var p = new PacketPing("test56789");
-        var result = await packetTerminal.SendAndReceive<PacketPing, PacketPingResponse>(netAddress, p);
+        /*var p = new PingPacket("test56789");
+        var result = await packetTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netAddress, p);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
@@ -135,7 +135,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
                 // await this.TestPut(service);
                 await this.TestPut2(service);
-               //  await this.TestGet(service);
+                //  await this.TestGet(service);
 
                 /*var stream = await service.SendData(123_000);
                 if (stream is not null)
@@ -227,7 +227,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
                 }*/
 
                 // connection.Close();
-                // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
+                // var r = await connection.SendAndReceiveAsync<PingPacket, PingPacketResponse>(netAddress, p);
 
                 Console.WriteLine($"Success: {success}, Send: {connection.SendCount}, Resend: {connection.ResendCount}");
             }
