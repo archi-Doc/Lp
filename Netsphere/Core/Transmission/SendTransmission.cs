@@ -379,7 +379,7 @@ internal sealed partial class SendTransmission : IDisposable
     {
         if (this.Mode != NetTransmissionMode.Stream)
         {
-            return NetResult.Closed;
+            return this.Mode == NetTransmissionMode.StreamCompleted ? NetResult.Completed : NetResult.Closed;
         }
 
         var addSend = false;
@@ -424,7 +424,7 @@ Loop:
             {
                 if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return NetResult.Closed;
+                    return this.Mode == NetTransmissionMode.StreamCompleted ? NetResult.Completed : NetResult.Closed;
                 }
 
                 var chain = this.genes?.GeneSerialListChain;

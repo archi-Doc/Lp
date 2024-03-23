@@ -103,18 +103,11 @@ public abstract class SendStreamBase
     protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
     {
         var result = await this.SendTransmission.ProcessSend(this, DataControl.Complete, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
-        if (result != NetResult.Success)
+        if (result != NetResult.Success &&
+            result != NetResult.Completed)
         {// Error
             this.Dispose(true);
-            /*if (result == NetResult.Completed ||
-                result == NetResult.Closed)
-            {
-                return new(NetResult.Success);
-            }
-            else-*/
-            {
-                return new(result);
-            }
+            return new(result);
         }
 
         // Stream -> StreamCompleted
