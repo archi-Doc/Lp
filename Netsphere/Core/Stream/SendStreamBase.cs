@@ -25,19 +25,29 @@ public abstract class SendStreamBase
 
     public long SentLength { get; internal set; }
 
-    internal void DisposeImmediately()
+    internal void Dispose(bool disposeTransmission)
     {
         if (this.SendTransmission.Mode == NetTransmissionMode.Stream)
         {
             this.SendTransmission.TrySendControl(this, DataControl.Cancel); // Stream -> StreamCompleted
         }
 
-        // this.SendTransmission.Dispose(); // Delay the disposal of SendTransmission until the transmission is complete.
+        if (disposeTransmission)
+        {
+            this.SendTransmission.Dispose();
+        }
+        else
+        {// Delay the disposal of SendTransmission until the transmission is complete.
+        }
     }
 
     public async Task Cancel(CancellationToken cancellationToken = default)
     {
-        var result = await this.SendTransmission.ProcessSend(this, DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        var result = await this.SendInternal(DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        if (result == NetResult.Success)
+        {
+
+        }
     }
 
     internal async Task<NetResult> SendInternal(DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
@@ -45,7 +55,7 @@ public abstract class SendStreamBase
         var result = await this.SendTransmission.ProcessSend(this, dataControl, buffer, cancellationToken).ConfigureAwait(false);
         if (result != NetResult.Success)
         {// Error
-            this.DisposeImmediately();
+            this.Dispose(true);
         }
 
         return result;
@@ -95,8 +105,16 @@ public abstract class SendStreamBase
         var result = await this.SendTransmission.ProcessSend(this, DataControl.Complete, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
         if (result != NetResult.Success)
         {// Error
-            this.DisposeImmediately();
-            return new(result);
+            this.Dispose(true);
+            /*if (result == NetResult.Completed ||
+                result == NetResult.Closed)
+            {
+                return new(NetResult.Success);
+            }
+            else-*/
+            {
+                return new(result);
+            }
         }
 
         // Stream -> StreamCompleted
