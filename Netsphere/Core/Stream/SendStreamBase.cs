@@ -41,14 +41,8 @@ public abstract class SendStreamBase
         }
     }
 
-    public async Task Cancel(CancellationToken cancellationToken = default)
-    {
-        var result = await this.SendInternal(DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
-        if (result == NetResult.Success)
-        {
-
-        }
-    }
+    public Task<NetResult> Cancel(CancellationToken cancellationToken = default)
+        => this.SendInternal(DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken);
 
     internal async Task<NetResult> SendInternal(DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
@@ -103,8 +97,7 @@ public abstract class SendStreamBase
     protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
     {
         var result = await this.SendTransmission.ProcessSend(this, DataControl.Complete, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
-        if (result != NetResult.Success &&
-            result != NetResult.Completed)
+        if (result != NetResult.Success)
         {// Error
             this.Dispose(true);
             return new(result);

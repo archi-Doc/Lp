@@ -90,7 +90,8 @@ public class ReceiveStream : IDisposable
             }
 
             (result, written) = await this.Receive(memory, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success)
+            if (result != NetResult.Success &&
+                result != NetResult.Completed)
             {
                 return new(result);
             }
