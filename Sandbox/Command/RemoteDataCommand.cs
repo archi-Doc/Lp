@@ -31,13 +31,14 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         try
         {
             var remoteData = r.Service;
-            var sendStream = await remoteData.Put("test.txt", 100);
+            var data = Encoding.UTF8.GetBytes("test string");
+            var sendStream = await remoteData.Put("test.txt", data.Length);
             if (sendStream is null)
             {
                 return;
             }
 
-            var result = await sendStream.Send(Encoding.UTF8.GetBytes("test string"));
+            var result = await sendStream.Send(data);
             var resultValue = await sendStream.CompleteSendAndReceive();
 
             var receiveStream = await remoteData.Get("test.txt");

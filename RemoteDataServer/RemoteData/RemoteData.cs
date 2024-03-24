@@ -163,9 +163,10 @@ public class RemoteData
 
                 if (result == NetResult.Completed)
                 {// Complete
-                     // transmissionContext.Result = NetResult.Success;
+                 // transmissionContext.Result = NetResult.Success;
                     result = NetResult.Success;
                     this.logger.TryGet(LogLevel.Information)?.Log($"Put: {identifier} {totalWritten} bytes");
+                    // this.logger.TryGet(LogLevel.Information)?.Log($"{maxLength}, {receiveStream.MaxStreamLength}, {receiveStream.ReceivedLength}");
                 }
                 else
                 {

@@ -7,6 +7,11 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
+public interface IReceiveStreamInternal
+{
+    Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default);
+}
+
 public readonly struct ReceiveStream<TResponse>
 {
     internal ReceiveStream(TransmissionContext transmissionContext, ReceiveStream receiveStream)
@@ -40,7 +45,7 @@ public readonly struct ReceiveStream<TResponse>
     }
 }
 
-public class ReceiveStream // : IDisposable
+public class ReceiveStream : IReceiveStreamInternal // , IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -89,7 +94,7 @@ public class ReceiveStream // : IDisposable
         return r;
     }
 
-    public async Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default)
+    async Task<NetResultValue<TReceive>> IReceiveStreamInternal.ReceiveBlock<TReceive>(CancellationToken cancellationToken)
     {
         var buffer = NetHelper.RentBuffer();
         try
@@ -140,6 +145,8 @@ public class ReceiveStream // : IDisposable
                 return new(NetResult.DeserializationFailed);
             }
 
+            this.MaxStreamLength -= this.ReceivedLength;
+            this.ReceivedLength = 0;
             return new(NetResult.Success, value);
         }
         finally
