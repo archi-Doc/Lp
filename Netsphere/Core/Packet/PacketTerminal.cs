@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Net;
+using Netsphere.Core;
 using Netsphere.Stats;
 using Tinyhand.IO;
 

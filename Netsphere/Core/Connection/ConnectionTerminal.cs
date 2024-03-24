@@ -2,8 +2,8 @@
 
 using System.Diagnostics;
 using Arc.Collections;
+using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
 

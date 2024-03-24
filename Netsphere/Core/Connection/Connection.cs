@@ -6,8 +6,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
+using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Net;
 using Netsphere.Packet;
 
 #pragma warning disable SA1202

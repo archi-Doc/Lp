@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 [ValueLinkObject(Restricted = true)]
 internal partial class ReceiveGene

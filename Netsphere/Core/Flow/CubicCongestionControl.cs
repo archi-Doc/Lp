@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 public class CubicCongestionControl : ICongestionControl
 {

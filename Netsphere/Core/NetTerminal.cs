@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Responder;
 using Netsphere.Stats;

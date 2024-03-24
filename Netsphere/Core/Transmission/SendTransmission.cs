@@ -8,7 +8,7 @@ using System.Threading;
 using Arc.Collections;
 using Netsphere.Packet;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 public enum NetTransmissionMode
 {

@@ -4,7 +4,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 

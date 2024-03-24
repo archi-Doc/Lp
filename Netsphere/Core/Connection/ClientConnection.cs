@@ -2,9 +2,9 @@
 
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Internal;
-using Netsphere.Net;
 using Netsphere.Packet;
 
 namespace Netsphere;

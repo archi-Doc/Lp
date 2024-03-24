@@ -2,7 +2,7 @@
 
 using System.Net.Sockets;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 /// <summary>
 /// NetSocket provides low-level network service.

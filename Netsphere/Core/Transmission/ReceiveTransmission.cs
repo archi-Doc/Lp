@@ -5,7 +5,7 @@ using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Packet;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class ReceiveTransmission : IDisposable

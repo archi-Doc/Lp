@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 internal partial class AckBuffer
 {
