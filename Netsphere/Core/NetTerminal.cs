@@ -36,9 +36,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     #region FieldAndProperty
 
-    public CancellationToken CancellationToken
-        => ThreadCore.Root.CancellationToken;
-
     public State CurrentState { get; private set; }
 
     public bool IsActive => this.CurrentState == State.Active;
@@ -178,6 +175,38 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.Responders = responders;
         this.Services = services;
         this.IsAlternative = isAlternative;
+    }
+
+    internal async Task<NetResponse> Wait(Task<NetResponse> task, int timeoutInMilliseconds, CancellationToken cancellationToken)
+    {// I don't think this is a smart approach, but...
+        var remainingMilliseconds = timeoutInMilliseconds;
+        while (true)
+        {
+            if (!this.IsActive)
+            {// NetTerminal
+                return new(NetResult.Closed);
+            }
+
+            try
+            {
+                var result = await task.WaitAsync(NetConstants.WaitIntervalTimeSpan, cancellationToken).ConfigureAwait(false);
+                return result;
+            }
+            catch (TimeoutException)
+            {
+                if (remainingMilliseconds < 0)
+                {// Wait indefinitely.
+                }
+                else if (remainingMilliseconds > NetConstants.WaitIntervalMilliseconds)
+                {// Reduce the time and continue waiting.
+                    remainingMilliseconds -= NetConstants.WaitIntervalMilliseconds;
+                }
+                else
+                {// Timeout
+                    return new(NetResult.Timeout);
+                }
+            }
+        }
     }
 
     internal void ProcessSend(NetSender netSender)

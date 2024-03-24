@@ -103,9 +103,9 @@ public sealed partial class PacketTerminal
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
-        if (this.netTerminal.CancellationToken.IsCancellationRequested)
+        if (!this.netTerminal.IsActive)
         {
-            return (NetResult.Timeout, default, 0);
+            return (NetResult.Closed, default, 0);
         }
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -119,7 +119,7 @@ public sealed partial class PacketTerminal
 
         try
         {
-            var response = await responseTcs.Task.WaitAsync(this.netTerminal.ResponseTimeout, this.netTerminal.CancellationToken).ConfigureAwait(false);
+            var response = await this.netTerminal.Wait(responseTcs.Task, -1, default).ConfigureAwait(false);
 
             if (response.IsFailure)
             {

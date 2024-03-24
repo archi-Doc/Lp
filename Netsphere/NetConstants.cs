@@ -34,5 +34,5 @@ public static class NetConstants
     internal static readonly long MicsPerRound = Mics.FromMilliseconds(1);
     internal static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
     internal static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
-    internal static readonly TimeSpan WaitInterval = TimeSpan.FromMilliseconds(200);
+    internal static readonly TimeSpan WaitIntervalTimeSpan = TimeSpan.FromMilliseconds(WaitIntervalMilliseconds);
 }

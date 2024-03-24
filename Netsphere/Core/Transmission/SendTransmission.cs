@@ -130,13 +130,13 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal async Task<NetResult> Wait(Task<NetResult> task, CancellationToken cancellationToken)
-    {
-        var remainingMilliseconds = 5_000;
-        while (remainingMilliseconds > 0)
+    internal async Task<NetResult> Wait(Task<NetResult> task, int timeoutInMilliseconds, CancellationToken cancellationToken)
+    {// I don't think this is a smart approach, but...
+        var remainingMilliseconds = timeoutInMilliseconds;
+        while (true)
         {
-            if (this.Connection.NetTerminal.CancellationToken.IsCancellationRequested)
-            {//NetTerminal
+            if (!this.Connection.NetTerminal.IsActive)
+            {// NetTerminal
                 return NetResult.Closed;
             }
 
@@ -152,12 +152,22 @@ internal sealed partial class SendTransmission : IDisposable
 
             try
             {
-                var result = await task.WaitAsync(NetConstants.WaitInterval, cancellationToken).ConfigureAwait(false);
+                var result = await task.WaitAsync(NetConstants.WaitIntervalTimeSpan, cancellationToken).ConfigureAwait(false);
                 return result;
             }
             catch (TimeoutException)
             {
-                remainingMilliseconds -= NetConstants.WaitIntervalMilliseconds;
+                if (remainingMilliseconds < 0)
+                {// Wait indefinitely.
+                }
+                else if (remainingMilliseconds > NetConstants.WaitIntervalMilliseconds)
+                {// Reduce the time and continue waiting.
+                    remainingMilliseconds -= NetConstants.WaitIntervalMilliseconds;
+                }
+                else
+                {// Timeout
+                    return NetResult.Timeout;
+                }
             }
         }
     }
