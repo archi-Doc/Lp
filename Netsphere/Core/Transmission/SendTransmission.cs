@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using Arc.Collections;
 using Netsphere.Packet;
 
@@ -126,6 +127,38 @@ internal sealed partial class SendTransmission : IDisposable
         {
             this.sentTcs.SetResult(NetResult.Closed);
             this.sentTcs = null;
+        }
+    }
+
+    internal async Task<NetResult> Wait(Task<NetResult> task, CancellationToken cancellationToken)
+    {
+        var remainingMilliseconds = 5_000;
+        while (remainingMilliseconds > 0)
+        {
+            if (this.Connection.NetTerminal.CancellationToken.IsCancellationRequested)
+            {//NetTerminal
+                return NetResult.Closed;
+            }
+
+            if (!this.Connection.IsActive)
+            {// Connection
+                return NetResult.Closed;
+            }
+
+            if (this.IsDisposed)
+            {// Transmission
+                return NetResult.Closed;
+            }
+
+            try
+            {
+                var result = await task.WaitAsync(NetConstants.WaitInterval, cancellationToken).ConfigureAwait(false);
+                return result;
+            }
+            catch (TimeoutException)
+            {
+                remainingMilliseconds -= NetConstants.WaitIntervalMilliseconds;
+            }
         }
     }
 

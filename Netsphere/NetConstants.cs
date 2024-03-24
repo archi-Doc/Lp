@@ -19,6 +19,7 @@ public static class NetConstants
     internal const long ConnectionClosedToDisposalMics = 10_000_000; // 10s
     internal const int TransmissionTimeoutMics = 5_000_000; // 5s
     internal const int TransmissionDisposalMics = 5_000_000; // 5s
+    internal const int WaitIntervalMilliseconds = 200; // 200ms
 
     internal const int DefaultRetransmissionTimeoutMics = 500_000; // 500ms
     internal const int SendIntervalMilliseconds = 1;
@@ -33,4 +34,5 @@ public static class NetConstants
     internal static readonly long MicsPerRound = Mics.FromMilliseconds(1);
     internal static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
     internal static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
+    internal static readonly TimeSpan WaitInterval = TimeSpan.FromMilliseconds(200);
 }
