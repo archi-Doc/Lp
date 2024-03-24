@@ -7,6 +7,26 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
+public class ReceiveStream<TResponse> : ReceiveStream
+{
+    internal ReceiveStream(TransmissionContext transmissionContext, ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
+        : base(receiveTransmission, dataId, maxStreamLength)
+    {
+        this.transmissionContext = transmissionContext;
+    }
+
+    private readonly TransmissionContext transmissionContext;
+
+    public NetResult Send(TResponse data)
+    {
+        if (this.ReceiveTransmission.Mode != NetTransmissionMode.Disposed)
+        {
+
+        }
+        this.transmissionContext.SendAndForget<TResponse>(data, this.transmissionContext.DataId);
+    }
+}
+
 public class ReceiveStream : IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)

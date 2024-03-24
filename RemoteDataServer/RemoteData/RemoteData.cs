@@ -130,7 +130,7 @@ public class RemoteData
         try
         {
             using var fileStream = File.Create(path);
-            using var receiveStream = transmissionContext.GetReceiveStream();
+            using var receiveStream = transmissionContext.GetReceiveStream<NetResult>();
 
             var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
             try
