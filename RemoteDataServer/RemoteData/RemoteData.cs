@@ -11,8 +11,9 @@ public class RemoteData
 {
     private const int ReadBufferSize = 1024 * 1024 * 4;
 
-    public RemoteData(UnitOptions unitOptions)
+    public RemoteData(UnitOptions unitOptions, ILogger<RemoteData> logger)
     {
+        this.logger = logger;
         this.baseDirectory = string.IsNullOrEmpty(unitOptions.DataDirectory) ?
             unitOptions.RootDirectory : unitOptions.DataDirectory;
         this.limitAreement = new ConnectionAgreement() with
@@ -29,6 +30,7 @@ public class RemoteData
 
     public SignaturePublicKey RemotePublicKey { get; set; }
 
+    private readonly ILogger logger;
     private readonly ConnectionAgreement limitAreement;
     private readonly string baseDirectory;
 
@@ -87,15 +89,18 @@ public class RemoteData
             }
 
             var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
+            long totalSent = 0;
             try
             {
                 int length;
                 while ((length = await fileStream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
                 {
                     await sendStream.Send(buffer.AsMemory(0, length)).ConfigureAwait(false);
+                    totalSent += length;
                 }
 
                 await sendStream.Complete().ConfigureAwait(false);
+                this.logger.TryGet(LogLevel.Information)?.Log($"Get: {identifier} {totalSent} bytes");
             }
             catch
             {
@@ -128,6 +133,7 @@ public class RemoteData
         }
 
         var result = NetResult.UnknownError;
+        long totalWritten = 0;
         try
         {
             using var fileStream = File.Create(path);
@@ -147,6 +153,7 @@ public class RemoteData
                     else
                     {// written > 0
                         await fileStream.WriteAsync(buffer.AsMemory(0, written)).ConfigureAwait(false);
+                        totalWritten += written;
                     }
                 }
             }
@@ -156,8 +163,9 @@ public class RemoteData
 
                 if (result == NetResult.Completed)
                 {// Complete
-                 // transmissionContext.Result = NetResult.Success;
+                     // transmissionContext.Result = NetResult.Success;
                     result = NetResult.Success;
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Put: {identifier} {totalWritten} bytes");
                 }
                 else
                 {
@@ -180,6 +188,11 @@ public class RemoteData
     private string? IdentifierToPath(string identifier)
     {
         if (string.IsNullOrEmpty(identifier))
+        {
+            return null;
+        }
+        else if (identifier.Contains("../") ||
+            identifier.Contains("..\\"))
         {
             return null;
         }

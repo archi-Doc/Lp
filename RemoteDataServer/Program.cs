@@ -39,6 +39,17 @@ public class Program
 
                 // Command
                 context.AddCommand(typeof(DefaultCommand));
+
+                context.AddLoggerResolver(context =>
+                {// Logger
+                    if (context.LogLevel == LogLevel.Debug)
+                    {
+                        context.SetOutput<EmptyLogger>();
+                        return;
+                    }
+
+                    context.SetOutput<ConsoleLogger>();
+                });
             })
             .SetupOptions<NetOptions>((context, options) =>
             {// Modify NetOptions

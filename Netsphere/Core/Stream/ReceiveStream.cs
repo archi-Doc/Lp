@@ -15,6 +15,12 @@ public readonly struct ReceiveStream<TResponse>
         this.receiveStream = receiveStream;
     }
 
+    public ulong DataId => this.receiveStream.DataId;
+
+    public long MaxStreamLength => this.receiveStream.MaxStreamLength;
+
+    public long ReceivedLength => this.receiveStream.ReceivedLength;
+
     private readonly TransmissionContext transmissionContext;
     private readonly ReceiveStream receiveStream;
 
