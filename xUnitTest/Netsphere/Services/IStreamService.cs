@@ -59,7 +59,7 @@ public class StreamServiceImpl : IStreamService
     public async NetTask<SendStreamAndReceive<ulong>?> PutAndGetHash(long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.GetReceiveStream();
+        var stream = transmissionContext.GetReceiveStream<ulong>();
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -82,7 +82,8 @@ public class StreamServiceImpl : IStreamService
 
             if (r.Result == NetResult.Completed)
             {
-                transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                stream.SendAndDispose(BitConverter.ToUInt64(hash.HashFinal()));
+                // transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
                 break;
             }
         }
@@ -97,10 +98,6 @@ public class StreamServiceImpl : IStreamService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
-        {
-            return default;
-        }
 
         // return default;
 

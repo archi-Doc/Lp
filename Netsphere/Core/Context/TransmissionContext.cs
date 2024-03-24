@@ -7,7 +7,12 @@ using Netsphere.Core;
 
 namespace Netsphere;
 
-public sealed class TransmissionContext
+public interface ITransmissionContextInternal
+{
+    // ReceiveStream GetReceiveStream();
+}
+
+public sealed class TransmissionContext : ITransmissionContextInternal
 {
     public static TransmissionContext Current => AsyncLocal.Value!;
 
