@@ -736,7 +736,7 @@ Wait:
         }
 
         if (packetType == PacketType.Protected || packetType == PacketType.ProtectedResponse)
-        {
+        {// ProtectedPacketCode
             if (span.Length < sizeof(ulong))
             {
                 return;
@@ -1070,7 +1070,7 @@ Wait:
     }
 
     internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)
-    {
+    {// ProtectedPacketCode
         Debug.Assert(frame.Length > 0);
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
@@ -1111,7 +1111,7 @@ Wait:
     }
 
     internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
-    {
+    {// ProtectedPacketCode
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
@@ -1147,7 +1147,7 @@ Wait:
     }
 
     internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
-    {
+    {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var span = owner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();

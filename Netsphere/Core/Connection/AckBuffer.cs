@@ -167,6 +167,7 @@ NewPacket:
 
             if (owner is null)
             {// Prepare
+                // ProtectedPacketCode
                 owner = PacketPool.Rent();
                 span = owner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
             }

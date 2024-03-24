@@ -5,7 +5,7 @@ namespace Netsphere.Packet;
 #pragma warning disable CS0649
 
 internal readonly struct ProtectedPacket
-{// Protected = Salt + Encrypted + Checksum, ProtectedPacketCode
+{// Protected = Salt + Checksum + Encryption, ProtectedPacketCode
     public const int Length = 8;
 
     public readonly ulong Checksum;
