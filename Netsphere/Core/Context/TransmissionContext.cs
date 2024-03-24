@@ -87,6 +87,9 @@ public sealed class TransmissionContext
     public ReceiveStream GetReceiveStream()
         => this.receiveStream ?? throw new InvalidOperationException();
 
+    public ReceiveStream<TResponse> GetReceiveStream<TResponse>()
+        => new ReceiveStream<TResponse>(this, this.GetReceiveStream());
+
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
     {
         if (this.sendStream is not null)

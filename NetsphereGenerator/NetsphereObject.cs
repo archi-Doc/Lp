@@ -879,7 +879,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {
             if (method.ParameterLength > 1)
             {
-                ssb.AppendLine($"var rr = await context.GetReceiveStream()!.ReceiveBlock<{method.GetParameterTypes(1)}>().ConfigureAwait(false);");
+                ssb.AppendLine($"var rr = await context.GetReceiveStream().ReceiveBlock<{method.GetParameterTypes(1)}>().ConfigureAwait(false);");
                 using (var scopeIf = ssb.ScopeBrace("if (rr.IsFailure)"))
                 {
                     ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
@@ -887,11 +887,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     ssb.AppendLine("return;");
                 }
 
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream()!.MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
             else
             {
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}(context.GetReceiveStream()!.MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
         }
         else

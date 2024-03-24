@@ -41,11 +41,7 @@ public class RemoteBenchHostImpl : RemoteBenchHost, IRemoteBenchService
     public async NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
-        {
-            return default;
-        }
+        var stream = transmissionContext.GetReceiveStream<ulong>();
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -68,7 +64,8 @@ public class RemoteBenchHostImpl : RemoteBenchHost, IRemoteBenchService
 
             if (r.Result == NetResult.Completed)
             {
-                transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                // transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                stream.SendAndDispose(BitConverter.ToUInt64(hash.HashFinal()));
                 break;
             }
         }

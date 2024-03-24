@@ -7,27 +7,34 @@ namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public class ReceiveStream<TResponse> : ReceiveStream
+public readonly struct ReceiveStream<TResponse>
 {
-    internal ReceiveStream(TransmissionContext transmissionContext, ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
-        : base(receiveTransmission, dataId, maxStreamLength)
+    internal ReceiveStream(TransmissionContext transmissionContext, ReceiveStream receiveStream)
     {
         this.transmissionContext = transmissionContext;
+        this.receiveStream = receiveStream;
     }
 
     private readonly TransmissionContext transmissionContext;
+    private readonly ReceiveStream receiveStream;
 
-    public NetResult Send(TResponse data)
+    public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        => this.receiveStream.Receive(buffer, cancellationToken);
+
+    public NetResult SendAndDispose(TResponse data)
     {
-        if (this.ReceiveTransmission.Mode != NetTransmissionMode.Disposed)
+        if (this.receiveStream.ReceiveTransmission.Mode != NetTransmissionMode.Disposed)
         {
-
+            return NetResult.InvalidOperation;
         }
-        this.transmissionContext.SendAndForget<TResponse>(data, this.transmissionContext.DataId);
+
+        var result = this.transmissionContext.SendAndForget(data, this.transmissionContext.DataId);
+        this.receiveStream.Dispose();
+        return result;
     }
 }
 
-public class ReceiveStream : IDisposable
+public class ReceiveStream // : IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -52,7 +59,7 @@ public class ReceiveStream : IDisposable
 
     #endregion
 
-    public void Dispose()
+    internal void Dispose()
     {
         this.DisposeImmediately();
     }

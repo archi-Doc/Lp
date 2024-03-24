@@ -2,6 +2,7 @@
 
 using System.Buffers;
 using System.IO;
+using Netsphere;
 using Netsphere.Crypto;
 
 namespace RemoteDataServer;
@@ -126,11 +127,11 @@ public class RemoteData
             return default;
         }
 
-        var result = NetResult.Success;
+        var result = NetResult.UnknownError;
         try
         {
             using var fileStream = File.Create(path);
-            using var receiveStream = transmissionContext.GetReceiveStream<NetResult>();
+            var receiveStream = transmissionContext.GetReceiveStream<NetResult>();
 
             var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
             try
@@ -140,7 +141,7 @@ public class RemoteData
                     (result, var written) = await receiveStream.Receive(buffer).ConfigureAwait(false);
                     if (written == 0)
                     {// Completed or error.
-                        transmissionContext.SendAndForget(result);
+                        // transmissionContext.SendAndForget(result);
                         break;
                     }
                     else
@@ -152,22 +153,25 @@ public class RemoteData
             finally
             {
                 ArrayPool<byte>.Shared.Return(buffer);
+
+                if (result == NetResult.Completed)
+                {// Complete
+                 // transmissionContext.Result = NetResult.Success;
+                    result = NetResult.Success;
+                }
+                else
+                {
+                    PathHelper.TryDeleteFile(path);
+                    // transmissionContext.Result = result;
+                }
+
+                receiveStream.SendAndDispose(result);
             }
         }
         catch
         {
             transmissionContext.Result = NetResult.InvalidOperation;
             return default;
-        }
-
-        if (result == NetResult.Completed)
-        {// Complete
-            transmissionContext.Result = NetResult.Success;
-        }
-        else
-        {
-            PathHelper.TryDeleteFile(path);
-            transmissionContext.Result = result;
         }
 
         return default;
