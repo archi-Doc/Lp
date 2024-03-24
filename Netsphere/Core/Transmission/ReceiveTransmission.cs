@@ -128,11 +128,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 return new(NetResult.Closed);
             }
 
-            if (this.IsDisposed)
-            {// Transmission
-                return new(NetResult.Closed);
-            }
-
             try
             {
                 var result = await task.WaitAsync(NetConstants.WaitIntervalTimeSpan, cancellationToken).ConfigureAwait(false);
@@ -151,6 +146,11 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Timeout
                     return new(NetResult.Timeout);
                 }
+            }
+
+            if (this.IsDisposed)
+            {// Transmission
+                return new(NetResult.Closed);
             }
         }
     }
@@ -526,7 +526,7 @@ Abort:
         int written = 0;
         if (this.Mode != NetTransmissionMode.Stream)
         {
-            return (NetResult.Closed, written);
+            return (NetResult.Completed, written);
         }
 
         int remaining = buffer.Length;
@@ -541,17 +541,13 @@ Abort:
                 }
                 else if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return (NetResult.Closed, written);
+                    return (NetResult.Completed, written);
                 }
 
                 var chain = this.genes?.DataPositionListChain;
                 if (chain is null)
                 {
                     return (NetResult.Closed, written);
-                }
-
-                if (remaining > 1000)
-                {
                 }
 
                 while (chain.Get(stream.CurrentGene) is { } gene)

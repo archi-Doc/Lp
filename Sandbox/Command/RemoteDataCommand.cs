@@ -40,7 +40,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
             var result = await sendStream.Send(Encoding.UTF8.GetBytes("test string"));
             var resultValue = await sendStream.CompleteSendAndReceive();
 
-            /*var receiveStream = await remoteData.Get("test.txt");
+            var receiveStream = await remoteData.Get("test.txt");
             if (receiveStream is null)
             {
                 return;
@@ -48,7 +48,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
 
             var buffer = new byte[100];
             var r2 = await receiveStream.Receive(buffer);
-            await Console.Out.WriteLineAsync(Encoding.UTF8.GetString(buffer, 0, r2.Written));*/
+            await Console.Out.WriteLineAsync(Encoding.UTF8.GetString(buffer, 0, r2.Written));
         }
         finally
         {

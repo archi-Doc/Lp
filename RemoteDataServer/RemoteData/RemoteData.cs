@@ -140,7 +140,7 @@ public class RemoteData
                     (result, var written) = await receiveStream.Receive(buffer).ConfigureAwait(false);
                     if (written == 0)
                     {// Completed or error.
-                        transmissionContext.SendAndForget(NetResult.Success);
+                        transmissionContext.SendAndForget(result);
                         break;
                     }
                     else
