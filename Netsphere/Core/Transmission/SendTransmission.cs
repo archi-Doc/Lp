@@ -409,16 +409,9 @@ Loop:
             {
                 SendKnockFrame();
 
-                try
-                {
-                    // await Console.Out.WriteLineAsync($"Delay {this.MaxReceivePosition}/{this.GeneSerialMax}");
-                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-                    delay = Math.Min(delay << 1, NetConstants.MaxSendStreamDelayMilliseconds);
-                }
-                catch
-                {
-                    return NetResult.Timeout;
-                }
+                // await Console.Out.WriteLineAsync($"Delay {this.MaxReceivePosition}/{this.GeneSerialMax}");
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                delay = Math.Min(delay << 1, NetConstants.MaxSendStreamDelayMilliseconds);
 
                 if (this.Connection.CloseIfTransmissionHasTimedOut())
                 {

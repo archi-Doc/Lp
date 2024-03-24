@@ -334,7 +334,7 @@ public abstract class Connection : IDisposable
         {
             if (this.IsClosedOrDisposed ||
                 this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
-            {//
+            {
                 return default;
             }
 
@@ -377,7 +377,7 @@ public abstract class Connection : IDisposable
         }
     }
 
-    internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout)
+    internal async ValueTask<SendTransmissionAndTimeout> TryCreateSendTransmission(TimeSpan timeout, CancellationToken cancellationToken)
     {
 Retry:
         if (!this.IsActive || timeout < TimeSpan.Zero)
@@ -410,15 +410,7 @@ Retry:
         }
 
 Wait:
-        try
-        {
-            await Task.Delay(NetConstants.CreateTransmissionDelay).ConfigureAwait(false);
-        }
-        catch
-        {// Cancelled
-            return default;
-        }
-
+        await Task.Delay(NetConstants.CreateTransmissionDelay, cancellationToken).ConfigureAwait(false);
         timeout -= NetConstants.CreateTransmissionDelay;
         goto Retry;
     }
