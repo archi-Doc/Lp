@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Netsphere.Crypto;
 using Netsphere.Internal;
 using Netsphere.Net;
@@ -76,7 +77,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
             {
@@ -124,7 +125,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         NetResponse response;
         var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
             {
@@ -331,7 +332,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
-    public async Task<(NetResult Result, ReceiveStream? Stream)> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0)
+    public async Task<(NetResult Result, ReceiveStream? Stream)> SendAndReceiveStream<TSend>(TSend packet, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
         if (!this.IsActive)
         {
@@ -346,7 +347,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         NetResponse response;
         ReceiveTransmission? receiveTransmission;
         var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
             {
@@ -440,7 +441,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         NetResponse response;
         var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, default).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
             {
@@ -493,7 +494,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         NetResponse response;
         ReceiveTransmission? receiveTransmission;
         var timeout = this.NetBase.DefaultSendTimeout;
-        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout).ConfigureAwait(false))
+        using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, default).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
             {

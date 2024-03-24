@@ -94,11 +94,11 @@ public class RemoteData
                     await sendStream.Send(buffer.AsMemory(0, length)).ConfigureAwait(false);
                 }
 
-                await sendStream.CompleteSend().ConfigureAwait(false);
+                await sendStream.Complete().ConfigureAwait(false);
             }
             catch
             {
-                sendStream.Dispose();// error
+                await sendStream.Cancel();
             }
             finally
             {
@@ -166,7 +166,7 @@ public class RemoteData
         }
         else
         {
-            Arc.Unit.PathHelper.TryDeleteFile(path);
+            PathHelper.TryDeleteFile(path);
             transmissionContext.Result = result;
         }
 

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Netsphere.Net;
 
@@ -23,27 +25,38 @@ public abstract class SendStreamBase
 
     public long SentLength { get; internal set; }
 
-    public void Dispose()
-        => this.SendTransmission.Dispose();
-
-    public async Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    internal void Dispose(bool disposeTransmission)
     {
-        if (this.SendTransmission.Mode == NetTransmissionMode.StreamCompleted)
+        if (this.SendTransmission.Mode == NetTransmissionMode.Stream)
         {
-            return NetResult.Completed;
+            this.SendTransmission.TrySendControl(this, DataControl.Cancel); // Stream -> StreamCompleted
+        }
+
+        if (disposeTransmission)
+        {
+            this.SendTransmission.Dispose();
         }
         else
-        {
-            var result = await this.SendTransmission.ProcessSend(this, buffer, false, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success &&
-                result != NetResult.Completed)
-            {xx
-                this.Dispose();
-            }
-
-            return result;
+        {// Delay the disposal of SendTransmission until the transmission is complete.
         }
     }
+
+    public Task<NetResult> Cancel(CancellationToken cancellationToken = default)
+        => this.SendInternal(DataControl.Cancel, ReadOnlyMemory<byte>.Empty, cancellationToken);
+
+    internal async Task<NetResult> SendInternal(DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+    {
+        var result = await this.SendTransmission.ProcessSend(this, dataControl, buffer, cancellationToken).ConfigureAwait(false);
+        if (result != NetResult.Success)
+        {// Error
+            this.Dispose(true);
+        }
+
+        return result;
+    }
+
+    public Task<NetResult> Send(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        => this.SendInternal(DataControl.Valid, buffer, cancellationToken);
 
     public async Task<NetResult> SendBlock<TSend>(TSend data, CancellationToken cancellationToken = default)
     {
@@ -70,32 +83,34 @@ public abstract class SendStreamBase
         return result;
     }
 
-    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
+    /*protected async Task<NetResult> SendControl(DataControl dataControl, CancellationToken cancellationToken)
     {
-        if (this.IsComplete)
+        if (this.SendTransmission.Mode != NetTransmissionMode.Stream)
         {
-            return new(NetResult.Completed);
+            return NetResult.InvalidOperation;
         }
 
-        var mode = this.SendTransmission.Mode;
-        if (mode != NetTransmissionMode.StreamCompleted &&
-            mode != NetTransmissionMode.Disposed)
-        {
-            var result = await this.SendTransmission.ProcessSend(this, ReadOnlyMemory<byte>.Empty, true, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success)
-            {
-                return new(result);
-            }
+        var result = await this.SendTransmission.ProcessSend(this, dataControl, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        return result;
+    }*/
+
+    protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
+    {
+        var result = await this.SendTransmission.ProcessSend(this, DataControl.Complete, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        if (result != NetResult.Success)
+        {// Error
+            this.Dispose(true);
+            return new(result);
         }
+
+        // Stream -> StreamCompleted
 
         try
         {
-            this.IsComplete = true;
-
             var connection = this.SendTransmission.Connection;
             if (connection.IsServer)
             {// On the server side, it does not receive completion of the stream since ReceiveTransmission is already consumed.
-                var result = NetResult.Success;
+                result = NetResult.Success;
                 if (this.SendTransmission.SentTcs is { } sentTcs)
                 {//
                     result = await sentTcs.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);

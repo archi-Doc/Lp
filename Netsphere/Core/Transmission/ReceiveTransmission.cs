@@ -160,7 +160,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
-    internal void ProcessReceive_Gene(int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(DataControl dataControl, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
     {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
         var completeFlag = false;
         uint dataKind = 0;
@@ -183,17 +183,17 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 if (dataPosition == 0)
                 {
                     this.gene0 ??= new(this);
-                    this.gene0.SetRecv(toBeShared);
+                    this.gene0.SetRecv(dataControl, toBeShared);
                 }
                 else if (dataPosition == 1)
                 {
                     this.gene1 ??= new(this);
-                    this.gene1.SetRecv(toBeShared);
+                    this.gene1.SetRecv(dataControl, toBeShared);
                 }
                 else if (dataPosition == 2)
                 {
                     this.gene2 ??= new(this);
-                    this.gene2.SetRecv(toBeShared);
+                    this.gene2.SetRecv(dataControl, toBeShared);
                 }
 
                 if (this.totalGene == 0)
@@ -243,7 +243,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
                 if (chain.Get(dataPosition) is { } gene)
                 {
-                    gene.SetRecv(toBeShared);
+                    gene.SetRecv(dataControl, toBeShared);
 
                     if (this.successiveReceivedPosition <= dataPosition)
                     {
@@ -265,18 +265,20 @@ internal sealed partial class ReceiveTransmission : IDisposable
                             completeFlag = true;
                         }
                     }
-                    else if (this.Mode == NetTransmissionMode.Stream)
+
+                    /*else if (this.Mode == NetTransmissionMode.Stream)
                     {
-                        if (toBeShared.Memory.Length == 0)
+                        if (dataControl == DataControl.Complete ||
+                            dataControl == DataControl.Cancel)
                         {
                             this.totalGene = dataPosition;
                         }
-                    }
+                    }*/
                 }
             }
 
             if (completeFlag)
-            {// Complete
+            {// Complete (Rama, Stream)
                 this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
             }
         }
@@ -479,13 +481,13 @@ Abort:
 
     internal async Task<(NetResult Result, int Written)> ProcessReceive(ReceiveStream stream, Memory<byte> buffer, CancellationToken cancellationToken)
     {
-        if (stream.State != StreamState.Receiving)
+        int written = 0;
+        if (this.Mode != NetTransmissionMode.Stream)
         {
-            return (NetResult.Completed, 0);
+            return (NetResult.Closed, written);
         }
 
         int remaining = buffer.Length;
-        int written = 0;
         int lastMaxReceivedPosition;
         while (true)
         {
@@ -497,7 +499,7 @@ Abort:
                 }
                 else if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return (NetResult.Completed, written);
+                    return (NetResult.Closed, written);
                 }
 
                 var chain = this.genes?.DataPositionListChain;
@@ -528,12 +530,19 @@ Abort:
 
                     var originalLength = gene.Packet.Span.Length;
                     var length = originalLength;
-                    if (originalLength == 0)
+                    if (gene.DataControl == DataControl.Complete)
                     {// Complete
                         gene.Dispose();
                         gene.Goshujin = default;
                         this.DisposeInternal();
                         goto Complete;
+                    }
+                    else if (gene.DataControl == DataControl.Cancel)
+                    {// Cancel
+                        gene.Dispose();
+                        gene.Goshujin = default;
+                        this.DisposeInternal();
+                        goto Cancel;
                     }
 
                     if (stream.CurrentGene == 0 &&
@@ -585,7 +594,7 @@ Abort:
                 }
                 else if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return (NetResult.Completed, written);
+                    return (NetResult.Closed, written);
                 }
 
                 try
@@ -595,14 +604,17 @@ Abort:
                 }
                 catch
                 {
-                    return (NetResult.Canceled, written);
+                    return (NetResult.Timeout, written);
                 }
             }
         }
 
 Complete:
-        stream.State = StreamState.Received;
         this.Connection.RemoveTransmission(this);
         return (NetResult.Completed, written);
+
+Cancel:
+        this.Connection.RemoveTransmission(this);
+        return (NetResult.Canceled, written);
     }
 }

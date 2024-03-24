@@ -23,7 +23,7 @@ public partial class Vault
         }
         else
         {
-            this.path = CrystalData.PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
+            this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
         }
     }
 

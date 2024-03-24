@@ -166,7 +166,7 @@ public partial class RunnerMachine : Machine
                 return NetResult.NoNetwork;
             }
 
-            var result = await terminal.SendAndReceive<PacketPing, PacketPingResponse>(new());
+            var result = await terminal.SendAndReceive<PingPacket, PingPacketResponse>(new());
             this.logger.TryGet()?.Log($"Ping: {result.Result}");
             return result.Result;
         }

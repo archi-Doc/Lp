@@ -41,8 +41,10 @@ public class AesBenchmark
         this.Aes.Key = this.Key;
         this.Iv = new byte[16];
         Array.Fill<byte>(this.Iv, 1);
-        this.Source = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, };
-        this.Destination = new byte[32];
+        // this.Source = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, };
+        // this.Destination = new byte[32];
+        this.Source = new byte[1000];
+        this.Destination = new byte[1024];
     }
 
     [GlobalSetup]

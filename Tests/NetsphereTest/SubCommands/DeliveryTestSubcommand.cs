@@ -46,8 +46,8 @@ public class DeliveryTestSubcommand : ISimpleCommandAsync<DeliveryTestOptions>
         {
             array[i] = Task.Run(async () =>
             {
-                var p = new PacketPing("test56789");
-                var result = await packetTerminal.SendAndReceive<PacketPing, PacketPingResponse>(nodeAddress, p);
+                var p = new PingPacket("test56789");
+                var result = await packetTerminal.SendAndReceive<PingPacket, PingPacketResponse>(nodeAddress, p);
                 if (result.Result == NetResult.Success)
                 {
                     Interlocked.Increment(ref successCount);

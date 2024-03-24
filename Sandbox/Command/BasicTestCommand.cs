@@ -88,7 +88,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         this.NetControl.Responders.Register(TestStreamResponder.Instance);
         this.NetControl.Services.Register<TestService>();
 
-        // this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
+        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = 300;
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
@@ -256,7 +256,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             var result = await sendStream.Send(this.dataArray[i]);
-            var resultValue = await sendStream.CompleteSend();
+            var resultValue = await sendStream.Complete();
             await Console.Out.WriteLineAsync($"{result.ToString()}, {resultValue.ToString()}");
         }
     }
@@ -434,7 +434,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
         var hash = FarmHash.Hash64(buffer);
 
         var r2 = await stream.Send(buffer);
-        var r3 = await stream.CompleteSend();
+        var r3 = await stream.Complete();
     }
 
     public NetControl NetControl { get; set; }

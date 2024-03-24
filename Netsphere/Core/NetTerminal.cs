@@ -100,7 +100,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             return null;
         }
 
-        var t = await this.PacketTerminal.SendAndReceive<PacketGetInformation, PacketGetInformationResponse>(address, new()).ConfigureAwait(false);
+        var t = await this.PacketTerminal.SendAndReceive<GetInformationPacket, GetInformationPacketResponse>(address, new()).ConfigureAwait(false);
         if (t.Value is null)
         {
             return null;

@@ -17,8 +17,8 @@ public enum PacketType : ushort
     GetInformationResponse,
 
     // Gene types (256-383)
-    Encrypted = 256,
+    Protected = 256,
 
     // Packet response types (384-512)
-    EncryptedResponse = 384,
+    ProtectedResponse = 384,
 }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Netsphere.Net;
 
 namespace Netsphere;
@@ -17,8 +18,6 @@ public class ReceiveStream : IDisposable
 
     #region FieldAndProperty
 
-    public StreamState State { get; internal set; }
-
     internal ReceiveTransmission ReceiveTransmission { get; }
 
     public ulong DataId { get; }
@@ -33,14 +32,29 @@ public class ReceiveStream : IDisposable
 
     #endregion
 
-    public void Cancel()
-        => this.Dispose();
-
     public void Dispose()
-        => this.ReceiveTransmission.ProcessDispose();
+    {
+        this.DisposeImmediately();
+    }
 
-    public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        => this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken);
+    public async Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        var r = await this.ReceiveTransmission.ProcessReceive(this, buffer, cancellationToken).ConfigureAwait(false);
+        if (r.Result != NetResult.Success)
+        {
+            if (r.Result == NetResult.Completed ||
+                r.Result == NetResult.Canceled)
+            {
+                Debug.Assert(this.ReceiveTransmission.Mode == NetTransmissionMode.Disposed);
+            }
+            else
+            {
+                this.Dispose();
+            }
+        }
+
+        return r;
+    }
 
     public async Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default)
     {
@@ -54,12 +68,14 @@ public class ReceiveStream : IDisposable
             }
             else if (written != sizeof(int))
             {
+                this.Dispose();
                 return new(NetResult.DeserializationFailed);
             }
 
             var length = BitConverter.ToInt32(buffer);
             if (length > this.ReceiveTransmission.Connection.Agreement.MaxBlockSize)
             {
+                this.Dispose();
                 return new(NetResult.BlockSizeLimit);
             }
 
@@ -81,11 +97,13 @@ public class ReceiveStream : IDisposable
             }
             else if (written != length)
             {
+                this.Dispose();
                 return new(NetResult.DeserializationFailed);
             }
 
             if (!TinyhandSerializer.TryDeserialize<TReceive>(memory.Span, out var value))
             {
+                this.Dispose();
                 return new(NetResult.DeserializationFailed);
             }
 
@@ -95,5 +113,10 @@ public class ReceiveStream : IDisposable
         {
             NetHelper.ReturnBuffer(buffer);
         }
+    }
+
+    internal void DisposeImmediately()
+    {
+        this.ReceiveTransmission.ProcessDispose();
     }
 }

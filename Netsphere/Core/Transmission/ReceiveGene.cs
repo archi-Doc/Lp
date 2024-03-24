@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Netsphere.Net;
@@ -17,23 +18,27 @@ internal partial class ReceiveGene
 
     public ReceiveTransmission ReceiveTransmission { get; }
 
+    public DataControl DataControl { get; private set; }
+
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
-    public bool IsReceived => !this.Packet.IsEmpty;
+    public bool IsReceived => this.DataControl != DataControl.Initial;
 
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetRecv(ByteArrayPool.MemoryOwner toBeShared)
+    public void SetRecv(DataControl dataControl, ByteArrayPool.MemoryOwner toBeShared)
     {
         if (!this.IsReceived)
         {
+            this.DataControl = dataControl;
             this.Packet = toBeShared.IncrementAndShare();
         }
     }
 
     public void Dispose()
     {
+        this.DataControl = DataControl.Initial;
         this.Packet = this.Packet.Return();
     }
 }
