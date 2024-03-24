@@ -737,6 +737,18 @@ Wait:
 
         if (packetType == PacketType.Protected || packetType == PacketType.ProtectedResponse)
         {
+            if (span.Length < sizeof(ulong))
+            {
+                return;
+            }
+
+            var checksum = BitConverter.ToUInt64(span); // Checksum
+            span = span.Slice(8);
+            if (XxHash3.Hash64(span) != checksum)
+            {
+                return;
+            }
+
             if (!this.TryDecryptCbc(salt, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
                 return;
@@ -747,7 +759,7 @@ Wait:
                 return;
             }
 
-            var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
+            var owner = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
             {// Close 2
@@ -1059,6 +1071,7 @@ Wait:
 
     internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)
     {
+        Debug.Assert(frame.Length > 0);
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
             owner = default;
@@ -1084,16 +1097,16 @@ Wait:
         span = span.Slice(sizeof(ulong));
 
         int written = 0;
-        if (frame.Length > 0)
+        var span2 = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        if (!this.TryEncryptCbc(salt, frame, span2, out written))
         {
-            if (!this.TryEncryptCbc(salt, frame, arrayOwner.ByteArray.AsSpan(PacketHeader.Length), out written))
-            {
-                owner = default;
-                return false;
-            }
+            owner = default;
+            return false;
         }
 
-        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
+        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
+
+        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
         return true;
     }
 
@@ -1119,13 +1132,18 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        frameHeader.CopyTo(span);
-        span = span.Slice(frameHeader.Length);
-        frameContent.CopyTo(span);
-        span = span.Slice(frameContent.Length);
+        var span2 = span.Slice(sizeof(ulong)); // Checksum
 
-        this.TryEncryptCbc(salt, arrayOwner.ByteArray.AsSpan(PacketHeader.Length, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
-        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
+        frameHeader.CopyTo(span2);
+        span2 = span2.Slice(frameHeader.Length);
+        frameContent.CopyTo(span2);
+
+        span2 = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        this.TryEncryptCbc(salt, span2.Slice(0, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
+
+        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
+
+        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
     }
 
     internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
@@ -1147,12 +1165,12 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        var source = span;
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack); // Frame type
-        span = span.Slice(sizeof(ushort));
+        var span2 = span.Slice(sizeof(ulong)); // Checksum
+        BitConverter.TryWriteBytes(span2, (ushort)FrameType.Ack); // Frame type
 
-        this.TryEncryptCbc(salt, source.Slice(0, sizeof(ushort) + length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
-        packetLength = PacketHeader.Length + written;
+        this.TryEncryptCbc(salt, span2.Slice(0, sizeof(ushort) + length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
+        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
+        packetLength = PacketHeader.Length + ProtectedPacket.Length + written;
     }
 
     /// <inheritdoc/>

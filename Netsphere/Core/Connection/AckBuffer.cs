@@ -168,7 +168,7 @@ NewPacket:
             if (owner is null)
             {// Prepare
                 owner = PacketPool.Rent();
-                span = owner.ByteArray.AsSpan(PacketHeader.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
+                span = owner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
             }
 
             var ackGene = item.AckGene;
