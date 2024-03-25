@@ -32,7 +32,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         try
         {
             var remoteData = r.Service;
-            var data = Encoding.UTF8.GetBytes("test string");
+            /*var data = Encoding.UTF8.GetBytes("test string");
             var sendStream = await remoteData.Put("test.txt", data.Length);
             if (sendStream is null)
             {
@@ -50,27 +50,36 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
 
             var buffer = new byte[100];
             var r2 = await receiveStream.Receive(buffer);
-            await Console.Out.WriteLineAsync(Encoding.UTF8.GetString(buffer, 0, r2.Written));
+            await Console.Out.WriteLineAsync(Encoding.UTF8.GetString(buffer, 0, r2.Written));*/
 
             await this.fileLogger.Flush(false);
             var path = this.fileLogger.GetCurrentPath();
 
             try
             {
-                var b = File.ReadAllBytes(path);
-                sendStream = await remoteData.Put("test2.txt", b.Length);
-                if (sendStream is null)
+                using var fileStream = File.OpenRead(path);
+                var sendStream = await remoteData.Put("test2.txt", fileStream.Length);
+                if (sendStream is not null)
                 {
-                    return;
+                    var r3 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
                 }
-
-                await sendStream.Send(b);
-                await sendStream.CompleteSendAndReceive();
             }
             catch
             {
             }
-            
+
+            try
+            {
+                using var fileStream = File.OpenWrite("test2.txt");
+                var receiveStream = await remoteData.Get("test2.txt");
+                if (receiveStream is not null)
+                {
+                    var r3 = await StreamHelper.ReceiveStreamToStream(receiveStream, fileStream);
+                }
+            }
+            catch
+            {
+            }
         }
         finally
         {
