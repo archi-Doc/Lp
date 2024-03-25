@@ -179,8 +179,8 @@ public class Program
         await unit.Run(options, true, x => new TestConnectionContext(x));
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        netControl.Services.Register<RemoteBenchHost>();
-        netControl.Services.Register<RemoteBenchRunner>();
+        netControl.Services.Register<IRemoteBenchHost>();
+        netControl.Services.Register<IRemoteBenchRunner>();
 
         // NtpCorrection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();

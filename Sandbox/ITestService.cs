@@ -59,11 +59,7 @@ public class TestServiceImpl : TestService
     public async NetTask<SendStreamAndReceive<ulong>?> SendData(long maxLength)
     {
         var transmissionContext = TransmissionContext.Current;
-        var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
-        {
-            return default;
-        }
+        var stream = transmissionContext.GetReceiveStream<ulong>();
 
         var buffer = new byte[100_000];
         var hash = new FarmHash();
@@ -86,7 +82,8 @@ public class TestServiceImpl : TestService
 
             if (r.Result == NetResult.Completed)
             {
-                transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                stream.SendAndDispose(BitConverter.ToUInt64(hash.HashFinal()));
+                // transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
                 break;
             }
         }
@@ -111,10 +108,6 @@ public class TestServiceImpl : TestService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
-        {
-            return default;
-        }
 
         // transmissionContext.Result = NetResult.InvalidOperation;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);
@@ -162,10 +155,6 @@ public class TestServiceImpl : TestService
     {
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream();
-        if (stream is null)
-        {
-            return default;
-        }
 
         // transmissionContext.Result = NetResult.NotFound;
         // transmissionContext.SendAndForget(NetResult.InvalidOperation);

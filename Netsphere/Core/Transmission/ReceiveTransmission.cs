@@ -5,7 +5,7 @@ using System.Diagnostics;
 using Arc.Collections;
 using Netsphere.Packet;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class ReceiveTransmission : IDisposable
@@ -110,6 +110,48 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {
             this.receivedTcs.SetResult(new(NetResult.Closed));
             this.receivedTcs = null;
+        }
+    }
+
+    internal async Task<NetResponse> Wait(Task<NetResponse> task, int timeoutInMilliseconds, CancellationToken cancellationToken)
+    {// I don't think this is a smart approach, but...
+        var remainingMilliseconds = timeoutInMilliseconds;
+        while (true)
+        {
+            if (!this.Connection.NetTerminal.IsActive)
+            {// NetTerminal
+                return new(NetResult.Closed);
+            }
+
+            if (!this.Connection.IsActive)
+            {// Connection
+                return new(NetResult.Closed);
+            }
+
+            try
+            {
+                var result = await task.WaitAsync(NetConstants.WaitIntervalTimeSpan, cancellationToken).ConfigureAwait(false);
+                return result;
+            }
+            catch (TimeoutException)
+            {
+                if (remainingMilliseconds < 0)
+                {// Wait indefinitely.
+                }
+                else if (remainingMilliseconds > NetConstants.WaitIntervalMilliseconds)
+                {// Reduce the time and continue waiting.
+                    remainingMilliseconds -= NetConstants.WaitIntervalMilliseconds;
+                }
+                else
+                {// Timeout
+                    return new(NetResult.Timeout);
+                }
+            }
+
+            if (this.IsDisposed)
+            {// Transmission
+                return new(NetResult.Closed);
+            }
         }
     }
 
@@ -484,7 +526,7 @@ Abort:
         int written = 0;
         if (this.Mode != NetTransmissionMode.Stream)
         {
-            return (NetResult.Closed, written);
+            return (NetResult.Completed, written);
         }
 
         int remaining = buffer.Length;
@@ -499,17 +541,13 @@ Abort:
                 }
                 else if (this.Mode != NetTransmissionMode.Stream)
                 {
-                    return (NetResult.Closed, written);
+                    return (NetResult.Completed, written);
                 }
 
                 var chain = this.genes?.DataPositionListChain;
                 if (chain is null)
                 {
                     return (NetResult.Closed, written);
-                }
-
-                if (remaining > 1000)
-                {
                 }
 
                 while (chain.Get(stream.CurrentGene) is { } gene)

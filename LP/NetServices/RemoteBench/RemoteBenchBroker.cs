@@ -53,8 +53,8 @@ public class RemoteBenchBroker
 
         async Task Process(ClientConnection clientConnection)
         {
-            var service = clientConnection.GetService<RemoteBenchRunner>();
-            var result = await service.Start(total, concurrent);
+            var service = clientConnection.GetService<IRemoteBenchRunner>();
+            var result = await service.Start(total, concurrent, );
             if (result == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Start: {clientConnection}");

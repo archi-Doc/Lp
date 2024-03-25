@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1401 // Fields should be private
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 [ValueLinkObject(Restricted = true)]
 internal partial class SendGene

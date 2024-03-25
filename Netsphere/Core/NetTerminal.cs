@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Responder;
 using Netsphere.Stats;
@@ -10,8 +10,6 @@ namespace Netsphere;
 
 public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public const double DefaultResponseTimeoutInSeconds = 2d;
-
     public enum State
     {
         Initial,
@@ -31,13 +29,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.netCleaner = new(this);
 
-        this.ResponseTimeout = TimeSpan.FromSeconds(DefaultResponseTimeoutInSeconds);
+        this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
     }
 
     #region FieldAndProperty
-
-    public CancellationToken CancellationToken
-        => ThreadCore.Root.CancellationToken;
 
     public State CurrentState { get; private set; }
 
@@ -61,7 +56,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public int Port { get; set; }
 
-    public TimeSpan ResponseTimeout { get; set; }
+    public TimeSpan ConnectTimeout { get; set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -178,6 +173,38 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.Responders = responders;
         this.Services = services;
         this.IsAlternative = isAlternative;
+    }
+
+    internal async Task<NetResponse> Wait(Task<NetResponse> task, TimeSpan timeout, CancellationToken cancellationToken)
+    {// I don't think this is a smart approach, but...
+        var remaining = timeout;
+        while (true)
+        {
+            if (!this.IsActive)
+            {// NetTerminal
+                return new(NetResult.Closed);
+            }
+
+            try
+            {
+                var result = await task.WaitAsync(NetConstants.WaitIntervalTimeSpan, cancellationToken).ConfigureAwait(false);
+                return result;
+            }
+            catch (TimeoutException)
+            {
+                if (remaining < TimeSpan.Zero)
+                {// Wait indefinitely.
+                }
+                else if (remaining > NetConstants.WaitIntervalTimeSpan)
+                {// Reduce the time and continue waiting.
+                    remaining -= NetConstants.WaitIntervalTimeSpan;
+                }
+                else
+                {// Timeout
+                    return new(NetResult.Timeout);
+                }
+            }
+        }
     }
 
     internal void ProcessSend(NetSender netSender)

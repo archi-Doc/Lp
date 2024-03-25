@@ -10,8 +10,9 @@ namespace Sandbox;
 [SimpleCommand("remotedata")]
 public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
 {
-    public RemoteDataCommand(ILogger<RemoteDataCommand> logger, NetControl netControl)
+    public RemoteDataCommand(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteDataCommand> logger, NetControl netControl)
     {
+        this.fileLogger = fileLogger;
         this.logger = logger;
         this.netControl = netControl;
     }
@@ -31,16 +32,17 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         try
         {
             var remoteData = r.Service;
-            var sendStream = await remoteData.Put("test.txt", 100);
+            /*var data = Encoding.UTF8.GetBytes("test string");
+            var sendStream = await remoteData.Put("test.txt", data.Length);
             if (sendStream is null)
             {
                 return;
             }
 
-            var result = await sendStream.Send(Encoding.UTF8.GetBytes("test string"));
+            var result = await sendStream.Send(data);
             var resultValue = await sendStream.CompleteSendAndReceive();
 
-            /*var receiveStream = await remoteData.Get("test.txt");
+            var receiveStream = await remoteData.Get("test.txt");
             if (receiveStream is null)
             {
                 return;
@@ -49,6 +51,35 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
             var buffer = new byte[100];
             var r2 = await receiveStream.Receive(buffer);
             await Console.Out.WriteLineAsync(Encoding.UTF8.GetString(buffer, 0, r2.Written));*/
+
+            await this.fileLogger.Flush(false);
+            var path = this.fileLogger.GetCurrentPath();
+
+            try
+            {
+                using var fileStream = File.OpenRead(path);
+                var sendStream = await remoteData.Put("test2.txt", fileStream.Length);
+                if (sendStream is not null)
+                {
+                    var r3 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                using var fileStream = File.OpenWrite("test2.txt");
+                var receiveStream = await remoteData.Get("test2.txt");
+                if (receiveStream is not null)
+                {
+                    var r3 = await StreamHelper.ReceiveStreamToStream(receiveStream, fileStream);
+                }
+            }
+            catch
+            {
+            }
         }
         finally
         {
@@ -56,6 +87,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         }
     }
 
+    private readonly FileLogger<FileLoggerOptions> fileLogger;
     private readonly NetControl netControl;
     private readonly ILogger logger;
 }

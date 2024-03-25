@@ -3,7 +3,7 @@
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchHostImpl : RemoteBenchHost, IRemoteBenchService
+public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 {
     public RemoteBenchHostImpl()
     {
@@ -43,10 +43,10 @@ public class RemoteBenchHostImpl : RemoteBenchHost, IRemoteBenchService
         }
 
         var clientConnection = context.ServerConnection.PrepareBidirectionalConnection();
-        var service = clientConnection.GetService<RemoteBenchRunner>();
+        var service = clientConnection.GetService<IRemoteBenchRunner>();
         if (service is not null)
         {
-            var result = await service.Start(10_000, 20);
+            var result = await service.Start(10_000, 20, default, default);
         }
 
         return NetResult.Success;

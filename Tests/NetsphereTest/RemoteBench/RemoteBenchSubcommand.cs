@@ -64,7 +64,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         // var r = await connection.ConnectBidirectionally(token);
         // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
 
-        var service = connection.GetService<RemoteBenchHost>();
+        var service = connection.GetService<IRemoteBenchHost>();
 
         // var r = await service.UpdateAgreement(token);
         // await Console.Out.WriteLineAsync($"{r}: {connection.Agreement}");
@@ -121,7 +121,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             }
 
             var sw = Stopwatch.StartNew();
-            var service = connection.GetService<RemoteBenchHost>();
+            var service = connection.GetService<IRemoteBenchHost>();
             for (var i = 0; i < N; i++)
             {
                 await service.Pingpong([0, 1, 2,]);
@@ -139,7 +139,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
 public record RemoteBenchOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = true)]
+    [SimpleOption("netnode", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

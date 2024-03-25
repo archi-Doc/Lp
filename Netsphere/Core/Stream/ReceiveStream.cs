@@ -1,13 +1,51 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using Netsphere.Net;
+using Netsphere.Core;
 
 namespace Netsphere;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-public class ReceiveStream : IDisposable
+public interface IReceiveStreamInternal
+{
+    Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default);
+}
+
+public readonly struct ReceiveStream<TResponse>
+{
+    internal ReceiveStream(TransmissionContext transmissionContext, ReceiveStream receiveStream)
+    {
+        this.transmissionContext = transmissionContext;
+        this.receiveStream = receiveStream;
+    }
+
+    public ulong DataId => this.receiveStream.DataId;
+
+    public long MaxStreamLength => this.receiveStream.MaxStreamLength;
+
+    public long ReceivedLength => this.receiveStream.ReceivedLength;
+
+    private readonly TransmissionContext transmissionContext;
+    private readonly ReceiveStream receiveStream;
+
+    public Task<(NetResult Result, int Written)> Receive(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        => this.receiveStream.Receive(buffer, cancellationToken);
+
+    public NetResult SendAndDispose(TResponse data)
+    {
+        if (this.receiveStream.ReceiveTransmission.Mode != NetTransmissionMode.Disposed)
+        {
+            return NetResult.InvalidOperation;
+        }
+
+        var result = this.transmissionContext.SendAndForget(data, this.transmissionContext.DataId);
+        this.receiveStream.Dispose();
+        return result;
+    }
+}
+
+public class ReceiveStream : IReceiveStreamInternal // , IDisposable
 {
     internal ReceiveStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -32,7 +70,7 @@ public class ReceiveStream : IDisposable
 
     #endregion
 
-    public void Dispose()
+    internal void Dispose()
     {
         this.DisposeImmediately();
     }
@@ -56,7 +94,7 @@ public class ReceiveStream : IDisposable
         return r;
     }
 
-    public async Task<NetResultValue<TReceive>> ReceiveBlock<TReceive>(CancellationToken cancellationToken = default)
+    async Task<NetResultValue<TReceive>> IReceiveStreamInternal.ReceiveBlock<TReceive>(CancellationToken cancellationToken)
     {
         var buffer = NetHelper.RentBuffer();
         try
@@ -107,6 +145,8 @@ public class ReceiveStream : IDisposable
                 return new(NetResult.DeserializationFailed);
             }
 
+            this.MaxStreamLength -= this.ReceivedLength;
+            this.ReceivedLength = 0;
             return new(NetResult.Success, value);
         }
         finally

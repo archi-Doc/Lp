@@ -86,7 +86,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     private async Task TestStreamData(ClientConnection connection)
     {
         const int N = 50_000_000;
-        var service = connection.GetService<RemoteBenchHost>();
+        var service = connection.GetService<IRemoteBenchHost>();
         var data = new byte[N];
         RandomVault.Pseudo.NextBytes(data);
 
@@ -108,7 +108,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     private async Task TestLargeData(ClientConnection connection)
     {
         const int N = 4_000_000;
-        var service = connection.GetService<RemoteBenchHost>();
+        var service = connection.GetService<IRemoteBenchHost>();
         var data = new byte[N];
         RandomVault.Pseudo.NextBytes(data);
 
@@ -124,7 +124,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     private async Task PingpongSmallData(ClientConnection connection)
     {
         const int N = 100; // 20;
-        var service = connection.GetService<RemoteBenchHost>();
+        var service = connection.GetService<IRemoteBenchHost>();
         var data = new byte[100];
 
         var sw = Stopwatch.StartNew();
@@ -165,7 +165,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
                 {
                     return;
                 }
-                var service = connection.GetService<RemoteBenchHost>();
+                var service = connection.GetService<IRemoteBenchHost>();
                 var response = await service.Pingpong(data).ResponseAsync;
                 if (response.IsSuccess)
                 {
@@ -217,7 +217,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
                         return;
                     }
 
-                    var service = connection.GetService<RemoteBenchHost>();
+                    var service = connection.GetService<IRemoteBenchHost>();
                     var response = service.Pingpong(data).ResponseAsync;
                     if (response.Result.IsSuccess)
                     {
@@ -245,7 +245,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
 public record NetbenchOptions
 {
-    [SimpleOption("node", Description = "Node address")]
+    [SimpleOption("netnode", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

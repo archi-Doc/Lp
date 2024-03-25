@@ -1,13 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Netsphere.Net;
+using Netsphere.Core;
 
 #pragma warning disable SA1401
 
 namespace Netsphere;
 
-public sealed class TransmissionContext
+public interface ITransmissionContextInternal
+{
+    // ReceiveStream GetReceiveStream();
+}
+
+public sealed class TransmissionContext : ITransmissionContextInternal
 {
     public static TransmissionContext Current => AsyncLocal.Value!;
 
@@ -86,6 +91,9 @@ public sealed class TransmissionContext
 
     public ReceiveStream GetReceiveStream()
         => this.receiveStream ?? throw new InvalidOperationException();
+
+    public ReceiveStream<TResponse> GetReceiveStream<TResponse>()
+        => new ReceiveStream<TResponse>(this, this.GetReceiveStream());
 
     public (NetResult Result, SendStream? Stream) GetSendStream(long maxLength, ulong dataId = 0)
     {

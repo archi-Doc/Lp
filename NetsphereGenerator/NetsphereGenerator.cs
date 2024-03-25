@@ -6,8 +6,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-#pragma warning disable SA1306 // Field names should begin with lower-case letter
-#pragma warning disable SA1204 // Static elements should appear before instance elements
 #pragma warning disable RS1036
 
 namespace Netsphere.Generator;

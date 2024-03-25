@@ -3,7 +3,7 @@
 using System.Runtime.CompilerServices;
 using Netsphere.Misc;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 internal class NetSender
 {

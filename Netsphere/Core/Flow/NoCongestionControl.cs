@@ -3,7 +3,7 @@
 using System.Runtime.CompilerServices;
 using Arc.Collections;
 
-namespace Netsphere.Net;
+namespace Netsphere.Core;
 
 internal class NoCongestionControl : ICongestionControl
 {
@@ -60,7 +60,7 @@ internal class NoCongestionControl : ICongestionControl
         }
     }
 
-    void ICongestionControl.LossDetected(Netsphere.Net.SendGene sendGene)
+    void ICongestionControl.LossDetected(Netsphere.Core.SendGene sendGene)
     {
     }
 
