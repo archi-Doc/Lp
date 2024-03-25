@@ -79,7 +79,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                 for (var j = 0; j < (options.Total / options.Concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var connection = await this.NetControl.NetTerminal.Connect(node))
+                    using (var connection = await this.NetControl.NetTerminal.Connect(node, Connection.ConnectMode.NoReuse)) // Do not reuse the connection as it quickly reaches the transmission limit.
                     {
                         if (connection is null)
                         {
@@ -87,7 +87,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
                         }
 
-                        var service = connection.GetService<RemoteBenchHost>();
+                        var service = connection.GetService<IRemoteBenchHost>();
                         sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
@@ -136,7 +136,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                 return;
 
             }
-            var service = terminal.GetService<RemoteBenchHost>();
+            var service = terminal.GetService<IRemoteBenchHost>();
             await service.Report(record);
         }
 

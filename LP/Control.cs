@@ -403,7 +403,7 @@ public class Control : ILogInformation
 
         if (this.LPBase.TestFeatures)
         {
-            this.NetControl.Services.Register<RemoteBenchHost>();
+            this.NetControl.Services.Register<IRemoteBenchHost>();
         }
 
         this.MergerProvider = new();
