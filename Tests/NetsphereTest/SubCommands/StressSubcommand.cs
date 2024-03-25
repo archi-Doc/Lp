@@ -148,7 +148,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
 public record StressOptions
 {
-    [SimpleOption("node", Description = "Node address")]
+    [SimpleOption("netnode", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
     [SimpleOption("total", Description = "")]
