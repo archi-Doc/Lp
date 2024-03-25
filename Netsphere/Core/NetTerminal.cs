@@ -10,8 +10,6 @@ namespace Netsphere;
 
 public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public const double DefaultResponseTimeoutInSeconds = 2d;
-
     public enum State
     {
         Initial,
@@ -31,7 +29,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.netCleaner = new(this);
 
-        this.ResponseTimeout = TimeSpan.FromSeconds(DefaultResponseTimeoutInSeconds);
+        this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
     }
 
     #region FieldAndProperty
@@ -58,7 +56,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public int Port { get; set; }
 
-    public TimeSpan ResponseTimeout { get; set; }
+    public TimeSpan ConnectTimeout { get; set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -177,9 +175,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.IsAlternative = isAlternative;
     }
 
-    internal async Task<NetResponse> Wait(Task<NetResponse> task, int timeoutInMilliseconds, CancellationToken cancellationToken)
+    internal async Task<NetResponse> Wait(Task<NetResponse> task, TimeSpan timeout, CancellationToken cancellationToken)
     {// I don't think this is a smart approach, but...
-        var remainingMilliseconds = timeoutInMilliseconds;
+        var remaining = timeout;
         while (true)
         {
             if (!this.IsActive)
@@ -194,12 +192,12 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             }
             catch (TimeoutException)
             {
-                if (remainingMilliseconds < 0)
+                if (remaining < TimeSpan.Zero)
                 {// Wait indefinitely.
                 }
-                else if (remainingMilliseconds > NetConstants.WaitIntervalMilliseconds)
+                else if (remaining > NetConstants.WaitIntervalTimeSpan)
                 {// Reduce the time and continue waiting.
-                    remainingMilliseconds -= NetConstants.WaitIntervalMilliseconds;
+                    remaining -= NetConstants.WaitIntervalTimeSpan;
                 }
                 else
                 {// Timeout

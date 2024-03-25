@@ -119,7 +119,7 @@ public sealed partial class PacketTerminal
 
         try
         {
-            var response = await this.netTerminal.Wait(responseTcs.Task, -1, default).ConfigureAwait(false);
+            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.ConnectTimeout, default).ConfigureAwait(false);
 
             if (response.IsFailure)
             {

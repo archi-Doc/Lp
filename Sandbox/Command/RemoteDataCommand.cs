@@ -10,8 +10,9 @@ namespace Sandbox;
 [SimpleCommand("remotedata")]
 public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
 {
-    public RemoteDataCommand(ILogger<RemoteDataCommand> logger, NetControl netControl)
+    public RemoteDataCommand(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteDataCommand> logger, NetControl netControl)
     {
+        this.fileLogger = fileLogger;
         this.logger = logger;
         this.netControl = netControl;
     }
@@ -50,6 +51,26 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
             var buffer = new byte[100];
             var r2 = await receiveStream.Receive(buffer);
             await Console.Out.WriteLineAsync(Encoding.UTF8.GetString(buffer, 0, r2.Written));
+
+            await this.fileLogger.Flush(false);
+            var path = this.fileLogger.GetCurrentPath();
+
+            try
+            {
+                var b = File.ReadAllBytes(path);
+                sendStream = await remoteData.Put("test2.txt", b.Length);
+                if (sendStream is null)
+                {
+                    return;
+                }
+
+                await sendStream.Send(b);
+                await sendStream.CompleteSendAndReceive();
+            }
+            catch
+            {
+            }
+            
         }
         finally
         {
@@ -57,6 +78,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         }
     }
 
+    private readonly FileLogger<FileLoggerOptions> fileLogger;
     private readonly NetControl netControl;
     private readonly ILogger logger;
 }

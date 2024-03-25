@@ -35,4 +35,5 @@ public static class NetConstants
     internal static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
     internal static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
     internal static readonly TimeSpan WaitIntervalTimeSpan = TimeSpan.FromMilliseconds(WaitIntervalMilliseconds);
+    internal static readonly TimeSpan DefaultConnectTimeout = TimeSpan.FromSeconds(2);
 }
