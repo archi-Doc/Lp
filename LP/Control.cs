@@ -12,7 +12,6 @@ global using LP;
 global using Netsphere;
 global using Tinyhand;
 using LP.Data;
-using LP.Logger.Options;
 using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.Services;
@@ -117,7 +116,7 @@ public class Control
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<DebugLoggerOptions>((context, options) =>
+            this.SetupOptions<LP.Logging.DebugLoggerOptions>((context, options) =>
             {// ClientTerminalLoggerOptions
                 var logfile = "Logs/Debug.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))

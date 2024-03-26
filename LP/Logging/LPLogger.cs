@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Logger.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Logging;
@@ -84,26 +83,6 @@ public class LPLogger
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             });
-        }
-
-        private class MachineLogFilter : ILogFilter
-        {
-            public MachineLogFilter(LPBase lpBase)
-            {
-                this.lpBase = lpBase;
-            }
-
-            public ILogWriter? Filter(LogFilterParameter param)
-            {
-                /*if (param.LogSourceType == typeof(Netsphere.Machines.EssentialNetMachine))
-                {
-                    return this.lpBase.Settings.Flags.LogEssentialNetMachine ? param.OriginalLogger : null;
-                }*/
-
-                return param.OriginalLogger;
-            }
-
-            private LPBase lpBase;
         }
     }
 }
