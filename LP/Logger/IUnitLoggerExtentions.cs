@@ -4,12 +4,12 @@ namespace LP;
 
 public static class IUnitLoggerExtentions
 {
-    public static void Log(this Arc.Unit.ILog logger, ulong hash)
+    public static void Log(this Arc.Unit.ILogWriter logger, ulong hash)
         => logger.Log(HashedString.Get(hash));
 
-    public static void Log(this Arc.Unit.ILog logger, ulong hash, object obj1)
+    public static void Log(this Arc.Unit.ILogWriter logger, ulong hash, object obj1)
         => logger.Log(HashedString.Get(hash, obj1));
 
-    public static void Log(this Arc.Unit.ILog logger, ulong hash, object obj1, object obj2)
+    public static void Log(this Arc.Unit.ILogWriter logger, ulong hash, object obj1, object obj2)
         => logger.Log(HashedString.Get(hash, obj1, obj2));
 }

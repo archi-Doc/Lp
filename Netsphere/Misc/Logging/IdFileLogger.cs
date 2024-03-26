@@ -18,11 +18,11 @@ public class IdFileLogger<TOption> : BufferedLogOutput
         this.worker.Start();
     }
 
-    public override void Output(LogOutputParameter param)
+    public override void Output(LogEvent logEvent)
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {
-            this.worker.Add(new(param));
+            this.worker.Add(new(logEvent));
         }
     }
 

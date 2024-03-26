@@ -93,7 +93,7 @@ public class LPLogger
                 this.lpBase = lpBase;
             }
 
-            public ILog? Filter(LogFilterParameter param)
+            public ILogWriter? Filter(LogFilterParameter param)
             {
                 /*if (param.LogSourceType == typeof(Netsphere.Machines.EssentialNetMachine))
                 {

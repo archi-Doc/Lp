@@ -11,16 +11,16 @@ internal class BackgroundAndFileLogger : ILogOutput
         this.fileLogger = fileLogger;
     }
 
-    public void Output(LogOutputParameter param)
+    public void Output(LogEvent logEvent)
     {// Fatai or Error or ViewMode -> Console and File, Others -> File
-        if (param.LogLevel == LogLevel.Fatal ||
-            param.LogLevel == LogLevel.Error ||
+        if (logEvent.LogLevel == LogLevel.Fatal ||
+            logEvent.LogLevel == LogLevel.Error ||
             this.userInterfaceService.IsViewMode)
         {
-            this.consoleLogger.Output(param);
+            this.consoleLogger.Output(logEvent);
         }
 
-        this.fileLogger.Output(param);
+        this.fileLogger.Output(logEvent);
     }
 
     private IUserInterfaceService userInterfaceService;

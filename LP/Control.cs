@@ -24,7 +24,7 @@ using SimpleCommandLine;
 
 namespace LP;
 
-public class Control : ILogInformation
+public class Control
 {
     public class Builder : UnitBuilder<Unit>
     {
@@ -491,7 +491,7 @@ public class Control : ILogInformation
         logger.Log("Running");
     }
 
-    public void LogInformation(ILog logger)
+    public void LogInformation(ILogWriter logger)
     {
         logger.Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
         this.LPBase.LogInformation(logger);
