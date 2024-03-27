@@ -165,7 +165,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             try
             {
                 using var fileStream = File.OpenRead(path);
-                var sendStream = await remoteData.Put("RemoteBenchRunner.txt", fileStream.Length);
+                var sendStream = await remoteData.Put("RemoteBench.Runner.txt", fileStream.Length);
                 if (sendStream is not null)
                 {
                     var r2 = await NetHelper.StreamToSendStream(fileStream, sendStream);

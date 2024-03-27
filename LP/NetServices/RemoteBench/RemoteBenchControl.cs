@@ -17,12 +17,49 @@ public class RemoteBenchControl
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
-    private readonly FileLogger<NetsphereLoggerOptions>? fileLogger;
+    private readonly IFileLogger? fileLogger;
     private readonly SingleTask singleTask = new();
 
     private readonly object syncObject = new();
     private HashSet<ClientConnection> connections = new();
     private Dictionary<ClientConnection, RemoteBenchRecord?> records = new();
+
+    public static async Task SendLog(NetTerminal netTerminal, IFileLogger? fileLogger, string netNode, string remotePrivateKey, string identifier)
+    {
+        if (fileLogger is null ||
+            string.IsNullOrEmpty(netNode) ||
+            string.IsNullOrEmpty(remotePrivateKey))
+        {
+            return;
+        }
+
+        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, netNode, remotePrivateKey, 100_000_000);
+        if (r.Connection is null ||
+            r.Service is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await fileLogger.Flush(false);
+
+            var path = fileLogger.GetCurrentPath();
+            using var fileStream = File.OpenRead(path);
+            var sendStream = await r.Service.Put(identifier, fileStream.Length);
+            if (sendStream is not null)
+            {
+                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
+            }
+        }
+        catch
+        {
+        }
+        finally
+        {
+            r.Connection.Dispose();
+        }
+    }
 
     public void Register(ClientConnection clientConnection)
     {
@@ -53,13 +90,15 @@ public class RemoteBenchControl
         for (var i = 0; i < array.Length; i++)
         {
             var c = array[i];
-            tasks[i] = Task.Run(() => Process(c));
+            tasks[i] = Task.Run(() => Process(i, c));
         }
 
-        async Task Process(ClientConnection clientConnection)
+        async Task Process(int index, ClientConnection clientConnection)
         {
             var service = clientConnection.GetService<IRemoteBenchRunner>();
-            var result = await service.Start(options.Total, options.Concurrent, default, default);
+            var remoteNode = index == 0 ? null : options.NetNode;
+            var remotePrivateKey = index == 0 ? null : options.RemotePrivateKey;
+            var result = await service.Start(options.Total, options.Concurrent, remoteNode, remotePrivateKey);
             if (result == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Start: {clientConnection}");
@@ -127,7 +166,7 @@ public class RemoteBenchControl
             }
 
             // Send
-            await this.SendLog(options);
+            await SendLog(this.netTerminal, this.fileLogger, options.NetNode, options.RemotePrivateKey, "RemoteBench.Server.txt");
         });
     }
 
@@ -136,39 +175,6 @@ public class RemoteBenchControl
         lock (this.syncObject)
         {
             this.records[clientConnection] = record;
-        }
-    }
-
-    private async Task SendLog(Subcommands.RemoteBenchOptions options)
-    {
-        if (this.fileLogger is null ||
-            string.IsNullOrEmpty(options.NetNode) ||
-            string.IsNullOrEmpty(options.RemotePrivateKey))
-        {
-            return;
-        }
-
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(this.netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
-        if (r.Connection is null ||
-            r.Service is null)
-        {
-            return;
-        }
-
-        await this.fileLogger.Flush(false);
-        var path = this.fileLogger.GetCurrentPath();
-
-        try
-        {
-            using var fileStream = File.OpenRead(path);
-            var sendStream = await r.Service.Put("RemoteBenchServer.txt", fileStream.Length);
-            if (sendStream is not null)
-            {
-                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
-            }
-        }
-        catch
-        {
         }
     }
 }
