@@ -2,6 +2,6 @@
 
 namespace LP.Logging;
 
-public class DebugLoggerOptions : FileLoggerOptions
+public class NetsphereLoggerOptions : FileLoggerOptions
 {
 }

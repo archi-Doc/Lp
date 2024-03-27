@@ -116,9 +116,9 @@ public class Control
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<LP.Logging.DebugLoggerOptions>((context, options) =>
-            {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Debug.txt";
+            this.SetupOptions<LP.Logging.NetsphereLoggerOptions>((context, options) =>
+            {// NetsphereLoggerOptions, LogLowLevelNet
+                var logfile = "Logs/Net.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);

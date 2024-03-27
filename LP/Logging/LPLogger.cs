@@ -39,13 +39,17 @@ public class LPLogger
 
                 // Resolver
                 context.ClearLoggerResolver();
+                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
                 context.AddLoggerResolver(context =>
                 {
-                    context.SetFilter<TemporaryMemoryLogFilter>();
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        context.SetOutput<FileLogger<DebugLoggerOptions>>();
-                        // context.SetOutput<EmptyLogger>();
+                        // context.SetOutput<FileLogger<NetsphereLoggerOptions>>();
+                        if (context.LogOutputType is null)
+                        {
+                            context.SetOutput<EmptyLogger>();
+                        }
+
                         return;
                     }
 
