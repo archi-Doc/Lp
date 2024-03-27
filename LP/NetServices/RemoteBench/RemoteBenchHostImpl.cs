@@ -7,12 +7,12 @@ namespace LP.NetServices;
 [NetServiceObject]
 public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
 {
-    public RemoteBenchHostImpl(RemoteBenchBroker broker)
+    public RemoteBenchHostImpl(RemoteBenchControl broker)
     {
         this.broker = broker;
     }
 
-    private readonly RemoteBenchBroker broker;
+    private readonly RemoteBenchControl broker;
 
     public async NetTask Report(RemoteBenchRecord record)
     {

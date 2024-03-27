@@ -1,18 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using Netsphere;
+using LP.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.NetServices;
 
-public class RemoteBenchBroker
+public class RemoteBenchControl
 {
-    public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger)
+    public RemoteBenchControl(IServiceProvider serviceProvider, ILogger<RemoteBenchControl> logger, NetTerminal netTerminal)
     {
         this.logger = logger;
+        this.netTerminal = netTerminal;
+        this.fileLogger = serviceProvider.GetService<FileLogger<NetsphereLoggerOptions>>();
     }
 
     private readonly ILogger logger;
+    private readonly NetTerminal netTerminal;
+    private readonly FileLogger<NetsphereLoggerOptions>? fileLogger;
     private readonly SingleTask singleTask = new();
 
     private readonly object syncObject = new();
@@ -30,7 +35,7 @@ public class RemoteBenchBroker
         this.logger.TryGet()?.Log($"Registered({result}): {clientConnection.ToString()}");
     }
 
-    public void Start(int total, int concurrent)
+    public void Start(Subcommands.RemoteBenchOptions options)
     {
         ClientConnection[] array;
         lock (this.syncObject)
@@ -54,7 +59,7 @@ public class RemoteBenchBroker
         async Task Process(ClientConnection clientConnection)
         {
             var service = clientConnection.GetService<IRemoteBenchRunner>();
-            var result = await service.Start(total, concurrent, default, default);
+            var result = await service.Start(options.Total, options.Concurrent, default, default);
             if (result == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Start: {clientConnection}");
@@ -70,6 +75,11 @@ public class RemoteBenchBroker
             var sw = Stopwatch.StartNew();
             while (await ThreadCore.Root.Delay(1_000))
             {
+                if (this.fileLogger is not null)
+                {// Reset
+                    this.fileLogger.DeleteAllLogs();
+                }
+
                 lock (this.syncObject)
                 {
                     if (this.records.Values.Any(x => x is null))
@@ -115,6 +125,9 @@ public class RemoteBenchBroker
                     break;
                 }
             }
+
+            // Send
+            await this.SendLog(options);
         });
     }
 
@@ -123,6 +136,37 @@ public class RemoteBenchBroker
         lock (this.syncObject)
         {
             this.records[clientConnection] = record;
+        }
+    }
+
+    private async Task SendLog(Subcommands.RemoteBenchOptions options)
+    {
+        if (this.fileLogger is null)
+        {
+            return;
+        }
+
+        var r = await NetHelper.TryGetStreamService<IRemoteData>(this.netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
+        if (r.Connection is null ||
+            r.Service is null)
+        {
+            return;
+        }
+
+        await this.fileLogger.Flush(false);
+        var path = this.fileLogger.GetCurrentPath();
+
+        try
+        {
+            using var fileStream = File.OpenRead(path);
+            var sendStream = await r.Service.Put("test2.txt", fileStream.Length);
+            if (sendStream is not null)
+            {
+                var r3 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
+            }
+        }
+        catch
+        {
         }
     }
 }
