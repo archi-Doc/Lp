@@ -35,11 +35,13 @@ public class LPLogger
 
                 // Filters
                 context.AddSingleton<MachineLogFilter>();
+                context.AddSingleton<TemporaryMemoryLogFilter>();
 
                 // Resolver
                 context.ClearLoggerResolver();
                 context.AddLoggerResolver(context =>
                 {
+                    context.SetFilter<TemporaryMemoryLogFilter>();
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
                         context.SetOutput<FileLogger<DebugLoggerOptions>>();
