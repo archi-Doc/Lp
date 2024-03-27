@@ -53,7 +53,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         }
 
         var privateKey = SignaturePrivateKey.Create();
-        var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionSeconds = 300, };
+        var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionMics = Mics.FromMinutes(5), };
         var token = new CertificateToken<ConnectionAgreement>(agreement);
         connection.SignWithSalt(token, privateKey);
         connection.ValidateAndVerifyWithSalt(token);

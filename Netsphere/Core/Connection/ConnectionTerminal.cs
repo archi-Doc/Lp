@@ -80,7 +80,7 @@ public class ConnectionTerminal
                 Debug.Assert(!clientConnection.IsDisposed);
                 if (clientConnection.IsOpen)
                 {
-                    if (clientConnection.LastEventMics + clientConnection.ConnectionRetentionMics < systemCurrentMics)
+                    if (clientConnection.LastEventMics + clientConnection.Agreement.MinimumConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close (unused)");
                         clientToChange.Enqueue(clientConnection);
@@ -133,7 +133,7 @@ public class ConnectionTerminal
                 Debug.Assert(!serverConnection.IsDisposed);
                 if (serverConnection.IsOpen)
                 {
-                    if (serverConnection.LastEventMics + serverConnection.ConnectionRetentionMics < systemCurrentMics)
+                    if (serverConnection.LastEventMics + serverConnection.Agreement.MinimumConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close (unused)");
                         serverToChange.Enqueue(serverConnection);

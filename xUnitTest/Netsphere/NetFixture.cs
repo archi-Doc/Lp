@@ -19,7 +19,7 @@ public class NetFixture : IDisposable
     public const int MaxBlockSize = 1_000_000;
     public const long MaxStreamLength = 4_000_000;
     public const int StreamBufferSize = 1_000_000;
-    public const int MinimumConnectionRetentionSeconds = 1_000_000;
+    public const long MinimumConnectionRetentionMics = 1_000_000_000_000;
 
     public NetFixture()
     {
@@ -53,7 +53,7 @@ public class NetFixture : IDisposable
         this.NetControl.NetBase.DefaultAgreement.MaxBlockSize = MaxBlockSize;
         this.NetControl.NetBase.DefaultAgreement.MaxStreamLength = MaxStreamLength;
         this.NetControl.NetBase.DefaultAgreement.StreamBufferSize = StreamBufferSize;
-        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionSeconds = MinimumConnectionRetentionSeconds;
+        this.NetControl.NetBase.DefaultAgreement.MinimumConnectionRetentionMics = MinimumConnectionRetentionMics;
     }
 
     public void Dispose()
