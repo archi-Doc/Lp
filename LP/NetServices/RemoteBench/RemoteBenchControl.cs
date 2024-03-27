@@ -141,7 +141,9 @@ public class RemoteBenchControl
 
     private async Task SendLog(Subcommands.RemoteBenchOptions options)
     {
-        if (this.fileLogger is null)
+        if (this.fileLogger is null ||
+            string.IsNullOrEmpty(options.NetNode) ||
+            string.IsNullOrEmpty(options.RemotePrivateKey))
         {
             return;
         }
@@ -159,10 +161,10 @@ public class RemoteBenchControl
         try
         {
             using var fileStream = File.OpenRead(path);
-            var sendStream = await r.Service.Put("test2.txt", fileStream.Length);
+            var sendStream = await r.Service.Put("RemoteBenchServer.txt", fileStream.Length);
             if (sendStream is not null)
             {
-                var r3 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
+                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
             }
         }
         catch

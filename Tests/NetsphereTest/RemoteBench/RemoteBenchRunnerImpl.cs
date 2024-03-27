@@ -168,7 +168,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
                 var sendStream = await remoteData.Put("RemoteBenchRunner.txt", fileStream.Length);
                 if (sendStream is not null)
                 {
-                    var r2 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
+                    var r2 = await NetHelper.StreamToSendStream(fileStream, sendStream);
                 }
             }
             catch
