@@ -34,8 +34,8 @@ public class Program
         var builder = new NetControl.Builder() // Create a NetControl builder.
             .Configure(context =>
             {
-                context.AddSingleton<RemoteData>();
-                context.AddTransient<RemoteDataBroker>();
+                context.AddSingleton<RemoteDataControl>();
+                context.AddTransient<RemoteDataAgent>();
 
                 // Command
                 context.AddCommand(typeof(DefaultCommand));

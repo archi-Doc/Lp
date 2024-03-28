@@ -9,7 +9,7 @@ namespace RemoteDataServer;
 [SimpleCommand("default", Default = true)]
 public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 {
-    public DefaultCommand(ILogger<DefaultCommandOptions> logger, NetControl netControl, RemoteData remoteDataBroker)
+    public DefaultCommand(ILogger<DefaultCommandOptions> logger, NetControl netControl, RemoteDataControl remoteDataBroker)
     {
         this.logger = logger;
         this.netControl = netControl;
@@ -70,7 +70,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private readonly NetControl netControl;
     private readonly ILogger logger;
-    private readonly RemoteData remoteData;
+    private readonly RemoteDataControl remoteData;
 }
 
 public record DefaultCommandOptions

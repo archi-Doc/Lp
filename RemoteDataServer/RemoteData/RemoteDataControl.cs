@@ -7,11 +7,11 @@ using Netsphere.Crypto;
 
 namespace RemoteDataServer;
 
-public class RemoteData
+public class RemoteDataControl
 {
     private const int ReadBufferSize = 1024 * 1024 * 4;
 
-    public RemoteData(UnitOptions unitOptions, ILogger<RemoteData> logger)
+    public RemoteDataControl(UnitOptions unitOptions, ILogger<RemoteDataControl> logger)
     {
         this.logger = logger;
         this.baseDirectory = string.IsNullOrEmpty(unitOptions.DataDirectory) ?
