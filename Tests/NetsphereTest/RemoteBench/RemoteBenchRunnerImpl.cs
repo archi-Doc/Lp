@@ -18,7 +18,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 
     #region FieldAndProperty
 
-    private readonly FileLogger<FileLoggerOptions> fileLogger;
+    private readonly IFileLogger fileLogger;
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
     private string? remoteNode;

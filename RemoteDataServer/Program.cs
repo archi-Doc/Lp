@@ -44,12 +44,14 @@ public class Program
                 {// Logger
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<EmptyLogger>();
+                        context.SetOutput<ConsoleLogger>(); // EmptyLogger
                         return;
                     }
 
                     context.SetOutput<ConsoleLogger>();
                 });
+
+                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<EmptyLogger>);
             })
             .SetupOptions<NetOptions>((context, options) =>
             {// Modify NetOptions
