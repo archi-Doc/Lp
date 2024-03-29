@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using LP.Logging;
+using Netsphere.RemoteData;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.NetServices;
@@ -23,43 +24,6 @@ public class RemoteBenchControl
     private readonly object syncObject = new();
     private HashSet<ClientConnection> connections = new();
     private Dictionary<ClientConnection, RemoteBenchRecord?> records = new();
-
-    public static async Task SendLog(NetTerminal netTerminal, IFileLogger? fileLogger, string netNode, string remotePrivateKey, string identifier)
-    {
-        if (fileLogger is null ||
-            string.IsNullOrEmpty(netNode) ||
-            string.IsNullOrEmpty(remotePrivateKey))
-        {
-            return;
-        }
-
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, netNode, remotePrivateKey, 100_000_000);
-        if (r.Connection is null ||
-            r.Service is null)
-        {
-            return;
-        }
-
-        try
-        {
-            await fileLogger.Flush(false);
-
-            var path = fileLogger.GetCurrentPath();
-            using var fileStream = File.OpenRead(path);
-            var sendStream = await r.Service.Put(identifier, fileStream.Length);
-            if (sendStream is not null)
-            {
-                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
-            }
-        }
-        catch
-        {
-        }
-        finally
-        {
-            r.Connection.Dispose();
-        }
-    }
 
     public void Register(ClientConnection clientConnection)
     {
@@ -166,7 +130,7 @@ public class RemoteBenchControl
             }
 
             // Send
-            await SendLog(this.netTerminal, this.fileLogger, options.NetNode, options.RemotePrivateKey, "RemoteBench.Server.txt");
+            await RemoteDataHelper.SendLog(this.netTerminal, this.fileLogger, options.NetNode, options.RemotePrivateKey, "RemoteBench.Server.txt");
         });
     }
 

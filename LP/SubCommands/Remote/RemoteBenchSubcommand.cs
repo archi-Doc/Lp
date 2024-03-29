@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using LP.NetServices;
-using Netsphere;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -24,7 +22,7 @@ internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
     }
 
     private RemoteBenchControl remoteBenchBroker;
-    private ILogger<RemoteBenchSubcommand> logger;
+    private ILogger logger;
     private IUserInterfaceService userInterfaceService;
 }
 
