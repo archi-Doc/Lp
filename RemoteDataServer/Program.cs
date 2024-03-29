@@ -40,18 +40,21 @@ public class Program
                 // Command
                 context.AddCommand(typeof(DefaultCommand));
 
+                // context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<EmptyLogger>);
                 context.AddLoggerResolver(context =>
                 {// Logger
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<ConsoleLogger>(); // EmptyLogger
+                        // if (context.LogOutputType is null)
+                        {
+                            context.SetOutput<FileLogger<FileLoggerOptions>>(); // EmptyLogger
+                        }
+
                         return;
                     }
 
                     context.SetOutput<ConsoleLogger>();
                 });
-
-                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<EmptyLogger>);
             })
             .SetupOptions<NetOptions>((context, options) =>
             {// Modify NetOptions
@@ -59,6 +62,15 @@ public class Program
                 options.Port = 50000; // Specify the port number.
                 options.EnableEssential = false; // Required when using functions such as Ping.
                 options.EnableServer = true;
+            })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {
+                var logfile = "Logs/Net.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 100;
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K";
+                options.ClearLogsAtStartup = true;
+                options.MaxQueue = 100_000;
             })
             .ConfigureSerivice(context =>
             {// Register the services provided by the server.

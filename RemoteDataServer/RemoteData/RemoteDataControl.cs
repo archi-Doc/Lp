@@ -83,9 +83,9 @@ public class RemoteDataControl
             {
                 transmissionContext.Result = NetResult.NotFound;
                 return default;
-            }
+                }
 
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Get: {identifier}");
+            this.logger.TryGet(LogLevel.Information)?.Log($"Get: {identifier}");
             var result = await NetHelper.StreamToSendStream(fileStream, sendStream);
             this.logger.TryGet(LogLevel.Information)?.Log($"Get ({result}): {identifier} {sendStream.SentLength} bytes");
 
@@ -138,7 +138,7 @@ public class RemoteDataControl
             using var fileStream = File.Create(path);
             var receiveStream = transmissionContext.GetReceiveStream<NetResult>();
 
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Put: {identifier}");
+            this.logger.TryGet(LogLevel.Information)?.Log($"Put: {identifier}");
             result = await NetHelper.ReceiveStreamToStream(receiveStream, fileStream);
             this.logger.TryGet(LogLevel.Information)?.Log($"Put({result}): {identifier} {receiveStream.ReceivedLength} bytes");
 
