@@ -77,6 +77,7 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RemoteBenchSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RemoteDataSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
