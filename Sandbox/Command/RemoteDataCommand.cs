@@ -22,7 +22,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         var netTerminal = this.netControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
+        var r = await NetHelper.TryGetStreamService<Netsphere.RemoteData.IRemoteData>(netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
         if (r.Connection is null ||
             r.Service is null)
         {
