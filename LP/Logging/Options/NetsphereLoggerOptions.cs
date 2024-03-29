@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Logger.Options;
+namespace LP.Logging;
 
-public class DebugLoggerOptions : FileLoggerOptions
+public class NetsphereLoggerOptions : FileLoggerOptions
 {
 }

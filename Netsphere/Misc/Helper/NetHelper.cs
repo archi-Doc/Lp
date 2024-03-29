@@ -16,8 +16,9 @@ public static class NetHelper
     internal const int RamaGenes = 3;
     internal const char Quote = '\"';
     internal const string TripleQuotes = "\"\"\"";
-    private const int BufferLength = 64 * 1024;
+    private const int BufferLength = 64 * 1024; // 64 KB
     private const int BufferMax = 16;
+    private const int StreamBufferSize = 1024 * 1024 * 4; // 4 MB
 
     private static ArrayPool<byte> arrayPool { get; } = ArrayPool<byte>.Create(BufferLength, BufferMax);
 
@@ -26,6 +27,147 @@ public static class NetHelper
 
     internal static void ReturnBuffer(byte[] buffer)
         => arrayPool.Return(buffer);
+
+    public static async Task<NetResult> ReceiveStreamToStream(ReceiveStream receiveStream, Stream stream, CancellationToken cancellationToken = default)
+    {
+        var result = NetResult.UnknownError;
+        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        try
+        {
+            while (true)
+            {
+                (result, var written) = await receiveStream.Receive(buffer, cancellationToken).ConfigureAwait(false);
+                if (written > 0)
+                {
+                    await stream.WriteAsync(buffer.AsMemory(0, written), cancellationToken).ConfigureAwait(false);
+                }
+
+                if (result == NetResult.Success)
+                {// Continue
+                }
+                else if (result == NetResult.Completed)
+                {// Completed
+                    result = NetResult.Success;
+                    break;
+                }
+                else
+                {// Error
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return result;
+    }
+
+    public static async Task<NetResult> ReceiveStreamToStream<TResponse>(ReceiveStream<TResponse> receiveStream, Stream stream, CancellationToken cancellationToken = default)
+    {
+        var result = NetResult.UnknownError;
+        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        try
+        {
+            while (true)
+            {
+                (result, var written) = await receiveStream.Receive(buffer, cancellationToken).ConfigureAwait(false);
+                if (written > 0)
+                {
+                    await stream.WriteAsync(buffer.AsMemory(0, written), cancellationToken).ConfigureAwait(false);
+                }
+
+                if (result == NetResult.Success)
+                {// Continue
+                }
+                else if (result == NetResult.Completed)
+                {// Completed
+                    result = NetResult.Success;
+                    break;
+                }
+                else
+                {// Error
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return result;
+    }
+
+    public static async Task<NetResult> StreamToSendStream(Stream stream, SendStream sendStream, CancellationToken cancellationToken = default)
+    {
+        var result = NetResult.Success;
+        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        long totalSent = 0;
+        try
+        {
+            int length;
+            while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
+                if (result != NetResult.Success)
+                {
+                    return result;
+                }
+
+                totalSent += length;
+            }
+
+            await sendStream.Complete(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await sendStream.Cancel(cancellationToken);
+            result = NetResult.Canceled;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return result;
+    }
+
+    public static async Task<NetResultValue<TReceive>> StreamToSendStream<TReceive>(Stream stream, SendStreamAndReceive<TReceive> sendStream, CancellationToken cancellationToken = default)
+    {
+        var result = NetResult.Success;
+        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        long totalSent = 0;
+        try
+        {
+            int length;
+            while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
+                if (result != NetResult.Success)
+                {
+                    return new(result);
+                }
+
+                totalSent += length;
+            }
+
+            var r = await sendStream.CompleteSendAndReceive(cancellationToken).ConfigureAwait(false);
+            return r;
+        }
+        catch
+        {
+            await sendStream.Cancel(cancellationToken);
+            result = NetResult.Canceled;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return new(result);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void DeserializeNetResult(ulong dataId, ReadOnlySpan<byte> span, out NetResult value)

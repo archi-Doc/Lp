@@ -144,34 +144,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }*/
     }
 
-    private class ExampleLogFilter : ILogFilter
-    {
-        public ExampleLogFilter(ConsoleUnit consoleUnit)
-        {
-            this.consoleUnit = consoleUnit;
-        }
-
-        public ILog? Filter(LogFilterParameter param)
-        {// Log source/Event id/LogLevel -> Filter() -> ILog
-            if (param.LogSourceType == typeof(ConsoleCommand))
-            {
-                // return null; // No log
-                if (param.LogLevel == LogLevel.Error)
-                {
-                    return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
-                }
-                else if (param.LogLevel == LogLevel.Fatal)
-                {
-                    return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
-                }
-            }
-
-            return param.OriginalLogger;
-        }
-
-        private ConsoleUnit consoleUnit;
-    }
-
     public ConsoleUnit(UnitContext context, ILogger<ConsoleUnit> logger)
         : base(context)
     {

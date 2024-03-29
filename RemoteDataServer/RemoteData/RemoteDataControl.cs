@@ -1,17 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
-using System.IO;
-using Netsphere;
 using Netsphere.Crypto;
 
 namespace RemoteDataServer;
 
-public class RemoteData
+public class RemoteDataControl
 {
-    private const int ReadBufferSize = 1024 * 1024 * 4;
+    // private const int ReadBufferSize = 1024 * 1024 * 4;
 
-    public RemoteData(UnitOptions unitOptions, ILogger<RemoteData> logger)
+    public RemoteDataControl(UnitOptions unitOptions, ILogger<RemoteDataControl> logger)
     {
         this.logger = logger;
         this.baseDirectory = string.IsNullOrEmpty(unitOptions.DataDirectory) ?
@@ -88,7 +85,11 @@ public class RemoteData
                 return default;
             }
 
-            var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
+            this.logger.TryGet(LogLevel.Debug)?.Log($"Get: {identifier}");
+            var result = await NetHelper.StreamToSendStream(fileStream, sendStream);
+            this.logger.TryGet(LogLevel.Information)?.Log($"Get ({result}): {identifier} {sendStream.SentLength} bytes");
+
+            /*var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
             long totalSent = 0;
             try
             {
@@ -100,7 +101,6 @@ public class RemoteData
                 }
 
                 await sendStream.Complete().ConfigureAwait(false);
-                this.logger.TryGet(LogLevel.Information)?.Log($"Get: {identifier} {totalSent} bytes");
             }
             catch
             {
@@ -109,7 +109,7 @@ public class RemoteData
             finally
             {
                 ArrayPool<byte>.Shared.Return(buffer);
-            }
+            }*/
         }
         catch
         {
@@ -133,12 +133,18 @@ public class RemoteData
         }
 
         var result = NetResult.UnknownError;
-        long totalWritten = 0;
         try
         {
             using var fileStream = File.Create(path);
             var receiveStream = transmissionContext.GetReceiveStream<NetResult>();
 
+            this.logger.TryGet(LogLevel.Debug)?.Log($"Put: {identifier}");
+            result = await NetHelper.ReceiveStreamToStream(receiveStream, fileStream);
+            this.logger.TryGet(LogLevel.Information)?.Log($"Put({result}): {identifier} {receiveStream.ReceivedLength} bytes");
+
+            receiveStream.SendAndDispose(result);
+
+            /*long totalWritten = 0;
             var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
             try
             {
@@ -165,8 +171,6 @@ public class RemoteData
                 {// Complete
                  // transmissionContext.Result = NetResult.Success;
                     result = NetResult.Success;
-                    this.logger.TryGet(LogLevel.Information)?.Log($"Put: {identifier} {totalWritten} bytes");
-                    // this.logger.TryGet(LogLevel.Information)?.Log($"{maxLength}, {receiveStream.MaxStreamLength}, {receiveStream.ReceivedLength}");
                 }
                 else
                 {
@@ -175,7 +179,7 @@ public class RemoteData
                 }
 
                 receiveStream.SendAndDispose(result);
-            }
+            }*/
         }
         catch
         {

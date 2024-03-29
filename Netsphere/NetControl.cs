@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1204
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 global using System.Net;
@@ -10,9 +11,11 @@ global using BigMachines;
 global using Tinyhand;
 global using ValueLink;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.Core;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Misc;
+using Netsphere.Packet;
 using Netsphere.Responder;
 using Netsphere.Stats;
 
@@ -178,5 +181,26 @@ public class NetControl : UnitBase, IUnitPreparable
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
+    }
+
+#pragma warning disable CS0162
+    public static void LowLevelLoggerResolver<TOutput>(LoggerResolverContext context)
+        where TOutput : ILogOutput
+    {
+        if (!NetConstants.LogLowLevelNet)
+        {
+            return;
+        }
+
+        if (context.LogSourceType == typeof(AckBuffer) ||
+            context.LogSourceType == typeof(ClientConnection) ||
+            context.LogSourceType == typeof(ServerConnection) ||
+            context.LogSourceType == typeof(PacketTerminal) ||
+            context.LogSourceType == typeof(NetSender) ||
+            context.LogSourceType == typeof(CubicCongestionControl) ||
+            context.LogSourceType == typeof(NoCongestionControl))
+        {
+            context.SetOutput<TOutput>();
+        }
     }
 }

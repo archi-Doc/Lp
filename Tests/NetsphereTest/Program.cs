@@ -107,8 +107,8 @@ public class Program
                 context.AddCommand(typeof(RemoteBenchSubcommand));
 
                 // NetService
-                context.AddSingleton<RemoteBenchHostImpl>();
-                context.AddSingleton<RemoteBenchRunnerImpl>();
+                context.AddSingleton<RemoteBenchHostAgent>();
+                context.AddSingleton<RemoteBenchRunnerAgent>();
 
                 // ServiceFilter
 
@@ -174,7 +174,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
-        options.EnableAlternative = true;
+        // options.EnableAlternative = true;
         await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true, x => new TestConnectionContext(x));
 

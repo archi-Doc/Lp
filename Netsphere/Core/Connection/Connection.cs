@@ -139,8 +139,6 @@ public abstract class Connection : IDisposable
         }
     }
 
-    public long ConnectionRetentionMics { get; set; }
-
     internal ILogger Logger { get; }
 
     internal int SendTransmissionsCount
@@ -233,11 +231,6 @@ public abstract class Connection : IDisposable
         this.CurrentState = state;
         this.UpdateLastEventMics();
         this.OnStateChanged();
-    }
-
-    public void ApplyAgreement()
-    {
-        this.ConnectionRetentionMics = (long)this.Agreement.MinimumConnectionRetentionSeconds * 1_000_000;
     }
 
     public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
@@ -603,7 +596,6 @@ Wait:
     {
         this.Agreement = agreement;
         this.embryo = embryo;
-        this.ApplyAgreement();
     }
 
     internal void AddRtt(int rttMics)

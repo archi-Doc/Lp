@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Logger.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Logging;
@@ -36,15 +35,21 @@ public class LPLogger
 
                 // Filters
                 context.AddSingleton<MachineLogFilter>();
+                context.AddSingleton<TemporaryMemoryLogFilter>();
 
                 // Resolver
                 context.ClearLoggerResolver();
+                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
                 context.AddLoggerResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        context.SetOutput<FileLogger<DebugLoggerOptions>>();
-                        // context.SetOutput<EmptyLogger>();
+                        // context.SetOutput<FileLogger<NetsphereLoggerOptions>>();
+                        if (context.LogOutputType is null)
+                        {
+                            context.SetOutput<EmptyLogger>();
+                        }
+
                         return;
                     }
 
@@ -84,26 +89,6 @@ public class LPLogger
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             });
-        }
-
-        private class MachineLogFilter : ILogFilter
-        {
-            public MachineLogFilter(LPBase lpBase)
-            {
-                this.lpBase = lpBase;
-            }
-
-            public ILog? Filter(LogFilterParameter param)
-            {
-                /*if (param.LogSourceType == typeof(Netsphere.Machines.EssentialNetMachine))
-                {
-                    return this.lpBase.Settings.Flags.LogEssentialNetMachine ? param.OriginalLogger : null;
-                }*/
-
-                return param.OriginalLogger;
-            }
-
-            private LPBase lpBase;
         }
     }
 }

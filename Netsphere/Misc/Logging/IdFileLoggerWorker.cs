@@ -33,7 +33,7 @@ internal partial class IdFileLoggerWorker : TaskCore
             var sb = new StringBuilder();
             while (this.queue.TryDequeue(out var work))
             {
-                this.worker.formatter.Format(sb, work.Parameter);
+                this.worker.formatter.Format(sb, work.LogEvent);
                 sb.Append(Environment.NewLine);
             }
 
@@ -167,7 +167,7 @@ internal partial class IdFileLoggerWorker : TaskCore
             {
                 count++;
 
-                var id = work.Parameter.EventId;
+                var id = work.LogEvent.EventId;
                 var stream = this.goshujin.IdChain.FindFirst(id);
                 if (stream == null)
                 {// New
@@ -300,10 +300,10 @@ internal partial class IdFileLoggerWorker : TaskCore
 
 internal class IdFileLoggerWork
 {
-    public IdFileLoggerWork(LogOutputParameter parameter)
+    public IdFileLoggerWork(LogEvent logEvent)
     {
-        this.Parameter = parameter;
+        this.LogEvent = logEvent;
     }
 
-    public LogOutputParameter Parameter { get; }
+    public LogEvent LogEvent { get; }
 }

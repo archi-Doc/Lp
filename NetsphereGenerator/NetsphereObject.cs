@@ -906,7 +906,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             using (var scopeIf = ssb.ScopeBrace($"if (result == NetResult.Success)"))
             {
                 ssb.AppendLine("context.ServerConnection.Agreement.AcceptAll(value.Target);");
-                ssb.AppendLine("context.ServerConnection.ApplyAgreement();");
+                // ssb.AppendLine("context.ServerConnection.ApplyAgreement();");
             }
         }
         else if (method.Kind == ServiceMethod.MethodKind.ConnectBidirectionally)
@@ -917,7 +917,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 using (var scopeIf2 = ssb.ScopeBrace("if (value is not null)"))
                 {
                     ssb.AppendLine("context.ServerConnection.Agreement.AcceptAll(value.Target);");
-                    ssb.AppendLine("context.ServerConnection.ApplyAgreement();");
+                    // ssb.AppendLine("context.ServerConnection.ApplyAgreement();");
                 }
             }
         }

@@ -7,9 +7,9 @@ using NetsphereTest;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
+public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
 {
-    public RemoteBenchRunnerImpl(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteBenchRunnerImpl> logger, NetTerminal netTerminal)
+    public RemoteBenchRunnerAgent(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteBenchRunnerAgent> logger, NetTerminal netTerminal)
     {
         this.fileLogger = fileLogger;
         this.logger = logger;
@@ -18,7 +18,7 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
 
     #region FieldAndProperty
 
-    private readonly FileLogger<FileLoggerOptions> fileLogger;
+    private readonly IFileLogger fileLogger;
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
     private string? remoteNode;
@@ -165,10 +165,10 @@ public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
             try
             {
                 using var fileStream = File.OpenRead(path);
-                var sendStream = await remoteData.Put("RemoteBenchRunner.txt", fileStream.Length);
+                var sendStream = await remoteData.Put("RemoteBench.Runner.txt", fileStream.Length);
                 if (sendStream is not null)
                 {
-                    var r2 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
+                    var r2 = await NetHelper.StreamToSendStream(fileStream, sendStream);
                 }
             }
             catch

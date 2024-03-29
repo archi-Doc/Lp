@@ -34,8 +34,8 @@ public class Program
         var builder = new NetControl.Builder() // Create a NetControl builder.
             .Configure(context =>
             {
-                context.AddSingleton<RemoteData>();
-                context.AddTransient<RemoteDataBroker>();
+                context.AddSingleton<RemoteDataControl>();
+                context.AddTransient<RemoteDataAgent>();
 
                 // Command
                 context.AddCommand(typeof(DefaultCommand));
@@ -44,12 +44,14 @@ public class Program
                 {// Logger
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<EmptyLogger>();
+                        context.SetOutput<ConsoleLogger>(); // EmptyLogger
                         return;
                     }
 
                     context.SetOutput<ConsoleLogger>();
                 });
+
+                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<EmptyLogger>);
             })
             .SetupOptions<NetOptions>((context, options) =>
             {// Modify NetOptions

@@ -1,23 +1,65 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using Netsphere;
+using LP.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.NetServices;
 
-public class RemoteBenchBroker
+public class RemoteBenchControl
 {
-    public RemoteBenchBroker(ILogger<RemoteBenchBroker> logger)
+    public RemoteBenchControl(IServiceProvider serviceProvider, ILogger<RemoteBenchControl> logger, NetTerminal netTerminal)
     {
         this.logger = logger;
+        this.netTerminal = netTerminal;
+        this.fileLogger = serviceProvider.GetService<FileLogger<NetsphereLoggerOptions>>();
     }
 
     private readonly ILogger logger;
+    private readonly NetTerminal netTerminal;
+    private readonly IFileLogger? fileLogger;
     private readonly SingleTask singleTask = new();
 
     private readonly object syncObject = new();
     private HashSet<ClientConnection> connections = new();
     private Dictionary<ClientConnection, RemoteBenchRecord?> records = new();
+
+    public static async Task SendLog(NetTerminal netTerminal, IFileLogger? fileLogger, string netNode, string remotePrivateKey, string identifier)
+    {
+        if (fileLogger is null ||
+            string.IsNullOrEmpty(netNode) ||
+            string.IsNullOrEmpty(remotePrivateKey))
+        {
+            return;
+        }
+
+        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, netNode, remotePrivateKey, 100_000_000);
+        if (r.Connection is null ||
+            r.Service is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await fileLogger.Flush(false);
+
+            var path = fileLogger.GetCurrentPath();
+            using var fileStream = File.OpenRead(path);
+            var sendStream = await r.Service.Put(identifier, fileStream.Length);
+            if (sendStream is not null)
+            {
+                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
+            }
+        }
+        catch
+        {
+        }
+        finally
+        {
+            r.Connection.Dispose();
+        }
+    }
 
     public void Register(ClientConnection clientConnection)
     {
@@ -30,7 +72,7 @@ public class RemoteBenchBroker
         this.logger.TryGet()?.Log($"Registered({result}): {clientConnection.ToString()}");
     }
 
-    public void Start(int total, int concurrent)
+    public void Start(Subcommands.RemoteBenchOptions options)
     {
         ClientConnection[] array;
         lock (this.syncObject)
@@ -48,13 +90,15 @@ public class RemoteBenchBroker
         for (var i = 0; i < array.Length; i++)
         {
             var c = array[i];
-            tasks[i] = Task.Run(() => Process(c));
+            tasks[i] = Task.Run(() => Process(i, c));
         }
 
-        async Task Process(ClientConnection clientConnection)
+        async Task Process(int index, ClientConnection clientConnection)
         {
             var service = clientConnection.GetService<IRemoteBenchRunner>();
-            var result = await service.Start(total, concurrent, );
+            var remoteNode = index == 0 ? null : options.NetNode;
+            var remotePrivateKey = index == 0 ? null : options.RemotePrivateKey;
+            var result = await service.Start(options.Total, options.Concurrent, remoteNode, remotePrivateKey);
             if (result == NetResult.Success)
             {
                 this.logger.TryGet()?.Log($"Start: {clientConnection}");
@@ -63,6 +107,11 @@ public class RemoteBenchBroker
             {
                 this.logger.TryGet()?.Log($"Unregistered: {clientConnection}");
             }
+        }
+
+        if (this.fileLogger is not null)
+        {// Reset
+            this.fileLogger.DeleteAllLogs();
         }
 
         this.singleTask.TryRun(async () =>
@@ -115,6 +164,9 @@ public class RemoteBenchBroker
                     break;
                 }
             }
+
+            // Send
+            await SendLog(this.netTerminal, this.fileLogger, options.NetNode, options.RemotePrivateKey, "RemoteBench.Server.txt");
         });
     }
 

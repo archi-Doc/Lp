@@ -5,21 +5,21 @@ using Netsphere.Crypto;
 namespace RemoteDataServer;
 
 [NetServiceObject]
-public class RemoteDataBroker : IRemoteData
+public class RemoteDataAgent : IRemoteData
 {
-    public RemoteDataBroker(RemoteData broker)
+    public RemoteDataAgent(RemoteDataControl control)
     {
-        this.broker = broker;
+        this.control = control;
     }
 
-    private readonly RemoteData broker;
+    private readonly RemoteDataControl control;
 
     NetTask<NetResult> INetServiceAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
-        => this.broker.UpdateAgreement(token);
+        => this.control.UpdateAgreement(token);
 
     NetTask<ReceiveStream?> IRemoteData.Get(string identifier)
-        => this.broker.Get(identifier);
+        => this.control.Get(identifier);
 
     NetTask<SendStreamAndReceive<NetResult>?> IRemoteData.Put(string identifier, long maxLength)
-        => this.broker.Put(identifier, maxLength);
+        => this.control.Put(identifier, maxLength);
 }

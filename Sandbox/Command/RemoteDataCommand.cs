@@ -61,7 +61,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
                 var sendStream = await remoteData.Put("test2.txt", fileStream.Length);
                 if (sendStream is not null)
                 {
-                    var r3 = await StreamHelper.StreamToSendStream(fileStream, sendStream);
+                    var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
                 }
             }
             catch
@@ -74,7 +74,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
                 var receiveStream = await remoteData.Get("test2.txt");
                 if (receiveStream is not null)
                 {
-                    var r3 = await StreamHelper.ReceiveStreamToStream(receiveStream, fileStream);
+                    var r3 = await NetHelper.ReceiveStreamToStream(receiveStream, fileStream);
                 }
             }
             catch

@@ -17,7 +17,7 @@ public enum LPMode
     Karate,
 }
 
-public class LPBase : ILogInformation
+public class LPBase
 {
     public const string DataDirectoryName = "Local";
 
@@ -156,7 +156,7 @@ public class LPBase : ILogInformation
         this.RemotePublicKey = remoteKey;
     }
 
-    public void LogInformation(ILog logger)
+    public void LogInformation(ILogWriter logger)
     {
         logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");

@@ -5,14 +5,14 @@ using Netsphere.Crypto;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
+public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
 {
-    public RemoteBenchHostImpl(RemoteBenchBroker broker)
+    public RemoteBenchHostAgent(RemoteBenchControl broker)
     {
         this.broker = broker;
     }
 
-    private readonly RemoteBenchBroker broker;
+    private readonly RemoteBenchControl broker;
 
     public async NetTask Report(RemoteBenchRecord record)
     {

@@ -12,7 +12,6 @@ global using LP;
 global using Netsphere;
 global using Tinyhand;
 using LP.Data;
-using LP.Logger.Options;
 using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.Services;
@@ -24,7 +23,7 @@ using SimpleCommandLine;
 
 namespace LP;
 
-public class Control : ILogInformation
+public class Control
 {
     public class Builder : UnitBuilder<Unit>
     {
@@ -56,8 +55,8 @@ public class Control : ILogInformation
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
-                context.AddSingleton<NetServices.RemoteBenchBroker>();
-                context.AddSingleton<NetServices.RemoteBenchHostImpl>();
+                context.AddSingleton<NetServices.RemoteBenchControl>();
+                context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
@@ -117,9 +116,9 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<DebugLoggerOptions>((context, options) =>
-            {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Debug.txt";
+            this.SetupOptions<LP.Logging.NetsphereLoggerOptions>((context, options) =>
+            {// NetsphereLoggerOptions, LogLowLevelNet
+                var logfile = "Logs/Net.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
@@ -491,7 +490,7 @@ public class Control : ILogInformation
         logger.Log("Running");
     }
 
-    public void LogInformation(ILog logger)
+    public void LogInformation(ILogWriter logger)
     {
         logger.Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
         this.LPBase.LogInformation(logger);
