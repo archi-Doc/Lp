@@ -107,8 +107,8 @@ public class Program
                 context.AddCommand(typeof(RemoteBenchSubcommand));
 
                 // NetService
-                context.AddSingleton<RemoteBenchHostImpl>();
-                context.AddSingleton<RemoteBenchRunnerImpl>();
+                context.AddSingleton<RemoteBenchHostAgent>();
+                context.AddSingleton<RemoteBenchRunnerAgent>();
 
                 // ServiceFilter
 

@@ -56,7 +56,7 @@ public class Control
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
-                context.AddSingleton<NetServices.RemoteBenchHostImpl>();
+                context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 

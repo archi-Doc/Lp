@@ -7,9 +7,9 @@ using NetsphereTest;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchRunnerImpl : IRemoteBenchRunner, INetServiceHandler
+public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
 {
-    public RemoteBenchRunnerImpl(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteBenchRunnerImpl> logger, NetTerminal netTerminal)
+    public RemoteBenchRunnerAgent(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteBenchRunnerAgent> logger, NetTerminal netTerminal)
     {
         this.fileLogger = fileLogger;
         this.logger = logger;

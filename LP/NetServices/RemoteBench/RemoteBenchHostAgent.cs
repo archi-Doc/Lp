@@ -5,9 +5,9 @@ using Netsphere.Crypto;
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
+public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
 {
-    public RemoteBenchHostImpl(RemoteBenchControl broker)
+    public RemoteBenchHostAgent(RemoteBenchControl broker)
     {
         this.broker = broker;
     }

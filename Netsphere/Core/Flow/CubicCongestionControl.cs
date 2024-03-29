@@ -62,10 +62,11 @@ public class CubicCongestionControl : ICongestionControl
         this.slowstart = true;
         this.UpdateRegen();
 
-        /*if (connection.IsClient)
+        if (NetConstants.LogLowLevelNet &&
+            connection.IsClient)
         {
             this.logger = this.Connection.ConnectionTerminal.NetBase.UnitLogger.GetLogger<CubicCongestionControl>();
-        }*/
+        }
     }
 
     #region FieldAndProperty
@@ -94,7 +95,7 @@ public class CubicCongestionControl : ICongestionControl
         }
     }
 
-    // private readonly ILogger? logger;
+    private readonly ILogger? logger;
 
     private readonly object syncObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
@@ -221,7 +222,7 @@ public class CubicCongestionControl : ICongestionControl
 
                     if (NetConstants.LogLowLevelNet)
                     {
-                        // Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
+                        this.logger?.TryGet(LogLevel.Debug)?.Log($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                     }
                 }
 

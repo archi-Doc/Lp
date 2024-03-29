@@ -3,9 +3,9 @@
 namespace LP.NetServices;
 
 [NetServiceObject]
-public class RemoteBenchHostImpl : IRemoteBenchHost, IRemoteBenchService
+public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
 {
-    public RemoteBenchHostImpl()
+    public RemoteBenchHostAgent()
     {
     }
 

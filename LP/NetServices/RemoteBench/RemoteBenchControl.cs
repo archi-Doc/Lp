@@ -109,16 +109,16 @@ public class RemoteBenchControl
             }
         }
 
+        if (this.fileLogger is not null)
+        {// Reset
+            this.fileLogger.DeleteAllLogs();
+        }
+
         this.singleTask.TryRun(async () =>
         {
             var sw = Stopwatch.StartNew();
             while (await ThreadCore.Root.Delay(1_000))
             {
-                if (this.fileLogger is not null)
-                {// Reset
-                    this.fileLogger.DeleteAllLogs();
-                }
-
                 lock (this.syncObject)
                 {
                     if (this.records.Values.Any(x => x is null))
