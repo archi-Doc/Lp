@@ -47,5 +47,15 @@ public sealed partial class PingPacketResponse : IPacket
     [Key(1)]
     public NetAddress Address { get; set; }
 
-    public override string ToString() => $"{this.Message} - {this.Address}";
+    public override string ToString()
+    {
+        if (string.IsNullOrEmpty(this.Message))
+        {
+            return $"{this.Address}";
+        }
+        else
+        {
+            return $"{this.Message} {this.Address}";
+        }
+    }
 }

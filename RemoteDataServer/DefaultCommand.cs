@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 using Netsphere.Stats;
 using SimpleCommandLine;
 
@@ -20,6 +22,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
     {
         this.PrepareKey(options);
         // await this.PrepareNodeAddress();
+        await this.PunchNode(options.PunchNode);
         this.remoteData.Initialize(options.Directory);
 
         await Console.Out.WriteLineAsync($"{this.netControl.NetBase.NetOptions.NodeName}");
@@ -55,6 +58,25 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
         }
     }
 
+    private async Task PunchNode(string punchNode)
+    {
+        if (!NetAddress.TryParse(punchNode, out var node))
+        {
+            if (!CryptoHelper.TryParseFromEnvironmentVariable<NetAddress>("punchnode", out node))
+            {
+                return;
+            }
+        }
+
+        var sw = Stopwatch.StartNew();
+
+        var p = new PingPacket("PunchMe");
+        var result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node, p);
+
+        sw.Stop();
+        this.logger.TryGet()?.Log($"Punch: {result.ToString()} {sw.ElapsedMilliseconds} ms");
+    }
+
     private async Task PrepareNodeAddress()
     {
         var tasks = new List<Task<AddressQueryResult>>();
@@ -77,6 +99,9 @@ public record DefaultCommandOptions
 {
     [SimpleOption("directory", Description = "Directory")]
     public string Directory { get; init; } = "Data";
+
+    [SimpleOption("punchnode", Description = "Punch node")]
+    public string PunchNode { get; init; } = string.Empty;
 
     [SimpleOption("nodeprivatekey", Description = "Node private key")]
     public string NodePrivateKey { get; init; } = string.Empty;

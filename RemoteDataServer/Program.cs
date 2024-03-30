@@ -60,7 +60,7 @@ public class Program
             {// Modify NetOptions
                 options.NodeName = "RemoteDataServer";
                 options.Port = 50000; // Specify the port number.
-                options.EnableEssential = false; // Required when using functions such as Ping.
+                options.EnableEssential = true; // Required when using functions such as Ping.
                 options.EnableServer = true;
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>

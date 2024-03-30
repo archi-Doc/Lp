@@ -298,10 +298,11 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
+        /* Port number is not checked because it may be changed by NAT
         if (this.Port < NetConstants.MinPort || this.Port > NetConstants.MaxPort)
         {
             return false;
-        }
+        }*/
 
         if (ipv4)
         {
