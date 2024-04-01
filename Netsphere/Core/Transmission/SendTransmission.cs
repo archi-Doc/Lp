@@ -689,7 +689,7 @@ Exit:
 
                             if (NetConstants.LogLowLevelNet)
                             {
-                                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                                // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
                             }
 
                             this.Connection.AddRtt(rtt);
@@ -717,7 +717,7 @@ Exit:
 
                             if (NetConstants.LogLowLevelNet)
                             {
-                                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                                // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
                             }
 
                             this.Connection.AddRtt(rtt);
