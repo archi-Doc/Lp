@@ -6,16 +6,16 @@ namespace Netsphere.RemoteData;
 
 public static class RemoteDataHelper
 {
-    public static async Task SendLog(NetTerminal netTerminal, IFileLogger? fileLogger, string netNode, string remotePrivateKey, string identifier)
+    public static async Task SendLog(NetTerminal netTerminal, IFileLogger? fileLogger, string? remoteNode, string? remotePrivateKey, string identifier)
     {
         if (fileLogger is null ||
-            string.IsNullOrEmpty(netNode) ||
+            string.IsNullOrEmpty(remoteNode) ||
             string.IsNullOrEmpty(remotePrivateKey))
         {
             return;
         }
 
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, netNode, remotePrivateKey, 100_000_000);
+        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, remoteNode, remotePrivateKey, 100_000_000);
         if (r.Connection is null ||
             r.Service is null)
         {

@@ -135,50 +135,9 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
         this.logger.TryGet()?.Log(record.ToString());
 
         // Send log
-        await this.SendLog();
+        await RemoteDataHelper.SendLog(this.netTerminal, this.fileLogger, this.remoteNode, this.remotePrivateKey, "RemoteBench.Runner.txt");
 
         serverConnection.Close();
         // connectionContext.Terminate();
-    }
-
-    private async Task SendLog()
-    {
-        if (string.IsNullOrEmpty(this.remoteNode) ||
-            string.IsNullOrEmpty(this.remotePrivateKey))
-        {
-            return;
-        }
-
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, this.remoteNode, this.remotePrivateKey, 100_000_000);
-        if (r.Connection is null ||
-            r.Service is null)
-        {
-            return;
-        }
-
-        try
-        {
-            var remoteData = r.Service;
-
-            await this.fileLogger.Flush(false);
-            var path = this.fileLogger.GetCurrentPath();
-
-            try
-            {
-                using var fileStream = File.OpenRead(path);
-                var sendStream = await remoteData.Put("RemoteBench.Runner.txt", fileStream.Length);
-                if (sendStream is not null)
-                {
-                    var r2 = await NetHelper.StreamToSendStream(fileStream, sendStream);
-                }
-            }
-            catch
-            {
-            }
-        }
-        finally
-        {
-            r.Connection.Dispose();
-        }
     }
 }
