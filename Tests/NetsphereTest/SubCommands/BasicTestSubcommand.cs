@@ -17,7 +17,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
+        if (!NetAddress.TryParse(this.logger, options.NetNode, out var address))
         {
             return;
         }
@@ -89,7 +89,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 public record BasicTestOptions
 {
     [SimpleOption("node", Description = "Node address", Required = true)]
-    public string Node { get; init; } = string.Empty;
+    public string NetNode { get; init; } = string.Empty;
 
-    public override string ToString() => $"{this.Node}";
+    public override string ToString() => $"{this.NetNode}";
 }

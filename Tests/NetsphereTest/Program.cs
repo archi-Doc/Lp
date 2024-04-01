@@ -105,6 +105,7 @@ public class Program
                 context.AddCommand(typeof(TaskScalingSubcommand));
                 context.AddCommand(typeof(StressSubcommand));
                 context.AddCommand(typeof(RemoteBenchSubcommand));
+                context.AddCommand(typeof(StreamTestSubcommand));
 
                 // NetService
                 context.AddSingleton<RemoteBenchHostAgent>();
