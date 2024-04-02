@@ -4,7 +4,7 @@ namespace Netsphere;
 
 public static class NetConstants
 {
-    public const string NetNodeName = "netnode";
+    public const string NodeName = "node";
     public const string NodePrivateKeyName = "nodeprivatekey";
     public const string NodePublicKeyName = "nodepublickey";
     public const string RemotePrivateKeyName = "remoteprivatekey";

@@ -78,7 +78,7 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
             {
                 for (var j = 0; j < (total / concurrent); j++)
                 {
-                    var sw2 = new Stopwatch();
+                    var sw2 = Stopwatch.StartNew();
                     using (var t = await this.netTerminal.Connect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse)) // Do not reuse the connection as it quickly reaches the transmission limit.
                     {
                         if (t is null)
@@ -88,7 +88,6 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
                         }
 
                         var service = t.GetService<IRemoteBenchHost>();
-                        sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
                         if (response.IsSuccess)
