@@ -444,7 +444,7 @@ public class BasicTestCommand : ISimpleCommandAsync<BasicTestOptions>
 
 public record BasicTestOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = false)]
+    [SimpleOption("node", Description = "Node to connect", Required = false)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

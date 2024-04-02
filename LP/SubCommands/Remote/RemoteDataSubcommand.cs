@@ -29,7 +29,7 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
             this.fileLogger.DeleteAllLogs();
         }
 
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(this.netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
+        var r = await NetHelper.TryGetStreamService<IRemoteData>(this.netTerminal, options.Node, options.RemotePrivateKey, 100_000_000);
         if (r.Connection is null ||
             r.Service is null)
         {
@@ -81,8 +81,8 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
 
 public record RemoteDataOptions
 {
-    [SimpleOption("netnode", Description = "Node address", Required = false)]
-    public string NetNode { get; init; } = string.Empty;
+    [SimpleOption("node", Description = "Node address", Required = false)]
+    public string Node { get; init; } = string.Empty;
 
     [SimpleOption("remoteprivatekey", Description = "Remote private key", Required = false)]
     public string RemotePrivateKey { get; init; } = string.Empty;

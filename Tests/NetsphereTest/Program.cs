@@ -148,10 +148,10 @@ public class Program
             })
             .SetupOptions<NetOptions>((context, options) =>
             {
-                if (!string.IsNullOrEmpty(options.PrivateKey) &&
-                Environment.GetEnvironmentVariable("privatekey") is { } privateKey)
+                if (!string.IsNullOrEmpty(options.NodePrivateKey) &&
+                Environment.GetEnvironmentVariable("nodeprivatekey") is { } nodePrivateKey)
                 {
-                    options.PrivateKey = privateKey;
+                    options.NodePrivateKey = nodePrivateKey;
                 }
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
