@@ -22,6 +22,7 @@ public static class RemoteDataHelper
             return;
         }
 
+        NetResultValue<NetResult> r3 = default;
         try
         {
             await fileLogger.Flush(false);
@@ -31,7 +32,7 @@ public static class RemoteDataHelper
             var sendStream = await r.Service.Put(identifier, fileStream.Length);
             if (sendStream is not null)
             {
-                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
+                r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
             }
         }
         catch
@@ -39,6 +40,7 @@ public static class RemoteDataHelper
         }
         finally
         {
+            Console.WriteLine($"CloseInternal5 {r3.ToString()}");//
             r.Connection.Dispose();
         }
     }

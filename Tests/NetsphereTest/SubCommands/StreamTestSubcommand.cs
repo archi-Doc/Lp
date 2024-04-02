@@ -24,7 +24,7 @@ public class StreamTestSubcommand : ISimpleCommandAsync<StreamTestOptions>
         RandomVault.Pseudo.NextBytes(data);
         var hash = FarmHash.Hash64(data);
 
-        var r = await NetHelper.TryGetStreamService<IRemoteBenchHost>(this.netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
+        var r = await NetHelper.TryGetStreamService<IRemoteBenchHost>(this.netTerminal, options.Node, options.RemotePrivateKey, 100_000_000);
         if (r.Connection is null ||
             r.Service is null)
         {
@@ -65,8 +65,8 @@ public class StreamTestSubcommand : ISimpleCommandAsync<StreamTestOptions>
 
 public record StreamTestOptions
 {
-    [SimpleOption("netnode", Description = "Node address")]
-    public string NetNode { get; init; } = string.Empty;
+    [SimpleOption("node", Description = "Node address")]
+    public string Node { get; init; } = string.Empty;
 
     [SimpleOption("remoteprivatekey", Description = "Remote private key")]
     public string RemotePrivateKey { get; init; } = string.Empty;
