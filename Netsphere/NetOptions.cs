@@ -10,8 +10,8 @@ public partial record NetOptions
     [SimpleOption("nodename", Description = "Node name")]
     public string NodeName { get; set; } = string.Empty;
 
-    [SimpleOption("address", Description = "Global IP address")]
-    public string Address { get; set; } = string.Empty;
+    // [SimpleOption("address", Description = "Global IP address")]
+    // public string Address { get; set; } = string.Empty;
 
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
