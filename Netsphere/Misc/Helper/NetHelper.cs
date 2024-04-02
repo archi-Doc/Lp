@@ -147,6 +147,7 @@ public static class NetHelper
                 result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
                 if (result != NetResult.Success)
                 {
+                    Console.WriteLine($"CloseInternal6 {result.ToString()}");//
                     return new(result);
                 }
 
@@ -154,6 +155,7 @@ public static class NetHelper
             }
 
             var r = await sendStream.CompleteSendAndReceive(cancellationToken).ConfigureAwait(false);
+            Console.WriteLine($"CloseInternal7 {r.ToString()}");//
             return r;
         }
         catch
