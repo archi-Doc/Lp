@@ -16,8 +16,8 @@ public partial record NetOptions
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
 
-    [SimpleOption("privatekey", Description = "Node private key")]
-    public string PrivateKey { get; set; } = string.Empty;
+    [SimpleOption("nodeprivatekey", Description = "Node private key")]
+    public string NodePrivateKey { get; set; } = string.Empty;
 
     [SimpleOption("nodelist", Description = "Node addresses to connect")]
     public string NodeList { get; set; } = string.Empty;

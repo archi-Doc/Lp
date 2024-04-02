@@ -291,10 +291,10 @@ public class Control
                 }
 
                 var netOptions = options.NetsphereOptions;
-                if (string.IsNullOrEmpty(netOptions.PrivateKey) &&
+                if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
                 Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
                 {
-                    netOptions.PrivateKey = privateKey;
+                    netOptions.NodePrivateKey = privateKey;
                 }
 
                 netOptions.EnableServer = true;
