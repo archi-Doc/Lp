@@ -373,7 +373,6 @@ public class ConnectionTerminal
 
             if (bidirectionalConnection is not null)
             {
-                Console.WriteLine($"CloseInternal3");//
                 this.CloseInternal(bidirectionalConnection, sendCloseFrame);
             }
         }
@@ -405,7 +404,6 @@ public class ConnectionTerminal
 
             if (bidirectionalConnection is not null)
             {
-                Console.WriteLine($"CloseInternal4");//
                 this.CloseInternal(bidirectionalConnection, sendCloseFrame);
             }
         }

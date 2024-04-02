@@ -69,7 +69,6 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
         }
         finally
         {
-            Console.WriteLine($"CloseInternal5");//
             r.Connection.Dispose();
         }
     }

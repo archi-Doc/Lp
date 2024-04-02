@@ -157,7 +157,6 @@ public static class NetHelper
             }
 
             var r = await sendStream.CompleteSendAndReceive(cancellationToken).ConfigureAwait(false);
-            Console.WriteLine($"CloseInternal7 {r.ToString()}");//
             return r;
         }
         catch

@@ -152,7 +152,6 @@ public abstract class Connection : IDisposable
     {
         if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
         {// Timeout
-            Console.WriteLine($"CloseInternal1 {this.LastEventMics}");//
             this.ConnectionTerminal.CloseInternal(this, true);
             return true;
         }
@@ -682,7 +681,6 @@ Wait:
 
         if (this.LastEventMics + NetConstants.TransmissionTimeoutMics < Mics.FastSystem)
         {// Timeout
-            Console.WriteLine($"CloseInternal2 {this.LastEventMics}");//
             this.ConnectionTerminal.CloseInternal(this, true);
             return ProcessSendResult.Complete;
         }
