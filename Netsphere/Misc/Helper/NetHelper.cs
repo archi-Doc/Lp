@@ -142,8 +142,10 @@ public static class NetHelper
         try
         {
             int length;
+            Console.WriteLine($"StreamToSendStream Remaining: {sendStream.RemainingLength} Stream: {stream.Length}");//
             while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
             {
+                Console.WriteLine($"StreamToSendStream Read: {length}");//
                 result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
                 if (result != NetResult.Success)
                 {
