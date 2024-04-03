@@ -95,7 +95,7 @@ internal partial class SendGene
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Send_NotThreadSafe(NetSender netSender, int additional)
+    public bool Send_NotThreadSafe(NetSender netSender, int additional/*, bool doNotTransmit = false*/)
     {
         if (!this.CanSend || !this.Packet.TryIncrement())
         {// MemoryOwner has been returned to the pool (Disposed).
@@ -110,7 +110,11 @@ internal partial class SendGene
             connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} {connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
         }
 
-        netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, this.Packet); // Incremented
+        // if (!doNotTransmit)
+        {
+            netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, this.Packet); // Incremented
+        }
+
         this.SentMics = currentMics;
         if (this.CurrentState == State.Initial)
         {// First send

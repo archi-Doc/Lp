@@ -222,7 +222,8 @@ public class CubicCongestionControl : ICongestionControl
 
                     if (NetConstants.LogLowLevelNet)
                     {
-                        this.logger?.TryGet(LogLevel.Debug)?.Log($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} epoch:{this.epochStart} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
+                        this.logger?.TryGet(LogLevel.Debug)?.Log($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
+                        // Console.WriteLine($"cwnd:{this.cwnd:F2} {this.increasePerAck:F3} k:{this.k:F2} tcp:{this.tcpCwnd:F2}");
                     }
                 }
 
@@ -461,10 +462,9 @@ public class CubicCongestionControl : ICongestionControl
                 this.previousMinRtt != 0)
             {
                 var eta = Math.Clamp(currentMinRtt >> 3, HystartMinEta, HystartMaxEta);
-                // Console.WriteLine($"Hystart MinRtt Current/Prev {currentMinRtt / 1000}/{this.previousMinRtt / 1000} ms [{currentRttSamples}] ETA {eta}");
                 if (currentMinRtt >= (this.previousMinRtt + eta))
                 {// Exit slow start
-                    Console.WriteLine($"Hystart Current MinRtt {currentMinRtt / 1000} ms Previous {this.previousMinRtt / 1000} ms");
+                    Console.WriteLine($"Hystart MinRtt Current  {currentMinRtt / 1000} ms Previous {this.previousMinRtt / 1000} ms");
                     Console.WriteLine($"Exit slow start");
                     this.slowstart = false;
                 }
@@ -484,13 +484,16 @@ public class CubicCongestionControl : ICongestionControl
         }
 
         if (this.slowstart)
-        {// Slow start
-            var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
-            acked -= cwnd - this.cwnd;
-            this.cwnd = Math.Min(cwnd, MaxCwnd);
-
-            if (acked == 0)
+        {
+            // var cwnd = Math.Min(this.cwnd + acked, this.ssthresh);
+            var cwnd = this.cwnd + acked;
+            if (cwnd > this.ssthresh)
             {
+                this.slowstart = false;
+            }
+            else
+            {
+                this.cwnd = Math.Min(cwnd, MaxCwnd);
                 return;
             }
         }
@@ -554,11 +557,14 @@ public class CubicCongestionControl : ICongestionControl
         }
 
         this.increasePerAck = Math.Min(this.increasePerAck, 0.5);
+        // Console.WriteLine($"cwnd {this.cwnd:F2} = cwnd + acked {acked:F2} * increasePerAck {this.increasePerAck:F3}");//
         this.cwnd += acked * this.increasePerAck; // MaxCwnd
         if (this.cwnd > MaxCwnd)
         {
             this.cwnd = MaxCwnd;
         }
+
+        // Console.WriteLine($"cwnd2 {this.cwnd:F2}");
     }
 
     private void UpdateRegen()
