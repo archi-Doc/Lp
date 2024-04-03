@@ -189,7 +189,7 @@ public class Program
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
         var offset = await ntpCorrection.SendAndReceiveOffset();
         await Console.Out.WriteLineAsync($"NtpCorrection {offset.ToString()}");
-        UnitLogger.SetTimeOffset(offset);
+        UnitLogger.SetTimeOffset(offset.Negate());
 
         var parserOptions = SimpleParserOptions.Standard with
         {

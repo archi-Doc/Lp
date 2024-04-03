@@ -79,7 +79,7 @@ public partial class NtpMachine : Machine
     private void SetLoggerTimeOffset()
     {
         var offset = this.ntpCorrection.GetTimeOffset();
-        UnitLogger.SetTimeOffset(TimeSpan.FromMilliseconds(offset.MeanTimeoffset));
+        UnitLogger.SetTimeOffset(TimeSpan.FromMilliseconds(-offset.MeanTimeoffset));
     }
 
     private ILogger<NtpMachine> logger;
