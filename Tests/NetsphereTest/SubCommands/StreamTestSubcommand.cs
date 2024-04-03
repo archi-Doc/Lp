@@ -41,14 +41,14 @@ public class StreamTestSubcommand : ISimpleCommandAsync<StreamTestOptions>
             }
 
             var result = await sendStream.Send(data);
+            await Console.Out.WriteLineAsync(result.ToString());
+            // result = await sendStream.Send(data);
+            // await Console.Out.WriteLineAsync(result.ToString());
             var result2 = await sendStream.CompleteSendAndReceive();
+            this.logger.TryGet(LogLevel.Information)?.Log((result2.Value == hash).ToString());
             if (result2.Result != NetResult.Success)
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(result2.Result.ToString());
-            }
-            else
-            {
-                this.logger.TryGet(LogLevel.Error)?.Log((result2.Value == hash).ToString());
             }
         }
         finally

@@ -29,7 +29,7 @@ public static class RemoteDataHelper
 
             var path = fileLogger.GetCurrentPath();
             using var fileStream = File.OpenRead(path);
-            var sendStream = await r.Service.Put(identifier, 90_000_000); // The log file may be appended to during data transmission (fileStream.Length)
+            var sendStream = await r.Service.Put(identifier, fileStream.Length);
             if (sendStream is not null)
             {
                 r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
