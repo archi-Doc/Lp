@@ -30,8 +30,8 @@ public partial class NtpMachine : Machine
         bool corrected;
         DateTime correctedNow;
 
-        var dif = Mics.GetUtcNow() - this.ntpCorrection.LastCorrectedMics;
-        if (dif > 0 && dif < Mics.FromHours(1))
+        //var dif = Mics.GetUtcNow() - this.ntpCorrection.LastCorrectedMics;
+        /*if (dif > 0 && dif < Mics.FromHours(1))
         {// Already correctedd
             corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);
             this.logger.TryGet()?.Log($"Already corrected {corrected}, {correctedNow.ToString()}");
@@ -40,7 +40,7 @@ public partial class NtpMachine : Machine
             var ts = Mics.ToTimeSpan(Mics.FromHours(1) - dif);
             this.TimeUntilRun = ts;
             return StateResult.Continue;
-        }
+        }*/
 
         this.ntpCorrection.LastCorrectedMics = Mics.GetUtcNow();
         await this.ntpCorrection.Correct(this.CancellationToken).ConfigureAwait(false);
