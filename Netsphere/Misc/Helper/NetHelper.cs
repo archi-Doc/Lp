@@ -393,7 +393,16 @@ public static class NetHelper
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
             {
-                return default;
+                if (node == NetAddress.AlternativeName ||
+                    Environment.GetEnvironmentVariable(NetConstants.NodeName) == NetAddress.AlternativeName)
+                {
+                    netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative).ConfigureAwait(false);
+                }
+
+                if (netNode is null)
+                {
+                    return default;
+                }
             }
         }
 

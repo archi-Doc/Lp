@@ -11,6 +11,7 @@ namespace Netsphere;
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
 {// 24 bytes
+    public const string AlternativeName = "alternative";
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
 
@@ -110,7 +111,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
         address = default;
-        if (string.Compare(source, "alternative", true) == 0)
+        if (string.Compare(source, AlternativeName, true) == 0)
         {
             address = NetAddress.Alternative;
             return true;

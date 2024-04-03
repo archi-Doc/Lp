@@ -148,11 +148,13 @@ public class Program
             })
             .SetupOptions<NetOptions>((context, options) =>
             {
-                if (!string.IsNullOrEmpty(options.NodePrivateKey) &&
+                if (string.IsNullOrEmpty(options.NodePrivateKey) &&
                 Environment.GetEnvironmentVariable("nodeprivatekey") is { } nodePrivateKey)
                 {
                     options.NodePrivateKey = nodePrivateKey;
                 }
+
+                options.Port = 50000;
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
@@ -175,7 +177,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
-        // options.EnableAlternative = true;
+        options.EnableAlternative = true;
         await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true, x => new TestConnectionContext(x));
 
