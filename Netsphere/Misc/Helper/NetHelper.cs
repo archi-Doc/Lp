@@ -28,6 +28,10 @@ public static class NetHelper
     internal static void ReturnBuffer(byte[] buffer)
         => arrayPool.Return(buffer);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsError(this NetResult result)
+        => result != NetResult.Success && result != NetResult.Completed;
+
     public static async Task<NetResult> ReceiveStreamToStream(ReceiveStream receiveStream, Stream stream, CancellationToken cancellationToken = default)
     {
         var result = NetResult.UnknownError;
@@ -111,7 +115,7 @@ public static class NetHelper
             while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
             {
                 result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
-                if (result != NetResult.Success)
+                if (result.IsError())
                 {
                     return result;
                 }
@@ -145,7 +149,7 @@ public static class NetHelper
             while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
             {
                 result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
-                if (result != NetResult.Success)
+                if (result.IsError())
                 {
                     return new(result);
                 }
