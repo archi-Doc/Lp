@@ -39,7 +39,7 @@ public class LPLogger
 
                 // Resolver
                 context.ClearLoggerResolver();
-                //context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
+                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
                 context.AddLoggerResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)

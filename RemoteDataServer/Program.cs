@@ -84,7 +84,7 @@ public class Program
         // NtpCorrection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<Netsphere.Misc.NtpCorrection>();
         var offset = await ntpCorrection.SendAndReceiveOffset();
-        UnitLogger.SetTimeOffset(offset.Negate());
+        UnitLogger.SetTimeOffset(offset);
         await Console.Out.WriteLineAsync($"Corrected: {offset.ToString()}");
 
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.

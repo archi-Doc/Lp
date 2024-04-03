@@ -121,8 +121,8 @@ public class Program
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                       //context.SetOutput<FileLogger<FileLoggerOptions>>();
-                        context.SetOutput<EmptyLogger>();
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        // context.SetOutput<EmptyLogger>();
                         return;
                     }
 
@@ -190,7 +190,7 @@ public class Program
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
         var offset = await ntpCorrection.SendAndReceiveOffset();
         await Console.Out.WriteLineAsync($"NtpCorrection {offset.ToString()}");
-        UnitLogger.SetTimeOffset(offset.Negate());
+        UnitLogger.SetTimeOffset(offset);
 
         var parserOptions = SimpleParserOptions.Standard with
         {
