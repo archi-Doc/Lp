@@ -161,7 +161,7 @@ public class Program
                 var logfile = "Logs/Debug.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 10;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K"; // "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
             })
@@ -169,7 +169,7 @@ public class Program
             {
                 options.Formatter.EnableColor = false;
                 options.EnableBuffering = true;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K"; // "yyyy-MM-dd HH:mm:ss.ffffff K";
             });
 
         Console.WriteLine(string.Join(' ', args));
