@@ -105,6 +105,7 @@ public class Program
                 context.AddCommand(typeof(TaskScalingSubcommand));
                 context.AddCommand(typeof(StressSubcommand));
                 context.AddCommand(typeof(RemoteBenchSubcommand));
+                context.AddCommand(typeof(StreamTestSubcommand));
 
                 // NetService
                 context.AddSingleton<RemoteBenchHostAgent>();
@@ -120,7 +121,7 @@ public class Program
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<FileLogger<FileLoggerOptions>>();//tempcode
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
                     }
 
@@ -147,11 +148,13 @@ public class Program
             })
             .SetupOptions<NetOptions>((context, options) =>
             {
-                if (!string.IsNullOrEmpty(options.PrivateKey) &&
-                Environment.GetEnvironmentVariable("privatekey") is { } privateKey)
+                if (string.IsNullOrEmpty(options.NodePrivateKey) &&
+                Environment.GetEnvironmentVariable("nodeprivatekey") is { } nodePrivateKey)
                 {
-                    options.PrivateKey = privateKey;
+                    options.NodePrivateKey = nodePrivateKey;
                 }
+
+                options.Port = 50000;
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
@@ -174,7 +177,7 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
         options.EnableServer = true;
-        // options.EnableAlternative = true;
+        options.EnableAlternative = true;
         await Console.Out.WriteLineAsync(options.ToString());
         await unit.Run(options, true, x => new TestConnectionContext(x));
 

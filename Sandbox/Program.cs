@@ -72,7 +72,7 @@ public class Program
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
 
         var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
-        if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodekey", out var privateKey))
+        if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("nodeprivatekey", out var privateKey))
         {
             netBase.SetNodePrivateKey(privateKey);
         }

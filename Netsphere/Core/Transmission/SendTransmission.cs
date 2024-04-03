@@ -1,10 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Threading;
 using Arc.Collections;
 using Netsphere.Packet;
 
@@ -689,7 +685,7 @@ Exit:
 
                             if (NetConstants.LogLowLevelNet)
                             {
-                                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                                // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
                             }
 
                             this.Connection.AddRtt(rtt);
@@ -717,7 +713,7 @@ Exit:
 
                             if (NetConstants.LogLowLevelNet)
                             {
-                                this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
+                                // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"ReceiveAck {gene.GeneSerial} {rtt} mics");
                             }
 
                             this.Connection.AddRtt(rtt);

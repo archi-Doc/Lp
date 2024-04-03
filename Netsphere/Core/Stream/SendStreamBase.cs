@@ -47,7 +47,8 @@ public abstract class SendStreamBase
     internal async Task<NetResult> SendInternal(DataControl dataControl, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
         var result = await this.SendTransmission.ProcessSend(this, dataControl, buffer, cancellationToken).ConfigureAwait(false);
-        if (result != NetResult.Success)
+        if (result != NetResult.Success &&
+            result != NetResult.Completed)
         {// Error
             this.Dispose(true);
         }
@@ -97,7 +98,8 @@ public abstract class SendStreamBase
     protected async Task<NetResultValue<TReceive>> InternalComplete<TReceive>(CancellationToken cancellationToken)
     {
         var result = await this.SendTransmission.ProcessSend(this, DataControl.Complete, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
-        if (result != NetResult.Success)
+        if (result != NetResult.Success &&
+            result != NetResult.Completed)
         {// Error
             this.Dispose(true);
             return new(result);

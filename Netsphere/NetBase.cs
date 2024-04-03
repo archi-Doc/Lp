@@ -19,11 +19,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     #region FieldAndProperty
 
-    public ThreadCoreBase Core => ThreadCore.Root;
-
     public UnitLogger UnitLogger { get; }
-
-    public CancellationToken CancellationToken => this.Core.CancellationToken;
 
     public NetOptions NetOptions { get; private set; }
 
@@ -58,8 +54,8 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NetOptions.Port = RandomVault.Pseudo.NextInt32(NetConstants.MinPort, NetConstants.MaxPort + 1);
             if (showWarning)
             {
-                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetConstants.MinPort} and {NetConstants.MaxPort}");
-                this.UnitLogger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetOptions.Port}");
+                this.UnitLogger.TryGet<NetBase>(LogLevel.Error)?.Log($"Port number must be between {NetConstants.MinPort} and {NetConstants.MaxPort}");
+                this.UnitLogger.TryGet<NetBase>(LogLevel.Error)?.Log($"Port number is set to {this.NetOptions.Port}");
             }
         }
 
@@ -76,13 +72,13 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         this.NetOptions = netsphereOptions;
 
-        if (!string.IsNullOrEmpty(this.NetOptions.PrivateKey) &&
-            NodePrivateKey.TryParse(this.NetOptions.PrivateKey, out var privateKey))
+        if (!string.IsNullOrEmpty(this.NetOptions.NodePrivateKey) &&
+            NodePrivateKey.TryParse(this.NetOptions.NodePrivateKey, out var privateKey))
         {
             this.SetNodePrivateKey(privateKey);
         }
 
-        this.NetOptions.PrivateKey = string.Empty; // Erase
+        this.NetOptions.NodePrivateKey = string.Empty; // Erase
     }
 
     public bool SetNodePrivateKey(NodePrivateKey privateKey)

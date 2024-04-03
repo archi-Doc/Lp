@@ -74,7 +74,7 @@ internal partial class AckBuffer
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBlock {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
+            this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} AckBlock to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
         }
 
         lock (this.syncObject)
@@ -256,7 +256,7 @@ NewPacket:
         {
             if (NetConstants.LogLowLevelNet)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()}, SendAck");
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} to {connection.DestinationEndPoint.ToString()}, SendAck");
             }
 
             connection.CreateAckPacket(owner, spanLength, out var packetLength);

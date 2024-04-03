@@ -385,12 +385,21 @@ public static class NetHelper
     public static async Task<(ClientConnection? Connection, TService? Service)> TryGetStreamService<TService>(NetTerminal netTerminal, string node, string remotePrivateKey, long maxStreamLength)
         where TService : INetService, INetServiceAgreement
     {
-        // 1st: netNode, 2nd: EnvironmentVariable 'netnode'
+        // 1st: node, 2nd: EnvironmentVariable 'node'
         if (!NetNode.TryParse(node, out var netNode))
         {
-            if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NetNodeName, out netNode))
+            if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
             {
-                return default;
+                if (node == NetAddress.AlternativeName ||
+                    Environment.GetEnvironmentVariable(NetConstants.NodeName) == NetAddress.AlternativeName)
+                {
+                    netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative).ConfigureAwait(false);
+                }
+
+                if (netNode is null)
+                {
+                    return default;
+                }
             }
         }
 

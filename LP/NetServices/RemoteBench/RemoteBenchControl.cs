@@ -2,8 +2,8 @@
 
 using System.Diagnostics;
 using LP.Logging;
-using Netsphere.RemoteData;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.RemoteData;
 
 namespace LP.NetServices;
 
@@ -60,7 +60,7 @@ public class RemoteBenchControl
         async Task Process(int index, ClientConnection clientConnection)
         {
             var service = clientConnection.GetService<IRemoteBenchRunner>();
-            var remoteNode = index == 0 ? null : options.NetNode;
+            var remoteNode = index == 0 ? null : options.Node;
             var remotePrivateKey = index == 0 ? null : options.RemotePrivateKey;
             var result = await service.Start(options.Total, options.Concurrent, remoteNode, remotePrivateKey);
             if (result == NetResult.Success)
@@ -130,7 +130,7 @@ public class RemoteBenchControl
             }
 
             // Send
-            await RemoteDataHelper.SendLog(this.netTerminal, this.fileLogger, options.NetNode, options.RemotePrivateKey, "RemoteBench.Server.txt");
+            await RemoteDataHelper.SendLog(this.netTerminal, this.fileLogger, options.Node, options.RemotePrivateKey, "RemoteBench.Server.txt");
         });
     }
 

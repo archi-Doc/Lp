@@ -22,7 +22,7 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
         var netTerminal = this.netControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, options.NetNode, options.RemotePrivateKey, 100_000_000);
+        var r = await NetHelper.TryGetStreamService<Netsphere.RemoteData.IRemoteData>(netTerminal, options.Node, options.RemotePrivateKey, 100_000_000);
         if (r.Connection is null ||
             r.Service is null)
         {
@@ -94,8 +94,8 @@ public class RemoteDataCommand : ISimpleCommandAsync<RemoteDataOptions>
 
 public record RemoteDataOptions
 {
-    [SimpleOption("netnode", Description = "Node address", Required = false)]
-    public string NetNode { get; init; } = string.Empty;
+    [SimpleOption("node", Description = "Node to connect", Required = false)]
+    public string Node { get; init; } = string.Empty;
 
     [SimpleOption("nodepublickey", Description = "Node public key", Required = false)]
     public string NodePublicKey { get; init; } = string.Empty;

@@ -78,7 +78,7 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
             {
                 for (var j = 0; j < (total / concurrent); j++)
                 {
-                    var sw2 = new Stopwatch();
+                    var sw2 = Stopwatch.StartNew();
                     using (var t = await this.netTerminal.Connect(transmissionContext.ServerConnection.DestinationNode, Connection.ConnectMode.NoReuse)) // Do not reuse the connection as it quickly reaches the transmission limit.
                     {
                         if (t is null)
@@ -88,7 +88,6 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
                         }
 
                         var service = t.GetService<IRemoteBenchHost>();
-                        sw2.Restart();
 
                         var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
                         if (response.IsSuccess)
@@ -135,50 +134,9 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
         this.logger.TryGet()?.Log(record.ToString());
 
         // Send log
-        await this.SendLog();
+        await RemoteDataHelper.SendLog(this.netTerminal, this.fileLogger, this.remoteNode, this.remotePrivateKey, "RemoteBench.Runner.txt");
 
         serverConnection.Close();
         // connectionContext.Terminate();
-    }
-
-    private async Task SendLog()
-    {
-        if (string.IsNullOrEmpty(this.remoteNode) ||
-            string.IsNullOrEmpty(this.remotePrivateKey))
-        {
-            return;
-        }
-
-        var r = await NetHelper.TryGetStreamService<IRemoteData>(netTerminal, this.remoteNode, this.remotePrivateKey, 100_000_000);
-        if (r.Connection is null ||
-            r.Service is null)
-        {
-            return;
-        }
-
-        try
-        {
-            var remoteData = r.Service;
-
-            await this.fileLogger.Flush(false);
-            var path = this.fileLogger.GetCurrentPath();
-
-            try
-            {
-                using var fileStream = File.OpenRead(path);
-                var sendStream = await remoteData.Put("RemoteBench.Runner.txt", fileStream.Length);
-                if (sendStream is not null)
-                {
-                    var r2 = await NetHelper.StreamToSendStream(fileStream, sendStream);
-                }
-            }
-            catch
-            {
-            }
-        }
-        finally
-        {
-            r.Connection.Dispose();
-        }
     }
 }

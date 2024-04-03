@@ -10,8 +10,8 @@ namespace Netsphere.Core;
 public sealed class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    // private const int SendBufferSize = 8 * 1024 * 1024;
-    private const int ReceiveBufferSize = 8 * 1024 * 1024;
+    private const int SendBufferSize = 4 * 1024 * 1024;
+    private const int ReceiveBufferSize = 4 * 1024 * 1024;
 
     private class RecvCore : ThreadCore
     {
@@ -43,6 +43,11 @@ public sealed class NetSocket
                     var remoteEP = (EndPoint)anyEP;
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    /*if (NetConstants.LogLowLevelNet)
+                    {
+                        core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {received}");
+                    }*/
+
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
                     if (received <= NetConstants.MaxPacketLength)
                     {// nspi
@@ -133,7 +138,7 @@ public sealed class NetSocket
         {
         }
 
-        // udp.Client.SendBufferSize = SendBufferSize;
+        udp.Client.SendBufferSize = SendBufferSize;
         udp.Client.ReceiveBufferSize = ReceiveBufferSize;
         udp.Client.ReceiveTimeout = ReceiveTimeout;
 

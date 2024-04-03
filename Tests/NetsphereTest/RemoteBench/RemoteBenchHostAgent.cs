@@ -1,4 +1,5 @@
-﻿using Netsphere.Crypto;
+﻿using Arc.Crypto;
+using Netsphere.Crypto;
 
 namespace LP.NetServices;
 
@@ -25,11 +26,40 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
 
     async NetTask<ulong> IRemoteBenchService.GetHash(byte[] data)
     {
-        return 0;
+        return default;
     }
 
     public async NetTask<SendStreamAndReceive<ulong>?> GetHash(long maxLength)
     {
+        var transmissionContext = TransmissionContext.Current;
+        var stream = transmissionContext.GetReceiveStream<ulong>();
+
+        var buffer = new byte[100_000];
+        var hash = new FarmHash();
+        hash.HashInitialize();
+        long total = 0;
+
+        while (true)
+        {
+            var r = await stream.Receive(buffer);
+            if (r.Result == NetResult.Success ||
+                r.Result == NetResult.Completed)
+            {
+                hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                total += r.Written;
+            }
+            else
+            {
+                break;
+            }
+
+            if (r.Result == NetResult.Completed)
+            {
+                stream.SendAndDispose(BitConverter.ToUInt64(hash.HashFinal()));
+                break;
+            }
+        }
+
         return default;
     }
 
