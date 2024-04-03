@@ -121,7 +121,8 @@ public class Program
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                       //context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        context.SetOutput<EmptyLogger>();
                         return;
                     }
 
