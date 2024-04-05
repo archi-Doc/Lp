@@ -5,6 +5,7 @@ using Arc.Unit;
 using LP.NetServices;
 using Netsphere.Crypto;
 using Netsphere.Misc;
+using Netsphere.Packet;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -12,10 +13,11 @@ namespace NetsphereTest;
 [SimpleCommand("remotebench")]
 public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 {
-    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl)
+    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl, NtpCorrection ntpCorrection)
     {
         this.logger = logger;
         this.netControl = netControl;
+        this.ntpCorrection = ntpCorrection;
     }
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
@@ -45,6 +47,18 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         }*/
 
         // await this.TestPingpong(node);
+
+        // NtpCorrection
+        var offset = await this.ntpCorrection.SendAndReceiveOffset();
+        this.logger.TryGet()?.Log($"NtpCorrection {offset.ToString()}");
+        UnitLogger.SetTimeOffset(offset);
+
+        // PingMe
+        var sw = Stopwatch.StartNew();
+        var p = new PingPacket("PingMe");
+        var result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
+        sw.Stop();
+        this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
 
         var connection = await this.netControl.NetTerminal.Connect(node);
         if (connection is null)
@@ -134,6 +148,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
     }
 
     private readonly NetControl netControl;
+    private readonly NtpCorrection ntpCorrection;
     private readonly ILogger logger;
 }
 
