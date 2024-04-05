@@ -48,29 +48,6 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
         // await this.TestPingpong(node);
 
-        // NtpCorrection
-        var offset = await this.ntpCorrection.SendAndReceiveOffset();
-        this.logger.TryGet()?.Log($"NtpCorrection {offset.ToString()}");
-        UnitLogger.SetTimeOffset(offset);
-
-        //PingMe
-        var sw = new Stopwatch();
-        sw.Restart();
-        var p = new PingPacket("PingMe");
-        var result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
-        sw.Stop();
-        this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
-        sw.Restart();
-        p = new PingPacket("PingMe");
-        result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
-        sw.Stop();
-        this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
-        sw.Restart();
-        p = new PingPacket("PingMe");
-        result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
-        sw.Stop();
-        this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
-
         var connection = await this.netControl.NetTerminal.Connect(node);
         if (connection is null)
         {

@@ -186,12 +186,6 @@ public class Program
         netControl.Services.Register<IRemoteBenchHost>();
         netControl.Services.Register<IRemoteBenchRunner>();
 
-        // NtpCorrection
-        var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
-        var offset = await ntpCorrection.SendAndReceiveOffset();
-        await Console.Out.WriteLineAsync($"NtpCorrection {offset.ToString()}");
-        UnitLogger.SetTimeOffset(offset);
-
         var parserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = unit.Context.ServiceProvider,

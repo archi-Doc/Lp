@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using LP.NetServices;
+using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -8,22 +9,26 @@ namespace LP.Subcommands;
 [SimpleCommand("remotebench")]
 internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 {
-    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, IUserInterfaceService userInterfaceService, RemoteBenchControl remoteBenchBroker)
+    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, IUserInterfaceService userInterfaceService, RemoteBenchControl remoteBenchBroker, NtpCorrection ntpCorrection)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.remoteBenchBroker = remoteBenchBroker;
+        this.ntpCorrection = ntpCorrection;
     }
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
+        await this.ntpCorrection.CorrectUnitLogger();
+
         this.logger.TryGet()?.Log($"RemoteBench");
         this.remoteBenchBroker.Start(options);
     }
 
-    private RemoteBenchControl remoteBenchBroker;
-    private ILogger logger;
-    private IUserInterfaceService userInterfaceService;
+    private readonly RemoteBenchControl remoteBenchBroker;
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly NtpCorrection ntpCorrection;
 }
 
 public record RemoteBenchOptions

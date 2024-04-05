@@ -110,6 +110,13 @@ Retry:
         return packet.TimeOffset;
     }
 
+    public async Task CorrectUnitLogger(CancellationToken cancellationToken = default)
+    {
+        var offset = await this.SendAndReceiveOffset();
+        UnitLogger.SetTimeOffset(offset);
+        // await Console.Out.WriteLineAsync($"Corrected: {offset.ToString()}");
+    }
+
     public async Task<bool> CheckConnection(CancellationToken cancellationToken)
     {
         if (this.hostNames.Length == 0)
