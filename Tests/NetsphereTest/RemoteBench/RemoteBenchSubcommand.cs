@@ -54,9 +54,20 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
         UnitLogger.SetTimeOffset(offset);
 
         // PingMe
-        var sw = Stopwatch.StartNew();
+        var sw = new Stopwatch();
+        sw.Start();
         var p = new PingPacket("PingMe");
         var result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
+        sw.Stop();
+        this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
+        sw.Start();
+        p = new PingPacket("PingMe");
+        result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
+        sw.Stop();
+        this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
+        sw.Start();
+        p = new PingPacket("PingMe");
+        result = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
         sw.Stop();
         this.logger.TryGet()?.Log($"PingMe: {result.ToString()} {sw.ElapsedMilliseconds} ms");
 
