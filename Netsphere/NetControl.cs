@@ -197,6 +197,7 @@ public class NetControl : UnitBase, IUnitPreparable
             context.LogSourceType == typeof(ServerConnection) ||
             context.LogSourceType == typeof(PacketTerminal) ||
             context.LogSourceType == typeof(NetSender) ||
+            context.LogSourceType == typeof(NetSocket) ||
             context.LogSourceType == typeof(CubicCongestionControl) ||
             context.LogSourceType == typeof(NoCongestionControl))
         {
