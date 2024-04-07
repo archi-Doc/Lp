@@ -10,7 +10,7 @@ namespace Netsphere.Core;
 public sealed class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendBufferSize = 4 * 1024 * 1024;
+    private const int SendBufferSize = 1 * 1024 * 1024;
     private const int ReceiveBufferSize = 4 * 1024 * 1024;
 
     private class RecvCore : ThreadCore
