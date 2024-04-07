@@ -13,9 +13,9 @@ public sealed class NetSocket
     private const int SendBufferSize = 1 * 1024 * 1024;
     private const int ReceiveBufferSize = 4 * 1024 * 1024;
 
-    private class RecvCore : TaskCore
+    private class RecvCore : ThreadCore
     {
-        public static async Task Process(object? parameter)
+        public static async void Process(object? parameter)
         {
             var core = (RecvCore)parameter!;
 
@@ -42,16 +42,16 @@ public sealed class NetSocket
                 {// nspi 10^5
                     var remoteEP = (EndPoint)anyEP;
                     arrayOwner ??= PacketPool.Rent();
-                    // var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
-                    var vt = await udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP, core.CancellationToken);
+                    var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    // var vt = await udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP, core.CancellationToken);
                     if (NetConstants.LogLowLevelNet)
                     {
-                        core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {vt.ReceivedBytes}");//
+                        core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {received}");//
                     }
 
-                    if (vt.ReceivedBytes <= NetConstants.MaxPacketLength)
+                    if (received <= NetConstants.MaxPacketLength)
                     {// nspi
-                        core.socket.netTerminal.ProcessReceive((IPEndPoint)vt.RemoteEndPoint, arrayOwner, vt.ReceivedBytes);
+                        core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
