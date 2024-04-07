@@ -13,9 +13,9 @@ public sealed class NetSocket
     private const int SendBufferSize = 1 * 1024 * 1024;
     private const int ReceiveBufferSize = 4 * 1024 * 1024;
 
-    private class RecvCore : ThreadCore
+    private class RecvCore : TaskCore
     {
-        public static void Process(object? parameter)
+        public static async Task Process(object? parameter)
         {
             var core = (RecvCore)parameter!;
 
@@ -42,16 +42,16 @@ public sealed class NetSocket
                 {// nspi 10^5
                     var remoteEP = (EndPoint)anyEP;
                     arrayOwner ??= PacketPool.Rent();
-                    var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    // var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    var vt = await udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP, core.CancellationToken);
                     if (NetConstants.LogLowLevelNet)
                     {
-                        core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {received}");//
+                        core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {vt.ReceivedBytes}");//
                     }
 
-                    // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
-                    if (received <= NetConstants.MaxPacketLength)
+                    if (vt.ReceivedBytes <= NetConstants.MaxPacketLength)
                     {// nspi
-                        core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
+                        core.socket.netTerminal.ProcessReceive((IPEndPoint)vt.RemoteEndPoint, arrayOwner, vt.ReceivedBytes);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -67,7 +67,7 @@ public sealed class NetSocket
         public RecvCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
-            this.Thread.Priority = ThreadPriority.AboveNormal;
+            // this.Thread.Priority = ThreadPriority.AboveNormal;
             this.socket = socket;
         }
 
