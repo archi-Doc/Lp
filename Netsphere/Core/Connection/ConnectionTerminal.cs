@@ -484,7 +484,7 @@ public class ConnectionTerminal
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");//
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");
         }
 
         if (packetUInt16 < 384)

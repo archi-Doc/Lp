@@ -249,7 +249,7 @@ internal class NetSender
 
                 if (NetConstants.LogLowLevelNet)
                 {
-                    this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual4 {item.EndPoint.ToString()} {item.MemoryOwner.Span.Length}");//
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual4 {item.EndPoint.ToString()} {item.MemoryOwner.Span.Length}");
                 }
 
                 try
@@ -280,7 +280,7 @@ internal class NetSender
 
                 if (NetConstants.LogLowLevelNet)
                 {
-                    this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual6 {item.EndPoint.ToString()} {item.MemoryOwner.Span.Length}");//
+                    // this.logger.TryGet(LogLevel.Debug)?.Log($"Send actual6 {item.EndPoint.ToString()} {item.MemoryOwner.Span.Length}");
                 }
 
                 try

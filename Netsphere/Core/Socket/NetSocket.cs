@@ -46,7 +46,7 @@ public sealed class NetSocket
                     // var vt = await udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP, core.CancellationToken);
                     if (NetConstants.LogLowLevelNet)
                     {
-                        core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {received}");//
+                        // core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {received}");
                     }
 
                     if (received <= NetConstants.MaxPacketLength)

@@ -270,10 +270,9 @@ public sealed partial class PacketTerminal
                     CreatePacket(packetId, packet, out var owner);
                     this.AddSendPacket(endPoint, owner, default);
 
-                    this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PingResponse");//
                     if (NetConstants.LogLowLevelNet)
                     {
-                        // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
+                        // this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PingResponse");
                     }
                 }
 
