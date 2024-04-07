@@ -122,6 +122,7 @@ public class Program
                     if (context.LogLevel == LogLevel.Debug)
                     {
                         context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        // context.SetOutput<EmptyLogger>();
                         return;
                     }
 
@@ -161,7 +162,7 @@ public class Program
                 var logfile = "Logs/Debug.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 10;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K"; // "yyyy-MM-dd HH:mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
             })
@@ -169,7 +170,7 @@ public class Program
             {
                 options.Formatter.EnableColor = false;
                 options.EnableBuffering = true;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.Formatter.TimestampFormat = "mm:ss.ffffff K"; // "yyyy-MM-dd HH:mm:ss.ffffff K";
             });
 
         Console.WriteLine(string.Join(' ', args));
@@ -184,12 +185,6 @@ public class Program
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
         netControl.Services.Register<IRemoteBenchHost>();
         netControl.Services.Register<IRemoteBenchRunner>();
-
-        // NtpCorrection
-        var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<NtpCorrection>();
-        var offset = await ntpCorrection.SendAndReceiveOffset();
-        await Console.Out.WriteLineAsync($"NtpCorrection {offset.ToString()}");
-        UnitLogger.SetTimeOffset(offset);
 
         var parserOptions = SimpleParserOptions.Standard with
         {

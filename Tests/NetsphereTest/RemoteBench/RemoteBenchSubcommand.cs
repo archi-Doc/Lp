@@ -5,6 +5,7 @@ using Arc.Unit;
 using LP.NetServices;
 using Netsphere.Crypto;
 using Netsphere.Misc;
+using Netsphere.Packet;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -12,10 +13,11 @@ namespace NetsphereTest;
 [SimpleCommand("remotebench")]
 public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 {
-    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl)
+    public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, NetControl netControl, NtpCorrection ntpCorrection)
     {
         this.logger = logger;
         this.netControl = netControl;
+        this.ntpCorrection = ntpCorrection;
     }
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
@@ -134,6 +136,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
     }
 
     private readonly NetControl netControl;
+    private readonly NtpCorrection ntpCorrection;
     private readonly ILogger logger;
 }
 

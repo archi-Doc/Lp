@@ -272,7 +272,7 @@ public sealed partial class PacketTerminal
 
                     if (NetConstants.LogLowLevelNet)
                     {
-                        // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} PingResponse");
+                        // this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PingResponse");
                     }
                 }
 

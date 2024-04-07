@@ -128,8 +128,7 @@ public class ReceiveStream : IReceiveStreamInternal // , IDisposable
             }
 
             (result, written) = await this.Receive(memory, cancellationToken).ConfigureAwait(false);
-            if (result != NetResult.Success &&
-                result != NetResult.Completed)
+            if (result.IsError())
             {
                 return new(result);
             }

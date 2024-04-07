@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Unit;
+using Netsphere.Misc;
 using Netsphere.RemoteData;
 using NetsphereTest;
 
@@ -10,11 +11,12 @@ namespace LP.NetServices;
 [NetServiceObject]
 public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
 {
-    public RemoteBenchRunnerAgent(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteBenchRunnerAgent> logger, NetTerminal netTerminal)
+    public RemoteBenchRunnerAgent(FileLogger<FileLoggerOptions> fileLogger, ILogger<RemoteBenchRunnerAgent> logger, NetTerminal netTerminal, NtpCorrection ntpCorrection)
     {
         this.fileLogger = fileLogger;
         this.logger = logger;
         this.netTerminal = netTerminal;
+        this.ntpCorrection = ntpCorrection;
     }
 
     #region FieldAndProperty
@@ -22,6 +24,7 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
     private readonly IFileLogger fileLogger;
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
+    private readonly NtpCorrection ntpCorrection;
     private string? remoteNode;
     private string? remotePrivateKey;
 
@@ -69,6 +72,9 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
 
         // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
         // ThreadPool.SetMinThreads(3000, ioMin);
+
+        // NtpCorrection
+        await ntpCorrection.CorrectUnitLogger();
 
         var sw = Stopwatch.StartNew();
         var array = new Task[concurrent];

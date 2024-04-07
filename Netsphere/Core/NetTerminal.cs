@@ -36,7 +36,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public State CurrentState { get; private set; }
 
-    public bool IsActive => this.CurrentState == State.Active;
+    public bool IsActive => !ThreadCore.Root.IsTerminated && this.CurrentState == State.Active;
 
     public NetBase NetBase { get; }
 

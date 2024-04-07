@@ -480,13 +480,13 @@ public class ConnectionTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
-        if (NetConstants.LogLowLevelNet)
-        {
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
-        }
-
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
+        if (NetConstants.LogLowLevelNet)
+        {
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");
+        }
+
         if (packetUInt16 < 384)
         {// Client -> Server
             ServerConnection? connection = default;

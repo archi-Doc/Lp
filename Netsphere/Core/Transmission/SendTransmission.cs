@@ -78,6 +78,8 @@ internal sealed partial class SendTransmission : IDisposable
 
     #endregion
 
+    // private int skip19 = 0;//
+
     public void Dispose()
     {
         if (this.IsDisposed)
@@ -208,6 +210,15 @@ internal sealed partial class SendTransmission : IDisposable
                     {
                         if (gene.CurrentState == SendGene.State.Initial)
                         {
+                            /*var doNotTransmit = false;//
+                            if (gene.GeneSerial > 0 && gene.GeneSerial < 10)
+                            {
+                                if (this.skip19++ < 9)
+                                {
+                                    doNotTransmit = true;
+                                }
+                            }*/
+
                             if (!gene.Send_NotThreadSafe(netSender, 0))
                             {// Cannot send
                                 return ProcessSendResult.Complete;
