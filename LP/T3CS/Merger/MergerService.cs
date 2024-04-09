@@ -44,8 +44,7 @@ public class MergerServiceImpl : IMergerService
 
     public NetTask<T3CSResult> CreateCredit(Merger.CreateCreditParams param)
     {
-        TransmissionContext.Current.ServerConnection.GetContext();
-        if (!this.Authenticated)
+        if (!TransmissionContext.Current.ServerConnection.GetContext().TryGetAuthenticationToken(out _))
         {
             return new(T3CSResult.NotAuthorized);
         }

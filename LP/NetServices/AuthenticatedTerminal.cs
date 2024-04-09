@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using LP.T3CS;
-using Netsphere;
 using Netsphere.Crypto;
 
 namespace LP.NetServices;
@@ -23,7 +22,7 @@ public class AuthenticatedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        // Terminal
+        // Connect
         var connection = await terminal.Connect(node);
         if (connection == null)
         {
@@ -44,7 +43,7 @@ public class AuthenticatedTerminalFactory
                 return null; // AuthorizedTerminal<TService>.Invalid;
             }
 
-            context.IsAuthenticated = true;
+            context.AuthenticationToken = token;
         }
 
         return new(connection, authority, logger);

@@ -111,6 +111,12 @@ public class ServerConnectionContext
     public virtual bool RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
         => false;*/
 
+    public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
+    {
+        authenticationToken = this.AuthenticationToken;
+        return authenticationToken is not null;
+    }
+
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
         // Get ServiceMethod
@@ -263,7 +269,6 @@ SendNoNetService:
     {
         if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.Owner.Memory.Span, out var token))
         {
-            transmissionContext.Result = NetResult.DeserializationFailed;
             transmissionContext.Return();
             return;
         }

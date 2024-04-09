@@ -167,6 +167,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             }
         }
 
+        if (typeof(TReceive) == typeof(NetResult))
+        {// In the current implementation, the value of NetResult is assigned to DataId.
+            response.Return();
+            var netResult = (NetResult)response.DataId;
+            return new(NetResult.Success, Unsafe.As<NetResult, TReceive>(ref netResult));
+        }
+
         if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
         {
             response.Return();
@@ -435,7 +442,6 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     public async Task<NetResult> Authenticate(AuthenticationToken token)
     {
         var r = await this.SendAndReceive<AuthenticationToken, NetResult>(token, ConnectionAgreement.AuthenticateId).ConfigureAwait(false);
-
         if (r.Result == NetResult.Success)
         {
             return r.Value;
