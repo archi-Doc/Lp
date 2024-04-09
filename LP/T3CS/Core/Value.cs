@@ -33,7 +33,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     public SignaturePublicKey Owner { get; private set; }
 
     [Key(1)]
-    public long Point { get; private set; }
+    public Point Point { get; private set; }
 
     [Key(2)]
     public Credit Credit { get; private set; } = Credit.Default;
