@@ -793,12 +793,12 @@ Wait:
                 span = span.Slice(sizeof(uint));
 
                 if (maxReceivePosition < 0)
-                {// Rama (Complete)
+                {// Burst (Complete)
                     if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
                     {
                         this.UpdateAckedNode(transmission);
                         this.UpdateLastEventMics();
-                        transmission.ProcessReceive_AckRama();
+                        transmission.ProcessReceive_AckBurst();
                     }
                     else
                     {// SendTransmission has already been disposed due to reasons such as having already received response data.

@@ -54,7 +54,7 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         else
         {
             Span<char> destination = stackalloc char[this.SingleCredit.GetStringLength()];
-            this.SingleCreditString = this.SingleCredit.TryFormat(destination, out _);
+            this.SingleCreditString = this.SingleCredit.ConvertToString();
         }
     }
 

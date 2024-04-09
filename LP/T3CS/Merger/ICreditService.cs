@@ -3,10 +3,10 @@
 using LP.T3CS;
 using Netsphere;
 
-namespace LP.NetServices.T3CS;
+namespace LP.T3CS.NetService;
 
 [NetServiceInterface]
 public interface ICreditService : INetService
 {
-    public NetTask<MergerResult> Open(Credit credit);
+    public NetTask<T3CSResult> Open(Credit credit);
 }

@@ -163,9 +163,9 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
     internal void SetState_Receiving(int totalGene)
     {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
-        if (totalGene <= NetHelper.RamaGenes)
+        if (totalGene <= NetHelper.BurstGenes)
         {
-            this.Mode = NetTransmissionMode.Rama;
+            this.Mode = NetTransmissionMode.Burst;
         }
         else
         {
@@ -203,7 +203,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void ProcessReceive_Gene(DataControl dataControl, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
-    {// this.Mode == NetTransmissionMode.Rama or NetTransmissionMode.Block or NetTransmissionMode.Stream
+    {// this.Mode == NetTransmissionMode.Burst or NetTransmissionMode.Block or NetTransmissionMode.Stream
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
@@ -220,7 +220,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 return;
             }
 
-            if (this.Mode == NetTransmissionMode.Rama)
+            if (this.Mode == NetTransmissionMode.Burst)
             {// Single send/recv
                 if (dataPosition == 0)
                 {
@@ -320,7 +320,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
             }
 
             if (completeFlag)
-            {// Complete (Rama, Stream)
+            {// Complete (Burst, Stream)
                 this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
             }
         }
@@ -328,7 +328,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         this.Connection.UpdateLastEventMics();
 
         // Send Ack
-        if (this.Mode == NetTransmissionMode.Rama)
+        if (this.Mode == NetTransmissionMode.Burst)
         {// Fast Ack
             if (completeFlag)
             {
@@ -352,7 +352,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {// Defer
                     // this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Ack 0 - {this.totalGene}");
 
-                    this.Connection.ConnectionTerminal.AckQueue.AckRama(this.Connection, this);
+                    this.Connection.ConnectionTerminal.AckQueue.AckBurst(this.Connection, this);
                 }
             }
         }

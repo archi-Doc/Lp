@@ -13,7 +13,7 @@ namespace Netsphere;
 
 public static class NetHelper
 {
-    internal const int RamaGenes = 3;
+    internal const int BurstGenes = 3;
     internal const char Quote = '\"';
     internal const string TripleQuotes = "\"\"\"";
     private const int BufferLength = 64 * 1024; // 64 KB

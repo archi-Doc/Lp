@@ -9,7 +9,7 @@ namespace Netsphere.Core;
 public enum NetTransmissionMode
 {
     Initial,
-    Rama,
+    Burst,
     Block,
     Stream,
     StreamCompleted,
@@ -174,7 +174,7 @@ internal sealed partial class SendTransmission : IDisposable
     {// lock (this.ConnectionTerminal.SyncSend)
         lock (this.syncObject)
         {
-            if (this.Mode == NetTransmissionMode.Rama)
+            if (this.Mode == NetTransmissionMode.Burst)
             {
                 if (this.gene0?.CurrentState == SendGene.State.Initial)
                 {
@@ -253,9 +253,9 @@ internal sealed partial class SendTransmission : IDisposable
             this.sentTcs = sentTcs;
 
             var span = block.Span;
-            if (info.NumberOfGenes <= NetHelper.RamaGenes)
-            {// Rama
-                this.Mode = NetTransmissionMode.Rama;
+            if (info.NumberOfGenes <= NetHelper.BurstGenes)
+            {// Burst
+                this.Mode = NetTransmissionMode.Burst;
                 if (this.Connection.SendTransmissionsCount >= CongestionControlThreshold)
                 {// Enable congestion control when the number of SendTransmissions exceeds the threshold.
                     this.Connection.CreateCongestionControl();
@@ -571,22 +571,22 @@ Exit:
         }
     }
 
-    internal void ProcessReceive_AckRama()
+    internal void ProcessReceive_AckBurst()
     {
         lock (this.syncObject)
         {
-            if (this.Mode != NetTransmissionMode.Rama)
+            if (this.Mode != NetTransmissionMode.Burst)
             {
                 return;
             }
 
-            this.ProcessReceive_AckRamaInternal();
+            this.ProcessReceive_AckBurstInternal();
         }
     }
 
-    internal void ProcessReceive_AckRamaInternal()
+    internal void ProcessReceive_AckBurstInternal()
     {// lock (this.syncObject)
-        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Rama {this.GeneSerialMax}");
+        this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Burst {this.GeneSerialMax}");
 
         if (this.gene0 is not null)
         {
@@ -660,10 +660,10 @@ Exit:
         var congestionControl = this.Connection.GetCongestionControl();
         lock (this.syncObject)
         {
-            // if (this.Mode == NetTransmissionMode.Rama)
+            // if (this.Mode == NetTransmissionMode.Burst)
             if (this.genes is null)
-            {// Rama (Complete)
-                this.ProcessReceive_AckRamaInternal();
+            {// Burst (Complete)
+                this.ProcessReceive_AckBurstInternal();
                 return;
             }
 

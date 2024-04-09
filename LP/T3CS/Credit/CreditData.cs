@@ -21,5 +21,5 @@ public partial record CreditData
     private CreditInformation creditInformation = CreditInformation.Default;
 
     [Key(3, AddProperty = "Borrowers", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<Borrower.GoshujinClass> borrowers = new();
+    private StorageData<BorrowerData.GoshujinClass> borrowers = new();
 }
