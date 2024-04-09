@@ -30,7 +30,7 @@ internal partial class AckBuffer
 
     private readonly ConnectionTerminal connectionTerminal;
     private readonly ILogger logger;
-    private readonly Queue<int> rama = new();
+    private readonly Queue<int> burst = new();
 
     private readonly object syncObject = new();
     private readonly Queue<Connection> connectionQueue = new();
@@ -40,11 +40,11 @@ internal partial class AckBuffer
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AckRama(Connection connection, ReceiveTransmission receiveTransmission)
+    public void AckBurst(Connection connection, ReceiveTransmission receiveTransmission)
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"AckRama {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}");
+            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBurst {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}");
         }
 
         lock (this.syncObject)
@@ -63,8 +63,8 @@ internal partial class AckBuffer
             var ackGene = receiveTransmission.AckGene;
             if (ackGene is null)
             {
-                receiveTransmission.AckGene = this.rama;
-                ackQueue.Enqueue(new(receiveTransmission, this.rama));
+                receiveTransmission.AckGene = this.burst;
+                ackQueue.Enqueue(new(receiveTransmission, this.burst));
             }
         }
     }
@@ -169,12 +169,12 @@ NewPacket:
             {// Prepare
                 // ProtectedPacketCode
                 owner = PacketPool.Rent();
-                span = owner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfRama, NumberOfBlock
+                span = owner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfBurst, NumberOfBlock
             }
 
             var ackGene = item.AckGene;
-            if (ackGene == this.rama)
-            {// Rama
+            if (ackGene == this.burst)
+            {// Burst
                 BitConverter.TryWriteBytes(span, (int)-1); // 4 bytes
                 span = span.Slice(sizeof(int));
                 BitConverter.TryWriteBytes(span, item.ReceiveTransmission.TransmissionId); // 4 bytes
