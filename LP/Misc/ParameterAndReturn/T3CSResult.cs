@@ -5,8 +5,8 @@ namespace LP;
 public enum T3CSResult
 {
     Success,
-    NotAuthorized,
-    InvalidToken,
+    NotAuthenticated,
+    InvalidProof,
     NoData,
     AlreadyExists,
 }

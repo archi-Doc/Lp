@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using LP.NetServices;
-using LP.NetServices.T3CS;
 using LP.T3CS;
-using Netsphere;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -31,14 +29,6 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
             }
 
             var service = authenticated.Connection.GetService<IMergerService>();
-
-            /*var response = await service.GetInformation().ResponseAsync;
-            if (response.IsSuccess && response.Value is { } informationResult)
-            {
-                this.logger.TryGet()?.Log(informationResult.Name);
-            }
-
-            return;*/
 
             /*var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
             authorized.Authority.SignToken(token);

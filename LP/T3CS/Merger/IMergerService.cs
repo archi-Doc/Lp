@@ -1,9 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
-using Netsphere.Crypto;
-
-namespace LP.NetServices.T3CS;
+namespace LP.T3CS;
 
 [NetServiceInterface]
 public partial interface IMergerService : INetService
@@ -28,11 +25,10 @@ public partial interface IMergerService : INetService
     NetTask<T3CSResult> CreateCredit(Merger.CreateCreditParams param);
 }
 
-[NetServiceFilter<MergerOrTestFilter>]
 [NetServiceObject]
-public class MergerServiceImpl : IMergerService
-{// LPCallContext.Current
-    public MergerServiceImpl(Merger.Provider mergerProvider)
+internal class MergerServiceAgent : IMergerService
+{
+    public MergerServiceAgent(Merger.Provider mergerProvider)
     {
         this.merger = mergerProvider.GetOrException();
     }
@@ -44,9 +40,14 @@ public class MergerServiceImpl : IMergerService
 
     public NetTask<T3CSResult> CreateCredit(Merger.CreateCreditParams param)
     {
-        if (!TransmissionContext.Current.ServerConnection.GetContext().TryGetAuthenticationToken(out _))
+        if (!TransmissionContext.Current.TryGetAuthenticationToken(out var token))
         {
-            return new(T3CSResult.NotAuthorized);
+            return new(T3CSResult.NotAuthenticated);
+        }
+
+        if (!token.PublicKey.Equals(param.Proof.PublicKey))
+        {
+            return new(T3CSResult.InvalidProof);
         }
 
         return this.merger.CreateCredit(param);

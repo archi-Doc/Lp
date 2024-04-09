@@ -46,7 +46,7 @@ public class AuthenticatedTerminalFactory
             context.AuthenticationToken = token;
         }
 
-        return new(connection, authority, logger);
+        return new(connection, context, authority, logger);
     }
 
     private AuthorityVault authorityVault;
@@ -54,9 +54,10 @@ public class AuthenticatedTerminalFactory
 
 public class AuthenticatedTerminal : IDisposable, IEquatable<AuthenticatedTerminal>
 {
-    internal AuthenticatedTerminal(ClientConnection terminal, Authority authority, ILogger? logger)
+    internal AuthenticatedTerminal(ClientConnection terminal, ClientConnectionContext context, Authority authority, ILogger? logger)
     {
         this.Connection = terminal;
+        this.Context = context;
         this.Authority = authority;
         this.logger = logger;
     }
@@ -78,6 +79,8 @@ public class AuthenticatedTerminal : IDisposable, IEquatable<AuthenticatedTermin
     }
 
     public ClientConnection Connection { get; private set; }
+
+    public ClientConnectionContext Context { get; private set; }
 
     public Authority Authority { get; private set; }
 

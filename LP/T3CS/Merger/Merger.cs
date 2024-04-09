@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.NetServices;
-using LP.NetServices.T3CS;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -44,8 +42,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
-        this.Check();
         this.logger.TryGet()?.Log(this.Information.ToString());
+        this.Check();
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -69,7 +67,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         if (!param.Proof.ValidateAndVerify())
         {
-            return T3CSResult.InvalidToken;
+            return T3CSResult.InvalidProof;
         }
 
         // Get LpData
@@ -110,8 +108,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     private void Check()
     {
-        this.logger.TryGet()?.Log("Merger started");
-
         this.Information.SingleCredit = Credit.Default;
 
         this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}");
