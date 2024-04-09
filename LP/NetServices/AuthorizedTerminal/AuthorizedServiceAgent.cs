@@ -1,23 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.T3CS;
 using Netsphere.Crypto;
 
-namespace Netsphere;
+namespace LP.NetServices;
 
 /// <summary>
-/// A base interface for authorized service.
+/// A base interface for authentication.
 /// </summary>
-public interface IAuthorizedService : INetService
+public interface IAuthenticationService : INetService
 {
     NetTask<NetResult> Authenticate(AuthenticationToken token);
-
-    // NetTask<NetResult> Engage(EngageProof proof);
-
-    // bool Engaged { get; }
 }
 
-public class AuthorizedService : IAuthorizedService
+internal class AuthorizedServiceAgent : IAuthenticationService
 {
     public async NetTask<NetResult> Authenticate(AuthenticationToken token)
     {
@@ -31,19 +26,6 @@ public class AuthorizedService : IAuthorizedService
         this.Authenticated = false;
         return NetResult.NotAuthorized;
     }
-
-    /*public async NetTask<NetResult> Engage(EngageProof proof)
-    {// -> Engage
-        /*if (proof.ValidateAndVerify(CallContext.Current.ServerContext.Terminal.Salt))
-        {
-            this.AuthorizedKey = proof.PublicKey;
-            this.Engaged = true;
-            return NetResult.Success;
-        }
-
-        this.Engaged = false;
-        return NetResult.NotAuthorized;
-    }*/
 
     public SignaturePublicKey AuthenticationKey { get; private set; }
 

@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace LP.NetServices.T3CS;
 
 [NetServiceInterface]
-public partial interface IMergerService : IAuthorizedService
+public partial interface IMergerService : IAuthenticationService
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -30,7 +30,7 @@ public partial interface IMergerService : IAuthorizedService
 
 [NetServiceFilter<MergerOrTestFilter>]
 [NetServiceObject]
-public class MergerServiceImpl : AuthorizedService, IMergerService
+public class MergerServiceImpl : AuthorizedServiceAgent, IMergerService
 {// LPCallContext.Current
     public MergerServiceImpl(Merger.Provider mergerProvider)
     {

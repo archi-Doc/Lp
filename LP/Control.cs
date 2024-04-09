@@ -58,6 +58,7 @@ public class Control
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
+                context.AddTransient<NetServices.AuthorizedServiceAgent>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
                 // RPC / Filters

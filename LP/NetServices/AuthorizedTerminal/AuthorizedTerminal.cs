@@ -14,7 +14,7 @@ public class AuthorizedTerminalFactory
     }
 
     public async Task<AuthorizedTerminal<TService>?> Create<TService>(NetTerminal terminal, NetNode node, string authorityName, ILogger? logger)
-        where TService : IAuthorizedService
+        where TService : IAuthenticationService
     {
         // Authority key
         var authority = await this.authorityVault.GetAuthority(authorityName);
@@ -61,7 +61,7 @@ public class AuthorizedTerminalFactory
 }
 
 public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
-    where TService : IAuthorizedService
+    where TService : IAuthenticationService
 {
     internal AuthorizedTerminal(ClientConnection terminal, Authority authority, TService service, ILogger? logger)
     {
