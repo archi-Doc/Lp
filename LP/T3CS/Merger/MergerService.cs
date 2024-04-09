@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace LP.NetServices.T3CS;
 
 [NetServiceInterface]
-public partial interface IMergerService : IAuthenticationService
+public partial interface IMergerService : INetService
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -30,7 +30,7 @@ public partial interface IMergerService : IAuthenticationService
 
 [NetServiceFilter<MergerOrTestFilter>]
 [NetServiceObject]
-public class MergerServiceImpl : AuthorizedServiceAgent, IMergerService
+public class MergerServiceImpl : IMergerService
 {// LPCallContext.Current
     public MergerServiceImpl(Merger.Provider mergerProvider)
     {
@@ -44,6 +44,7 @@ public class MergerServiceImpl : AuthorizedServiceAgent, IMergerService
 
     public NetTask<T3CSResult> CreateCredit(Merger.CreateCreditParams param)
     {
+        TransmissionContext.Current.ServerConnection.GetContext();
         if (!this.Authenticated)
         {
             return new(T3CSResult.NotAuthorized);
@@ -51,9 +52,6 @@ public class MergerServiceImpl : AuthorizedServiceAgent, IMergerService
 
         return this.merger.CreateCredit(param);
     }
-
-    public new NetTask<NetResult> Authenticate(AuthenticationToken token)
-        => base.Authenticate(token);
 
     private Merger merger;
 }

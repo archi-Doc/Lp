@@ -54,11 +54,10 @@ public class Control
                 context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
 
                 // RPC / Services
-                context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
+                context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
-                context.AddTransient<NetServices.AuthorizedServiceAgent>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
                 // RPC / Filters
