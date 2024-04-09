@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Core;
+using Netsphere.Crypto;
 
 #pragma warning disable SA1202
 
@@ -97,6 +98,8 @@ public class ServerConnectionContext
 
     public ServerConnection ServerConnection { get; }
 
+    public AuthenticationToken? AuthenticationToken { get; private set; }
+
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
 
@@ -167,16 +170,11 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            /*if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
+            if (transmissionContext.DataId == ConnectionAgreement.AuthenticateId)
             {
-                this.UpdateAgreement(transmissionContext);
+                this.Authenticate(transmissionContext);
             }
-            else if (transmissionContext.DataId == ConnectionAgreement.BidirectionalId)
-            {
-                this.ConnectBidirectionally(transmissionContext);
-            }
-            else */
-            if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
+            else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
             }
@@ -185,6 +183,15 @@ public class ServerConnectionContext
                 transmissionContext.ReturnAndDisposeStream();
                 return;
             }
+
+            /*else if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
+            {
+                this.UpdateAgreement(transmissionContext);
+            }
+            else if (transmissionContext.DataId == ConnectionAgreement.BidirectionalId)
+            {
+                this.ConnectBidirectionally(transmissionContext);
+            }*/
         }
         else if (transmissionContext.DataKind == 1)
         {// RPC
@@ -250,6 +257,36 @@ SendNoNetService:
         transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
         transmissionContext.ReturnAndDisposeStream();
         return;
+    }
+
+    private void Authenticate(TransmissionContext transmissionContext)
+    {
+        if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.Owner.Memory.Span, out var token))
+        {
+            transmissionContext.Result = NetResult.DeserializationFailed;
+            transmissionContext.Return();
+            return;
+        }
+
+        transmissionContext.Return();
+
+        _ = Task.Run(() =>
+        {
+            var result = NetResult.Success;
+            if (this.AuthenticationToken is null)
+            {
+                if (this.ServerConnection.ValidateAndVerifyWithSalt(token))
+                {
+                    this.AuthenticationToken = token;
+                }
+                else
+                {
+                    result = NetResult.InvalidData;
+                }
+            }
+
+            transmissionContext.SendAndForget(result, ConnectionAgreement.AuthenticateId);
+        });
     }
 
     /*private void UpdateAgreement(TransmissionContext transmissionContext)

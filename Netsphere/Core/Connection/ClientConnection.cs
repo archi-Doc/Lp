@@ -432,6 +432,18 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return r.Result;
     }*/
 
+    public async Task<NetResult> Authenticate(AuthenticationToken token)
+    {
+        var r = await this.SendAndReceive<AuthenticationToken, NetResult>(token, ConnectionAgreement.AuthenticateId).ConfigureAwait(false);
+
+        if (r.Result == NetResult.Success)
+        {
+            return r.Value;
+        }
+
+        return r.Result;
+    }
+
     async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> IClientConnectionInternal.RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
     {
         if (!this.IsActive)
