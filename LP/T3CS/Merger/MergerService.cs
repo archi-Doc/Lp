@@ -25,7 +25,7 @@ public partial interface IMergerService : IAuthorizedService
         private string mergerName = default!;
     }
 
-    NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param);
+    NetTask<T3CSResult> CreateCredit(Merger.CreateCreditParams param);
 }
 
 [NetServiceFilter<MergerOrTestFilter>]
@@ -42,11 +42,11 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
         return this.merger.Information.ToInformationResult();
     }
 
-    public NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
+    public NetTask<T3CSResult> CreateCredit(Merger.CreateCreditParams param)
     {
         if (!this.Authenticated)
         {
-            return new(MergerResult.NotAuthorized);
+            return new(T3CSResult.NotAuthorized);
         }
 
         return this.merger.CreateCredit(param);

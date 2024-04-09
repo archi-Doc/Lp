@@ -14,8 +14,10 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public const char StandardSymbol = ':';
     public const char MergerSymbol = '/';
     public const char MergerSeparator = '+';
-    public const int MaxMergers = 4;
+    public const int MaxMergers = 3;
     public static readonly Credit Default = new();
+
+    #region IStringConvertible
 
     public static bool TryParse(ReadOnlySpan<char> source, out Credit? instance)
     {
@@ -100,6 +102,8 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         written = length;
         return true;
     }
+
+    #endregion
 
     public Credit()
     {

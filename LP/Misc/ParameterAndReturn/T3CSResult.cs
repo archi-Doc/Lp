@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.NetServices.T3CS;
+namespace LP;
 
-public enum MergerResult
+public enum T3CSResult
 {
     Success,
     NotAuthorized,

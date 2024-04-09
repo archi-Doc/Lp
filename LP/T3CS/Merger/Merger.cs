@@ -65,11 +65,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async NetTask<MergerResult> CreateCredit(CreateCreditParams param)
+    public async NetTask<T3CSResult> CreateCredit(CreateCreditParams param)
     {
         if (!param.Proof.ValidateAndVerify())
         {
-            return MergerResult.InvalidToken;
+            return T3CSResult.InvalidToken;
         }
 
         // Get LpData
@@ -81,7 +81,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {
             if (w is null)
             {
-                return MergerResult.NoData;
+                return T3CSResult.NoData;
             }
 
             creditData = w.Commit();
@@ -89,7 +89,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (creditData is null)
         {
-            return MergerResult.NoData;
+            return T3CSResult.NoData;
         }
 
         var borrowers = await creditData.Borrowers.Get();
@@ -97,13 +97,13 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {
             if (w2 is null)
             {
-                return MergerResult.AlreadyExists;
+                return T3CSResult.AlreadyExists;
             }
 
             w2.Commit();
         }
 
-        return MergerResult.Success;
+        return T3CSResult.Success;
     }
 
     public MergerInformation Information { get; private set; }
