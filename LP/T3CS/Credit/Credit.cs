@@ -1,25 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-using Netsphere;
 using Netsphere.Crypto;
 
 namespace LP.T3CS;
-
-public static class StringConvertibleExtension
-{
-    [SkipLocalsInit]
-    public static string TryFormat<T>(this T obj)
-        where T : IStringConvertible<T>
-    { // MemoryMarshal.CreateSpan<char>(ref MemoryMarshal.GetReference(str.AsSpan()), str.Length);
-        scoped Span<char> destination;
-        var length = obj.GetStringLength();
-        destination = length <= 1024 ? stackalloc char[length] : new char[length];
-
-        obj.TryFormat(destination, out var written);
-        return new string(destination);
-    }
-}
 
 /// <summary>
 /// Represents a credit information (@Originator:Standard/Merger1+Merger2).

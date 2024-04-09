@@ -26,7 +26,7 @@
     <PackageReference Include="Arc.Collections" Version="1.14.1" />
     <PackageReference Include="Arc.CrossChannel" Version="1.2.1" />
     <PackageReference Include="Arc.Threading" Version="0.28.0" />
-    <PackageReference Include="Arc.Crypto" Version="1.23.1" />
+    <PackageReference Include="Arc.Crypto" Version="1.23.2" />
     <PackageReference Include="Arc.Unit" Version="0.11.1" />
     <PackageReference Include="BigMachines" Version="0.29.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />

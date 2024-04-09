@@ -53,7 +53,8 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         }
         else
         {
-            this.SingleCreditString = this.SingleCredit.TryFormat();
+            Span<char> destination = stackalloc char[this.SingleCredit.GetStringLength()];
+            this.SingleCreditString = this.SingleCredit.TryFormat(destination, out _);
         }
     }
 
