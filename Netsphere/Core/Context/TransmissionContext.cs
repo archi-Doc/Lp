@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Netsphere.Core;
+using Netsphere.Crypto;
 
 #pragma warning disable SA1401
 
@@ -48,6 +50,9 @@ public sealed class TransmissionContext : ITransmissionContextInternal
     private SendStream? sendStream;
 
     #endregion
+
+    public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
+        => this.ServerConnection.GetContext().TryGetAuthenticationToken(out authenticationToken);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Return()

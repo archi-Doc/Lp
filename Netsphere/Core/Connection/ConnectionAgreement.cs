@@ -10,6 +10,7 @@ public partial record ConnectionAgreement
     public static readonly ConnectionAgreement Default = new();
     internal const ulong UpdateId = 0x54074a0294a59b25;
     internal const ulong BidirectionalId = 0x7432bf385bf192da;
+    internal const ulong AuthenticateId = 0xa0637663baed28e9;
 
     public ConnectionAgreement()
     {

@@ -11,9 +11,9 @@ global using CrystalData;
 global using LP;
 global using Netsphere;
 global using Tinyhand;
+global using ValueLink;
 using LP.Data;
 using LP.NetServices;
-using LP.NetServices.T3CS;
 using LP.Services;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,12 +54,11 @@ public class Control
                 context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
 
                 // RPC / Services
-                context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
+                context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
-                context.AddTransient<NetServices.AuthorizedServiceAgent>();
-                context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
+                context.AddTransient<LP.T3CS.MergerServiceAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();

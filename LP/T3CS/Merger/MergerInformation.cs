@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.ComponentModel;
-using LP.NetServices.T3CS;
 using LP.T3CS;
 
 namespace LP;
@@ -11,7 +10,7 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 {
     public const string Filename = "Merger.tinyhand";
     public const string DefaultName = "Test merger";
-    public const int DefaultMaxCredit = 10_000;
+    public const int DefaultMaxCredit = 1_000_000;
 
     public enum Type
     {

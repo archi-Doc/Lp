@@ -1,9 +1,46 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using ValueLink;
-
 namespace LP.T3CS;
 
+/// <summary>
+/// Immutable linkage object.
+/// </summary>
+/// <typeparam name="TProof">The type of a linkage target.</typeparam>
+[TinyhandObject(ReservedKeys = 4)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+public sealed partial class Linkage<TProof> : IValidatable
+    where TProof : Proof
+{
+    [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
+    public Linkage(TProof proof)
+    {
+        this.Proof = proof;
+    }
+
+    private Linkage()
+    {
+        this.Proof = default!;
+    }
+
+    [Key(0)]
+    public TProof Proof { get; private set; }
+
+    [Key(1, Level = 0)]
+    public byte[]? Signature0 { get; private set; }
+
+    [Key(2, Level = 1)]
+    public byte[]? Signature1 { get; private set; }
+
+    public long ProofMics
+        => this.Proof.ProofMics;
+
+    public bool Validate()
+    {
+        return this.Proof.Validate();
+    }
+}
+
+/*
 /// <summary>
 /// Immutable linkage object.
 /// </summary>
@@ -73,4 +110,4 @@ public partial class Transaction : Linkage<Proof>
     [Key(5)]
     [Link(Primary = true, Type = ChainType.Unordered)]
     public int Id { get; set; }
-}
+}*/

@@ -1,20 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using LP.T3CS;
-using Netsphere;
 using Netsphere.Crypto;
 
 namespace LP.NetServices;
 
-public class AuthorizedTerminalFactory
+public class AuthenticatedTerminalFactory
 {
-    public AuthorizedTerminalFactory(AuthorityVault authorityVault)
+    public AuthenticatedTerminalFactory(AuthorityVault authorityVault)
     {
         this.authorityVault = authorityVault;
     }
 
-    public async Task<AuthorizedTerminal<TService>?> Create<TService>(NetTerminal terminal, NetNode node, string authorityName, ILogger? logger)
-        where TService : IAuthenticationService
+    public async Task<AuthenticatedTerminal?> Create(NetTerminal terminal, NetNode node, string authorityName, ILogger? logger)
     {
         // Authority key
         var authority = await this.authorityVault.GetAuthority(authorityName);
@@ -24,7 +22,7 @@ public class AuthorizedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        // Terminal
+        // Connect
         var connection = await terminal.Connect(node);
         if (connection == null)
         {
@@ -32,46 +30,39 @@ public class AuthorizedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        // Service & authorize
-        var service = connection.GetService<TService>();
-        // var token = await clientTerminal.CreateToken(Token.Type.Authorize);
-        // authority.SignToken(token);
-        // var response = await service.Authorize(token).ResponseAsync;
-
         var context = connection.GetContext();
         if (!context.IsAuthenticated)
         {
             var token = new AuthenticationToken(connection.Salt);
             authority.SignToken(token);
             // authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
-            var response = await service.Authenticate(token).ResponseAsync;
-            if (!response.IsSuccess || response.Value != NetResult.Success)
+            var result = await connection.Authenticate(token).ConfigureAwait(false);
+            if (result != NetResult.Success)
             {
                 logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
                 return null; // AuthorizedTerminal<TService>.Invalid;
             }
 
-            context.IsAuthenticated = true;
+            context.AuthenticationToken = token;
         }
 
-        return new(connection, authority, service, logger);
+        return new(connection, context, authority, logger);
     }
 
     private AuthorityVault authorityVault;
 }
 
-public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
-    where TService : IAuthenticationService
+public class AuthenticatedTerminal : IDisposable, IEquatable<AuthenticatedTerminal>
 {
-    internal AuthorizedTerminal(ClientConnection terminal, Authority authority, TService service, ILogger? logger)
+    internal AuthenticatedTerminal(ClientConnection terminal, ClientConnectionContext context, Authority authority, ILogger? logger)
     {
         this.Connection = terminal;
+        this.Context = context;
         this.Authority = authority;
-        this.Service = service;
         this.logger = logger;
     }
 
-    public bool Equals(AuthorizedTerminal<TService>? other)
+    public bool Equals(AuthenticatedTerminal? other)
     {
         if (other == null)
         {
@@ -79,18 +70,17 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
         }
 
         return this.Connection == other.Connection &&
-            typeof(TService) == other.Service.GetType() &&
             this.Authority == other.Authority;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Connection, typeof(TService), this.Authority);
+        return HashCode.Combine(this.Connection, this.Authority);
     }
 
     public ClientConnection Connection { get; private set; }
 
-    public TService Service { get; private set; }
+    public ClientConnectionContext Context { get; private set; }
 
     public Authority Authority { get; private set; }
 
@@ -103,9 +93,9 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
     private bool disposed = false; // To detect redundant calls.
 
     /// <summary>
-    /// Finalizes an instance of the <see cref="AuthorizedTerminal{TService}"/> class.
+    /// Finalizes an instance of the <see cref="AuthenticatedTerminal"/> class.
     /// </summary>
-    ~AuthorizedTerminal()
+    ~AuthenticatedTerminal()
     {
         this.Dispose(false);
     }
@@ -132,7 +122,6 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
             }
 
             this.Connection = default!;
-            this.Service = default!;
             this.Authority = default!;
 
             // free native resources here if there are any.

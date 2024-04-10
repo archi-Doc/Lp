@@ -14,6 +14,7 @@ public static class ProofHelper
 [TinyhandUnion(0, typeof(EngageProof))]
 [TinyhandUnion(1, typeof(CreateCreditProof))]
 [TinyhandObject(ReservedKeys = 4)]
+// [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
     // public static readonly Proof Default = new();
@@ -40,6 +41,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
 
     [Key(2)]
+    [Link(Primary = true, Type = ChainType.Ordered)]
     public long ProofMics { get; protected set; }
 
     // [Key(3)]
