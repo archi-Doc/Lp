@@ -40,6 +40,42 @@ public sealed partial class Linkage<TProof> : IValidatable
     }
 }
 
+/// <summary>
+/// Immutable linkage object.
+/// </summary>
+[TinyhandObject(ReservedKeys = 4)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+public sealed partial class Linkage2 : IValidatable
+{
+    [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
+    public Linkage2(Proof proof)
+    {
+        this.Proof = proof;
+    }
+
+    private Linkage2()
+    {
+        this.Proof = default!;
+    }
+
+    [Key(0)]
+    public Proof Proof { get; private set; }
+
+    [Key(1, Level = 0)]
+    public byte[]? Signature0 { get; private set; }
+
+    [Key(2, Level = 1)]
+    public byte[]? Signature1 { get; private set; }
+
+    public long ProofMics
+        => this.Proof.ProofMics;
+
+    public bool Validate()
+    {
+        return this.Proof.Validate();
+    }
+}
+
 /*
 /// <summary>
 /// Immutable linkage object.
