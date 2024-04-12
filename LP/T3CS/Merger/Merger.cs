@@ -3,6 +3,7 @@
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
+using Netsphere.Crypto;
 
 namespace LP;
 
@@ -63,11 +64,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async NetTask<T3CSResult> CreateCredit(CreateCreditParams param)
+    public async NetTask<T3CSResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
     {
         if (!param.Proof.ValidateAndVerify())
         {
-            return T3CSResult.InvalidProof;
+            return new(T3CSResult.InvalidProof);
         }
 
         // Get LpData
@@ -79,7 +80,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {
             if (w is null)
             {
-                return T3CSResult.NoData;
+                return new(T3CSResult.NoData);
             }
 
             creditData = w.Commit();
@@ -87,21 +88,23 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (creditData is null)
         {
-            return T3CSResult.NoData;
+            return new(T3CSResult.NoData);
         }
+
+        var mergerPublicKey = SignaturePrivateKey.Create().ToPublicKey();
+        var credit = new Credit(param.Proof.PublicKey, SignaturePrivateKey.Create().ToPublicKey(), [mergerPublicKey,]);
 
         var borrowers = await creditData.Borrowers.Get();
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
         {
             if (w2 is null)
             {
-                return T3CSResult.AlreadyExists;
+                return new(T3CSResult.AlreadyExists, credit);
             }
 
             w2.Commit();
+            return new(credit);
         }
-
-        return T3CSResult.Success;
     }
 
     public MergerInformation Information { get; private set; }

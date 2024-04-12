@@ -91,7 +91,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         var originator = SignaturePrivateKey.Create();
         var pub = originator.ToPublicKey();
-        var value = new Value(1, pub, new[] { pub, });
+        var value = new Value(1, pub, pub, [pub]);
         this.userInterfaceService.WriteLine(value.GetHashCode().ToString());
 
         var bin = TinyhandSerializer.Serialize(value);

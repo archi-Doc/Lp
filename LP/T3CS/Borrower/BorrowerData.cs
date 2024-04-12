@@ -14,7 +14,7 @@ public sealed partial record BorrowerData // : ITinyhandCustomJournal
 
     [Key(0)]
     [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
-    private SignaturePublicKey borrowerKey;
+    public SignaturePublicKey BorrowerPublicKey { get; private set; }
 
     [Key(1)]
     public Proof.GoshujinClass Proofs { get; private set; } = default!;
