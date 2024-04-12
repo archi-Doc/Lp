@@ -5,7 +5,7 @@ namespace LP.T3CS;
 /// <summary>
 /// Immutable linkage object.
 /// </summary>
-[TinyhandObject(ReservedKeys = 4)]
+[TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public sealed partial class Linkage : IValidatable
 {// Linkage x Point

@@ -1,16 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace LP.T3CS;
 
 [TinyhandObject]
-public partial class EvolProof : Proof
+public partial class TransferProof : Proof
 {
-    public EvolProof()
+    public TransferProof()
     {
     }
 
     [Key(5)]
     public Point Point { get; private set; }
+
+    [Key(6)]
+    public SignaturePublicKey RecipientKey { get; protected set; }
 
     public bool ValidateAndVerify()
     {
