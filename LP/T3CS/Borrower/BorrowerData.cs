@@ -17,7 +17,10 @@ public sealed partial record BorrowerData // : ITinyhandCustomJournal
     private SignaturePublicKey borrowerKey;
 
     [Key(1)]
-    public Proof.GoshujinClass proofs { get; private set; } = default!;
+    public Proof.GoshujinClass Proofs { get; private set; } = default!;
+
+    [Key(2)]
+    public Linkage.GoshujinClass Linkages { get; private set; } = default!;
 
     /*
     void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
