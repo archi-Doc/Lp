@@ -10,6 +10,8 @@ namespace LP.T3CS;
 // [TinyhandUnion(0, typeof(EngageProof))]
 [TinyhandUnion(0, typeof(CreateCreditProof))]
 [TinyhandUnion(1, typeof(EvolProof))]
+[TinyhandUnion(2, typeof(TransferProof))]
+[TinyhandUnion(3, typeof(DimensionProof))]
 [TinyhandObject(ReservedKeys = 4)]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
