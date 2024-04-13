@@ -44,7 +44,23 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         this.logger.TryGet()?.Log(this.Information.ToString());
-        this.Check();
+
+        if (this.Information.MergerType == MergerInformation.Type.Single)
+        {// Single credit
+            this.Information.SingleCredit = Credit.Default;
+        }
+        else
+        {// Multi credit
+        }
+
+        if (this.Information.MergerPrivateKey is null)
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log("No merger private key");
+            Console.WriteLine($"Created signature key: {SignaturePrivateKey.Create().UnsafeToString()}");
+            return;//
+        }
+        
+        this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -108,15 +124,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public MergerInformation Information { get; private set; }
-
-    private void Check()
-    {
-        this.Information.SingleCredit = Credit.Default;
-
-        this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}");
-
-        // throw new PanicException();
-    }
 
     private ILogger logger;
     private LPBase lpBase;
