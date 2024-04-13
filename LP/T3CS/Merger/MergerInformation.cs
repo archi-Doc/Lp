@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using LP.T3CS;
+using Netsphere.Crypto;
 
 namespace LP;
 
@@ -11,6 +12,7 @@ public partial record MergerInformation : ITinyhandSerializationCallback
     public const string Filename = "Merger.tinyhand";
     public const string DefaultName = "Test merger";
     public const int DefaultMaxCredit = 1_000_000;
+    public const string MergerPrivateKeyName = "mergerprivatekey";
 
     public enum Type
     {
@@ -33,6 +35,9 @@ public partial record MergerInformation : ITinyhandSerializationCallback
     public Type MergerType { get; set; }
 
     [IgnoreMember]
+    public SignaturePrivateKey MergerPrivateKey { get; set; } = default!;
+
+    [IgnoreMember]
     public Credit? SingleCredit { get; set; }
 
     [Key("SingleCredit")]
@@ -52,7 +57,6 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         }
         else
         {
-            Span<char> destination = stackalloc char[this.SingleCredit.GetStringLength()];
             this.SingleCreditString = this.SingleCredit.ConvertToString();
         }
     }
@@ -66,6 +70,15 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         else if (this.MaxCredits < 0)
         {
             this.MaxCredits = DefaultMaxCredit;
+        }
+
+        if (!string.IsNullOrEmpty(this.MergerPrivateKeyString) &&
+            SignaturePrivateKey.TryParse(this.MergerPrivateKeyString, out var mergerPrivateKey))
+        {// 1st: Vault, 2nd: EnvironmentVariable
+            this.MergerPrivateKey = mergerPrivateKey;
+        }
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(MergerPrivateKeyName, out mergerPrivateKey))
+        {
         }
 
         if (!string.IsNullOrEmpty(this.SingleCreditString) &&

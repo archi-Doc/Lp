@@ -4,7 +4,7 @@ namespace LP.T3CS;
 
 [TinyhandObject]
 public partial class TemplateProof : Proof
-{
+{// Remember to add the TinyhandUnion attribute to the Proof class.
     public TemplateProof()
     {
     }

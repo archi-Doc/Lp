@@ -63,11 +63,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bt.Start();
         encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
         this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
-
-        var engageProof = new EngageProof(1);
-        engageProof.SignProof(privateKey, Mics.GetCorrected());
-        var result = engageProof.ValidateAndVerify(1);
-        this.userInterfaceService.WriteLine($"{result}");
     }
 
     private async Task Test0()
@@ -96,7 +91,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         var originator = SignaturePrivateKey.Create();
         var pub = originator.ToPublicKey();
-        var value = new Value(1, pub, new[] { pub, });
+        var value = new Value(1, pub, pub, [pub]);
         this.userInterfaceService.WriteLine(value.GetHashCode().ToString());
 
         var bin = TinyhandSerializer.Serialize(value);

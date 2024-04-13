@@ -4,29 +4,27 @@ using Netsphere.Crypto;
 
 namespace LP.T3CS;
 
-public static class ProofHelper
-{
-}
-
 /// <summary>
 /// Represents a proof object.
 /// </summary>
-[TinyhandUnion(0, typeof(EngageProof))]
-[TinyhandUnion(1, typeof(CreateCreditProof))]
+// [TinyhandUnion(0, typeof(EngageProof))]
+[TinyhandUnion(0, typeof(CreateCreditProof))]
+[TinyhandUnion(1, typeof(EvolProof))]
+[TinyhandUnion(2, typeof(TransferProof))]
+[TinyhandUnion(3, typeof(DimensionProof))]
+[TinyhandUnion(4, typeof(IdentificationProof))]
 [TinyhandObject(ReservedKeys = 4)]
-// [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
-    // public static readonly Proof Default = new();
-
-    public enum Kind
+    /*public enum Kind
     {
         CreateCredit,
         Engage,
         Transfer,
         Merge,
         CloseBorrower,
-    }
+    }*/
 
     public Proof()
     {

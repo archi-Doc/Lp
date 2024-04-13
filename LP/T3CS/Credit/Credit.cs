@@ -13,7 +13,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public const char CreditSymbol = '@';
     public const char StandardSymbol = ':';
     public const char MergerSymbol = '/';
-    public const char MergerSeparator = '+';
+    public const char MergerSeparatorSymbol = '+';
     public const int MaxMergers = 3;
     public static readonly Credit Default = new();
 
@@ -89,8 +89,21 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         span = span.Slice(w);
 
+        var isFirst = true;
         foreach (var x in this.mergers)
         {
+            if (isFirst)
+            {
+                isFirst = false;
+                span[0] = MergerSymbol;
+                span = span.Slice(1);
+            }
+            else
+            {
+                span[0] = MergerSeparatorSymbol;
+                span = span.Slice(1);
+            }
+
             if (!x.TryFormat(span, out w))
             {
                 return false;
@@ -109,9 +122,10 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     {
     }
 
-    public Credit(SignaturePublicKey originator, SignaturePublicKey[] mergers)
+    public Credit(SignaturePublicKey originator, SignaturePublicKey standard, SignaturePublicKey[] mergers)
     {
         this.Originator = originator;
+        this.Standard = standard;
         this.mergers = mergers;
 
         if (!this.Validate())
@@ -208,4 +222,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         return hash.ToHashCode();
     }
+
+    public override string ToString()
+        => this.ConvertToString();
 }

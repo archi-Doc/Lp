@@ -14,10 +14,13 @@ public sealed partial record BorrowerData // : ITinyhandCustomJournal
 
     [Key(0)]
     [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
-    private SignaturePublicKey borrowerKey;
+    public SignaturePublicKey BorrowerPublicKey { get; private set; }
 
-    // [Key(1)]
-    // public Proof.GoshujinClass proofs { get; private set; }
+    [Key(1)]
+    public Proof.GoshujinClass Proofs { get; private set; } = default!;
+
+    [Key(2)]
+    public Linkage.GoshujinClass Linkages { get; private set; } = default!;
 
     /*
     void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)

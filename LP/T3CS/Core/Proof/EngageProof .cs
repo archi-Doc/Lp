@@ -2,7 +2,7 @@
 
 namespace LP.T3CS;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial class EngageProof : Proof
 {
     public EngageProof()
@@ -40,4 +40,4 @@ public partial class EngageProof : Proof
 
         return TinyhandHelper.ValidateAndVerify(this);
     }
-}
+}*/
