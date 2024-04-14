@@ -34,7 +34,6 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 
     public Type MergerType { get; set; }
 
-    [IgnoreMember]
     public SignaturePrivateKey MergerPrivateKey { get; set; } = default!;
 
     [IgnoreMember]
@@ -72,14 +71,18 @@ public partial record MergerInformation : ITinyhandSerializationCallback
             this.MaxCredits = DefaultMaxCredit;
         }
 
-        if (!string.IsNullOrEmpty(this.MergerPrivateKeyString) &&
+        /*if (!string.IsNullOrEmpty(this.MergerPrivateKeyString) &&
             SignaturePrivateKey.TryParse(this.MergerPrivateKeyString, out var mergerPrivateKey))
         {// 1st: Vault, 2nd: EnvironmentVariable
             this.MergerPrivateKey = mergerPrivateKey;
-        }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(MergerPrivateKeyName, out mergerPrivateKey))
+        }*/
+        if (this.MergerPrivateKey is null &&
+            CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(MergerPrivateKeyName, out var mergerPrivateKey))
         {
+            this.MergerPrivateKey = mergerPrivateKey;
         }
+
+        this.MergerPrivateKey = SignaturePrivateKey.Create();
 
         if (!string.IsNullOrEmpty(this.SingleCreditString) &&
             Credit.TryParse(this.SingleCreditString, out var credit))

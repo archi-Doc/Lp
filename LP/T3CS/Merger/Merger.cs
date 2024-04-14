@@ -59,7 +59,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             Console.WriteLine($"Created signature key: {SignaturePrivateKey.Create().UnsafeToString()}");
             return;//
         }
-        
+
         this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}");
     }
 
