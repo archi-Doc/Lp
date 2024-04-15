@@ -40,7 +40,7 @@ public class LPBase
 
     public string DataDirectory { get; private set; } = default!;
 
-    public LPMode Mode { get; private set; }
+    public LPMode Mode { get; internal set; }
 
     public bool TestFeatures { get; private set; }
 
