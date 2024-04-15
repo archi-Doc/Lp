@@ -34,13 +34,11 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 
     public Type MergerType { get; set; }
 
+    [KeyAsName(ConvertToString = true)]
     public SignaturePrivateKey MergerPrivateKey { get; set; } = default!;
 
-    [IgnoreMember]
+    [KeyAsName(ConvertToString = true)]
     public Credit? SingleCredit { get; set; }
-
-    [Key("SingleCredit")]
-    public string SingleCreditString { get; set; } = string.Empty;
 
     [DefaultValue(DefaultMaxCredit)]
     public int MaxCredits { get; set; }
@@ -50,14 +48,6 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 
     public void OnBeforeSerialize()
     {
-        if (this.SingleCredit is null)
-        {
-            this.SingleCreditString = string.Empty;
-        }
-        else
-        {
-            this.SingleCreditString = this.SingleCredit.ConvertToString();
-        }
     }
 
     public void OnAfterDeserialize()
@@ -83,15 +73,5 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         }
 
         this.MergerPrivateKey = SignaturePrivateKey.Create();
-
-        if (!string.IsNullOrEmpty(this.SingleCreditString) &&
-            Credit.TryParse(this.SingleCreditString, out var credit))
-        {
-            this.SingleCredit = credit;
-        }
-        else
-        {
-            this.SingleCredit = null;
-        }
     }
 }

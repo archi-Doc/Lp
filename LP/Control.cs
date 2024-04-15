@@ -406,7 +406,7 @@ public class Control
             this.NetControl.Services.Register<IRemoteBenchHost>();
         }
 
-        this.MergerProvider = new();
+        this.MergerProvider = new();//
         if (this.LPBase.Mode == LPMode.Merger)
         {// Merger
             this.NetControl.Services.Register<IMergerService>();
