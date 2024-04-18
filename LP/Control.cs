@@ -653,7 +653,7 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.Get().RunAsync();
         _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
-        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
+        _ = this.BigMachine.LPControlMachine.Get(); // .RunAsync();
     }
 
     private async Task LoadKeyVault_NodeKey()

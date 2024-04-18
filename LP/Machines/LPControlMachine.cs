@@ -26,27 +26,27 @@ public partial class LPControlMachine : Machine
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        if (this.lifespan > 0)
+        if (this.lifespan >= 0)
         {
             this.lifespan -= IntervalInSeconds;
-            if (this.lifespan <= 0)
+            if (this.lifespan < 0)
             {
-                this.logger.TryGet(LogLevel.Warning)?.Log($"LP will be terminated as the lifespan has reached 0.");
+                this.logger.TryGet(LogLevel.Warning)?.Log($"LP is terminating because the specified time has elapsed.");
                 _ = this.control.TryTerminate(true);
                 return StateResult.Terminate;
             }
             else
             {
-                var x = (this.lifespan + IntervalInSeconds - 1) / IntervalInSeconds * IntervalInSeconds;
-                this.logger.TryGet(LogLevel.Information)?.Log($"LP will shut down in {x} seconds.");
+                var x = (this.lifespan + IntervalInSeconds) / IntervalInSeconds * IntervalInSeconds;
+                this.logger.TryGet(LogLevel.Information)?.Log($"LP will terminate in {x} seconds.");
             }
         }
 
         return StateResult.Continue;
     }
 
-    private ILogger logger;
-    private Control control;
-    private LPOptions options;
+    private readonly ILogger logger;
+    private readonly Control control;
+    private readonly LPOptions options;
     private long lifespan;
 }
