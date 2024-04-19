@@ -66,7 +66,7 @@ public class ConnectionTerminal
     {
         var systemCurrentMics = Mics.GetSystem();
 
-        (UnorderedMap<NetEndPoint, ClientConnection>.Node[] Nodes, int Max) client;
+        (UnorderedMap<NetEndpoint, ClientConnection>.Node[] Nodes, int Max) client;
         Queue<ClientConnection> clientToChange = new();
         lock (this.clientConnections.SyncObject)
         {
@@ -119,7 +119,7 @@ public class ConnectionTerminal
             }
         }
 
-        (UnorderedMap<NetEndPoint, ServerConnection>.Node[] Nodes, int Max) server;
+        (UnorderedMap<NetEndpoint, ServerConnection>.Node[] Nodes, int Max) server;
         Queue<ServerConnection> serverToChange = new();
         lock (this.serverConnections.SyncObject)
         {
@@ -206,7 +206,7 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new ConnectPacket(0, this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
+        var packet = new ConnectPacket(this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
@@ -268,7 +268,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
@@ -285,7 +285,7 @@ public class ConnectionTerminal
         return connection;
     }
 
-    internal bool PrepareServerSide(NetEndPoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
+    internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, p.ClientPublicKey);
@@ -478,7 +478,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
@@ -501,9 +501,9 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.DestinationEndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndPoint.Equals(endpoint))
             {
-                connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
+                connection.ProcessReceive(endpoint, toBeShared, currentSystemMics);
             }
         }
         else
@@ -515,9 +515,9 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.DestinationEndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndPoint.Equals(endpoint))
             {
-                connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
+                connection.ProcessReceive(endpoint, toBeShared, currentSystemMics);
             }
         }
     }

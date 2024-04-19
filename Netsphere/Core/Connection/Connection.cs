@@ -39,7 +39,7 @@ public abstract class Connection : IDisposable
         Disposed,
     }
 
-    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
+    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndpoint endPoint)
     {
         this.NetBase = connectionTerminal.NetBase;
         this.Logger = this.NetBase.UnitLogger.GetLogger(this.GetType());
@@ -77,7 +77,7 @@ public abstract class Connection : IDisposable
 
     public NetNode DestinationNode { get; }
 
-    public NetEndPoint DestinationEndPoint { get; }
+    public NetEndpoint DestinationEndPoint { get; }
 
     public ulong Salt
         => this.embryo.Salt;
@@ -705,7 +705,7 @@ Wait:
         return this.SendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// endPoint: Checked
         if (this.CurrentState == State.Disposed)
         {
@@ -780,7 +780,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Ack(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
@@ -840,7 +840,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FirstGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
@@ -967,7 +967,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FollowingGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FollowingGeneFrame.LengthExcludingFrameType)
@@ -1008,7 +1008,7 @@ Wait:
         transmission.ProcessReceive_Gene(dataControl, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
-    internal void ProcessReceive_Knock(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Knock(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// KnockResponseFrameCode
         if (toBeShared.Memory.Length < (KnockFrame.Length - 2))
         {
@@ -1037,7 +1037,7 @@ Wait:
         this.SendPriorityFrame(frame);
     }
 
-    internal void ProcessReceive_KnockResponse(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_KnockResponse(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// KnockResponseFrameCode
         var span = toBeShared.Span;
         if (span.Length < (KnockResponseFrame.Length - 2))

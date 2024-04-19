@@ -75,7 +75,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal.Clean();
     }
 
-    public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
+    public bool TryCreateEndPoint(in NetAddress address, out NetEndpoint endPoint)
         => this.NetStats.TryCreateEndPoint(in address, out endPoint);
 
     public void SetDeliveryFailureRatioForTest(double ratio)
@@ -240,7 +240,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         // RelayId
         span = span.Slice(4);
-        var relayId = BitConverter.ToUInt16(span);
+        var netEndpoint = new NetEndpoint(endPoint, BitConverter.ToUInt16(span));
 
         // Packet type
         span = span.Slice(2);
@@ -248,11 +248,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(endPoint, relayId, packetType, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene
-            this.ConnectionTerminal.ProcessReceive(endPoint, relayId, packetType, owner, currentSystemMics);
+            this.ConnectionTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
         }
     }
 }

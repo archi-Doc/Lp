@@ -14,7 +14,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
     [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
-    internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
+    internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndpoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
         this.context = this.NetBase.NewClientConnectionContext(this);

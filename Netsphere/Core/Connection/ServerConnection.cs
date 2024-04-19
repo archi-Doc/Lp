@@ -9,7 +9,7 @@ public sealed partial class ServerConnection : Connection, IEquatable<ServerConn
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
     [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
-    internal ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
+    internal ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndpoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
         this.context = this.NetBase.NewServerConnectionContext(this);

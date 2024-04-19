@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Crypto;
 using Netsphere.Crypto;
 
 namespace Netsphere;
@@ -38,7 +39,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable,
         this.PublicKey = publicKey;
     }
 
-    public NetNode(in NetEndPoint endPoint, NodePublicKey publicKey)
+    public NetNode(in NetEndpoint endPoint, NodePublicKey publicKey)
     {
         this.Address = new(endPoint.EndPoint.Address, (ushort)endPoint.EndPoint.Port);
         this.PublicKey = publicKey;

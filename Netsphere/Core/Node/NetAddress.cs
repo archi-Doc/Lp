@@ -239,7 +239,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateIpv4(ref NetEndPoint endPoint)
+    public bool TryCreateIpv4(ref NetEndpoint endPoint)
     {
         if (!this.IsValidIpv4)
         {
@@ -251,7 +251,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateIpv6(ref NetEndPoint endPoint)
+    public bool TryCreateIpv6(ref NetEndpoint endPoint)
     {
         if (!this.IsValidIpv6)
         {

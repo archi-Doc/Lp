@@ -99,7 +99,7 @@ public sealed partial class PacketTerminal
         return this.SendAndReceive<TSend, TReceive>(endPoint, packet);
     }
 
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet)
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -213,7 +213,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
         if (NetConstants.LogLowLevelNet)
         {
@@ -254,9 +254,9 @@ public sealed partial class PacketTerminal
                     Task.Run(() =>
                     {
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
-                        this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
+                        this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var owner);
-                        this.AddSendPacket(endPoint, owner, default);
+                        this.AddSendPacket(endpoint.EndPoint, owner, default);
                     });
 
                     return;
@@ -266,9 +266,9 @@ public sealed partial class PacketTerminal
             {// PingPacket
                 if (this.netBase.NetOptions.EnableEssential)
                 {
-                    var packet = new PingPacketResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netBase.NetOptions.NodeName);
+                    var packet = new PingPacketResponse(new(endpoint.EndPoint.Address, (ushort)endpoint.EndPoint.Port), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endPoint, owner, default);
+                    this.AddSendPacket(endpoint.EndPoint, owner, default);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -284,7 +284,7 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endPoint, owner, default);
+                    this.AddSendPacket(endpoint.EndPoint, owner, default);
                 }
 
                 return;

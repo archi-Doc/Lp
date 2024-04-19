@@ -3,9 +3,9 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public readonly partial record struct NetEndPoint
+public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
 {
-    public NetEndPoint(IPEndPoint endPoint, ushort relayId)
+    public NetEndpoint(IPEndPoint endPoint, ushort relayId)
     {
         this.EndPoint = endPoint;
         this.RelayId = relayId;
@@ -28,6 +28,13 @@ public readonly partial record struct NetEndPoint
 
     public bool EndPointEquals(IPEndPoint endPoint)
         => this.EndPoint.Equals(endPoint);
+
+    public bool Equals(NetEndpoint endPoint)
+        => this.RelayId == endPoint.RelayId &&
+        this.EndPoint.Equals(endPoint.EndPoint);
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.RelayId, this.EndPoint);
 
     public override string ToString()
         => this.EndPoint.ToString();

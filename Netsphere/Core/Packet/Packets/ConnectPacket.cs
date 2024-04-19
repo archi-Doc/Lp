@@ -13,9 +13,8 @@ internal partial class ConnectPacket : IPacket
     {
     }
 
-    public ConnectPacket(ushort engagement, NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
+    public ConnectPacket(NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
     {
-        this.Engagement = engagement;
         this.ClientPublicKey = clientPublicKey;
         this.ServerPublicKeyChecksum = serverPublicKeyChecksum;
         this.ClientSalt = RandomVault.Crypto.NextUInt64();
