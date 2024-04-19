@@ -4,7 +4,7 @@ namespace Netsphere.Packet;
 
 #pragma warning disable CS0649
 
-internal readonly struct RelayHeader
+public readonly struct RelayHeader
 {// 32 bytes, RelayHeaderCode
     public const int Length = 32;
 
