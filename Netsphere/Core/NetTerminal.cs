@@ -3,6 +3,7 @@
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
+using Netsphere.Relay;
 using Netsphere.Responder;
 using Netsphere.Stats;
 
@@ -27,6 +28,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
+        this.RelayTerminal = new(this);
         this.netCleaner = new(this);
 
         this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
@@ -63,6 +65,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal NetSender NetSender { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
+
+    public RelayTerminal RelayTerminal { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
