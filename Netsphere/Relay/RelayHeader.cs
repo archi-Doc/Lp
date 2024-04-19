@@ -1,0 +1,14 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+namespace Netsphere.Packet;
+
+#pragma warning disable CS0649
+
+internal readonly struct RelayHeader
+{// 32 bytes, RelayHeaderCode
+    public const int Length = 32;
+
+    public readonly uint Zero; // 4 bytes
+    public readonly uint Salt; // 4 bytes
+    public readonly NetAddress NetAddress; // 24 bytes
+}
