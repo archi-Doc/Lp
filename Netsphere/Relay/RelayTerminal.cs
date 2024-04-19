@@ -5,7 +5,7 @@ using Netsphere.Packet;
 namespace Netsphere.Relay;
 
 public class RelayTerminal
-{
+{//RelayCircuit
     public RelayTerminal(NetTerminal netTerminal, IRelayControl relayControl)
     {
         this.netTerminal = netTerminal;
