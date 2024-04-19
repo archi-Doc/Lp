@@ -5,8 +5,15 @@ namespace Netsphere.Relay;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public partial class RelayNode
 {
-    [Link(Name = "SerialLink", Type = ChainType.List)]
-    public RelayNode()
+    public RelayNode(ushort relayId, NetNode netNode)
     {
+        this.RelayId = relayId;
+        this.NetNode = netNode;
     }
+
+    [Link(Primary = true, Type = ChainType.Unordered)]
+    public ushort RelayId { get; private set; }
+
+    [Link(Type = ChainType.Unordered)]
+    public NetNode NetNode { get; private set; }
 }

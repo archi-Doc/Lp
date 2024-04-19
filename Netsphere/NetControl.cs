@@ -16,6 +16,7 @@ using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Misc;
 using Netsphere.Packet;
+using Netsphere.Relay;
 using Netsphere.Responder;
 using Netsphere.Stats;
 
@@ -38,6 +39,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
                 context.AddSingleton<ServiceControl>();
+                context.TryAddSingleton<IRelayControl, GabaGabaRelayControl>();//
 
                 // Stream logger
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(IdFileLogger<>), typeof(IdFileLoggerFactory<>)));
@@ -122,7 +124,7 @@ public class NetControl : UnitBase, IUnitPreparable
             => this.Context.SendTerminateAsync(new());
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal, IRelayControl relayControl)
         : base(context)
     {
         this.unitLogger = unitLogger;
@@ -142,7 +144,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetTerminal.Initialize(this.Responders, this.Services, false);
         if (this.NetBase.NetOptions.EnableAlternative)
         {// For debugging
-            this.Alternative = new(context, unitLogger, netBase, netStats);
+            this.Alternative = new(context, unitLogger, netBase, netStats, relayControl);
             this.Alternative.Initialize(this.Responders, this.Services, true);
         }
     }

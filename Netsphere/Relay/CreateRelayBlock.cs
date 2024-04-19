@@ -2,8 +2,8 @@
 
 namespace Netsphere.Packet;
 
-[TinyhandObject]
-public sealed partial class CreateRelayBlock
+[TinyhandObject(ReservedKeys = 2)]
+public partial class CreateRelayBlock
 {
     internal const ulong DataId = 0x4CB0F32920D365F6;
 
@@ -17,7 +17,7 @@ public sealed partial class CreateRelayBlock
     }
 
     [Key(0)]
-    public ushort RelayId { get; private set; }
+    public ushort RelayId { get; protected set; }
 
     // [Key(1)]
     // public Linkage? Linkage { get; private set; }

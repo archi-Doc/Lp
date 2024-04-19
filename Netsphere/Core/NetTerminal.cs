@@ -18,7 +18,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         Shutdown,
     }
 
-    public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats, IRelayControl relayControl)
         : base(unitContext)
     {
         this.UnitLogger = unitLogger;
@@ -28,7 +28,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
-        this.RelayTerminal = new(this);
+        this.RelayTerminal = new(this, relayControl);
+        this.RelayControl = relayControl;
         this.netCleaner = new(this);
 
         this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
@@ -69,6 +70,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
+
+    internal IRelayControl RelayControl { get; private set; }
 
     private readonly NetCleaner netCleaner;
 

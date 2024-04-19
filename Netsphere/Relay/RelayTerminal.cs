@@ -6,23 +6,29 @@ namespace Netsphere.Relay;
 
 public class RelayTerminal
 {
-    public RelayTerminal(NetTerminal netTerminal)
+    public RelayTerminal(NetTerminal netTerminal, IRelayControl relayControl)
     {
         this.netTerminal = netTerminal;
+        this.relayControl = relayControl;
     }
 
     #region FieldAndProperty
 
     private readonly NetTerminal netTerminal;
+    private readonly IRelayControl relayControl;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
     #endregion
 
     public async Task<RelayResult> AddRelay(NetNode netNode, CancellationToken cancellationToken = default)
     {
-        if (this.relayNodes.SerialLinkChain.Count >= NetConstants.MaxSerialRelays)
+        lock (this.relayNodes.SyncObject)
         {
-            return RelayResult.SerialRelayLimit;
+            var result = this.CanAddRelay(netNode);
+            if (result != RelayResult.Success)
+            {
+                return result;
+            }
         }
 
         using (var clientConnection = await this.netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false))
@@ -31,6 +37,8 @@ public class RelayTerminal
             {
                 return RelayResult.ConnectionFailure;
             }
+
+            // this.relayControl.CreateRelay(clientConnection);
 
             var block = new CreateRelayBlock((ushort)RandomVault.Pseudo.NextUInt32());
             var r = await clientConnection.SendAndReceive<CreateRelayBlock, CreateRelayResponse>(block, CreateRelayBlock.DataId, cancellationToken).ConfigureAwait(false);
@@ -45,6 +53,13 @@ public class RelayTerminal
 
             lock (this.relayNodes.SyncObject)
             {
+                var result = this.CanAddRelay(netNode);
+                if (result != RelayResult.Success)
+                {//Terminate
+                    return result;
+                }
+
+                this.relayNodes.Add(new(block.RelayId, netNode));
             }
 
             return RelayResult.Success;
@@ -53,5 +68,19 @@ public class RelayTerminal
 
     internal async Task Terminate(CancellationToken cancellationToken)
     {
+    }
+
+    private RelayResult CanAddRelay(NetNode netNode)
+    {
+        if (this.relayNodes.Count >= this.relayControl.MaxSerialRelays)
+        {
+            return RelayResult.SerialRelayLimit;
+        }
+        else if (this.relayNodes.NetNodeChain.ContainsKey(netNode))
+        {
+            return RelayResult.DuplicateNetNode;
+        }
+
+        return RelayResult.Success;
     }
 }
