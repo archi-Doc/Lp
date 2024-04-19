@@ -649,7 +649,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.DestinationEndPoint.EndPoint, owner, default);
+        this.PacketTerminal.AddSendPacket(this.DestinationEndPoint, owner, default);
     }
 
     internal void SendCloseFrame()
@@ -713,10 +713,9 @@ Wait:
         }
 
         // PacketHeaderCode
-        var span = toBeShared.Span;
-
+        var span = toBeShared.Span.Slice(2); // RelayId
         var salt = BitConverter.ToUInt32(span); // Salt
-        span = span.Slice(6);
+        span = span.Slice(4);
 
         var packetType = (PacketType)BitConverter.ToUInt16(span); // PacketType
         span = span.Slice(10);
@@ -1076,11 +1075,11 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // Engagement
-        span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -1112,11 +1111,11 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode
-        BitConverter.TryWriteBytes(span, salt); // Salt
-        span = span.Slice(sizeof(uint));
-
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, salt); // Salt
+        span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -1145,11 +1144,11 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // Engagement
-        span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));

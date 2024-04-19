@@ -110,7 +110,7 @@ public sealed partial class PacketTerminal
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var owner);
-        this.AddSendPacket(endPoint.EndPoint, owner, responseTcs);
+        this.AddSendPacket(endPoint, owner, responseTcs);
 
         if (NetConstants.LogLowLevelNet)
         {
@@ -198,7 +198,7 @@ public sealed partial class PacketTerminal
                 // PacketHeaderCode
                 var span = item.MemoryOwner.Span;
                 BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
-                BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
+                BitConverter.TryWriteBytes(span.Slice(2), (uint)XxHash3.Hash64(span.Slice(6)));
 
                 if (NetConstants.LogLowLevelNet)
                 {
@@ -222,7 +222,7 @@ public sealed partial class PacketTerminal
 
         // PacketHeaderCode
         var span = toBeShared.Span;
-        if (BitConverter.ToUInt32(span) != (uint)XxHash3.Hash64(span.Slice(4)))
+        if (BitConverter.ToUInt32(span.Slice(2)) != (uint)XxHash3.Hash64(span.Slice(6)))
         {// Checksum
             return;
         }
@@ -256,7 +256,7 @@ public sealed partial class PacketTerminal
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var owner);
-                        this.AddSendPacket(endpoint.EndPoint, owner, default);
+                        this.AddSendPacket(endpoint, owner, default);
                     });
 
                     return;
@@ -268,7 +268,7 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new PingPacketResponse(new(endpoint.EndPoint.Address, (ushort)endpoint.EndPoint.Port), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endpoint.EndPoint, owner, default);
+                    this.AddSendPacket(endpoint, owner, default);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -284,7 +284,7 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endpoint.EndPoint, owner, default);
+                    this.AddSendPacket(endpoint, owner, default);
                 }
 
                 return;
@@ -320,14 +320,17 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+    internal unsafe void AddSendPacket(NetEndpoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {
-        if (dataToBeMoved.Span.Length > NetConstants.MaxPacketLength)
+        var length = dataToBeMoved.Span.Length;
+        if (length < PacketHeader.Length ||
+            length > NetConstants.MaxPacketLength)
         {
             return;
         }
 
-        var item = new Item(endPoint, dataToBeMoved, responseTcs);
+        BitConverter.TryWriteBytes(dataToBeMoved.Span, endPoint.RelayId);
+        var item = new Item(endPoint.EndPoint, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
@@ -367,11 +370,11 @@ public sealed partial class PacketTerminal
         scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
         var span = header;
 
+        BitConverter.TryWriteBytes(span, (ushort)0); // RelayId
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, 0u); // Hash
         span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)0); // Engagement
-        span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)TPacket.PacketType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -388,7 +391,7 @@ public sealed partial class PacketTerminal
 
         // Get checksum
         span = array.AsSpan(0, arrayLength);
-        BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
+        BitConverter.TryWriteBytes(span.Slice(2), (uint)XxHash3.Hash64(span.Slice(6)));
 
         if (!isInitialBuffer)
         {

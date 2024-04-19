@@ -10,7 +10,7 @@ using Tinyhand;
 namespace Netsphere;
 
 /// <summary>
-/// Represents a basic node information (Address, Port, Engagement, Type).
+/// Represents a basic node information (Address, Port, RelayId, Type).
 /// </summary>
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
@@ -78,7 +78,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         }
 
         ushort.TryParse(port, out var nodePort);
-        // byte.TryParse(engagement, out var engage);
+        // byte.TryParse(relayId, out var relayId);
 
         node = new NodeAddress(ipAddress, nodePort, 0);
         return true;
@@ -88,15 +88,15 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     {
     }
 
-    public NodeAddress(IPAddress address, ushort port, ushort engagement = 0)
+    public NodeAddress(IPAddress address, ushort port, ushort relayId = 0)
     {
         this.Address = address;
         this.Port = port;
-        this.Engagement = engagement;
+        this.RelayId = relayId;
     }
 
     [Key(0)]
-    public ushort Engagement { get; protected set; }
+    public ushort RelayId { get; protected set; }
 
     [Key(1)]
     public ushort Port { get; protected set; }
@@ -133,12 +133,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             return false;
         }
 
-        return this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+        return this.RelayId == other.RelayId && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.RelayId, this.Port, this.Address);
     }
 
     public override string ToString()

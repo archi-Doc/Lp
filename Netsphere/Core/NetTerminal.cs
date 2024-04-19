@@ -233,17 +233,16 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
 
-        if (packetSize < PacketHeader.Length)
-        {// Check length
-            return;
+        // RelayId
+        var relayId = BitConverter.ToUInt16(span);
+        var netEndpoint = new NetEndpoint(endPoint, relayId);
+
+        if (relayId != 0)
+        {// Relay
         }
 
-        // RelayId
-        span = span.Slice(4);
-        var netEndpoint = new NetEndpoint(endPoint, BitConverter.ToUInt16(span));
-
         // Packet type
-        span = span.Slice(2);
+        span = span.Slice(6);
         var packetType = BitConverter.ToUInt16(span);
 
         if (packetType < 256)

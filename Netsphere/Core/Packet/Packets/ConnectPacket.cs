@@ -25,7 +25,7 @@ internal partial class ConnectPacket : IPacket
     public uint NetIdentification { get; set; }
 
     // [Key(1)]
-    // public ushort Engagement { get; set; }
+    // public ushort RelayId { get; set; }
 
     [Key(2)]
     public NodePublicKey ClientPublicKey { get; set; }
