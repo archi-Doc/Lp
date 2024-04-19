@@ -34,8 +34,9 @@ public class PlayCommand : ISimpleCommandAsync
             return;
         }
 
-        // netTerminal.PacketTerminal.MaxResendCount = 0;
-        using (var connection = await netTerminal.Connect(netNode))
+        var result = await netTerminal.RelayTerminal.AddRelay(netNode);
+
+        /*using (var connection = await netTerminal.Connect(netNode))
         {
             if (connection is not null)
             {
@@ -43,7 +44,7 @@ public class PlayCommand : ISimpleCommandAsync
                 var r = await connection.SendAndReceive<NetTestBlock, NetTestBlock>(testBlock);
                 Debug.Assert(testBlock.Equals(r.Value));
             }
-        }
+        }*/
     }
 
     private readonly NetControl netControl;

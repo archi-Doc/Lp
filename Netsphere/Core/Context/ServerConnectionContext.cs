@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Core;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 
 #pragma warning disable SA1202
 
@@ -179,6 +180,9 @@ public class ServerConnectionContext
             if (transmissionContext.DataId == ConnectionAgreement.AuthenticateId)
             {
                 this.Authenticate(transmissionContext);
+            }
+            else if (transmissionContext.DataId == CreateRelayBlock.DataId)
+            {//
             }
             else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {

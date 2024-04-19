@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Packet;
+
 namespace Netsphere.Relay;
 
 public class RelayTerminal
@@ -30,7 +32,16 @@ public class RelayTerminal
                 return RelayResult.ConnectionFailure;
             }
 
-
+            var block = new CreateRelayBlock((ushort)RandomVault.Pseudo.NextUInt32());
+            var r = await clientConnection.SendAndReceive<CreateRelayBlock, CreateRelayResponse>(block, CreateRelayBlock.DataId, cancellationToken).ConfigureAwait(false);
+            if (r.IsFailure || r.Value is null)
+            {
+                return RelayResult.ConnectionFailure;
+            }
+            else if (r.Value.Result != RelayResult.Success)
+            {
+                return r.Value.Result;
+            }
 
             lock (this.relayNodes.SyncObject)
             {

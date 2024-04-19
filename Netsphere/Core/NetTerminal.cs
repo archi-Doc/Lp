@@ -54,6 +54,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
+    public RelayTerminal RelayTerminal { get; private set; }
+
     public bool IsAlternative { get; private set; }
 
     public int Port { get; set; }
@@ -65,8 +67,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal NetSender NetSender { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
-
-    public RelayTerminal RelayTerminal { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 

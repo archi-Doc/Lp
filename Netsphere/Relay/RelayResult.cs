@@ -10,4 +10,5 @@ public enum RelayResult : byte
     Success,
     ConnectionFailure,
     SerialRelayLimit,
+    ParallelRelayLimit,
 }
