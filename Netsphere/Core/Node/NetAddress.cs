@@ -14,6 +14,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public const string AlternativeName = "alternative";
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
+    public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
     [Key(0)]
     public readonly ushort Engagement; // 2 bytes

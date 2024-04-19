@@ -162,6 +162,18 @@ public partial class Vault
         }
     }
 
+    public bool TryGetAndConvert<T>(string name, [MaybeNullWhen(false)] out T obj)
+        where T : IStringConvertible<T>
+    {
+        if (!this.TryGet(name, out var decrypted))
+        {
+            obj = default;
+            return false;
+        }
+
+        return T.TryParse(System.Text.Encoding.UTF8.GetString(decrypted), out obj);
+    }
+
     public string[] GetNames()
     {
         lock (this.syncObject)

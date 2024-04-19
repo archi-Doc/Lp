@@ -342,6 +342,9 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
 
+                // Merger
+                await control.CreateMerger(this.Context);
+
                 // Vault -> NodeKey
                 await control.LoadKeyVault_NodeKey();
 
@@ -400,18 +403,11 @@ public class Control
         this.Vault = vault;
         this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
+        this.MergerProvider = new();
 
         if (this.LPBase.TestFeatures)
         {
             this.NetControl.Services.Register<IRemoteBenchHost>();
-        }
-
-        this.MergerProvider = new();
-        if (this.LPBase.Mode == LPMode.Merger)
-        {// Merger
-            this.NetControl.Services.Register<IMergerService>();
-
-            this.MergerProvider.Create(context);
         }
 
         this.Core = core;
@@ -451,6 +447,30 @@ public class Control
     public AuthorityVault AuthorityVault { get; }
 
     private SimpleParser subcommandParser;
+
+    public async Task CreateMerger(UnitContext context)
+    {
+        if (this.LPBase.Mode == LPMode.Merger)
+        {// Merger private key
+            SignaturePrivateKey? mergerPrivateKey;
+
+            // 1st: Vault
+            if (!this.Vault.TryGetAndConvert<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
+            {
+                // 2nd: EnvironmentVariable
+                if (!CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, Merger.MergerPrivateKeyName);
+                    this.LPBase.Mode = LPMode.Automaton;
+                    return;
+                }
+            }
+
+            this.NetControl.Services.Register<IMergerService>();
+
+            this.MergerProvider.Create(context, mergerPrivateKey);
+        }
+    }
 
     public async Task LoadAsync(UnitContext context)
     {
@@ -633,7 +653,7 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.Get().RunAsync();
         _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
-        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
+        _ = this.BigMachine.LPControlMachine.Get(); // .RunAsync();
     }
 
     private async Task LoadKeyVault_NodeKey()

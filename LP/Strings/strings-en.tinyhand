@@ -102,3 +102,8 @@ AddStorageResult = {
     DuplicatePath = "Duplicate path is found"
     WriteError = "Could not write to the path"
 }
+
+Merger =
+{
+    NoPrivateKey = "Merger private key cannot be loaded. If this is a new Merger, please create a private key and specify it in the Vault or the environment variable '{0}'"
+}
