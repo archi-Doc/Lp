@@ -1079,7 +1079,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -1115,7 +1115,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -1148,7 +1148,7 @@ Wait:
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // Engagement
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType

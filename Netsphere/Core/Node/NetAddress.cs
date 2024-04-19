@@ -17,7 +17,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
     [Key(0)]
-    public readonly ushort Engagement; // 2 bytes
+    public readonly ushort RelayId; // 2 bytes
 
     [Key(1)]
     public readonly ushort Port; // 2 bytes
@@ -246,7 +246,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
-        endPoint = new(new(this.Address4, this.Port), this.Engagement);
+        endPoint = new(new(this.Address4, this.Port), this.RelayId);
         return true;
     }
 
@@ -262,7 +262,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
         BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
         var ipv6 = new IPAddress(ipv6byte);
-        endPoint = new(new(ipv6, this.Port), this.Engagement);
+        endPoint = new(new(ipv6, this.Port), this.RelayId);
         return true;
     }
 

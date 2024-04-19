@@ -238,9 +238,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        // Engagement
+        // RelayId
         span = span.Slice(4);
-        var engagement = BitConverter.ToUInt16(span);
+        var relayId = BitConverter.ToUInt16(span);
 
         // Packet type
         span = span.Slice(2);
@@ -248,11 +248,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(endPoint, packetType, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(endPoint, relayId, packetType, owner, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene
-            this.ConnectionTerminal.ProcessReceive(endPoint, packetType, owner, currentSystemMics);
+            this.ConnectionTerminal.ProcessReceive(endPoint, relayId, packetType, owner, currentSystemMics);
         }
     }
 }
