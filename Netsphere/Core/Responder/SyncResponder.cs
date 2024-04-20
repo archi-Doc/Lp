@@ -7,7 +7,7 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
     public ulong DataId
         => NetHelper.GetDataId<TSend, TReceive>();
 
-    public virtual TReceive? RespondSync(TSend value) => default;
+    public virtual NetResultValue<TReceive> RespondSync(TSend value) => default;
 
     public void Respond(TransmissionContext transmissionContext)
     {
@@ -20,16 +20,15 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
 
         transmissionContext.Return();
 
-        transmissionContext.Result = NetResult.UnknownError;
         this.ServerConnection = transmissionContext.ServerConnection;
-        var response = this.RespondSync(t);
-        if (response is not null)
+        var r = this.RespondSync(t);
+        if (r.Value is not null)
         {
-            transmissionContext.SendAndForget(response, this.DataId);
+            transmissionContext.SendAndForget(r.Value, this.DataId);
         }
         else
         {
-            transmissionContext.SendResultAndForget(transmissionContext.Result);
+            transmissionContext.SendResultAndForget(r.Result);
         }
     }
 

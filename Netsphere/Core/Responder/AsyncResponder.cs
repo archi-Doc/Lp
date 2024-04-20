@@ -7,7 +7,7 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
     public ulong DataId
         => NetHelper.GetDataId<TSend, TReceive>();
 
-    public virtual TReceive? RespondAsync(TSend value) => default;
+    public virtual NetResultValue<TReceive> RespondAsync(TSend value) => default;
 
     public void Respond(TransmissionContext transmissionContext)
     {
@@ -22,16 +22,15 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 
         _ = Task.Run(() =>
         {
-            var result = NetResult.UnknownError;
             this.ServerConnection = transmissionContext.ServerConnection;
-            (result, var response) = this.RespondAsync(t);
-            if (response is not null)
+            var r = this.RespondAsync(t);
+            if (r.Value is not null)
             {
-                transmissionContext.SendAndForget(response, this.DataId);
+                transmissionContext.SendAndForget(r.Value, this.DataId);
             }
             else
             {
-                transmissionContext.SendResultAndForget(result);
+                transmissionContext.SendResultAndForget(r.Result);
             }
         });
     }

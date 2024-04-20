@@ -16,18 +16,17 @@ public class CertificateRelayControl : IRelayControl
             this.relayControl = relayControl;
         }
 
-        public override CreateRelayResponse? RespondAsync(CertificateToken<CreateRelayBlock> token)
+        public override NetResultValue<CreateRelayResponse> RespondAsync(CertificateToken<CreateRelayBlock> token)
         {
             if (!token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
                 !this.ServerConnection.ValidateAndVerifyWithSalt(token))
             {
-                TransmissionContext.Current.Result = NetResult.NotAuthorized;
-                return null;
+                return new(NetResult.NotAuthorized);
             }
 
             var result = this.ServerConnection.NetTerminal.RelayAgent.Add(token.Target.RelayId, this.ServerConnection.DestinationNode);
             var response = new CreateRelayResponse(result);
-            return response;
+            return new(NetResult.Success, response);
         }
 
         private readonly CertificateRelayControl relayControl;
