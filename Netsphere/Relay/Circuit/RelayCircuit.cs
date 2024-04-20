@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.Intrinsics.Arm;
+using System.Runtime.InteropServices;
+using System;
+using System.Security.Cryptography;
 using Netsphere.Packet;
 
 namespace Netsphere.Relay;
@@ -52,8 +54,6 @@ public class RelayCircuit
                 return RelayResult.ConnectionFailure;
             }
 
-            // this.relayControl.CreateRelay(clientConnection);
-
             var r = await clientConnection.SendAndReceive<CreateRelayBlock, CreateRelayResponse>(new CreateRelayBlock(relayId), 0, cancellationToken).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
@@ -94,6 +94,33 @@ public class RelayCircuit
         }
     }
 
+    public void Encrypt(ref ByteArrayPool.MemoryOwner owner)
+    {
+        if (!this.IsRelayAvailable)
+        {
+            return;
+        }
+
+        var aes = this.GetAes();
+        if (aes.Length == 0)
+        {
+            this.ReturnAes(aes);
+            return;
+        }
+
+        var prev = owner;
+        prev = PacketPool.Rent();
+        for (var i = aes.Length - 1; i >= 0; i--)
+        {
+            Span<byte> iv = stackalloc byte[16];
+            this.embryo.Iv.CopyTo(iv);
+            BitConverter.TryWriteBytes(iv, salt);
+            var result = aes[i].TryEncryptCbc(owner.Span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
+        }
+
+        this.ReturnAes(aes);
+    }
+
     public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(int relayIndex, TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
     {
         var aesList = new Aes[0];
@@ -115,6 +142,10 @@ public class RelayCircuit
     }
 
     internal async Task Terminate(CancellationToken cancellationToken)
+    {
+    }
+
+    private Aes[] GetAes()
     {
     }
 

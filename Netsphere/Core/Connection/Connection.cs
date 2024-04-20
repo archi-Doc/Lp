@@ -1135,6 +1135,10 @@ Wait:
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        if (this.NetTerminal.RelayCircuit.IsRelayAvailable)
+        {//
+            this.NetTerminal.RelayCircuit.Encrypt(ref owner);
+        }
     }
 
     internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
