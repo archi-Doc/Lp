@@ -8,6 +8,7 @@ using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using Netsphere.Crypto;
+using Netsphere.Relay;
 using SimpleCommandLine;
 
 namespace Playground;
@@ -31,6 +32,8 @@ public class Program
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
+                context.AddSingleton<IRelayControl, CertificateRelayControl>();
+
                 // Command
                 context.AddCommand(typeof(PlayCommand));
 

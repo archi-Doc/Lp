@@ -10,6 +10,7 @@ using Netsphere;
 using Netsphere.Misc;
 using Netsphere.Packet;
 using SimpleCommandLine;
+using Netsphere.Crypto;
 
 namespace Playground;
 
@@ -26,7 +27,6 @@ public class PlayCommand : ISimpleCommandAsync
     {
         this.netControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
         this.netControl.Responders.Register(Netsphere.Responder.TestBlockResponder.Instance);
-        this.netControl.Responders.Register(Netsphere.Responder.CreateRelayBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.netControl.NetTerminal;
@@ -46,7 +46,9 @@ public class PlayCommand : ISimpleCommandAsync
             }
 
             var block = new CreateRelayBlock((ushort)RandomVault.Pseudo.NextUInt32());
-            var r = await clientConnection.SendAndReceive<CreateRelayBlock, CreateRelayResponse>(block).ConfigureAwait(false);
+            var token = new CertificateToken<CreateRelayBlock>(block);
+            clientConnection.SignWithSalt(token, SignaturePrivateKey.Create());
+            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 return;

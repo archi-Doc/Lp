@@ -21,6 +21,7 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 
         _ = Task.Run(() =>
         {
+            this.ServerConnection = transmissionContext.ServerConnection;
             var response = this.RespondAsync(t);
             if (response is not null)
             {
@@ -30,4 +31,6 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 
         return true;
     }
+
+    protected ServerConnection ServerConnection { get; private set; } = default!;
 }

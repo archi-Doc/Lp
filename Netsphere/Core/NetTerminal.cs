@@ -183,6 +183,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.Responders = responders;
         this.Services = services;
         this.IsAlternative = isAlternative;
+
+        this.RelayControl.ProcessRegisterResponder(this.Responders);
     }
 
     internal async Task<NetResponse> Wait(Task<NetResponse> task, TimeSpan timeout, CancellationToken cancellationToken)

@@ -39,7 +39,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
                 context.AddSingleton<ServiceControl>();
-                context.TryAddSingleton<IRelayControl, GabaGabaRelayControl>();//
+                context.TryAddSingleton<IRelayControl, NoRelayControl>();
 
                 // Stream logger
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(IdFileLogger<>), typeof(IdFileLoggerFactory<>)));
@@ -144,7 +144,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetTerminal.Initialize(this.Responders, this.Services, false);
         if (this.NetBase.NetOptions.EnableAlternative)
         {// For debugging
-            this.Alternative = new(context, unitLogger, netBase, netStats, relayControl);
+            this.Alternative = new(context, unitLogger, netBase, netStats, NoRelayControl.Instance);
             this.Alternative.Initialize(this.Responders, this.Services, true);
         }
     }
