@@ -11,7 +11,8 @@ public class CreateRelayBlockResponder : SyncResponder<CreateRelayBlock, CreateR
 
     public override CreateRelayResponse? RespondSync(CreateRelayBlock value)
     {
-        var response = new CreateRelayResponse(RelayResult.Success);
+        var result = this.ServerConnection.NetTerminal.RelayAgent.Add(this.ServerConnection.DestinationNode, value.RelayId);
+        var response = new CreateRelayResponse(result);
         return response;
     }
 }

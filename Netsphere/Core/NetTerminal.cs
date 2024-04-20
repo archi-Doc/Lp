@@ -30,6 +30,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.RelayCircuit = new(this, relayControl);
         this.RelayControl = relayControl;
+        this.RelayAgent = new(relayControl);
         this.netCleaner = new(this);
 
         this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
@@ -72,6 +73,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
     internal IRelayControl RelayControl { get; private set; }
+
+    public RelayAgent RelayAgent { get; private set; }
 
     private readonly NetCleaner netCleaner;
 

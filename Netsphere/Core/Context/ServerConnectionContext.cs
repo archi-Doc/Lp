@@ -181,10 +181,6 @@ public class ServerConnectionContext
             {
                 this.Authenticate(transmissionContext);
             }
-            else if (transmissionContext.DataId == CreateRelayBlock.DataId)
-            {
-                this.NetTerminal.RelayControl.ProcessCreateRelay(transmissionContext);
-            }
             else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
@@ -195,7 +191,11 @@ public class ServerConnectionContext
                 return;
             }
 
-            /*else if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
+            /*else if (transmissionContext.DataId == CreateRelayBlock.DataId)
+            {
+                this.NetTerminal.RelayControl.ProcessCreateRelay(transmissionContext);
+            }
+            else if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
             {
                 this.UpdateAgreement(transmissionContext);
             }

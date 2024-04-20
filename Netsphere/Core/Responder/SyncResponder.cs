@@ -19,6 +19,7 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
 
         transmissionContext.Return();
 
+        this.ServerConnection = transmissionContext.ServerConnection;
         var response = this.RespondSync(t);
         if (response == null)
         {
@@ -28,4 +29,6 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
         transmissionContext.SendAndForget(response, this.DataId);
         return true;
     }
+
+    protected ServerConnection ServerConnection { get; private set; } = default!;
 }

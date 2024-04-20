@@ -4,6 +4,9 @@ using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
+/// <summary>
+/// Represents a relay circuit in Netsphere.
+/// </summary>
 public class RelayCircuit
 {
     public RelayCircuit(NetTerminal netTerminal, IRelayControl relayControl)

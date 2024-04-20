@@ -12,4 +12,5 @@ public enum RelayResult : byte
     SerialRelayLimit,
     ParallelRelayLimit,
     DuplicateNetNode,
+    DuplicateRelayId,
 }
