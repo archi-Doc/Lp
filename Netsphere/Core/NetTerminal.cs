@@ -28,7 +28,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
-        this.RelayTerminal = new(this, relayControl);
+        this.RelayCircuit = new(this, relayControl);
         this.RelayControl = relayControl;
         this.netCleaner = new(this);
 
@@ -55,7 +55,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
-    public RelayTerminal RelayTerminal { get; private set; }
+    public RelayCircuit RelayCircuit { get; private set; }
 
     public bool IsAlternative { get; private set; }
 

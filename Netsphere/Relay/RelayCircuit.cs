@@ -4,15 +4,18 @@ using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
-public class RelayTerminal
+public class RelayCircuit
 {
-    public RelayTerminal(NetTerminal netTerminal, IRelayControl relayControl)
+    public RelayCircuit(NetTerminal netTerminal, IRelayControl relayControl)
     {
         this.netTerminal = netTerminal;
         this.relayControl = relayControl;
     }
 
     #region FieldAndProperty
+
+    public int NumberOfRelays
+        => this.relayNodes.Count;
 
     private readonly NetTerminal netTerminal;
     private readonly IRelayControl relayControl;
@@ -24,7 +27,7 @@ public class RelayTerminal
     {
         lock (this.relayNodes.SyncObject)
         {
-            var result = this.CanAddRelay(netNode);
+            var result = this.CanAddRelayInternal(netNode);
             if (result != RelayResult.Success)
             {
                 return result;
@@ -53,7 +56,7 @@ public class RelayTerminal
 
             lock (this.relayNodes.SyncObject)
             {
-                var result = this.CanAddRelay(netNode);
+                var result = this.CanAddRelayInternal(netNode);
                 if (result != RelayResult.Success)
                 {//Terminate
                     return result;
@@ -66,12 +69,35 @@ public class RelayTerminal
         }
     }
 
+    public RelayResult AddRelay(NetNode netNode, ushort relayId)
+    {
+        lock (this.relayNodes.SyncObject)
+        {
+            var result = this.CanAddRelayInternal(netNode);
+            if (result != RelayResult.Success)
+            {
+                return result;
+            }
+
+            this.relayNodes.Add(new(relayId, netNode));
+            return RelayResult.Success;
+        }
+    }
+
+    public RelayResult CanAddRelay(NetNode netNode)
+    {
+        lock (this.relayNodes.SyncObject)
+        {
+            return this.CanAddRelayInternal(netNode);
+        }
+    }
+
     internal async Task Terminate(CancellationToken cancellationToken)
     {
     }
 
-    private RelayResult CanAddRelay(NetNode netNode)
-    {
+    private RelayResult CanAddRelayInternal(NetNode netNode)
+    {// lock (this.relayNodes.SyncObject)
         if (this.relayNodes.Count >= this.relayControl.MaxSerialRelays)
         {
             return RelayResult.SerialRelayLimit;

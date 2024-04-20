@@ -3,9 +3,12 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using Arc.Crypto;
+using System.Threading;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Misc;
+using Netsphere.Packet;
 using SimpleCommandLine;
 
 namespace Playground;
@@ -23,6 +26,7 @@ public class PlayCommand : ISimpleCommandAsync
     {
         this.netControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
         this.netControl.Responders.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.netControl.Responders.Register(Netsphere.Responder.CreateRelayBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
         var netTerminal = this.netControl.NetTerminal;
@@ -34,17 +38,27 @@ public class PlayCommand : ISimpleCommandAsync
             return;
         }
 
-        var result = await netTerminal.RelayTerminal.AddRelay(netNode);
-
-        /*using (var connection = await netTerminal.Connect(netNode))
+        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false))
         {
-            if (connection is not null)
+            if (clientConnection is null)
             {
-                var testBlock = NetTestBlock.Create(1000);
-                var r = await connection.SendAndReceive<NetTestBlock, NetTestBlock>(testBlock);
-                Debug.Assert(testBlock.Equals(r.Value));
+                return;
             }
-        }*/
+
+            var block = new CreateRelayBlock((ushort)RandomVault.Pseudo.NextUInt32());
+            var r = await clientConnection.SendAndReceive<CreateRelayBlock, CreateRelayResponse>(block).ConfigureAwait(false);
+            if (r.IsFailure || r.Value is null)
+            {
+                return;
+            }
+            else if (r.Value.Result != RelayResult.Success)
+            {
+                return;
+            }
+
+            var result = netTerminal.RelayCircuit.AddRelay(netNode, block.RelayId);
+            Console.WriteLine(result.ToString());
+        }
     }
 
     private readonly NetControl netControl;
