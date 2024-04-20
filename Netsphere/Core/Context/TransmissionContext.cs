@@ -235,6 +235,10 @@ public sealed class TransmissionContext : ITransmissionContextInternal
         return (NetResult.Success, stream);
     }*/
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetResult SendResultAndForget(NetResult result)
+        => this.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+
     internal NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
     {
         if (!this.ServerConnection.IsActive)

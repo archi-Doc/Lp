@@ -9,27 +9,31 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 
     public virtual TReceive? RespondAsync(TSend value) => default;
 
-    public bool Respond(TransmissionContext transmissionContext)
+    public void Respond(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
-            return false;
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
+            return;
         }
 
         transmissionContext.Return();
 
         _ = Task.Run(() =>
         {
+            var result = NetResult.UnknownError;
             this.ServerConnection = transmissionContext.ServerConnection;
-            var response = this.RespondAsync(t);
+            (result, var response) = this.RespondAsync(t);
             if (response is not null)
             {
                 transmissionContext.SendAndForget(response, this.DataId);
             }
+            else
+            {
+                transmissionContext.SendResultAndForget(result);
+            }
         });
-
-        return true;
     }
 
     protected ServerConnection ServerConnection { get; private set; } = default!;

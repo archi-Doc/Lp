@@ -51,10 +51,12 @@ public class PlayCommand : ISimpleCommandAsync
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
+                Console.WriteLine(r.Result.ToString());
                 return;
             }
             else if (r.Value.Result != RelayResult.Success)
             {
+                Console.WriteLine(r.Result.ToString());
                 return;
             }
 

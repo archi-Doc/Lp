@@ -245,7 +245,7 @@ public class ServerConnectionContext
                     }
                     else
                     {// Failure
-                        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                        transmissionContext.SendResultAndForget(result);
                     }
                 }
             }
@@ -255,7 +255,7 @@ public class ServerConnectionContext
         }
         catch
         {// Unknown exception
-            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownError);
+            transmissionContext.SendResultAndForget(NetResult.UnknownError);
         }
         finally
         {

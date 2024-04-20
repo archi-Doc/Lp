@@ -11,12 +11,17 @@ public class CertificateRelayControl : IRelayControl
 {
     private class CreateRelayResponder : AsyncResponder<CertificateToken<CreateRelayBlock>, CreateRelayResponse>
     {
-        public static readonly INetResponder Instance = new CreateRelayResponder();
+        public CreateRelayResponder(CertificateRelayControl relayControl)
+        {
+            this.relayControl = relayControl;
+        }
 
         public override CreateRelayResponse? RespondAsync(CertificateToken<CreateRelayBlock> token)
         {
-            if (!this.ServerConnection.ValidateAndVerifyWithSalt(token))
+            if (!token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
+                !this.ServerConnection.ValidateAndVerifyWithSalt(token))
             {
+                TransmissionContext.Current.Result = NetResult.NotAuthorized;
                 return null;
             }
 
@@ -24,6 +29,8 @@ public class CertificateRelayControl : IRelayControl
             var response = new CreateRelayResponse(result);
             return response;
         }
+
+        private readonly CertificateRelayControl relayControl;
     }
 
     public int MaxSerialRelays
@@ -32,32 +39,15 @@ public class CertificateRelayControl : IRelayControl
     public int MaxParallelRelays
         => 100;
 
+    public SignaturePublicKey CertificatePublicKey { get; private set; }
+
     public void ProcessRegisterResponder(ResponderControl responders)
     {
-        responders.Register(CreateRelayResponder.Instance);
+        responders.Register(new CreateRelayResponder(this));
     }
 
-    /*public void ProcessCreateRelay(TransmissionContext transmissionContext)
+    public void SetCertificatePublicKey(SignaturePublicKey publicKey)
     {
-        if (!TinyhandSerializer.TryDeserialize<CertificateToken<CreateRelayBlock>>(transmissionContext.Owner.Memory.Span, out var token))
-        {
-            transmissionContext.Result = NetResult.DeserializationFailed;
-            transmissionContext.Return();
-            return;
-        }
-
-        transmissionContext.Return();
-
-        _ = Task.Run(() =>
-        {
-            if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))
-            {
-                transmissionContext.Result = NetResult.NotAuthorized;
-                return;
-            }
-
-            var response = new CreateRelayResponse(RelayResult.Success);
-            transmissionContext.SendAndForget(response);
-        });
-    }*/
+        this.CertificatePublicKey = publicKey;
+    }
 }

@@ -9,25 +9,28 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
 
     public virtual TReceive? RespondSync(TSend value) => default;
 
-    public bool Respond(TransmissionContext transmissionContext)
+    public void Respond(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
-            return false;
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
+            return;
         }
 
         transmissionContext.Return();
 
+        transmissionContext.Result = NetResult.UnknownError;
         this.ServerConnection = transmissionContext.ServerConnection;
         var response = this.RespondSync(t);
-        if (response == null)
+        if (response is not null)
         {
-            return false;
+            transmissionContext.SendAndForget(response, this.DataId);
         }
-
-        transmissionContext.SendAndForget(response, this.DataId);
-        return true;
+        else
+        {
+            transmissionContext.SendResultAndForget(transmissionContext.Result);
+        }
     }
 
     protected ServerConnection ServerConnection { get; private set; } = default!;

@@ -149,6 +149,12 @@ public abstract class SendStreamBase
                 return new(NetResult.Success, Unsafe.As<NetResult, TReceive>(ref netResult));
             }
 
+            if (response.Received.Memory.Length == 0)
+            {
+                response.Return();
+                return new((NetResult)response.DataId);
+            }
+
             if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
             {
                 response.Return();
