@@ -74,7 +74,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal IRelayControl RelayControl { get; private set; }
 
-    public RelayAgent RelayAgent { get; private set; }
+    internal RelayAgent RelayAgent { get; private set; }
 
     private readonly NetCleaner netCleaner;
 

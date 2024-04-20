@@ -28,7 +28,7 @@ public partial class RelayAgent
         this.relayControl = relayControl;
     }
 
-    public RelayResult Add(NetNode netNode, ushort relayId)
+    public RelayResult Add(ushort relayId, NetNode innerNode)
     {
         lock (this.items.SyncObject)
         {
@@ -42,7 +42,7 @@ public partial class RelayAgent
                 return RelayResult.DuplicateRelayId;
             }
 
-            this.items.Add(new(relayId, netNode));
+            this.items.Add(new(relayId, innerNode));
         }
 
         return RelayResult.Success;
