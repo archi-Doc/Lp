@@ -3,6 +3,7 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Relay;
 
@@ -138,6 +139,10 @@ public class RelayCircuit
         {
             return this.CanAddRelayInternal(relayId, netNode);
         }
+    }
+
+    internal bool TryEncrypt(int relayNumber, ref ByteArrayPool.MemoryOwner owner, out NetEndpoint relayEndpoint)
+    {
     }
 
     internal async Task Terminate(CancellationToken cancellationToken)

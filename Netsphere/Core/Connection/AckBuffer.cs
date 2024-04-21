@@ -3,6 +3,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
+using Netsphere.Relay;
 
 namespace Netsphere.Core;
 
@@ -23,12 +24,14 @@ internal partial class AckBuffer
     public AckBuffer(ConnectionTerminal connectionTerminal)
     {
         this.connectionTerminal = connectionTerminal;
+        this.relayCircuit = connectionTerminal.NetTerminal.RelayCircuit;
         this.logger = connectionTerminal.UnitLogger.GetLogger<AckBuffer>();
     }
 
     #region FieldAndProperty
 
     private readonly ConnectionTerminal connectionTerminal;
+    private readonly RelayCircuit relayCircuit;
     private readonly ILogger logger;
     private readonly Queue<int> burst = new();
 
@@ -260,7 +263,19 @@ NewPacket:
             }
 
             connection.CreateAckPacket(owner, spanLength, out var packetLength);
-            netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
+            if (connection.MinimumNumberOfRelays == 0)
+            {// No relay
+                netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
+            }
+            else
+            {//Relay
+                var memoryOwner = owner.ToMemoryOwner(0, packetLength);
+                if (this.relayCircuit.TryEncrypt(connection.MinimumNumberOfRelays, ref memoryOwner, out var relayEndpoint))
+                {
+                    netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, memoryOwner);
+                }
+            }
+
             // owner = owner.Return(); // Moved
             owner = default;
         }

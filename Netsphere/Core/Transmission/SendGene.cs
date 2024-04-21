@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using static Arc.Unit.ByteArrayPool;
 
 #pragma warning disable SA1401 // Fields should be private
 
@@ -95,7 +96,7 @@ internal partial class SendGene
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Send_NotThreadSafe(NetSender netSender, int additional/*, bool doNotTransmit = false*/)
+    public bool Send_NotThreadSafe(NetSender netSender, int additional)
     {
         if (!this.CanSend || !this.Packet.TryIncrement())
         {// MemoryOwner has been returned to the pool (Disposed).
@@ -110,9 +111,19 @@ internal partial class SendGene
             connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} {connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
         }
 
-        // if (!doNotTransmit)
+        if (connection.MinimumNumberOfRelays == 0)
         {
             netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, this.Packet); // Incremented
+        }
+        else
+        {
+            var owner = this.Packet;
+            if (!connection.NetTerminal.RelayCircuit.TryEncrypt(connection.MinimumNumberOfRelays, ref owner, out var relayEndpoint))
+            {
+                return false;
+            }
+
+            netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, owner); // Incremented
         }
 
         this.SentMics = currentMics;

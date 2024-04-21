@@ -112,7 +112,19 @@ public sealed partial class PacketTerminal
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var owner); // CreatePacketCode
-        this.AddSendPacket(endPoint, owner, responseTcs);
+        if (relayNumber == 0)
+        {// No relay
+            this.AddSendPacket(endPoint, owner, responseTcs);
+        }
+        else
+        {// Relay
+            if (!this.netTerminal.RelayCircuit.TryEncrypt(relayNumber, ref owner, out var relayEndpoint))
+            {
+                return (NetResult.InvalidRelay, default, 0);
+            }
+
+            this.AddSendPacket(relayEndpoint, owner, responseTcs);
+        }
 
         if (NetConstants.LogLowLevelNet)
         {
