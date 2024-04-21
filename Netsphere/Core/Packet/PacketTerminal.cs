@@ -69,25 +69,17 @@ public sealed partial class PacketTerminal
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
 
-    /*public void SendAndForget<TSend>(NetAddress address, TSend packet)
-        where TSend : IPacket, ITinyhandSerialize<TSend>
-    {
-        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
-        {
-            return;
-        }
-
-        this.SendAndForget(endPoint, packet);
-    }
-
-    public void SendAndForget<TSend>(NetEndPoint endPoint, TSend packet)
-        where TSend : IPacket, ITinyhandSerialize<TSend>
-    {
-        CreatePacket(0, packet, out var owner);
-        this.AddSendPacket(endPoint.EndPoint, owner, true, default);
-    }*/
-
-    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet)
+    /// <summary>
+    /// Sends a packet to a specified address and waits for a response.
+    /// </summary>
+    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <param name="address">The address to send the packet to.</param>
+    /// <param name="packet">The packet to send.</param>
+    /// <param name="targetNumberOfRelays">The target number of relays [default is -1].<br/>
+    /// -1: </param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet, int targetNumberOfRelays = -1)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -96,10 +88,10 @@ public sealed partial class PacketTerminal
             return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
         }
 
-        return this.SendAndReceive<TSend, TReceive>(endPoint, packet);
+        return this.SendAndReceive<TSend, TReceive>(endPoint, packet, targetNumberOfRelays);
     }
 
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet, int targetNumberOfRelays = -1)
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {

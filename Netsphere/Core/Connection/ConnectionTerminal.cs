@@ -174,7 +174,7 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> ConnectForRelay(NetNode node)
+    public async Task<ClientConnection?> ConnectForRelay(NetNode node, int targetNumberOfRelays)
     {
         if (!this.NetTerminal.IsActive)
         {
