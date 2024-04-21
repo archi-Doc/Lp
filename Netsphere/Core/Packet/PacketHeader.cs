@@ -5,7 +5,7 @@ namespace Netsphere.Packet;
 #pragma warning disable CS0649
 
 internal readonly struct PacketHeader
-{// 16 bytes, PacketHeaderCode
+{// 16 bytes, PacketHeaderCode, CreatePacketCode
     public const int Length = 16;
     public const int MaxPayloadLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length;
     public const int MaxFrameLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length - ProtectedPacket.Length - 16; // - Checksum - PKCS7 padding

@@ -210,6 +210,7 @@ public class ConnectionTerminal
             return default;
         }
 
+        newConnection.MinimumNumberOfRelays = targetNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
         lock (this.clientConnections.SyncObject)
         {// ConnectionStateCode
@@ -237,9 +238,13 @@ public class ConnectionTerminal
             minimumNumberOfRelays = this.NetTerminal.MinimumNumberOfRelays;
         }
 
+        var privateKey = this.NetTerminal.NodePrivateKey;
+        var publicKey = this.NetTerminal.NodePublicKey;
         if (minimumNumberOfRelays > 0)
         {
-            mode = Connection.ConnectMode.NoReuse;
+            mode = Connection.ConnectMode.NoReuse; // Do not reuse connections.
+            privateKey = NodePrivateKey.Create(); // Do not reuse node encryption keys.
+            publicKey = privateKey.ToPublicKey();
         }
 
         lock (this.clientConnections.SyncObject)
@@ -263,19 +268,20 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new ConnectPacket(this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, minimumNumberOfRelays).ConfigureAwait(false);
         if (t.Value is null)
         {
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, this.NetTerminal.NodePrivateKey, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
         }
 
+        newConnection.MinimumNumberOfRelays = minimumNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
         lock (this.clientConnections.SyncObject)
         {// ConnectionStateCode

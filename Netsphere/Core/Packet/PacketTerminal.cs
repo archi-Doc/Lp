@@ -81,19 +81,76 @@ public sealed partial class PacketTerminal
     /// 0: Relays are not necessary.<br/>
     /// 0 &gt;: The minimum number of relays.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet, int relayNumber = 0)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet, int relayNumber = 0)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
-        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
+        if (!this.netTerminal.IsActive)
         {
-            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
+            return (NetResult.Closed, default, 0);
         }
 
-        return this.SendAndReceive<TSend, TReceive>(endPoint, packet, relayNumber);
+        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
+        {
+            return (NetResult.NoNetwork, default, 0);
+        }
+
+        if (relayNumber > 0)
+        {// The minimum number of relays
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            {
+                return (NetResult.InvalidRelay, default, 0);
+            }
+        }
+        else if (relayNumber < 0)
+        {// The target relay
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            {
+                return (NetResult.InvalidRelay, default, 0);
+            }
+        }
+
+        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CreatePacket(0, packet, out var owner); // CreatePacketCode
+        this.AddSendPacket(endPoint, owner, responseTcs);
+
+        if (NetConstants.LogLowLevelNet)
+        {
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+        }
+
+        try
+        {
+            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.PacketTransmissionTimeout, default).ConfigureAwait(false);
+
+            if (response.IsFailure)
+            {
+                return new(response.Result, default, 0);
+            }
+
+            TReceive? receive;
+            try
+            {
+                receive = TinyhandSerializer.DeserializeObject<TReceive>(response.Received.Span.Slice(PacketHeader.Length));
+            }
+            catch
+            {
+                return new(NetResult.DeserializationFailed, default, 0);
+            }
+            finally
+            {
+                response.Return();
+            }
+
+            return (NetResult.Success, receive, (int)response.Additional);
+        }
+        catch
+        {
+            return (NetResult.Timeout, default, 0);
+        }
     }
 
-    /// <summary>
+    /*/// <summary>
     /// Sends a packet to a specified address and waits for a response.
     /// </summary>
     /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
@@ -152,7 +209,7 @@ public sealed partial class PacketTerminal
         {
             return (NetResult.Timeout, default, 0);
         }
-    }
+    }*/
 
     internal void ProcessSend(NetSender netSender)
     {
@@ -261,7 +318,7 @@ public sealed partial class PacketTerminal
                     {
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
-                        CreatePacket(packetId, packet, out var owner);
+                        CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
                         this.AddSendPacket(endpoint, owner, default);
                     });
 
@@ -273,7 +330,7 @@ public sealed partial class PacketTerminal
                 if (this.netBase.NetOptions.EnableEssential)
                 {
                     var packet = new PingPacketResponse(new(endpoint.EndPoint.Address, (ushort)endpoint.EndPoint.Port), this.netBase.NetOptions.NodeName);
-                    CreatePacket(packetId, packet, out var owner);
+                    CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
                     this.AddSendPacket(endpoint, owner, default);
 
                     if (NetConstants.LogLowLevelNet)
@@ -289,7 +346,7 @@ public sealed partial class PacketTerminal
                 if (this.netBase.AllowUnsafeConnection)
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
-                    CreatePacket(packetId, packet, out var owner);
+                    CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
                     this.AddSendPacket(endpoint, owner, default);
                 }
 

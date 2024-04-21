@@ -1077,7 +1077,7 @@ Wait:
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
-        // PacketHeaderCode
+        // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
@@ -1113,7 +1113,7 @@ Wait:
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
-        // PacketHeaderCode
+        // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
@@ -1150,7 +1150,7 @@ Wait:
         var span = owner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
-        // PacketHeaderCode
+        // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 

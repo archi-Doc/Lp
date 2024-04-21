@@ -35,6 +35,8 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public ServerConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.serverConnections.SyncObject)
 
+    public int MinimumNumberOfRelays { get; internal set; }
+
     public CancellationToken CancellationToken => this.cts.Token;
 
     private CancellationTokenSource cts = new();
