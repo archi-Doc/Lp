@@ -199,6 +199,9 @@ public abstract class Connection : IDisposable
 
     #endregion
 
+    internal Embryo UnsafeGetEmbryo()
+        => this.embryo;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateAckedNode(SendTransmission sendTransmission)
     {// lock (Connection.sendTransmissions.SyncObject)
@@ -1136,8 +1139,8 @@ Wait:
 
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
         if (this.NetTerminal.RelayCircuit.IsRelayAvailable)
-        {//
-            this.NetTerminal.RelayCircuit.Encrypt(ref owner);
+        {
+            //this.NetTerminal.RelayCircuit.Encrypt(ref owner);
         }
     }
 

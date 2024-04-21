@@ -1,14 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.InteropServices;
-using System;
 using System.Security.Cryptography;
 using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
 /// <summary>
-/// Represents a relay circuit in Netsphere.
+/// <see cref="RelayCircuit"/> is a primitive class for managing relay circuits.
 /// </summary>
 public class RelayCircuit
 {
@@ -35,7 +34,7 @@ public class RelayCircuit
 
     #endregion
 
-    public async Task<RelayResult> AddRelay(NetNode netNode, CancellationToken cancellationToken = default)
+    /*public async Task<RelayResult> AddRelay(NetNode netNode, CancellationToken cancellationToken = default)
     {
         var relayId = (ushort)RandomVault.Pseudo.NextUInt32();
         lock (this.relayNodes.SyncObject)
@@ -72,29 +71,29 @@ public class RelayCircuit
                     return result;
                 }
 
-                this.relayNodes.Add(new(relayId, netNode));
+                this.relayNodes.Add(new(relayId, clientConnection));
             }
 
             return RelayResult.Success;
         }
-    }
+    }*/
 
-    public RelayResult AddRelay(ushort relayId, NetNode netNode)
+    public RelayResult AddRelay(ushort relayId, ClientConnection clientConnection)
     {
         lock (this.relayNodes.SyncObject)
         {
-            var result = this.CanAddRelayInternal(relayId, netNode);
+            var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationNode);
             if (result != RelayResult.Success)
             {
                 return result;
             }
 
-            this.relayNodes.Add(new(relayId, netNode));
+            this.relayNodes.Add(new(relayId, clientConnection));
             return RelayResult.Success;
         }
     }
 
-    public void Encrypt(ref ByteArrayPool.MemoryOwner owner)
+    /*public void Encrypt(ref ByteArrayPool.MemoryOwner owner)
     {
         if (!this.IsRelayAvailable)
         {
@@ -131,7 +130,7 @@ public class RelayCircuit
                 return new(NetResult.InvalidData);
             }
         }
-    }
+    }*/
 
     public RelayResult CanAddRelay(ushort relayId, NetNode netNode)
     {
@@ -142,10 +141,6 @@ public class RelayCircuit
     }
 
     internal async Task Terminate(CancellationToken cancellationToken)
-    {
-    }
-
-    private Aes[] GetAes()
     {
     }
 

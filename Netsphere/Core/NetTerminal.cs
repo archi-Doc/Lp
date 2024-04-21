@@ -117,6 +117,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
         => this.ConnectionTerminal.Connect(destination, mode);
 
+    public Task<ClientConnection?> ConnectForRelay(NetNode destination)
+        => this.ConnectionTerminal.ConnectForRelay(destination);
+
     public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
         var netNode = await this.UnsafeGetNetNode(destination).ConfigureAwait(false);

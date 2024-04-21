@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using Arc.Collections;
 using Netsphere.Core;
 using Netsphere.Crypto;
@@ -173,6 +174,46 @@ public class ConnectionTerminal
         }
     }
 
+    public async Task<ClientConnection?> ConnectForRelay(NetNode node)
+    {
+        if (!this.NetTerminal.IsActive)
+        {
+            return null;
+        }
+
+        if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
+        {
+            return null;
+        }
+
+        // Create a new encryption key
+        var privateKey = NodePrivateKey.Create();
+        var publicKey = privateKey.ToPublicKey();
+
+        // Create a new connection
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet).ConfigureAwait(false);
+        if (t.Value is null)
+        {
+            return default;
+        }
+
+        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
+        if (newConnection is null)
+        {
+            return default;
+        }
+
+        newConnection.AddRtt(t.RttMics);
+        lock (this.clientConnections.SyncObject)
+        {// ConnectionStateCode
+            newConnection.IncrementOpenCount();
+            newConnection.Goshujin = this.clientConnections;
+        }
+
+        return newConnection;
+    }
+
     public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
         if (!this.NetTerminal.IsActive)
@@ -213,7 +254,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, this.NetTerminal.NodePrivateKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -268,10 +309,10 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, NodePrivateKey clientPrivateKey, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
+        var pair = new NodeKeyPair(clientPrivateKey, serverPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
