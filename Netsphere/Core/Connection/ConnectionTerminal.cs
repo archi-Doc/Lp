@@ -186,13 +186,19 @@ public class ConnectionTerminal
             return null;
         }
 
+        if (targetNumberOfRelays < 0 ||
+            this.NetTerminal.RelayCircuit.NumberOfRelays != targetNumberOfRelays)
+        {// When making a relay connection, it is necessary to specify the appropriate number of relays (the outermost layer of relays).
+            return null;
+        }
+
         // Create a new encryption key
         var privateKey = NodePrivateKey.Create();
         var publicKey = privateKey.ToPublicKey();
 
         // Create a new connection
         var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
-        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet).ConfigureAwait(false);
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, -targetNumberOfRelays).ConfigureAwait(false); // < 0: target
         if (t.Value is null)
         {
             return default;
@@ -214,7 +220,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
+    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
     {
         if (!this.NetTerminal.IsActive)
         {
@@ -224,6 +230,16 @@ public class ConnectionTerminal
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
         {
             return null;
+        }
+
+        if (minimumNumberOfRelays < this.NetTerminal.MinimumNumberOfRelays)
+        {
+            minimumNumberOfRelays = this.NetTerminal.MinimumNumberOfRelays;
+        }
+
+        if (minimumNumberOfRelays > 0)
+        {
+            mode = Connection.ConnectMode.NoReuse;
         }
 
         lock (this.clientConnections.SyncObject)
@@ -248,7 +264,7 @@ public class ConnectionTerminal
 
         // Create a new connection
         var packet = new ConnectPacket(this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
-        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet).ConfigureAwait(false);
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, minimumNumberOfRelays).ConfigureAwait(false);
         if (t.Value is null)
         {
             return default;

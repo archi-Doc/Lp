@@ -34,8 +34,8 @@ public static class NetConstants
     internal const int TerminateTerminalDelayMilliseconds = 100;
 
     internal static readonly long MicsPerRound = Mics.FromMilliseconds(1);
-    internal static readonly TimeSpan DefaultSendTimeout = TimeSpan.FromSeconds(4);
     internal static readonly TimeSpan CreateTransmissionDelay = TimeSpan.FromMilliseconds(100);
     internal static readonly TimeSpan WaitIntervalTimeSpan = TimeSpan.FromMilliseconds(WaitIntervalMilliseconds);
-    internal static readonly TimeSpan DefaultConnectTimeout = TimeSpan.FromSeconds(2);
+    internal static readonly TimeSpan DefaultPacketTransmissionTimeout = TimeSpan.FromSeconds(2);
+    internal static readonly TimeSpan DefaultTransmissionTimeout = TimeSpan.FromSeconds(4);
 }

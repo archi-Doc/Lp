@@ -33,7 +33,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.RelayAgent = new(relayControl);
         this.netCleaner = new(this);
 
-        this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
+        this.PacketTransmissionTimeout = NetConstants.DefaultPacketTransmissionTimeout;
     }
 
     #region FieldAndProperty
@@ -60,9 +60,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public bool IsAlternative { get; private set; }
 
-    public int Port { get; set; }
+    public int Port { get; private set; }
 
-    public TimeSpan ConnectTimeout { get; set; }
+    public int MinimumNumberOfRelays { get; private set; }
+
+    public TimeSpan PacketTransmissionTimeout { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -114,11 +116,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
-        => this.ConnectionTerminal.Connect(destination, mode);
+    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
+        => this.ConnectionTerminal.Connect(destination, mode, minimumNumberOfRelays);
 
-    public Task<ClientConnection?> ConnectForRelay(NetNode destination)
-        => this.ConnectionTerminal.ConnectForRelay(destination);
+    public Task<ClientConnection?> ConnectForRelay(NetNode destination, int targetNumberOfRelays)
+        => this.ConnectionTerminal.ConnectForRelay(destination, targetNumberOfRelays);
 
     public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {

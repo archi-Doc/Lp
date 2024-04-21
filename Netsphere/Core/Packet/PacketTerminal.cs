@@ -76,10 +76,12 @@ public sealed partial class PacketTerminal
     /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
     /// <param name="address">The address to send the packet to.</param>
     /// <param name="packet">The packet to send.</param>
-    /// <param name="targetNumberOfRelays">The target number of relays [default is -1].<br/>
-    /// -1: </param>
+    /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
+    /// &lt; 0: The target relay.<br/>
+    /// 0: Relays are not necessary.<br/>
+    /// 0 &gt;: The minimum number of relays.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet, int targetNumberOfRelays = -1)
+    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet, int relayNumber = 0)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -88,10 +90,22 @@ public sealed partial class PacketTerminal
             return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
         }
 
-        return this.SendAndReceive<TSend, TReceive>(endPoint, packet, targetNumberOfRelays);
+        return this.SendAndReceive<TSend, TReceive>(endPoint, packet, relayNumber);
     }
 
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet, int targetNumberOfRelays = -1)
+    /// <summary>
+    /// Sends a packet to a specified address and waits for a response.
+    /// </summary>
+    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <param name="endPoint">The endpoint to send the packet to.</param>
+    /// <param name="packet">The packet to send.</param>
+    /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
+    /// &lt; 0: The target relay.<br/>
+    /// 0: Relays are not necessary.<br/>
+    /// 0 &gt;: The minimum number of relays.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet, int relayNumber = 0)
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -111,7 +125,7 @@ public sealed partial class PacketTerminal
 
         try
         {
-            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.ConnectTimeout, default).ConfigureAwait(false);
+            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.PacketTransmissionTimeout, default).ConfigureAwait(false);
 
             if (response.IsFailure)
             {

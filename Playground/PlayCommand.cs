@@ -43,7 +43,7 @@ public class PlayCommand : ISimpleCommandAsync
             return;
         }
 
-        using (var clientConnection = await netTerminal.ConnectForRelay(netNode).ConfigureAwait(false))
+        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, 0).ConfigureAwait(false))
         {
             if (clientConnection is null)
             {

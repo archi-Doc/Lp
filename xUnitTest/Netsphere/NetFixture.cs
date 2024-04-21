@@ -49,7 +49,7 @@ public class NetFixture : IDisposable
         this.unit.Run(options, true).Wait();
 
         this.NetControl = this.unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-        this.NetControl.NetBase.DefaultSendTimeout = TimeSpan.FromSeconds(1_000);
+        this.NetControl.NetBase.DefaultTransmissionTimeout = TimeSpan.FromSeconds(1_000);
         this.NetControl.NetBase.DefaultAgreement.MaxBlockSize = MaxBlockSize;
         this.NetControl.NetBase.DefaultAgreement.MaxStreamLength = MaxStreamLength;
         this.NetControl.NetBase.DefaultAgreement.StreamBufferSize = StreamBufferSize;

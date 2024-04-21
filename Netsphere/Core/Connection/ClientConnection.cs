@@ -76,7 +76,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return NetResult.SerializationFailed;
         }
 
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -124,7 +124,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         NetResponse response;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -359,7 +359,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         NetResponse response;
         ReceiveTransmission? receiveTransmission;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -464,7 +464,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         NetResponse response;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, default).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -517,7 +517,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         NetResponse response;
         ReceiveTransmission? receiveTransmission;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, default).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
