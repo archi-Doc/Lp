@@ -16,7 +16,7 @@ using Netsphere.Packet;
 
 namespace Netsphere;
 
-// byte[32] Key, byte[16] Iv
+// byte[32 = EmbryoKeyLength] Key, byte[16 = EmbryoIvLength] Iv
 internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
@@ -24,6 +24,8 @@ public abstract class Connection : IDisposable
     private const int LowerRttLimit = 5_000; // 5ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
+    internal const int EmbryoKeyLength = 32;
+    internal const int EmbryoIvLength = 16;
 
     public enum ConnectMode
     {
@@ -201,8 +203,14 @@ public abstract class Connection : IDisposable
 
     #endregion
 
-    internal Embryo UnsafeGetEmbryo()
-        => this.embryo;
+    /*internal Embryo UnsafeGetEmbryo()
+        => this.embryo;*/
+
+    internal void UnsafeCopyKey(Span<byte> destination)
+        => this.embryo.Key.CopyTo(destination);
+
+    internal void UnsafeCopyIv(Span<byte> destination)
+        => this.embryo.Iv.CopyTo(destination);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateAckedNode(SendTransmission sendTransmission)

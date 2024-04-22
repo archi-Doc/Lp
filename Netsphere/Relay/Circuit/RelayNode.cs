@@ -10,7 +10,8 @@ public partial class RelayNode
     {
         this.RelayId = relayId;
         this.NetNode = clientConnection.DestinationNode;
-        this.embryo = clientConnection.UnsafeGetEmbryo();
+        clientConnection.UnsafeCopyKey(this.Key);
+        clientConnection.UnsafeCopyIv(this.Iv);
     }
 
     [Link(Type = ChainType.Unordered)]
@@ -19,5 +20,7 @@ public partial class RelayNode
     [Link(Type = ChainType.Unordered)]
     public NetNode NetNode { get; private set; }
 
-    private Embryo embryo;
+    internal byte[] Key { get; private set; } = new byte[Connection.EmbryoKeyLength];
+
+    internal byte[] Iv { get; private set; } = new byte[Connection.EmbryoIvLength];
 }

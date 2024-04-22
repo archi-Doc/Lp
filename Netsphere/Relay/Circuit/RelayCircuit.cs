@@ -30,6 +30,7 @@ public class RelayCircuit
     private readonly IRelayControl relayControl;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
+    private ImmutableRelayKey immutableRelayKey = new();
     private Aes[]? aes0 = null;
     private Aes[]? aes1 = null;
 
@@ -90,6 +91,7 @@ public class RelayCircuit
             }
 
             this.relayNodes.Add(new(relayId, clientConnection));
+            this.UpdateRelayKeyInternal();
             return RelayResult.Success;
         }
     }
@@ -147,6 +149,11 @@ public class RelayCircuit
 
     internal async Task Terminate(CancellationToken cancellationToken)
     {
+    }
+
+    private void UpdateRelayKeyInternal()
+    {// lock (this.relayNodes.SyncObject)
+        this.immutableRelayKey = new(this.relayNodes);
     }
 
     private RelayResult CanAddRelayInternal(ushort relayId, NetNode netNode)

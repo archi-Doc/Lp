@@ -394,11 +394,11 @@ public class ConnectionTerminal
         connectionId = BitConverter.ToUInt64(hash);
         hash = hash.Slice(sizeof(ulong));
 
-        var key = new byte[32];
-        hash.Slice(0, 32).CopyTo(key);
-        hash = hash.Slice(32);
+        var key = new byte[Connection.EmbryoKeyLength];
+        hash.Slice(0, Connection.EmbryoKeyLength).CopyTo(key);
+        hash = hash.Slice(Connection.EmbryoKeyLength);
 
-        var iv = new byte[16];
+        var iv = new byte[Connection.EmbryoIvLength];
         hash.CopyTo(iv);
         embryo = new(salt, key, iv);
     }
