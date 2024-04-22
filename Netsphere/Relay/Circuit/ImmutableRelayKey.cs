@@ -7,6 +7,7 @@ namespace Netsphere.Relay;
 
 internal class ImmutableRelayKey
 {
+    private const int AesPoolSize = 32;
     private static readonly ObjectPool<Aes> AesPool = new(
         () =>
         {
@@ -16,7 +17,7 @@ internal class ImmutableRelayKey
             // aes.Padding = PaddingMode.PKCS7;
             return aes;
         },
-        32);
+        AesPoolSize);
 
     public ImmutableRelayKey()
     {
@@ -74,7 +75,26 @@ internal class ImmutableRelayKey
         }
 
         var aes = AesPool.Get();
+        var packet = PacketPool.Rent();
 
+        // RelayId
+        var span = packet.ByteArray.AsSpan();
+        BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId);
+        var span2 = span.Slice(sizeof(ushort));
+
+        // RelayHeader
+        BitConverter.TryWriteBytes(span2, 0u); // Zero
+        span2 = span2.Slice(sizeof(uint));
+        var salt = RandomVault.Crypto.NextUInt32();
+        BitConverter.TryWriteBytes(span2, salt); // Salt
+        span2 = span2.Slice(sizeof(uint));
+
+        for (var i = 0; i < relayNumber; i++)
+        {
+
+        }
+
+        packet.Return();
         AesPool.Return(aes);
 
 Error:
