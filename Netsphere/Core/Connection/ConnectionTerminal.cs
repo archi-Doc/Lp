@@ -71,7 +71,7 @@ public class ConnectionTerminal
         Queue<ClientConnection> clientToChange = new();
         lock (this.clientConnections.SyncObject)
         {
-            client = this.clientConnections.DestinationEndPointChain.UnsafeGetNodes();
+            client = this.clientConnections.DestinationEndpointChain.UnsafeGetNodes();
         }
 
         for (var i = 0; i < client.Max; i++)
@@ -124,7 +124,7 @@ public class ConnectionTerminal
         Queue<ServerConnection> serverToChange = new();
         lock (this.serverConnections.SyncObject)
         {
-            server = this.serverConnections.DestinationEndPointChain.UnsafeGetNodes();
+            server = this.serverConnections.DestinationEndpointChain.UnsafeGetNodes();
         }
 
         for (var i = 0; i < server.Max; i++)
@@ -252,7 +252,7 @@ public class ConnectionTerminal
             if (mode == Connection.ConnectMode.ReuseIfAvailable ||
                 mode == Connection.ConnectMode.ReuseOnly)
             {// Attempts to reuse a connection that has already been connected or disconnected (but not yet disposed).
-                if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
+                if (this.clientConnections.DestinationEndpointChain.TryGetValue(endPoint, out var connection))
                 {
                     Debug.Assert(!connection.IsDisposed);
                     connection.IncrementOpenCount();
@@ -564,7 +564,7 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.DestinationEndPoint.Equals(endpoint))
+                connection.DestinationEndpoint.Equals(endpoint))
             {
                 connection.ProcessReceive(endpoint, toBeShared, currentSystemMics);
             }
@@ -578,7 +578,7 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.DestinationEndPoint.Equals(endpoint))
+                connection.DestinationEndpoint.Equals(endpoint))
             {
                 connection.ProcessReceive(endpoint, toBeShared, currentSystemMics);
             }

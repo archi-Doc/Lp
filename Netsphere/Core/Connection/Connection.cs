@@ -49,7 +49,7 @@ public abstract class Connection : IDisposable
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.DestinationNode = node;
-        this.DestinationEndPoint = endPoint;
+        this.DestinationEndpoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
         this.minimumRtt = 0;
@@ -57,7 +57,7 @@ public abstract class Connection : IDisposable
     }
 
     public Connection(Connection connection)
-        : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndPoint)
+        : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndpoint)
     {
         this.Initialize(connection.Agreement, connection.embryo);
     }
@@ -79,7 +79,7 @@ public abstract class Connection : IDisposable
 
     public NetNode DestinationNode { get; }
 
-    public NetEndpoint DestinationEndPoint { get; }
+    public NetEndpoint DestinationEndpoint { get; }
 
     public int MinimumNumberOfRelays { get; internal set; }
 
@@ -662,7 +662,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.DestinationEndPoint, owner, default);
+        this.PacketTerminal.AddSendPacket(this.DestinationEndpoint, owner, default);
     }
 
     internal void SendCloseFrame()
@@ -1088,7 +1088,7 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, salt); // Salt
@@ -1124,7 +1124,7 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, salt); // Salt
@@ -1157,7 +1157,7 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.RelayId); // RelayId
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, salt); // Salt
@@ -1195,7 +1195,7 @@ Wait:
             connectionString = "Client";
         }
 
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndpoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     protected void ReleaseResource()

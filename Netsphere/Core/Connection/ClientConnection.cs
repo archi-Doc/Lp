@@ -13,7 +13,7 @@ namespace Netsphere;
 public sealed partial class ClientConnection : Connection, IClientConnectionInternal, IEquatable<ClientConnection>, IComparable<ClientConnection>
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
+    [Link(Type = ChainType.Unordered, Name = "DestinationEndpoint", TargetMember = "DestinationEndpoint")]
     internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndpoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {

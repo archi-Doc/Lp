@@ -28,7 +28,7 @@ internal class ImmutableRelayKey
         if (relayNodes.Count > 0)
         {
             var chain = relayNodes.ListChain;
-            this.FirstRelay = new(chain[0].NetNode, chain[0].RelayId);
+            this.FirstEndpoint = chain[0].Endpoint;
 
             this.KeyArray = new byte[relayNodes.Count][];
             this.IvArray = new byte[relayNodes.Count][];
@@ -42,7 +42,7 @@ internal class ImmutableRelayKey
 
     public int NumberOfRelays { get; }
 
-    public NetEndpoint FirstRelay { get; }
+    public NetEndpoint FirstEndpoint { get; }
 
     public byte[][] KeyArray { get; } = [];
 

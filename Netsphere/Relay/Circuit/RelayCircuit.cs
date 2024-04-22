@@ -30,9 +30,7 @@ public class RelayCircuit
     private readonly IRelayControl relayControl;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
-    private ImmutableRelayKey immutableRelayKey = new();
-    private Aes[]? aes0 = null;
-    private Aes[]? aes1 = null;
+    private ImmutableRelayKey relayKey = new();
 
     #endregion
 
@@ -84,14 +82,14 @@ public class RelayCircuit
     {
         lock (this.relayNodes.SyncObject)
         {
-            var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationNode);
+            var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationEndpoint);
             if (result != RelayResult.Success)
             {
                 return result;
             }
 
             this.relayNodes.Add(new(relayId, clientConnection));
-            this.UpdateRelayKeyInternal();
+            this.ReplaceRelayKeyInternal();
             return RelayResult.Success;
         }
     }
@@ -135,30 +133,33 @@ public class RelayCircuit
         }
     }*/
 
-    public RelayResult CanAddRelay(ushort relayId, NetNode netNode)
+    public RelayResult CanAddRelay(ushort relayId, NetEndpoint endpoint)
     {
         lock (this.relayNodes.SyncObject)
         {
-            return this.CanAddRelayInternal(relayId, netNode);
+            return this.CanAddRelayInternal(relayId, endpoint);
         }
     }
 
     internal bool TryEncrypt(int relayNumber, ref ByteArrayPool.MemoryOwner owner, out NetEndpoint relayEndpoint)
-    {
-    }
+        => this.relayKey.TryEncrypt(relayNumber, ref owner, out relayEndpoint);
 
     internal async Task Terminate(CancellationToken cancellationToken)
     {
     }
 
-    private void UpdateRelayKeyInternal()
+    private void ReplaceRelayKeyInternal()
     {// lock (this.relayNodes.SyncObject)
-        this.immutableRelayKey = new(this.relayNodes);
+        this.relayKey = new(this.relayNodes);
     }
 
-    private RelayResult CanAddRelayInternal(ushort relayId, NetNode netNode)
+    private RelayResult CanAddRelayInternal(ushort relayId, NetEndpoint endpoint)
     {// lock (this.relayNodes.SyncObject)
-        if (this.relayNodes.Count >= this.relayControl.MaxSerialRelays)
+        if (endpoint.RelayId != 0)
+        {
+            return RelayResult.InvalidEndpoint;
+        }
+        else if (this.relayNodes.Count >= this.relayControl.MaxSerialRelays)
         {
             return RelayResult.SerialRelayLimit;
         }
@@ -166,9 +167,9 @@ public class RelayCircuit
         {
             return RelayResult.DuplicateRelayId;
         }
-        else if (this.relayNodes.NetNodeChain.ContainsKey(netNode))
+        else if (this.relayNodes.EndpointChain.ContainsKey(endpoint))
         {
-            return RelayResult.DuplicateNetNode;
+            return RelayResult.DuplicateEndpoint;
         }
 
         return RelayResult.Success;

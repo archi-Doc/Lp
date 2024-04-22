@@ -47,7 +47,7 @@ internal partial class AckBuffer
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBurst {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}");
+            this.logger.TryGet(LogLevel.Debug)?.Log($"AckBurst {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndpoint.ToString()} {receiveTransmission.TransmissionId}");
         }
 
         lock (this.syncObject)
@@ -77,7 +77,7 @@ internal partial class AckBuffer
     {
         if (NetConstants.LogLowLevelNet)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} AckBlock to {connection.DestinationEndPoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
+            this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} AckBlock to {connection.DestinationEndpoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
         }
 
         lock (this.syncObject)
@@ -259,13 +259,13 @@ NewPacket:
         {
             if (NetConstants.LogLowLevelNet)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} to {connection.DestinationEndPoint.ToString()}, SendAck");
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} to {connection.DestinationEndpoint.ToString()}, SendAck");
             }
 
             connection.CreateAckPacket(owner, spanLength, out var packetLength);
             if (connection.MinimumNumberOfRelays == 0)
             {// No relay
-                netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
+                netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
             }
             else
             {//Relay
