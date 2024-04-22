@@ -246,7 +246,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
-        endPoint = new(new(this.Address4, this.Port), this.RelayId);
+        endPoint = new(this.RelayId, new(this.Address4, this.Port));
         return true;
     }
 
@@ -262,7 +262,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
         BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
         var ipv6 = new IPAddress(ipv6byte);
-        endPoint = new(new(ipv6, this.Port), this.RelayId);
+        endPoint = new(this.RelayId, new(ipv6, this.Port));
         return true;
     }
 

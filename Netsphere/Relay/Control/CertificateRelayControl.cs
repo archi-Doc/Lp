@@ -38,6 +38,9 @@ public class CertificateRelayControl : IRelayControl
     public int MaxParallelRelays
         => 100;
 
+    public long RelayDurationMics
+        => Mics.FromMinutes(10);
+
     public SignaturePublicKey CertificatePublicKey { get; private set; }
 
     public void ProcessRegisterResponder(ResponderControl responders)

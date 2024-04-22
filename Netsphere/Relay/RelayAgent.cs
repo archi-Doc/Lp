@@ -48,6 +48,12 @@ public partial class RelayAgent
         return RelayResult.Success;
     }
 
+    public bool ProcessReceive(NetEndpoint endpoint, out ByteArrayPool.MemoryOwner decrypted)
+    {
+        decrypted = default;
+        return false;
+    }
+
     private readonly IRelayControl relayControl;
     private readonly Item.GoshujinClass items = new();
 }

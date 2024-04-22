@@ -1,20 +1,29 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.InteropServices;
+
 namespace Netsphere.Relay;
 
 #pragma warning disable CS0649
 
+[StructLayout(LayoutKind.Explicit)]
 public readonly struct RelayHeader
 {// 32 bytes, RelayHeaderCode
     public const int Length = 32;
 
-    public RelayHeader(uint salt, NetAddress netAddress)
+    public RelayHeader(uint salt, byte paddingLength, NetAddress netAddress)
     {
         this.Salt = salt;
+        this.PaddingLength = paddingLength;
         this.NetAddress = netAddress;
     }
 
+    [FieldOffset(0)]
     public readonly uint Zero; // 4 bytes
+    [FieldOffset(4)]
     public readonly uint Salt; // 4 bytes
+    [FieldOffset(7)]
+    public readonly byte PaddingLength; // 4 bytes
+    [FieldOffset(8)]
     public readonly NetAddress NetAddress; // 24 bytes
 }

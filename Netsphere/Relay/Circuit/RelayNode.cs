@@ -10,7 +10,7 @@ public partial class RelayNode
     public RelayNode(ushort relayId, ClientConnection clientConnection)
     {
         // this.RelayId = relayId;
-        this.Endpoint = new(clientConnection.DestinationEndpoint.EndPoint, relayId);
+        this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
         clientConnection.UnsafeCopyKey(this.Key);
         clientConnection.UnsafeCopyIv(this.Iv);
     }

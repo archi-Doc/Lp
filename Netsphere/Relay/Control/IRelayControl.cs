@@ -10,6 +10,8 @@ public interface IRelayControl
 
     int MaxParallelRelays { get; }
 
+    long RelayDurationMics { get; }
+
     void ProcessRegisterResponder(ResponderControl responders)
     {
     }

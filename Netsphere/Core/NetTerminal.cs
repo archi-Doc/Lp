@@ -252,10 +252,17 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         // RelayId
         var relayId = BitConverter.ToUInt16(span);
-        var netEndpoint = new NetEndpoint(endPoint, relayId);
+        var netEndpoint = new NetEndpoint(relayId, endPoint);
 
         if (relayId != 0)
         {// Relay
+            if (!this.RelayAgent.ProcessReceive(netEndpoint, out var decrypted))
+            {
+                return;
+            }
+
+            owner = decrypted;
+            span = decrypted.Span;
         }
 
         // Packet type

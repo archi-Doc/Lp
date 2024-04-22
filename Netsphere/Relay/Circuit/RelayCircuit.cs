@@ -26,14 +26,14 @@ public class RelayCircuit
     public int NumberOfRelays
         => this.relayNodes.Count;
 
-    internal ImmutableRelayKey RelayKey
+    internal RelayKey RelayKey
         => this.relayKey;
 
     private readonly NetTerminal netTerminal;
     private readonly IRelayControl relayControl;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
-    private ImmutableRelayKey relayKey = new();
+    private RelayKey relayKey = new();
 
     #endregion
 

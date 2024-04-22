@@ -5,17 +5,17 @@ namespace Netsphere;
 [TinyhandObject]
 public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
 {
-    public NetEndpoint(IPEndPoint endPoint, ushort relayId)
+    public NetEndpoint(ushort relayId, IPEndPoint endPoint)
     {
         this.EndPoint = endPoint;
         this.RelayId = relayId;
     }
 
     [Key(0)]
-    public readonly IPEndPoint EndPoint;
+    public readonly ushort RelayId;
 
     [Key(1)]
-    public readonly ushort RelayId;
+    public readonly IPEndPoint EndPoint;
 
     public bool IsValid
         => this.EndPoint is not null;
@@ -37,5 +37,5 @@ public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
         => HashCode.Combine(this.RelayId, this.EndPoint);
 
     public override string ToString()
-        => this.EndPoint.ToString();
+        => $"[{this.RelayId.ToString()}]{this.EndPoint.ToString()}";
 }

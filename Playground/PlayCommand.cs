@@ -43,7 +43,7 @@ public class PlayCommand : ISimpleCommandAsync
             return;
         }
 
-        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, 0).ConfigureAwait(false))
+        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, 0))
         {
             if (clientConnection is null)
             {
@@ -68,6 +68,14 @@ public class PlayCommand : ISimpleCommandAsync
             var result = netTerminal.RelayCircuit.AddRelay(block.RelayId, clientConnection);
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
+        }
+
+        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
+        {
+            if (clientConnection is null)
+            {
+                return;
+            }
         }
     }
 
