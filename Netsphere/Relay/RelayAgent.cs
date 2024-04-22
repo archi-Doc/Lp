@@ -10,17 +10,46 @@ public partial class RelayAgent
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private partial class Item
     {
-        public Item(ushort relayId, NetNode netNode)
+        public enum Type
         {
-            this.RelayId = relayId;
-            this.NetNode = netNode;
+            Inner,
+            Outer,
         }
 
-        [Link(Primary = true, Type = ChainType.Unordered)]
+        public Item(ushort relayId, NetEndpoint endpoint)
+        {
+            this.RelayId = relayId;
+            this.Endpoint = endpoint;
+        }
+
+        public Type RelayType { get; private set; }
+
+        [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
         public ushort RelayId { get; private set; }
 
-        [Link(Type = ChainType.Unordered)]
-        public NetNode NetNode { get; private set; }
+        [Link(Type = ChainType.Unordered, AddValue = false)]
+        public NetEndpoint Endpoint { get; private set; }
+
+        public long RelayPoint { get; private set; }
+
+        public bool DecrementAndCheck()
+        {
+
+            if (this.RelayPoint-- <= 0)
+            {
+                this.Clean();
+                this.Goshujin = null;
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public void Clean()
+        {
+        }
     }
 
     public RelayAgent(IRelayControl relayControl)
@@ -28,7 +57,7 @@ public partial class RelayAgent
         this.relayControl = relayControl;
     }
 
-    public RelayResult Add(ushort relayId, NetNode innerNode)
+    public RelayResult Add(ushort relayId, NetEndpoint innerEndpoint)
     {
         lock (this.items.SyncObject)
         {
@@ -42,7 +71,7 @@ public partial class RelayAgent
                 return RelayResult.DuplicateRelayId;
             }
 
-            this.items.Add(new(relayId, innerNode));
+            this.items.Add(new(relayId, innerEndpoint));
         }
 
         return RelayResult.Success;
@@ -50,6 +79,53 @@ public partial class RelayAgent
 
     public bool ProcessReceive(NetEndpoint endpoint, out ByteArrayPool.MemoryOwner decrypted)
     {
+        Item? item;
+        lock (this.items.SyncObject)
+        {
+            item = this.items.RelayIdChain.FindFirst(endpoint.RelayId);
+            if (item is null || !item.DecrementAndCheck())
+            {
+                goto Exit;
+            }
+        }
+
+        if (item.RelayType == Item.Type.Inner)
+        {// Inner -> Outer
+            if (item.Endpoint.EndPointEquals(endpoint))
+            {// Inner -> Outer: Decrypt
+                // Decrypted
+                if (netAddress == NetAddress.Relay)
+                {
+                }
+                else
+                {
+                }
+
+                // Not decrypted
+                if (item.OuterRelay is { } outerRelay)
+                {
+
+                }
+                else
+                {// Discard
+                }
+            }
+            else if (item.OuterRelay is null)
+            {// Unknown
+
+            }
+        }
+        else
+        {// Outer -> Inner
+            if (item.Endpoint.EndPointEquals(endpoint))
+            {// Outer -> Inner: Encrypt
+            }
+            else
+            {// Unknown: Discard
+            }
+        }
+
+Exit:
         decrypted = default;
         return false;
     }

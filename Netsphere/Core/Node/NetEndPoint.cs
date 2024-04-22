@@ -26,8 +26,8 @@ public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
     public bool IsPrivateOrLocalLoopbackAddress()
         => new NetAddress(this.EndPoint.Address, (ushort)this.EndPoint.Port).IsPrivateOrLocalLoopbackAddress();
 
-    public bool EndPointEquals(IPEndPoint endPoint)
-        => this.EndPoint.Equals(endPoint);
+    public bool EndPointEquals(NetEndpoint endPoint)
+        => this.EndPoint.Equals(endPoint.EndPoint);
 
     public bool Equals(NetEndpoint endPoint)
         => this.RelayId == endPoint.RelayId &&
