@@ -23,4 +23,11 @@ public partial class RelayNode
     internal byte[] Key { get; private set; } = new byte[Connection.EmbryoKeyLength];
 
     internal byte[] Iv { get; private set; } = new byte[Connection.EmbryoIvLength];
+
+    public void Clear()
+    {
+        this.RelayId = 0;
+        this.Key.AsSpan().Fill(0);
+        this.Iv.AsSpan().Fill(0);
+    }
 }
