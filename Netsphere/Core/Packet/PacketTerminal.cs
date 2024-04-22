@@ -117,13 +117,15 @@ public sealed partial class PacketTerminal
             this.AddSendPacket(endPoint, owner, responseTcs);
         }
         else
-        {// Relay
-            if (!this.netTerminal.RelayCircuit.TryEncrypt(relayNumber, ref owner, out var relayEndpoint))
+        {//Relay
+            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, address, owner.Span, out var encrypted, out var relayEndpoint))
             {
+                owner.Return();
                 return (NetResult.InvalidRelay, default, 0);
             }
 
-            this.AddSendPacket(relayEndpoint, owner, responseTcs);
+            owner.Return();
+            this.AddSendPacket(relayEndpoint, encrypted, responseTcs);
         }
 
         if (NetConstants.LogLowLevelNet)

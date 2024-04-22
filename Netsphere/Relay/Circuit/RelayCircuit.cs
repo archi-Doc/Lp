@@ -26,6 +26,9 @@ public class RelayCircuit
     public int NumberOfRelays
         => this.relayNodes.Count;
 
+    internal ImmutableRelayKey RelayKey
+        => this.relayKey;
+
     private readonly NetTerminal netTerminal;
     private readonly IRelayControl relayControl;
     private readonly RelayNode.GoshujinClass relayNodes = new();
@@ -141,8 +144,8 @@ public class RelayCircuit
         }
     }
 
-    internal bool TryEncrypt(int relayNumber, ref ByteArrayPool.MemoryOwner owner, out NetEndpoint relayEndpoint)
-        => this.relayKey.TryEncrypt(relayNumber, ref owner, out relayEndpoint);
+    /*internal bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
+        => this.relayKey.TryEncrypt(relayNumber, destination, content, out encrypted, out relayEndpoint);*/
 
     internal async Task Terminate(CancellationToken cancellationToken)
     {

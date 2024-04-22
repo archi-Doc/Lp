@@ -8,6 +8,12 @@ public readonly struct RelayHeader
 {// 32 bytes, RelayHeaderCode
     public const int Length = 32;
 
+    public RelayHeader(uint salt, NetAddress netAddress)
+    {
+        this.Salt = salt;
+        this.NetAddress = netAddress;
+    }
+
     public readonly uint Zero; // 4 bytes
     public readonly uint Salt; // 4 bytes
     public readonly NetAddress NetAddress; // 24 bytes

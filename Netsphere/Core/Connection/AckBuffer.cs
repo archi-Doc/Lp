@@ -269,11 +269,12 @@ NewPacket:
             }
             else
             {//Relay
-                var memoryOwner = owner.ToMemoryOwner(0, packetLength);
-                if (this.relayCircuit.TryEncrypt(connection.MinimumNumberOfRelays, ref memoryOwner, out var relayEndpoint))
+                if (this.relayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, owner.ToMemoryOwner(0, packetLength).Span, out var encrypted, out var relayEndpoint))
                 {
-                    netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, memoryOwner);
+                    netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, encrypted);
                 }
+
+                owner.Return();
             }
 
             // owner = owner.Return(); // Moved

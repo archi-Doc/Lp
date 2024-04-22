@@ -112,18 +112,19 @@ internal partial class SendGene
         }
 
         if (connection.MinimumNumberOfRelays == 0)
-        {
-            netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, this.Packet); // Incremented
+        {// No relay
+            netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, this.Packet);
         }
         else
-        {
-            var owner = this.Packet;
-            if (!connection.NetTerminal.RelayCircuit.TryEncrypt(connection.MinimumNumberOfRelays, ref owner, out var relayEndpoint))
+        {//Relay
+            if (!connection.NetTerminal.RelayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, this.Packet.Span, out var encrypted, out var relayEndpoint))
             {
+                this.Packet.Return();
                 return false;
             }
 
-            netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, owner); // Incremented
+            this.Packet.Return();
+            netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, encrypted);
         }
 
         this.SentMics = currentMics;

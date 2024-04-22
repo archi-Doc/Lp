@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
 
@@ -49,8 +51,10 @@ internal class ImmutableRelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryEncrypt(int relayNumber, ref ByteArrayPool.MemoryOwner owner, out NetEndpoint relayEndpoint)
+    public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
     {
+        Debug.Assert(content.Length <= (NetConstants.MaxPacketLength - NetConstants.RelayLength));
+
         if (relayNumber < 0)
         {// The target relay
             if (this.NumberOfRelays < -relayNumber)
@@ -75,29 +79,36 @@ internal class ImmutableRelayKey
         }
 
         var aes = AesPool.Get();
-        var packet = PacketPool.Rent();
+        encrypted = PacketPool.Rent().ToMemoryOwner();
 
         // RelayId
-        var span = packet.ByteArray.AsSpan();
+        var span = encrypted.Span;
         BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId);
-        var span2 = span.Slice(sizeof(ushort));
+        span = span.Slice(sizeof(ushort));
 
         // RelayHeader
-        BitConverter.TryWriteBytes(span2, 0u); // Zero
-        span2 = span2.Slice(sizeof(uint));
-        var salt = RandomVault.Crypto.NextUInt32();
-        BitConverter.TryWriteBytes(span2, salt); // Salt
-        span2 = span2.Slice(sizeof(uint));
+        var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), destination);
+        MemoryMarshal.Write(span, relayHeader);
+        span = span.Slice(RelayHeader.Length);
 
+        // Content
+        content.CopyTo(span);
+
+        var headerAndContentLength = RelayHeader.Length + content.Length;
+        var headerAndContent = encrypted.Span.Slice(sizeof(ushort), headerAndContentLength);
         for (var i = 0; i < relayNumber; i++)
         {
-
+            aes.Key = this.KeyArray[i];
+            aes.TryEncryptCbc(headerAndContent, this.IvArray[i], headerAndContent, out _, PaddingMode.None);//PaddingMode
         }
 
-        packet.Return();
         AesPool.Return(aes);
 
+        relayEndpoint = this.FirstEndpoint;
+        return true;
+
 Error:
+        encrypted = default;
         relayEndpoint = default;
         return false;
     }
