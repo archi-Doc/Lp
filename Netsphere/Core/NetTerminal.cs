@@ -30,7 +30,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.RelayCircuit = new(this, relayControl);
         this.RelayControl = relayControl;
-        this.RelayAgent = new(relayControl);
+        this.RelayAgent = new(relayControl, this);
         this.netCleaner = new(this);
 
         this.PacketTransmissionTimeout = NetConstants.DefaultPacketTransmissionTimeout;
@@ -63,6 +63,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public int Port { get; private set; }
 
     public int MinimumNumberOfRelays { get; private set; }
+
+    public bool Flag;
 
     public TimeSpan PacketTransmissionTimeout { get; private set; }
 
@@ -246,6 +248,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
     {
+        if (this.Flag)
+        {
+
+        }
         var currentSystemMics = Mics.FastSystem;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
@@ -256,7 +262,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (relayId != 0)
         {// Relay
-            if (!this.RelayAgent.ProcessReceive(netEndpoint, out var decrypted))
+            if (!this.RelayAgent.ProcessReceive(netEndpoint, owner, out var decrypted))
             {
                 return;
             }

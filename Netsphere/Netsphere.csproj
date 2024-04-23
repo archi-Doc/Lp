@@ -32,7 +32,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.20.0" />
     <PackageReference Include="Tinyhand" Version="0.73.2" />
-    <PackageReference Include="ValueLink" Version="0.55.0" />
+    <PackageReference Include="ValueLink" Version="0.56.1" />
   </ItemGroup>
 
   <ItemGroup>
