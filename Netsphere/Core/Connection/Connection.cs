@@ -765,7 +765,7 @@ Wait:
                 return;
             }
 
-            var owner = toBeShared.Slice(RelayHeader.RelayIdLength + PacketHeader.Length + ProtectedPacket.Length, written - 2);
+            var owner = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
             {// Close 2

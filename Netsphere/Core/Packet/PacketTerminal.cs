@@ -284,7 +284,7 @@ public sealed partial class PacketTerminal
         }
 
         var packetType = (PacketType)packetUInt16;
-        var packetId = BitConverter.ToUInt64(span.Slice(8));
+        var packetId = BitConverter.ToUInt64(span.Slice(10));
 
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
@@ -367,10 +367,10 @@ public sealed partial class PacketTerminal
                     this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} received {toBeShared.Span.Length} {packetType.ToString()}");
                 }
 
-                if (item.ResponseTcs is not null)
+                if (item.ResponseTcs is { } tcs)
                 {
                     var elapsedMics = currentSystemMics > item.SentMics ? (int)(currentSystemMics - item.SentMics) : 0;
-                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, elapsedMics, toBeShared.IncrementAndShare()));
+                    tcs.SetResult(new(NetResult.Success, 0, elapsedMics, toBeShared.IncrementAndShare()));
                 }
             }
         }
