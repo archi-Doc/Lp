@@ -58,7 +58,8 @@ internal class RelayKey
         Debug.Assert(content[0] == 0);
         Debug.Assert(content[1] == 0);
 
-        content = content.Slice(2); // Remove relay id
+        // PacketHeaderCode
+        content = content.Slice(4); // Remove relay id
         var multiple = content.Length & ~15;
         var paddingLength = content.Length == multiple ? 0 : (multiple + 16 - content.Length);
 
@@ -90,7 +91,7 @@ internal class RelayKey
 
         // RelayId
         var span = encrypted.Span;
-        BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId);
+        BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId); // Source
         span = span.Slice(sizeof(ushort));
 
         // RelayHeader

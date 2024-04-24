@@ -544,7 +544,7 @@ public class ConnectionTerminal
     internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
         // PacketHeaderCode
-        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
+        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(10)); // ConnectionId
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");

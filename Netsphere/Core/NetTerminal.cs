@@ -252,11 +252,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
 
-        // RelayId
-        var relayId = BitConverter.ToUInt16(span);
-        var netEndpoint = new NetEndpoint(relayId, endPoint);
+        // PacketHeaderCode
+        var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint);
+        var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort)));
 
-        if (relayId != 0)
+        if (destinationRelayId != 0)
         {// Relay
             if (!this.RelayAgent.ProcessReceive(netEndpoint, owner, out var decrypted))
             {
@@ -272,7 +272,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Packet type
-        span = span.Slice(6);
+        span = span.Slice(8);
         var packetType = BitConverter.ToUInt16(span);
 
         if (packetType < 256)

@@ -726,7 +726,7 @@ Wait:
         }
 
         // PacketHeaderCode
-        var span = toBeShared.Span.Slice(2); // RelayId
+        var span = toBeShared.Span.Slice(4); // SourceRelayId/DestinationRelayId
         var salt = BitConverter.ToUInt32(span); // Salt
         span = span.Slice(4);
 
@@ -1088,7 +1088,9 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, salt); // Salt
@@ -1124,7 +1126,9 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, salt); // Salt
@@ -1157,6 +1161,8 @@ Wait:
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 

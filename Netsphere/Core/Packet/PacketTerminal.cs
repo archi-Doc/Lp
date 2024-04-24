@@ -23,7 +23,7 @@ public sealed partial class PacketTerminal
             }
 
             this.EndPoint = endPoint;
-            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(8)); // PacketHeaderCode
+            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
             this.MemoryOwner = dataToBeMoved;
             this.ResponseTcs = responseTcs;
         }
@@ -274,8 +274,8 @@ public sealed partial class PacketTerminal
 
                 // PacketHeaderCode
                 var span = item.MemoryOwner.Span;
-                BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
-                BitConverter.TryWriteBytes(span.Slice(2), (uint)XxHash3.Hash64(span.Slice(6)));
+                BitConverter.TryWriteBytes(span.Slice(10), newPacketId);
+                BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
 
                 if (NetConstants.LogLowLevelNet)
                 {
@@ -299,7 +299,7 @@ public sealed partial class PacketTerminal
 
         // PacketHeaderCode
         var span = toBeShared.Span;
-        if (BitConverter.ToUInt32(span.Slice(2)) != (uint)XxHash3.Hash64(span.Slice(6)))
+        if (BitConverter.ToUInt32(span.Slice(4)) != (uint)XxHash3.Hash64(span.Slice(8)))
         {// Checksum
             return;
         }
@@ -409,7 +409,7 @@ public sealed partial class PacketTerminal
             return;
         }
 
-        BitConverter.TryWriteBytes(dataToBeMoved.Span, endPoint.RelayId);
+        BitConverter.TryWriteBytes(dataToBeMoved.Span.Slice(2), endPoint.RelayId); // DestinationRelayId
         var item = new Item(endPoint.EndPoint, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
@@ -450,8 +450,8 @@ public sealed partial class PacketTerminal
         scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
         var span = header;
 
-        BitConverter.TryWriteBytes(span, (ushort)0); // RelayId
-        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, 0u); // SourceRelayId/DestinationRelayId
+        span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, 0u); // Hash
         span = span.Slice(sizeof(uint));
@@ -471,7 +471,7 @@ public sealed partial class PacketTerminal
 
         // Get checksum
         span = array.AsSpan(0, arrayLength);
-        BitConverter.TryWriteBytes(span.Slice(2), (uint)XxHash3.Hash64(span.Slice(6)));
+        BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
 
         if (!isInitialBuffer)
         {
