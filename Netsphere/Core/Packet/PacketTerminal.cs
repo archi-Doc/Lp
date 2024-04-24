@@ -1,8 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Netsphere.Core;
 using Netsphere.Stats;
 using Tinyhand.IO;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Packet;
 
@@ -77,9 +79,9 @@ public sealed partial class PacketTerminal
     /// <param name="address">The address to send the packet to.</param>
     /// <param name="packet">The packet to send.</param>
     /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
-    /// &lt; 0: The target relay.<br/>
-    /// 0: Relays are not necessary.<br/>
-    /// 0 &gt;: The minimum number of relays.</param>
+    /// relayNumber &lt; 0: The target relay.<br/>
+    /// relayNumber == 0: Relays are not necessary.<br/>
+    /// relayNumber &gt; 0: The minimum number of relays.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet, int relayNumber = 0)
         where TSend : IPacket, ITinyhandSerialize<TSend>
@@ -95,37 +97,12 @@ public sealed partial class PacketTerminal
             return (NetResult.NoNetwork, default, 0);
         }
 
-        if (relayNumber > 0)
-        {// The minimum number of relays
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
-            {
-                return (NetResult.InvalidRelay, default, 0);
-            }
-        }
-        else if (relayNumber < 0)
-        {// The target relay
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
-            {
-                return (NetResult.InvalidRelay, default, 0);
-            }
-        }
-
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var owner); // CreatePacketCode
-        if (relayNumber == 0)
-        {// No relay
-            this.AddSendPacket(endPoint, owner, responseTcs);
-        }
-        else
-        {//Relay
-            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, address, owner.Span, out var encrypted, out var relayEndpoint))
-            {
-                owner.Return();
-                return (NetResult.InvalidRelay, default, 0);
-            }
-
-            owner.Return();
-            this.AddSendPacket(relayEndpoint, encrypted, responseTcs);
+        var result = this.AddSendPacket(endPoint, owner, responseTcs, relayNumber);
+        if (result != NetResult.Success)
+        {
+            return (result, default, 0);
         }
 
         if (NetConstants.LogLowLevelNet)
@@ -336,7 +313,7 @@ public sealed partial class PacketTerminal
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-                        this.AddSendPacket(endpoint, owner, default);
+                        this.AddSendPacket(endpoint, owner, default, 0);
                     });
 
                     return;
@@ -348,7 +325,7 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new PingPacketResponse(new(endpoint.EndPoint.Address, (ushort)endpoint.EndPoint.Port), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-                    this.AddSendPacket(endpoint, owner, default);
+                    this.AddSendPacket(endpoint, owner, default, 0);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -364,7 +341,7 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-                    this.AddSendPacket(endpoint, owner, default);
+                    this.AddSendPacket(endpoint, owner, default, 0);
                 }
 
                 return;
@@ -400,17 +377,49 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe void AddSendPacket(NetEndpoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+    internal unsafe NetResult AddSendPacket(NetEndpoint endpoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
             length > NetConstants.MaxPacketLength)
         {
-            return;
+            return NetResult.InvalidData;
         }
 
-        BitConverter.TryWriteBytes(dataToBeMoved.Span.Slice(2), endPoint.RelayId); // DestinationRelayId
-        var item = new Item(endPoint.EndPoint, dataToBeMoved, responseTcs);
+        if (relayNumber > 0)
+        {// The minimum number of relays
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+        else if (relayNumber < 0)
+        {// The target relay
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+
+        BitConverter.TryWriteBytes(dataToBeMoved.Span.Slice(2), endpoint.RelayId); // DestinationRelayId
+
+        if (relayNumber == 0)
+        {// No relay
+        }
+        else
+        {//Relay
+            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, endpoint, dataToBeMoved.Span, out var encrypted, out var relayEndpoint))
+            {
+                dataToBeMoved.Return();
+                return NetResult.InvalidRelay;
+            }
+
+            dataToBeMoved.Return();
+            endpoint = relayEndpoint;
+            dataToBeMoved = encrypted;
+        }
+
+        var item = new Item(endpoint.EndPoint, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
@@ -433,6 +442,8 @@ public sealed partial class PacketTerminal
         }
 
         // this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
+
+        return NetResult.Success;
     }
 
     private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)

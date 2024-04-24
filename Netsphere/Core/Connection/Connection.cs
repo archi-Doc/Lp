@@ -662,7 +662,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.DestinationEndpoint, owner, default);
+        this.PacketTerminal.AddSendPacket(this.DestinationEndpoint, owner, default, this.MinimumNumberOfRelays);
     }
 
     internal void SendCloseFrame()

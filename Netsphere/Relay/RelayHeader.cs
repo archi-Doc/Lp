@@ -18,6 +18,13 @@ public readonly struct RelayHeader
         this.NetAddress = netAddress;
     }
 
+    public RelayHeader(uint salt, byte paddingLength, NetEndpoint endpoint)
+    {
+        this.Salt = salt;
+        this.PaddingLength = paddingLength;
+        this.NetAddress = new(endpoint);
+    }
+
     [FieldOffset(0)]
     public readonly uint Zero; // 4 bytes
     [FieldOffset(4)]

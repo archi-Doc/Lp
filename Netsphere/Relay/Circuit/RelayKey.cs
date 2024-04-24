@@ -51,7 +51,7 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
+    public bool TryEncrypt(int relayNumber, NetEndpoint destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
     {
         Debug.Assert(content.Length >= 2);
         Debug.Assert(content.Length <= (NetConstants.MaxPacketLength - NetConstants.RelayLength));
