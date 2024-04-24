@@ -258,7 +258,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (destinationRelayId != 0)
         {// Relay
-            if (!this.RelayAgent.ProcessReceive(netEndpoint, owner, out var decrypted))
+            if (!this.RelayAgent.ProcessReceive(netEndpoint, destinationRelayId, owner, out var decrypted))
             {
                 return;
             }

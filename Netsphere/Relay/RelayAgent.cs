@@ -108,9 +108,9 @@ public partial class RelayAgent
         return RelayResult.Success;
     }
 
-    public bool ProcessReceive(NetEndpoint endpoint, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
+    public bool ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
     {
-        var span = source.Span.Slice(sizeof(ushort));
+        var span = source.Span.Slice(RelayHeader.RelayIdLength);
         if ((span.Length & 15) != 0 ||
             source.Owner is null)
         {
@@ -121,7 +121,7 @@ public partial class RelayAgent
         Aes? aes;
         lock (this.syncObject)
         {
-            item = this.items.RelayIdChain.FindFirst(endpoint.RelayId);
+            item = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (item is null || !item.DecrementAndCheck())
             {
                 goto Exit;
@@ -132,7 +132,7 @@ public partial class RelayAgent
 
         try
         {
-            if (endpoint.RelayId == item.RelayId)
+            if (item.RelayId == destinationRelayId)
             {// Inner -> Outer
                 if (item.Endpoint.EndPointEquals(endpoint))
                 {// Inner -> Outer: Decrypt
@@ -146,15 +146,22 @@ public partial class RelayAgent
                     var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
                     if (relayHeader.Zero == 0)
                     { // Decrypted
-                        span = span.Slice(RelayHeader.Length - sizeof(ushort));
-                        MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId);
-                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, sizeof(ushort) + written - relayHeader.PaddingLength);
+                        span = span.Slice(RelayHeader.Length - RelayHeader.RelayIdLength);
+                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
                         if (relayHeader.NetAddress == NetAddress.Relay)
                         {// Initiator -> This node
+                            MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
+                            span = span.Slice(sizeof(ushort));
+                            MemoryMarshal.Write(span, (ushort)0); // DestinationRelayId
+                            this.netTerminal.Flag = true;
                             return true;
                         }
                         else
                         {// Initiator -> Other
+                            MemoryMarshal.Write(span, (ushort)1);// SourceRelayId = OuterRelayId
+                            span = span.Slice(sizeof(ushort));
+                            MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
+
                             if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
                             {
                                 this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);
