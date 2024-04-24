@@ -248,10 +248,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
     {
-        if (this.Flag)
-        {
-
-        }
         var currentSystemMics = Mics.FastSystem;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
@@ -269,6 +265,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
             owner = decrypted;
             span = decrypted.Span;
+        }
+
+        if (this.Flag)
+        {
         }
 
         // Packet type

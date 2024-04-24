@@ -330,6 +330,9 @@ public sealed partial class PacketTerminal
 
                     Task.Run(() =>
                     {
+                        if (this.netTerminal.Flag)
+                        {
+                        }
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)

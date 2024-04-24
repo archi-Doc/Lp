@@ -148,7 +148,7 @@ public partial class RelayAgent
                     { // Decrypted
                         span = span.Slice(RelayHeader.Length - sizeof(ushort));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId);
-                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, sizeof(ushort) + written - relayHeader.PaddingLength);
+                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, sizeof(ushort) + written - RelayHeader.Length - relayHeader.PaddingLength);
                         if (relayHeader.NetAddress == NetAddress.Relay)
                         {// Initiator -> This node
                             return true;
