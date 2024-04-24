@@ -45,7 +45,7 @@ public partial class RelayAgent
 
         public NetEndpoint OuterEndpoint { get; private set; }
 
-        public long RelayPoint { get; private set; } = 1_000_000;//
+        public long RelayPoint { get; private set; } = 1_000_000; // tempcode
 
         internal byte[] Key { get; private set; }
 
@@ -148,14 +148,14 @@ public partial class RelayAgent
                     { // Decrypted
                         span = span.Slice(RelayHeader.Length - sizeof(ushort));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId);
-                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, sizeof(ushort) + written - RelayHeader.Length - relayHeader.PaddingLength);
+                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, sizeof(ushort) + written - relayHeader.PaddingLength);
                         if (relayHeader.NetAddress == NetAddress.Relay)
                         {// Initiator -> This node
                             return true;
                         }
                         else
                         {// Initiator -> Other
-                            if (this.netTerminal.TryCreateEndPoint(relayHeader.NetAddress, out var ep2))
+                            if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
                             {
                                 this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);
                                 this.netTerminal.Flag = true;

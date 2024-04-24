@@ -9,6 +9,7 @@ using Arc.Collections;
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
+using Netsphere.Relay;
 
 #pragma warning disable SA1202
 #pragma warning disable SA1214
@@ -662,7 +663,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.DestinationEndpoint, owner, default, this.MinimumNumberOfRelays);
+        this.PacketTerminal.SendPacket(this.DestinationNode.Address, this.DestinationEndpoint, owner, default, this.MinimumNumberOfRelays);
     }
 
     internal void SendCloseFrame()
@@ -718,21 +719,22 @@ Wait:
         return this.SendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
-    internal void ProcessReceive(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// endPoint: Checked
+    internal void ProcessReceive(NetEndpoint endpoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// Checked: endpoint, toBeShared.Length
         if (this.CurrentState == State.Disposed)
         {
             return;
         }
 
         // PacketHeaderCode
-        var span = toBeShared.Span.Slice(4); // SourceRelayId/DestinationRelayId
+        var span = toBeShared.Span.Slice(RelayHeader.RelayIdLength); // SourceRelayId/DestinationRelayId
         var salt = BitConverter.ToUInt32(span); // Salt
         span = span.Slice(4);
 
         var packetType = (PacketType)BitConverter.ToUInt16(span); // PacketType
         span = span.Slice(10);
 
+        // span: frame
         if (span.Length == 0)
         {// Close 1 (Obsolete)
             // this.ConnectionTerminal.CloseInternal(this, false);
@@ -763,7 +765,7 @@ Wait:
                 return;
             }
 
-            var owner = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
+            var owner = toBeShared.Slice(RelayHeader.RelayIdLength + PacketHeader.Length + ProtectedPacket.Length, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
             {// Close 2
@@ -771,23 +773,23 @@ Wait:
             }
             else if (frameType == FrameType.Ack)
             {// Ack
-                this.ProcessReceive_Ack(endPoint, owner);
+                this.ProcessReceive_Ack(endpoint, owner);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.ProcessReceive_FirstGene(endPoint, owner);
+                this.ProcessReceive_FirstGene(endpoint, owner);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.ProcessReceive_FollowingGene(endPoint, owner);
+                this.ProcessReceive_FollowingGene(endpoint, owner);
             }
             else if (frameType == FrameType.Knock)
             {// Knock
-                this.ProcessReceive_Knock(endPoint, owner);
+                this.ProcessReceive_Knock(endpoint, owner);
             }
             else if (frameType == FrameType.KnockResponse)
             {// KnockResponse
-                this.ProcessReceive_KnockResponse(endPoint, owner);
+                this.ProcessReceive_KnockResponse(endpoint, owner);
             }
         }
     }

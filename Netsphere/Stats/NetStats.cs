@@ -37,7 +37,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateEndPoint(in NetAddress address, out NetEndpoint endPoint)
+    public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)
     {
         endPoint = default;
         if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
@@ -58,7 +58,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateEndPoint(NetNode node, out NetEndpoint endPoint)
+    public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
     {
         endPoint = default;
         if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||

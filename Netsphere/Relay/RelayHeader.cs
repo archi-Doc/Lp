@@ -9,6 +9,7 @@ namespace Netsphere.Relay;
 [StructLayout(LayoutKind.Explicit)]
 public readonly struct RelayHeader
 {// 32 bytes, RelayHeaderCode
+    public const int RelayIdLength = 4; // SourceRelayId/DestinationRelayId
     public const int Length = 32;
 
     public RelayHeader(uint salt, byte paddingLength, NetAddress netAddress)
@@ -18,12 +19,12 @@ public readonly struct RelayHeader
         this.NetAddress = netAddress;
     }
 
-    public RelayHeader(uint salt, byte paddingLength, NetEndpoint endpoint)
+    /*public RelayHeader(uint salt, byte paddingLength, NetEndpoint endpoint)
     {
         this.Salt = salt;
         this.PaddingLength = paddingLength;
         this.NetAddress = new(endpoint);
-    }
+    }*/
 
     [FieldOffset(0)]
     public readonly uint Zero; // 4 bytes

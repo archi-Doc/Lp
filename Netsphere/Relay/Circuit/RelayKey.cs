@@ -51,7 +51,7 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryEncrypt(int relayNumber, NetEndpoint destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
+    public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
     {
         Debug.Assert(content.Length >= 2);
         Debug.Assert(content.Length <= (NetConstants.MaxPacketLength - NetConstants.RelayLength));
@@ -59,7 +59,7 @@ internal class RelayKey
         Debug.Assert(content[1] == 0);
 
         // PacketHeaderCode
-        content = content.Slice(4); // Remove relay id
+        content = content.Slice(4); // Skip relay id
         var multiple = content.Length & ~15;
         var paddingLength = content.Length == multiple ? 0 : (multiple + 16 - content.Length);
 
@@ -91,7 +91,9 @@ internal class RelayKey
 
         // RelayId
         var span = encrypted.Span;
-        BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId); // Source
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId); // DestinationRelayId
         span = span.Slice(sizeof(ushort));
 
         // RelayHeader
@@ -105,7 +107,7 @@ internal class RelayKey
         span.Slice(0, paddingLength).Fill(0x07);
 
         var headerAndContentLength = RelayHeader.Length + content.Length + paddingLength;
-        var headerAndContent = encrypted.Span.Slice(sizeof(ushort), headerAndContentLength);
+        var headerAndContent = encrypted.Span.Slice(RelayHeader.RelayIdLength, headerAndContentLength);
         for (var i = 0; i < relayNumber; i++)
         {
             aes.Key = this.KeyArray[i];
@@ -114,7 +116,7 @@ internal class RelayKey
 
         AesPool.Return(aes);
 
-        encrypted = encrypted.Slice(0, sizeof(ushort) + headerAndContentLength);
+        encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + headerAndContentLength);
         relayEndpoint = this.FirstEndpoint;
         return true;
 

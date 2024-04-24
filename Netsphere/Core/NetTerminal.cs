@@ -89,8 +89,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal.Clean();
     }
 
-    public bool TryCreateEndPoint(in NetAddress address, out NetEndpoint endPoint)
-        => this.NetStats.TryCreateEndPoint(in address, out endPoint);
+    public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)
+        => this.NetStats.TryCreateEndpoint(in address, out endPoint);
 
     public void SetDeliveryFailureRatioForTest(double ratio)
     {
@@ -247,14 +247,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
-    {
+    {// Checked: packetSize
         var currentSystemMics = Mics.FastSystem;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
 
         // PacketHeaderCode
-        var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint);
-        var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort)));
+        var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
+        var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
 
         if (destinationRelayId != 0)
         {// Relay

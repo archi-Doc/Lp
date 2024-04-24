@@ -181,7 +181,7 @@ public class ConnectionTerminal
             return null;
         }
 
-        if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
+        if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
         {
             return null;
         }
@@ -228,7 +228,7 @@ public class ConnectionTerminal
             return null;
         }
 
-        if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
+        if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
         {
             return null;
         }
@@ -542,7 +542,7 @@ public class ConnectionTerminal
     }
 
     internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    {// Checked: toBeShared.Length
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(10)); // ConnectionId
         if (NetConstants.LogLowLevelNet)

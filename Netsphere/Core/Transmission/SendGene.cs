@@ -116,8 +116,8 @@ internal partial class SendGene
             netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, this.Packet);
         }
         else
-        {//Relay
-            if (!connection.NetTerminal.RelayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationEndpoint, this.Packet.Span, out var encrypted, out var relayEndpoint))
+        {// Relay
+            if (!connection.NetTerminal.RelayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, this.Packet.Span, out var encrypted, out var relayEndpoint))
             {
                 this.Packet.Return();
                 return false;
