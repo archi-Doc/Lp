@@ -24,8 +24,8 @@ public class CertificateRelayControl : IRelayControl
                 return new(NetResult.NotAuthorized);
             }
 
-            var result = this.ServerConnection.NetTerminal.RelayAgent.Add(token.Target.RelayId, this.ServerConnection);
-            var response = new CreateRelayResponse(result);
+            var result = this.ServerConnection.NetTerminal.RelayAgent.Add(this.ServerConnection, out var relayId);
+            var response = new CreateRelayResponse(result, relayId);
             return new(NetResult.Success, response);
         }
 

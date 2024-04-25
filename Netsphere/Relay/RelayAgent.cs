@@ -3,7 +3,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Netsphere.Core;
 
 namespace Netsphere.Relay;
 
@@ -13,7 +12,7 @@ namespace Netsphere.Relay;
 public partial class RelayAgent
 {
     [ValueLinkObject]
-    private partial class Item
+    private partial class RelayExchange
     {
         public enum Type
         {
@@ -21,7 +20,7 @@ public partial class RelayAgent
             Outer,
         }
 
-        public Item(ushort relayId, ServerConnection serverConnection)
+        public RelayExchange(ushort relayId, ServerConnection serverConnection)
         {
             this.RelayId = relayId;
             this.Endpoint = serverConnection.DestinationEndpoint;
@@ -82,14 +81,15 @@ public partial class RelayAgent
     private readonly NetTerminal netTerminal;
 
     private readonly object syncObject = new();
-    private readonly Item.GoshujinClass items = new();
+    private readonly RelayExchange.GoshujinClass items = new();
     private Aes? aes0;
     private Aes? aes1;
 
     #endregion
 
-    public RelayResult Add(ushort relayId, ServerConnection serverConnection)
+    public RelayResult Add(ServerConnection serverConnection, out ushort relayId)
     {
+        relayId = 0;
         lock (this.syncObject)
         {
             if (this.items.Count > this.relayControl.MaxParallelRelays)
@@ -97,9 +97,13 @@ public partial class RelayAgent
                 return RelayResult.ParallelRelayLimit;
             }
 
-            if (this.items.RelayIdChain.ContainsKey(relayId))
+            while (true)
             {
-                return RelayResult.DuplicateRelayId;
+                relayId = (ushort)RandomVault.Pseudo.NextUInt32();
+                if (!this.items.RelayIdChain.ContainsKey(relayId))
+                {
+                    break;
+                }
             }
 
             this.items.Add(new(relayId, serverConnection));
@@ -117,7 +121,7 @@ public partial class RelayAgent
             goto Exit;
         }
 
-        Item? item;
+        RelayExchange? item;
         Aes? aes;
         lock (this.syncObject)
         {

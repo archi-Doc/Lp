@@ -1,10 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
-
 namespace Netsphere.Relay;
 
 /// <summary>
@@ -83,6 +78,11 @@ public class RelayCircuit
 
     public RelayResult AddRelay(ushort relayId, ClientConnection clientConnection)
     {
+        if (clientConnection.DestinationEndpoint.RelayId != 0)
+        {
+            return RelayResult.InvalidEndpoint;
+        }
+
         lock (this.relayNodes.SyncObject)
         {
             var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationEndpoint);

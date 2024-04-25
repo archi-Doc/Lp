@@ -50,7 +50,7 @@ public class PlayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new CreateRelayBlock((ushort)RandomVault.Pseudo.NextUInt32());
+            var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
             clientConnection.SignWithSalt(token, privateKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
@@ -65,7 +65,7 @@ public class PlayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.RelayCircuit.AddRelay(block.RelayId, clientConnection);
+            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection);
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
         }
