@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.Packet;
+namespace Netsphere.Relay;
 
 [TinyhandObject(ReservedKeys = 2)]
 public partial class CreateRelayBlock
