@@ -5,15 +5,10 @@ namespace Netsphere.Relay;
 [ValueLinkObject]
 internal partial class RelayExchange
 {
-    public enum Type
-    {
-        Inner,
-        Outer,
-    }
-
-    public RelayExchange(ushort relayId, ServerConnection serverConnection)
+    public RelayExchange(ushort relayId, ushort outerRelayId, ServerConnection serverConnection)
     {
         this.RelayId = relayId;
+        this.OuterRelayId = outerRelayId;
         this.Endpoint = serverConnection.DestinationEndpoint;
 
         this.Key = new byte[Connection.EmbryoKeyLength];
@@ -22,12 +17,12 @@ internal partial class RelayExchange
         serverConnection.UnsafeCopyIv(this.Iv);
     }
 
-    // public Type RelayType { get; private set; }
-
     [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
     public ushort RelayId { get; private set; }
 
-    // [Link(Type = ChainType.Unordered, AddValue = false)]
+    [Link(UnsafeTargetChain = "RelayIdChain")]
+    public ushort OuterRelayId { get; private set; }
+
     public NetEndpoint Endpoint { get; private set; }
 
     public NetEndpoint OuterEndpoint { get; private set; }

@@ -458,6 +458,7 @@ public sealed partial class PacketTerminal
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
         span = span.Slice(sizeof(ushort));
         BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
+        Console.WriteLine("sss" + endpoint.ToString());
 
         var item = new Item(endpoint.EndPoint, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)

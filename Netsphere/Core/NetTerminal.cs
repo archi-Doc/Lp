@@ -255,7 +255,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         // PacketHeaderCode
         var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
         var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
-
+        Console.WriteLine($"ProcessReceive {netEndpoint.EndPoint.ToString()} / {destinationRelayId}");
         if (destinationRelayId != 0)
         {// Relay
             if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, owner, out var decrypted))

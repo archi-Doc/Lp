@@ -32,6 +32,7 @@ public partial class RelayAgent
     public RelayResult Add(ServerConnection serverConnection, out ushort relayId)
     {
         relayId = 0;
+        ushort outerRelayId = 0;
         lock (this.syncObject)
         {
             if (this.items.Count > this.relayControl.MaxParallelRelays)
@@ -48,7 +49,16 @@ public partial class RelayAgent
                 }
             }
 
-            this.items.Add(new(relayId, serverConnection));
+            while (true)
+            {
+                outerRelayId = (ushort)RandomVault.Pseudo.NextUInt32();
+                if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
+                {
+                    break;
+                }
+            }
+
+            this.items.Add(new(relayId, outerRelayId, serverConnection));
         }
 
         return RelayResult.Success;
@@ -63,12 +73,12 @@ public partial class RelayAgent
             goto Exit;
         }
 
-        RelayExchange? item;
+        RelayExchange? exchange;
         Aes? aes;
         lock (this.syncObject)
         {
-            item = this.items.RelayIdChain.FindFirst(destinationRelayId);
-            if (item is null || !item.DecrementAndCheck())
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null || !exchange.DecrementAndCheck())
             {// No relay exchange
                 goto Exit;
             }
@@ -78,12 +88,12 @@ public partial class RelayAgent
 
         try
         {
-            if (item.RelayId == destinationRelayId)
-            {// Inner -> Outer
-                if (item.Endpoint.EndPointEquals(endpoint))
+            if (exchange.RelayId == destinationRelayId)
+            {// InnerRelayId
+                if (exchange.Endpoint.EndPointEquals(endpoint))
                 {// Inner -> Outer: Decrypt
-                    aes.Key = item.Key;
-                    if (!aes.TryDecryptCbc(span, item.Iv, span, out var written, PaddingMode.None) ||
+                    aes.Key = exchange.Key;
+                    if (!aes.TryDecryptCbc(span, exchange.Iv, span, out var written, PaddingMode.None) ||
                         written < RelayHeader.Length)
                     {
                         goto Exit;
@@ -104,23 +114,24 @@ public partial class RelayAgent
                         }
                         else
                         {// Initiator -> Other
-                            MemoryMarshal.Write(span, (ushort)1);// SourceRelayId = OuterRelayId
+                            Console.WriteLine($"{exchange.OuterRelayId}/{relayHeader.NetAddress.RelayId}");
+                            MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
                             span = span.Slice(sizeof(ushort));
                             MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
                             if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
                             {
-                                this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);
+                                this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);//
                                 this.netTerminal.Flag = true;
                             }
                         }
                     }
                     else
                     {// Not decrypted
-                        if (item.OuterRelayIdLink.IsLinked)
+                        if (exchange.OuterRelayIdLink.IsLinked)
                         {// -> Outer relay
-                            MemoryMarshal.Write(source.Span, item.OuterRelayId);
-                            this.netTerminal.NetSender.Send_NotThreadSafe(item.OuterEndpoint.EndPoint, source);
+                            MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
+                            this.netTerminal.NetSender.Send_NotThreadSafe(exchange.OuterEndpoint.EndPoint, source);
                         }
                         else
                         {// Discard
@@ -132,10 +143,10 @@ public partial class RelayAgent
                 }
             }
             else
-            {// Outer -> Inner
-                if (item.Endpoint.EndPointEquals(endpoint))
+            {// OuterRelayId
+                if (exchange.Endpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
-                    aes.Key = item.Key;
+                    aes.Key = exchange.Key;
                 }
                 else
                 {// Other
