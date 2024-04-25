@@ -112,12 +112,12 @@ public partial class RelayAgent
         return RelayResult.Success;
     }
 
-    public bool ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
+    public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
     {
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
         if ((span.Length & 15) != 0 ||
             source.Owner is null)
-        {
+        {// Invalid data
             goto Exit;
         }
 
@@ -127,7 +127,7 @@ public partial class RelayAgent
         {
             item = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (item is null || !item.DecrementAndCheck())
-            {
+            {// No relay exchange
                 goto Exit;
             }
 
