@@ -113,28 +113,27 @@ public partial class RelayAgent
                             MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
                             span = span.Slice(sizeof(ushort));
                             MemoryMarshal.Write(span, (ushort)0); // DestinationRelayId
-                            this.netTerminal.Flag = true;
                             return true;
                         }
                         else
-                        {// Initiator -> Other
-                            Console.WriteLine($"{exchange.OuterRelayId}/{relayHeader.NetAddress.RelayId}");
+                        {// Initiator -> Other (known)
                             MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
                             span = span.Slice(sizeof(ushort));
                             MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
                             if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
                             {
+                                decrypted.IncrementAndShare();
                                 this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);//
-                                this.netTerminal.Flag = true;
                             }
                         }
                     }
                     else
                     {// Not decrypted
-                        if (exchange.IsValidOuterEndpoint)
+                        if (exchange.OuterEndpoint.IsValid)
                         {// -> Outer relay
                             MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
+                            source.IncrementAndShare();
                             this.netTerminal.NetSender.Send_NotThreadSafe(exchange.OuterEndpoint.EndPoint, source);
                         }
                         else
@@ -148,16 +147,53 @@ public partial class RelayAgent
             }
             else
             {// OuterRelayId
-                if (exchange.IsValidOuterEndpoint &&
+                if (exchange.OuterEndpoint.IsValid &&
                     exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                     aes.Key = exchange.Key;
                 }
                 else
-                {// Other
-                 // Known
-                 // Unknown
+                {// Other (known or unknown)
                 }
+
+                var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
+                if (sourceRelayId == 0)
+                {// RelayId(Source/Destination), RelayHeader, Content, Padding
+                    var sourceSpan = source.Owner.ByteArray.AsSpan(RelayHeader.RelayIdLength);
+                    span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
+
+                    var contentLength = span.Length;
+                    var multiple = contentLength & ~15;
+                    var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
+
+                    // RelayHeader
+                    var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));//
+                    MemoryMarshal.Write(sourceSpan, relayHeader);
+                    sourceSpan = sourceSpan.Slice(RelayHeader.Length);
+
+                    sourceSpan = sourceSpan.Slice(contentLength);
+                    sourceSpan.Slice(0, paddingLength).Fill(0x07);
+
+                    source = new(source.Owner.ByteArray, 0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
+                    span = source.Span.Slice(RelayHeader.RelayIdLength);
+                }
+
+                // Encrypt
+                if ((span.Length & 15) != 0)
+                {// Invalid data
+                    goto Exit;
+                }
+
+                aes.Key = exchange.Key;
+                if (!aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+                {
+                    goto Exit;
+                }
+
+                MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
+                source.IncrementAndShare();
+                this.netTerminal.NetSender.Send_NotThreadSafe(exchange.Endpoint.EndPoint, source);//
             }
         }
         finally

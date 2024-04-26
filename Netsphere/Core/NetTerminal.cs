@@ -64,8 +64,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public int MinimumNumberOfRelays { get; private set; }
 
-    public bool Flag;
-
     public TimeSpan PacketTransmissionTimeout { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
@@ -255,10 +253,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         // PacketHeaderCode
         var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
         var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
-        Console.WriteLine($"ProcessReceive {netEndpoint.ToString()} / {destinationRelayId}");
-        if (this.Flag)
-        {
-        }
         if (destinationRelayId != 0)
         {// Relay
             if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, owner, out var decrypted))
@@ -268,6 +262,13 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
             owner = decrypted;
             span = decrypted.Span;
+        }
+        else if (netEndpoint.RelayId != 0)
+        {// Relay
+            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref toBeShared, out originalEndpoint))
+            {
+
+            }
         }
 
         // Packet type

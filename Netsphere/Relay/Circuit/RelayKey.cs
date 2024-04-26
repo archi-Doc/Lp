@@ -51,6 +51,17 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
+    public bool TryDecrypt(NetEndpoint endpoint, ref ByteArrayPool.MemoryOwner owner, out NetEndpoint originalEndpoint)
+    {
+        if (!endpoint.Equals(this.FirstEndpoint))
+        {
+            originalEndpoint = default;
+            return false;
+        }
+
+        // Original, Encrypted
+    }
+
     public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
     {
         Debug.Assert(content.Length >= 2);

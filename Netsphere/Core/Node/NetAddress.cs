@@ -39,7 +39,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         this.Address6B = address6b;
     }
 
-    /*public NetAddress(NetEndpoint endpoint)
+    public NetAddress(NetEndpoint endpoint)
     {
         Span<byte> span = stackalloc byte[16];
 
@@ -60,7 +60,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
                 this.Address4 = BitConverter.ToUInt32(span);
             }
         }
-    }*/
+    }
 
     public NetAddress(IPAddress ipAddress, ushort port)
     {
