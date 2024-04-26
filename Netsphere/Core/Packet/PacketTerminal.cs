@@ -2,6 +2,7 @@
 
 using System;
 using System.Net;
+using System.Runtime.InteropServices;
 using Netsphere.Core;
 using Netsphere.Relay;
 using Netsphere.Stats;
@@ -246,18 +247,16 @@ public sealed partial class PacketTerminal
                     continue;
                 }
 
-                // Reset packet id in order to improve the accuracy of RTT measurement.
-                var newPacketId = RandomVault.Pseudo.NextUInt64();
-                item.PacketIdValue = newPacketId;
-
                 // PacketHeaderCode
                 var span = item.MemoryOwner.Span;
-                BitConverter.TryWriteBytes(span.Slice(10), newPacketId);
-                BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
+                if (MemoryMarshal.Read<ushort>(span.Slice(sizeof(ushort))) == 0)
+                {// No relay
+                    // Reset packet id in order to improve the accuracy of RTT measurement.
+                    var newPacketId = RandomVault.Pseudo.NextUInt64();
+                    item.PacketIdValue = newPacketId;
 
-                if (NetConstants.LogLowLevelNet)
-                {
-                    // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
+                    BitConverter.TryWriteBytes(span.Slice(10), newPacketId);
+                    BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
                 }
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());

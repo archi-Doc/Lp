@@ -67,8 +67,7 @@ public partial class RelayAgent
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
     {
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if ((span.Length & 15) != 0 ||
-            source.Owner is null)
+        if (source.Owner is null)
         {// Invalid data
             goto Exit;
         }
@@ -92,6 +91,11 @@ public partial class RelayAgent
             {// InnerRelayId
                 if (exchange.Endpoint.EndPointEquals(endpoint))
                 {// Inner -> Outer: Decrypt
+                    if ((span.Length & 15) != 0)
+                    {// Invalid data
+                        goto Exit;
+                    }
+
                     aes.Key = exchange.Key;
                     if (!aes.TryDecryptCbc(span, exchange.Iv, span, out var written, PaddingMode.None) ||
                         written < RelayHeader.Length)
@@ -128,7 +132,7 @@ public partial class RelayAgent
                     }
                     else
                     {// Not decrypted
-                        if (exchange.OuterRelayIdLink.IsLinked)
+                        if (exchange.IsValidOuterEndpoint)
                         {// -> Outer relay
                             MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                             this.netTerminal.NetSender.Send_NotThreadSafe(exchange.OuterEndpoint.EndPoint, source);
@@ -144,7 +148,8 @@ public partial class RelayAgent
             }
             else
             {// OuterRelayId
-                if (exchange.Endpoint.EndPointEquals(endpoint))
+                if (exchange.IsValidOuterEndpoint &&
+                    exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                     aes.Key = exchange.Key;
                 }

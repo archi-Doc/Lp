@@ -29,6 +29,9 @@ internal partial class RelayExchange
 
     public long RelayPoint { get; private set; } = 1_000_000; // tempcode
 
+    public bool IsValidOuterEndpoint
+        => this.OuterEndpoint.EndPoint is not null;
+
     internal byte[] Key { get; private set; }
 
     internal byte[] Iv { get; private set; }
