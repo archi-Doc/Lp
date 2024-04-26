@@ -265,9 +265,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         }
         else if (netEndpoint.RelayId != 0)
         {// Relay
-            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref toBeShared, out originalEndpoint))
+            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalEndpoint))
             {
-
+                span = owner.Span;
+                // netEndpoint = originalEndpoint;
             }
         }
 

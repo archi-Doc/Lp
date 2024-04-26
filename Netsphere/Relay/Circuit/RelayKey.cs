@@ -59,7 +59,61 @@ internal class RelayKey
             return false;
         }
 
-        // Original, Encrypted
+        var span = owner.Span;
+        if (span.Length < RelayHeader.Length)
+        {
+            goto Exit;
+        }
+
+        span = span.Slice(RelayHeader.RelayIdLength);
+        if ((span.Length & 15) != 0)
+        {// It might not be encrypted.
+            goto Exit;
+        }
+
+        var aes = AesPool.Get();
+
+        try
+        {
+            for (var i = 0; i < this.NumberOfRelays; i++)
+            {
+                if (owner.Owner is null)
+                {
+                    goto Exit;
+                }
+
+                aes.Key = this.KeyArray[i];
+                aes.TryDecryptCbc(span, this.IvArray[i], span, out _, PaddingMode.None);
+
+                var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
+                if (relayHeader.Zero == 0)
+                {// Decrypted
+                    var span2 = owner.Owner.ByteArray.AsSpan();
+                    MemoryMarshal.Write(span2, relayHeader.NetAddress.RelayId);
+                    span2 = span2.Slice(sizeof(ushort));
+                    MemoryMarshal.Write(span2, (ushort)0);
+                    span2 = span2.Slice(sizeof(ushort));
+
+                    span = span.Slice(RelayHeader.Length);
+                    var contentLength = span.Length - relayHeader.PaddingLength;
+                    span.Slice(0, contentLength).CopyTo(span2);
+                    owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
+
+                    originalEndpoint = default;// relayHeader.NetAddress;
+                    return true;
+                }
+            }
+
+            goto Exit; // It might not be encrypted.
+        }
+        finally
+        {
+            AesPool.Return(aes);
+        }
+
+Exit:
+        originalEndpoint = default;
+        return false;
     }
 
     public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)

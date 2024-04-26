@@ -19,7 +19,7 @@ public sealed partial class PacketTerminal
         // ResponseTcs != null: WaitingToSend -> WaitingForResponse -> Complete or Resend
         [Link(Type = ChainType.LinkedList, Name = "WaitingToSendList", AutoLink = true)]
         [Link(Type = ChainType.LinkedList, Name = "WaitingForResponseList", AutoLink = false)]
-        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+        public Item(IPEndPoint endPoint, ulong packetId, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
         {
             if (dataToBeMoved.Span.Length < PacketHeader.Length)
             {
@@ -27,7 +27,7 @@ public sealed partial class PacketTerminal
             }
 
             this.EndPoint = endPoint;
-            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+            this.PacketId = packetId;
             this.MemoryOwner = dataToBeMoved;
             this.ResponseTcs = responseTcs;
         }
@@ -398,6 +398,7 @@ public sealed partial class PacketTerminal
             }
         }
 
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
         if (relayNumber == 0)
         {// No relay
             var span = dataToBeMoved.Span;
@@ -417,7 +418,7 @@ public sealed partial class PacketTerminal
             dataToBeMoved = encrypted;
         }
 
-        var item = new Item(netEndpoint.EndPoint, dataToBeMoved, responseTcs);
+        var item = new Item(netEndpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
@@ -453,12 +454,14 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
+        // PacketHeaderCode
         var span = dataToBeMoved.Span;
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
         span = span.Slice(sizeof(ushort));
         BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(6)); // PacketId
 
-        var item = new Item(endpoint.EndPoint, dataToBeMoved, responseTcs);
+        var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
