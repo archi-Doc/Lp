@@ -51,11 +51,11 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryDecrypt(NetEndpoint endpoint, ref ByteArrayPool.MemoryOwner owner, out NetEndpoint originalEndpoint)
+    public bool TryDecrypt(NetEndpoint endpoint, ref ByteArrayPool.MemoryOwner owner, out NetAddress originalAddress)
     {
         if (!endpoint.Equals(this.FirstEndpoint))
         {
-            originalEndpoint = default;
+            originalAddress = default;
             return false;
         }
 
@@ -99,7 +99,7 @@ internal class RelayKey
                     span.Slice(0, contentLength).CopyTo(span2);
                     owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
 
-                    originalEndpoint = default;// relayHeader.NetAddress;
+                    originalAddress = relayHeader.NetAddress;
                     return true;
                 }
             }
@@ -112,7 +112,7 @@ internal class RelayKey
         }
 
 Exit:
-        originalEndpoint = default;
+        originalAddress = default;
         return false;
     }
 
