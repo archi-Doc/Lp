@@ -3,6 +3,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Netsphere.Core;
 
 namespace Netsphere.Relay;
 
@@ -22,7 +23,6 @@ public partial class RelayAgent
     private readonly IRelayControl relayControl;
     private readonly NetTerminal netTerminal;
 
-    private readonly object syncObject = new();
     private readonly RelayExchange.GoshujinClass items = new();
     private readonly Aes aes = Aes.Create();
 
@@ -32,7 +32,7 @@ public partial class RelayAgent
     {
         relayId = 0;
         ushort outerRelayId = 0;
-        lock (this.syncObject)
+        lock (this.items.SyncObject)
         {
             if (this.items.Count > this.relayControl.MaxParallelRelays)
             {
@@ -72,7 +72,7 @@ public partial class RelayAgent
         }
 
         RelayExchange? exchange;
-        lock (this.syncObject)
+        lock (this.items.SyncObject)
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null || !exchange.DecrementAndCheck())
@@ -142,15 +142,23 @@ public partial class RelayAgent
         }
         else
         {// OuterRelayId
-            if (exchange.OuterEndpoint.IsValid &&
-                exchange.OuterEndpoint.EndPointEquals(endpoint))
-            {// Outer relay -> Inner: Encrypt
-                this.aes.Key = exchange.Key;
+            if (exchange.OuterEndpoint.IsValid)
+            {
+                if (exchange.OuterEndpoint.EndPointEquals(endpoint))
+                {// Outer relay -> Inner: Encrypt
+                }
+                else
+                {// Other (known or unknown)
+                    goto Exit;
+                }
             }
             else
-            {// Other (known or unknown)
+            {// Outermost relay
+                // Other (known or unknown)
+
             }
 
+            this.aes.Key = exchange.Key;
             var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
             if (sourceRelayId == 0)
             {// RelayId(Source/Destination), RelayHeader, Content, Padding
@@ -194,6 +202,11 @@ public partial class RelayAgent
 Exit:
         decrypted = default;
         return false;
+    }
+
+    internal void ProcessSend(NetSender netSender)
+    {
+        if (netSender.CanSend)
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]

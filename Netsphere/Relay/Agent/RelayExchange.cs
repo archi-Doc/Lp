@@ -2,7 +2,7 @@
 
 namespace Netsphere.Relay;
 
-[ValueLinkObject]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 internal partial class RelayExchange
 {
     public RelayExchange(ushort relayId, ushort outerRelayId, ServerConnection serverConnection)

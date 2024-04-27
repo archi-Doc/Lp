@@ -242,6 +242,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         // 3rd: ConnectionTerminal (SendTransmission/SendGene)
         this.ConnectionTerminal.ProcessSend(netSender);
+
+        // 4th : Relay
+        this.RelayAgent.ProcessSend(netSender);
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
