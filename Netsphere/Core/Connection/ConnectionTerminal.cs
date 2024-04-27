@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using Arc.Collections;
 using Netsphere.Core;
 using Netsphere.Crypto;
@@ -66,11 +67,11 @@ public class ConnectionTerminal
     {
         var systemCurrentMics = Mics.GetSystem();
 
-        (UnorderedMap<NetEndPoint, ClientConnection>.Node[] Nodes, int Max) client;
+        (UnorderedMap<NetEndpoint, ClientConnection>.Node[] Nodes, int Max) client;
         Queue<ClientConnection> clientToChange = new();
         lock (this.clientConnections.SyncObject)
         {
-            client = this.clientConnections.DestinationEndPointChain.UnsafeGetNodes();
+            client = this.clientConnections.DestinationEndpointChain.UnsafeGetNodes();
         }
 
         for (var i = 0; i < client.Max; i++)
@@ -119,11 +120,11 @@ public class ConnectionTerminal
             }
         }
 
-        (UnorderedMap<NetEndPoint, ServerConnection>.Node[] Nodes, int Max) server;
+        (UnorderedMap<NetEndpoint, ServerConnection>.Node[] Nodes, int Max) server;
         Queue<ServerConnection> serverToChange = new();
         lock (this.serverConnections.SyncObject)
         {
-            server = this.serverConnections.DestinationEndPointChain.UnsafeGetNodes();
+            server = this.serverConnections.DestinationEndpointChain.UnsafeGetNodes();
         }
 
         for (var i = 0; i < server.Max; i++)
@@ -173,16 +174,77 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
+    public async Task<ClientConnection?> ConnectForRelay(NetNode node, int targetNumberOfRelays)
     {
         if (!this.NetTerminal.IsActive)
         {
             return null;
         }
 
-        if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
+        if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
         {
             return null;
+        }
+
+        if (targetNumberOfRelays < 0 ||
+            this.NetTerminal.RelayCircuit.NumberOfRelays != targetNumberOfRelays)
+        {// When making a relay connection, it is necessary to specify the appropriate number of relays (the outermost layer of relays).
+            return null;
+        }
+
+        // Create a new encryption key
+        var privateKey = NodePrivateKey.Create();
+        var publicKey = privateKey.ToPublicKey();
+
+        // Create a new connection
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, -targetNumberOfRelays).ConfigureAwait(false); // < 0: target
+        if (t.Value is null)
+        {
+            return default;
+        }
+
+        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
+        if (newConnection is null)
+        {
+            return default;
+        }
+
+        newConnection.MinimumNumberOfRelays = targetNumberOfRelays;
+        newConnection.AddRtt(t.RttMics);
+        lock (this.clientConnections.SyncObject)
+        {// ConnectionStateCode
+            newConnection.IncrementOpenCount();
+            newConnection.Goshujin = this.clientConnections;
+        }
+
+        return newConnection;
+    }
+
+    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
+    {
+        if (!this.NetTerminal.IsActive)
+        {
+            return null;
+        }
+
+        if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
+        {
+            return null;
+        }
+
+        if (minimumNumberOfRelays < this.NetTerminal.MinimumNumberOfRelays)
+        {
+            minimumNumberOfRelays = this.NetTerminal.MinimumNumberOfRelays;
+        }
+
+        var privateKey = this.NetTerminal.NodePrivateKey;
+        var publicKey = this.NetTerminal.NodePublicKey;
+        if (minimumNumberOfRelays > 0)
+        {
+            mode = Connection.ConnectMode.NoReuse; // Do not reuse connections.
+            privateKey = NodePrivateKey.Create(); // Do not reuse node encryption keys.
+            publicKey = privateKey.ToPublicKey();
         }
 
         lock (this.clientConnections.SyncObject)
@@ -190,7 +252,7 @@ public class ConnectionTerminal
             if (mode == Connection.ConnectMode.ReuseIfAvailable ||
                 mode == Connection.ConnectMode.ReuseOnly)
             {// Attempts to reuse a connection that has already been connected or disconnected (but not yet disposed).
-                if (this.clientConnections.DestinationEndPointChain.TryGetValue(endPoint, out var connection))
+                if (this.clientConnections.DestinationEndpointChain.TryGetValue(endPoint, out var connection))
                 {
                     Debug.Assert(!connection.IsDisposed);
                     connection.IncrementOpenCount();
@@ -206,19 +268,20 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new ConnectPacket(0, this.NetTerminal.NodePublicKey, node.PublicKey.GetHashCode());
-        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet).ConfigureAwait(false);
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, minimumNumberOfRelays).ConfigureAwait(false);
         if (t.Value is null)
         {
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
         }
 
+        newConnection.MinimumNumberOfRelays = minimumNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
         lock (this.clientConnections.SyncObject)
         {// ConnectionStateCode
@@ -268,10 +331,10 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndPoint endPoint, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, NodePrivateKey clientPrivateKey, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, serverPublicKey);
+        var pair = new NodeKeyPair(clientPrivateKey, serverPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -285,7 +348,7 @@ public class ConnectionTerminal
         return connection;
     }
 
-    internal bool PrepareServerSide(NetEndPoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
+    internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, p.ClientPublicKey);
@@ -331,11 +394,11 @@ public class ConnectionTerminal
         connectionId = BitConverter.ToUInt64(hash);
         hash = hash.Slice(sizeof(ulong));
 
-        var key = new byte[32];
-        hash.Slice(0, 32).CopyTo(key);
-        hash = hash.Slice(32);
+        var key = new byte[Connection.EmbryoKeyLength];
+        hash.Slice(0, Connection.EmbryoKeyLength).CopyTo(key);
+        hash = hash.Slice(Connection.EmbryoKeyLength);
 
-        var iv = new byte[16];
+        var iv = new byte[Connection.EmbryoIvLength];
         hash.CopyTo(iv);
         embryo = new(salt, key, iv);
     }
@@ -478,10 +541,10 @@ public class ConnectionTerminal
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// Checked: toBeShared.Length
         // PacketHeaderCode
-        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
+        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(10)); // ConnectionId
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");
@@ -501,9 +564,9 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.DestinationEndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndpoint.Equals(endpoint))
             {
-                connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
+                connection.ProcessReceive(endpoint, toBeShared, currentSystemMics);
             }
         }
         else
@@ -515,9 +578,9 @@ public class ConnectionTerminal
             }
 
             if (connection is not null &&
-                connection.DestinationEndPoint.EndPointEquals(endPoint))
+                connection.DestinationEndpoint.Equals(endpoint))
             {
-                connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
+                connection.ProcessReceive(endpoint, toBeShared, currentSystemMics);
             }
         }
     }

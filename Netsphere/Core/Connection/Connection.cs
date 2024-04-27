@@ -9,6 +9,7 @@ using Arc.Collections;
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
+using Netsphere.Relay;
 
 #pragma warning disable SA1202
 #pragma warning disable SA1214
@@ -16,7 +17,7 @@ using Netsphere.Packet;
 
 namespace Netsphere;
 
-// byte[32] Key, byte[16] Iv
+// byte[32 = EmbryoKeyLength] Key, byte[16 = EmbryoIvLength] Iv
 internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
@@ -24,6 +25,8 @@ public abstract class Connection : IDisposable
     private const int LowerRttLimit = 5_000; // 5ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
+    internal const int EmbryoKeyLength = 32;
+    internal const int EmbryoIvLength = 16;
 
     public enum ConnectMode
     {
@@ -39,7 +42,7 @@ public abstract class Connection : IDisposable
         Disposed,
     }
 
-    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
+    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndpoint endPoint)
     {
         this.NetBase = connectionTerminal.NetBase;
         this.Logger = this.NetBase.UnitLogger.GetLogger(this.GetType());
@@ -47,7 +50,7 @@ public abstract class Connection : IDisposable
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.DestinationNode = node;
-        this.DestinationEndPoint = endPoint;
+        this.DestinationEndpoint = endPoint;
 
         this.smoothedRtt = DefaultRtt;
         this.minimumRtt = 0;
@@ -55,7 +58,7 @@ public abstract class Connection : IDisposable
     }
 
     public Connection(Connection connection)
-        : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndPoint)
+        : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndpoint)
     {
         this.Initialize(connection.Agreement, connection.embryo);
     }
@@ -77,7 +80,9 @@ public abstract class Connection : IDisposable
 
     public NetNode DestinationNode { get; }
 
-    public NetEndPoint DestinationEndPoint { get; }
+    public NetEndpoint DestinationEndpoint { get; }
+
+    public int MinimumNumberOfRelays { get; internal set; }
 
     public ulong Salt
         => this.embryo.Salt;
@@ -198,6 +203,15 @@ public abstract class Connection : IDisposable
     internal int Taichi = 1;
 
     #endregion
+
+    /*internal Embryo UnsafeGetEmbryo()
+        => this.embryo;*/
+
+    internal void UnsafeCopyKey(Span<byte> destination)
+        => this.embryo.Key.CopyTo(destination);
+
+    internal void UnsafeCopyIv(Span<byte> destination)
+        => this.embryo.Iv.CopyTo(destination);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateAckedNode(SendTransmission sendTransmission)
@@ -649,7 +663,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.DestinationEndPoint.EndPoint, owner, default);
+        this.PacketTerminal.SendPacket(this.DestinationNode.Address, this.DestinationEndpoint, owner, default, this.MinimumNumberOfRelays);
     }
 
     internal void SendCloseFrame()
@@ -705,22 +719,22 @@ Wait:
         return this.SendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// endPoint: Checked
+    internal void ProcessReceive(NetEndpoint endpoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// Checked: endpoint, toBeShared.Length
         if (this.CurrentState == State.Disposed)
         {
             return;
         }
 
         // PacketHeaderCode
-        var span = toBeShared.Span;
-
+        var span = toBeShared.Span.Slice(RelayHeader.RelayIdLength); // SourceRelayId/DestinationRelayId
         var salt = BitConverter.ToUInt32(span); // Salt
-        span = span.Slice(6);
+        span = span.Slice(4);
 
         var packetType = (PacketType)BitConverter.ToUInt16(span); // PacketType
         span = span.Slice(10);
 
+        // span: frame
         if (span.Length == 0)
         {// Close 1 (Obsolete)
             // this.ConnectionTerminal.CloseInternal(this, false);
@@ -759,28 +773,28 @@ Wait:
             }
             else if (frameType == FrameType.Ack)
             {// Ack
-                this.ProcessReceive_Ack(endPoint, owner);
+                this.ProcessReceive_Ack(endpoint, owner);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.ProcessReceive_FirstGene(endPoint, owner);
+                this.ProcessReceive_FirstGene(endpoint, owner);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.ProcessReceive_FollowingGene(endPoint, owner);
+                this.ProcessReceive_FollowingGene(endpoint, owner);
             }
             else if (frameType == FrameType.Knock)
             {// Knock
-                this.ProcessReceive_Knock(endPoint, owner);
+                this.ProcessReceive_Knock(endpoint, owner);
             }
             else if (frameType == FrameType.KnockResponse)
             {// KnockResponse
-                this.ProcessReceive_KnockResponse(endPoint, owner);
+                this.ProcessReceive_KnockResponse(endpoint, owner);
             }
         }
     }
 
-    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Ack(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
@@ -840,7 +854,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FirstGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
@@ -967,7 +981,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FollowingGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FollowingGeneFrame.LengthExcludingFrameType)
@@ -1008,7 +1022,7 @@ Wait:
         transmission.ProcessReceive_Gene(dataControl, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
-    internal void ProcessReceive_Knock(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Knock(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// KnockResponseFrameCode
         if (toBeShared.Memory.Length < (KnockFrame.Length - 2))
         {
@@ -1037,7 +1051,7 @@ Wait:
         this.SendPriorityFrame(frame);
     }
 
-    internal void ProcessReceive_KnockResponse(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_KnockResponse(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {// KnockResponseFrameCode
         var span = toBeShared.Span;
         if (span.Length < (KnockResponseFrame.Length - 2))
@@ -1075,12 +1089,14 @@ Wait:
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
-        // PacketHeaderCode
+        // PacketHeaderCode, CreatePacketCode
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
-        span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -1111,12 +1127,14 @@ Wait:
         var span = arrayOwner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
-        // PacketHeaderCode
+        // PacketHeaderCode, CreatePacketCode
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
-        span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -1144,12 +1162,14 @@ Wait:
         var span = owner.ByteArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
-        // PacketHeaderCode
+        // PacketHeaderCode, CreatePacketCode
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, salt); // Salt
         span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndPoint.Engagement); // Engagement
-        span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -1183,7 +1203,7 @@ Wait:
             connectionString = "Client";
         }
 
-        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndPoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndpoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
     protected void ReleaseResource()

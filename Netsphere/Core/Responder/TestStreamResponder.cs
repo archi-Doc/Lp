@@ -13,12 +13,13 @@ public class TestStreamResponder : INetResponder
     public ulong DataId
         => 123456789;
 
-    public bool Respond(TransmissionContext transmissionContext)
+    public void Respond(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<int>(transmissionContext.Owner.Memory.Span, out var size))
         {
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
             transmissionContext.Return();
-            return false;
+            return;
         }
 
         Task.Run(async () =>
@@ -35,7 +36,5 @@ public class TestStreamResponder : INetResponder
                 await stream.Complete();
             }
         });
-
-        return true;
     }
 }

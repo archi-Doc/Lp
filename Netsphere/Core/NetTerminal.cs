@@ -3,6 +3,7 @@
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
+using Netsphere.Relay;
 using Netsphere.Responder;
 using Netsphere.Stats;
 
@@ -17,7 +18,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         Shutdown,
     }
 
-    public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
+    public NetTerminal(UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats, IRelayControl relayControl)
         : base(unitContext)
     {
         this.UnitLogger = unitLogger;
@@ -27,9 +28,12 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
+        this.RelayCircuit = new(this, relayControl);
+        this.RelayControl = relayControl;
+        this.RelayAgent = new(relayControl, this);
         this.netCleaner = new(this);
 
-        this.ConnectTimeout = NetConstants.DefaultConnectTimeout;
+        this.PacketTransmissionTimeout = NetConstants.DefaultPacketTransmissionTimeout;
     }
 
     #region FieldAndProperty
@@ -52,11 +56,15 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
+    public RelayCircuit RelayCircuit { get; private set; }
+
     public bool IsAlternative { get; private set; }
 
-    public int Port { get; set; }
+    public int Port { get; private set; }
 
-    public TimeSpan ConnectTimeout { get; set; }
+    public int MinimumNumberOfRelays { get; private set; }
+
+    public TimeSpan PacketTransmissionTimeout { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -65,6 +73,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
+
+    internal IRelayControl RelayControl { get; private set; }
+
+    internal RelayAgent RelayAgent { get; private set; }
 
     private readonly NetCleaner netCleaner;
 
@@ -75,8 +87,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.ConnectionTerminal.Clean();
     }
 
-    public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
-        => this.NetStats.TryCreateEndPoint(in address, out endPoint);
+    public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)
+        => this.NetStats.TryCreateEndpoint(in address, out endPoint);
 
     public void SetDeliveryFailureRatioForTest(double ratio)
     {
@@ -104,8 +116,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
-        => this.ConnectionTerminal.Connect(destination, mode);
+    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
+        => this.ConnectionTerminal.Connect(destination, mode, minimumNumberOfRelays);
+
+    public Task<ClientConnection?> ConnectForRelay(NetNode destination, int targetNumberOfRelays)
+        => this.ConnectionTerminal.ConnectForRelay(destination, targetNumberOfRelays);
 
     public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
@@ -173,6 +188,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.Responders = responders;
         this.Services = services;
         this.IsAlternative = isAlternative;
+
+        this.RelayControl.ProcessRegisterResponder(this.Responders);
     }
 
     internal async Task<NetResponse> Wait(Task<NetResponse> task, TimeSpan timeout, CancellationToken cancellationToken)
@@ -225,34 +242,50 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         // 3rd: ConnectionTerminal (SendTransmission/SendGene)
         this.ConnectionTerminal.ProcessSend(netSender);
+
+        // 4th : Relay
+        this.RelayAgent.ProcessSend(netSender);
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
-    {
+    {// Checked: packetSize
         var currentSystemMics = Mics.FastSystem;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
         var span = owner.Span;
 
-        if (packetSize < PacketHeader.Length)
-        {// Check length
-            return;
+        // PacketHeaderCode
+        var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
+        var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
+        if (destinationRelayId != 0)
+        {// Relay
+            if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, owner, out var decrypted))
+            {
+                return;
+            }
+
+            owner = decrypted;
+            span = decrypted.Span;
+        }
+        else if (netEndpoint.RelayId != 0)
+        {// Relay
+            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalAddress))
+            {
+                span = owner.Span;
+                netEndpoint = new(originalAddress.RelayId, this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress));
+            }
         }
 
-        // Engagement
-        span = span.Slice(4);
-        var engagement = BitConverter.ToUInt16(span);
-
         // Packet type
-        span = span.Slice(2);
+        span = span.Slice(8);
         var packetType = BitConverter.ToUInt16(span);
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(endPoint, packetType, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene
-            this.ConnectionTerminal.ProcessReceive(endPoint, packetType, owner, currentSystemMics);
+            this.ConnectionTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
         }
     }
 }

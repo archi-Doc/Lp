@@ -7,25 +7,30 @@ public abstract class SyncResponder<TSend, TReceive> : INetResponder
     public ulong DataId
         => NetHelper.GetDataId<TSend, TReceive>();
 
-    public virtual TReceive? RespondSync(TSend value) => default;
+    public virtual NetResultValue<TReceive> RespondSync(TSend value) => default;
 
-    public bool Respond(TransmissionContext transmissionContext)
+    public void Respond(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
-            return false;
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
+            return;
         }
 
         transmissionContext.Return();
 
-        var response = this.RespondSync(t);
-        if (response == null)
+        this.ServerConnection = transmissionContext.ServerConnection;
+        var r = this.RespondSync(t);
+        if (r.Value is not null)
         {
-            return false;
+            transmissionContext.SendAndForget(r.Value, this.DataId);
         }
-
-        transmissionContext.SendAndForget(response, this.DataId);
-        return true;
+        else
+        {
+            transmissionContext.SendResultAndForget(r.Result);
+        }
     }
+
+    protected ServerConnection ServerConnection { get; private set; } = default!;
 }

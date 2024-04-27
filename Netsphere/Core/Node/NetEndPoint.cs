@@ -3,19 +3,19 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public readonly partial record struct NetEndPoint
+public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
 {
-    public NetEndPoint(IPEndPoint endPoint, ushort engagement)
+    public NetEndpoint(ushort relayId, IPEndPoint endPoint)
     {
         this.EndPoint = endPoint;
-        this.Engagement = engagement;
+        this.RelayId = relayId;
     }
 
     [Key(0)]
-    public readonly IPEndPoint EndPoint;
+    public readonly ushort RelayId;
 
     [Key(1)]
-    public readonly ushort Engagement;
+    public readonly IPEndPoint EndPoint;
 
     public bool IsValid
         => this.EndPoint is not null;
@@ -26,9 +26,16 @@ public readonly partial record struct NetEndPoint
     public bool IsPrivateOrLocalLoopbackAddress()
         => new NetAddress(this.EndPoint.Address, (ushort)this.EndPoint.Port).IsPrivateOrLocalLoopbackAddress();
 
-    public bool EndPointEquals(IPEndPoint endPoint)
-        => this.EndPoint.Equals(endPoint);
+    public bool EndPointEquals(NetEndpoint endPoint)
+        => this.EndPoint.Equals(endPoint.EndPoint);
+
+    public bool Equals(NetEndpoint endPoint)
+        => this.RelayId == endPoint.RelayId &&
+        this.EndPoint.Equals(endPoint.EndPoint);
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.RelayId, this.EndPoint);
 
     public override string ToString()
-        => this.EndPoint.ToString();
+        => $"[{this.RelayId.ToString()}]{this.EndPoint.ToString()}";
 }

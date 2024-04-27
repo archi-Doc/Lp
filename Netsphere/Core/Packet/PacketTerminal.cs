@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
+using System.Net;
+using System.Runtime.InteropServices;
 using Netsphere.Core;
+using Netsphere.Relay;
 using Netsphere.Stats;
 using Tinyhand.IO;
 
@@ -15,7 +19,7 @@ public sealed partial class PacketTerminal
         // ResponseTcs != null: WaitingToSend -> WaitingForResponse -> Complete or Resend
         [Link(Type = ChainType.LinkedList, Name = "WaitingToSendList", AutoLink = true)]
         [Link(Type = ChainType.LinkedList, Name = "WaitingForResponseList", AutoLink = false)]
-        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+        public Item(IPEndPoint endPoint, ulong packetId, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
         {
             if (dataToBeMoved.Span.Length < PacketHeader.Length)
             {
@@ -23,7 +27,7 @@ public sealed partial class PacketTerminal
             }
 
             this.EndPoint = endPoint;
-            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(8)); // PacketHeaderCode
+            this.PacketId = packetId;
             this.MemoryOwner = dataToBeMoved;
             this.ResponseTcs = responseTcs;
         }
@@ -69,48 +73,39 @@ public sealed partial class PacketTerminal
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
 
-    /*public void SendAndForget<TSend>(NetAddress address, TSend packet)
-        where TSend : IPacket, ITinyhandSerialize<TSend>
-    {
-        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
-        {
-            return;
-        }
-
-        this.SendAndForget(endPoint, packet);
-    }
-
-    public void SendAndForget<TSend>(NetEndPoint endPoint, TSend packet)
-        where TSend : IPacket, ITinyhandSerialize<TSend>
-    {
-        CreatePacket(0, packet, out var owner);
-        this.AddSendPacket(endPoint.EndPoint, owner, true, default);
-    }*/
-
-    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress address, TSend packet)
+    /// <summary>
+    /// Sends a packet to a specified address and waits for a response.
+    /// </summary>
+    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <param name="netAddress">The address to send the packet to.</param>
+    /// <param name="packet">The packet to send.</param>
+    /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
+    /// relayNumber &lt; 0: The target relay.<br/>
+    /// relayNumber == 0: Relays are not necessary.<br/>
+    /// relayNumber &gt; 0: The minimum number of relays.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
-    {
-        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
-        {
-            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.NoNetwork, default, 0));
-        }
-
-        return this.SendAndReceive<TSend, TReceive>(endPoint, packet);
-    }
-
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
-    where TSend : IPacket, ITinyhandSerialize<TSend>
-    where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
         if (!this.netTerminal.IsActive)
         {
             return (NetResult.Closed, default, 0);
         }
 
+        if (!this.netTerminal.TryCreateEndpoint(in netAddress, out var endpoint))
+        {
+            return (NetResult.NoNetwork, default, 0);
+        }
+
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CreatePacket(0, packet, out var owner);
-        this.AddSendPacket(endPoint.EndPoint, owner, responseTcs);
+        CreatePacket(0, packet, out var owner); // CreatePacketCode
+        var result = this.SendPacket(netAddress, endpoint, owner, responseTcs, relayNumber);
+        if (result != NetResult.Success)
+        {
+            return (result, default, 0);
+        }
 
         if (NetConstants.LogLowLevelNet)
         {
@@ -119,7 +114,7 @@ public sealed partial class PacketTerminal
 
         try
         {
-            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.ConnectTimeout, default).ConfigureAwait(false);
+            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.PacketTransmissionTimeout, default).ConfigureAwait(false);
 
             if (response.IsFailure)
             {
@@ -147,6 +142,67 @@ public sealed partial class PacketTerminal
             return (NetResult.Timeout, default, 0);
         }
     }
+
+    /*/// <summary>
+    /// Sends a packet to a specified address and waits for a response.
+    /// </summary>
+    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <param name="endPoint">The endpoint to send the packet to.</param>
+    /// <param name="packet">The packet to send.</param>
+    /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
+    /// &lt; 0: The target relay.<br/>
+    /// 0: Relays are not necessary.<br/>
+    /// 0 &gt;: The minimum number of relays.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet, int relayNumber = 0)
+    where TSend : IPacket, ITinyhandSerialize<TSend>
+    where TReceive : IPacket, ITinyhandSerialize<TReceive>
+    {
+        if (!this.netTerminal.IsActive)
+        {
+            return (NetResult.Closed, default, 0);
+        }
+
+        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CreatePacket(0, packet, out var owner);
+        this.AddSendPacket(endPoint, owner, responseTcs);
+
+        if (NetConstants.LogLowLevelNet)
+        {
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+        }
+
+        try
+        {
+            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.PacketTransmissionTimeout, default).ConfigureAwait(false);
+
+            if (response.IsFailure)
+            {
+                return new(response.Result, default, 0);
+            }
+
+            TReceive? receive;
+            try
+            {
+                receive = TinyhandSerializer.DeserializeObject<TReceive>(response.Received.Span.Slice(PacketHeader.Length));
+            }
+            catch
+            {
+                return new(NetResult.DeserializationFailed, default, 0);
+            }
+            finally
+            {
+                response.Return();
+            }
+
+            return (NetResult.Success, receive, (int)response.Additional);
+        }
+        catch
+        {
+            return (NetResult.Timeout, default, 0);
+        }
+    }*/
 
     internal void ProcessSend(NetSender netSender)
     {
@@ -191,18 +247,16 @@ public sealed partial class PacketTerminal
                     continue;
                 }
 
-                // Reset packet id in order to improve the accuracy of RTT measurement.
-                var newPacketId = RandomVault.Pseudo.NextUInt64();
-                item.PacketIdValue = newPacketId;
-
                 // PacketHeaderCode
                 var span = item.MemoryOwner.Span;
-                BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
-                BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
+                if (MemoryMarshal.Read<ushort>(span.Slice(sizeof(ushort))) == 0)
+                {// No relay
+                    // Reset packet id in order to improve the accuracy of RTT measurement.
+                    var newPacketId = RandomVault.Pseudo.NextUInt64();
+                    item.PacketIdValue = newPacketId;
 
-                if (NetConstants.LogLowLevelNet)
-                {
-                    // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {item.EndPoint.ToString()}, Resend packet id:{item.PacketId}");
+                    BitConverter.TryWriteBytes(span.Slice(10), newPacketId);
+                    BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
                 }
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
@@ -213,8 +267,8 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
@@ -222,13 +276,13 @@ public sealed partial class PacketTerminal
 
         // PacketHeaderCode
         var span = toBeShared.Span;
-        if (BitConverter.ToUInt32(span) != (uint)XxHash3.Hash64(span.Slice(4)))
+        if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(8)))
         {// Checksum
             return;
         }
 
         var packetType = (PacketType)packetUInt16;
-        var packetId = BitConverter.ToUInt64(span.Slice(8));
+        var packetId = BitConverter.ToUInt64(span.Slice(10));
 
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
@@ -254,9 +308,9 @@ public sealed partial class PacketTerminal
                     Task.Run(() =>
                     {
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
-                        this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
-                        CreatePacket(packetId, packet, out var owner);
-                        this.AddSendPacket(endPoint, owner, default);
+                        this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
+                        CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
+                        this.SendPacketWithoutRelay(endpoint, owner, default);
                     });
 
                     return;
@@ -266,9 +320,9 @@ public sealed partial class PacketTerminal
             {// PingPacket
                 if (this.netBase.NetOptions.EnableEssential)
                 {
-                    var packet = new PingPacketResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netBase.NetOptions.NodeName);
-                    CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endPoint, owner, default);
+                    var packet = new PingPacketResponse(new(endpoint.EndPoint.Address, (ushort)endpoint.EndPoint.Port), this.netBase.NetOptions.NodeName);
+                    CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
+                    this.SendPacketWithoutRelay(endpoint, owner, default);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -283,8 +337,8 @@ public sealed partial class PacketTerminal
                 if (this.netBase.AllowUnsafeConnection)
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
-                    CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endPoint, owner, default);
+                    CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
+                    this.SendPacketWithoutRelay(endpoint, owner, default);
                 }
 
                 return;
@@ -308,10 +362,10 @@ public sealed partial class PacketTerminal
                     this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} received {toBeShared.Span.Length} {packetType.ToString()}");
                 }
 
-                if (item.ResponseTcs is not null)
+                if (item.ResponseTcs is { } tcs)
                 {
                     var elapsedMics = currentSystemMics > item.SentMics ? (int)(currentSystemMics - item.SentMics) : 0;
-                    item.ResponseTcs.SetResult(new(NetResult.Success, 0, elapsedMics, toBeShared.IncrementAndShare()));
+                    tcs.SetResult(new(NetResult.Success, 0, elapsedMics, toBeShared.IncrementAndShare()));
                 }
             }
         }
@@ -320,14 +374,51 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, NetEndpoint netEndpoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
     {
-        if (dataToBeMoved.Span.Length > NetConstants.MaxPacketLength)
+        var length = dataToBeMoved.Span.Length;
+        if (length < PacketHeader.Length ||
+            length > NetConstants.MaxPacketLength)
         {
-            return;
+            return NetResult.InvalidData;
         }
 
-        var item = new Item(endPoint, dataToBeMoved, responseTcs);
+        if (relayNumber > 0)
+        {// The minimum number of relays
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+        else if (relayNumber < 0)
+        {// The target relay
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+        if (relayNumber == 0)
+        {// No relay
+            var span = dataToBeMoved.Span;
+            BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+            span = span.Slice(sizeof(ushort));
+            BitConverter.TryWriteBytes(span, netAddress.RelayId); // DestinationRelayId
+        }
+        else
+        {// Relay
+            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out netEndpoint))
+            {
+                dataToBeMoved.Return();
+                return NetResult.InvalidRelay;
+            }
+
+            dataToBeMoved.Return();
+            dataToBeMoved = encrypted;
+        }
+
+        var item = new Item(netEndpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
@@ -350,6 +441,33 @@ public sealed partial class PacketTerminal
         }
 
         // this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
+
+        return NetResult.Success;
+    }
+
+    internal unsafe NetResult SendPacketWithoutRelay(NetEndpoint endpoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+    {
+        var length = dataToBeMoved.Span.Length;
+        if (length < PacketHeader.Length ||
+            length > NetConstants.MaxPacketLength)
+        {
+            return NetResult.InvalidData;
+        }
+
+        // PacketHeaderCode
+        var span = dataToBeMoved.Span;
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(6)); // PacketId
+
+        var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
+        lock (this.items.SyncObject)
+        {
+            item.Goshujin = this.items;
+        }
+
+        return NetResult.Success;
     }
 
     private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
@@ -367,11 +485,11 @@ public sealed partial class PacketTerminal
         scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
         var span = header;
 
-        BitConverter.TryWriteBytes(span, 0u); // Hash
+        BitConverter.TryWriteBytes(span, 0u); // SourceRelayId/DestinationRelayId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, (ushort)0); // Engagement
-        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, 0u); // Hash
+        span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, (ushort)TPacket.PacketType); // PacketType
         span = span.Slice(sizeof(ushort));
@@ -388,7 +506,7 @@ public sealed partial class PacketTerminal
 
         // Get checksum
         span = array.AsSpan(0, arrayLength);
-        BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
+        BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
 
         if (!isInitialBuffer)
         {

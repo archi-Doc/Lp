@@ -13,9 +13,8 @@ internal partial class ConnectPacket : IPacket
     {
     }
 
-    public ConnectPacket(ushort engagement, NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
+    public ConnectPacket(NodePublicKey clientPublicKey, int serverPublicKeyChecksum)
     {
-        this.Engagement = engagement;
         this.ClientPublicKey = clientPublicKey;
         this.ServerPublicKeyChecksum = serverPublicKeyChecksum;
         this.ClientSalt = RandomVault.Crypto.NextUInt64();
@@ -25,8 +24,8 @@ internal partial class ConnectPacket : IPacket
     [Key(0)]
     public uint NetIdentification { get; set; }
 
-    [Key(1)]
-    public ushort Engagement { get; set; }
+    // [Key(1)]
+    // public ushort RelayId { get; set; }
 
     [Key(2)]
     public NodePublicKey ClientPublicKey { get; set; }

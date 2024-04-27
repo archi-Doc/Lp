@@ -62,9 +62,9 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
         return this.ecdsa ??= KeyHelper.CreateEcdsaFromD(this.d);
     }
 
-    public bool CreateSignature<T>(T data, out Signature signature)
+    /*public bool CreateSignature<T>(T data, out Signature signature)
         where T : ITinyhandSerialize<T>
-    {// tempcode
+    {
         var ecdsa = this.TryGetEcdsa();
         if (ecdsa == null)
         {
@@ -84,7 +84,7 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
         var mics = Mics.GetCorrected();
         signature = new Signature(this.ToPublicKey(), Signature.Type.Attest, mics, sign);
         return true;
-    }
+    }*/
 
     public byte[]? SignData(ReadOnlySpan<byte> data)
     {

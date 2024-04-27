@@ -45,10 +45,10 @@ public readonly partial record struct DualAddressRecord
 public readonly partial struct DualAddressImplemented : IEquatable<DualAddressImplemented>
 {
     [Key(0)]
-    public readonly ushort Engagement4;
+    public readonly ushort RelayId4;
 
     [Key(1)]
-    public readonly ushort Engagement6;
+    public readonly ushort RelayId6;
 
     [Key(2)]
     public readonly ushort Port4;
@@ -75,8 +75,8 @@ public readonly partial struct DualAddressImplemented : IEquatable<DualAddressIm
     }
 
     public bool Equals(DualAddressImplemented other)
-        => this.Engagement4 == other.Engagement4 &&
-        this.Engagement6 == other.Engagement6 &&
+        => this.RelayId4 == other.RelayId4 &&
+        this.RelayId6 == other.RelayId6 &&
         this.Port4 == other.Port4 &&
         this.Port6 == other.Port6 &&
         this.Address4 == other.Address4 &&
@@ -84,7 +84,7 @@ public readonly partial struct DualAddressImplemented : IEquatable<DualAddressIm
         this.Address6B == other.Address6B;
 
     public override int GetHashCode()
-        => HashCode.Combine(this.Engagement4, this.Engagement6, this.Port4, this.Port6, this.Address4, this.Address6A, this.Address6B);
+        => HashCode.Combine(this.RelayId4, this.RelayId6, this.Port4, this.Port6, this.Address4, this.Address6A, this.Address6B);
 }
 
 /// <summary>
@@ -95,10 +95,10 @@ public readonly partial struct DualAddressImplemented : IEquatable<DualAddressIm
 public readonly partial struct DualAddress : IStringConvertible<DualAddress>
 {
     [Key(0)]
-    public readonly ushort Engagement4;
+    public readonly ushort RelayId4;
 
     [Key(1)]
-    public readonly ushort Engagement6;
+    public readonly ushort RelayId6;
 
     [Key(2)]
     public readonly ushort Port4;

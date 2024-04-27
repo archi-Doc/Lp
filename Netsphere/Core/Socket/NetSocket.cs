@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net.Sockets;
+using Netsphere.Packet;
 
 namespace Netsphere.Core;
 
@@ -49,7 +50,8 @@ public sealed class NetSocket
                         // core.socket.netTerminal.UnitLogger.Get<NetSocket>(LogLevel.Debug)?.Log($"Receive actual {received}");
                     }
 
-                    if (received <= NetConstants.MaxPacketLength)
+                    if (received > PacketHeader.Length &&
+                        received <= NetConstants.MaxPacketLength)
                     {// nspi
                         core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
                         if (arrayOwner.Count > 1)

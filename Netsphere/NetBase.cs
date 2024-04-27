@@ -27,7 +27,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public ConnectionAgreement DefaultAgreement { get; set; } = ConnectionAgreement.Default;
 
-    public TimeSpan DefaultSendTimeout { get; set; } = NetConstants.DefaultSendTimeout;
+    public TimeSpan DefaultTransmissionTimeout { get; set; } = NetConstants.DefaultTransmissionTimeout;
 
     public NodePublicKey NodePublicKey { get; private set; }
 

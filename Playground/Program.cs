@@ -8,10 +8,10 @@ using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using Netsphere.Crypto;
-using Netsphere.Logging;
+using Netsphere.Relay;
 using SimpleCommandLine;
 
-namespace Sandbox;
+namespace Playground;
 
 public class Program
 {
@@ -32,11 +32,10 @@ public class Program
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
+                context.AddSingleton<IRelayControl, CertificateRelayControl>();
+
                 // Command
-                context.AddCommand(typeof(SandboxCommand));
-                context.AddCommand(typeof(BasicTestCommand));
-                context.AddCommand(typeof(BlockTestCommand));
-                context.AddCommand(typeof(RemoteDataCommand));
+                context.AddCommand(typeof(PlayCommand));
 
                 context.AddLoggerResolver(context =>
                 {// Logger

@@ -13,8 +13,8 @@ namespace Netsphere;
 public sealed partial class ClientConnection : Connection, IClientConnectionInternal, IEquatable<ClientConnection>, IComparable<ClientConnection>
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
-    [Link(Type = ChainType.Unordered, Name = "DestinationEndPoint", TargetMember = "DestinationEndPoint")]
-    internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndPoint endPoint)
+    [Link(Type = ChainType.Unordered, Name = "DestinationEndpoint", TargetMember = "DestinationEndpoint")]
+    internal ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetNode node, NetEndpoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, node, endPoint)
     {
         this.context = this.NetBase.NewClientConnectionContext(this);
@@ -76,7 +76,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return NetResult.SerializationFailed;
         }
 
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -124,7 +124,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         NetResponse response;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -172,6 +172,12 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             response.Return();
             var netResult = (NetResult)response.DataId;
             return new(NetResult.Success, Unsafe.As<NetResult, TReceive>(ref netResult));
+        }
+
+        if (response.Received.Memory.Length == 0)
+        {
+            response.Return();
+            return new((NetResult)response.DataId);
         }
 
         if (!NetHelper.TryDeserialize<TReceive>(response.Received, out var receive))
@@ -353,7 +359,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         NetResponse response;
         ReceiveTransmission? receiveTransmission;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, cancellationToken).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -458,7 +464,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         NetResponse response;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, default).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)
@@ -511,7 +517,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
         NetResponse response;
         ReceiveTransmission? receiveTransmission;
-        var timeout = this.NetBase.DefaultSendTimeout;
+        var timeout = this.NetBase.DefaultTransmissionTimeout;
         using (var transmissionAndTimeout = await this.TryCreateSendTransmission(timeout, default).ConfigureAwait(false))
         {
             if (transmissionAndTimeout.Transmission is null)

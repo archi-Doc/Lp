@@ -10,14 +10,14 @@ namespace Netsphere;
 /// </summary>
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
-{// 24 bytes
+{// 24 bytes. IEquatable<NetAddress> -> record struct
     public const string AlternativeName = "alternative";
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
     public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
     [Key(0)]
-    public readonly ushort Engagement; // 2 bytes
+    public readonly ushort RelayId; // 2 bytes
 
     [Key(1)]
     public readonly ushort Port; // 2 bytes
@@ -37,6 +37,29 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         this.Address4 = address4;
         this.Address6A = address6a;
         this.Address6B = address6b;
+    }
+
+    public NetAddress(NetEndpoint endpoint)
+    {
+        Span<byte> span = stackalloc byte[16];
+
+        this.Port = (ushort)endpoint.EndPoint.Port;
+        if (endpoint.EndPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            if (endpoint.EndPoint.Address.TryWriteBytes(span, out _))
+            {
+                this.Address6A = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
+                this.Address6B = BitConverter.ToUInt64(span);
+            }
+        }
+        else
+        {
+            if (endpoint.EndPoint.Address.TryWriteBytes(span, out _))
+            {
+                this.Address4 = BitConverter.ToUInt32(span);
+            }
+        }
     }
 
     public NetAddress(IPAddress ipAddress, ushort port)
@@ -239,19 +262,19 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateIpv4(ref NetEndPoint endPoint)
+    public bool TryCreateIpv4(ref NetEndpoint endPoint)
     {
         if (!this.IsValidIpv4)
         {
             return false;
         }
 
-        endPoint = new(new(this.Address4, this.Port), this.Engagement);
+        endPoint = new(this.RelayId, new(this.Address4, this.Port));
         return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateIpv6(ref NetEndPoint endPoint)
+    public bool TryCreateIpv6(ref NetEndpoint endPoint)
     {
         if (!this.IsValidIpv6)
         {
@@ -262,17 +285,16 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
         BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
         var ipv6 = new IPAddress(ipv6byte);
-        endPoint = new(new(ipv6, this.Port), this.Engagement);
+        endPoint = new(this.RelayId, new(ipv6, this.Port));
         return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateIPEndPoint([MaybeNullWhen(false)] out IPEndPoint endPoint)
+    public void CreateIPEndPoint([MaybeNullWhen(false)] out IPEndPoint endPoint)
     {
         if (this.IsValidIpv4)
         {
             endPoint = new(this.Address4, this.Port);
-            return true;
         }
         else if (this.IsValidIpv6)
         {
@@ -281,12 +303,10 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
             var ipv6 = new IPAddress(ipv6byte);
             endPoint = new(this.Address4, this.Port);
-            return true;
         }
         else
         {
-            endPoint = default;
-            return false;
+            endPoint = new(0, 0);
         }
     }
 
@@ -329,6 +349,16 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         Span<char> span = stackalloc char[MaxStringLength];
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
     }
+
+    /*public bool Equals(NetAddress other)
+        => this.RelayId == other.RelayId &&
+        this.Port == other.Port &&
+        this.Address4 == other.Address4 &&
+        this.Address6A == other.Address6A &&
+        this.Address6B == other.Address6B;
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.RelayId, this.Port, this.Address4, this.Address6A, this.Address6B);*/
 
     private static bool TryParseIPv4(ref ReadOnlySpan<char> source, ref ushort port, out uint address4)
     {

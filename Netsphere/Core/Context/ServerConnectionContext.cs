@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Core;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 
 #pragma warning disable SA1202
 
@@ -190,7 +191,11 @@ public class ServerConnectionContext
                 return;
             }
 
-            /*else if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
+            /*else if (transmissionContext.DataId == CreateRelayBlock.DataId)
+            {
+                this.NetTerminal.RelayControl.ProcessCreateRelay(transmissionContext);
+            }
+            else if (transmissionContext.DataId == ConnectionAgreement.UpdateId)
             {
                 this.UpdateAgreement(transmissionContext);
             }
@@ -240,7 +245,7 @@ public class ServerConnectionContext
                     }
                     else
                     {// Failure
-                        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                        transmissionContext.SendResultAndForget(result);
                     }
                 }
             }
@@ -250,7 +255,7 @@ public class ServerConnectionContext
         }
         catch
         {// Unknown exception
-            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownError);
+            transmissionContext.SendResultAndForget(NetResult.UnknownError);
         }
         finally
         {

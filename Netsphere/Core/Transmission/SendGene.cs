@@ -95,7 +95,7 @@ internal partial class SendGene
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Send_NotThreadSafe(NetSender netSender, int additional/*, bool doNotTransmit = false*/)
+    public bool Send_NotThreadSafe(NetSender netSender, int additional)
     {
         if (!this.CanSend || !this.Packet.TryIncrement())
         {// MemoryOwner has been returned to the pool (Disposed).
@@ -107,12 +107,23 @@ internal partial class SendGene
 
         if (NetConstants.LogLowLevelNet)
         {
-            connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} {connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndPoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
+            connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} {connection.ConnectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndpoint.ToString()}, Send gene {this.GeneSerialListLink.Position} {this.CurrentState.ToString()} {this.Packet.Memory.Length}");
         }
 
-        // if (!doNotTransmit)
-        {
-            netSender.Send_NotThreadSafe(connection.DestinationEndPoint.EndPoint, this.Packet); // Incremented
+        if (connection.MinimumNumberOfRelays == 0)
+        {// No relay
+            netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, this.Packet);
+        }
+        else
+        {// Relay
+            if (!connection.NetTerminal.RelayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, this.Packet.Span, out var encrypted, out var relayEndpoint))
+            {
+                this.Packet.Return();
+                return false;
+            }
+
+            this.Packet.Return();
+            netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, encrypted);
         }
 
         this.SentMics = currentMics;

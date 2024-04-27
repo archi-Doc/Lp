@@ -6,5 +6,5 @@ public interface INetResponder
 {
     ulong DataId { get; }
 
-    bool Respond(TransmissionContext transmissionContext);
+    void Respond(TransmissionContext transmissionContext);
 }

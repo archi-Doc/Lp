@@ -7,27 +7,33 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
     public ulong DataId
         => NetHelper.GetDataId<TSend, TReceive>();
 
-    public virtual TReceive? RespondAsync(TSend value) => default;
+    public virtual NetResultValue<TReceive> RespondAsync(TSend value) => default;
 
-    public bool Respond(TransmissionContext transmissionContext)
+    public void Respond(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.Owner.Memory.Span, out var t))
         {
             transmissionContext.Return();
-            return false;
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
+            return;
         }
 
         transmissionContext.Return();
 
         _ = Task.Run(() =>
         {
-            var response = this.RespondAsync(t);
-            if (response is not null)
+            this.ServerConnection = transmissionContext.ServerConnection;
+            var r = this.RespondAsync(t);
+            if (r.Value is not null)
             {
-                transmissionContext.SendAndForget(response, this.DataId);
+                transmissionContext.SendAndForget(r.Value, this.DataId);
+            }
+            else
+            {
+                transmissionContext.SendResultAndForget(r.Result);
             }
         });
-
-        return true;
     }
+
+    protected ServerConnection ServerConnection { get; private set; } = default!;
 }
