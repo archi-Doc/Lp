@@ -266,12 +266,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             owner = decrypted;
             span = decrypted.Span;
         }
-        else if (netEndpoint.RelayId != 0)
+        else if (netEndpoint.RelayId != 0 &&
+            this.RelayCircuit.RelayKey.NumberOfRelays > 0)
         {// Relay
             if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalAddress))
             {
                 span = owner.Span;
-                netEndpoint = new(originalAddress.RelayId, this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress));
+                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, false);
+                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
         }
 
