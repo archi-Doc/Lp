@@ -12,6 +12,25 @@ namespace Netsphere.Relay;
 /// </summary>
 public partial class RelayAgent
 {
+    private const int EndPointCacheSize = 100;
+
+    [ValueLinkObject]
+    private partial class NetAddressToEndPointItem
+    {
+        [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
+        public NetAddressToEndPointItem(NetAddress netAddress)
+        {
+            this.NetAddress = netAddress;
+            netAddress.CreateIPEndPoint(out var endPoint);
+            this.EndPoint = endPoint;
+        }
+
+        [Link(Type = ChainType.Unordered, AddValue = false)]
+        public NetAddress NetAddress { get; }
+
+        public IPEndPoint EndPoint { get; }
+    }
+
     internal RelayAgent(IRelayControl relayControl, NetTerminal netTerminal)
     {
         this.relayControl = relayControl;
@@ -25,6 +44,8 @@ public partial class RelayAgent
 
     private readonly RelayExchange.GoshujinClass items = new();
     private readonly Aes aes = Aes.Create();
+
+    private readonly NetAddressToEndPointItem.GoshujinClass endPointCache = new();
 
     #endregion
 
@@ -111,15 +132,18 @@ public partial class RelayAgent
                     }
                     else
                     {// Initiator -> Other (known)
+                        if (exchange.OuterEndpoint.IsValid)
+                        {// Inner relay
+                            goto Exit;
+                        }
+
                         MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
                         span = span.Slice(sizeof(ushort));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
-                        if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
-                        {
-                            decrypted.IncrementAndShare();
-                            this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);//
-                        }
+                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress);
+                        decrypted.IncrementAndShare();
+                        this.netTerminal.NetSender.Send_NotThreadSafe(ep2, decrypted);
                     }
                 }
                 else
@@ -143,7 +167,7 @@ public partial class RelayAgent
         else
         {// OuterRelayId
             if (exchange.OuterEndpoint.IsValid)
-            {
+            {// Inner relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                 }
@@ -154,8 +178,7 @@ public partial class RelayAgent
             }
             else
             {// Outermost relay
-                // Other (known or unknown)
-
+                // Other (known, unknown)
             }
 
             this.aes.Key = exchange.Key;
@@ -170,7 +193,7 @@ public partial class RelayAgent
                 var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
 
                 // RelayHeader
-                var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));//
+                var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));
                 MemoryMarshal.Write(sourceSpan, relayHeader);
                 sourceSpan = sourceSpan.Slice(RelayHeader.Length);
 
@@ -206,7 +229,22 @@ Exit:
 
     internal void ProcessSend(NetSender netSender)
     {
-        if (netSender.CanSend)
+        // if (netSender.CanSend)
+    }
+
+    internal IPEndPoint GetEndPoint_NotThreadSafe(NetAddress netAddress)
+    {
+        if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
+        {
+            item = new(netAddress);
+            this.endPointCache.Add(item);
+            if (this.endPointCache.Count > EndPointCacheSize)
+            {
+                this.endPointCache.QueueChain.Peek().Goshujin = default;
+            }
+        }
+
+        return item.EndPoint;
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
