@@ -10,7 +10,7 @@ internal class NetSender
     private const int RetryLimit = 3;
     private const int RetryIntervalInMilliseconds = 500;
 
-    private readonly struct Item
+    internal readonly struct Item
     {
         public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
         {

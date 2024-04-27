@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -18,17 +19,20 @@ public partial class RelayAgent
     private partial class NetAddressToEndPointItem
     {
         [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
-        public NetAddressToEndPointItem(NetAddress netAddress)
+        public NetAddressToEndPointItem(NetAddress netAddress, bool known)
         {
             this.NetAddress = netAddress;
             netAddress.CreateIPEndPoint(out var endPoint);
             this.EndPoint = endPoint;
+            this.Known = known;
         }
 
         [Link(Type = ChainType.Unordered, AddValue = false)]
         public NetAddress NetAddress { get; }
 
         public IPEndPoint EndPoint { get; }
+
+        public bool Known { get; }
     }
 
     internal RelayAgent(IRelayControl relayControl, NetTerminal netTerminal)
@@ -46,6 +50,7 @@ public partial class RelayAgent
     private readonly Aes aes = Aes.Create();
 
     private readonly NetAddressToEndPointItem.GoshujinClass endPointCache = new();
+    private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
 
     #endregion
 
@@ -141,9 +146,9 @@ public partial class RelayAgent
                         span = span.Slice(sizeof(ushort));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
-                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress);
+                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, true);
                         decrypted.IncrementAndShare();
-                        this.netTerminal.NetSender.Send_NotThreadSafe(ep2, decrypted);
+                        this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
                     }
                 }
                 else
@@ -153,7 +158,7 @@ public partial class RelayAgent
                         MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                         MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
                         source.IncrementAndShare();
-                        this.netTerminal.NetSender.Send_NotThreadSafe(exchange.OuterEndpoint.EndPoint, source);
+                        this.sendItems.Enqueue(new(exchange.OuterEndpoint.EndPoint, source));
                     }
                     else
                     {// No outer relay. Discard
@@ -179,6 +184,7 @@ public partial class RelayAgent
             else
             {// Outermost relay
                 // Other (known, unknown)
+                var ep2 = this.GetEndPoint_NotThreadSafe(endpoint, false);
             }
 
             this.aes.Key = exchange.Key;
@@ -219,7 +225,7 @@ public partial class RelayAgent
             MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
             MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
             source.IncrementAndShare();
-            this.netTerminal.NetSender.Send_NotThreadSafe(exchange.Endpoint.EndPoint, source);//
+            this.sendItems.Enqueue(new(exchange.Endpoint.EndPoint, source));
         }
 
 Exit:
@@ -229,14 +235,18 @@ Exit:
 
     internal void ProcessSend(NetSender netSender)
     {
-        // if (netSender.CanSend)
+        while (netSender.CanSend &&
+            this.sendItems.TryDequeue(out var item))
+        {
+            netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+        }
     }
 
-    internal IPEndPoint GetEndPoint_NotThreadSafe(NetAddress netAddress)
+    internal (IPEndPoint EndPoint, bool Known) GetEndPoint_NotThreadSafe(NetAddress netAddress, bool known)
     {
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
-            item = new(netAddress);
+            item = new(netAddress, known);
             this.endPointCache.Add(item);
             if (this.endPointCache.Count > EndPointCacheSize)
             {
@@ -244,7 +254,7 @@ Exit:
             }
         }
 
-        return item.EndPoint;
+        return (item.EndPoint, item.Known);
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
