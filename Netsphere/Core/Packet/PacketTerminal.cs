@@ -94,14 +94,9 @@ public sealed partial class PacketTerminal
             return (NetResult.Closed, default, 0);
         }
 
-        if (!this.netTerminal.TryCreateEndpoint(in netAddress, out var endpoint))
-        {
-            return (NetResult.NoNetwork, default, 0);
-        }
-
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var owner); // CreatePacketCode
-        var result = this.SendPacket(netAddress, endpoint, owner, responseTcs, relayNumber);
+        var result = this.SendPacket(netAddress, owner, responseTcs, relayNumber);
         if (result != NetResult.Success)
         {
             return (result, default, 0);
@@ -341,7 +336,7 @@ public sealed partial class PacketTerminal
                     this.SendPacketWithoutRelay(endpoint, owner, default);
                 }
 
-                return;
+                return;//
             }
         }
         else if (packetUInt16 < 255)
@@ -374,7 +369,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe NetResult SendPacket(NetAddress netAddress, NetEndpoint netEndpoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -399,8 +394,14 @@ public sealed partial class PacketTerminal
         }
 
         var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+        NetEndpoint endpoint;
         if (relayNumber == 0)
         {// No relay
+            if (!this.netTerminal.TryCreateEndpoint(in netAddress, out endpoint))
+            {
+                return NetResult.NoNetwork;
+            }
+
             var span = dataToBeMoved.Span;
             BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
             span = span.Slice(sizeof(ushort));
@@ -408,7 +409,7 @@ public sealed partial class PacketTerminal
         }
         else
         {// Relay
-            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out netEndpoint))
+            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
             {
                 dataToBeMoved.Return();
                 return NetResult.InvalidRelay;
@@ -418,7 +419,7 @@ public sealed partial class PacketTerminal
             dataToBeMoved = encrypted;
         }
 
-        var item = new Item(netEndpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
+        var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
