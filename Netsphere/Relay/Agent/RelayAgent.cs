@@ -24,8 +24,7 @@ public partial class RelayAgent
 
     private readonly object syncObject = new();
     private readonly RelayExchange.GoshujinClass items = new();
-    private Aes? aes0;
-    private Aes? aes1;
+    private readonly Aes aes = Aes.Create();
 
     #endregion
 
@@ -65,7 +64,7 @@ public partial class RelayAgent
     }
 
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
-    {
+    {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
         if (source.Owner is null)
         {// Invalid data
@@ -73,7 +72,6 @@ public partial class RelayAgent
         }
 
         RelayExchange? exchange;
-        Aes? aes;
         lock (this.syncObject)
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
@@ -81,127 +79,116 @@ public partial class RelayAgent
             {// No relay exchange
                 goto Exit;
             }
-
-            aes = this.RentAesInternal();
         }
 
-        try
-        {
-            if (exchange.RelayId == destinationRelayId)
-            {// InnerRelayId
-                if (exchange.Endpoint.EndPointEquals(endpoint))
-                {// Inner -> Outer: Decrypt
-                    if ((span.Length & 15) != 0)
-                    {// Invalid data
-                        goto Exit;
-                    }
-
-                    aes.Key = exchange.Key;
-                    if (!aes.TryDecryptCbc(span, exchange.Iv, span, out var written, PaddingMode.None) ||
-                        written < RelayHeader.Length)
-                    {
-                        goto Exit;
-                    }
-
-                    var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
-                    if (relayHeader.Zero == 0)
-                    { // Decrypted
-                        span = span.Slice(RelayHeader.Length - RelayHeader.RelayIdLength);
-                        decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
-                        if (relayHeader.NetAddress == NetAddress.Relay)
-                        {// Initiator -> This node
-                            MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
-                            span = span.Slice(sizeof(ushort));
-                            MemoryMarshal.Write(span, (ushort)0); // DestinationRelayId
-                            return true;
-                        }
-                        else
-                        {// Initiator -> Other (known)
-                            MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
-                            span = span.Slice(sizeof(ushort));
-                            MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
-
-                            if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
-                            {
-                                decrypted.IncrementAndShare();
-                                this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);//
-                            }
-                        }
-                    }
-                    else
-                    {// Not decrypted
-                        if (exchange.OuterEndpoint.IsValid)
-                        {// -> Outer relay
-                            MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
-                            source.IncrementAndShare();
-                            this.netTerminal.NetSender.Send_NotThreadSafe(exchange.OuterEndpoint.EndPoint, source);
-                        }
-                        else
-                        {// Discard
-                        }
-                    }
-                }
-                else
-                {// Invalid: Discard
-                }
-            }
-            else
-            {// OuterRelayId
-                if (exchange.OuterEndpoint.IsValid &&
-                    exchange.OuterEndpoint.EndPointEquals(endpoint))
-                {// Outer relay -> Inner: Encrypt
-                    aes.Key = exchange.Key;
-                }
-                else
-                {// Other (known or unknown)
-                }
-
-                var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
-                if (sourceRelayId == 0)
-                {// RelayId(Source/Destination), RelayHeader, Content, Padding
-                    var sourceSpan = source.Owner.ByteArray.AsSpan(RelayHeader.RelayIdLength);
-                    span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
-
-                    var contentLength = span.Length;
-                    var multiple = contentLength & ~15;
-                    var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
-
-                    // RelayHeader
-                    var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));//
-                    MemoryMarshal.Write(sourceSpan, relayHeader);
-                    sourceSpan = sourceSpan.Slice(RelayHeader.Length);
-
-                    sourceSpan = sourceSpan.Slice(contentLength);
-                    sourceSpan.Slice(0, paddingLength).Fill(0x07);
-
-                    source = new(source.Owner.ByteArray, 0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
-                    span = source.Span.Slice(RelayHeader.RelayIdLength);
-                }
-
-                // Encrypt
+        if (exchange.RelayId == destinationRelayId)
+        {// InnerRelayId
+            if (exchange.Endpoint.EndPointEquals(endpoint))
+            {// Inner -> Outer: Decrypt
                 if ((span.Length & 15) != 0)
                 {// Invalid data
                     goto Exit;
                 }
 
-                aes.Key = exchange.Key;
-                if (!aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+                this.aes.Key = exchange.Key;
+                if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out var written, PaddingMode.None) ||
+                    written < RelayHeader.Length)
                 {
                     goto Exit;
                 }
 
-                MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
-                MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
-                source.IncrementAndShare();
-                this.netTerminal.NetSender.Send_NotThreadSafe(exchange.Endpoint.EndPoint, source);//
+                var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
+                if (relayHeader.Zero == 0)
+                { // Decrypted. Process the packet on this node.
+                    span = span.Slice(RelayHeader.Length - RelayHeader.RelayIdLength);
+                    decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
+                    if (relayHeader.NetAddress == NetAddress.Relay)
+                    {// Initiator -> This node
+                        MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
+                        span = span.Slice(sizeof(ushort));
+                        MemoryMarshal.Write(span, (ushort)0); // DestinationRelayId
+                        return true;
+                    }
+                    else
+                    {// Initiator -> Other (known)
+                        MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
+                        span = span.Slice(sizeof(ushort));
+                        MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
+
+                        if (this.netTerminal.TryCreateEndpoint(relayHeader.NetAddress, out var ep2))
+                        {
+                            decrypted.IncrementAndShare();
+                            this.netTerminal.NetSender.Send_NotThreadSafe(ep2.EndPoint, decrypted);//
+                        }
+                    }
+                }
+                else
+                {// Not decrypted. Relay the packet to the next node.
+                    if (exchange.OuterEndpoint.IsValid)
+                    {// -> Outer relay
+                        MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
+                        MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
+                        source.IncrementAndShare();
+                        this.netTerminal.NetSender.Send_NotThreadSafe(exchange.OuterEndpoint.EndPoint, source);
+                    }
+                    else
+                    {// No outer relay. Discard
+                    }
+                }
+            }
+            else
+            {// Invalid: Discard
             }
         }
-        finally
-        {
-            lock (this.syncObject)
-            {
-                this.ReturnAesInternal(aes);
+        else
+        {// OuterRelayId
+            if (exchange.OuterEndpoint.IsValid &&
+                exchange.OuterEndpoint.EndPointEquals(endpoint))
+            {// Outer relay -> Inner: Encrypt
+                this.aes.Key = exchange.Key;
             }
+            else
+            {// Other (known or unknown)
+            }
+
+            var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
+            if (sourceRelayId == 0)
+            {// RelayId(Source/Destination), RelayHeader, Content, Padding
+                var sourceSpan = source.Owner.ByteArray.AsSpan(RelayHeader.RelayIdLength);
+                span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
+
+                var contentLength = span.Length;
+                var multiple = contentLength & ~15;
+                var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
+
+                // RelayHeader
+                var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));//
+                MemoryMarshal.Write(sourceSpan, relayHeader);
+                sourceSpan = sourceSpan.Slice(RelayHeader.Length);
+
+                sourceSpan = sourceSpan.Slice(contentLength);
+                sourceSpan.Slice(0, paddingLength).Fill(0x07);
+
+                source = new(source.Owner.ByteArray, 0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
+                span = source.Span.Slice(RelayHeader.RelayIdLength);
+            }
+
+            // Encrypt
+            if ((span.Length & 15) != 0)
+            {// Invalid data
+                goto Exit;
+            }
+
+            this.aes.Key = exchange.Key;
+            if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+            {
+                goto Exit;
+            }
+
+            MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
+            MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
+            source.IncrementAndShare();
+            this.netTerminal.NetSender.Send_NotThreadSafe(exchange.Endpoint.EndPoint, source);//
         }
 
 Exit:
@@ -209,7 +196,7 @@ Exit:
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Aes RentAesInternal()
     {
         Aes aes;
@@ -245,5 +232,5 @@ Exit:
         {
             aes.Dispose();
         }
-    }
+    }*/
 }

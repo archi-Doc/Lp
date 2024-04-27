@@ -10,7 +10,7 @@ namespace Netsphere;
 /// </summary>
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
-{// 24 bytes
+{// 24 bytes. IEquatable<NetAddress> -> record struct
     public const string AlternativeName = "alternative";
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
@@ -352,6 +352,16 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         Span<char> span = stackalloc char[MaxStringLength];
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
     }
+
+    /*public bool Equals(NetAddress other)
+        => this.RelayId == other.RelayId &&
+        this.Port == other.Port &&
+        this.Address4 == other.Address4 &&
+        this.Address6A == other.Address6A &&
+        this.Address6B == other.Address6B;
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.RelayId, this.Port, this.Address4, this.Address6A, this.Address6B);*/
 
     private static bool TryParseIPv4(ref ReadOnlySpan<char> source, ref ushort port, out uint address4)
     {
