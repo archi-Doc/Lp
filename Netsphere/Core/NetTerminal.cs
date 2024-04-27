@@ -268,7 +268,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         }
         else if (netEndpoint.RelayId != 0 &&
             this.RelayCircuit.RelayKey.NumberOfRelays > 0)
-        {// Relay
+        {// Receive data from relays.
             if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalAddress))
             {
                 span = owner.Span;

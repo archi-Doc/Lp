@@ -1,18 +1,24 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Packet;
+
 namespace Netsphere.Relay;
 
 [TinyhandObject]
-public sealed partial class PingRelayBlock
+public sealed partial class PingRelayBlock : IPacket
 {
+    public static PacketType PacketType => PacketType.GetInformation;//
+
     public PingRelayBlock()
     {
     }
 }
 
 [TinyhandObject]
-public sealed partial class PingRelayResponse
+public sealed partial class PingRelayResponse : IPacket
 {
+    public static PacketType PacketType => PacketType.GetInformationResponse;//
+
     public PingRelayResponse()
     {
     }

@@ -77,6 +77,8 @@ public class PlayCommand : ISimpleCommandAsync
                 return;
             }
         }
+
+        var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayBlock, PingRelayResponse>(NetAddress.Relay, new(), 1);
     }
 
     private readonly NetControl netControl;

@@ -9,12 +9,14 @@ public enum PacketType : ushort
     Ping,
     Punch,
     GetInformation,
+    PingRelay,
 
     // Response packet types (128-255)
     ConnectResponse = 128,
     PingResponse,
     PunchResponse,
     GetInformationResponse,
+    PingRelayResponse,
 
     // Gene types (256-383)
     Protected = 256,
