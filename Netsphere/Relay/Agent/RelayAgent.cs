@@ -1,10 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Netsphere.Core;
+using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
@@ -255,6 +257,28 @@ Exit:
         }
 
         return (item.EndPoint, item.Known);
+    }
+
+    internal void ProcessPingRelay(PacketTerminal packetTerminal, NetEndpoint endpoint, ushort destinationRelayId)
+    {
+        if (this.items.Count == 0)
+        {
+            return;
+        }
+
+        RelayExchange? exchange;
+        lock (this.items.SyncObject)
+        {
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null)
+            {
+                return;
+            }
+        }
+
+        var packet = new PingRelayResponse(exchange.RelayId, exchange.OuterRelayId, exchange.RelayPoint);
+        CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
+        this.SendPacketWithoutRelay(endpoint, owner, default);
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]

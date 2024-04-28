@@ -283,7 +283,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, destinationRelayId, packetType, owner, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene

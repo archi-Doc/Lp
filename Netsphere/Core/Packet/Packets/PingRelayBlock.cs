@@ -5,11 +5,11 @@ using Netsphere.Packet;
 namespace Netsphere.Relay;
 
 [TinyhandObject]
-public sealed partial class PingRelayBlock : IPacket
+public sealed partial class PingRelayPacket : IPacket
 {
-    public static PacketType PacketType => PacketType.GetInformation;//
+    public static PacketType PacketType => PacketType.PingRelay;
 
-    public PingRelayBlock()
+    public PingRelayPacket()
     {
     }
 }
@@ -17,7 +17,7 @@ public sealed partial class PingRelayBlock : IPacket
 [TinyhandObject]
 public sealed partial class PingRelayResponse : IPacket
 {
-    public static PacketType PacketType => PacketType.GetInformationResponse;//
+    public static PacketType PacketType => PacketType.PingRelayResponse;//
 
     public PingRelayResponse()
     {

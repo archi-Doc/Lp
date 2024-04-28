@@ -262,7 +262,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
@@ -336,7 +336,12 @@ public sealed partial class PacketTerminal
                     this.SendPacketWithoutRelay(endpoint, owner, default);
                 }
 
-                return;//
+                return;
+            }
+            else if (packetType == PacketType.PingRelay)
+            {// PingRelay
+                this.netTerminal.RelayAgent.ProcessPingRelay(this, endpoint, destinationRelayId);
+                return;
             }
         }
         else if (packetUInt16 < 255)
