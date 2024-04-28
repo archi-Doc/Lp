@@ -17,22 +17,21 @@ public sealed partial class PingRelayPacket : IPacket
 [TinyhandObject]
 public sealed partial class PingRelayResponse : IPacket
 {
-    public static PacketType PacketType => PacketType.PingRelayResponse;//
+    public static PacketType PacketType => PacketType.PingRelayResponse;
 
     public PingRelayResponse()
     {
     }
 
-    public PingRelayResponse(ushort outerRelayId, NetAddress outerRelayAddress, long relayPoint)
+    public PingRelayResponse(long relayPoint, NetEndpoint outerRelayAddress)
     {
+        this.RelayPoint = relayPoint;
+        this.OuterRelayAddress = outerRelayAddress;
     }
 
     [Key(0)]
-    public ushort OuterRelayId { get; private set; }
+    public long RelayPoint { get; private set; }
 
     [Key(1)]
-    public NetAddress OuterRelayAddress { get; private set; }
-
-    [Key(2)]
-    public long RelayPoint { get; private set; }
+    public NetEndpoint OuterRelayAddress { get; private set; }
 }

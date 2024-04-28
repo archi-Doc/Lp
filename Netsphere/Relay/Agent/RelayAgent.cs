@@ -259,11 +259,11 @@ Exit:
         return (item.EndPoint, item.Known);
     }
 
-    internal void ProcessPingRelay(PacketTerminal packetTerminal, NetEndpoint endpoint, ushort destinationRelayId)
+    internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)
     {
         if (this.items.Count == 0)
         {
-            return;
+            return null;
         }
 
         RelayExchange? exchange;
@@ -272,13 +272,12 @@ Exit:
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
-                return;
+                return null;
             }
         }
 
-        var packet = new PingRelayResponse(exchange.RelayId, exchange.OuterRelayId, exchange.RelayPoint);
-        CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-        this.SendPacketWithoutRelay(endpoint, owner, default);
+        var packet = new PingRelayResponse(exchange.RelayPoint, exchange.OuterEndpoint);
+        return packet;
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]

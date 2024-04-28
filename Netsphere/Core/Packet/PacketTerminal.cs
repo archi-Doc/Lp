@@ -340,7 +340,13 @@ public sealed partial class PacketTerminal
             }
             else if (packetType == PacketType.PingRelay)
             {// PingRelay
-                this.netTerminal.RelayAgent.ProcessPingRelay(this, endpoint, destinationRelayId);
+                var packet = this.netTerminal.RelayAgent.ProcessPingRelay(destinationRelayId);
+                if (packet is not null)
+                {
+                    CreatePacket(packetId, packet, out var owner);
+                    this.SendPacketWithoutRelay(endpoint, owner, default);
+                }
+
                 return;
             }
         }
