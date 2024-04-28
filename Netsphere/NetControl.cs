@@ -144,7 +144,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetTerminal.Initialize(this.Responders, this.Services, false);
         if (this.NetBase.NetOptions.EnableAlternative)
         {// For debugging
-            this.Alternative = new(context, unitLogger, netBase, netStats, NoRelayControl.Instance);
+            this.Alternative = new(context, unitLogger, netBase, netStats, CertificateRelayControl.Instance);
             this.Alternative.Initialize(this.Responders, this.Services, true);
         }
     }

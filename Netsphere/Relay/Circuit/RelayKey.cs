@@ -28,17 +28,18 @@ internal class RelayKey
     public RelayKey(RelayNode.GoshujinClass relayNodes)
     {// lock (relayNodes.SyncObject)
         this.NumberOfRelays = relayNodes.Count;
-        if (relayNodes.Count > 0)
+        var node = relayNodes.LinkedListChain.First;
+        if (node is not null)
         {
-            var chain = relayNodes.ListChain;
-            this.FirstEndpoint = chain[0].Endpoint;
+            this.FirstEndpoint = node.Endpoint;
 
             this.KeyArray = new byte[relayNodes.Count][];
             this.IvArray = new byte[relayNodes.Count][];
-            for (var i = 0; i < relayNodes.Count; i++)
+            for (var i = 0; node is not null; i++)
             {
-                this.KeyArray[i] = chain[i].Key;
-                this.IvArray[i] = chain[i].Iv;
+                this.KeyArray[i] = node.Key;
+                this.IvArray[i] = node.Iv;
+                node = node.LinkedListLink.Next;
             }
         }
     }

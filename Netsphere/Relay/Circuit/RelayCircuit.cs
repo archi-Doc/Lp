@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+using System.Text;
+
 namespace Netsphere.Relay;
 
 /// <summary>
@@ -142,6 +145,65 @@ public class RelayCircuit
         {
             return this.CanAddRelayInternal(relayId, endpoint);
         }
+    }
+
+    public string UnsafeToString()
+    {
+        var sb = new StringBuilder();
+        lock (this.relayNodes.SyncObject)
+        {
+            var i = 0;
+            foreach (var x in this.relayNodes)
+            {
+                sb.Append($"{i++}: {x.ToString()} - ");
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    public async Task<string> UnsafeDetailedToString()
+    {
+        NetEndpoint[] endpointArray;
+        lock (this.relayNodes.SyncObject)
+        {
+            endpointArray = this.relayNodes.Select(x => x.Endpoint).ToArray();
+        }
+
+        var dictionary = new ConcurrentDictionary<int, PingRelayResponse>();
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(NetConstants.DefaultPacketTransmissionTimeout);
+        var task = Parallel.ForAsync(0, endpointArray.Length, cts.Token, async (i, cancellationToken) =>
+        {
+            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -(1 + i), cancellationToken);
+            if (rr.Result == NetResult.Success &&
+            rr.Value is { } response)
+            {
+                dictionary.TryAdd(i, response);
+            }
+        });
+
+        try
+        {
+            await task;
+        }
+        catch
+        {
+        }
+
+        var sb = new StringBuilder();
+        for (var i = 0; i < endpointArray.Length; i++)
+        {
+            if (dictionary.TryGetValue(i, out var response))
+            {
+                sb.AppendLine($"{i}: {endpointArray[i].ToString()} {response.ToString()}");
+            }
+            else
+            {
+            }
+        }
+
+        return sb.ToString();
     }
 
     /*internal bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)

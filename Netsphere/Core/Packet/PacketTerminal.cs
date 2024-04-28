@@ -84,8 +84,9 @@ public sealed partial class PacketTerminal
     /// relayNumber &lt; 0: The target relay.<br/>
     /// relayNumber == 0: Relays are not necessary.<br/>
     /// relayNumber &gt; 0: The minimum number of relays.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0)
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="NetResult"/>, the received packet value of type <typeparamref name="TReceive"/>, and the round-trip time in microseconds.</returns>
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -109,7 +110,7 @@ public sealed partial class PacketTerminal
 
         try
         {
-            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.PacketTransmissionTimeout, default).ConfigureAwait(false);
+            var response = await this.netTerminal.Wait(responseTcs.Task, this.netTerminal.PacketTransmissionTimeout, cancellationToken).ConfigureAwait(false);
 
             if (response.IsFailure)
             {

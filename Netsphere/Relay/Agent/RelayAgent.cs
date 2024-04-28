@@ -45,6 +45,9 @@ public partial class RelayAgent
 
     #region FieldAndProperty
 
+    public int NumberOfExchanges
+        => this.items.Count >> 1; // Inner and outer relay id.
+
     private readonly IRelayControl relayControl;
     private readonly NetTerminal netTerminal;
 
@@ -62,7 +65,7 @@ public partial class RelayAgent
         ushort outerRelayId = 0;
         lock (this.items.SyncObject)
         {
-            if (this.items.Count > this.relayControl.MaxParallelRelays)
+            if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)
             {
                 return RelayResult.ParallelRelayLimit;
             }
@@ -261,7 +264,7 @@ Exit:
 
     internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)
     {
-        if (this.items.Count == 0)
+        if (this.NumberOfExchanges == 0)
         {
             return null;
         }
@@ -282,7 +285,7 @@ Exit:
 
     internal SetRelayResponse? ProcessSetRelay(ushort destinationRelayId, SetRelayPacket p)
     {
-        if (this.items.Count == 0)
+        if (this.NumberOfExchanges == 0)
         {
             return null;
         }

@@ -9,6 +9,8 @@ namespace Netsphere.Relay;
 
 public class CertificateRelayControl : IRelayControl
 {
+    public static readonly IRelayControl Instance = new CertificateRelayControl();
+
     private class CreateRelayResponder : AsyncResponder<CertificateToken<CreateRelayBlock>, CreateRelayResponse>
     {
         public CreateRelayResponder(CertificateRelayControl relayControl)
@@ -18,7 +20,8 @@ public class CertificateRelayControl : IRelayControl
 
         public override NetResultValue<CreateRelayResponse> RespondAsync(CertificateToken<CreateRelayBlock> token)
         {
-            if (!token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
+            if (this.ServerConnection.NetTerminal.RelayControl is not CertificateRelayControl ||
+                !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
                 !this.ServerConnection.ValidateAndVerifyWithSalt(token))
             {
                 return new(NetResult.NotAuthorized);
