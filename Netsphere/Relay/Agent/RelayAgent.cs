@@ -223,7 +223,10 @@ public partial class RelayAgent
             else
             {// Outermost relay
                 // Other (known, unknown)
-                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), false);//
+                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), false);
+                if (!ep2.Known)
+                {//Unknown
+                }
             }
 
             this.aes.Key = exchange.Key;

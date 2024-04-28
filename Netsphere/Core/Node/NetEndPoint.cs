@@ -47,5 +47,5 @@ public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
         => HashCode.Combine(this.RelayId, this.EndPoint);
 
     public override string ToString()
-        => $"[{this.RelayId.ToString()}]{this.EndPoint?.ToString()}";
+        => this.IsValid ? $"[{this.RelayId.ToString()}]{this.EndPoint?.ToString()}" : string.Empty;
 }
