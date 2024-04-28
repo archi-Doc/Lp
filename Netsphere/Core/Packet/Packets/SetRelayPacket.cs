@@ -14,7 +14,7 @@ public sealed partial class SetRelayPacket : IPacket
     }
 
     [Key(0)]
-    public IPEndPoint? OuterRelayEndPoint { get; set; }
+    public NetEndpoint OuterEndPoint { get; set; }
 }
 
 [TinyhandObject]

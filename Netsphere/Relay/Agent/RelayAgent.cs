@@ -296,7 +296,7 @@ Exit:
                 return null;
             }
 
-            exchange.OuterEndpoint
+            exchange.OuterEndpoint = p.OuterEndPoint;
         }
 
         var packet = new SetRelayResponse();

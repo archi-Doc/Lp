@@ -25,7 +25,7 @@ internal partial class RelayExchange
 
     public NetEndpoint Endpoint { get; private set; }
 
-    public NetEndpoint OuterEndpoint { get; private set; }
+    public NetEndpoint OuterEndpoint { get; set; }
 
     public long RelayPoint { get; private set; } = 1_000_000; // tempcode
 
