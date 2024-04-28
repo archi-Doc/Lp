@@ -108,6 +108,11 @@ public class PlayCommand : ISimpleCommandAsync
 
         // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
         Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+        /*for (var i = 0; i < 10; i++)
+        {
+            Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+            await Task.Delay(2_000 * i);
+        }*/
     }
 
     private readonly NetControl netControl;

@@ -5,11 +5,13 @@ namespace Netsphere.Relay;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 internal partial class RelayExchange
 {
+    [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
     public RelayExchange(ushort relayId, ushort outerRelayId, ServerConnection serverConnection)
     {
         this.RelayId = relayId;
         this.OuterRelayId = outerRelayId;
         this.Endpoint = serverConnection.DestinationEndpoint;
+        this.LastAccessMics = Mics.FastSystem;
 
         this.Key = new byte[Connection.EmbryoKeyLength];
         serverConnection.UnsafeCopyKey(this.Key);
@@ -17,7 +19,7 @@ internal partial class RelayExchange
         serverConnection.UnsafeCopyIv(this.Iv);
     }
 
-    [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
+    [Link(Type = ChainType.Unordered, AddValue = false)]
     public ushort RelayId { get; private set; }
 
     [Link(UnsafeTargetChain = "RelayIdChain")]
@@ -29,20 +31,23 @@ internal partial class RelayExchange
 
     public long RelayPoint { get; private set; } = 1_000_000; // tempcode
 
+    public long LastAccessMics { get; private set; }
+
     internal byte[] Key { get; private set; }
 
     internal byte[] Iv { get; private set; }
 
     public bool DecrementAndCheck()
-    {
+    {// lock (items)
         if (this.RelayPoint-- <= 0)
-        {
+        {// All RelayPoints have been exhausted.
             this.Clean();
             this.Goshujin = null;
             return false;
         }
         else
         {
+            this.LastAccessMics = Mics.FastSystem;
             return true;
         }
     }

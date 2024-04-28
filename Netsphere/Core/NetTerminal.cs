@@ -85,6 +85,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public void Clean()
     {
         this.ConnectionTerminal.Clean();
+        this.RelayAgent.Clean();
     }
 
     public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)

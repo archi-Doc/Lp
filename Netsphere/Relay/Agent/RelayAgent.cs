@@ -16,6 +16,7 @@ namespace Netsphere.Relay;
 public partial class RelayAgent
 {
     private const int EndPointCacheSize = 100;
+    private const long CleanIntervalMics = 10_000_000; // 10 seconds
 
     [ValueLinkObject]
     private partial class NetAddressToEndPointItem
@@ -46,7 +47,7 @@ public partial class RelayAgent
     #region FieldAndProperty
 
     public int NumberOfExchanges
-        => this.items.Count >> 1; // Inner and outer relay id.
+        => this.items.Count;
 
     private readonly IRelayControl relayControl;
     private readonly NetTerminal netTerminal;
@@ -56,6 +57,8 @@ public partial class RelayAgent
 
     private readonly NetAddressToEndPointItem.GoshujinClass endPointCache = new();
     private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
+
+    private long lastCleanMics;
 
     #endregion
 
@@ -92,6 +95,37 @@ public partial class RelayAgent
         }
 
         return RelayResult.Success;
+    }
+
+    public void Clean()
+    {
+        if (Mics.FastSystem - this.lastCleanMics < CleanIntervalMics)
+        {
+            return;
+        }
+
+        this.lastCleanMics = Mics.FastSystem;
+
+        lock (this.items.SyncObject)
+        {
+            Queue<RelayExchange>? toDelete = default;
+            foreach (var x in this.items)
+            {
+                if (this.lastCleanMics - x.LastAccessMics > NetConstants.DefaultRelayRetensionMics)
+                {
+                    toDelete ??= new();
+                    toDelete.Enqueue(x);
+                }
+            }
+
+            if (toDelete is not null)
+            {
+                while (toDelete.TryDequeue(out var x))
+                {
+                    this.items.Remove(x);
+                }
+            }
+        }
     }
 
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
