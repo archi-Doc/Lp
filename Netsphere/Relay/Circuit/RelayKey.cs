@@ -174,7 +174,7 @@ Exit:
 
         var headerAndContentLength = RelayHeader.Length + content.Length + paddingLength;
         var headerAndContent = encrypted.Span.Slice(RelayHeader.RelayIdLength, headerAndContentLength);
-        for (var i = 0; i < relayNumber; i++)
+        for (var i = relayNumber - 1; i >= 0; i--)
         {
             aes.Key = this.KeyArray[i];
             aes.TryEncryptCbc(headerAndContent, this.IvArray[i], headerAndContent, out _, PaddingMode.None);

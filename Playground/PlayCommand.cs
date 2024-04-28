@@ -95,11 +95,18 @@ public class PlayCommand : ISimpleCommandAsync
             var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection);
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
+
+            var setRelayPacket = new SetRelayPacket();
+            setRelayPacket.OuterEndPoint = new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
+            await netTerminal.PacketTerminal.SendAndReceive<SetRelayPacket, SetRelayResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
-        // var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), 1);
-        // Console.WriteLine(rr);
+        /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -1);
+        Console.WriteLine(rr);*/
+        var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -2);
+        Console.WriteLine(rr);
 
+        // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
         Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
     }
 

@@ -27,10 +27,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
-        this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.RelayCircuit = new(this, relayControl);
         this.RelayControl = relayControl;
         this.RelayAgent = new(relayControl, this);
+        this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.netCleaner = new(this);
 
         this.PacketTransmissionTimeout = NetConstants.DefaultPacketTransmissionTimeout;
