@@ -16,6 +16,7 @@ public enum NetResult : byte
     Refused,
     InvalidData,
     InvalidOperation,
+    InvalidEndpoint,
     InvalidRelay,
     SerializationFailed,
     DeserializationFailed,

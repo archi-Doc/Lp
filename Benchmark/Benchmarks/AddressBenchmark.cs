@@ -21,7 +21,7 @@ public partial class NetAddressToEndPoint
     [Link(Type = ChainType.Unordered, AddValue = false)]
     public NetAddress NetAddress { get; }
 
-    public EndPoint EndPoint { get; }
+    public EndPoint? EndPoint { get; }
 }
 
 [ValueLinkObject]
@@ -39,7 +39,7 @@ public partial class NetAddressToEndPoint2
     [Link(Type = ChainType.Unordered, AddValue = false)]
     public NetAddress NetAddress { get; }
 
-    public EndPoint EndPoint { get; }
+    public EndPoint? EndPoint { get; }
 }
 
 [Config(typeof(BenchmarkConfig))]
@@ -79,7 +79,7 @@ public class AddressBenchmark
     }
 
     [Benchmark]
-    public EndPoint NetAddressToEndPoint_Ipv4()
+    public EndPoint? NetAddressToEndPoint_Ipv4()
     {
         var endpoint = default(NetEndpoint);
         this.netAddress.TryCreateIpv4(ref endpoint);
@@ -87,7 +87,7 @@ public class AddressBenchmark
     }
 
     [Benchmark]
-    public EndPoint NetAddressToEndPoint_Ipv6()
+    public EndPoint? NetAddressToEndPoint_Ipv6()
     {
         var endpoint = default(NetEndpoint);
         this.netAddress.TryCreateIpv6(ref endpoint);
@@ -95,7 +95,7 @@ public class AddressBenchmark
     }
 
     [Benchmark]
-    public EndPoint NetAddressToEndPoint_Cache()
+    public EndPoint? NetAddressToEndPoint_Cache()
     {
         lock (this.items.SyncObject)
         {
@@ -110,7 +110,7 @@ public class AddressBenchmark
     }
 
     [Benchmark]
-    public EndPoint NetAddressToEndPoint_Cache2()
+    public EndPoint? NetAddressToEndPoint_Cache2()
     {
         // lock (this.items.SyncObject)
         {
@@ -125,7 +125,7 @@ public class AddressBenchmark
     }
 
     [Benchmark]
-    public EndPoint NetAddressToEndPoint_Cache3()
+    public EndPoint? NetAddressToEndPoint_Cache3()
     {
         if (!this.items2.NetAddressChain.TryGetValue(this.netAddress, out var item))
         {

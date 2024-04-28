@@ -192,12 +192,12 @@ public partial class RelayAgent
                 }
                 else
                 {// Not decrypted. Relay the packet to the next node.
-                    if (exchange.OuterEndpoint.IsValid)
+                    if (exchange.OuterEndpoint.EndPoint is { } ep)
                     {// -> Outer relay
                         MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                         MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
                         source.IncrementAndShare();
-                        this.sendItems.Enqueue(new(exchange.OuterEndpoint.EndPoint, source));
+                        this.sendItems.Enqueue(new(ep, source));
                     }
                     else
                     {// No outer relay. Discard
@@ -261,10 +261,13 @@ public partial class RelayAgent
                 goto Exit;
             }
 
-            MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
-            MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
-            source.IncrementAndShare();
-            this.sendItems.Enqueue(new(exchange.Endpoint.EndPoint, source));
+            if (exchange.Endpoint.EndPoint is { } ep)
+            {
+                MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
+                source.IncrementAndShare();
+                this.sendItems.Enqueue(new(ep, source));
+            }
         }
 
 Exit:

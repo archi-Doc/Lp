@@ -316,7 +316,7 @@ public sealed partial class PacketTerminal
             {// PingPacket
                 if (this.netBase.NetOptions.EnableEssential)
                 {
-                    var packet = new PingPacketResponse(new(endpoint.EndPoint.Address, (ushort)endpoint.EndPoint.Port), this.netBase.NetOptions.NodeName);
+                    var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName);
                     CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
                     this.SendPacketWithoutRelay(endpoint, owner, default);
 
@@ -445,6 +445,11 @@ public sealed partial class PacketTerminal
             dataToBeMoved = encrypted;
         }
 
+        if (endpoint.EndPoint is null)
+        {
+            return NetResult.InvalidEndpoint;
+        }
+
         var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
@@ -479,6 +484,11 @@ public sealed partial class PacketTerminal
             length > NetConstants.MaxPacketLength)
         {
             return NetResult.InvalidData;
+        }
+
+        if (endpoint.EndPoint is null)
+        {
+            return NetResult.InvalidEndpoint;
         }
 
         // PacketHeaderCode
