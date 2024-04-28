@@ -23,24 +23,24 @@ public sealed partial class PingRelayResponse : IPacket
     {
     }
 
-    public PingRelayResponse(long relayPoint, IPEndPoint? outerRelayEndPoint)
+    public PingRelayResponse(long relayPoint, NetEndpoint outerEndPoint)
     {
         this.RelayPoint = relayPoint;
-        this.OuterRelayEndPoint = outerRelayEndPoint;
+        this.OuterEndPoint = outerEndPoint;
     }
 
     [Key(0)]
     public long RelayPoint { get; set; }
 
     [Key(1)]
-    public IPEndPoint? OuterRelayEndPoint { get; set; }
+    public NetEndpoint? OuterEndPoint { get; set; }
 
     public bool IsOutermost
-        => this.OuterRelayEndPoint is null;
+        => this.OuterEndPoint is null;
 
     public override string ToString()
     {
-        var outerRelay = this.OuterRelayEndPoint is null ? string.Empty : $", OuterRelayAddress: {this.OuterRelayEndPoint}";
+        var outerRelay = this.OuterEndPoint is null ? string.Empty : $", OuterRelayAddress: {this.OuterEndPoint}";
 
         return $"RelayPoint: {this.RelayPoint}{outerRelay}";
     }

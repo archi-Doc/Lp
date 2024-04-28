@@ -103,8 +103,8 @@ public class PlayCommand : ISimpleCommandAsync
 
         /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -1);
         Console.WriteLine(rr);*/
-        var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -2);
-        Console.WriteLine(rr);
+        /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -2);
+        Console.WriteLine(rr);*/
 
         // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
         Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());

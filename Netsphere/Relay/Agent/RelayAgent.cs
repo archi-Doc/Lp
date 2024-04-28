@@ -189,7 +189,7 @@ public partial class RelayAgent
             else
             {// Outermost relay
                 // Other (known, unknown)
-                //var ep2 = this.GetEndPoint_NotThreadSafe(endpoint, false);
+                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), false);//
             }
 
             this.aes.Key = exchange.Key;
@@ -279,7 +279,7 @@ Exit:
             }
         }
 
-        var packet = new PingRelayResponse(exchange.RelayPoint, exchange.OuterEndpoint.EndPoint);
+        var packet = new PingRelayResponse(exchange.RelayPoint, exchange.OuterEndpoint);
         return packet;
     }
 
