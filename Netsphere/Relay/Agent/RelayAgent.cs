@@ -276,7 +276,31 @@ Exit:
             }
         }
 
-        var packet = new PingRelayResponse(exchange.RelayPoint, exchange.OuterEndpoint);
+        var packet = new PingRelayResponse(exchange.RelayPoint, exchange.OuterEndpoint.EndPoint);
+        return packet;
+    }
+
+    internal SetRelayResponse? ProcessSetRelay(ushort destinationRelayId, SetRelayPacket p)
+    {
+        if (this.items.Count == 0)
+        {
+            return null;
+        }
+
+        RelayExchange? exchange;
+        lock (this.items.SyncObject)
+        {
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null)
+            {
+                return null;
+            }
+
+            exchange.OuterEndpoint
+        }
+
+        var packet = new SetRelayResponse();
+        packet.Result = RelayResult.Success;
         return packet;
     }
 

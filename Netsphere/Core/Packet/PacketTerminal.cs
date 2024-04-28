@@ -349,6 +349,20 @@ public sealed partial class PacketTerminal
 
                 return;
             }
+            else if (packetType == PacketType.SetRelay)
+            {// SetRelay
+                if (TinyhandSerializer.TryDeserialize<SetRelayPacket>(span, out var p))
+                {
+                    var packet = this.netTerminal.RelayAgent.ProcessSetRelay(destinationRelayId, p);
+                    if (packet is not null)
+                    {
+                        CreatePacket(packetId, packet, out var owner);
+                        this.SendPacketWithoutRelay(endpoint, owner, default);
+                    }
+                }
+
+                return;
+            }
         }
         else if (packetUInt16 < 255)
         {// Packet response types (128-255), Server -> Client (Response)
