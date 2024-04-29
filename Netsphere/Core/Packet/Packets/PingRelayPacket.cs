@@ -46,6 +46,6 @@ public sealed partial class PingRelayResponse : IPacket
     {
         var outerRelay = this.OuterEndPoint is null ? string.Empty : $", OuterRelayAddress: {this.OuterEndPoint}";
 
-        return $"RelayPoint: {this.RelayPoint}{outerRelay}, RetensionMics: {this.RelayRetensionMics}";
+        return $"RelayPoint: {this.RelayPoint}{outerRelay}, RetensionMics: {Mics.ToSimpleString(this.RelayRetensionMics)}";
     }
 }

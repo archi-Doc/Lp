@@ -37,6 +37,8 @@ internal partial class RelayExchange
 
     public long RelayRetensionMics { get; private set; }
 
+    public long RestrictedIntervalMics { get; private set; }
+
     internal byte[] Key { get; private set; }
 
     internal byte[] Iv { get; private set; }

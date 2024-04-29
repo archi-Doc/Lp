@@ -22,12 +22,12 @@ public partial class RelayAgent
     private partial class NetAddressToEndPointItem
     {
         [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
-        public NetAddressToEndPointItem(NetAddress netAddress, bool known)
+        public NetAddressToEndPointItem(NetAddress netAddress, bool unrestricted)
         {
             this.NetAddress = netAddress;
             netAddress.CreateIPEndPoint(out var endPoint);
             this.EndPoint = endPoint;
-            this.Known = known;
+            this.Unrestricted = unrestricted;
         }
 
         [Link(Type = ChainType.Unordered, AddValue = false)]
@@ -35,7 +35,7 @@ public partial class RelayAgent
 
         public IPEndPoint EndPoint { get; }
 
-        public bool Known { get; }
+        public bool Unrestricted { get; }
     }
 
     internal RelayAgent(IRelayControl relayControl, NetTerminal netTerminal)
@@ -59,6 +59,7 @@ public partial class RelayAgent
     private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
 
     private long lastCleanMics;
+    private long lastRestrictedMics;
 
     #endregion
 
@@ -196,7 +197,7 @@ public partial class RelayAgent
                         return true;
                     }
                     else
-                    {// Initiator -> Other (known)
+                    {// Initiator -> Other (unrestricted)
                         if (exchange.OuterEndpoint.IsValid)
                         {// Inner relay
                             goto Exit;
@@ -237,16 +238,22 @@ public partial class RelayAgent
                 {// Outer relay -> Inner: Encrypt
                 }
                 else
-                {// Other (known or unknown)
+                {// Other (unrestricted or restricted)
                     goto Exit;
                 }
             }
             else
             {// Outermost relay
-                // Other (known, unknown)
+                // Other (unrestricted or restricted)
                 var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), false);
-                if (!ep2.Known)
-                {//Unknown
+                if (!ep2.Unrestricted)
+                {// Restricted
+                    if (Mics.FastSystem - this.lastRestrictedMics < this.relayControl.)
+                    {// Discard
+                        goto Exit;
+                    }
+
+                    this.lastRestrictedMics = Mics.FastSystem;
                 }
             }
 
@@ -308,11 +315,11 @@ Exit:
         }
     }
 
-    internal (IPEndPoint EndPoint, bool Known) GetEndPoint_NotThreadSafe(NetAddress netAddress, bool known)
+    internal (IPEndPoint EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, bool unrestricted)
     {
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
-            item = new(netAddress, known);
+            item = new(netAddress, unrestricted);
             this.endPointCache.Add(item);
             if (this.endPointCache.Count > EndPointCacheSize)
             {
@@ -320,7 +327,7 @@ Exit:
             }
         }
 
-        return (item.EndPoint, item.Known);
+        return (item.EndPoint, item.Unrestricted);
     }
 
     internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)
