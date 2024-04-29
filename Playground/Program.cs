@@ -48,6 +48,10 @@ public class Program
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
+             .ConfigureSerivice(context =>
+             {// Register the services provided by the server.
+                 context.AddService<ITestService>();
+             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/Debug.txt";

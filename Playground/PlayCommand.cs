@@ -101,6 +101,18 @@ public class PlayCommand : ISimpleCommandAsync
             await netTerminal.PacketTerminal.SendAndReceive<SetRelayPacket, SetRelayResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
+        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
+        {
+            if (clientConnection is null)
+            {
+                return;
+            }
+
+            var service = clientConnection.GetService<ITestService>();
+            var result = await service.DoubleString("Test1");
+            Console.WriteLine(result);
+        }
+
         /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -1);
         Console.WriteLine(rr);*/
         /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -2);
