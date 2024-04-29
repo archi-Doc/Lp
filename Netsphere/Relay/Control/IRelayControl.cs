@@ -14,6 +14,8 @@ public interface IRelayControl
 
     long DefaultMaxRelayPoint { get; }
 
+    long DefaultRestrictedIntervalMics { get; }
+
     void ProcessRegisterResponder(ResponderControl responders)
     {
     }

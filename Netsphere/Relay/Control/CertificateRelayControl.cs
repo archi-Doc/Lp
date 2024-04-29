@@ -52,6 +52,9 @@ public class CertificateRelayControl : IRelayControl
     public long DefaultMaxRelayPoint
         => 100_000;
 
+    public long DefaultRestrictedIntervalMics
+        => 100_000;
+
     public SignaturePublicKey CertificatePublicKey { get; private set; }
 
     public void ProcessRegisterResponder(ResponderControl responders)

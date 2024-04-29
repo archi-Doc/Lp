@@ -19,6 +19,7 @@ internal partial class RelayExchange
         serverConnection.UnsafeCopyIv(this.Iv);
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
+        this.RestrictedIntervalMics = relayControl.DefaultRestrictedIntervalMics;
     }
 
     [Link(Type = ChainType.Unordered, AddValue = false)]
@@ -31,12 +32,24 @@ internal partial class RelayExchange
 
     public NetEndpoint OuterEndpoint { get; set; }
 
+    /// <summary>
+    /// Gets or sets the remaining relay points.
+    /// </summary>
     public long RelayPoint { get; internal set; }
 
     public long LastAccessMics { get; private set; }
 
+    /// <summary>
+    /// Gets the duration for maintaining the relay circuit.<br/>
+    /// If no packets are received during this time, the relay circuit will be released.
+    /// </summary>
     public long RelayRetensionMics { get; private set; }
 
+    /// <summary>
+    /// Gets the reception interval for packets from restricted nodes (unknown nodes) To protect the relay.<br/>
+    /// Packets received more frequently than this interval will be discarded.<br/>
+    /// If set to 0, all packets from unknown nodes will be discarded.
+    /// </summary>
     public long RestrictedIntervalMics { get; private set; }
 
     internal byte[] Key { get; private set; }

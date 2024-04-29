@@ -17,4 +17,7 @@ public class NoRelayControl : IRelayControl
 
     public long DefaultMaxRelayPoint
         => 0;
+
+    public long DefaultRestrictedIntervalMics
+        => 0;
 }

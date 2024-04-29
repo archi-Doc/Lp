@@ -248,7 +248,8 @@ public partial class RelayAgent
                 var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), false);
                 if (!ep2.Unrestricted)
                 {// Restricted
-                    if (Mics.FastSystem - this.lastRestrictedMics < this.relayControl.)
+                    if (exchange.RestrictedIntervalMics == 0 ||
+                        Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
                     {// Discard
                         goto Exit;
                     }
