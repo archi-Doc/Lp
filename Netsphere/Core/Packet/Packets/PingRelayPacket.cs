@@ -23,17 +23,21 @@ public sealed partial class PingRelayResponse : IPacket
     {
     }
 
-    public PingRelayResponse(long relayPoint, NetEndpoint outerEndPoint)
+    internal PingRelayResponse(RelayExchange exchange)
     {
-        this.RelayPoint = relayPoint;
-        this.OuterEndPoint = outerEndPoint;
+        this.RelayPoint = exchange.RelayPoint;
+        this.OuterEndPoint = exchange.OuterEndpoint;
+        this.RelayRetensionMics = exchange.RelayRetensionMics;
     }
 
     [Key(0)]
-    public long RelayPoint { get; set; }
+    public long RelayPoint { get; private set; }
 
     [Key(1)]
-    public NetEndpoint? OuterEndPoint { get; set; }
+    public NetEndpoint? OuterEndPoint { get; private set; }
+
+    [Key(2)]
+    public long RelayRetensionMics { get; private set; }
 
     public bool IsOutermost
         => this.OuterEndPoint is null;
@@ -42,6 +46,6 @@ public sealed partial class PingRelayResponse : IPacket
     {
         var outerRelay = this.OuterEndPoint is null ? string.Empty : $", OuterRelayAddress: {this.OuterEndPoint}";
 
-        return $"RelayPoint: {this.RelayPoint}{outerRelay}";
+        return $"RelayPoint: {this.RelayPoint}{outerRelay}, RetensionMics: {this.RelayRetensionMics}";
     }
 }

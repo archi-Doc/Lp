@@ -6,7 +6,7 @@ namespace Netsphere.Relay;
 internal partial class RelayExchange
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
-    public RelayExchange(ushort relayId, ushort outerRelayId, ServerConnection serverConnection)
+    public RelayExchange(IRelayControl relayControl, ushort relayId, ushort outerRelayId, ServerConnection serverConnection)
     {
         this.RelayId = relayId;
         this.OuterRelayId = outerRelayId;
@@ -17,6 +17,8 @@ internal partial class RelayExchange
         serverConnection.UnsafeCopyKey(this.Key);
         this.Iv = new byte[Connection.EmbryoIvLength];
         serverConnection.UnsafeCopyIv(this.Iv);
+
+        this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
     }
 
     [Link(Type = ChainType.Unordered, AddValue = false)]
@@ -29,9 +31,11 @@ internal partial class RelayExchange
 
     public NetEndpoint OuterEndpoint { get; set; }
 
-    public long RelayPoint { get; private set; } = 1_000_000; // tempcode
+    public long RelayPoint { get; internal set; }
 
     public long LastAccessMics { get; private set; }
+
+    public long RelayRetensionMics { get; private set; }
 
     internal byte[] Key { get; private set; }
 

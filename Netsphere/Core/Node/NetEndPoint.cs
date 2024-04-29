@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Netsphere;
 
 [TinyhandObject]
@@ -17,6 +19,7 @@ public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
     [Key(1)]
     public readonly IPEndPoint? EndPoint;
 
+    [MemberNotNullWhen(true, nameof(EndPoint))]
     public bool IsValid
         => this.EndPoint is not null;
 

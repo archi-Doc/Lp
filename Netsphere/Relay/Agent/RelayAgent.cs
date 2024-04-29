@@ -91,10 +91,31 @@ public partial class RelayAgent
                 }
             }
 
-            this.items.Add(new(relayId, outerRelayId, serverConnection));
+            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection));
         }
 
         return RelayResult.Success;
+    }
+
+    public long AddRelayPoint(ushort relayId, long relayPoint)
+    {
+        lock (this.items.SyncObject)
+        {
+            var exchange = this.items.RelayIdChain.FindFirst(relayId);
+            if (exchange is null)
+            {
+                return 0;
+            }
+
+            var prev = exchange.RelayPoint;
+            exchange.RelayPoint += relayPoint;
+            if (exchange.RelayPoint > this.relayControl.DefaultMaxRelayPoint)
+            {
+                exchange.RelayPoint = this.relayControl.DefaultMaxRelayPoint;
+            }
+
+            return exchange.RelayPoint - prev;
+        }
     }
 
     public void Clean()
@@ -111,7 +132,7 @@ public partial class RelayAgent
             Queue<RelayExchange>? toDelete = default;
             foreach (var x in this.items)
             {
-                if (this.lastCleanMics - x.LastAccessMics > NetConstants.DefaultRelayRetensionMics)
+                if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
                 {
                     toDelete ??= new();
                     toDelete.Enqueue(x);
@@ -310,6 +331,7 @@ Exit:
         }
 
         RelayExchange? exchange;
+        PingRelayResponse? packet;
         lock (this.items.SyncObject)
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
@@ -317,9 +339,10 @@ Exit:
             {
                 return null;
             }
+
+            packet = new PingRelayResponse(exchange);
         }
 
-        var packet = new PingRelayResponse(exchange.RelayPoint, exchange.OuterEndpoint);
         return packet;
     }
 

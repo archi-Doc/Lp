@@ -486,7 +486,7 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
-        if (endpoint.EndPoint is null)
+        if (!endpoint.IsValid)
         {
             return NetResult.InvalidEndpoint;
         }

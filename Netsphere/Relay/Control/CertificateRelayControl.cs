@@ -27,8 +27,13 @@ public class CertificateRelayControl : IRelayControl
                 return new(NetResult.NotAuthorized);
             }
 
-            var result = this.ServerConnection.NetTerminal.RelayAgent.Add(this.ServerConnection, out var relayId);
+            var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
+            var result = relayAgent.Add(this.ServerConnection, out var relayId);
             var response = new CreateRelayResponse(result, relayId);
+
+            var relayPoint = this.relayControl.DefaultMaxRelayPoint;
+            relayAgent.AddRelayPoint(relayId, relayPoint);
+
             return new(NetResult.Success, response);
         }
 
@@ -41,8 +46,11 @@ public class CertificateRelayControl : IRelayControl
     public int MaxParallelRelays
         => 100;
 
-    public long RelayDurationMics
+    public long DefaultRelayRetensionMics
         => Mics.FromMinutes(10);
+
+    public long DefaultMaxRelayPoint
+        => 100_000;
 
     public SignaturePublicKey CertificatePublicKey { get; private set; }
 
