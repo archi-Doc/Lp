@@ -70,7 +70,8 @@ public class PlayCommand : ISimpleCommandAsync
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
         }
 
-        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
+        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
+        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, 1))
         {
             if (clientConnection is null)
             {
@@ -101,7 +102,9 @@ public class PlayCommand : ISimpleCommandAsync
             await netTerminal.PacketTerminal.SendAndReceive<SetRelayPacket, SetRelayResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
-        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
+        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 2))
+        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
+        using (var clientConnection = await netTerminal.Connect(netNode))
         {
             if (clientConnection is null)
             {
