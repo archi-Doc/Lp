@@ -66,6 +66,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public TimeSpan PacketTransmissionTimeout { get; private set; }
 
+    public IRelayControl RelayControl { get; private set; }
+
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal NetSender NetSender { get; }
@@ -73,8 +75,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
-
-    internal IRelayControl RelayControl { get; private set; }
 
     internal RelayAgent RelayAgent { get; private set; }
 

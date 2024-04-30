@@ -35,51 +35,7 @@ public class RelayCircuit
 
     #endregion
 
-    /*public async Task<RelayResult> AddRelay(NetNode netNode, CancellationToken cancellationToken = default)
-    {
-        var relayId = (ushort)RandomVault.Pseudo.NextUInt32();
-        lock (this.relayNodes.SyncObject)
-        {
-            var result = this.CanAddRelayInternal(relayId, netNode);
-            if (result != RelayResult.Success)
-            {
-                return result;
-            }
-        }
-
-        using (var clientConnection = await this.netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false))
-        {
-            if (clientConnection is null)
-            {
-                return RelayResult.ConnectionFailure;
-            }
-
-            var r = await clientConnection.SendAndReceive<CreateRelayBlock, CreateRelayResponse>(new CreateRelayBlock(relayId), 0, cancellationToken).ConfigureAwait(false);
-            if (r.IsFailure || r.Value is null)
-            {
-                return RelayResult.ConnectionFailure;
-            }
-            else if (r.Value.Result != RelayResult.Success)
-            {
-                return r.Value.Result;
-            }
-
-            lock (this.relayNodes.SyncObject)
-            {
-                var result = this.CanAddRelayInternal(relayId, netNode);
-                if (result != RelayResult.Success)
-                {//Terminate
-                    return result;
-                }
-
-                this.relayNodes.Add(new(relayId, clientConnection));
-            }
-
-            return RelayResult.Success;
-        }
-    }*/
-
-    public RelayResult AddRelay(ushort relayId, ClientConnection clientConnection, bool closeRelayedConnections)
+    public RelayResult AddRelay(ushort relayId, ClientConnection clientConnection, bool closeRelayedConnections = true)
     {
         if (clientConnection.DestinationEndpoint.RelayId != 0)
         {
@@ -95,7 +51,7 @@ public class RelayCircuit
             }
 
             this.relayNodes.Add(new(relayId, clientConnection));
-            this.ReplaceRelayKeyInternal();
+            this.NewRelayKeyInternal();
         }
 
         if (closeRelayedConnections)
@@ -106,44 +62,21 @@ public class RelayCircuit
         return RelayResult.Success;
     }
 
-    /*public void Encrypt(ref ByteArrayPool.MemoryOwner owner)
+    public void Clear(bool closeRelayedConnections = true)
     {
-        if (!this.IsRelayAvailable)
-        {
-            return;
-        }
-
-        var aes = this.GetAes();
-        if (aes.Length == 0)
-        {
-            this.ReturnAes(aes);
-            return;
-        }
-
-        var prev = owner;
-        prev = PacketPool.Rent();
-        for (var i = aes.Length - 1; i >= 0; i--)
-        {
-            Span<byte> iv = stackalloc byte[16];
-            this.embryo.Iv.CopyTo(iv);
-            BitConverter.TryWriteBytes(iv, salt);
-            var result = aes[i].TryEncryptCbc(owner.Span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
-        }
-
-        this.ReturnAes(aes);
-    }
-
-    public async Task<NetResultValue<TReceive>> SendAndReceive<TSend, TReceive>(int relayIndex, TSend data, ulong dataId = 0, CancellationToken cancellationToken = default)
-    {
-        var aesList = new Aes[0];
         lock (this.relayNodes.SyncObject)
         {
-            if (relayIndex < 0 || relayIndex >= this.relayNodes.Count)
-            {
-                return new(NetResult.InvalidData);
-            }
+            //SetRelayPacket
+
+            this.relayNodes.Clear();
+            this.NewRelayKeyInternal();
         }
-    }*/
+
+        if (closeRelayedConnections)
+        {
+            this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
+        }
+    }
 
     public RelayResult CanAddRelay(ushort relayId, NetEndpoint endpoint)
     {
@@ -219,7 +152,7 @@ public class RelayCircuit
     {
     }
 
-    private void ReplaceRelayKeyInternal()
+    private void NewRelayKeyInternal()
     {// lock (this.relayNodes.SyncObject)
         this.relayKey = new(this.relayNodes);
     }

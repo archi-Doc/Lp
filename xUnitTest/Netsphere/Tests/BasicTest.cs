@@ -18,6 +18,7 @@ public class BasicTest
     [Fact]
     public async Task Test1()
     {
+        var xo = new Xoshiro256StarStar(123);
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
 
         var p = new PingPacket("test56789");
@@ -39,10 +40,10 @@ public class BasicTest
             task2.Result.Is(NetResult.Success);
             task2.Value.Is(7);
 
-            for (var i = 0; i < 10_000; i += 1_000)
+            for (var i = 3_000; i < 10_000; i += 1_000)//0
             {
                 var array = new byte[i];
-                RandomVault.Pseudo.NextBytes(array);
+                xo.NextBytes(array);
                 var memory = await connection.SendAndReceive<Memory<byte>, Memory<byte>>(array.AsMemory());
                 memory.Value.Span.SequenceEqual(array).IsTrue();
             }

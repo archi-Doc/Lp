@@ -141,6 +141,22 @@ public class PlayCommand : ISimpleCommandAsync
             Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
             await Task.Delay(2_000 * i);
         }*/
+
+        netTerminal.RelayCircuit.Clear();
+
+        Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+
+        using (var clientConnection = await netTerminal.Connect(netNode))
+        {
+            if (clientConnection is null)
+            {
+                return;
+            }
+
+            var service = clientConnection.GetService<ITestService>();
+            var result = await service.DoubleString("Test3");
+            Console.WriteLine(result);
+        }
     }
 
     private readonly NetControl netControl;
