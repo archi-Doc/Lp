@@ -70,8 +70,13 @@ internal class NetSender
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
+    public void Send_NotThreadSafe(IPEndPoint? endPoint, ByteArrayPool.MemoryOwner toBeMoved)
     {
+        if (endPoint is null)
+        {
+            return;
+        }
+
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()}, {toBeMoved.Span.Length} bytes");

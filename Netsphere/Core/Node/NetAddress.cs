@@ -41,23 +41,26 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     public NetAddress(NetEndpoint endpoint)
     {
-        Span<byte> span = stackalloc byte[16];
+        if (endpoint.EndPoint is not null)
+        {
+            Span<byte> span = stackalloc byte[16];
 
-        this.Port = (ushort)endpoint.EndPoint.Port;
-        if (endpoint.EndPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-        {
-            if (endpoint.EndPoint.Address.TryWriteBytes(span, out _))
+            this.Port = (ushort)endpoint.EndPoint.Port;
+            if (endpoint.EndPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
             {
-                this.Address6A = BitConverter.ToUInt64(span);
-                span = span.Slice(sizeof(ulong));
-                this.Address6B = BitConverter.ToUInt64(span);
+                if (endpoint.EndPoint.Address.TryWriteBytes(span, out _))
+                {
+                    this.Address6A = BitConverter.ToUInt64(span);
+                    span = span.Slice(sizeof(ulong));
+                    this.Address6B = BitConverter.ToUInt64(span);
+                }
             }
-        }
-        else
-        {
-            if (endpoint.EndPoint.Address.TryWriteBytes(span, out _))
+            else
             {
-                this.Address4 = BitConverter.ToUInt32(span);
+                if (endpoint.EndPoint.Address.TryWriteBytes(span, out _))
+                {
+                    this.Address4 = BitConverter.ToUInt32(span);
+                }
             }
         }
     }

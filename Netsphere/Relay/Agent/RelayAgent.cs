@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -13,18 +14,27 @@ namespace Netsphere.Relay;
 /// </summary>
 public partial class RelayAgent
 {
+    private const long CleanIntervalMics = 10_000_000; // 10 seconds
+    private const long UnrestrictedRetensionMics = 60_000_000; // 1 minute
     private const int EndPointCacheSize = 100;
 
-    [ValueLinkObject]
-    private partial class NetAddressToEndPointItem
+    internal enum EndPointOperation
     {
-        [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
-        public NetAddressToEndPointItem(NetAddress netAddress, bool known)
+        None,
+        Update,
+        SetUnrestricted,
+        SetRestricted,
+    }
+
+    [ValueLinkObject]
+    private partial class EndPointItem
+    {
+        [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
+        public EndPointItem(NetAddress netAddress)
         {
             this.NetAddress = netAddress;
             netAddress.CreateIPEndPoint(out var endPoint);
             this.EndPoint = endPoint;
-            this.Known = known;
         }
 
         [Link(Type = ChainType.Unordered, AddValue = false)]
@@ -32,7 +42,27 @@ public partial class RelayAgent
 
         public IPEndPoint EndPoint { get; }
 
-        public bool Known { get; }
+        public long UnrestrictedMics { get; internal set; }
+
+        public bool IsUnrestricted
+        {
+            get
+            {
+                if (this.UnrestrictedMics == 0)
+                {
+                    return false;
+                }
+                else if (Mics.FastSystem - this.UnrestrictedMics > UnrestrictedRetensionMics)
+                {
+                    this.UnrestrictedMics = 0;
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
     }
 
     internal RelayAgent(IRelayControl relayControl, NetTerminal netTerminal)
@@ -43,14 +73,20 @@ public partial class RelayAgent
 
     #region FieldAndProperty
 
+    public int NumberOfExchanges
+        => this.items.Count;
+
     private readonly IRelayControl relayControl;
     private readonly NetTerminal netTerminal;
 
     private readonly RelayExchange.GoshujinClass items = new();
     private readonly Aes aes = Aes.Create();
 
-    private readonly NetAddressToEndPointItem.GoshujinClass endPointCache = new();
+    private readonly EndPointItem.GoshujinClass endPointCache = new();
     private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
+
+    private long lastCleanMics;
+    private long lastRestrictedMics;
 
     #endregion
 
@@ -60,7 +96,7 @@ public partial class RelayAgent
         ushort outerRelayId = 0;
         lock (this.items.SyncObject)
         {
-            if (this.items.Count > this.relayControl.MaxParallelRelays)
+            if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)
             {
                 return RelayResult.ParallelRelayLimit;
             }
@@ -83,10 +119,62 @@ public partial class RelayAgent
                 }
             }
 
-            this.items.Add(new(relayId, outerRelayId, serverConnection));
+            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection));
         }
 
         return RelayResult.Success;
+    }
+
+    public long AddRelayPoint(ushort relayId, long relayPoint)
+    {
+        lock (this.items.SyncObject)
+        {
+            var exchange = this.items.RelayIdChain.FindFirst(relayId);
+            if (exchange is null)
+            {
+                return 0;
+            }
+
+            var prev = exchange.RelayPoint;
+            exchange.RelayPoint += relayPoint;
+            if (exchange.RelayPoint > this.relayControl.DefaultMaxRelayPoint)
+            {
+                exchange.RelayPoint = this.relayControl.DefaultMaxRelayPoint;
+            }
+
+            return exchange.RelayPoint - prev;
+        }
+    }
+
+    public void Clean()
+    {
+        if (Mics.FastSystem - this.lastCleanMics < CleanIntervalMics)
+        {
+            return;
+        }
+
+        this.lastCleanMics = Mics.FastSystem;
+
+        lock (this.items.SyncObject)
+        {
+            Queue<RelayExchange>? toDelete = default;
+            foreach (var x in this.items)
+            {
+                if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
+                {
+                    toDelete ??= new();
+                    toDelete.Enqueue(x);
+                }
+            }
+
+            if (toDelete is not null)
+            {
+                while (toDelete.TryDequeue(out var x))
+                {
+                    this.items.Remove(x);
+                }
+            }
+        }
     }
 
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
@@ -136,7 +224,7 @@ public partial class RelayAgent
                         return true;
                     }
                     else
-                    {// Initiator -> Other (known)
+                    {// Initiator -> Other (unrestricted)
                         if (exchange.OuterEndpoint.IsValid)
                         {// Inner relay
                             goto Exit;
@@ -146,19 +234,32 @@ public partial class RelayAgent
                         span = span.Slice(sizeof(ushort));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
-                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, true);
+                        var operation = EndPointOperation.Update;
+                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(6));
+                        if (packetType == Packet.PacketType.Connect)
+                        {// Connect
+                            operation = EndPointOperation.SetUnrestricted;
+                        }
+                        else
+                        {// Other
+                            operation = EndPointOperation.Update;
+                        }
+
+                        // Close -> EndPointOperation.SetRestricted ?
+
+                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
                         decrypted.IncrementAndShare();
                         this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
                     }
                 }
                 else
                 {// Not decrypted. Relay the packet to the next node.
-                    if (exchange.OuterEndpoint.IsValid)
+                    if (exchange.OuterEndpoint.EndPoint is { } ep)
                     {// -> Outer relay
                         MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                         MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
                         source.IncrementAndShare();
-                        this.sendItems.Enqueue(new(exchange.OuterEndpoint.EndPoint, source));
+                        this.sendItems.Enqueue(new(ep, source));
                     }
                     else
                     {// No outer relay. Discard
@@ -177,14 +278,24 @@ public partial class RelayAgent
                 {// Outer relay -> Inner: Encrypt
                 }
                 else
-                {// Other (known or unknown)
+                {// Other (unrestricted or restricted)
                     goto Exit;
                 }
             }
             else
             {// Outermost relay
-                // Other (known, unknown)
-                var ep2 = this.GetEndPoint_NotThreadSafe(endpoint, false);
+                // Other (unrestricted or restricted)
+                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndPointOperation.None);
+                if (!ep2.Unrestricted)
+                {// Restricted
+                    if (exchange.RestrictedIntervalMics == 0 ||
+                        Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
+                    {// Discard
+                        goto Exit;
+                    }
+
+                    this.lastRestrictedMics = Mics.FastSystem;
+                }
             }
 
             this.aes.Key = exchange.Key;
@@ -222,10 +333,13 @@ public partial class RelayAgent
                 goto Exit;
             }
 
-            MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
-            MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
-            source.IncrementAndShare();
-            this.sendItems.Enqueue(new(exchange.Endpoint.EndPoint, source));
+            if (exchange.Endpoint.EndPoint is { } ep)
+            {
+                MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
+                source.IncrementAndShare();
+                this.sendItems.Enqueue(new(ep, source));
+            }
         }
 
 Exit:
@@ -242,19 +356,97 @@ Exit:
         }
     }
 
-    internal (IPEndPoint EndPoint, bool Known) GetEndPoint_NotThreadSafe(NetAddress netAddress, bool known)
+    internal (IPEndPoint EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, EndPointOperation operation)
     {
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
-            item = new(netAddress, known);
+            item = new(netAddress);
             this.endPointCache.Add(item);
-            if (this.endPointCache.Count > EndPointCacheSize)
+            if (this.endPointCache.Count > EndPointCacheSize &&
+                this.endPointCache.LinkedListChain.First is { } i)
             {
-                this.endPointCache.QueueChain.Peek().Goshujin = default;
+                i.Goshujin = default;
+            }
+        }
+        else
+        {
+            this.endPointCache.LinkedListChain.AddLast(item);
+        }
+
+        var unrestricted = false;
+        if (operation == EndPointOperation.SetUnrestricted)
+        {// Unrestricted
+            unrestricted = true;
+            item.UnrestrictedMics = Mics.FastSystem;
+        }
+        else if (operation == EndPointOperation.SetRestricted)
+        {// Restricted
+            item.UnrestrictedMics = 0;
+        }
+        else
+        {// None, Update
+            if (Mics.FastSystem - item.UnrestrictedMics > UnrestrictedRetensionMics)
+            {// Restricted
+                item.UnrestrictedMics = 0;
+            }
+            else
+            {// Unrestricted
+                unrestricted = true;
+                if (operation == EndPointOperation.Update)
+                {
+                    item.UnrestrictedMics = Mics.FastSystem;
+                }
             }
         }
 
-        return (item.EndPoint, item.Known);
+        return (item.EndPoint, unrestricted);
+    }
+
+    internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)
+    {
+        if (this.NumberOfExchanges == 0)
+        {
+            return null;
+        }
+
+        RelayExchange? exchange;
+        PingRelayResponse? packet;
+        lock (this.items.SyncObject)
+        {
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null)
+            {
+                return null;
+            }
+
+            packet = new PingRelayResponse(exchange);
+        }
+
+        return packet;
+    }
+
+    internal SetRelayResponse? ProcessSetRelay(ushort destinationRelayId, SetRelayPacket p)
+    {
+        if (this.NumberOfExchanges == 0)
+        {
+            return null;
+        }
+
+        RelayExchange? exchange;
+        lock (this.items.SyncObject)
+        {
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null)
+            {
+                return null;
+            }
+
+            exchange.OuterEndpoint = p.OuterEndPoint;
+        }
+
+        var packet = new SetRelayResponse();
+        packet.Result = RelayResult.Success;
+        return packet;
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]

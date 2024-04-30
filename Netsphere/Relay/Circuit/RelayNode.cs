@@ -5,19 +5,16 @@ namespace Netsphere.Relay;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public partial class RelayNode
 {
-    [Link(Primary = true, Name = "List", Type = ChainType.List)]
+    [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
     [Link(Name = "RelayId", TargetMember = "RelayId", Type = ChainType.Unordered)]
     public RelayNode(ushort relayId, ClientConnection clientConnection)
     {
-        // this.RelayId = relayId;
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
         clientConnection.UnsafeCopyKey(this.Key);
         clientConnection.UnsafeCopyIv(this.Iv);
     }
 
-    // [Link(Type = ChainType.Unordered)]
-    // public ushort RelayId { get; private set; }
-    public ushort RelayId
+    public ushort RelayId // For chain
         => this.Endpoint.RelayId;
 
     [Link(Type = ChainType.Unordered)]
@@ -32,4 +29,7 @@ public partial class RelayNode
         this.Key.AsSpan().Fill(0);
         this.Iv.AsSpan().Fill(0);
     }
+
+    public override string ToString()
+        => this.Endpoint.ToString();
 }

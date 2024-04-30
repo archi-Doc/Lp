@@ -4,6 +4,7 @@ using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
+using Netsphere.Relay;
 using Xunit;
 
 namespace xUnitTest.NetsphereTest;
@@ -26,6 +27,8 @@ public class NetFixture : IDisposable
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
+                context.AddSingleton<IRelayControl, CertificateRelayControl>();
+
                 // NetService
                 context.AddSingleton<BasicServiceImpl>();
 

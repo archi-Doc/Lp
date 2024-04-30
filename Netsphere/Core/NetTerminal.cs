@@ -27,10 +27,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
-        this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.RelayCircuit = new(this, relayControl);
         this.RelayControl = relayControl;
         this.RelayAgent = new(relayControl, this);
+        this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
         this.netCleaner = new(this);
 
         this.PacketTransmissionTimeout = NetConstants.DefaultPacketTransmissionTimeout;
@@ -66,6 +66,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public TimeSpan PacketTransmissionTimeout { get; private set; }
 
+    public IRelayControl RelayControl { get; private set; }
+
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal NetSender NetSender { get; }
@@ -73,8 +75,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
-
-    internal IRelayControl RelayControl { get; private set; }
 
     internal RelayAgent RelayAgent { get; private set; }
 
@@ -85,6 +85,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public void Clean()
     {
         this.ConnectionTerminal.Clean();
+        this.RelayAgent.Clean();
     }
 
     public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)
@@ -266,12 +267,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             owner = decrypted;
             span = decrypted.Span;
         }
-        else if (netEndpoint.RelayId != 0)
-        {// Relay
+        else if (netEndpoint.RelayId != 0 &&
+            this.RelayCircuit.RelayKey.NumberOfRelays > 0)
+        {// Receive data from relays.
             if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalAddress))
             {
                 span = owner.Span;
-                netEndpoint = new(originalAddress.RelayId, this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress));
+                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
+                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
         }
 
@@ -281,7 +284,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, destinationRelayId, packetType, owner, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene

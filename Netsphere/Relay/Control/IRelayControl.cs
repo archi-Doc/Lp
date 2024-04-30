@@ -10,7 +10,11 @@ public interface IRelayControl
 
     int MaxParallelRelays { get; }
 
-    long RelayDurationMics { get; }
+    long DefaultRelayRetensionMics { get; }
+
+    long DefaultMaxRelayPoint { get; }
+
+    long DefaultRestrictedIntervalMics { get; }
 
     void ProcessRegisterResponder(ResponderControl responders)
     {

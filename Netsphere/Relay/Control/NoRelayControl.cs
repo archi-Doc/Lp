@@ -12,6 +12,12 @@ public class NoRelayControl : IRelayControl
     public int MaxParallelRelays
         => 0;
 
-    public long RelayDurationMics
+    public long DefaultRelayRetensionMics
+        => 0;
+
+    public long DefaultMaxRelayPoint
+        => 0;
+
+    public long DefaultRestrictedIntervalMics
         => 0;
 }
