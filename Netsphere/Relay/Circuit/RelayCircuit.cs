@@ -79,7 +79,7 @@ public class RelayCircuit
         }
     }*/
 
-    public RelayResult AddRelay(ushort relayId, ClientConnection clientConnection)
+    public RelayResult AddRelay(ushort relayId, ClientConnection clientConnection, bool closeRelayedConnections)
     {
         if (clientConnection.DestinationEndpoint.RelayId != 0)
         {
@@ -96,8 +96,14 @@ public class RelayCircuit
 
             this.relayNodes.Add(new(relayId, clientConnection));
             this.ReplaceRelayKeyInternal();
-            return RelayResult.Success;
         }
+
+        if (closeRelayedConnections)
+        {
+            this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
+        }
+
+        return RelayResult.Success;
     }
 
     /*public void Encrypt(ref ByteArrayPool.MemoryOwner owner)

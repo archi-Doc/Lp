@@ -65,7 +65,7 @@ public class PlayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection);
+            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
         }
@@ -93,7 +93,7 @@ public class PlayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection);
+            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
 
@@ -102,9 +102,22 @@ public class PlayCommand : ISimpleCommandAsync
             await netTerminal.PacketTerminal.SendAndReceive<SetRelayPacket, SetRelayResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
-        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 2))
+        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
+
         using (var clientConnection = await netTerminal.Connect(netNode))
+        {
+            if (clientConnection is null)
+            {
+                return;
+            }
+
+            var service = clientConnection.GetService<ITestService>();
+            var result = await service.DoubleString("Test2");
+            Console.WriteLine(result);
+        }
+
+        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
         {
             if (clientConnection is null)
             {

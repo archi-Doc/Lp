@@ -242,7 +242,7 @@ public class ConnectionTerminal
         var publicKey = this.NetTerminal.NodePublicKey;
         if (minimumNumberOfRelays > 0)
         {
-            mode = Connection.ConnectMode.NoReuse; // Do not reuse connections.
+            // mode = Connection.ConnectMode.NoReuse; // Do not reuse connections.
             privateKey = NodePrivateKey.Create(); // Do not reuse node encryption keys.
             publicKey = privateKey.ToPublicKey();
         }
@@ -254,10 +254,13 @@ public class ConnectionTerminal
             {// Attempts to reuse a connection that has already been connected or disconnected (but not yet disposed).
                 if (this.clientConnections.DestinationEndpointChain.TryGetValue(endPoint, out var connection))
                 {
-                    Debug.Assert(!connection.IsDisposed);
-                    connection.IncrementOpenCount();
-                    connection.ChangeStateInternal(Connection.State.Open);
-                    return connection;
+                    if (connection.MinimumNumberOfRelays >= minimumNumberOfRelays)
+                    {
+                        Debug.Assert(!connection.IsDisposed);
+                        connection.IncrementOpenCount();
+                        connection.ChangeStateInternal(Connection.State.Open);
+                        return connection;
+                    }
                 }
 
                 if (mode == Connection.ConnectMode.ReuseOnly)
@@ -290,6 +293,38 @@ public class ConnectionTerminal
         }
 
         return newConnection;
+    }
+
+    internal void CloseRelayedConnections()
+    {
+        ClientConnection[] clients;
+        lock (this.clientConnections.SyncObject)
+        {
+            clients = this.clientConnections.Where(x => x.MinimumNumberOfRelays > 0).ToArray();
+        }
+
+        foreach (var x in clients)
+        {
+            x.TerminateInternal();
+        }
+
+        lock (this.clientConnections.SyncObject)
+        {
+            foreach (var x in clients)
+            {
+                if (x.IsOpen)
+                {
+                    x.ChangeStateInternal(Connection.State.Closed);
+                }
+
+                if (x.IsClosed)
+                {
+                    x.ChangeStateInternal(Connection.State.Disposed);
+                }
+
+                x.Goshujin = null;
+            }
+        }
     }
 
     internal ClientConnection PrepareBidirectionalConnection(ServerConnection serverConnection)
