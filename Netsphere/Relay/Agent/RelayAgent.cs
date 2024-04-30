@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Netsphere.Core;
-using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
@@ -15,19 +14,27 @@ namespace Netsphere.Relay;
 /// </summary>
 public partial class RelayAgent
 {
-    private const int EndPointCacheSize = 100;
     private const long CleanIntervalMics = 10_000_000; // 10 seconds
+    private const long UnrestrictedRetensionMics = 60_000_000; // 1 minute
+    private const int EndPointCacheSize = 100;
+
+    internal enum EndPointOperation
+    {
+        None,
+        Update,
+        SetUnrestricted,
+        SetRestricted,
+    }
 
     [ValueLinkObject]
-    private partial class NetAddressToEndPointItem
+    private partial class EndPointItem
     {
-        [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
-        public NetAddressToEndPointItem(NetAddress netAddress, bool unrestricted)
+        [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
+        public EndPointItem(NetAddress netAddress)
         {
             this.NetAddress = netAddress;
             netAddress.CreateIPEndPoint(out var endPoint);
             this.EndPoint = endPoint;
-            this.Unrestricted = unrestricted;
         }
 
         [Link(Type = ChainType.Unordered, AddValue = false)]
@@ -35,7 +42,27 @@ public partial class RelayAgent
 
         public IPEndPoint EndPoint { get; }
 
-        public bool Unrestricted { get; }
+        public long UnrestrictedMics { get; internal set; }
+
+        public bool IsUnrestricted
+        {
+            get
+            {
+                if (this.UnrestrictedMics == 0)
+                {
+                    return false;
+                }
+                else if (Mics.FastSystem - this.UnrestrictedMics > UnrestrictedRetensionMics)
+                {
+                    this.UnrestrictedMics = 0;
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
     }
 
     internal RelayAgent(IRelayControl relayControl, NetTerminal netTerminal)
@@ -55,7 +82,7 @@ public partial class RelayAgent
     private readonly RelayExchange.GoshujinClass items = new();
     private readonly Aes aes = Aes.Create();
 
-    private readonly NetAddressToEndPointItem.GoshujinClass endPointCache = new();
+    private readonly EndPointItem.GoshujinClass endPointCache = new();
     private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
 
     private long lastCleanMics;
@@ -207,7 +234,20 @@ public partial class RelayAgent
                         span = span.Slice(sizeof(ushort));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
-                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, true);
+                        var operation = EndPointOperation.Update;
+                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(6));
+                        if (packetType == Packet.PacketType.Connect)
+                        {// Connect
+                            operation = EndPointOperation.SetUnrestricted;
+                        }
+                        else
+                        {// Other
+                            operation = EndPointOperation.Update;
+                        }
+
+                        // Close -> EndPointOperation.SetRestricted ?
+
+                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
                         decrypted.IncrementAndShare();
                         this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
                     }
@@ -245,7 +285,7 @@ public partial class RelayAgent
             else
             {// Outermost relay
                 // Other (unrestricted or restricted)
-                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), false);
+                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndPointOperation.None);
                 if (!ep2.Unrestricted)
                 {// Restricted
                     if (exchange.RestrictedIntervalMics == 0 ||
@@ -316,19 +356,50 @@ Exit:
         }
     }
 
-    internal (IPEndPoint EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, bool unrestricted)
+    internal (IPEndPoint EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, EndPointOperation operation)
     {
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
-            item = new(netAddress, unrestricted);
+            item = new(netAddress);
             this.endPointCache.Add(item);
-            if (this.endPointCache.Count > EndPointCacheSize)
+            if (this.endPointCache.Count > EndPointCacheSize &&
+                this.endPointCache.LinkedListChain.First is { } i)
             {
-                this.endPointCache.QueueChain.Peek().Goshujin = default;
+                i.Goshujin = default;
+            }
+        }
+        else
+        {
+            this.endPointCache.LinkedListChain.AddLast(item);
+        }
+
+        var unrestricted = false;
+        if (operation == EndPointOperation.SetUnrestricted)
+        {// Unrestricted
+            unrestricted = true;
+            item.UnrestrictedMics = Mics.FastSystem;
+        }
+        else if (operation == EndPointOperation.SetRestricted)
+        {// Restricted
+            item.UnrestrictedMics = 0;
+        }
+        else
+        {// None, Update
+            if (Mics.FastSystem - item.UnrestrictedMics > UnrestrictedRetensionMics)
+            {// Restricted
+                item.UnrestrictedMics = 0;
+            }
+            else
+            {// Unrestricted
+                unrestricted = true;
+                if (operation == EndPointOperation.Update)
+                {
+                    item.UnrestrictedMics = Mics.FastSystem;
+                }
             }
         }
 
-        return (item.EndPoint, item.Unrestricted);
+        return (item.EndPoint, unrestricted);
     }
 
     internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)

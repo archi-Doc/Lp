@@ -273,7 +273,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalAddress))
             {
                 span = owner.Span;
-                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, false);
+                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
         }

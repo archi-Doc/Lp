@@ -53,7 +53,7 @@ public class CertificateRelayControl : IRelayControl
         => 100_000;
 
     public long DefaultRestrictedIntervalMics
-        => 100_000;
+        => 20_000;
 
     public SignaturePublicKey CertificatePublicKey { get; private set; }
 
