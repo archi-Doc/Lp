@@ -119,8 +119,11 @@ Exit:
 
     public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
     {
-        Debug.Assert(content.Length >= 2);
-        Debug.Assert(content.Length <= (NetConstants.MaxPacketLength - NetConstants.RelayLength));
+        if (content.Length > 1000)
+        {
+
+        }
+        Debug.Assert(content.Length >= 4);
         Debug.Assert(content[0] == 0);
         Debug.Assert(content[1] == 0);
 
@@ -183,6 +186,7 @@ Exit:
         AesPool.Return(aes);
 
         encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + headerAndContentLength);
+        Debug.Assert(encrypted.Memory.Length <= NetConstants.MaxPacketLength);
         relayEndpoint = this.FirstEndpoint;
         return true;
 

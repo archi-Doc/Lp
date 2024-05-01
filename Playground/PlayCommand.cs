@@ -125,8 +125,14 @@ public class PlayCommand : ISimpleCommandAsync
             }
 
             var service = clientConnection.GetService<ITestService>();
+            var token = new CertificateToken<ConnectionAgreement>(clientConnection.Agreement with { MinimumConnectionRetentionMics = Mics.FromMinutes(10), });
+            var rr = await service.UpdateAgreement(token);
             var result = await service.DoubleString("Test1");
             Console.WriteLine(result);
+
+            var bin = new byte[2000];
+            bin.AsSpan().Fill(0x12);
+            var result2 = await service.Pingpong(bin);
         }
 
         /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -1);

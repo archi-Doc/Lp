@@ -11,8 +11,8 @@ public static class NetConstants
     public const string RemotePublicKeyName = "remotepublickey";
     public const string RelayPublicKeyName = "relaypublickey";
 
-    public const int MaxPacketLength = 1350; // 50 bytes for relay. 1500 - 60 - 8 = 1432 bytes
-    public const int RelayLength = 50; // RelayId(2) + RelayHeader(32) + Padding(1-16)
+    public const int MaxPacketLength = 1350; // 1500 - 60 - 8 = 1432 bytes
+    public const int RelayLength = 48; // RelayHeader(32) + Padding(0-15)
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
