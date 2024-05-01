@@ -73,6 +73,8 @@ public abstract class Connection : IDisposable
 
     internal PacketTerminal PacketTerminal { get; }
 
+    public bool Flag { get; set; }//
+
     public ulong ConnectionId { get; }
 
     public string ConnectionIdText
@@ -751,7 +753,7 @@ Wait:
             var checksum = BitConverter.ToUInt64(span); // Checksum
             span = span.Slice(8);
             if (XxHash3.Hash64(span) != checksum)
-            {
+            {//
                 return;
             }
 

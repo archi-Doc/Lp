@@ -8,7 +8,7 @@ internal readonly struct PacketHeader
 {// 18 bytes, PacketHeaderCode, CreatePacketCode
     public const int Length = 18;
     public const int MaxPayloadLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length;
-    public const int MaxFrameLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length - ProtectedPacket.Length - 16; // - Checksum - PKCS7 padding
+    public const int MaxFrameLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length - ProtectedPacket.Length;// - 16 PKCS7 padding
 
     public readonly ushort SourceRelayId; // 2 bytes
     public readonly ushort DestinationRelayId; // 2 bytes

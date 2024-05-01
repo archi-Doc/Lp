@@ -20,7 +20,10 @@ internal class TestServiceImpl : ITestService
         => input + input;
 
     public async NetTask<byte[]?> Pingpong(byte[] data)
-        => data;
+    {
+        TransmissionContext.Current.ServerConnection.Flag = true;
+        return data;
+    }
 
     async NetTask<NetResult> INetServiceAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {

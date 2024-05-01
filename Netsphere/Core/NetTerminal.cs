@@ -38,6 +38,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     #region FieldAndProperty
 
+    public bool Flag { get; set; }//
+
     public State CurrentState { get; private set; }
 
     public bool IsActive => !ThreadCore.Root.IsTerminated && this.CurrentState == State.Active;

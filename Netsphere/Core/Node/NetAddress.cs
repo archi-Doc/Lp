@@ -45,6 +45,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         {
             Span<byte> span = stackalloc byte[16];
 
+            this.RelayId = endpoint.RelayId;
             this.Port = (ushort)endpoint.EndPoint.Port;
             if (endpoint.EndPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
             {
