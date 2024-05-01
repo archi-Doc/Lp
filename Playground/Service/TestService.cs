@@ -21,7 +21,6 @@ internal class TestServiceImpl : ITestService
 
     public async NetTask<byte[]?> Pingpong(byte[] data)
     {
-        TransmissionContext.Current.ServerConnection.Flag = true;
         return data;
     }
 

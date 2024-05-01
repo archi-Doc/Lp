@@ -334,10 +334,6 @@ internal sealed partial class ReceiveTransmission : IDisposable
             {
                 if (this.Connection.Agreement.MaxTransmissions < 10)
                 {// Instant
-                    if (this.Connection.Flag)
-                    {
-
-                    }
                     this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} Send Instant Ack {this.totalGene} to {this.Connection.DestinationEndpoint}");
 
                     Span<byte> ackFrame = stackalloc byte[2 + 4 + 4];

@@ -132,13 +132,11 @@ public class RelayCommand : ISimpleCommandAsync
             var result = await service.DoubleString("Test1");
             Console.WriteLine(result);*/
 
-            netTerminal.Flag = true;
-            netControl.Alternative!.Flag = true;
             var count = 0;
-            for (var i = 0; i < 100; i++)
+            for (var i = 0; i < 1; i++)
             {
                 this.logger.TryGet()?.Log("Pingpong");
-                var bin = new byte[1000];
+                var bin = new byte[5000];
                 bin.AsSpan().Fill(0x12);
                 var result = await service.Pingpong(bin);
                 // await Task.Delay(100);

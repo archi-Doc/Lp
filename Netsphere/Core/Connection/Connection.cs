@@ -73,8 +73,6 @@ public abstract class Connection : IDisposable
 
     internal PacketTerminal PacketTerminal { get; }
 
-    public bool Flag { get; set; }//
-
     public ulong ConnectionId { get; }
 
     public string ConnectionIdText
