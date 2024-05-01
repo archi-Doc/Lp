@@ -753,7 +753,7 @@ Wait:
             var checksum = BitConverter.ToUInt64(span); // Checksum
             span = span.Slice(8);
             if (XxHash3.Hash64(span) != checksum)
-            {//
+            {
                 return;
             }
 

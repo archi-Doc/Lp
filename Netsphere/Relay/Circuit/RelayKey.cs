@@ -98,7 +98,8 @@ internal class RelayKey
                     span = span.Slice(RelayHeader.Length);
                     var contentLength = span.Length - relayHeader.PaddingLength;
                     span.Slice(0, contentLength).CopyTo(span2);
-                    owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
+                    owner = owner.Owner.ToMemoryOwner(0, RelayHeader.RelayIdLength + contentLength);
+                    // owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
 
                     originalAddress = relayHeader.NetAddress;
                     return true;
@@ -119,10 +120,6 @@ Exit:
 
     public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
     {
-        if (content.Length > 1000)
-        {
-
-        }
         Debug.Assert(content.Length >= 4);
         Debug.Assert(content[0] == 0);
         Debug.Assert(content[1] == 0);

@@ -105,7 +105,9 @@ public class RelayCommand : ISimpleCommandAsync
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
 
-        using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
+        Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+
+        /*sing (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
         {
             if (clientConnection is null)
             {
@@ -115,7 +117,7 @@ public class RelayCommand : ISimpleCommandAsync
             var service = clientConnection.GetService<ITestService>();
             var result = await service.DoubleString("Test2");
             Console.WriteLine(result);
-        }
+        }*/
 
         using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 2))
         {
@@ -130,19 +132,32 @@ public class RelayCommand : ISimpleCommandAsync
             var result = await service.DoubleString("Test1");
             Console.WriteLine(result);*/
 
-            await Task.Delay(1000);
-            this.logger.TryGet()?.Log("Pingpong");
-            var bin = new byte[1000];
-            bin.AsSpan().Fill(0x12);
-            var result2 = await service.Pingpong(bin);
-            this.logger.TryGet()?.Log((result2 is not null).ToString());
+            netTerminal.Flag = true;
+            netControl.Alternative!.Flag = true;
+            var count = 0;
+            for (var i = 0; i < 100; i++)
+            {
+                this.logger.TryGet()?.Log("Pingpong");
+                var bin = new byte[1000];
+                bin.AsSpan().Fill(0x12);
+                var result = await service.Pingpong(bin);
+                // await Task.Delay(100);
+                this.logger.TryGet()?.Log((result is not null).ToString());
+                if (result is not null &&
+                    result.SequenceEqual(bin))
+                {
+                    count++;
+                }
+            }
 
-            await Task.Delay(1000);
+            Console.WriteLine(count);
+
+            /*await Task.Delay(1000);
             this.logger.TryGet()?.Log("Pingpong");
-            bin = new byte[3000];
-            bin.AsSpan().Fill(0x12);
-            result2 = await service.Pingpong(bin);
-            this.logger.TryGet()?.Log((result2 is not null).ToString());
+            var bin2 = new byte[3000];
+            bin2.AsSpan().Fill(0x12);
+            var result2 = await service.Pingpong(bin2);
+            this.logger.TryGet()?.Log((result2 is not null).ToString());*/
         }
 
         /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -1);

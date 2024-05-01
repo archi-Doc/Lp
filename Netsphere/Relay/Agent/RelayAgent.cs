@@ -250,6 +250,7 @@ public partial class RelayAgent
                         var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
                         decrypted.IncrementAndShare();
                         this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
+                        // Console.WriteLine($"Outermost[{decrypted.Memory.Length}] {endpoint} to {relayHeader.NetAddress}");
                     }
                 }
                 else
@@ -260,6 +261,7 @@ public partial class RelayAgent
                         MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
                         source.IncrementAndShare();
                         this.sendItems.Enqueue(new(ep, source));
+                        // Console.WriteLine($"Inner->Outer[{source.Memory.Length}] {endpoint} to {exchange.OuterEndpoint}");
                     }
                     else
                     {// No outer relay. Discard
@@ -317,7 +319,7 @@ public partial class RelayAgent
                 sourceSpan = sourceSpan.Slice(contentLength);
                 sourceSpan.Slice(0, paddingLength).Fill(0x07);
 
-                source = new(source.Owner.ByteArray, 0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
+                source = source.Owner.ToMemoryOwner(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
                 span = source.Span.Slice(RelayHeader.RelayIdLength);
             }
 
@@ -339,6 +341,7 @@ public partial class RelayAgent
                 MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
+                // Console.WriteLine($"Outer->Inner[{source.Memory.Length}] {endpoint} to {exchange.Endpoint}");
             }
         }
 
