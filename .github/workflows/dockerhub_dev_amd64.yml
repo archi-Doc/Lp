@@ -27,4 +27,4 @@ jobs:
           context: .
           file: ./dev_amd64.Dockerfile
           push: true
-          tags: archidoc422/lpdev_amd64:latest
+          tags: archidoc422/lpdev-amd64:latest
