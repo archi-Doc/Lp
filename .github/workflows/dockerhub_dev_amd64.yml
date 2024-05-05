@@ -6,6 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .docker
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -23,6 +25,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./dev_amd64_net8.Dockerfile
+          file: ./dev_amd64.Dockerfile
           push: true
-          tags: archidoc422/lpdev:latest
+          tags: archidoc422/lpdev_amd64:latest
