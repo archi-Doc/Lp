@@ -15,7 +15,18 @@ public class RelayTest
     public RelayTest(NetFixture netFixture)
     {
         this.NetFixture = netFixture;
+
+        this.dataArray = new byte[this.dataLength.Length][];
+        for (var i = 0; i < this.dataLength.Length; i++)
+        {
+            var r = new Xoshiro256StarStar((ulong)this.dataLength[i]);
+            this.dataArray[i] = new byte[this.dataLength[i]];
+            r.NextBytes(this.dataArray[i]);
+        }
     }
+
+    private readonly int[] dataLength = [0, 1, 10, 111, 300, 1_000, 1_372, 1_373, 1_400, 3_000, 10_000, 100_000, 1_000_000, 1_500_000, 2_000_000,];
+    private readonly byte[][] dataArray;
 
     [Fact]
     public async Task Test1()
@@ -80,7 +91,7 @@ public class RelayTest
             task2.Result.Is(NetResult.Success);
             task2.Value.Is(7);
 
-            for (var i = 3_000; i < 10_000; i += 1_000) //0
+            for (var i = 0; i < 10_000; i += 1_000)
             {
                 var array = new byte[i];
                 xo.NextBytes(array);
@@ -98,10 +109,50 @@ public class RelayTest
 
         var st = await netTerminal.RelayCircuit.UnsafeDetailedToString();
 
+        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse, 2))!)
+        {
+            var service = connection.GetService<IStreamService>();
+            service.IsNotNull();
+            if (service is null)
+            {
+                return;
+            }
+
+            await this.TestPutAndGetHash(service);
+        }
+
         netTerminal.RelayCircuit.Clear();
     }
 
     public NetFixture NetFixture { get; }
 
     public NetControl NetControl => this.NetFixture.NetControl;
+
+    private async Task TestPutAndGetHash(IStreamService service)
+    {
+        var buffer = new byte[12_345];
+        for (var i = 1; i < this.dataLength.Length; i++)
+        {
+            var stream = await service.PutAndGetHash(this.dataLength[i]);
+            stream.IsNotNull();
+            if (stream is null)
+            {
+                break;
+            }
+
+            var memory = this.dataArray[i].AsMemory();
+            while (!memory.IsEmpty)
+            {
+                var length = Math.Min(buffer.Length, memory.Length);
+                memory.Slice(0, length).CopyTo(buffer);
+                memory = memory.Slice(length);
+
+                var r = await stream.Send(buffer.AsMemory(0, length));
+                r.Is(NetResult.Success);
+            }
+
+            var r2 = await stream.CompleteSendAndReceive();
+            r2.Value.Is(FarmHash.Hash64(this.dataArray[i]));
+        }
+    }
 }

@@ -9,17 +9,17 @@ namespace xUnitTest.NetsphereTest;
 [NetServiceInterface]
 public interface IStreamService : INetService, INetServiceAgreement
 {
-    public NetTask<byte[]?> Pingpong(byte[] data);
+    NetTask<byte[]?> Pingpong(byte[] data);
 
-    public NetTask<ulong> GetHash(byte[] data);
+    NetTask<ulong> GetHash(byte[] data);
 
-    public NetTask<ReceiveStream?> Get(string name, long length);
+    NetTask<ReceiveStream?> Get(string name, long length);
 
-    public NetTask<SendStreamAndReceive<NetResult>?> Put(long maxLength);
+    NetTask<SendStreamAndReceive<NetResult>?> Put(long maxLength);
 
-    public NetTask<SendStreamAndReceive<ulong>?> PutAndGetHash(long maxLength);
+    NetTask<SendStreamAndReceive<ulong>?> PutAndGetHash(long maxLength);
 
-    public NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
+    NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 }
 
 [NetServiceObject]

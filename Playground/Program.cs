@@ -35,7 +35,8 @@ public class Program
                 context.AddSingleton<IRelayControl, CertificateRelayControl>();
 
                 // Command
-                context.AddCommand(typeof(PlayCommand));
+                context.AddCommand(typeof(RelayCommand));
+                context.AddCommand(typeof(BasicCommand));
 
                 context.AddLoggerResolver(context =>
                 {// Logger

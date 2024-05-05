@@ -40,7 +40,7 @@ public class BasicTest
             task2.Result.Is(NetResult.Success);
             task2.Value.Is(7);
 
-            for (var i = 3_000; i < 10_000; i += 1_000)//0
+            for (var i = 0; i < 10_000; i += 1_000)
             {
                 var array = new byte[i];
                 xo.NextBytes(array);
