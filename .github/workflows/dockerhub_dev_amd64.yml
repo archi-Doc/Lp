@@ -25,6 +25,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: /.docker/dev_amd64.Dockerfile
+          file: ./.docker/dev_amd64.Dockerfile
           push: true
           tags: archidoc422/lpdev-amd64:latest
