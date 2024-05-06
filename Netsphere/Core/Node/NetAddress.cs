@@ -294,7 +294,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void CreateIPEndPoint([MaybeNullWhen(false)] out IPEndPoint endPoint)
+    public void CreateIPEndPoint(out IPEndPoint endPoint)
     {
         if (this.IsValidIpv4)
         {
