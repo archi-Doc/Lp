@@ -11,6 +11,7 @@ namespace Netsphere;
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
 {// 24 bytes. IEquatable<NetAddress> -> record struct
+    public const char RelayIdSeparator = '&';
     public const string AlternativeName = "alternative";
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
@@ -30,6 +31,15 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     [Key(4)]
     public readonly ulong Address6B; // 8 bytes
+
+    public NetAddress(ushort relayId, uint address4, ulong address6a, ulong address6b, ushort port)
+    {
+        this.RelayId = relayId;
+        this.Port = port;
+        this.Address4 = address4;
+        this.Address6A = address6a;
+        this.Address6B = address6b;
+    }
 
     public NetAddress(uint address4, ulong address6a, ulong address6b, ushort port)
     {
@@ -124,7 +134,10 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         {
             return false;
         }
-        else if (IsIpv4Address(source))
+
+        TryParseRelayId(ref source, out var relayId);
+
+        if (IsIpv4Address(source))
         {// TryParse IPv4
             TryParseIPv4(ref source, ref port, out address4);
         }
@@ -132,7 +145,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         // TryParse IPv6
         TryParseIPv6(ref source, ref port, out address6a, out address6b);
 
-        instance = new(address4, address6a, address6b, port);
+        instance = new(relayId, address4, address6a, address6b, port);
         return true;
     }
 
@@ -169,7 +182,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public bool IsValid => this.Port != 0 && (this.Address4 != 0 || this.Address6A != 0 || this.Address6B != 0);
 
     public static int MaxStringLength
-        => (15 + 1 + 5) + (2 + 54 + 1 + 5); // IPv4:12345, [IPv6]:12345
+        => (5 + 1) + (15 + 1 + 5) + (2 + 54 + 1 + 5); // RelayId:12345& IPv4:12345, [IPv6]:12345
 
     public int GetStringLength()
         => throw new NotImplementedException();
@@ -183,6 +196,14 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
 
         var span = destination;
+        if (this.RelayId != 0)
+        {
+            this.RelayId.TryFormat(span, out written);
+            span = span.Slice(written);
+            span[0] = RelayIdSeparator;
+            span = span.Slice(1);
+        }
+
         if (this.IsValidIpv4)
         {
             Span<byte> ipv4byte = stackalloc byte[4];
@@ -363,6 +384,42 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     public override int GetHashCode()
         => HashCode.Combine(this.RelayId, this.Port, this.Address4, this.Address6A, this.Address6B);*/
+
+    private static bool TryParseRelayId(ref ReadOnlySpan<char> source, out ushort relayId)
+    {// 123:1.2.3.4:456, 1.2.3.4:456, []
+        relayId = 0;
+        if (source.Length == 0)
+        {
+            return false;
+        }
+
+        var i = 0;
+        for (; i < source.Length; i++)
+        {
+            var c = source[i];
+            if (c >= '0' && c <= '9')
+            {
+                continue;
+            }
+            else if (c == '.' || c == ':')
+            {// IPv4 or IPv6
+                return false;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (i >= source.Length)
+        {
+            i = source.Length - 1;
+        }
+
+        var result = ushort.TryParse(source.Slice(0, i), out relayId);
+        source = source.Slice(i + 1);
+        return result;
+    }
 
     private static bool TryParseIPv4(ref ReadOnlySpan<char> source, ref ushort port, out uint address4)
     {
