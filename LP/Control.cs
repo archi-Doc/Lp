@@ -340,7 +340,6 @@ public class Control
             try
             {
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"A");
                 control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
 
                 // Merger

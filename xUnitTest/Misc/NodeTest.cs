@@ -54,6 +54,11 @@ public class NodeTest
         NetAddress.TryParse("[fd00:1234::]:49152", out address);
         address.Validate().IsFalse();
         address.IsPrivateOrLocalLoopbackAddress().IsTrue();
+
+        TestDualAddress("1&192.168.0.0:49152", false).IsTrue();
+        TestDualAddress("12345&192.168.0.0:49152", false).IsTrue();
+        TestDualAddress("123&[2404:6800:4004:80a::2004]:49152", false).IsTrue();
+        TestDualAddress("123&172.217.25.228:49152[2404:6800:4004:80a::2004]:49152", false).IsTrue();
     }
 
     [Fact]
