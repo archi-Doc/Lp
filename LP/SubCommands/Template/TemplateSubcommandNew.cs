@@ -18,6 +18,6 @@ public class TemplateSubcommandLs : ISimpleCommandAsync
         this.userInterfaceService.WriteLine("Template");
     }
 
-    private Control control;
-    private IUserInterfaceService userInterfaceService;
+    private readonly Control control;
+    private readonly IUserInterfaceService userInterfaceService;
 }

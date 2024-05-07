@@ -100,6 +100,7 @@ public class Control
                 LP.Subcommands.CustomSubcommand.Configure(context);
                 LP.Subcommands.RemoteSubcommand.Configure(context);
                 LP.Subcommands.MergerNestedcommand.Configure(context);
+                LP.Subcommands.Relay.Subcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
