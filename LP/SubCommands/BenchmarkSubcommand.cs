@@ -21,7 +21,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         try
         {
             // var testKeyString = TinyhandSerializer.SerializeToString(AuthorityPrivateKey.Create());
-            this.privateKey = TinyhandSerializer.DeserializeFromString<SignaturePrivateKey>(TestKeyString);
+            this.privateKey = SignaturePrivateKey.Create();
         }
         catch
         {

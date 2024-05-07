@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net.Http;
+
 namespace Netsphere.Stats;
 
 public static class NetStatsHelper
@@ -33,6 +35,7 @@ public static class NetStatsHelper
         {
             using (var httpClient = new HttpClient())
             {
+                // httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
                 var result = await httpClient.GetStringAsync(IcanhazipUriIPv6, cancellationToken).WaitAsync(GetTimeout).ConfigureAwait(false);
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 IPAddress.TryParse(ipString, out var ipAddress);

@@ -419,6 +419,7 @@ public class Control
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
             DisplayCommandListAsHelp = true,
+            AutoAlias = true,
         };
 
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);

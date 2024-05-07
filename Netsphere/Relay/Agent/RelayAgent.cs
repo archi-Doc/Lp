@@ -205,8 +205,16 @@ public partial class RelayAgent
                 }
 
                 this.aes.Key = exchange.Key;
-                if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out var written, PaddingMode.None) ||
-                    written < RelayHeader.Length)
+                int written;
+                try
+                {
+                    if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out written, PaddingMode.None) ||
+                        written < RelayHeader.Length)
+                    {
+                        goto Exit;
+                    }
+                }
+                catch
                 {
                     goto Exit;
                 }
@@ -330,7 +338,14 @@ public partial class RelayAgent
             }
 
             this.aes.Key = exchange.Key;
-            if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+            try
+            {
+                if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+                {
+                    goto Exit;
+                }
+            }
+            catch
             {
                 goto Exit;
             }
