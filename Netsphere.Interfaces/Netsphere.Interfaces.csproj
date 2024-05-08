@@ -4,10 +4,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <PackageId>Netsphere.Remote</PackageId>
+    <PackageId>Netsphere.Interfaces</PackageId>
     <Authors>archi-Doc</Authors>
-    <Product>Netsphere.Remote</Product>
-    <Description>Netsphere.Remote</Description>
+    <Product>Netsphere.Interfaces</Product>
+    <Description>Netsphere.Interfaces</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/archi-Doc/LP</PackageProjectUrl>
     <RepositoryUrl>https://github.com/archi-Doc/LP</RepositoryUrl>

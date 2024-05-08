@@ -4,7 +4,7 @@ using Arc.Threading;
 using Arc.Unit;
 using BigMachines;
 using Netsphere;
-using Netsphere.Remote;
+using Netsphere.Interfaces;
 using SimpleCommandLine;
 
 namespace Netsphere.Runner;

@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace Netsphere.Remote;
+namespace Netsphere.Interfaces;
 
 [NetServiceInterface]
 public interface IRemoteControl : INetService

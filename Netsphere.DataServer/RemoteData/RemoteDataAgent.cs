@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
-using Netsphere.Remote;
+using Netsphere.Interfaces;
 
 namespace RemoteDataServer;
 
