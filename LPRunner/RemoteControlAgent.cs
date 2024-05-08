@@ -6,11 +6,11 @@ using Netsphere;
 using Netsphere.Crypto;
 using Netsphere.Remote;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [NetServiceObject]
 internal class RemoteControlAgent : IRemoteControl
-{// Remote -> LPRunner
+{// Remote -> Netsphere.Runner
     public RemoteControlAgent(ILogger<RemoteControlAgent> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
     {
         this.logger = logger;

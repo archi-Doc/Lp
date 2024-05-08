@@ -14,7 +14,7 @@ public interface IRemoteControlService : INetService
 
 [NetServiceObject]
 internal class RemoteControlServiceImpl : IRemoteControlService
-{// LPRunner -> Container
+{// Netsphere.Runner -> Container
     // This class is unsafe.
     public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, Control control)
     {

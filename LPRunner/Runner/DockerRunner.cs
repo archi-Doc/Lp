@@ -4,7 +4,7 @@ using Arc.Unit;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 internal class DockerRunner
 {

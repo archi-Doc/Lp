@@ -6,9 +6,9 @@ using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
-public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
+public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public class Builder : UnitBuilder<Unit>
     {// Builder class for customizing dependencies.
@@ -18,13 +18,13 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Configuration for Unit.
             this.Configure(context =>
             {
-                context.AddSingleton<ConsoleUnit>();
+                context.AddSingleton<RunnerUnit>();
                 context.AddSingleton<BigMachine>();
                 context.AddSingleton<RunnerInformation>();
-                context.CreateInstance<ConsoleUnit>();
+                context.CreateInstance<RunnerUnit>();
 
                 // Command
-                context.AddCommand(typeof(ConsoleCommand));
+                context.AddCommand(typeof(RunCommand));
 
                 // Machines
                 context.AddTransient<RunnerMachine>();
@@ -144,7 +144,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }*/
     }
 
-    public ConsoleUnit(UnitContext context, ILogger<ConsoleUnit> logger)
+    public RunnerUnit(UnitContext context, ILogger<RunnerUnit> logger)
         : base(context)
     {
         this.logger = logger;
@@ -167,5 +167,5 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    private ILogger<ConsoleUnit> logger;
+    private ILogger<RunnerUnit> logger;
 }

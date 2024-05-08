@@ -5,7 +5,7 @@ using BigMachines;
 using Netsphere;
 using Netsphere.Packet;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [MachineObject(UseServiceProvider = true)]
 public partial class RunnerMachine : Machine
