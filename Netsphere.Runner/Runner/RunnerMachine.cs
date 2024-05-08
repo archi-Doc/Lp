@@ -26,6 +26,14 @@ public partial class RunnerMachine : Machine
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
 
+    protected override void OnCreate(object? createParam)
+    {
+        if (createParam is RunOptions options)
+        {
+            this.runOptions = options;
+        }
+    }
+
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
@@ -172,6 +180,7 @@ public partial class RunnerMachine : Machine
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
     private readonly RunnerInformation information;
+    private RunOptions runOptions = new();
     private DockerRunner? docker;
     private int checkRetry;
 }

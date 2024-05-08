@@ -23,7 +23,7 @@ public class RunCommand : ISimpleCommandAsync<RunOptions>
 
     public async Task RunAsync(RunOptions options, string[] args)
     {
-        var runner = this.bigMachine.RunnerMachine.Get();
+        var runner = this.bigMachine.RunnerMachine.GetOrCreate(options);
         this.bigMachine.Start(ThreadCore.Root);
 
         while (!((IBigMachine)this.bigMachine).Core.IsTerminated)
