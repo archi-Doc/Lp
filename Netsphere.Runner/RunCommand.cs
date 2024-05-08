@@ -10,7 +10,7 @@ using SimpleCommandLine;
 namespace Netsphere.Runner;
 
 [SimpleCommand("run", Default = true)]
-public class RunCommand : ISimpleCommandAsync
+public class RunCommand : ISimpleCommandAsync<RunOptions>
 {
     public RunCommand(ILogger<RunCommand> logger, BigMachine bigMachine, NetControl netControl)
     {
@@ -21,7 +21,7 @@ public class RunCommand : ISimpleCommandAsync
         this.netControl.Services.Register<IRemoteControl>();
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task RunAsync(RunOptions options, string[] args)
     {
         var runner = this.bigMachine.RunnerMachine.Get();
         this.bigMachine.Start(ThreadCore.Root);
