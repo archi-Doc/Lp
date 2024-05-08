@@ -26,6 +26,11 @@ public partial class RunnerMachine : Machine
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
 
+    protected override void OnCreate(object? createParam)
+    {
+        base.OnCreate(createParam);
+    }
+
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
