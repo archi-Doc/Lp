@@ -17,10 +17,10 @@ public partial class RunnerMachine : Machine
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, NetControl netControl, RunnerInformation information)
+    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunnerInformation information)
     {
         this.logger = logger;
-        this.netControl = netControl;
+        this.netTerminal = netTerminal;
         this.information = information;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
@@ -150,13 +150,13 @@ public partial class RunnerMachine : Machine
             return NetResult.NoNodeInformation;
         }
 
-        var node = await this.netControl.NetTerminal.UnsafeGetNetNode(address);
+        var node = await this.netTerminal.UnsafeGetNetNode(address);
         if (node is null)
         {
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = await this.netControl.NetTerminal.Connect(node))
+        using (var terminal = await this.netTerminal.Connect(node))
         {
             if (terminal is null)
             {
@@ -170,7 +170,7 @@ public partial class RunnerMachine : Machine
     }
 
     private readonly ILogger logger;
-    private readonly NetControl netControl;
+    private readonly NetTerminal netTerminal;
     private readonly RunnerInformation information;
     private DockerRunner? docker;
     private int checkRetry;

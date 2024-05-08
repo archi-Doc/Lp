@@ -82,9 +82,9 @@ internal class RemoteControlAgent : IRemoteControl
         }
     }
 
-    private ILogger<RemoteControlAgent> logger;
-    private NetControl netControl;
-    private BigMachine bigMachine;
-    private RunnerInformation information;
+    private readonly ILogger logger;
+    private readonly NetControl netControl;
+    private readonly BigMachine bigMachine;
+    private readonly RunnerInformation information;
     private AuthenticationToken? token;
 }
