@@ -2,7 +2,7 @@
 
 using Arc.Unit;
 
-namespace Netsphere.RemoteData;
+namespace Netsphere.Remote;
 
 public static class RemoteDataHelper
 {

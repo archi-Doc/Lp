@@ -74,7 +74,7 @@ public class Program
             })
             .ConfigureSerivice(context =>
             {// Register the services provided by the server.
-                context.AddService<Netsphere.RemoteData.IRemoteData>();
+                context.AddService<Netsphere.Remote.IRemoteData>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.

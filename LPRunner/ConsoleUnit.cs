@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
-using LP.NetServices;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using SimpleCommandLine;
@@ -30,7 +29,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 context.AddTransient<RunnerMachine>();
 
                 // Net Services
-                context.AddSingleton<RemoteControlServiceImpl>();
+                context.AddSingleton<RemoteControlAgent>();
 
                 // Log filter
                 // context.AddSingleton<ExampleLogFilter>();

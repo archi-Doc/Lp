@@ -1,18 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Security.Cryptography.X509Certificates;
 using Arc.Unit;
 using BigMachines;
-using LPRunner;
 using Netsphere;
 using Netsphere.Crypto;
+using Netsphere.Remote;
 
-namespace LP.NetServices;
+namespace LPRunner;
 
 [NetServiceObject]
-internal class RemoteControlServiceImpl : IRemoteControlService
+internal class RemoteControlAgent : IRemoteControl
 {// Remote -> LPRunner
-    public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
+    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
     {
         this.logger = logger;
         this.netControl = netControl;
@@ -60,7 +59,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
                 return NetResult.NoNetwork;
             }
 
-            var remoteControl = terminal.GetService<IRemoteControlService>();
+            var remoteControl = terminal.GetService<IRemoteControl>();
             var response = await remoteControl.Authenticate(this.token).ResponseAsync;
             this.logger.TryGet()?.Log($"RequestAuthorization: {response.Result}");
             if (!response.IsSuccess)
@@ -83,7 +82,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
         }
     }
 
-    private ILogger<RemoteControlServiceImpl> logger;
+    private ILogger<RemoteControlAgent> logger;
     private NetControl netControl;
     private BigMachine bigMachine;
     private RunnerInformation information;

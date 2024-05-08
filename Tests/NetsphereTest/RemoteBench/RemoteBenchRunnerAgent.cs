@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using Arc.Unit;
 using Netsphere.Misc;
-using Netsphere.RemoteData;
+using Netsphere.Remote;
 using NetsphereTest;
 
 namespace LP.NetServices;

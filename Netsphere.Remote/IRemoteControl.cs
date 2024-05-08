@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
 using Netsphere.Crypto;
 
-namespace LP.NetServices;
+namespace Netsphere.Remote;
 
 [NetServiceInterface]
-public interface IRemoteControlService : INetService
+public interface IRemoteControl : INetService
 {
     public NetTask Authenticate(AuthenticationToken token);
 
