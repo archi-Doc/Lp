@@ -10,7 +10,7 @@ public partial record RunOptions
     public long Lifespan { get; init; } = 6; // tempcode
 
     [SimpleOption("port", Description = "Port number associated with the runner")]
-    public int Port { get; set; }
+    public int Port { get; set; } = 49999;
 
     [SimpleOption("nodeprivatekey", Description = "Node private key")]
     public string NodePrivateKey { get; set; } = string.Empty;

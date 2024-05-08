@@ -71,7 +71,7 @@ internal class RemoteControlAgent : IRemoteControl
             this.logger.TryGet()?.Log($"Restart: {result}");
             if (result == NetResult.Success)
             {
-                var machine = this.bigMachine.RunnerMachine.Get();
+                var machine = this.bigMachine.RunnerMachine.GetOrCreate();
                 if (machine != null)
                 {
                     _ = machine.Command.Restart();

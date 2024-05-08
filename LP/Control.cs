@@ -653,9 +653,9 @@ public class Control
 
     private void RunMachines()
     {
-        _ = this.BigMachine.NtpMachine.Get().RunAsync();
-        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
-        _ = this.BigMachine.LPControlMachine.Get(); // .RunAsync();
+        _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
+        _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
+        _ = this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
     }
 
     private async Task LoadKeyVault_NodeKey()

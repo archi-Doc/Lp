@@ -28,7 +28,10 @@ public partial class RunnerMachine : Machine
 
     protected override void OnCreate(object? createParam)
     {
-        base.OnCreate(createParam);
+        if (createParam is RunOptions options)
+        {
+            this.runOptions = options;
+        }
     }
 
     [StateMethod(0)]
@@ -177,6 +180,7 @@ public partial class RunnerMachine : Machine
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
     private readonly RunnerInformation information;
+    private RunOptions runOptions = new();
     private DockerRunner? docker;
     private int checkRetry;
 }
