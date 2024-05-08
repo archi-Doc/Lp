@@ -58,6 +58,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public RelayCircuit RelayCircuit { get; private set; }
 
+    public RelayAgent RelayAgent { get; private set; }
+
     public bool IsAlternative { get; private set; }
 
     public int Port { get; private set; }
@@ -75,8 +77,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
-
-    internal RelayAgent RelayAgent { get; private set; }
 
     private readonly NetCleaner netCleaner;
 

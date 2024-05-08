@@ -64,10 +64,15 @@ public class RelayCircuit
 
     public void Clear(bool closeRelayedConnections = true)
     {
+        var numberOfRelays = this.NumberOfRelays;
+        var packet = RelayOperatioPacket.CreateClose();
+        for (var i = -numberOfRelays; i < 0; i++)
+        {
+            _ = this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, i);
+        }
+
         lock (this.relayNodes.SyncObject)
         {
-            //SetRelayPacket
-
             this.relayNodes.Clear();
             this.NewRelayKeyInternal();
         }

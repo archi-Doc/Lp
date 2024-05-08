@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.Relay;
 
-[SimpleCommand("show-relay", Description = "Check the relay circuit and display detailed status.")]
-public class ShowRelaySubcommand : ISimpleCommandAsync
+[SimpleCommand("show-relay-exchange", Description = "Display relay exchange.")]
+public class ShowRelayExchangeSubcommand : ISimpleCommandAsync
 {
-    public ShowRelaySubcommand(ILogger<ShowRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal)
+    public ShowRelayExchangeSubcommand(ILogger<ShowRelayExchangeSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -16,9 +16,9 @@ public class ShowRelaySubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log("Show relay circuit");
+        this.logger.TryGet()?.Log("Show relay exchange");
 
-        var st = await this.netTerminal.RelayCircuit.UnsafeDetailedToString();
+        var st = $"Number of relay exchange: {this.netTerminal.RelayAgent.NumberOfExchanges}";
         this.userInterfaceService.WriteLine(st);
     }
 

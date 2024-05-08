@@ -443,7 +443,7 @@ Exit:
         return packet;
     }
 
-    internal SetRelayResponse? ProcessSetRelay(ushort destinationRelayId, SetRelayPacket p)
+    internal RelayOperatioResponse? ProcessRelayOperation(ushort destinationRelayId, RelayOperatioPacket p)
     {
         if (this.NumberOfExchanges == 0)
         {
@@ -451,6 +451,7 @@ Exit:
         }
 
         RelayExchange? exchange;
+        RelayOperatioResponse? response = default;
         lock (this.items.SyncObject)
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
@@ -459,12 +460,19 @@ Exit:
                 return null;
             }
 
-            exchange.OuterEndpoint = p.OuterEndPoint;
+            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
+            {
+                exchange.OuterEndpoint = p.OuterEndPoint;
+                response = new(RelayResult.Success);
+            }
+            else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
+            {
+                exchange.Goshujin = null;
+                exchange.Clean();
+            }
         }
 
-        var packet = new SetRelayResponse();
-        packet.Result = RelayResult.Success;
-        return packet;
+        return response;
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]

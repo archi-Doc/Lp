@@ -71,9 +71,9 @@ public class RelayTest
 
             var result = netTerminal.RelayCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
 
-            var setRelayPacket = new SetRelayPacket();
+            var setRelayPacket = new RelayOperatioPacket();
             setRelayPacket.OuterEndPoint = new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
-            await netTerminal.PacketTerminal.SendAndReceive<SetRelayPacket, SetRelayResponse>(NetAddress.Relay, setRelayPacket, -1);
+            await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
         using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.ReuseIfAvailable, 2))!)
