@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using LP.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using Netsphere.RemoteData;
+using Netsphere.Remote;
 
 namespace LP.NetServices;
 

@@ -5,7 +5,7 @@ using LP.NetServices;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using Netsphere.Crypto;
-using Netsphere.RemoteData;
+using Netsphere.Remote;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

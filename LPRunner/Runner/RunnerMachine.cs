@@ -2,7 +2,6 @@
 
 using Arc.Unit;
 using BigMachines;
-using LP;
 using Netsphere;
 using Netsphere.Packet;
 
