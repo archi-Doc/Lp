@@ -5,23 +5,23 @@ using BigMachines;
 using Netsphere;
 using Netsphere.Packet;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [MachineObject(UseServiceProvider = true)]
 public partial class RunnerMachine : Machine
 {
-    public enum LPStatus
+    public enum Status
     {
         NoContainer,
         Container,
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, NetControl netControl, RunnerInformation information)
+    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunnerInformation information)
     {
         this.logger = logger;
-        this.netControl = netControl;
-        this.Information = information;
+        this.netTerminal = netTerminal;
+        this.information = information;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -29,10 +29,10 @@ public partial class RunnerMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        this.docker = DockerRunner.Create(this.logger, this.Information);
+        this.docker = await DockerRunner.Create(this.logger, this.information);
         if (this.docker == null)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"No docker");
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker is not available");
             return StateResult.Terminate;
         }
 
@@ -40,7 +40,7 @@ public partial class RunnerMachine : Machine
         // this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
         // var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
         // this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
-        this.logger.TryGet()?.Log($"{this.Information.ToString()}");
+        this.logger.TryGet()?.Log($"{this.information.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
 
@@ -65,16 +65,16 @@ public partial class RunnerMachine : Machine
         }
 
         this.logger.TryGet()?.Log($"Check ({this.checkRetry++})");
-        var status = await this.GetLPStatus();
+        var status = await this.GetStatus();
         this.logger.TryGet()?.Log($"Status: {status}");
 
-        if (status == LPStatus.Running)
+        if (status == Status.Running)
         {// Running
             this.checkRetry = 0;
             this.ChangeState(State.Running);
             return StateResult.Continue;
         }
-        else if (status == LPStatus.NoContainer)
+        else if (status == Status.NoContainer)
         {// No container -> Run
             if (await this.docker.RunContainer() == false)
             {
@@ -121,44 +121,42 @@ public partial class RunnerMachine : Machine
         return CommandResult.Success;
     }
 
-    public RunnerInformation Information { get; private set; }
-
-    private async Task<LPStatus> GetLPStatus()
+    private async Task<Status> GetStatus()
     {
         if (await this.SendAcknowledge() == NetResult.Success)
         {
-            return LPStatus.Running;
+            return Status.Running;
         }
 
         if (this.docker == null)
         {
-            return LPStatus.NoContainer;
+            return Status.NoContainer;
         }
 
         var containers = await this.docker.EnumerateContainersAsync();
         if (containers.Count() > 0)
         {
-            return LPStatus.Container;
+            return Status.Container;
         }
 
-        return LPStatus.NoContainer;
+        return Status.NoContainer;
     }
 
     private async Task<NetResult> SendAcknowledge()
     {
-        var address = this.Information.TryGetDualAddress();
+        var address = this.information.TryGetDualAddress();
         if (!address.IsValid)
         {
             return NetResult.NoNodeInformation;
         }
 
-        var node = await this.netControl.NetTerminal.UnsafeGetNetNode(address);
+        var node = await this.netTerminal.UnsafeGetNetNode(address);
         if (node is null)
         {
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = await this.netControl.NetTerminal.Connect(node))
+        using (var terminal = await this.netTerminal.Connect(node))
         {
             if (terminal is null)
             {
@@ -171,8 +169,9 @@ public partial class RunnerMachine : Machine
         }
     }
 
-    private ILogger<RunnerMachine> logger;
-    private NetControl netControl;
+    private readonly ILogger logger;
+    private readonly NetTerminal netTerminal;
+    private readonly RunnerInformation information;
     private DockerRunner? docker;
     private int checkRetry;
 }

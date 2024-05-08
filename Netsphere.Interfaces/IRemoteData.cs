@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.Remote;
+namespace Netsphere.Interfaces;
 
 [NetServiceInterface]
 public interface IRemoteData : INetService, INetServiceAgreement

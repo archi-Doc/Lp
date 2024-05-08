@@ -4,13 +4,13 @@ using Arc.Unit;
 using BigMachines;
 using Netsphere;
 using Netsphere.Crypto;
-using Netsphere.Remote;
+using Netsphere.Interfaces;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [NetServiceObject]
 internal class RemoteControlAgent : IRemoteControl
-{// Remote -> LPRunner
+{// Remote -> Netsphere.Runner
     public RemoteControlAgent(ILogger<RemoteControlAgent> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
     {
         this.logger = logger;
@@ -82,9 +82,9 @@ internal class RemoteControlAgent : IRemoteControl
         }
     }
 
-    private ILogger<RemoteControlAgent> logger;
-    private NetControl netControl;
-    private BigMachine bigMachine;
-    private RunnerInformation information;
+    private readonly ILogger logger;
+    private readonly NetControl netControl;
+    private readonly BigMachine bigMachine;
+    private readonly RunnerInformation information;
     private AuthenticationToken? token;
 }

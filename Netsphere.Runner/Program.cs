@@ -5,12 +5,10 @@ using Arc.Unit;
 using BigMachines;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [BigMachineObject(Inclusive = true)]
-public partial class BigMachine
-{
-}
+public partial class BigMachine;
 
 public class Program
 {
@@ -28,7 +26,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new ConsoleUnit.Builder()
+        var builder = new RunnerUnit.Builder()
             .Configure(context =>
             {
                 // Add Command

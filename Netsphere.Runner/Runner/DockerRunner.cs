@@ -4,18 +4,18 @@ using Arc.Unit;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 internal class DockerRunner
 {
     private const string ExposedPort = "Port1";
 
-    public static DockerRunner? Create(ILogger<RunnerMachine> logger, RunnerInformation information)
+    public static async Task<DockerRunner?> Create(ILogger logger, RunnerInformation information)
     {
         var client = new DockerClientConfiguration().CreateClient();
         try
         {
-            var result = client.Containers.ListContainersAsync(new() { Limit = 10, }).Result;
+            _ = await client.Containers.ListContainersAsync(new() { Limit = 10, });
         }
         catch
         {// No docker
@@ -25,7 +25,7 @@ internal class DockerRunner
         return new DockerRunner(client, logger, information);
     }
 
-    private DockerRunner(DockerClient client, ILogger<RunnerMachine> logger, RunnerInformation information)
+    private DockerRunner(DockerClient client, ILogger logger, RunnerInformation information)
     {
         this.client = client;
         this.logger = logger;
@@ -166,7 +166,7 @@ internal class DockerRunner
         }
     }
 
-    private DockerClient client;
-    private ILogger<RunnerMachine> logger;
-    private RunnerInformation information;
+    private readonly DockerClient client;
+    private readonly ILogger logger;
+    private readonly RunnerInformation information;
 }

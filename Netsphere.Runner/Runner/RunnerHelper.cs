@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using Arc.Unit;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 internal static class RunnerHelper
 {

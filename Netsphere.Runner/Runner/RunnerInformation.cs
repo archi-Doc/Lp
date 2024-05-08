@@ -5,7 +5,7 @@ using Netsphere;
 using Netsphere.Crypto;
 using Tinyhand;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [TinyhandObject(ImplicitKeyAsName = true, UseServiceProvider = true)]
 public partial record RunnerInformation
@@ -104,7 +104,7 @@ public partial record RunnerInformation
         await File.WriteAllBytesAsync(path, TinyhandSerializer.SerializeToUtf8(this));
 
         this.logger.TryGet(LogLevel.Error)?.Log($"'{path}' could not be found and was created.");
-        this.logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart LPRunner.");
+        this.logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart Netsphere.Runner.");
 
         return false;
     }

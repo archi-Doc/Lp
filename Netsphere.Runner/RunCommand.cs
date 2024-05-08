@@ -4,15 +4,15 @@ using Arc.Threading;
 using Arc.Unit;
 using BigMachines;
 using Netsphere;
-using Netsphere.Remote;
+using Netsphere.Interfaces;
 using SimpleCommandLine;
 
-namespace LPRunner;
+namespace Netsphere.Runner;
 
 [SimpleCommand("run", Default = true)]
-public class ConsoleCommand : ISimpleCommandAsync
+public class RunCommand : ISimpleCommandAsync<RunOptions>
 {
-    public ConsoleCommand(ILogger<ConsoleCommand> logger, BigMachine bigMachine, NetControl netControl)
+    public RunCommand(ILogger<RunCommand> logger, BigMachine bigMachine, NetControl netControl)
     {
         this.logger = logger;
         this.bigMachine = bigMachine;
@@ -21,14 +21,14 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.netControl.Services.Register<IRemoteControl>();
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task RunAsync(RunOptions options, string[] args)
     {
         var runner = this.bigMachine.RunnerMachine.Get();
         this.bigMachine.Start(ThreadCore.Root);
 
         while (!((IBigMachine)this.bigMachine).Core.IsTerminated)
         {
-            if (!((IBigMachine)this).CheckActiveMachine())
+            if (!((IBigMachine)this.bigMachine).CheckActiveMachine())
             {
                 break;
             }
@@ -42,7 +42,7 @@ public class ConsoleCommand : ISimpleCommandAsync
         // await this.runner.Run();
     }
 
-    private ILogger<ConsoleCommand> logger;
+    private ILogger<RunCommand> logger;
     private BigMachine bigMachine;
     private NetControl netControl;
 }
