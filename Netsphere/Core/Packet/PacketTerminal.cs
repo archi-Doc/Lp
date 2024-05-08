@@ -350,11 +350,11 @@ public sealed partial class PacketTerminal
 
                 return;
             }
-            else if (packetType == PacketType.SetRelay)
+            else if (packetType == PacketType.RelayOperation)
             {// SetRelay
-                if (TinyhandSerializer.TryDeserialize<SetRelayPacket>(span, out var p))
+                if (TinyhandSerializer.TryDeserialize<RelayOperatioPacket>(span, out var p))
                 {
-                    var packet = this.netTerminal.RelayAgent.ProcessSetRelay(destinationRelayId, p);
+                    var packet = this.netTerminal.RelayAgent.ProcessRelayOperation(destinationRelayId, p);
                     if (packet is not null)
                     {
                         CreatePacket(packetId, packet, out var owner);

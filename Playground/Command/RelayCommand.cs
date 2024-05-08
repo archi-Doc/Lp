@@ -97,9 +97,8 @@ public class RelayCommand : ISimpleCommandAsync
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
 
-            var setRelayPacket = new SetRelayPacket();
-            setRelayPacket.OuterEndPoint = new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
-            await netTerminal.PacketTerminal.SendAndReceive<SetRelayPacket, SetRelayResponse>(NetAddress.Relay, setRelayPacket, -1);
+            var packet = RelayOperatioPacket.CreateSetOuterEndPoint(new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint));
+            await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
         }
 
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
@@ -166,8 +165,8 @@ public class RelayCommand : ISimpleCommandAsync
         // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
         // Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
 
-        // netTerminal.RelayCircuit.Clear();
-        // Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+        netTerminal.RelayCircuit.Clear();
+        Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
     }
 
     private readonly NetControl netControl;

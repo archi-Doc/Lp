@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using System.Security.Cryptography;
-using LP.NetServices;
 using LP.T3CS;
 using Netsphere.Crypto;
 using Netsphere.Misc;
@@ -47,7 +45,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var rawLinkageKey = LinkageKey.CreateRaw(publicKey);
         this.userInterfaceService.WriteLine($"Raw: {rawLinkageKey.ToString()}");
         bt.Start();
-        var encryptedLinkageKey = LinkageKey.CreateEncrypted(publicKey, publicEncryptionKey);
+        LinkageKey.TryCreateEncrypted(publicKey, publicEncryptionKey, out var encryptedLinkageKey);
         this.userInterfaceService.WriteLine($"Create encrypted linkage key: {bt.StopAndGetText()}");
         this.userInterfaceService.WriteLine($"Encrypted: {encryptedLinkageKey.ToString()}");
 

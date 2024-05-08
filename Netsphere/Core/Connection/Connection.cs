@@ -1231,8 +1231,21 @@ Wait:
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
-        var result = aes.TryEncryptCbc(source, iv, destination, out written, PaddingMode.PKCS7);
-        this.ReturnAes(aes);
+        bool result;
+        try
+        {
+            result = aes.TryEncryptCbc(source, iv, destination, out written, PaddingMode.PKCS7);
+        }
+        catch
+        {
+            result = false;
+            written = 0;
+        }
+        finally
+        {
+            this.ReturnAes(aes);
+        }
+
         return result;
     }
 
@@ -1243,8 +1256,21 @@ Wait:
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
-        var result = aes.TryEncryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
-        this.ReturnAes(aes);
+        bool result;
+        try
+        {
+            result = aes.TryEncryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
+        }
+        catch
+        {
+            result = false;
+            written = 0;
+        }
+        finally
+        {
+            this.ReturnAes(aes);
+        }
+
         return result;
     }
 
@@ -1255,8 +1281,21 @@ Wait:
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
-        var result = aes.TryDecryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
-        this.ReturnAes(aes);
+        bool result;
+        try
+        {
+            result = aes.TryDecryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
+        }
+        catch
+        {
+            result = false;
+            written = 0;
+        }
+        finally
+        {
+            this.ReturnAes(aes);
+        }
+
         return result;
     }
 

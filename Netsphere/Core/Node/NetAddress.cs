@@ -411,7 +411,11 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             }
         }
 
-        if (i >= source.Length)
+        if (i == 0)
+        {
+            return false;
+        }
+        else if (i >= source.Length)
         {
             i = source.Length - 1;
         }

@@ -205,8 +205,16 @@ public partial class RelayAgent
                 }
 
                 this.aes.Key = exchange.Key;
-                if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out var written, PaddingMode.None) ||
-                    written < RelayHeader.Length)
+                int written;
+                try
+                {
+                    if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out written, PaddingMode.None) ||
+                        written < RelayHeader.Length)
+                    {
+                        goto Exit;
+                    }
+                }
+                catch
                 {
                     goto Exit;
                 }
@@ -330,7 +338,14 @@ public partial class RelayAgent
             }
 
             this.aes.Key = exchange.Key;
-            if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+            try
+            {
+                if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
+                {
+                    goto Exit;
+                }
+            }
+            catch
             {
                 goto Exit;
             }
@@ -428,7 +443,7 @@ Exit:
         return packet;
     }
 
-    internal SetRelayResponse? ProcessSetRelay(ushort destinationRelayId, SetRelayPacket p)
+    internal RelayOperatioResponse? ProcessRelayOperation(ushort destinationRelayId, RelayOperatioPacket p)
     {
         if (this.NumberOfExchanges == 0)
         {
@@ -436,6 +451,7 @@ Exit:
         }
 
         RelayExchange? exchange;
+        RelayOperatioResponse? response = default;
         lock (this.items.SyncObject)
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
@@ -444,12 +460,19 @@ Exit:
                 return null;
             }
 
-            exchange.OuterEndpoint = p.OuterEndPoint;
+            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
+            {
+                exchange.OuterEndpoint = p.OuterEndPoint;
+                response = new(RelayResult.Success);
+            }
+            else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
+            {
+                exchange.Goshujin = null;
+                exchange.Clean();
+            }
         }
 
-        var packet = new SetRelayResponse();
-        packet.Result = RelayResult.Success;
-        return packet;
+        return response;
     }
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]

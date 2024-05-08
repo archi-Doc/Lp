@@ -17,7 +17,7 @@ public readonly partial record struct LinkageKey
     public static LinkageKey CreateRaw(SignaturePublicKey publicKey)
         => new(publicKey);
 
-    public static LinkageKey CreateEncrypted(SignaturePublicKey publicKey, EncryptionPublicKey encryptionKey)
+    public static bool TryCreateEncrypted(SignaturePublicKey publicKey, EncryptionPublicKey encryptionKey, out LinkageKey linkageKey)
     {
         Span<byte> destination = stackalloc byte[32];
 
@@ -27,27 +27,37 @@ public readonly partial record struct LinkageKey
         {
             if (ecdh is null || cache2.Object is null)
             {
-                throw new InvalidOperationException();
+                linkageKey = default;
+                return false;
             }
 
-            var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
-
-            // Hash key material
-            Sha3Helper.Get256_Span(material, material);
-
-            using (var aes = Aes.Create())
+            try
             {
-                aes.KeySize = 256;
-                aes.Key = material;
+                var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
-                Span<byte> source = stackalloc byte[32];
-                Span<byte> iv = stackalloc byte[16];
-                publicKey.WriteX(source);
-                aes.TryEncryptCbc(source, iv, destination, out _, PaddingMode.None);
+                // Hash key material
+                Sha3Helper.Get256_Span(material, material);
+
+                using (var aes = Aes.Create())
+                {
+                    aes.KeySize = 256;
+                    aes.Key = material;
+
+                    Span<byte> source = stackalloc byte[32];
+                    Span<byte> iv = stackalloc byte[16];
+                    publicKey.WriteX(source);
+                    aes.TryEncryptCbc(source, iv, destination, out _, PaddingMode.None);
+                }
+            }
+            catch
+            {
+                linkageKey = default;
+                return false;
             }
         }
 
-        return new(publicKey, newKey, destination);
+        linkageKey = new(publicKey, newKey, destination);
+        return true;
     }
 
     private LinkageKey(SignaturePublicKey publicKey)
@@ -113,38 +123,46 @@ public readonly partial record struct LinkageKey
 
         var key = this.Key;
         var encryptionKey = Unsafe.As<SignaturePublicKey, EncryptionPublicKey>(ref key);
-        using (var cache2 = encryptionKey.TryGetEcdh())
+        try
         {
-            if (ecdh is null || cache2.Object is null)
+            using (var cache2 = encryptionKey.TryGetEcdh())
             {
-                decrypted = default;
-                return false;
+                if (ecdh is null || cache2.Object is null)
+                {
+                    decrypted = default;
+                    return false;
+                }
+
+                var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
+
+                // Hash key material
+                Sha3Helper.Get256_Span(material, material);
+
+                using (var aes = Aes.Create())
+                {
+                    aes.KeySize = 256;
+                    aes.Key = material;
+
+                    Span<byte> source = stackalloc byte[32];
+                    Span<byte> iv = stackalloc byte[16];
+
+                    var c = source;
+                    BitConverter.TryWriteBytes(c, this.encrypted0);
+                    c = c.Slice(sizeof(ulong));
+                    BitConverter.TryWriteBytes(c, this.encrypted1);
+                    c = c.Slice(sizeof(ulong));
+                    BitConverter.TryWriteBytes(c, this.encrypted2);
+                    c = c.Slice(sizeof(ulong));
+                    BitConverter.TryWriteBytes(c, this.encrypted3);
+
+                    aes.TryDecryptCbc(source, iv, destination, out _, PaddingMode.None);
+                }
             }
-
-            var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
-
-            // Hash key material
-            Sha3Helper.Get256_Span(material, material);
-
-            using (var aes = Aes.Create())
-            {
-                aes.KeySize = 256;
-                aes.Key = material;
-
-                Span<byte> source = stackalloc byte[32];
-                Span<byte> iv = stackalloc byte[16];
-
-                var c = source;
-                BitConverter.TryWriteBytes(c, this.encrypted0);
-                c = c.Slice(sizeof(ulong));
-                BitConverter.TryWriteBytes(c, this.encrypted1);
-                c = c.Slice(sizeof(ulong));
-                BitConverter.TryWriteBytes(c, this.encrypted2);
-                c = c.Slice(sizeof(ulong));
-                BitConverter.TryWriteBytes(c, this.encrypted3);
-
-                aes.TryDecryptCbc(source, iv, destination, out _, PaddingMode.None);
-            }
+        }
+        catch
+        {
+            decrypted = default;
+            return false;
         }
 
         decrypted = new(this.originalKeyValue, destination);
