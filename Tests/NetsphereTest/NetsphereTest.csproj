@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Netsphere.RemoteData\Netsphere.RemoteData.csproj" />
     <ProjectReference Include="..\..\Netsphere\Netsphere.csproj" />
     <ProjectReference Include="..\..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  <ProjectReference Include="..\..\Netsphere.Remote\Netsphere.Remote.csproj" />
   </ItemGroup>
 
   <ItemGroup>
