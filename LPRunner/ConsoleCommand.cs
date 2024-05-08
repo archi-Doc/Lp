@@ -28,7 +28,7 @@ public class ConsoleCommand : ISimpleCommandAsync
 
         while (!((IBigMachine)this.bigMachine).Core.IsTerminated)
         {
-            if (!((IBigMachine)this).CheckActiveMachine())
+            if (!((IBigMachine)this.bigMachine).CheckActiveMachine())
             {
                 break;
             }

@@ -8,9 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace LPRunner;
 
 [BigMachineObject(Inclusive = true)]
-public partial class BigMachine
-{
-}
+public partial class BigMachine;
 
 public class Program
 {

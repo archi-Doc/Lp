@@ -19,6 +19,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingleton<ConsoleUnit>();
+                context.AddSingleton<BigMachine>();
                 context.AddSingleton<RunnerInformation>();
                 context.CreateInstance<ConsoleUnit>();
 
