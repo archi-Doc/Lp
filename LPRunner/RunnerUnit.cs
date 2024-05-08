@@ -105,7 +105,6 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             };
 
             // Main
-            // await SimpleParser.ParseAndRunAsync(this.Context.Commands, "example -string test", parserOptions);
             await SimpleParser.ParseAndRunAsync(this.Context.Commands, args, parserOptions);
 
             await this.Context.SendTerminateAsync(new());
