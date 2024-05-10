@@ -12,7 +12,7 @@ public partial class BigMachine;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
@@ -33,7 +33,7 @@ public class Program
             });
 
         var unit = builder.Build();
-        await unit.RunAsync(args);
+        await unit.RunAsync();
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

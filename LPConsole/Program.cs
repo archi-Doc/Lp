@@ -10,7 +10,7 @@ namespace LPConsole;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
@@ -55,6 +55,7 @@ public class Program
             });
         // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
 
+        var args = Environment.GetCommandLineArgs();
         SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
 
         unit = builder.Build(args);

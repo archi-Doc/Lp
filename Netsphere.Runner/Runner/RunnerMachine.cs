@@ -111,7 +111,7 @@ public partial class RunnerMachine : Machine
     [CommandMethod]
     protected async Task<CommandResult> Restart()
     {
-        this.logger.TryGet()?.Log("RemoteControl -> Restart");
+        this.logger.TryGet()?.Log("Restart");
 
         // Remove container
         if (this.docker != null)
@@ -120,6 +120,7 @@ public partial class RunnerMachine : Machine
         }
 
         this.ChangeState(State.Check);
+        this.TimeUntilRun = TimeSpan.FromSeconds(1);
         return CommandResult.Success;
     }
 

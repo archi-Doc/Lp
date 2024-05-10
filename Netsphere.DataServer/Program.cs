@@ -17,7 +17,7 @@ namespace RemoteDataServer;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
@@ -95,7 +95,7 @@ public class Program
             RequireStrictOptionName = false,
         };
 
-        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, SimpleParserHelper.GetCommandLineArguments(), parserOptions); // Main process
 
         await unit.Terminate(); // Perform the termination process for the unit.
         ThreadCore.Root.Terminate();

@@ -109,6 +109,4 @@ public partial record RunOptions
     internal NodePrivateKey? NodePrivateKey { get; set; }
 
     internal SignaturePublicKey RemotePublicKey { get; set; }
-
-    
 }

@@ -69,11 +69,12 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
-        public async Task RunAsync(string[] args)
+        public async Task RunAsync()
         {
             // Create optional instances
             this.Context.CreateInstances();
 
+            var args = SimpleParserHelper.GetCommandLineArguments();
             var options = this.Context.ServiceProvider.GetRequiredService<RunOptions>();
             SimpleParser.TryParseOptions<RunOptions>(args, out _, options);
             options.Prepare();
