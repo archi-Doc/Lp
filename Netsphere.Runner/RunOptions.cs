@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Arc.Crypto;
+using Arc.Unit;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -37,6 +37,24 @@ public partial record RunOptions
     [SimpleOption("containerparam", Description = "Parameters to be passed to the container.")]
     public string ContainerParameters { get; init; } = string.Empty;
 
+    public bool Check(ILogger logger)
+    {
+        var result = true;
+        if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
+        {
+            logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{RemotePublicKeyName}) for authentication of remote operations.");
+            result = false;
+        }
+
+        if (string.IsNullOrEmpty(this.Image))
+        {
+            logger.TryGet(LogLevel.Fatal)?.Log($"Specify the container image (-image).");
+            result = false;
+        }
+
+        return result;
+    }
+
     public async ValueTask<NetNode?> TryGetContainerNode(NetTerminal netTerminal)
     {
         if (this.containerNode is not null)
@@ -53,12 +71,6 @@ public partial record RunOptions
         this.containerNode = await netTerminal.UnsafeGetNetNode(address).ConfigureAwait(false);
         return this.containerNode;
     }
-
-    private NetNode? containerNode;
-
-    internal NodePrivateKey? NodePrivateKey { get; set; }
-
-    internal SignaturePublicKey RemotePublicKey { get; set; }
 
     public void Prepare()
     {
@@ -91,4 +103,12 @@ public partial record RunOptions
             }
         }
     }
+
+    private NetNode? containerNode;
+
+    internal NodePrivateKey? NodePrivateKey { get; set; }
+
+    internal SignaturePublicKey RemotePublicKey { get; set; }
+
+    
 }

@@ -38,7 +38,7 @@ internal class DockerRunner
         return list.Where(x => x.Image.StartsWith(this.options.Image));
     }
 
-    public async Task RemoveContainer()
+    public async Task RemoveAllContainers()
     {// Remove containers
         var array = (await this.EnumerateContainersAsync()).ToArray();
         foreach (var x in array)
@@ -67,15 +67,25 @@ internal class DockerRunner
     public async Task<bool> RunContainer()
     {
         // Create image
-        this.logger.TryGet()?.Log($"Create image: {this.options.Image}");
+        this.logger.TryGet()?.Log($"Pull image: {this.options.Image}");
+
+        string image = this.options.Image;
+        string tag = string.Empty;
+        var parts = image.Split(':');
+        if (parts.Length == 2)
+        {
+            image = parts[0];
+            tag = parts[1];
+        }
+
         var progress = new Progress<JSONMessage>();
         try
         {
             await this.client.Images.CreateImageAsync(
                 new ImagesCreateParameters
                 {
-                    FromImage = this.options.Image,
-                    // Tag = this.options.Tag,
+                    FromImage = image,
+                    Tag = tag,
                 },
                 null,
                 progress);
@@ -91,8 +101,7 @@ internal class DockerRunner
         // Create container
         this.logger.TryGet()?.Log($"Start container: {this.options.Image}");
 
-        var command = $"docker run -it -rm {this.options.ContainerParameters} {this.options.Image}";
-        this.logger.TryGet()?.Log(command);
+        var command = $"docker run -td --rm {this.options.ContainerParameters} {this.options.Image}"; // -i: key input, -t: , -d: leave the container running
         RunnerHelper.DispatchCommand(this.logger, command);
 
         /*try

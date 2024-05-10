@@ -75,8 +75,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Context.CreateInstances();
 
             var options = this.Context.ServiceProvider.GetRequiredService<RunOptions>();
-            SimpleParser.TryParseOptions<RunOptions>(args, out options, );
-            options ??= new();
+            SimpleParser.TryParseOptions<RunOptions>(args, out _, options);
             options.Prepare();
 
             var netOptions = new NetOptions()
