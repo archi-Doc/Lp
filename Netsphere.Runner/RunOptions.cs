@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -37,16 +38,33 @@ public partial record RunOptions
 
     public void Prepare()
     {
+        // 1st Argument, 2nd: Environment variable
         if (!string.IsNullOrEmpty(this.NodePrivateKeyString) &&
             NodePrivateKey.TryParse(this.NodePrivateKeyString, out var privateKey))
         {
             this.NodePrivateKey = privateKey;
         }
 
+        if (this.NodePrivateKey is null)
+        {
+            if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NodePrivateKeyName, out privateKey))
+            {
+                this.NodePrivateKey = privateKey;
+            }
+        }
+
         if (!string.IsNullOrEmpty(this.RemotePublicKeyString) &&
             SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var publicKey))
         {
             this.RemotePublicKey = publicKey;
+        }
+
+        if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
+        {
+            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(RemotePublicKeyName, out publicKey))
+            {
+                this.RemotePublicKey = publicKey;
+            }
         }
     }
 }
