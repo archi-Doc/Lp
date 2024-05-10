@@ -1,9 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
 using Arc.Threading;
 using Arc.Unit;
 using BigMachines;
 using Netsphere;
+using Netsphere.Crypto;
 using Netsphere.Interfaces;
 using SimpleCommandLine;
 
@@ -23,6 +25,8 @@ public class RunCommand : ISimpleCommandAsync<RunOptions>
 
     public async Task RunAsync(RunOptions options, string[] args)
     {
+        this.PrepareRunOptions(options);
+
         var runner = this.bigMachine.RunnerMachine.GetOrCreate(options);
         this.bigMachine.Start(ThreadCore.Root);
 
@@ -40,6 +44,27 @@ public class RunCommand : ISimpleCommandAsync<RunOptions>
 
         // await this.bigMachine.Core.WaitForTerminationAsync(-1);
         // await this.runner.Run();
+    }
+
+    private void PrepareRunOptions(RunOptions options)
+    {
+        options.Prepare();
+
+        if (options.NodePrivateKey is null)
+        {// 1st Argument, 2nd: Environment variable
+            if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(RunOptions.NodePrivateKeyName, out var privateKey))
+            {
+                options.NodePrivateKey = privateKey;
+            }
+        }
+
+        if (options.RemotePublicKey.Equals(SignaturePublicKey.Default))
+        {// 1st Argument, 2nd: Environment variable
+            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(RunOptions.RemotePublicKeyName, out var publicKey))
+            {
+                options.RemotePublicKey = publicKey;
+            }
+        }
     }
 
     private ILogger<RunCommand> logger;

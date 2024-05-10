@@ -18,6 +18,8 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
 {
     #region Unique
 
+    public static readonly SignaturePublicKey Default = default;
+
     private static ObjectCache<SignaturePublicKey, ECDsa> Cache { get; } = new(100);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
