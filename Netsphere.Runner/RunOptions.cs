@@ -28,8 +28,8 @@ public partial record RunOptions
     [SimpleOption("image", Description = "Container image")]
     public string Image { get; init; } = string.Empty;
 
-    // [SimpleOption("dockerparam", Description = "Parameters to be passed to the docker run command.")]
-    // public string DockerParameters { get; init; } = string.Empty;
+    [SimpleOption("dockerparam", Description = "Parameters to be passed to the docker run command.")]
+    public string DockerParameters { get; init; } = string.Empty;
 
     [SimpleOption("containerport", Description = "Port number associated with the container")]
     public ushort ContainerPort { get; set; } = 0; // 0: Disabled

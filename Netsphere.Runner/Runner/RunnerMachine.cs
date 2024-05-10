@@ -43,7 +43,7 @@ public partial class RunnerMachine : Machine
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"{this.options.ToString()}");
-        this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
+        this.logger.TryGet()?.Log("Press Ctrl+C to exit, Ctrl+R to restart container, Ctrl+Q to stop container and exit");
         await Console.Out.WriteLineAsync();
 
         // Remove container
@@ -120,6 +120,20 @@ public partial class RunnerMachine : Machine
         }
 
         this.ChangeState(State.Check);
+        return CommandResult.Success;
+    }
+
+    [CommandMethod]
+    protected async Task<CommandResult> StopAll()
+    {
+        this.logger.TryGet()?.Log("Stop all containers");
+
+        // Remove container
+        if (this.docker != null)
+        {
+            await this.docker.RemoveAllContainers();
+        }
+
         return CommandResult.Success;
     }
 

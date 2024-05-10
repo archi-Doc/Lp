@@ -96,6 +96,23 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var runner = bigMachine.RunnerMachine.GetOrCreate(options);
             bigMachine.Start(ThreadCore.Root);
 
+            _ = Task.Run(async () =>
+            {
+                while (!ThreadCore.Root.IsTerminated)
+                {
+                    var keyInfo = Console.ReadKey(true);
+                    if (keyInfo.Key == ConsoleKey.R && keyInfo.Modifiers == ConsoleModifiers.Control)
+                    {// Restart
+                        await runner.Command.Restart();
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
+                    {// Stop and quit
+                        await runner.Command.StopAll();
+                        runner.TerminateMachine();
+                    }
+                }
+            });
+
             while (!((IBigMachine)bigMachine).Core.IsTerminated)
             {
                 if (!((IBigMachine)bigMachine).CheckActiveMachine())
@@ -104,6 +121,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 }
                 else
                 {
+                    // await runner.Command.Restart();
                     await ((IBigMachine)bigMachine).Core.WaitForTerminationAsync(1000);
                 }
             }

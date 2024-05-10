@@ -15,9 +15,6 @@ public partial record LPOptions
     [SimpleOption("pass", Description = "Passphrase for vault")]
     public string? Pass { get; set; } = null;
 
-    [SimpleOption("development", Description = "Development")]
-    public bool Development { get; init; } = false;
-
     [SimpleOption("mode", Description = "LP mode (merger, relay, automaton, replicator, karate)")]
     public string Mode { get; init; } = string.Empty;
 
