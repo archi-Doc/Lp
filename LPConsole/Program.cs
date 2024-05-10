@@ -5,6 +5,7 @@ global using Arc.Unit;
 global using LP;
 using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
+using SimpleCommandLine;
 
 namespace LPConsole;
 
@@ -55,7 +56,7 @@ public class Program
             });
         // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
 
-        var args = Environment.GetCommandLineArgs();
+        var args = SimpleParserHelper.GetCommandLineArguments();
         SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
 
         unit = builder.Build(args);

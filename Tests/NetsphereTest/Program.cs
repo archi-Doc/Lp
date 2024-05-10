@@ -67,7 +67,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var args = Environment.GetCommandLineArgs();
+        var args = SimpleParserHelper.GetCommandLineArguments();
         SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
         if (args.Length == 0)
         {
@@ -75,7 +75,7 @@ public class Program
             var arguments = Console.ReadLine();
             if (arguments != null)
             {
-                args = new string[1] { arguments, };
+                args = arguments;
             }
         }
 
