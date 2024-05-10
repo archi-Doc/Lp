@@ -22,9 +22,9 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingleton<RunnerUnit>();
-                context.AddSingleton<BigMachine>();
-                context.AddSingleton<RunnerInformation>();
+                context.AddSingleton<RunOptions>();
                 context.CreateInstance<RunnerUnit>();
+                context.AddSingleton<BigMachine>();
 
                 // Command
 
@@ -74,7 +74,8 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
-            SimpleParser.TryParseOptions<RunOptions>(args, out var options);
+            var options = this.Context.ServiceProvider.GetRequiredService<RunOptions>();
+            SimpleParser.TryParseOptions<RunOptions>(args, out options, );
             options ??= new();
             options.Prepare();
 

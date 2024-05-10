@@ -11,18 +11,18 @@ namespace Netsphere.Runner;
 [NetServiceObject]
 internal class RemoteControlAgent : IRemoteControl
 {// Remote -> Netsphere.Runner
-    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, NetControl netControl, BigMachine bigMachine, RunnerInformation information)
+    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, NetControl netControl, BigMachine bigMachine, RunOptions runOptions)
     {
         this.logger = logger;
         this.netControl = netControl;
         this.bigMachine = bigMachine;
-        this.information = information;
+        this.runOptions = runOptions;
     }
 
     public async NetTask Authenticate(AuthenticationToken token)
     {
         if (TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
-            token.PublicKey.Equals(this.information.RemotePublicKey))
+            token.PublicKey.Equals(this.runOptions.RemotePublicKey))
         {
             this.token = token;
             TransmissionContext.Current.Result = NetResult.Success;
@@ -39,7 +39,7 @@ internal class RemoteControlAgent : IRemoteControl
             return NetResult.NotAuthorized;
         }
 
-        var address = this.information.TryGetDualAddress();
+        /*var address = this.information.TryGetDualAddress();
         if (!address.IsValid)
         {
             return NetResult.NoNodeInformation;
@@ -79,12 +79,14 @@ internal class RemoteControlAgent : IRemoteControl
             }
 
             return result;
-        }
+        }*/
+
+        return NetResult.UnknownError;
     }
 
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly BigMachine bigMachine;
-    private readonly RunnerInformation information;
+    private readonly RunOptions runOptions;
     private AuthenticationToken? token;
 }

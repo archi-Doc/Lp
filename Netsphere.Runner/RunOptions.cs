@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using Arc.Crypto;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -15,7 +17,7 @@ public partial record RunOptions
     public long Lifespan { get; init; } = 6; // tempcode
 
     [SimpleOption("port", Description = "Port number associated with the runner")]
-    public int Port { get; set; } = 49999;
+    public ushort Port { get; set; } = 49999;
 
     [SimpleOption(NodePrivateKeyName, Description = "Node private key for connection")]
     public string NodePrivateKeyString { get; set; } = string.Empty;
@@ -26,11 +28,33 @@ public partial record RunOptions
     [SimpleOption("image", Description = "Container image")]
     public string Image { get; init; } = string.Empty;
 
-    [SimpleOption("dockerparam", Description = "Parameters to be passed to the docker run command.")]
-    public string DockerParameters { get; init; } = string.Empty;
+    // [SimpleOption("dockerparam", Description = "Parameters to be passed to the docker run command.")]
+    // public string DockerParameters { get; init; } = string.Empty;
+
+    [SimpleOption("containerport", Description = "Port number associated with the container")]
+    public ushort ContainerPort { get; set; } = 0; // 0: Disabled
 
     [SimpleOption("containerparam", Description = "Parameters to be passed to the container.")]
     public string ContainerParameters { get; init; } = string.Empty;
+
+    public async ValueTask<NetNode?> TryGetContainerNode(NetTerminal netTerminal)
+    {
+        if (this.containerNode is not null)
+        {
+            return this.containerNode;
+        }
+
+        if (this.ContainerPort == 0)
+        {
+            return default;
+        }
+
+        var address = new NetAddress(IPAddress.Loopback, this.ContainerPort);
+        this.containerNode = await netTerminal.UnsafeGetNetNode(address).ConfigureAwait(false);
+        return this.containerNode;
+    }
+
+    private NetNode? containerNode;
 
     internal NodePrivateKey? NodePrivateKey { get; set; }
 

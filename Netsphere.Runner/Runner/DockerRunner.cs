@@ -10,7 +10,7 @@ internal class DockerRunner
 {
     private const string ExposedPort = "Port1";
 
-    public static async Task<DockerRunner?> Create(ILogger logger, RunnerInformation information)
+    public static async Task<DockerRunner?> Create(ILogger logger, RunOptions options)
     {
         var client = new DockerClientConfiguration().CreateClient();
         try
@@ -22,20 +22,20 @@ internal class DockerRunner
             return null;
         }
 
-        return new DockerRunner(client, logger, information);
+        return new DockerRunner(client, logger, options);
     }
 
-    private DockerRunner(DockerClient client, ILogger logger, RunnerInformation information)
+    private DockerRunner(DockerClient client, ILogger logger, RunOptions options)
     {
         this.client = client;
         this.logger = logger;
-        this.information = information;
+        this.options = options;
     }
 
     public async Task<IEnumerable<ContainerListResponse>> EnumerateContainersAsync()
     {
         var list = await this.client.Containers.ListContainersAsync(new() { Limit = 100, });
-        return list.Where(x => x.Image.StartsWith(this.information.Image));
+        return list.Where(x => x.Image.StartsWith(this.options.Image));
     }
 
     public async Task RemoveContainer()
@@ -67,15 +67,15 @@ internal class DockerRunner
     public async Task<bool> RunContainer()
     {
         // Create image
-        this.logger.TryGet()?.Log($"Create image: {this.information.Image}");
+        this.logger.TryGet()?.Log($"Create image: {this.options.Image}");
         var progress = new Progress<JSONMessage>();
         try
         {
             await this.client.Images.CreateImageAsync(
                 new ImagesCreateParameters
                 {
-                    FromImage = this.information.Image,
-                    Tag = this.information.Tag,
+                    FromImage = this.options.Image,
+                    // Tag = this.options.Tag,
                 },
                 null,
                 progress);
@@ -89,22 +89,10 @@ internal class DockerRunner
         }
 
         // Create container
-        this.logger.TryGet()?.Log($"Start container: {this.information.Image}");
-        // RunnerHelper.DispatchCommand(this.logger, "docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]"); // C:\\App\\docker
+        this.logger.TryGet()?.Log($"Start container: {this.options.Image}");
 
-        string directory;
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-        {
-            directory = "C:\\App\\docker";
-        }
-        else
-        {
-            directory = $"$(pwd)/{this.information.HostDirectory}";
-        }
-
-        var nodename = string.IsNullOrEmpty(this.information.NodeName) ? string.Empty : $"-name {this.information.NodeName}";
-
-        var command = $"docker run -d -it --mount type=bind,source={directory},destination={this.information.DestinationDirectory} --rm -p {this.information.HostPort}:{this.information.DestinationPort}/udp {this.information.Image} -rootdir {this.information.DestinationDirectory} {nodename} -ns [-port {this.information.DestinationPort} {this.information.NetsphereOptions}] -remotekey {this.information.RemotePublicKey.ToBase64()} {this.information.AdditionalArgs}";
+        var command = $"docker run -it -rm {this.options.ContainerParameters} {this.options.Image}";
+        this.logger.TryGet()?.Log(command);
         RunnerHelper.DispatchCommand(this.logger, command);
 
         /*try
@@ -168,5 +156,5 @@ internal class DockerRunner
 
     private readonly DockerClient client;
     private readonly ILogger logger;
-    private readonly RunnerInformation information;
+    private readonly RunOptions options;
 }

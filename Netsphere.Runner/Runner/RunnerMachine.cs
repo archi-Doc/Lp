@@ -17,11 +17,11 @@ public partial class RunnerMachine : Machine
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunnerInformation information)
+    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunOptions options)
     {
         this.logger = logger;
         this.netTerminal = netTerminal;
-        this.information = information;
+        this.options = options;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -37,7 +37,7 @@ public partial class RunnerMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        this.docker = await DockerRunner.Create(this.logger, this.information);
+        this.docker = await DockerRunner.Create(this.logger, this.options);
         if (this.docker == null)
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker is not available");
@@ -48,7 +48,7 @@ public partial class RunnerMachine : Machine
         // this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
         // var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
         // this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
-        this.logger.TryGet()?.Log($"{this.information.ToString()}");
+        this.logger.TryGet()?.Log($"{this.options.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
 
@@ -152,13 +152,7 @@ public partial class RunnerMachine : Machine
 
     private async Task<NetResult> SendAcknowledge()
     {
-        var address = this.information.TryGetDualAddress();
-        if (!address.IsValid)
-        {
-            return NetResult.NoNodeInformation;
-        }
-
-        var node = await this.netTerminal.UnsafeGetNetNode(address);
+        var node = await this.options.TryGetContainerNode(this.netTerminal);
         if (node is null)
         {
             return NetResult.NoNodeInformation;
@@ -179,7 +173,7 @@ public partial class RunnerMachine : Machine
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
-    private readonly RunnerInformation information;
+    private readonly RunOptions options;
     private RunOptions runOptions = new();
     private DockerRunner? docker;
     private int checkRetry;
