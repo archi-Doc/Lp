@@ -18,7 +18,7 @@ public class Program
     // basic -node alternative -ns{-alternative true -logger true}
     // stress -ns{-alternative true -logger true}
 
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         // 1st: DI Container
         /*var commandTypes = new List<Type>();
@@ -67,6 +67,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
+        var args = SimpleParserHelper.GetCommandLineArguments();
         SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
         if (args.Length == 0)
         {
@@ -74,7 +75,7 @@ public class Program
             var arguments = Console.ReadLine();
             if (arguments != null)
             {
-                args = new string[1] { arguments, };
+                args = arguments;
             }
         }
 

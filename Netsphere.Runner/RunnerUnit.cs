@@ -1,8 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Threading;
 using Arc.Unit;
+using BigMachines;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
+using Netsphere.Interfaces;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -19,12 +22,11 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingleton<RunnerUnit>();
-                context.AddSingleton<BigMachine>();
-                context.AddSingleton<RunnerInformation>();
+                context.AddSingleton<RunOptions>();
                 context.CreateInstance<RunnerUnit>();
+                context.AddSingleton<BigMachine>();
 
                 // Command
-                context.AddCommand(typeof(RunCommand));
 
                 // Machines
                 context.AddTransient<RunnerMachine>();
@@ -67,45 +69,63 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
-        public async Task RunAsync(string[] args)
+        public async Task RunAsync()
         {
             // Create optional instances
             this.Context.CreateInstances();
 
-            /*var lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
-            var logger = this.Context.ServiceProvider.GetRequiredService<ILogger<RunnerMachine>>();
-            var information = await this.LoadInformation(logger, Path.Combine(lpBase.RootDirectory, RunnerInformation.Path));
-            if (information == null)
-            {// Could not load RunnerInformation.
-                return;
-            }
+            var args = SimpleParserHelper.GetCommandLineArguments();
+            var options = this.Context.ServiceProvider.GetRequiredService<RunOptions>();
+            SimpleParser.TryParseOptions<RunOptions>(args, out _, options);
+            options.Prepare();
 
-            this.Context.ServiceProvider.GetRequiredService<RunnerBase>().Information = information;*/
-
-            var unitOptions = this.Context.ServiceProvider.GetRequiredService<UnitOptions>();
-            var information = this.Context.ServiceProvider.GetRequiredService<RunnerInformation>();
-            if (!await information.Load(Path.Combine(unitOptions.RootDirectory, RunnerInformation.Path)))
+            var netOptions = new NetOptions()
             {
-                return;
-            }
-
-            var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            netBase.SetNodePrivateKey(information.NodeKey);
-
-            var options = new NetOptions();
-            options.Port = information.RunnerPort;
-            options.NodeName = "Runner";
-            await this.Run(options, true);
-
-            var parserOptions = SimpleParserOptions.Standard with
-            {
-                ServiceProvider = this.Context.ServiceProvider,
-                RequireStrictCommandName = false,
-                RequireStrictOptionName = true,
+                NodeName = "Netsphere.Runner",
+                Port = options.Port,
+                EnableEssential = false,
+                EnableServer = false,
+                EnableAlternative = false,
             };
 
-            // Main
-            await SimpleParser.ParseAndRunAsync(this.Context.Commands, args, parserOptions);
+            var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
+            netControl.Services.Register<IRemoteControl>();
+
+            await this.Run(netOptions, true);
+
+            var bigMachine = this.Context.ServiceProvider.GetRequiredService<BigMachine>();
+            var runner = bigMachine.RunnerMachine.GetOrCreate(options);
+            bigMachine.Start(ThreadCore.Root);
+
+            _ = Task.Run(async () =>
+            {
+                while (!ThreadCore.Root.IsTerminated)
+                {
+                    var keyInfo = Console.ReadKey(true);
+                    if (keyInfo.Key == ConsoleKey.R && keyInfo.Modifiers == ConsoleModifiers.Control)
+                    {// Restart
+                        await runner.Command.Restart();
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
+                    {// Stop and quit
+                        await runner.Command.StopAll();
+                        runner.TerminateMachine();
+                    }
+                }
+            });
+
+            while (!((IBigMachine)bigMachine).Core.IsTerminated)
+            {
+                if (!((IBigMachine)bigMachine).CheckActiveMachine())
+                {
+                    break;
+                }
+                else
+                {
+                    // await runner.Command.Restart();
+                    await ((IBigMachine)bigMachine).Core.WaitForTerminationAsync(1000);
+                }
+            }
 
             await this.Context.SendTerminateAsync(new());
         }

@@ -7,7 +7,7 @@ namespace QuickStart;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         var unit = new NetControl.Builder().Build(); // Create a NetControl unit that implements communication functionality.
         await unit.Run(new NetOptions(), true); // Execute the created unit with default options.

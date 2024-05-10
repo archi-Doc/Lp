@@ -13,31 +13,28 @@ public partial class RunnerMachine : Machine
     public enum Status
     {
         NoContainer,
-        Container,
         Running,
+        Healthy,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunnerInformation information)
+    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunOptions options)
     {
         this.logger = logger;
         this.netTerminal = netTerminal;
-        this.information = information;
+        this.options = options;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
-    }
-
-    protected override void OnCreate(object? createParam)
-    {
-        if (createParam is RunOptions options)
-        {
-            this.runOptions = options;
-        }
     }
 
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        this.docker = await DockerRunner.Create(this.logger, this.information);
+        if (!this.options.Check(this.logger))
+        {
+            return StateResult.Terminate;
+        }
+
+        this.docker = await DockerRunner.Create(this.logger, this.options);
         if (this.docker == null)
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker is not available");
@@ -45,21 +42,18 @@ public partial class RunnerMachine : Machine
         }
 
         this.logger.TryGet()?.Log($"Runner start");
-        // this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
-        // var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
-        // this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
-        this.logger.TryGet()?.Log($"{this.information.ToString()}");
-        this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
+        this.logger.TryGet()?.Log($"{this.options.ToString()}");
+        this.logger.TryGet()?.Log("Press Ctrl+C to exit, Ctrl+R to restart container, Ctrl+Q to stop container and exit");
         await Console.Out.WriteLineAsync();
 
         // Remove container
-        await this.docker.RemoveContainer();
+        // await this.docker.RemoveAllContainers();
 
         this.ChangeState(State.Check, true);
         return StateResult.Continue;
     }
 
-    [StateMethod(1)]
+    [StateMethod]
     protected async Task<StateResult> Check(StateParameter parameter)
     {
         if (this.docker == null)
@@ -72,11 +66,11 @@ public partial class RunnerMachine : Machine
             return StateResult.Terminate;
         }
 
-        this.logger.TryGet()?.Log($"Check ({this.checkRetry++})");
+        // this.logger.TryGet()?.Log($"Check ({this.checkRetry++})");
         var status = await this.GetStatus();
         this.logger.TryGet()?.Log($"Status: {status}");
 
-        if (status == Status.Running)
+        if (status == Status.Healthy)
         {// Running
             this.checkRetry = 0;
             this.ChangeState(State.Running);
@@ -100,7 +94,7 @@ public partial class RunnerMachine : Machine
         }
     }
 
-    [StateMethod(3)]
+    [StateMethod]
     protected async Task<StateResult> Running(StateParameter parameter)
     {
         /*var result = await this.SendAcknowledge();
@@ -117,23 +111,38 @@ public partial class RunnerMachine : Machine
     [CommandMethod]
     protected async Task<CommandResult> Restart()
     {
-        this.logger.TryGet()?.Log("RemoteControl -> Restart");
+        this.logger.TryGet()?.Log("Restart");
 
         // Remove container
         if (this.docker != null)
         {
-            await this.docker.RemoveContainer();
+            await this.docker.RemoveAllContainers();
         }
 
         this.ChangeState(State.Check);
+        this.TimeUntilRun = TimeSpan.FromSeconds(1);
+        return CommandResult.Success;
+    }
+
+    [CommandMethod]
+    protected async Task<CommandResult> StopAll()
+    {
+        this.logger.TryGet()?.Log("Stop all containers");
+
+        // Remove container
+        if (this.docker != null)
+        {
+            await this.docker.RemoveAllContainers();
+        }
+
         return CommandResult.Success;
     }
 
     private async Task<Status> GetStatus()
     {
-        if (await this.SendAcknowledge() == NetResult.Success)
+        if (await this.CheckHealth() == NetResult.Success)
         {
-            return Status.Running;
+            return Status.Healthy;
         }
 
         if (this.docker == null)
@@ -144,21 +153,15 @@ public partial class RunnerMachine : Machine
         var containers = await this.docker.EnumerateContainersAsync();
         if (containers.Count() > 0)
         {
-            return Status.Container;
+            return Status.Running;
         }
 
         return Status.NoContainer;
     }
 
-    private async Task<NetResult> SendAcknowledge()
+    private async Task<NetResult> CheckHealth()
     {
-        var address = this.information.TryGetDualAddress();
-        if (!address.IsValid)
-        {
-            return NetResult.NoNodeInformation;
-        }
-
-        var node = await this.netTerminal.UnsafeGetNetNode(address);
+        var node = await this.options.TryGetContainerNode(this.netTerminal);
         if (node is null)
         {
             return NetResult.NoNodeInformation;
@@ -179,8 +182,7 @@ public partial class RunnerMachine : Machine
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
-    private readonly RunnerInformation information;
-    private RunOptions runOptions = new();
+    private readonly RunOptions options;
     private DockerRunner? docker;
     private int checkRetry;
 }
