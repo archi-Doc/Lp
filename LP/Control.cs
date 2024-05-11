@@ -346,6 +346,7 @@ public class Control
             try
             {
                 // Start
+                Console.WriteLine(File.Exists("/.dockerenv"));
                 control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
 
                 // Merger
