@@ -168,7 +168,8 @@ public partial class RunnerMachine : Machine
             return NetResult.NoNetService;
         }
 
-        var netAddress = new NetAddress(addresss, this.options.ContainerPort);
+        // var netAddress = new NetAddress(addresss, this.options.ContainerPort);
+        var netAddress = new NetAddress(IPAddress.Loopback, this.options.ContainerPort);
         var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netAddress, new());
         // if (r.Result == NetResult.Success && r.Value is not null)
         {
