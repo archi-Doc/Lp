@@ -9,8 +9,6 @@ namespace Netsphere.Runner;
 
 internal class DockerRunner
 {
-    private const string ExposedPort = "Port1";
-
     public static async Task<DockerRunner?> Create(ILogger logger, RunOptions options)
     {
         var client = new DockerClientConfiguration().CreateClient();

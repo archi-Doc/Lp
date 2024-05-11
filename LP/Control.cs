@@ -157,6 +157,11 @@ public class Control
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
+                if (options.Port != 0)
+                {
+                    options.NetsphereOptions.Port = options.Port;
+                }
+
                 netBase.SetOptions(options.NetsphereOptions);
 
                 netBase.AllowUnsafeConnection = true; // betacode
