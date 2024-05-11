@@ -83,7 +83,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 NodeName = "Netsphere.Runner",
                 Port = options.Port,
-                EnableEssential = false,
+                EnablePing = false,
                 EnableServer = false,
                 EnableAlternative = false,
             };

@@ -34,6 +34,7 @@ public class Program
             }
         };
 
+        Netsphere.Version.SetAssembly("LP.dll");
         var builder = new Control.Builder()
             .Preload(context =>
             {

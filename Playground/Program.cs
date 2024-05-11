@@ -65,7 +65,7 @@ public class Program
             .SetupOptions<NetOptions>((context, options) =>
             {// NetsphereOptions
                 options.NodeName = "test";
-                options.EnableEssential = true;
+                options.EnablePing = true;
                 options.EnableServer = true;
                 options.EnableAlternative = true;
             });

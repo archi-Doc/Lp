@@ -341,7 +341,7 @@ public class Control
             try
             {
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
+                control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
 
                 // Merger
                 await control.CreateMerger(this.Context);

@@ -314,9 +314,9 @@ public sealed partial class PacketTerminal
             }
             else if (packetType == PacketType.Ping)
             {// PingPacket
-                if (this.netBase.NetOptions.EnableEssential)
+                if (this.netBase.NetOptions.EnablePing)
                 {
-                    var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName);
+                    var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.AssemblyHash);
                     CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
                     this.SendPacketWithoutRelay(endpoint, owner, default);
 
