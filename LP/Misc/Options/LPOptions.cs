@@ -59,4 +59,16 @@ public partial record LPOptions
 
     [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
+
+    public NetOptions ToNetOptions()
+    {
+        return new NetOptions() with
+        {
+            Port = this.Port,
+            NodePrivateKey = this.NodePrivateKey,
+            EnablePing = this.EnablePing,
+            EnableServer = this.EnableServer,
+            EnableAlternative = this.EnableAlternative,
+        };
+    }
 }

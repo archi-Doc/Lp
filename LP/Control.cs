@@ -157,12 +157,7 @@ public class Control
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
-                if (options.Port != 0)
-                {
-                    options.NetsphereOptions.Port = options.Port;
-                }
-
-                netBase.SetOptions(options.NetsphereOptions);
+                netBase.SetOptions(options.ToNetOptions());
 
                 netBase.AllowUnsafeConnection = true; // betacode
                 netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
@@ -296,7 +291,7 @@ public class Control
                     }
                 }
 
-                var netOptions = options.NetsphereOptions;
+                var netOptions = options.ToNetOptions();
                 if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
                 Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
                 {
