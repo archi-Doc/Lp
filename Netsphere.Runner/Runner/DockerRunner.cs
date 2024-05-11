@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Unit;
 using Docker.DotNet;
 using Docker.DotNet.Models;
@@ -36,6 +37,21 @@ internal class DockerRunner
     {
         var list = await this.client.Containers.ListContainersAsync(new() { Limit = 100, });
         return list.Where(x => x.Image.StartsWith(this.options.Image));
+    }
+
+    public async Task<(bool IsRunning, IPAddress? Address)> GetContainer()
+    {
+        var list = await this.client.Containers.ListContainersAsync(new() { Limit = 100, });
+        foreach (var x in list)
+        {
+            if (x.Image.StartsWith(this.options.Image))
+            {
+                IPAddress.TryParse(x.NetworkSettings.Networks.FirstOrDefault().Value.IPAddress, out var address);
+                return (true, address);
+            }
+        }
+
+        return default;
     }
 
     public async Task RemoveAllContainers()

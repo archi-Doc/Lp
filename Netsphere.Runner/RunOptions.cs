@@ -55,6 +55,18 @@ public partial record RunOptions
         return result;
     }
 
+    public bool TryGetContainerAddress(out NetAddress netAddress)
+    {
+        if (this.ContainerPort == 0)
+        {
+            netAddress = default;
+            return false;
+        }
+
+        netAddress = new NetAddress(IPAddress.Loopback, this.ContainerPort);
+        return true;
+    }
+
     public async ValueTask<NetNode?> TryGetContainerNode(NetTerminal netTerminal)
     {
         if (this.containerNode is not null)

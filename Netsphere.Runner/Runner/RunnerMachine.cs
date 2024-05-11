@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Unit;
 using BigMachines;
+using Docker.DotNet.Models;
 using Netsphere;
 using Netsphere.Packet;
 
@@ -140,26 +142,43 @@ public partial class RunnerMachine : Machine
 
     private async Task<Status> GetStatus()
     {
-        if (await this.CheckHealth() == NetResult.Success)
-        {
-            return Status.Healthy;
-        }
-
         if (this.docker == null)
         {
             return Status.NoContainer;
         }
 
-        var containers = await this.docker.EnumerateContainersAsync();
-        if (containers.Count() > 0)
+        var r = await this.docker.GetContainer();
+        if (r.IsRunning)
         {
+            if (await this.CheckHealth(r.Address) == NetResult.Success)
+            {
+                return Status.Healthy;
+            }
+
             return Status.Running;
         }
 
         return Status.NoContainer;
     }
 
-    private async Task<NetResult> CheckHealth()
+    private async Task<NetResult> CheckHealth(IPAddress? addresss)
+    {
+        if (addresss is null)
+        {
+            return NetResult.NoNetService;
+        }
+
+        var netAddress = new NetAddress(addresss, this.options.ContainerPort);
+        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netAddress, new());
+        // if (r.Result == NetResult.Success && r.Value is not null)
+        {
+            this.logger.TryGet()?.Log($"Ping: {r.Result}");
+        }
+
+        return r.Result;
+    }
+
+    /*private async Task<NetResult> CheckHealth()
     {
         var node = await this.options.TryGetContainerNode(this.netTerminal);
         if (node is null)
@@ -178,7 +197,7 @@ public partial class RunnerMachine : Machine
             this.logger.TryGet()?.Log($"Ping: {result.Result}");
             return result.Result;
         }
-    }
+    }*/
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
