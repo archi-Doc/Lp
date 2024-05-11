@@ -22,8 +22,8 @@ public partial record NetOptions
     [SimpleOption("nodelist", Description = "Node addresses to connect")]
     public string NodeList { get; set; } = string.Empty;
 
-    [SimpleOption("essential", Description = "Enable essential network function")]
-    public bool EnableEssential { get; set; } = true;
+    [SimpleOption("ping", Description = "Enable ping function")]
+    public bool EnablePing { get; set; } = true;
 
     [SimpleOption("server", Description = "Enable server function")]
     public bool EnableServer { get; set; } = false;

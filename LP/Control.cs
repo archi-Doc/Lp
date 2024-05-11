@@ -157,6 +157,11 @@ public class Control
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
+                if (options.Port != 0)
+                {
+                    options.NetsphereOptions.Port = options.Port;
+                }
+
                 netBase.SetOptions(options.NetsphereOptions);
 
                 netBase.AllowUnsafeConnection = true; // betacode
@@ -341,7 +346,7 @@ public class Control
             try
             {
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
+                control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
 
                 // Merger
                 await control.CreateMerger(this.Context);

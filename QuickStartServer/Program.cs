@@ -29,7 +29,7 @@ public class Program
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
                 options.NodePrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.
-                options.EnableEssential = true; // Required when using functions such as Ping.
+                options.EnablePing = true;
                 options.EnableServer = true;
             })
             .ConfigureSerivice(context =>

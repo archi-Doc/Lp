@@ -15,6 +15,9 @@ public partial record LPOptions
     [SimpleOption("pass", Description = "Passphrase for vault")]
     public string? Pass { get; set; } = null;
 
+    [SimpleOption("port", Description = "Port number associated with the address")]
+    public int Port { get; set; }
+
     [SimpleOption("mode", Description = "LP mode (merger, relay, automaton, replicator, karate)")]
     public string Mode { get; init; } = string.Empty;
 
@@ -36,9 +39,6 @@ public partial record LPOptions
     [SimpleOption("name", Description = "Node name")]
     public string NodeName { get; init; } = string.Empty;
 
-    [SimpleOption("ns", Description = "Netsphere option")]
-    public NetOptions NetsphereOptions { get; init; } = default!;
-
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
 
@@ -47,4 +47,16 @@ public partial record LPOptions
 
     [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
     public long Lifespan { get; init; }
+
+    [SimpleOption("nodeprivatekey", Description = "Node private key")]
+    public string NodePrivateKey { get; set; } = string.Empty;
+
+    [SimpleOption("ping", Description = "Enable ping function")]
+    public bool EnablePing { get; set; } = true;
+
+    [SimpleOption("server", Description = "Enable server function")]
+    public bool EnableServer { get; set; } = false;
+
+    [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
+    public bool EnableAlternative { get; set; } = false;
 }
