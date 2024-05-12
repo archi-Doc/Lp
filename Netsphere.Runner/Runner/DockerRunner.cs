@@ -9,6 +9,8 @@ namespace Netsphere.Runner;
 
 internal class DockerRunner
 {
+    private const int ListContainersLimit = 100;
+
     public static async Task<DockerRunner?> Create(ILogger logger, RunOptions options)
     {
         var client = new DockerClientConfiguration().CreateClient();
@@ -33,13 +35,19 @@ internal class DockerRunner
 
     public async Task<IEnumerable<ContainerListResponse>> EnumerateContainersAsync()
     {
-        var list = await this.client.Containers.ListContainersAsync(new() { Limit = 100, });
+        var list = await this.client.Containers.ListContainersAsync(new() { Limit = ListContainersLimit, });
         return list.Where(x => x.Image.StartsWith(this.options.Image));
+    }
+
+    public async Task<int> CountContainersAsync()
+    {
+        var list = await this.client.Containers.ListContainersAsync(new() { Limit = ListContainersLimit, });
+        return list.Count(x => x.Image.StartsWith(this.options.Image));
     }
 
     public async Task<(bool IsRunning, IPAddress? Address)> GetContainer()
     {
-        var list = await this.client.Containers.ListContainersAsync(new() { Limit = 100, });
+        var list = await this.client.Containers.ListContainersAsync(new() { Limit = ListContainersLimit, });
         foreach (var x in list)
         {
             if (x.Image.StartsWith(this.options.Image))
@@ -104,11 +112,11 @@ internal class DockerRunner
                 null,
                 progress);
 
-            this.logger.TryGet()?.Log("Success");
+            // this.logger.TryGet()?.Log("Success");
         }
         catch
         {
-            this.logger.TryGet()?.Log("Failure");
+            // this.logger.TryGet()?.Log("Failure");
             return false;
         }
 
@@ -158,7 +166,7 @@ internal class DockerRunner
         return true;
     }
 
-    public async Task RestartContainer()
+    /*public async Task RestartContainer()
     {
         var array = (await this.EnumerateContainersAsync()).ToArray();
         foreach (var x in array)
@@ -175,7 +183,7 @@ internal class DockerRunner
                 }
             }
         }
-    }
+    }*/
 
     private readonly DockerClient client;
     private readonly ILogger logger;

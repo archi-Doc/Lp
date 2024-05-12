@@ -41,6 +41,12 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 context.ClearLoggerResolver();
                 context.AddLoggerResolver(x =>
                 {// Log source/level -> Resolver() -> Output/filter
+                    if (x.LogLevel == LogLevel.Debug)
+                    {
+                        x.ClearOutput();
+                        return;
+                    }
+
                     x.SetOutput<ConsoleAndFileLogger>();
                 });
             });
