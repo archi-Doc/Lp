@@ -10,7 +10,7 @@ namespace LP.Subcommands;
 [SimpleCommand("restart-remote-container")]
 public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemoteContainerOptions>
 {
-    private const int WaitIntervalInSeconds = 5;
+    private const int WaitIntervalInSeconds = 10;
     private const int PingIntervalInSeconds = 1;
     private const int PingRetries = 5;
 
@@ -34,7 +34,10 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
 
         // Ping container
         this.containerAddress = new(netNode.Address, options.ContainerPort);
-        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(this.containerAddress, new());
+        if (await this.Ping() == false)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPingFromContainer);
+        }
 
         /*var authority = await this.authorityVault.GetAuthority(options.Authority);
         if (authority == null)
@@ -70,11 +73,37 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
             }
         }
 
-        // Wait 5 seconds
+        // Wait
         this.logger.TryGet()?.Log($"Waiting...");
         await Task.Delay(TimeSpan.FromSeconds(WaitIntervalInSeconds));
 
         // Ping container
+        var sec = PingIntervalInSeconds;
+        for (var i = 0; i < PingRetries; i++)
+        {
+            if (await this.Ping())
+            {
+                return;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(sec));
+            sec *= 2;
+        }
+    }
+
+    private async Task<bool> Ping()
+    {
+        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(this.containerAddress, new());
+        this.logger.TryGet()?.Log($"Ping {this.containerAddress.ToString()}: {r.Result}");
+
+        if (r.Result == NetResult.Success)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private readonly ILogger logger;
