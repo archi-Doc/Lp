@@ -3,7 +3,7 @@
 namespace Netsphere.Interfaces;
 
 [NetServiceInterface]
-public interface IRemoteControl : INetService
+public interface IRemoteControl : INetServiceAuthentication
 {
     public NetTask<NetResult> Restart();
 }

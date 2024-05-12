@@ -112,6 +112,29 @@ public class ServerConnectionContext
     public virtual bool RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
         => false;*/
 
+    public NetResult Authenticate(AuthenticationToken authenticationToken, SignaturePublicKey publicKey)
+    {
+        if (!authenticationToken.PublicKey.Equals(publicKey))
+        {
+            return NetResult.NotAuthorized;
+        }
+
+        return this.Authenticate(authenticationToken);
+    }
+
+    public NetResult Authenticate(AuthenticationToken authenticationToken)
+    {
+        if (this.ServerConnection.ValidateAndVerifyWithSalt(authenticationToken))
+        {
+            this.AuthenticationToken = authenticationToken;
+            return NetResult.Success;
+        }
+        else
+        {
+            return NetResult.NotAuthorized;
+        }
+    }
+
     public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
     {
         authenticationToken = this.AuthenticationToken;

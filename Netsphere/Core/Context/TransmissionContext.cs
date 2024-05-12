@@ -31,6 +31,9 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     #region FieldAndProperty
 
+    public bool IsAuthenticated
+        => this.ServerConnection.GetContext().AuthenticationToken is not null;
+
     public ServerConnection ServerConnection { get; } // => this.ConnectionContext.ServerConnection;
 
     public uint TransmissionId { get; }
