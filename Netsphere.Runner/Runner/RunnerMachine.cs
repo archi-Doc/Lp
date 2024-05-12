@@ -15,6 +15,7 @@ public partial class RunnerMachine : Machine
     private const int CreateContainerRetries = 10;
     private const int CheckInvervalInSeconds = 10;
     private const int UnhealthyRetries = 3;
+    private const int RestartInvervalInSeconds = 30;
 
     public enum Status
     {
@@ -169,6 +170,10 @@ public partial class RunnerMachine : Machine
     protected async Task<CommandResult> Restart()
     {
         this.logger.TryGet()?.Log("Restart");
+        if (this.GetState() == State.NoContainer)
+        {
+            return CommandResult.Success;
+        }
 
         // Remove container
         if (this.docker != null)
@@ -176,8 +181,9 @@ public partial class RunnerMachine : Machine
             await this.docker.RemoveAllContainers();
         }
 
+        this.createContainerRetries = 0;
         this.ChangeState(State.NoContainer);
-        this.TimeUntilRun = TimeSpan.FromSeconds(1);
+        this.TimeUntilRun = TimeSpan.FromSeconds(RestartInvervalInSeconds);
         return CommandResult.Success;
     }
 

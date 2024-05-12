@@ -10,7 +10,7 @@ public class RemoteSubcommand : SimpleCommandGroup<RemoteSubcommand>
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(RemoteSubcommandRestart));
+        group.AddCommand(typeof(RestartRemoteContainerSubcommand));
     }
 
     public RemoteSubcommand(UnitContext context)

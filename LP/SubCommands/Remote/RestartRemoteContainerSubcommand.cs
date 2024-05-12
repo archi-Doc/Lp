@@ -1,24 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.NetServices;
 using LP.T3CS;
-using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("restart")]
-public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandRestartOptions>
+[SimpleCommand("restart-remote-container")]
+public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemoteContainerOptions>
 {
-    public RemoteSubcommandRestart(ILogger<RemoteSubcommandRestart> logger, NetTerminal terminal, AuthorityVault authorityVault)
+    public RestartRemoteContainerSubcommand(ILogger<RestartRemoteContainerSubcommand> logger, NetTerminal terminal, AuthorityVault authorityVault)
     {
         this.logger = logger;
         this.terminal = terminal;
         this.authorityVault = authorityVault;
     }
 
-    public async Task RunAsync(RemoteSubcommandRestartOptions options, string[] args)
+    public async Task RunAsync(RestartRemoteContainerOptions options, string[] args)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var nodeInformation))
         {
@@ -62,16 +60,16 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
         }
     }
 
-    private ILogger logger;
-    private NetTerminal terminal;
-    private AuthorityVault authorityVault;
+    private readonly ILogger logger;
+    private readonly NetTerminal terminal;
+    private readonly AuthorityVault authorityVault;
 }
 
-public record RemoteSubcommandRestartOptions
+public record RestartRemoteContainerOptions
 {
-    [SimpleOption("authority", Description = "Authority", Required = true)]
-    public string Authority { get; init; } = string.Empty;
-
     [SimpleOption("node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
+
+    [SimpleOption("remoteprivatekey", Description = "Private key for remote operation")]
+    public string RemotePrivateKey { get; init; } = string.Empty;
 }
