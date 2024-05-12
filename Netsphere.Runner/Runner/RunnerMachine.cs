@@ -29,7 +29,7 @@ public partial class RunnerMachine : Machine
         this.netTerminal = netTerminal;
         this.options = options;
 
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.DefaultTimeout = TimeSpan.FromSeconds(CheckInvervalInSeconds);
     }
 
     [StateMethod(0)]
@@ -107,6 +107,7 @@ public partial class RunnerMachine : Machine
         if (await this.docker.CountContainersAsync() == 0)
         {// No container
             this.ChangeStateAndRunImmediately(State.NoContainer);
+            return StateResult.Continue;
         }
         else if (this.options.ContainerPort != 0)
         {// Check health
