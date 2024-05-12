@@ -15,14 +15,8 @@ public partial class RunnerMachine : Machine
     private const int CreateContainerRetries = 10;
     private const int CheckInvervalInSeconds = 10;
     private const int UnhealthyRetries = 3;
-    private const int RestartInvervalInSeconds = 30;
-
-    public enum Status
-    {
-        NoContainer,
-        Running,
-        Healthy,
-    }
+    private const int RestartingInvervalInSeconds = 2;
+    private const int RestartingRetries = 30;
 
     public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunOptions options)
     {
@@ -166,11 +160,38 @@ public partial class RunnerMachine : Machine
         return StateResult.Continue;
     }
 
+    [StateMethod]
+    protected async Task<StateResult> Restarting(StateParameter parameter)
+    {
+        if (this.docker == null)
+        {
+            return StateResult.Terminate;
+        }
+
+        if (await this.docker.CountContainersAsync() == 0)
+        {// No container
+            this.ChangeStateAndRunImmediately(State.NoContainer);
+            return StateResult.Continue;
+        }
+
+        if (this.retries++ > RestartingRetries)
+        {
+            return StateResult.Terminate;
+        }
+
+        this.logger.TryGet()?.Log($"Status({this.retries}): {this.GetState()}");
+        this.TimeUntilRun = TimeSpan.FromSeconds(RestartingInvervalInSeconds);
+        return StateResult.Continue;
+    }
+
     [CommandMethod]
     protected async Task<CommandResult> Restart()
     {
         this.logger.TryGet()?.Log("Restart");
-        if (this.GetState() == State.NoContainer)
+
+        var state = this.GetState();
+        if (state == State.NoContainer ||
+            state == State.Restarting)
         {
             return CommandResult.Success;
         }
@@ -182,8 +203,8 @@ public partial class RunnerMachine : Machine
         }
 
         this.createContainerRetries = 0;
-        this.ChangeState(State.NoContainer);
-        this.TimeUntilRun = TimeSpan.FromSeconds(RestartInvervalInSeconds);
+        this.ChangeState(State.Restarting);
+        this.TimeUntilRun = TimeSpan.FromSeconds(RestartingInvervalInSeconds);
         return CommandResult.Success;
     }
 

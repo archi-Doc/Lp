@@ -75,6 +75,7 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RestartRemoteContainerSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RemoteBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RemoteDataSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
@@ -97,7 +98,6 @@ public class Control
                 LP.Subcommands.NodeKeySubcommand.Configure(context);
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
                 LP.Subcommands.CustomSubcommand.Configure(context);
-                LP.Subcommands.RemoteSubcommand.Configure(context);
                 LP.Subcommands.MergerNestedcommand.Configure(context);
                 LP.Subcommands.Relay.Subcommand.Configure(context);
             });

@@ -31,7 +31,7 @@ internal class RemoteControlAgent : IRemoteControl
     public async NetTask<NetResult> Restart()
     {
         if (!TransmissionContext.Current.TryGetAuthenticationToken(out var token) ||
-            token.PublicKey.Equals(this.runOptions.RemotePublicKey))
+            !token.PublicKey.Equals(this.runOptions.RemotePublicKey))
         {
             return NetResult.NotAuthorized;
         }

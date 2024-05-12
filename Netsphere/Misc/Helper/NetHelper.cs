@@ -26,7 +26,22 @@ public static class NetHelper
         => arrayPool.Rent(BufferLength);
 
     internal static void ReturnBuffer(byte[] buffer)
-        => arrayPool.Return(buffer);
+    => arrayPool.Return(buffer);
+
+    public static async Task<NetNode?> TryGetNetNode(NetTerminal netTerminal, string nodeString)
+    {
+        if (NetNode.TryParse(nodeString, out var netNode))
+        {
+            return netNode;
+        }
+
+        if (!NetAddress.TryParse(nodeString, out var netAddress))
+        {
+            return null;
+        }
+
+        return await netTerminal.UnsafeGetNetNode(netAddress).ConfigureAwait(false);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsError(this NetResult result)
