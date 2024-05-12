@@ -41,6 +41,12 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 context.ClearLoggerResolver();
                 context.AddLoggerResolver(x =>
                 {// Log source/level -> Resolver() -> Output/filter
+                    if (x.LogLevel == LogLevel.Debug)
+                    {
+                        x.ClearOutput();
+                        return;
+                    }
+
                     x.SetOutput<ConsoleAndFileLogger>();
                 });
             });
@@ -84,7 +90,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 NodeName = "Netsphere.Runner",
                 Port = options.Port,
                 EnablePing = false,
-                EnableServer = false,
+                EnableServer = true,
                 EnableAlternative = false,
             };
 

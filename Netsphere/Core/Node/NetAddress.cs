@@ -49,6 +49,15 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         this.Address6B = address6b;
     }
 
+    public NetAddress(NetAddress original, ushort port)
+    {
+        this.RelayId = original.RelayId;
+        this.Port = port;
+        this.Address4 = original.Address4;
+        this.Address6A = original.Address6A;
+        this.Address6B = original.Address6B;
+    }
+
     public NetAddress(NetEndpoint endpoint)
     {
         if (endpoint.EndPoint is not null)

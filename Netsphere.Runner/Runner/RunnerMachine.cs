@@ -3,8 +3,6 @@
 using System.Net;
 using Arc.Unit;
 using BigMachines;
-using Docker.DotNet.Models;
-using Netsphere;
 using Netsphere.Packet;
 
 namespace Netsphere.Runner;
@@ -12,12 +10,13 @@ namespace Netsphere.Runner;
 [MachineObject(UseServiceProvider = true)]
 public partial class RunnerMachine : Machine
 {
-    public enum Status
-    {
-        NoContainer,
-        Running,
-        Healthy,
-    }
+    private const int NoContainerRetries = 3;
+    private const int CreateContainerInvervalInSeconds = 30;
+    private const int CreateContainerRetries = 10;
+    private const int CheckInvervalInSeconds = 10;
+    private const int UnhealthyRetries = 3;
+    private const int TerminatingInvervalInSeconds = 2;
+    private const int TerminatingRetries = 30;
 
     public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunOptions options)
     {
@@ -25,7 +24,7 @@ public partial class RunnerMachine : Machine
         this.netTerminal = netTerminal;
         this.options = options;
 
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.DefaultTimeout = TimeSpan.FromSeconds(CheckInvervalInSeconds);
     }
 
     [StateMethod(0)]
@@ -51,62 +50,137 @@ public partial class RunnerMachine : Machine
         // Remove container
         // await this.docker.RemoveAllContainers();
 
-        this.ChangeState(State.Check, true);
+        this.ChangeStateAndRunImmediately(State.NoContainer);
         return StateResult.Continue;
     }
 
     [StateMethod]
-    protected async Task<StateResult> Check(StateParameter parameter)
+    protected async Task<StateResult> NoContainer(StateParameter parameter)
+    {// No active containers: Start a container and wait for a specified period. If the container is created, transition to Running; if not, retry a set number of times.
+        if (this.docker == null)
+        {
+            return StateResult.Terminate;
+        }
+
+        if (await this.docker.CountContainersAsync() > 0)
+        {
+            this.ChangeStateAndRunImmediately(State.Running);
+            return StateResult.Continue;
+        }
+
+        if (this.retries++ > NoContainerRetries)
+        {
+            return StateResult.Terminate;
+        }
+
+        if (this.createContainerRetries++ > CreateContainerRetries)
+        {
+            return StateResult.Terminate;
+        }
+
+        this.logger.TryGet()?.Log($"Status({this.retries}): {this.GetState()} -> Create container");
+
+        if (await this.docker.RunContainer() == false)
+        {
+            return StateResult.Terminate;
+        }
+
+        this.TimeUntilRun = TimeSpan.FromSeconds(CreateContainerInvervalInSeconds);
+        return StateResult.Continue;
+    }
+
+    [StateMethod]
+    protected async Task<StateResult> Running(StateParameter parameter)
+    {// Container is running: Check the number of containers. If none exist, transition to NoContainer. If there are containers and the ContainerPort is active, proceed to CheckHealth.
+        if (this.docker == null)
+        {
+            return StateResult.Terminate;
+        }
+
+        this.logger.TryGet()?.Log($"Running");
+
+        if (await this.docker.CountContainersAsync() == 0)
+        {// No container
+            this.ChangeStateAndRunImmediately(State.NoContainer);
+            return StateResult.Continue;
+        }
+        else if (this.options.ContainerPort != 0)
+        {// Check health
+            this.ChangeStateAndRunImmediately(State.CheckHealth);
+            return StateResult.Continue;
+        }
+
+        this.TimeUntilRun = TimeSpan.FromSeconds(CheckInvervalInSeconds);
+        return StateResult.Continue;
+    }
+
+    [StateMethod]
+    protected async Task<StateResult> CheckHealth(StateParameter parameter)
     {
         if (this.docker == null)
         {
             return StateResult.Terminate;
         }
 
-        if (this.checkRetry > 10)
+        if (this.options.ContainerPort == 0)
+        {
+            this.ChangeStateAndRunImmediately(State.Running);
+            return StateResult.Continue;
+        }
+
+        var r = await this.docker.GetContainer();
+        if (!r.IsRunning || r.Address is null)
+        {
+            this.ChangeStateAndRunImmediately(State.NoContainer);
+            return StateResult.Continue;
+        }
+
+        var result = await this.Ping(r.Address);
+        if (result == NetResult.Success)
+        {// Healthy
+            this.retries = 0;
+            this.logger.TryGet()?.Log($"Status({this.retries}): Healthy");
+        }
+        else
+        {// Unhealthy
+            if (this.retries++ >= UnhealthyRetries)
+            {
+                this.logger.TryGet()?.Log($"Status({this.retries}): Unhealthy -> Restart");
+                await this.docker.RemoveAllContainers();
+                this.ChangeStateAndRunImmediately(State.NoContainer);
+                return StateResult.Continue;
+            }
+            else
+            {
+                this.logger.TryGet()?.Log($"Status({this.retries}): Unhealthy");
+            }
+        }
+
+        this.TimeUntilRun = TimeSpan.FromSeconds(CheckInvervalInSeconds);
+        return StateResult.Continue;
+    }
+
+    [StateMethod]
+    protected async Task<StateResult> Terminating(StateParameter parameter)
+    {// Waiting for all containers to terminate.
+        if (this.docker == null)
         {
             return StateResult.Terminate;
         }
 
-        // this.logger.TryGet()?.Log($"Check ({this.checkRetry++})");
-        var status = await this.GetStatus();
-        this.logger.TryGet()?.Log($"Status: {status}");
-
-        if (status == Status.Healthy)
-        {// Running
-            this.checkRetry = 0;
-            this.ChangeState(State.Running);
+        if (await this.docker.CountContainersAsync() == 0)
+        {// No container
+            this.ChangeStateAndRunImmediately(State.NoContainer);
             return StateResult.Continue;
         }
-        else if (status == Status.NoContainer)
-        {// No container -> Run
-            if (await this.docker.RunContainer() == false)
-            {
-                return StateResult.Terminate;
-            }
 
-            this.TimeUntilRun = TimeSpan.FromSeconds(30);
-            return StateResult.Continue;
-        }
-        else
-        {// Container -> Try restart
-            await this.docker.RestartContainer();
-            this.TimeUntilRun = TimeSpan.FromSeconds(10);
-            return StateResult.Continue;
-        }
-    }
-
-    [StateMethod]
-    protected async Task<StateResult> Running(StateParameter parameter)
-    {
-        /*var result = await this.SendAcknowledge();
-        this.logger.TryGet()?.Log($"Running: {result}");
-        if (result != NetResult.Success)
+        if (this.retries++ > TerminatingRetries)
         {
-            this.ChangeState(State.Check);
-        }*/
+            return StateResult.Terminate;
+        }
 
-        this.TimeUntilRun = TimeSpan.FromSeconds(10);
+        this.logger.TryGet()?.Log($"Status({this.retries}): {this.GetState()}");
+        this.TimeUntilRun = TimeSpan.FromSeconds(TerminatingInvervalInSeconds);
         return StateResult.Continue;
     }
 
@@ -115,14 +189,22 @@ public partial class RunnerMachine : Machine
     {
         this.logger.TryGet()?.Log("Restart");
 
+        var state = this.GetState();
+        if (state == State.NoContainer ||
+            state == State.Terminating)
+        {
+            return CommandResult.Success;
+        }
+
         // Remove container
         if (this.docker != null)
         {
             await this.docker.RemoveAllContainers();
         }
 
-        this.ChangeState(State.Check);
-        this.TimeUntilRun = TimeSpan.FromSeconds(1);
+        this.createContainerRetries = 0;
+        this.ChangeState(State.Terminating);
+        this.TimeUntilRun = TimeSpan.FromSeconds(TerminatingInvervalInSeconds);
         return CommandResult.Success;
     }
 
@@ -140,69 +222,34 @@ public partial class RunnerMachine : Machine
         return CommandResult.Success;
     }
 
-    private async Task<Status> GetStatus()
+    private void ChangeStateAndRunImmediately(State state)
     {
-        if (this.docker == null)
-        {
-            return Status.NoContainer;
-        }
-
-        var r = await this.docker.GetContainer();
-        if (r.IsRunning)
-        {
-            if (await this.CheckHealth(r.Address) == NetResult.Success)
-            {
-                return Status.Healthy;
-            }
-
-            return Status.Running;
-        }
-
-        return Status.NoContainer;
+        this.retries = 0;
+        this.ChangeState(state, true);
     }
 
-    private async Task<NetResult> CheckHealth(IPAddress? addresss)
+    private async Task<NetResult> Ping(IPAddress addresss)
     {
-        if (addresss is null)
-        {
-            return NetResult.NoNetService;
+        NetAddress netAddress;
+        if (PathHelper.RunningInContainer)
+        {// In container. Use Container address.
+            netAddress = new NetAddress(addresss, this.options.ContainerPort);
+        }
+        else
+        {// Non-container. Use Loopback address.
+            netAddress = new NetAddress(IPAddress.Loopback, this.options.ContainerPort);
         }
 
-        // var netAddress = new NetAddress(addresss, this.options.ContainerPort);
-        var netAddress = new NetAddress(IPAddress.Loopback, this.options.ContainerPort);
         var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netAddress, new());
-        // if (r.Result == NetResult.Success && r.Value is not null)
-        {
-            this.logger.TryGet()?.Log($"Ping: {r.Result}");
-        }
+        // this.logger.TryGet()?.Log($"Ping: {r.Result}");
 
         return r.Result;
     }
-
-    /*private async Task<NetResult> CheckHealth()
-    {
-        var node = await this.options.TryGetContainerNode(this.netTerminal);
-        if (node is null)
-        {
-            return NetResult.NoNodeInformation;
-        }
-
-        using (var terminal = await this.netTerminal.Connect(node))
-        {
-            if (terminal is null)
-            {
-                return NetResult.NoNetwork;
-            }
-
-            var result = await terminal.SendAndReceive<PingPacket, PingPacketResponse>(new());
-            this.logger.TryGet()?.Log($"Ping: {result.Result}");
-            return result.Result;
-        }
-    }*/
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
     private readonly RunOptions options;
     private DockerRunner? docker;
-    private int checkRetry;
+    private int retries;
+    private int createContainerRetries;
 }

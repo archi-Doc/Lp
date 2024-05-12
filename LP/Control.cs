@@ -57,7 +57,6 @@ public class Control
                 context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<LP.T3CS.MergerServiceAgent>();
 
                 // RPC / Filters
@@ -76,6 +75,7 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RestartRemoteContainerSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RemoteBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RemoteDataSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
@@ -98,7 +98,6 @@ public class Control
                 LP.Subcommands.NodeKeySubcommand.Configure(context);
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
                 LP.Subcommands.CustomSubcommand.Configure(context);
-                LP.Subcommands.RemoteSubcommand.Configure(context);
                 LP.Subcommands.MergerNestedcommand.Configure(context);
                 LP.Subcommands.Relay.Subcommand.Configure(context);
             });
@@ -157,12 +156,7 @@ public class Control
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
-                if (options.Port != 0)
-                {
-                    options.NetsphereOptions.Port = options.Port;
-                }
-
-                netBase.SetOptions(options.NetsphereOptions);
+                netBase.SetOptions(options.ToNetOptions());
 
                 netBase.AllowUnsafeConnection = true; // betacode
                 netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
@@ -296,7 +290,7 @@ public class Control
                     }
                 }
 
-                var netOptions = options.NetsphereOptions;
+                var netOptions = options.ToNetOptions();
                 if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
                 Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
                 {

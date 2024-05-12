@@ -1,9 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
-using BigMachines;
-using Netsphere;
-using Netsphere.Crypto;
 using Netsphere.Interfaces;
 
 namespace Netsphere.Runner;
@@ -11,15 +8,14 @@ namespace Netsphere.Runner;
 [NetServiceObject]
 internal class RemoteControlAgent : IRemoteControl
 {// Remote -> Netsphere.Runner
-    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, NetControl netControl, BigMachine bigMachine, RunOptions runOptions)
+    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, BigMachine bigMachine, RunOptions runOptions)
     {
         this.logger = logger;
-        this.netControl = netControl;
         this.bigMachine = bigMachine;
         this.runOptions = runOptions;
     }
 
-    public async NetTask Authenticate(AuthenticationToken token)
+    /*public async NetTask Authenticate(AuthenticationToken token)
     {
         if (TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
             token.PublicKey.Equals(this.runOptions.RemotePublicKey))
@@ -30,14 +26,23 @@ internal class RemoteControlAgent : IRemoteControl
         }
 
         TransmissionContext.Current.Result = NetResult.NotAuthorized;
-    }
+    }*/
 
     public async NetTask<NetResult> Restart()
     {
-        if (this.token == null)
+        if (!TransmissionContext.Current.TryGetAuthenticationToken(out var token) ||
+            !token.PublicKey.Equals(this.runOptions.RemotePublicKey))
         {
             return NetResult.NotAuthorized;
         }
+
+        var machine = this.bigMachine.RunnerMachine.GetOrCreate();
+        if (machine != null)
+        {
+            _ = machine.Command.Restart();
+        }
+
+        return NetResult.Success;
 
         /*var address = this.information.TryGetDualAddress();
         if (!address.IsValid)
@@ -80,13 +85,9 @@ internal class RemoteControlAgent : IRemoteControl
 
             return result;
         }*/
-
-        return NetResult.UnknownError;
     }
 
     private readonly ILogger logger;
-    private readonly NetControl netControl;
     private readonly BigMachine bigMachine;
     private readonly RunOptions runOptions;
-    private AuthenticationToken? token;
 }
