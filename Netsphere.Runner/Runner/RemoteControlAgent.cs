@@ -16,12 +16,12 @@ internal class RemoteControlAgent : IRemoteControl
         this.runOptions = runOptions;
     }
 
-    public async NetTask<NetResult> Authenticate(AuthenticationToken token)
-        => TransmissionContext.Current.ServerConnection.GetContext().Authenticate(token, this.runOptions.RemotePublicKey);
+    /*public async NetTask<NetResult> Authenticate(AuthenticationToken token)
+        => TransmissionContext.Current.ServerConnection.GetContext().Authenticate(token, this.runOptions.RemotePublicKey);*/
 
     public async NetTask<NetResult> Restart()
     {
-        if (!TransmissionContext.Current.IsAuthenticated)
+        if (!TransmissionContext.Current.AuthenticationTokenEquals(this.runOptions.RemotePublicKey))
         {
             return NetResult.NotAuthenticated;
         }

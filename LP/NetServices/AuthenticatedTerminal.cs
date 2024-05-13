@@ -31,11 +31,11 @@ public class AuthenticatedTerminalFactory
         }
 
         var context = connection.GetContext();
-        //if (!context.AuthenticationTokenEquals()
+        var token = new AuthenticationToken(connection.Salt);
+        authority.SignToken(token);
+        if (!context.AuthenticationTokenEquals(token.PublicKey))
         {
-            var token = new AuthenticationToken(connection.Salt);
-            authority.SignToken(token);
-            var result = await connection.Authenticate(token).ConfigureAwait(false);
+            var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);

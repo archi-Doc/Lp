@@ -39,6 +39,7 @@ public interface INetServiceBidirectional : INetService
     NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token);
 }
 
+/*
 /// <summary>
 /// An interface for adding functions to <see cref="INetService"/> for authentication.
 /// </summary>
@@ -50,4 +51,4 @@ public interface INetServiceAuthentication : INetService
     /// <param name="token">The authentication token.</param>
     /// <returns>The result of the authentication.</returns>
     NetTask<NetResult> Authenticate(AuthenticationToken token);
-}
+}*/

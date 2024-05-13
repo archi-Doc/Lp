@@ -112,7 +112,7 @@ public class ServerConnectionContext
     public virtual bool RespondConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
         => false;*/
 
-    public NetResult Authenticate(AuthenticationToken authenticationToken, SignaturePublicKey publicKey)
+    /*public NetResult Authenticate(AuthenticationToken authenticationToken, SignaturePublicKey publicKey)
     {
         if (!authenticationToken.PublicKey.Equals(publicKey))
         {
@@ -133,13 +133,13 @@ public class ServerConnectionContext
         {
             return NetResult.NotAuthenticated;
         }
-    }
+    }*/
 
-    public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
+    /*public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
     {
         authenticationToken = this.AuthenticationToken;
         return authenticationToken is not null;
-    }
+    }*/
 
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
@@ -200,9 +200,9 @@ public class ServerConnectionContext
     {// transmissionContext.Return();
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
-            if (transmissionContext.DataId == ConnectionAgreement.AuthenticateId)
+            if (transmissionContext.DataId == ConnectionAgreement.AuthenticationTokenId)
             {
-                this.Authenticate(transmissionContext);
+                this.SetAuthenticationToken(transmissionContext);
             }
             else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
@@ -293,7 +293,7 @@ SendNoNetService:
         return;
     }
 
-    private void Authenticate(TransmissionContext transmissionContext)
+    private void SetAuthenticationToken(TransmissionContext transmissionContext)
     {
         if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.Owner.Memory.Span, out var token))
         {
@@ -318,7 +318,7 @@ SendNoNetService:
                 }
             }
 
-            transmissionContext.SendAndForget(result, ConnectionAgreement.AuthenticateId);
+            transmissionContext.SendAndForget(result, ConnectionAgreement.AuthenticationTokenId);
         });
     }
 

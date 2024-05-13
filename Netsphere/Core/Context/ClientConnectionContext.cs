@@ -13,7 +13,9 @@ public class ClientConnectionContext
 
     public ClientConnection Connection { get; }
 
-    public bool IsAuthenticated
+    public AuthenticationToken? AuthenticationToken { get; internal set; }
+
+    public bool IsAuthenticationTokenSet
         => this.AuthenticationToken is not null;
 
     public bool AuthenticationTokenEquals(SignaturePublicKey publicKey)
@@ -26,6 +28,4 @@ public class ClientConnectionContext
 
         return false;
     }
-
-    public AuthenticationToken? AuthenticationToken { get; internal set; }
 }
