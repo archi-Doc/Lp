@@ -85,11 +85,11 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RevealAuthoritySubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NewSignatureKeySubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
 
                 // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
-                LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
                 LP.Subcommands.ExportSubcommand.Configure(context);
                 LP.Subcommands.VaultSubcommand.Configure(context);
