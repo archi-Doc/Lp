@@ -14,7 +14,7 @@ public interface INetService
 /// <summary>
 /// An interface for adding functions to <see cref="INetService"/> to update the agreement.
 /// </summary>
-public interface INetServiceAgreement
+public interface INetServiceAgreement : INetService
 {
     /// <summary>
     /// Determines whether to allow updates to the agreement.<br/>
@@ -28,7 +28,7 @@ public interface INetServiceAgreement
 /// <summary>
 /// An interface for adding functions to <see cref="INetService"/> to enable bidirectional connection.
 /// </summary>
-public interface INetServiceBidirectional
+public interface INetServiceBidirectional : INetService
 {
     /// <summary>
     /// Determines whether to enable bidirectional connection.<br/>
@@ -38,3 +38,17 @@ public interface INetServiceBidirectional
     /// <returns><see cref="NetResult.Success"/> to enable bidirectional connection.</returns>
     NetTask<NetResult> ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token);
 }
+
+/*
+/// <summary>
+/// An interface for adding functions to <see cref="INetService"/> for authentication.
+/// </summary>
+public interface INetServiceAuthentication : INetService
+{
+    /// <summary>
+    /// Authenticates the user with the provided token.
+    /// </summary>
+    /// <param name="token">The authentication token.</param>
+    /// <returns>The result of the authentication.</returns>
+    NetTask<NetResult> Authenticate(AuthenticationToken token);
+}*/

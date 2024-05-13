@@ -47,11 +47,12 @@ public sealed partial class Authority
         NetHelper.Sign(token, privateKey);
     }
 
-    /*public void SignToken(Credit credit, Token token)
+    public void SignToken<T>(Credit credit, T token)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
-        token.Sign(privateKey);
-    }*/
+        NetHelper.Sign(token, privateKey);
+    }
 
     public byte[]? SignData(Credit credit, byte[] data)
     {

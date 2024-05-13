@@ -24,7 +24,7 @@ public class CertificateRelayControl : IRelayControl
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
                 !this.ServerConnection.ValidateAndVerifyWithSalt(token))
             {
-                return new(NetResult.NotAuthorized);
+                return new(NetResult.NotAuthenticated);
             }
 
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;

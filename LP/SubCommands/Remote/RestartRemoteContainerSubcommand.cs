@@ -57,7 +57,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
 
             var token = new AuthenticationToken(connection.Salt);
             NetHelper.Sign(token, privateKey);
-            var result = await connection.Authenticate(token).ConfigureAwait(false);
+            var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);

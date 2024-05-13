@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
+using Netsphere.Crypto;
 using Netsphere.Interfaces;
 
 namespace Netsphere.Runner;
@@ -15,25 +16,14 @@ internal class RemoteControlAgent : IRemoteControl
         this.runOptions = runOptions;
     }
 
-    /*public async NetTask Authenticate(AuthenticationToken token)
-    {
-        if (TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
-            token.PublicKey.Equals(this.runOptions.RemotePublicKey))
-        {
-            this.token = token;
-            TransmissionContext.Current.Result = NetResult.Success;
-            return;
-        }
-
-        TransmissionContext.Current.Result = NetResult.NotAuthorized;
-    }*/
+    /*public async NetTask<NetResult> Authenticate(AuthenticationToken token)
+        => TransmissionContext.Current.ServerConnection.GetContext().Authenticate(token, this.runOptions.RemotePublicKey);*/
 
     public async NetTask<NetResult> Restart()
     {
-        if (!TransmissionContext.Current.TryGetAuthenticationToken(out var token) ||
-            !token.PublicKey.Equals(this.runOptions.RemotePublicKey))
+        if (!TransmissionContext.Current.AuthenticationTokenEquals(this.runOptions.RemotePublicKey))
         {
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
 
         var machine = this.bigMachine.RunnerMachine.GetOrCreate();

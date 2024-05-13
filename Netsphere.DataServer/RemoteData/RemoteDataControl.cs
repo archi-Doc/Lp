@@ -48,11 +48,11 @@ public class RemoteDataControl
         var transmissionContext = TransmissionContext.Current;
         if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))
         {// Invalid token
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
         else if (!token.PublicKey.Equals(this.RemotePublicKey))
         {// Invalid public key
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
 
         if (!token.Target.IsInclusive(this.limitAreement))

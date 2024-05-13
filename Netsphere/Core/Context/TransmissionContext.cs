@@ -31,6 +31,9 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     #region FieldAndProperty
 
+    public bool IsAuthenticated
+        => this.ServerConnection.GetContext().AuthenticationToken is not null;
+
     public ServerConnection ServerConnection { get; } // => this.ConnectionContext.ServerConnection;
 
     public uint TransmissionId { get; }
@@ -51,8 +54,12 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     #endregion
 
-    public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
-        => this.ServerConnection.GetContext().TryGetAuthenticationToken(out authenticationToken);
+    /*public bool TryGetAuthenticationToken([MaybeNullWhen(false)] out AuthenticationToken authenticationToken)
+        => this.ServerConnection.GetContext().TryGetAuthenticationToken(out authenticationToken);*/
+
+    public bool AuthenticationTokenEquals(SignaturePublicKey publicKey)
+        => this.ServerConnection.GetContext().AuthenticationToken is { } t &&
+        t.PublicKey.Equals(publicKey);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Return()

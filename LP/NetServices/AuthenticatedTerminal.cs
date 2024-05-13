@@ -31,19 +31,16 @@ public class AuthenticatedTerminalFactory
         }
 
         var context = connection.GetContext();
-        if (!context.IsAuthenticated)
+        var token = new AuthenticationToken(connection.Salt);
+        authority.SignToken(token);
+        if (!context.AuthenticationTokenEquals(token.PublicKey))
         {
-            var token = new AuthenticationToken(connection.Salt);
-            authority.SignToken(token);
-            // authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
-            var result = await connection.Authenticate(token).ConfigureAwait(false);
+            var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
-                return null; // AuthorizedTerminal<TService>.Invalid;
+                return null;
             }
-
-            context.AuthenticationToken = token;
         }
 
         return new(connection, context, authority, logger);

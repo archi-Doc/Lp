@@ -79,7 +79,7 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
         if (token is null ||
            !context.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
 
         var clientConnection = context.ServerConnection.PrepareBidirectionalConnection();
@@ -92,7 +92,7 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
     {
         if (!TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
 
         return NetResult.Success;

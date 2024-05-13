@@ -13,8 +13,19 @@ public class ClientConnectionContext
 
     public ClientConnection Connection { get; }
 
-    public bool IsAuthenticated
+    public AuthenticationToken? AuthenticationToken { get; internal set; }
+
+    public bool IsAuthenticationTokenSet
         => this.AuthenticationToken is not null;
 
-    public AuthenticationToken? AuthenticationToken { get; set; }
+    public bool AuthenticationTokenEquals(SignaturePublicKey publicKey)
+    {
+        if (this.AuthenticationToken is { } token &&
+            token.PublicKey.Equals(publicKey))
+        {
+            return true;
+        }
+
+        return false;
+    }
 }

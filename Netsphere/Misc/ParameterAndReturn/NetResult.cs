@@ -22,11 +22,10 @@ public enum NetResult : byte
     DeserializationFailed,
     BlockSizeLimit,
     StreamLengthLimit,
-    NoNodeInformation,
     NoNetwork,
     NoNetService,
     NoTransmission,
     NotReceived,
-    NotAuthorized,
+    NotAuthenticated,
     NotFound,
 }
