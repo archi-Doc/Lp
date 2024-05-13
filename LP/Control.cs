@@ -248,7 +248,7 @@ public class Control
             LPOptions? options = null;
 
             if (context.Arguments.TryGetOption("loadoptions", out var optionFile))
-            {// First - Option file
+            {// 1st: Option file
                 if (!string.IsNullOrEmpty(optionFile))
                 {
                     var originalPath = optionFile;
@@ -269,7 +269,7 @@ public class Control
                 }
             }
 
-            // Second - Arguments
+            // 2nd: Arguments
             SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
 
             if (options != null)
@@ -290,6 +290,7 @@ public class Control
                     }
                 }
 
+                options.EnableServer = true; // tempcode
                 var netOptions = options.ToNetOptions();
                 if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
                 Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
@@ -297,7 +298,6 @@ public class Control
                     netOptions.NodePrivateKey = privateKey;
                 }
 
-                netOptions.EnableServer = true;
                 context.SetOptions(options);
             }
         }
