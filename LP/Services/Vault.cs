@@ -97,6 +97,18 @@ public partial class Vault
         return this.Add(name, bytes);
     }
 
+    public bool FormatAndTryAdd<T>(string name, T obj)
+        where T : IStringConvertible<T>
+    {
+        var array = Arc.Crypto.CryptoHelper.ConvertToUtf8(obj);
+        if (array.Length == 0)
+        {
+            return false;
+        }
+
+        return this.TryAdd(name, array);
+    }
+
     public bool Add(string name, byte[] decrypted)
     {
         lock (this.syncObject)
@@ -162,7 +174,7 @@ public partial class Vault
         }
     }
 
-    public bool TryGetAndConvert<T>(string name, [MaybeNullWhen(false)] out T obj)
+    public bool TryGetAndParse<T>(string name, [MaybeNullWhen(false)] out T obj)
         where T : IStringConvertible<T>
     {
         if (!this.TryGet(name, out var decrypted))

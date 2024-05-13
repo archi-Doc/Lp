@@ -106,5 +106,5 @@ AddStorageResult = {
 
 Merger =
 {
-    NoPrivateKey = "Merger private key cannot be loaded. If this is a new Merger, please create a private key and specify it in the Vault or the environment variable '{0}'"
+    NoPrivateKey = "Merger private key could not be loaded from the environment variable ('{0}') or Vault. It will be newly created and saved in the Vault."
 }
