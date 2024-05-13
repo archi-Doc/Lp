@@ -16,5 +16,16 @@ public class ClientConnectionContext
     public bool IsAuthenticated
         => this.AuthenticationToken is not null;
 
-    public AuthenticationToken? AuthenticationToken { get; set; }
+    public bool AuthenticationTokenEquals(SignaturePublicKey publicKey)
+    {
+        if (this.AuthenticationToken is { } token &&
+            token.PublicKey.Equals(publicKey))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public AuthenticationToken? AuthenticationToken { get; internal set; }
 }

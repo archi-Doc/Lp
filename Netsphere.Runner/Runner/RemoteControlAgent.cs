@@ -23,7 +23,7 @@ internal class RemoteControlAgent : IRemoteControl
     {
         if (!TransmissionContext.Current.IsAuthenticated)
         {
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
 
         var machine = this.bigMachine.RunnerMachine.GetOrCreate();

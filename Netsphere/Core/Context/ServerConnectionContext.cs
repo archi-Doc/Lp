@@ -116,7 +116,7 @@ public class ServerConnectionContext
     {
         if (!authenticationToken.PublicKey.Equals(publicKey))
         {
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
 
         return this.Authenticate(authenticationToken);
@@ -131,7 +131,7 @@ public class ServerConnectionContext
         }
         else
         {
-            return NetResult.NotAuthorized;
+            return NetResult.NotAuthenticated;
         }
     }
 

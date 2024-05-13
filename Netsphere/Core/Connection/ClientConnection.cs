@@ -447,9 +447,15 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<NetResult> Authenticate(AuthenticationToken token)
     {
+        if (token.Equals(this.context.AuthenticationToken))
+        {// Identical token
+            return NetResult.Success;
+        }
+
         var r = await this.SendAndReceive<AuthenticationToken, NetResult>(token, ConnectionAgreement.AuthenticateId).ConfigureAwait(false);
         if (r.Result == NetResult.Success)
         {
+            this.context.AuthenticationToken = token;
             return r.Value;
         }
 
