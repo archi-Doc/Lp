@@ -270,6 +270,7 @@ public sealed partial class PacketTerminal
             // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
         }
 
+        Console.WriteLine("0");
         // PacketHeaderCode
         var span = toBeShared.Span;
         if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(8)))
@@ -287,10 +288,12 @@ public sealed partial class PacketTerminal
             {// ConnectPacket
                 if (!this.netTerminal.IsActive)
                 {
+                    Console.WriteLine("1");
                     return;
                 }
                 else if (!this.netBase.NetOptions.EnableServer)
                 {
+                    Console.WriteLine("2");
                     return;
                 }
 
@@ -298,15 +301,19 @@ public sealed partial class PacketTerminal
                 {
                     if (p.ServerPublicKeyChecksum != this.netTerminal.NodePublicKey.GetHashCode())
                     {// Public Key does not match
+                        Console.WriteLine("3");
                         return;
                     }
 
+                    Console.WriteLine("4");
                     Task.Run(() =>
                     {
+                        Console.WriteLine("5");
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
                         this.SendPacketWithoutRelay(endpoint, owner, default);
+                        Console.WriteLine("6");
                     });
 
                     return;
