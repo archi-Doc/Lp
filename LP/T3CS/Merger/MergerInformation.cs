@@ -9,7 +9,8 @@ namespace LP;
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
 public partial record MergerInformation : ITinyhandSerializationCallback
 {
-    public const string Filename = "Merger.tinyhand";
+    public const string MergerFilename = "MergerInformation.tinyhand";
+    public const string RelayMergerFilename = "RelayMergerInformation.tinyhand";
     public const string DefaultName = "Test merger";
     public const int DefaultMaxCredit = 1_000_000;
 

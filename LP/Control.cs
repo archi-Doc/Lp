@@ -192,27 +192,11 @@ public class Control
                         RequiredForLoading = true,
                     });
 
-                    context.AddCrystal<MergerInformation>(new()
-                    {
-                        NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration(MergerInformation.Filename),
-                        RequiredForLoading = true,
-                    });
-
                     context.AddCrystal<Mono>(new()
                     {
                         SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 0,
                         FileConfiguration = new GlobalFileConfiguration("Mono"),
-                    });
-
-                    context.AddCrystal<CreditData.GoshujinClass>(new()
-                    {
-                        SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 3,
-                        FileConfiguration = new GlobalFileConfiguration("Merger/Credits"),
-                        StorageConfiguration = new SimpleStorageConfiguration(
-                            new GlobalDirectoryConfiguration("Merger/Storage")),
                     });
 
                     context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
@@ -476,11 +460,17 @@ public class Control
             }
 
             this.NetControl.Services.Register<IMergerService>();
-        }
 
-        if (this.LPBase.Options.CreditMerger)
-        {
-            context.ServiceProvider.GetRequiredService<Merger>().Initialize(mergerPrivateKey);
+            var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
+            if (this.LPBase.Options.CreditMerger)
+            {
+                context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, mergerPrivateKey);
+            }
+
+            if (this.LPBase.Options.RelayMerger)
+            {
+                context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, mergerPrivateKey);
+            }
         }
     }
 
@@ -499,7 +489,7 @@ public class Control
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
         // Vault
-        this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodePrivateKey());
+        this.Vault.Add(NodePrivateKey.PrivateKeyName, this.NetControl.NetBase.SerializeNodePrivateKey());
         await this.Vault.SaveAsync();
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
@@ -670,11 +660,11 @@ public class Control
 
     private async Task LoadKeyVault_NodeKey()
     {
-        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.PrivateKeyPath, out var key))
+        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.PrivateKeyName, out var key))
         {// Failure
             if (!this.Vault.Created)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodePrivateKey.PrivateKeyPath);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodePrivateKey.PrivateKeyName);
             }
 
             return;
@@ -682,7 +672,7 @@ public class Control
 
         if (!this.NetControl.NetBase.SetNodePrivateKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyPath);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyName);
             return;
         }
     }

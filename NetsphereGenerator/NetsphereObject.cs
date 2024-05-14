@@ -178,7 +178,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             this.ServiceInterfaces = new();
-            foreach (var x in this.InterfaceObjects) //
+            foreach (var x in this.InterfaceObjects)
             {
                 if (x.AllInterfaces.Any(x => x == INetService.FullName))
                 {

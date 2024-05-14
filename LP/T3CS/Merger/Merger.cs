@@ -1,9 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using LP.T3CS;
-using Microsoft.Extensions.DependencyInjection;
-using Netsphere;
 using Netsphere.Crypto;
+
+#pragma warning disable SA1401
 
 namespace LP;
 
@@ -11,25 +12,46 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const string MergerPrivateKeyName = "mergerprivatekey";
 
-    public Merger(UnitContext context, UnitLogger unitLogger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
+    public Merger(UnitContext context, UnitLogger unitLogger, LPBase lpBase)
         : base(context)
     {
-        this.Logger = unitLogger.GetLogger<Merger>();
+        this.logger = unitLogger.GetLogger<Merger>();
         this.lpBase = lpBase;
-        this.crystal = crystal;
-        this.Information = mergerInformation;
     }
 
-    public void Initialize(SignaturePrivateKey mergerPrivateKey)
+    public virtual void Initialize(Crystalizer crystalizer, SignaturePrivateKey mergerPrivateKey)
     {
+        this.Information = crystalizer.CreateCrystal<MergerInformation>(new()
+        {
+            NumberOfFileHistories = 3,
+            FileConfiguration = new GlobalFileConfiguration(MergerInformation.MergerFilename),
+            RequiredForLoading = true,
+        }).Data;
+
+        this.creditDataCrystal = crystalizer.CreateCrystal<CreditData.GoshujinClass>(new()
+        {
+            SaveFormat = SaveFormat.Binary,
+            NumberOfFileHistories = 3,
+            FileConfiguration = new GlobalFileConfiguration("Merger/Credits"),
+            StorageConfiguration = new SimpleStorageConfiguration(
+                new GlobalDirectoryConfiguration("Merger/Storage")),
+        });
+
+        this.creditData = this.creditDataCrystal.Data;
+        this.mergerPrivateKey = mergerPrivateKey;
+        this.MergerPublicKey = this.mergerPrivateKey.ToPublicKey();
+
         this.Initialized = true;
-        this.MergerPrivateKey = mergerPrivateKey;
-        this.MergerPublicKey = this.MergerPrivateKey.ToPublicKey();
     }
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
-        this.Logger.TryGet()?.Log(this.Information.ToString());
+        if (!this.Initialized)
+        {
+            return;
+        }
+
+        this.logger.TryGet()?.Log(this.Information.ToString());
 
         if (this.Information.MergerType == MergerInformation.Type.Single)
         {// Single credit
@@ -39,8 +61,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.Logger.TryGet()?.Log($"{this.Information.MergerName}: {this.MergerPublicKey.ToString()}");
-        this.Logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}/{this.Information.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Information.MergerName}: {this.MergerPublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Information.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -53,22 +74,26 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
     {
-        this.Logger.TryGet()?.Log("Merger terminated");
+        this.logger.TryGet()?.Log("Terminated");
     }
 
     [TinyhandObject]
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async NetTask<T3CSResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
+    public async NetTask<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
     {
-        if (!param.Proof.ValidateAndVerify())
+        if (!this.Initialized)
         {
-            return new(T3CSResult.InvalidProof);
+            return new(T3csResult.NoData);
+        }
+        else if (!param.Proof.ValidateAndVerify())
+        {
+            return new(T3csResult.InvalidProof);
         }
 
         // Get LpData
-        var g = this.crystal.Data;
+        var g = this.creditDataCrystal.Data;
         // var identifier = param.Proof.PublicKey.ToIdentifier();
 
         CreditData? creditData;
@@ -76,7 +101,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {
             if (w is null)
             {
-                return new(T3CSResult.NoData);
+                return new(T3csResult.NoData);
             }
 
             creditData = w.Commit();
@@ -84,7 +109,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (creditData is null)
         {
-            return new(T3CSResult.NoData);
+            return new(T3csResult.NoData);
         }
 
         var mergerPublicKey = SignaturePrivateKey.Create().ToPublicKey();
@@ -95,7 +120,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {
             if (w2 is null)
             {
-                return new(T3CSResult.AlreadyExists, credit);
+                return new(T3csResult.AlreadyExists, credit);
             }
 
             w2.Commit();
@@ -103,16 +128,23 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public bool Initialized { get; private set; }
+    #region FieldAndProperty
 
-    public SignaturePublicKey MergerPublicKey { get; private set; }
+    [MemberNotNullWhen(true, nameof(Information))]
+    [MemberNotNullWhen(true, nameof(creditDataCrystal))]
+    [MemberNotNullWhen(true, nameof(creditData))]
+    [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
+    public virtual bool Initialized { get; protected set; }
 
-    public MergerInformation Information { get; private set; }
+    public SignaturePublicKey MergerPublicKey { get; protected set; }
 
-    protected ILogger Logger { get; set; }
+    public MergerInformation? Information { get; protected set; }
 
-    protected SignaturePrivateKey MergerPrivateKey { get; private set; } = SignaturePrivateKey.De
+    protected ILogger logger;
+    protected LPBase lpBase;
+    protected ICrystal<CreditData.GoshujinClass>? creditDataCrystal;
+    protected CreditData.GoshujinClass? creditData;
+    protected SignaturePrivateKey? mergerPrivateKey;
 
-    private readonly LPBase lpBase;
-    private readonly ICrystal<CreditData.GoshujinClass> crystal;
+    #endregion
 }
