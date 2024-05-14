@@ -85,11 +85,11 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RevealAuthoritySubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NewSignatureKeySubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
 
                 // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
-                LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
                 LP.Subcommands.ExportSubcommand.Configure(context);
                 LP.Subcommands.VaultSubcommand.Configure(context);
@@ -248,7 +248,7 @@ public class Control
             LPOptions? options = null;
 
             if (context.Arguments.TryGetOption("loadoptions", out var optionFile))
-            {// First - Option file
+            {// 1st: Option file
                 if (!string.IsNullOrEmpty(optionFile))
                 {
                     var originalPath = optionFile;
@@ -269,7 +269,7 @@ public class Control
                 }
             }
 
-            // Second - Arguments
+            // 2nd: Arguments
             SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
 
             if (options != null)
@@ -290,6 +290,7 @@ public class Control
                     }
                 }
 
+                options.EnableServer = true; // tempcode
                 var netOptions = options.ToNetOptions();
                 if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
                 Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
@@ -297,7 +298,6 @@ public class Control
                     netOptions.NodePrivateKey = privateKey;
                 }
 
-                netOptions.EnableServer = true;
                 context.SetOptions(options);
             }
         }
@@ -405,7 +405,7 @@ public class Control
         this.LPBase.Settings = settings;
         this.MergerProvider = new();
 
-        if (this.LPBase.TestFeatures)
+        if (this.LPBase.Options.TestFeatures)
         {
             this.NetControl.Services.Register<IRemoteBenchHost>();
         }
@@ -451,24 +451,28 @@ public class Control
 
     public async Task CreateMerger(UnitContext context)
     {
-        if (this.LPBase.Mode == LPMode.Merger)
+        if (this.LPBase.Options.RequiredMergerPrivateKey)
         {// Merger private key
             SignaturePrivateKey? mergerPrivateKey;
 
             // 1st: Vault
-            if (!this.Vault.TryGetAndConvert<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
+            if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
             {
                 // 2nd: EnvironmentVariable
                 if (!CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, Merger.MergerPrivateKeyName);
-                    this.LPBase.Mode = LPMode.Automaton;
-                    return;
                 }
             }
 
-            this.NetControl.Services.Register<IMergerService>();
+            if (mergerPrivateKey is null)
+            {
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, Merger.MergerPrivateKeyName);
 
+                mergerPrivateKey = SignaturePrivateKey.Create();
+                this.Vault.FormatAndTryAdd(Merger.MergerPrivateKeyName, mergerPrivateKey);
+            }
+
+            this.NetControl.Services.Register<IMergerService>();
             this.MergerProvider.Create(context, mergerPrivateKey);
         }
     }

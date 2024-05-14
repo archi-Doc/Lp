@@ -159,9 +159,7 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>
         => (15 + 1 + 5) + (2 + 54 + 1 + 5); // IPv4:12345, [IPv6]:12345
 
     public int GetStringLength()
-    {
-        throw new NotImplementedException();
-    }
+        => -1;
 
     public bool TryFormat(Span<char> destination, out int written)
     {// 15 + 1 + 5, 54 + 1 + 5 + 2

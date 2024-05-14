@@ -23,8 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickStartServer", "QuickSt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickStartClient", "QuickStartClient\QuickStartClient.csproj", "{8B697CB6-6A2E-4035-B230-D024E4023E09}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetsphereGenerator", "NetsphereGenerator\NetsphereGenerator.csproj", "{C10D1479-2918-4E85-83B5-7DF72F48A1D5}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Playground\Playground.csproj", "{2B14707E-C502-401F-A0D0-5EDF1E6F355F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.DataServer", "Netsphere.DataServer\Netsphere.DataServer.csproj", "{6654F7D9-5B0D-406C-BB31-FA15EB1096D3}"
@@ -32,6 +30,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Runner", "Netsphere.Runner\Netsphere.Runner.csproj", "{F83D97AB-6A7A-4AD4-BDDC-840C2F8DAF84}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Interfaces", "Netsphere.Interfaces\Netsphere.Interfaces.csproj", "{E789687D-4CE4-45B5-8291-16C3EDCDA533}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetsphereGenerator", "NetsphereGenerator\NetsphereGenerator.csproj", "{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,10 +75,6 @@ Global
 		{8B697CB6-6A2E-4035-B230-D024E4023E09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B697CB6-6A2E-4035-B230-D024E4023E09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B697CB6-6A2E-4035-B230-D024E4023E09}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C10D1479-2918-4E85-83B5-7DF72F48A1D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C10D1479-2918-4E85-83B5-7DF72F48A1D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C10D1479-2918-4E85-83B5-7DF72F48A1D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C10D1479-2918-4E85-83B5-7DF72F48A1D5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2B14707E-C502-401F-A0D0-5EDF1E6F355F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2B14707E-C502-401F-A0D0-5EDF1E6F355F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B14707E-C502-401F-A0D0-5EDF1E6F355F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -95,6 +91,10 @@ Global
 		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

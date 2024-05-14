@@ -18,8 +18,11 @@ public partial record LPOptions
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
 
-    [SimpleOption("mode", Description = "LP mode (merger, relay, automaton, replicator, karate)")]
-    public string Mode { get; init; } = string.Empty;
+    [SimpleOption("creditmerger", Description = "Enable credit merger feature")]
+    public bool CreditMerger { get; init; } = true;
+
+    [SimpleOption("relaymerger", Description = "Enable relay merger feature")]
+    public bool RelayMerger { get; init; } = true;
 
     [SimpleOption("test", Description = "Enable test features")]
     public bool TestFeatures { get; set; } = false;
@@ -33,8 +36,8 @@ public partial record LPOptions
     [SimpleOption("vault", Description = "Vault path")]
     public string VaultPath { get; init; } = string.Empty;
 
-    [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
-    public string RemotePublicKeyBase64 { get; init; } = string.Empty;
+    // [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
+    // public string RemotePublicKeyBase64 { get; init; } = string.Empty;
 
     [SimpleOption("name", Description = "Node name")]
     public string NodeName { get; init; } = string.Empty;
@@ -71,4 +74,7 @@ public partial record LPOptions
             EnableAlternative = this.EnableAlternative,
         };
     }
+
+    public bool RequiredMergerPrivateKey
+        => this.CreditMerger || this.RelayMerger;
 }

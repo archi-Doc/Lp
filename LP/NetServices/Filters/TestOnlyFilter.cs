@@ -13,7 +13,7 @@ public class TestOnlyFilter : IServiceFilter
 
     public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
-        if (this.LpBase.TestFeatures)
+        if (this.LpBase.Options.TestFeatures)
         {
             await invoker(context);
         }

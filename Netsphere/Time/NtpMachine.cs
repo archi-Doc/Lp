@@ -52,7 +52,7 @@ public partial class NtpMachine : Machine
             return StateResult.Continue;
         }
 
-        this.logger.TryGet()?.Log($"Timeoffset {timeoffset.MeanTimeoffset} ms [{timeoffset.TimeoffsetCount}]");
+        this.logger.TryGet(LogLevel.Debug)?.Log($"Timeoffset {timeoffset.MeanTimeoffset} ms [{timeoffset.TimeoffsetCount}]");
         this.SetLoggerTimeOffset();
 
         corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);

@@ -4,18 +4,8 @@
 
 using LP.Data;
 using Netsphere.Crypto;
-using Netsphere.Misc;
 
 namespace LP;
-
-public enum LPMode
-{
-    Merger,
-    Relay,
-    Automaton,
-    Replicator,
-    Karate,
-}
 
 public class LPBase
 {
@@ -40,13 +30,9 @@ public class LPBase
 
     public string DataDirectory { get; private set; } = default!;
 
-    public LPMode Mode { get; internal set; }
-
-    public bool TestFeatures { get; private set; }
-
     public string NodeName { get; private set; } = default!;
 
-    public SignaturePublicKey RemotePublicKey { get; private set; }
+    // public SignaturePublicKey RemotePublicKey { get; private set; }
 
     public LPOptions Options { get; private set; } = default!;
 
@@ -132,19 +118,6 @@ public class LPBase
         this.DataDirectory = Path.Combine(this.RootDirectory, DataDirectoryName);
         this.IsFirstRun = !Directory.Exists(this.DataDirectory);
 
-        // Mode
-        LPMode mode;
-        if (!Enum.TryParse<LPMode>(this.Options.Mode, true, out mode))
-        {
-            if (!Enum.TryParse<LPMode>(defaultMode, true, out mode))
-            {
-                mode = LPMode.Merger;
-            }
-        }
-
-        this.Mode = mode;
-        this.TestFeatures = options.TestFeatures;
-
         this.NodeName = this.Options.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))
         {
@@ -152,15 +125,15 @@ public class LPBase
         }
 
         // Remote public key
-        SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
-        this.RemotePublicKey = remoteKey;
+        // SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
+        // this.RemotePublicKey = remoteKey;
     }
 
     public void LogInformation(ILogWriter logger)
     {
         logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");
-        logger.Log($"Node: {this.NodeName}, Mode: {this.Mode.ToString()}, Test: {this.TestFeatures}");
+        logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
         // logger.Log(this.Options.ToString());
     }
 

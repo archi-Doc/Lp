@@ -75,7 +75,7 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
         => TokenHelper.ToBase64(this, Identifier);
 
     public int GetStringLength()
-        => throw new NotImplementedException();
+        => -1;
 
     public bool TryFormat(Span<char> destination, out int written)
         => TokenHelper.TryFormat(this, Identifier, destination, out written);

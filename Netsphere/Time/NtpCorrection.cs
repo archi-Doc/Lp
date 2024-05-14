@@ -228,7 +228,7 @@ Retry:
                 var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
                 packet = new NtpPacket(result.Buffer);
 
-                this.logger?.TryGet()?.Log($"{hostname}, RoundtripTime: {(int)packet.RoundtripTime.TotalMilliseconds} ms, TimeOffset: {(int)packet.TimeOffset.TotalMilliseconds} ms");
+                this.logger?.TryGet(LogLevel.Debug)?.Log($"{hostname}, RoundtripTime: {(int)packet.RoundtripTime.TotalMilliseconds} ms, TimeOffset: {(int)packet.TimeOffset.TotalMilliseconds} ms");
 
                 lock (this.syncObject)
                 {

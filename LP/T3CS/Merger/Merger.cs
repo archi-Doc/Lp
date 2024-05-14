@@ -11,30 +11,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const string MergerPrivateKeyName = "mergerprivatekey";
 
-    public class Provider
-    {
-        public Merger? TryGet()
-            => this.merger;
-
-        public Merger GetOrException()
-            => this.merger ?? throw new InvalidOperationException();
-
-        internal Merger Create(UnitContext context, SignaturePrivateKey mergerPrivateKey)
-        {
-            this.merger = new(
-                mergerPrivateKey,
-                context,
-                context.ServiceProvider.GetRequiredService<ILogger<Merger>>(),
-                context.ServiceProvider.GetRequiredService<LPBase>(),
-                context.ServiceProvider.GetRequiredService<ICrystal<CreditData.GoshujinClass>>(),
-                context.ServiceProvider.GetRequiredService<MergerInformation>());
-
-            return this.merger;
-        }
-
-        private Merger? merger;
-    }
-
     public Merger(SignaturePrivateKey mergerPrivateKey, UnitContext context, ILogger<Merger> logger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
         : base(context)
     {

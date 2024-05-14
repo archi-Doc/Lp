@@ -40,7 +40,7 @@ internal class MergerServiceAgent : IMergerService
 
     public NetTask<T3CSResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param)
     {
-        if (TransmissionContext.Current.AuthenticationTokenEquals(param.Proof.PublicKey))
+        if (!TransmissionContext.Current.AuthenticationTokenEquals(param.Proof.PublicKey))
         {
             return new(new T3CSResultAndValue<Credit>(T3CSResult.NotAuthenticated));
         }
