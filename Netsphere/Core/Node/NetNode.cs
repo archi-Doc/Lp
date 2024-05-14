@@ -119,7 +119,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable,
         => NetAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
 
     public int GetStringLength()
-        => throw new NotImplementedException();
+        => -1;
 
     public bool TryFormat(Span<char> destination, out int written)
     {

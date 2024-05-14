@@ -82,7 +82,7 @@ public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<Cer
         => TokenHelper.ToBase64(this, Identifier);
 
     public int GetStringLength()
-        => throw new NotImplementedException();
+        => -1;
 
     public bool TryFormat(Span<char> destination, out int written)
         => TokenHelper.TryFormat(this, Identifier, destination, out written);
