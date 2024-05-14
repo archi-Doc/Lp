@@ -17,7 +17,7 @@ internal class RelayMerger : Merger
     }
 }
 
-/*[NetServiceObject]
+[NetServiceObject]
 internal class RelayMergerServiceAgent : IRelayMergerService
 {
     public RelayMergerServiceAgent(Merger.Provider mergerProvider)
@@ -42,4 +42,3 @@ internal class RelayMergerServiceAgent : IRelayMergerService
 
     private Merger merger;
 }
-*/
