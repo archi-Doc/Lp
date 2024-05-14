@@ -9,7 +9,7 @@ public class RelayMerger : Merger
     public RelayMerger(SignaturePrivateKey mergerPrivateKey, UnitContext context, UnitLogger unitLogger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation, ICrystal<RelayStatus.GoshujinClass> relayStatusCrystal)
         : base(mergerPrivateKey, context, unitLogger, lpBase, crystal, mergerInformation)
     {
-        this.logger = unitLogger.GetLogger<RelayMerger>();
+        this.Logger = unitLogger.GetLogger<RelayMerger>();
         this.relayStatusCrystal = relayStatusCrystal;
         this.relayStatusData = this.relayStatusCrystal.Data;
     }

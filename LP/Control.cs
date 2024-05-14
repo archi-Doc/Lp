@@ -476,7 +476,11 @@ public class Control
             }
 
             this.NetControl.Services.Register<IMergerService>();
-            // this.MergerProvider.Create(context, mergerPrivateKey);
+        }
+
+        if (this.LPBase.Options.CreditMerger)
+        {
+            context.ServiceProvider.GetRequiredService<Merger>().Initialize(mergerPrivateKey);
         }
     }
 

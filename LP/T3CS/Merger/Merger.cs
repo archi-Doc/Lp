@@ -11,21 +11,25 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const string MergerPrivateKeyName = "mergerprivatekey";
 
-    public Merger(SignaturePrivateKey mergerPrivateKey, UnitContext context, UnitLogger unitLogger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
+    public Merger(UnitContext context, UnitLogger unitLogger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
         : base(context)
     {
-        this.mergerPrivateKey = mergerPrivateKey;
-        this.logger = unitLogger.GetLogger<Merger>();
+        this.Logger = unitLogger.GetLogger<Merger>();
         this.lpBase = lpBase;
         this.crystal = crystal;
         this.Information = mergerInformation;
+    }
 
-        this.MergerPublicKey = this.mergerPrivateKey.ToPublicKey();
+    public void Initialize(SignaturePrivateKey mergerPrivateKey)
+    {
+        this.Initialized = true;
+        this.MergerPrivateKey = mergerPrivateKey;
+        this.MergerPublicKey = this.MergerPrivateKey.ToPublicKey();
     }
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
-        this.logger.TryGet()?.Log(this.Information.ToString());
+        this.Logger.TryGet()?.Log(this.Information.ToString());
 
         if (this.Information.MergerType == MergerInformation.Type.Single)
         {// Single credit
@@ -35,8 +39,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Information.MergerName}: {this.MergerPublicKey.ToString()}");
-        this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}/{this.Information.MaxCredits}");
+        this.Logger.TryGet()?.Log($"{this.Information.MergerName}: {this.MergerPublicKey.ToString()}");
+        this.Logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}/{this.Information.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -49,7 +53,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Merger terminated");
+        this.Logger.TryGet()?.Log("Merger terminated");
     }
 
     [TinyhandObject]
@@ -99,13 +103,16 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SignaturePublicKey MergerPublicKey { get; }
+    public bool Initialized { get; private set; }
+
+    public SignaturePublicKey MergerPublicKey { get; private set; }
 
     public MergerInformation Information { get; private set; }
 
-    protected ILogger logger { get; set; }
+    protected ILogger Logger { get; set; }
 
-    private readonly SignaturePrivateKey mergerPrivateKey;
+    protected SignaturePrivateKey MergerPrivateKey { get; private set; } = SignaturePrivateKey.De
+
     private readonly LPBase lpBase;
     private readonly ICrystal<CreditData.GoshujinClass> crystal;
 }
