@@ -28,9 +28,9 @@ public partial interface IMergerService : INetService
 [NetServiceObject]
 internal class MergerServiceAgent : IMergerService
 {
-    public MergerServiceAgent(Merger.Provider mergerProvider)
+    public MergerServiceAgent(Merger merger)
     {
-        this.merger = mergerProvider.GetOrException();
+        this.merger = merger;
     }
 
     public async NetTask<IMergerService.InformationResult?> GetInformation()

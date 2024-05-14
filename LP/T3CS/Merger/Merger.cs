@@ -11,11 +11,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public const string MergerPrivateKeyName = "mergerprivatekey";
 
-    public Merger(SignaturePrivateKey mergerPrivateKey, UnitContext context, ILogger<Merger> logger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
+    public Merger(SignaturePrivateKey mergerPrivateKey, UnitContext context, UnitLogger unitLogger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
         : base(context)
     {
         this.mergerPrivateKey = mergerPrivateKey;
-        this.logger = logger;
+        this.logger = unitLogger.GetLogger<Merger>();
         this.lpBase = lpBase;
         this.crystal = crystal;
         this.Information = mergerInformation;
@@ -103,8 +103,9 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public MergerInformation Information { get; private set; }
 
+    protected ILogger logger { get; set; }
+
     private readonly SignaturePrivateKey mergerPrivateKey;
-    private readonly ILogger logger;
     private readonly LPBase lpBase;
     private readonly ICrystal<CreditData.GoshujinClass> crystal;
 }

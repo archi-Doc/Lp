@@ -50,8 +50,8 @@ public class Control
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityVault>();
                 context.AddSingleton<Seedphrase>();
-                // context.AddSingleton<Merger>();
-                context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
+                context.AddSingleton<Merger>();
+                context.AddSingleton<RelayMerger>();
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
@@ -392,7 +392,7 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings, Merger merger, RelayMerger relayMerger)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -403,7 +403,8 @@ public class Control
         this.Vault = vault;
         this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
-        this.MergerProvider = new();
+        this.Merger = merger;
+        this.RelayMerger = relayMerger;
 
         if (this.LPBase.Options.TestFeatures)
         {
@@ -439,7 +440,9 @@ public class Control
 
     public NetControl NetControl { get; }
 
-    public Merger.Provider MergerProvider { get; }
+    public Merger Merger { get; }
+
+    public RelayMerger RelayMerger { get; }
 
     public Crystalizer Crystalizer { get; }
 
@@ -473,7 +476,7 @@ public class Control
             }
 
             this.NetControl.Services.Register<IMergerService>();
-            this.MergerProvider.Create(context, mergerPrivateKey);
+            // this.MergerProvider.Create(context, mergerPrivateKey);
         }
     }
 

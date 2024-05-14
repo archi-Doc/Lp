@@ -4,15 +4,22 @@ namespace LP.T3CS;
 
 #pragma warning disable SA1401
 
-[TinyhandObject(Structual = true)]
+/*[TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record CreditData
+public partial record RelayCreditData : CreditDataBase
 {
-    public CreditData()
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "credit")]
+    public RelayCreditData()
+    {
+    }
+}
+
+public partial record CreditDataBase
+{
+    public CreditDataBase()
     {
     }
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     [Key(0, AddProperty = "Credit", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     protected Credit credit = Credit.Default;
 
@@ -21,4 +28,4 @@ public partial record CreditData
 
     [Key(2, AddProperty = "Borrowers", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     protected StorageData<BorrowerData.GoshujinClass> borrowers = new();
-}
+}*/
