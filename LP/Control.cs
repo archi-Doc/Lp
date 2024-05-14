@@ -451,7 +451,7 @@ public class Control
 
     public async Task CreateMerger(UnitContext context)
     {
-        if (this.LPBase.Options.CreditMerger)
+        if (this.LPBase.Options.RequiredMergerPrivateKey)
         {// Merger private key
             SignaturePrivateKey? mergerPrivateKey;
 

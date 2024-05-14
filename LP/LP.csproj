@@ -48,9 +48,5 @@
     <ProjectReference Include="..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <ProjectReference Include="..\Netsphere.Interfaces\Netsphere.Interfaces.csproj" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Misc\Options\" />
-  </ItemGroup>
 
 </Project>

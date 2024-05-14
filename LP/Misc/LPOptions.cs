@@ -74,4 +74,7 @@ public partial record LPOptions
             EnableAlternative = this.EnableAlternative,
         };
     }
+
+    public bool RequiredMergerPrivateKey
+        => this.CreditMerger || this.RelayMerger;
 }
