@@ -24,6 +24,12 @@ public partial record LPOptions
     [SimpleOption("relaymerger", Description = "Enable relay merger feature")]
     public bool RelayMerger { get; init; } = true;
 
+    [SimpleOption("volatilepeer", Description = "Enable volatile peer feature")]
+    public bool VolatilePeer { get; init; } = true;
+
+    [SimpleOption("nonvolatilepeer", Description = "Enable non-volatile peer feature")]
+    public bool NonVolatilePeer { get; init; } = true;
+
     [SimpleOption("test", Description = "Enable test features")]
     public bool TestFeatures { get; set; } = false;
 

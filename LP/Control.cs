@@ -69,6 +69,7 @@ public class Control
                 context.AddTransient<Machines.SingleMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LPControlMachine>();
+                context.AddSingleton<Machines.RelayPeerMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
@@ -655,7 +656,12 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
+        this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
+
+        if (this.LPBase.Options.VolatilePeer)
+        {
+            this.BigMachine.RelayPeerMachine.GetOrCreate();
+        }
     }
 
     private async Task LoadKeyVault_NodeKey()

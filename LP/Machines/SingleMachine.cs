@@ -5,7 +5,7 @@ namespace LP.Machines;
 [MachineObject(UseServiceProvider = true)]
 // [TinyhandObject(UseServiceProvider = true)]
 public partial class SingleMachine : Machine
-{
+{// Control: context.AddSingleton<Machines.RelayPeerMachine>();
     public SingleMachine(IUserInterfaceService consoleSeuserInterfaceServicevice)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
