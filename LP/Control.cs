@@ -460,17 +460,17 @@ public class Control
                 this.Vault.FormatAndTryAdd(Merger.MergerPrivateKeyName, mergerPrivateKey);
             }
 
-            this.NetControl.Services.Register<IMergerService>();
-
             var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
             if (this.LPBase.Options.CreditMerger)
             {
                 context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, mergerPrivateKey);
+                this.NetControl.Services.Register<IMergerService>();
             }
 
             if (this.LPBase.Options.RelayMerger)
             {
                 context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, mergerPrivateKey);
+                this.NetControl.Services.Register<IRelayMergerService>();
             }
         }
     }
