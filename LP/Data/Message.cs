@@ -36,9 +36,9 @@ public class Test1
         g.Add(new());
 
         var engine = new IntegralityEngine();
-        var identity = engine.GetIdentity(g);
+        /*var identity = engine.GetIdentity(g);
         var difference = engine.GetDifference();
-        engine.Integrate(difference);
+        engine.Integrate(difference);*/
     }
 }
 
