@@ -67,7 +67,7 @@ public class PacketPoolBenchmark
     {
         // this.FixedArrayPoolObsolete = new(this.Length, N);
         this.FixedArrayPool = new(this.Length, N);
-        this.ByteArrayPool = new(0, N);
+        this.ByteArrayPool = ByteArrayPool.Create(1024 * 1024 * 16, N);
         // this.ByteArrayPoolObsolete = new(this.Length, N);
         this.Arrays = new byte[N][];
         this.ArrayMemoryPairs = new ArrayMemoryPair[N];
