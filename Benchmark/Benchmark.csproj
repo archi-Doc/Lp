@@ -15,8 +15,8 @@
   <ItemGroup>
     <PackageReference Include="Arc.Collections" Version="1.14.2" />
     <PackageReference Include="Arc.Crypto" Version="1.24.0" />
-    <PackageReference Include="Tinyhand" Version="0.73.3" />
-    <PackageReference Include="ValueLink" Version="0.56.1" />
+    <PackageReference Include="Tinyhand" Version="0.73.4" />
+    <PackageReference Include="ValueLink" Version="0.56.2" />
     
     <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
