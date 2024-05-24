@@ -180,7 +180,7 @@ public partial class RelayAgent
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if (source.A is null)
+        if (source.Owner is null)
         {// Invalid data
             goto Exit;
         }
