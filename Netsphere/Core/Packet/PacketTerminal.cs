@@ -19,7 +19,7 @@ public sealed partial class PacketTerminal
         // ResponseTcs != null: WaitingToSend -> WaitingForResponse -> Complete or Resend
         [Link(Type = ChainType.LinkedList, Name = "WaitingToSendList", AutoLink = true)]
         [Link(Type = ChainType.LinkedList, Name = "WaitingForResponseList", AutoLink = false)]
-        public Item(IPEndPoint endPoint, ulong packetId, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+        public Item(IPEndPoint endPoint, ulong packetId, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
         {
             if (dataToBeMoved.Span.Length < PacketHeader.Length)
             {
@@ -37,7 +37,7 @@ public sealed partial class PacketTerminal
 
         public IPEndPoint EndPoint { get; }
 
-        public ByteArrayPool.MemoryOwner MemoryOwner { get; }
+        public BytePool.RentMemory MemoryOwner { get; }
 
         public TaskCompletionSource<NetResponse>? ResponseTcs { get; }
 
@@ -263,7 +263,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
@@ -395,7 +395,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe NetResult SendPacket(NetAddress netAddress, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -477,7 +477,7 @@ public sealed partial class PacketTerminal
         return NetResult.Success;
     }
 
-    internal unsafe NetResult SendPacketWithoutRelay(NetEndpoint endpoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
+    internal unsafe NetResult SendPacketWithoutRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -507,7 +507,7 @@ public sealed partial class PacketTerminal
         return NetResult.Success;
     }
 
-    private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
+    private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out BytePool.RentMemory owner)
         where TPacket : IPacket, ITinyhandSerialize<TPacket>
     {
         if (packetId == 0)
@@ -550,6 +550,6 @@ public sealed partial class PacketTerminal
             arrayOwner = new(array);
         }
 
-        owner = arrayOwner.ToMemoryOwner(0, arrayLength);
+        owner = arrayOwner.AsMemory(0, arrayLength);
     }
 }

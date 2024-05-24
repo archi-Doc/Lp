@@ -30,7 +30,7 @@ public sealed class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
-            ByteArrayPool.Owner? arrayOwner = null;
+            BytePool.RentArray? arrayOwner = null;
             while (!core.IsTerminated)
             {
                 var udp = core.socket.UnsafeUdpClient;

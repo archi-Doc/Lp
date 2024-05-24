@@ -828,11 +828,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine("var value = context.Owner.Memory.ToArray();");
         }
         else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
-        {// ByteArrayPool.MemoryOwner
+        {// BytePool.RentMemory
             ssb.AppendLine("var value = context.Owner;");
         }
         else if (method.ParameterType == ServiceMethod.Type.ReadOnlyMemoryOwner)
-        {// ByteArrayPool.ReadOnlyMemoryOwner
+        {// BytePool.RentReadOnlyMemory
             ssb.AppendLine("var value = context.Owner.AsReadOnly();");
         }
         else if (method.ParameterLength == 0)
@@ -937,11 +937,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine($"context.Owner = result != null ? new {ServiceMethod.MemoryOwnerName}(result) : default;");
         }
         else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
-        {// ByteArrayPool.MemoryOwner result;
+        {// BytePool.RentMemory result;
             ssb.AppendLine("context.Owner = result;");
         }
         else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
-        {// ByteArrayPool.ReadOnlyMemoryOwner result;
+        {// BytePool.RentReadOnlyMemory result;
             ssb.AppendLine("context.Owner = result.AsMemory();");
         }
         else if (method.ReturnType == ServiceMethod.Type.ReceiveStream ||

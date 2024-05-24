@@ -9,10 +9,10 @@ internal static class PacketPool
 
     static PacketPool()
     {
-        packetPool = ByteArrayPool.Create(MaxPacketSize, PoolLimit);
+        packetPool = BytePool.CreateFlat(MaxPacketSize, PoolLimit);
     }
 
-    public static ByteArrayPool.Owner Rent() => packetPool.Rent(MaxPacketSize);
+    public static BytePool.RentArray Rent() => packetPool.Rent(MaxPacketSize);
 
-    private static ByteArrayPool packetPool;
+    private static BytePool packetPool;
 }

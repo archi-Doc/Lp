@@ -52,7 +52,7 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryDecrypt(NetEndpoint endpoint, ref ByteArrayPool.MemoryOwner owner, out NetAddress originalAddress)
+    public bool TryDecrypt(NetEndpoint endpoint, ref BytePool.RentMemory owner, out NetAddress originalAddress)
     {
         if (!endpoint.Equals(this.FirstEndpoint))
         {
@@ -98,7 +98,7 @@ internal class RelayKey
                     span = span.Slice(RelayHeader.Length);
                     var contentLength = span.Length - relayHeader.PaddingLength;
                     span.Slice(0, contentLength).CopyTo(span2);
-                    owner = owner.Owner.ToMemoryOwner(0, RelayHeader.RelayIdLength + contentLength);
+                    owner = owner.Owner.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
                     // owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
 
                     originalAddress = relayHeader.NetAddress;
@@ -121,7 +121,7 @@ Exit:
         return false;
     }
 
-    public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
+    public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out BytePool.RentMemory encrypted, out NetEndpoint relayEndpoint)
     {
         Debug.Assert(content.Length >= 4);
         Debug.Assert(content[0] == 0);
@@ -156,7 +156,7 @@ Exit:
         }
 
         var aes = AesPool.Get();
-        encrypted = PacketPool.Rent().ToMemoryOwner();
+        encrypted = PacketPool.Rent().AsMemory();
 
         // RelayId
         var span = encrypted.Span;

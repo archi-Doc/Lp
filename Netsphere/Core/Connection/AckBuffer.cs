@@ -157,7 +157,7 @@ internal partial class AckBuffer
     {
         const int maxLength = PacketHeader.MaxFrameLength - 2;
 
-        ByteArrayPool.Owner? owner = default;
+        BytePool.RentArray? owner = default;
         Span<byte> span = default;
 
         while (ackQueue.TryDequeue(out var item))
@@ -265,11 +265,11 @@ NewPacket:
             connection.CreateAckPacket(owner, spanLength, out var packetLength);
             if (connection.MinimumNumberOfRelays == 0)
             {// No relay
-                netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, owner.ToMemoryOwner(0, packetLength));
+                netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, owner.AsMemory(0, packetLength));
             }
             else
             {// Relay
-                if (this.relayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, owner.ToMemoryOwner(0, packetLength).Span, out var encrypted, out var relayEndpoint))
+                if (this.relayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, owner.AsMemory(0, packetLength).Span, out var encrypted, out var relayEndpoint))
                 {
                     netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, encrypted);
                 }

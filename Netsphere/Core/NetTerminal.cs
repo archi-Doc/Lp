@@ -248,10 +248,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.RelayAgent.ProcessSend(netSender);
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, BytePool.RentArray toBeShared, int packetSize)
     {// Checked: packetSize
         var currentSystemMics = Mics.FastSystem;
-        var owner = toBeShared.ToMemoryOwner(0, packetSize);
+        var owner = toBeShared.AsMemory(0, packetSize);
         var span = owner.Span;
 
         // PacketHeaderCode

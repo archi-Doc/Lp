@@ -150,7 +150,7 @@ public class RelayCircuit
         return sb.ToString();
     }
 
-    /*internal bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out ByteArrayPool.MemoryOwner encrypted, out NetEndpoint relayEndpoint)
+    /*internal bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out BytePool.RentMemory encrypted, out NetEndpoint relayEndpoint)
         => this.relayKey.TryEncrypt(relayNumber, destination, content, out encrypted, out relayEndpoint);*/
 
     internal async Task Terminate(CancellationToken cancellationToken)

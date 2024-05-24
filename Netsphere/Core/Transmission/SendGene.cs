@@ -30,7 +30,7 @@ internal partial class SendGene
 
     public ICongestionControl CongestionControl { get; }
 
-    public ByteArrayPool.MemoryOwner Packet { get; private set; }
+    public BytePool.RentMemory Packet { get; private set; }
 
     public long SentMics { get; private set; }
 
@@ -71,7 +71,7 @@ internal partial class SendGene
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
+    public void SetSend(BytePool.RentMemory toBeMoved)
     {
         this.Packet = toBeMoved;
     }

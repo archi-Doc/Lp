@@ -462,7 +462,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return r.Result;
     }
 
-    async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> IClientConnectionInternal.RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
+    async Task<(NetResult Result, ulong DataId, BytePool.RentMemory Value)> IClientConnectionInternal.RpcSendAndReceive(BytePool.RentMemory data, ulong dataId)
     {
         if (!this.IsActive)
         {
@@ -514,7 +514,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
-    async Task<(NetResult Result, ReceiveStream? Stream)> IClientConnectionInternal.RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
+    async Task<(NetResult Result, ReceiveStream? Stream)> IClientConnectionInternal.RpcSendAndReceiveStream(BytePool.RentMemory data, ulong dataId)
     {
         if (!this.IsActive)
         {

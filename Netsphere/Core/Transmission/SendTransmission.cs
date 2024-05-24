@@ -238,7 +238,7 @@ internal sealed partial class SendTransmission : IDisposable
         }
     }
 
-    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? sentTcs)
+    internal NetResult SendBlock(uint dataKind, ulong dataId, BytePool.RentMemory block, TaskCompletionSource<NetResult>? sentTcs)
     {
         lock (this.syncObject)
         {
@@ -406,7 +406,7 @@ internal sealed partial class SendTransmission : IDisposable
             }
 
             var gene = new SendGene(this);
-            ByteArrayPool.MemoryOwner owner;
+            BytePool.RentMemory owner;
             if (this.GeneSerialMax == 0)
             {// First gene
                 this.CreateFirstPacket_Stream(dataControl, 0, stream.DataId, ReadOnlySpan<byte>.Empty, out owner);
@@ -498,7 +498,7 @@ Loop:
                     // Debug.Assert(chain.CanAdd); // Consumed < items.Length;
                     int size;
                     var gene = new SendGene(this);
-                    ByteArrayPool.MemoryOwner owner;
+                    BytePool.RentMemory owner;
                     if (this.GeneSerialMax == 0)
                     {// First gene
                         size = Math.Min(buffer.Length, FirstGeneFrame.MaxGeneLength);
@@ -826,7 +826,7 @@ Exit:
         this.Mode = NetTransmissionMode.StreamCompleted;
     }*/
 
-    private void CreateFirstPacket_Block(int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket_Block(int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out BytePool.RentMemory owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -862,7 +862,7 @@ Exit:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFirstPacket_Stream(DataControl dataControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket_Stream(DataControl dataControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out BytePool.RentMemory owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -895,7 +895,7 @@ Exit:
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(DataControl dataControl, int dataPosition, ReadOnlySpan<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(DataControl dataControl, int dataPosition, ReadOnlySpan<byte> block, out BytePool.RentMemory owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 

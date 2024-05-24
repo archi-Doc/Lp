@@ -719,7 +719,7 @@ Wait:
         return this.SendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: endpoint, toBeShared.Length
         if (this.CurrentState == State.Disposed)
         {
@@ -794,7 +794,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_Ack(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Ack(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
@@ -854,7 +854,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FirstGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FirstGene(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
@@ -981,7 +981,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FollowingGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FollowingGene(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FollowingGeneFrame.LengthExcludingFrameType)
@@ -1022,7 +1022,7 @@ Wait:
         transmission.ProcessReceive_Gene(dataControl, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
-    internal void ProcessReceive_Knock(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Knock(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// KnockResponseFrameCode
         if (toBeShared.Memory.Length < (KnockFrame.Length - 2))
         {
@@ -1051,7 +1051,7 @@ Wait:
         this.SendPriorityFrame(frame);
     }
 
-    internal void ProcessReceive_KnockResponse(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_KnockResponse(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// KnockResponseFrameCode
         var span = toBeShared.Span;
         if (span.Length < (KnockResponseFrame.Length - 2))
@@ -1075,7 +1075,7 @@ Wait:
         }
     }
 
-    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)
+    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out BytePool.RentMemory owner)
     {// ProtectedPacketCode
         Debug.Assert(frame.Length > 0);
         if (frame.Length > PacketHeader.MaxFrameLength)
@@ -1114,11 +1114,11 @@ Wait:
 
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
-        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        owner = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
         return true;
     }
 
-    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out BytePool.RentMemory owner)
     {// ProtectedPacketCode
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
@@ -1148,15 +1148,15 @@ Wait:
         span2 = span2.Slice(frameHeader.Length);
         frameContent.CopyTo(span2);
 
-        span2 = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        span2 = arrayOwner.Array.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
         this.TryEncryptCbc(salt, span2.Slice(0, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
 
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
-        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        owner = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
     }
 
-    internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
+    internal void CreateAckPacket(BytePool.RentArray owner, int length, out int packetLength)
     {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var span = owner.ByteArray.AsSpan();

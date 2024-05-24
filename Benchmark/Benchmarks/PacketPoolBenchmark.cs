@@ -46,13 +46,13 @@ public class PacketPoolBenchmark
 
     public FixedArrayPool.Owner[] OwnerArray { get; set; } = default!;
 
-    public ByteArrayPool.Owner[] OwnerArray2 { get; set; } = default!;
+    public BytePool.RentArray[] OwnerArray2 { get; set; } = default!;
 
     // public ByteArrayPoolObsolete.Owner[] OwnerArray3 { get; set; } = default!;
 
     public FixedArrayPool.MemoryOwner[] MemoryArray { get; set; } = default!;
 
-    public ByteArrayPool.MemoryOwner[] MemoryArray2 { get; set; } = default!;
+    public BytePool.RentMemory[] MemoryArray2 { get; set; } = default!;
 
     // public ByteArrayPoolObsolete.MemoryOwner[] MemoryArray3 { get; set; } = default!;
 
@@ -72,10 +72,10 @@ public class PacketPoolBenchmark
         this.Arrays = new byte[N][];
         this.ArrayMemoryPairs = new ArrayMemoryPair[N];
         this.OwnerArray = new FixedArrayPool.Owner[N];
-        this.OwnerArray2 = new ByteArrayPool.Owner[N];
+        this.OwnerArray2 = new BytePool.RentArray[N];
         // this.OwnerArray3 = new ByteArrayPoolObsolete.Owner[N];
         this.MemoryArray = new FixedArrayPool.MemoryOwner[N];
-        this.MemoryArray2 = new ByteArrayPool.MemoryOwner[N];
+        this.MemoryArray2 = new BytePool.RentMemory[N];
         // this.MemoryArray3 = new ByteArrayPoolObsolete.MemoryOwner[N];
         // this.MemoryOwnerArray = new IMemoryOwner<byte>[N];
         for (var n = 0; n < N; n++)
@@ -135,7 +135,7 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.Owner ByteOwner1()
+    public BytePool.RentArray ByteOwner1()
     {
         var owner = this.ByteArrayPool.Rent(this.Length);
         owner.Return();
@@ -153,21 +153,21 @@ public class PacketPoolBenchmark
     [Benchmark]
     public FixedArrayPool.MemoryOwner FixedMemoryOwner1()
     {
-        var owner = this.FixedArrayPool.Rent().ToMemoryOwner(0, 10);
+        var owner = this.FixedArrayPool.Rent().AsMemory(0, 10);
         return owner.Return();
     }
 
     [Benchmark]
-    public ByteArrayPool.MemoryOwner ByteMemoryOwner1()
+    public BytePool.RentMemory ByteMemoryOwner1()
     {
-        var owner = this.ByteArrayPool.Rent(this.Length).ToMemoryOwner(0, 10);
+        var owner = this.ByteArrayPool.Rent(this.Length).AsMemory(0, 10);
         return owner.Return();
     }
 
     /*[Benchmark]
     public ByteArrayPoolObsolete.MemoryOwner ByteMemoryOwner1()
     {
-        var owner = this.ByteArrayPoolObsolete.Rent(this.Length).ToMemoryOwner(0, 10);
+        var owner = this.ByteArrayPoolObsolete.Rent(this.Length).AsMemory(0, 10);
         return owner.Return();
     }*/
 
@@ -307,7 +307,7 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.Owner[] ByteOwnerN()
+    public BytePool.RentArray[] ByteOwnerN()
     {
         for (var n = 0; n < N; n++)
         {
@@ -343,7 +343,7 @@ public class PacketPoolBenchmark
     {
         for (var n = 0; n < N; n++)
         {
-            this.MemoryArray[n] = this.FixedArrayPool.Rent().ToMemoryOwner(0, 10);
+            this.MemoryArray[n] = this.FixedArrayPool.Rent().AsMemory(0, 10);
         }
 
         for (var n = 0; n < N; n++)
@@ -355,11 +355,11 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.MemoryOwner[] ByteMemoryOwnerN()
+    public BytePool.RentMemory[] ByteMemoryOwnerN()
     {
         for (var n = 0; n < N; n++)
         {
-            this.MemoryArray2[n] = this.ByteArrayPool.Rent(this.Length).ToMemoryOwner(0, 10);
+            this.MemoryArray2[n] = this.ByteArrayPool.Rent(this.Length).AsMemory(0, 10);
         }
 
         for (var n = 0; n < N; n++)
@@ -375,7 +375,7 @@ public class PacketPoolBenchmark
     {
         for (var n = 0; n < N; n++)
         {
-            this.MemoryArray3[n] = this.ByteArrayPoolObsolete.Rent(this.Length).ToMemoryOwner(0, 10);
+            this.MemoryArray3[n] = this.ByteArrayPoolObsolete.Rent(this.Length).AsMemory(0, 10);
         }
 
         for (var n = 0; n < N; n++)

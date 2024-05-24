@@ -20,7 +20,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     internal static AsyncLocal<TransmissionContext?> AsyncLocal = new();
 
-    internal TransmissionContext(ServerConnection serverConnection, uint transmissionId, uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner toBeShared)
+    internal TransmissionContext(ServerConnection serverConnection, uint transmissionId, uint dataKind, ulong dataId, BytePool.RentMemory toBeShared)
     {
         this.ServerConnection = serverConnection;
         this.TransmissionId = transmissionId;
@@ -42,7 +42,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     public ulong DataId { get; }
 
-    public ByteArrayPool.MemoryOwner Owner { get; set; }
+    public BytePool.RentMemory Owner { get; set; }
 
     public NetResult Result { get; set; }
 
@@ -80,7 +80,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
         if (typeof(TSend) == typeof(NetResult))
         {
-            return this.SendAndForget(ByteArrayPool.MemoryOwner.Empty, Unsafe.As<TSend, ulong>(ref data));
+            return this.SendAndForget(BytePool.RentMemory.Empty, Unsafe.As<TSend, ulong>(ref data));
         }
 
         if (!NetHelper.TrySerialize(data, out var owner))
@@ -244,9 +244,9 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal NetResult SendResultAndForget(NetResult result)
-        => this.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+        => this.SendAndForget(BytePool.RentMemory.Empty, (ulong)result);
 
-    internal NetResult SendAndForget(ByteArrayPool.MemoryOwner toBeShared, ulong dataId = 0)
+    internal NetResult SendAndForget(BytePool.RentMemory toBeShared, ulong dataId = 0)
     {
         if (!this.ServerConnection.IsActive)
         {

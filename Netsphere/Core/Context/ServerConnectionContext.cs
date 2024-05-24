@@ -177,7 +177,7 @@ public class ServerConnectionContext
                         }
                         else
                         {// Failure
-                            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                            transmissionContext.SendAndForget(BytePool.RentMemory.Empty, (ulong)result);
                         }
                     }
                 }
@@ -187,7 +187,7 @@ public class ServerConnectionContext
             }
             catch
             {// Unknown exception
-                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownError);
+                transmissionContext.SendAndForget(BytePool.RentMemory.Empty, (ulong)NetResult.UnknownError);
             }
             finally
             {
@@ -288,7 +288,7 @@ public class ServerConnectionContext
         return;
 
 SendNoNetService:
-        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
+        transmissionContext.SendAndForget(BytePool.RentMemory.Empty, (ulong)NetResult.NoNetService);
         transmissionContext.ReturnAndDisposeStream();
         return;
     }

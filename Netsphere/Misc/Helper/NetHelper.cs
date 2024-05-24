@@ -217,14 +217,14 @@ public static class NetHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SerializeNetResult(NetResult value, out ByteArrayPool.MemoryOwner owner)
+    public static void SerializeNetResult(NetResult value, out BytePool.RentMemory owner)
     {
         var buffer = RentBuffer();
         buffer[0] = (byte)value;
-        owner = new ByteArrayPool.MemoryOwner(buffer, 0, 1);
+        owner = new BytePool.RentMemory(buffer, 0, 1);
     }
 
-    public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
+    public static bool TrySerialize<T>(T value, out BytePool.RentMemory owner)
     {
         var buffer = RentBuffer();
         try
@@ -235,13 +235,13 @@ public static class NetHelper
             writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
             if (isInitialBuffer)
             {
-                owner = new ByteArrayPool.MemoryOwner(buffer, 0, arrayLength);
+                owner = new BytePool.RentMemory(buffer, 0, arrayLength);
                 return true;
             }
             else
             {
                 ReturnBuffer(buffer);
-                owner = new ByteArrayPool.MemoryOwner(array);
+                owner = new BytePool.RentMemory(array);
                 return true;
             }
         }
@@ -253,7 +253,7 @@ public static class NetHelper
         }
     }
 
-    public static bool TrySerializeWithLength<T>(T value, out ByteArrayPool.MemoryOwner owner)
+    public static bool TrySerializeWithLength<T>(T value, out BytePool.RentMemory owner)
     {
         var buffer = RentBuffer();
         try
@@ -266,13 +266,13 @@ public static class NetHelper
             BitConverter.TryWriteBytes(array, arrayLength - sizeof(int));
             if (isInitialBuffer)
             {
-                owner = new ByteArrayPool.MemoryOwner(buffer, 0, arrayLength);
+                owner = new BytePool.RentMemory(buffer, 0, arrayLength);
                 return true;
             }
             else
             {
                 ReturnBuffer(buffer);
-                owner = new ByteArrayPool.MemoryOwner(array);
+                owner = new BytePool.RentMemory(array);
                 return true;
             }
         }
@@ -284,10 +284,10 @@ public static class NetHelper
         }
     }
 
-    public static bool TryDeserialize<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value)
+    public static bool TryDeserialize<T>(BytePool.RentMemory owner, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    public static bool TryDeserialize<T>(ByteArrayPool.ReadOnlyMemoryOwner owner, [MaybeNullWhen(false)] out T value)
+    public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory owner, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
     /*public static bool TryDeserializeWithLength<T>(ReadOnlySpan<byte> span, [MaybeNullWhen(false)] out T value, out int length)

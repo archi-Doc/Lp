@@ -9,8 +9,8 @@ namespace Netsphere.Generator;
 public class ServiceMethod
 {
     public const string ByteArrayName = "byte[]";
-    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
-    public const string ReadOnlyMemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
+    public const string MemoryOwnerName = "Arc.Unit.BytePool.RentMemory";
+    public const string ReadOnlyMemoryOwnerName = "Arc.Unit.BytePool.RentReadOnlyMemory";
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";

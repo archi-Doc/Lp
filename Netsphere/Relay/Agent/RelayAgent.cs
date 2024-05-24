@@ -177,10 +177,10 @@ public partial class RelayAgent
         }
     }
 
-    public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, ByteArrayPool.MemoryOwner source, out ByteArrayPool.MemoryOwner decrypted)
+    public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if (source.Owner is null)
+        if (source.A is null)
         {// Invalid data
             goto Exit;
         }
@@ -223,7 +223,7 @@ public partial class RelayAgent
                 if (relayHeader.Zero == 0)
                 { // Decrypted. Process the packet on this node.
                     span = span.Slice(RelayHeader.Length - RelayHeader.RelayIdLength);
-                    decrypted = source.Owner.ToMemoryOwner(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
+                    decrypted = source.Owner.AsMemory(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
                     if (relayHeader.NetAddress == NetAddress.Relay)
                     {// Initiator -> This node
                         MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
@@ -327,7 +327,7 @@ public partial class RelayAgent
                 sourceSpan = sourceSpan.Slice(contentLength);
                 sourceSpan.Slice(0, paddingLength).Fill(0x07);
 
-                source = source.Owner.ToMemoryOwner(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
+                source = source.Owner.AsMemory(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
                 span = source.Span.Slice(RelayHeader.RelayIdLength);
             }
 
