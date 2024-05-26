@@ -188,14 +188,14 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     public async NetTask<NetResult> InternalConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
     {
-        if (!NetHelper.TrySerialize(a1, out var owner))
+        if (!NetHelper.TrySerialize(a1, out var rentMemory))
         {
             return NetResult.SerializationFailed;
         }
 
         this.PrepareBidirectionally(); // Create the ServerConnection in advance, as packets may not arrive in order.
-        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
-        owner.Return();
+        var response = await this.RpcSendAndReceive(rentMemory, dataId).ConfigureAwait(false);
+        rentMemory.Return();
 
         try
         {

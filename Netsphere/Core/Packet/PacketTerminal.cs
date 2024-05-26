@@ -333,8 +333,8 @@ public sealed partial class PacketTerminal
                 if (this.netBase.AllowUnsafeConnection)
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
-                    CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, owner, default);
+                    CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                 }
 
                 return;
@@ -344,8 +344,8 @@ public sealed partial class PacketTerminal
                 var packet = this.netTerminal.RelayAgent.ProcessPingRelay(destinationRelayId);
                 if (packet is not null)
                 {
-                    CreatePacket(packetId, packet, out var owner);
-                    this.SendPacketWithoutRelay(endpoint, owner, default);
+                    CreatePacket(packetId, packet, out var rentMemory);
+                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                 }
 
                 return;

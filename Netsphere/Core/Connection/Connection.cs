@@ -1118,7 +1118,7 @@ Wait:
         return true;
     }
 
-    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out BytePool.RentMemory owner)
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out BytePool.RentMemory rentMemory)
     {// ProtectedPacketCode
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
@@ -1153,7 +1153,7 @@ Wait:
 
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
-        owner = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        rentMemory = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
     }
 
     internal void CreateAckPacket(BytePool.RentArray rentArray, int length, out int packetLength)

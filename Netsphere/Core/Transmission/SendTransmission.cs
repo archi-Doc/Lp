@@ -322,8 +322,8 @@ internal sealed partial class SendTransmission : IDisposable
                 this.genes.GeneSerialListChain.Resize(info.NumberOfGenes);
 
                 var firstGene = new SendGene(this);
-                this.CreateFirstPacket_Block(info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
-                firstGene.SetSend(owner);
+                this.CreateFirstPacket_Block(info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var rentMemory);
+                firstGene.SetSend(rentMemory);
                 span = span.Slice((int)info.FirstGeneSize);
                 firstGene.Goshujin = this.genes;
                 this.genes.GeneSerialListChain.Add(firstGene);
@@ -332,8 +332,8 @@ internal sealed partial class SendTransmission : IDisposable
                 {
                     var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : FollowingGeneFrame.MaxGeneLength);
                     var gene = new SendGene(this);
-                    this.CreateFollowingPacket(DataControl.Valid, i, span.Slice(0, size), out owner);
-                    gene.SetSend(owner);
+                    this.CreateFollowingPacket(DataControl.Valid, i, span.Slice(0, size), out rentMemory);
+                    gene.SetSend(rentMemory);
 
                     span = span.Slice(size);
                     gene.Goshujin = this.genes;

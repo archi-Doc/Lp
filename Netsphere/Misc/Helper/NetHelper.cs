@@ -217,11 +217,11 @@ public static class NetHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SerializeNetResult(NetResult value, out BytePool.RentMemory owner)
+    public static void SerializeNetResult(NetResult value, out BytePool.RentMemory rentMemory)
     {
         var buffer = RentBuffer();
         buffer[0] = (byte)value;
-        owner = new BytePool.RentMemory(buffer, 0, 1);
+        rentMemory = new BytePool.RentMemory(buffer, 0, 1);
     }
 
     public static bool TrySerialize<T>(T value, out BytePool.RentMemory rentMemory)
