@@ -826,7 +826,7 @@ Exit:
         this.Mode = NetTransmissionMode.StreamCompleted;
     }*/
 
-    private void CreateFirstPacket_Block(int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out BytePool.RentMemory owner)
+    private void CreateFirstPacket_Block(int totalGene, uint dataKind, ulong dataId, ReadOnlySpan<byte> block, out BytePool.RentMemory rentMemory)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -859,10 +859,10 @@ Exit:
         span = span.Slice(sizeof(ulong));
 
         Debug.Assert(span.Length == 0);
-        this.Connection.CreatePacket(frameHeader, block, out owner);
+        this.Connection.CreatePacket(frameHeader, block, out rentMemory);
     }
 
-    private void CreateFirstPacket_Stream(DataControl dataControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out BytePool.RentMemory owner)
+    private void CreateFirstPacket_Stream(DataControl dataControl, long maxStreamLength, ulong dataId, ReadOnlySpan<byte> block, out BytePool.RentMemory rentMemory)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -892,10 +892,10 @@ Exit:
         span = span.Slice(sizeof(ulong));
 
         Debug.Assert(span.Length == 0);
-        this.Connection.CreatePacket(frameHeader, block, out owner);
+        this.Connection.CreatePacket(frameHeader, block, out rentMemory);
     }
 
-    private void CreateFollowingPacket(DataControl dataControl, int dataPosition, ReadOnlySpan<byte> block, out BytePool.RentMemory owner)
+    private void CreateFollowingPacket(DataControl dataControl, int dataPosition, ReadOnlySpan<byte> block, out BytePool.RentMemory rentMemory)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 
@@ -916,6 +916,6 @@ Exit:
         span = span.Slice(sizeof(int));
 
         Debug.Assert(span.Length == 0);
-        this.Connection.CreatePacket(frameHeader, block, out owner);
+        this.Connection.CreatePacket(frameHeader, block, out rentMemory);
     }
 }

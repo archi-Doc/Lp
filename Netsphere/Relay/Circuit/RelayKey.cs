@@ -98,8 +98,8 @@ internal class RelayKey
                     span = span.Slice(RelayHeader.Length);
                     var contentLength = span.Length - relayHeader.PaddingLength;
                     span.Slice(0, contentLength).CopyTo(span2);
-                    rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
-                    // owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
+                    rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);//
+                    // rentMemory = new(rentMemory.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
 
                     originalAddress = relayHeader.NetAddress;
                     return true;

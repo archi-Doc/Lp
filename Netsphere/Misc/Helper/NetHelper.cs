@@ -284,11 +284,11 @@ public static class NetHelper
         }
     }
 
-    public static bool TryDeserialize<T>(BytePool.RentMemory owner, [MaybeNullWhen(false)] out T value)
-        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
+    public static bool TryDeserialize<T>(BytePool.RentMemory rentMemory, [MaybeNullWhen(false)] out T value)
+        => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory owner, [MaybeNullWhen(false)] out T value)
-        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, TinyhandSerializerOptions.Standard);
+    public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory rentMemory, [MaybeNullWhen(false)] out T value)
+        => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
     /*public static bool TryDeserializeWithLength<T>(ReadOnlySpan<byte> span, [MaybeNullWhen(false)] out T value, out int length)
     {

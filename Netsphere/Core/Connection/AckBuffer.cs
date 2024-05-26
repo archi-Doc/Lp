@@ -277,7 +277,7 @@ NewPacket:
                 rentArray.Return();
             }
 
-            // owner = owner.Return(); // Moved
+            // rentMemory = rentMemory.Return(); // Moved
             rentArray = default;
         }
     }

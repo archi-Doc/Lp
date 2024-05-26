@@ -105,7 +105,7 @@ public sealed partial class PacketTerminal
 
         if (NetConstants.LogLowLevelNet)
         {
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {rentMemory.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
         }
 
         try
@@ -161,12 +161,12 @@ public sealed partial class PacketTerminal
         }
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CreatePacket(0, packet, out var owner);
-        this.AddSendPacket(endPoint, owner, responseTcs);
+        CreatePacket(0, packet, out var rentMemory);
+        this.AddSendPacket(endPoint, rentMemory, responseTcs);
 
         if (NetConstants.LogLowLevelNet)
         {
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {owner.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {rentMemory.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
         }
 
         try
@@ -357,8 +357,8 @@ public sealed partial class PacketTerminal
                     var packet = this.netTerminal.RelayAgent.ProcessRelayOperation(destinationRelayId, p);
                     if (packet is not null)
                     {
-                        CreatePacket(packetId, packet, out var owner);
-                        this.SendPacketWithoutRelay(endpoint, owner, default);
+                        CreatePacket(packetId, packet, out var rentMemory);
+                        this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     }
                 }
 

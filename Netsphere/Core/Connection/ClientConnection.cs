@@ -71,7 +71,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return NetResult.Closed;
         }
 
-        if (!NetHelper.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var rentMemory))
         {
             return NetResult.SerializationFailed;
         }
@@ -81,13 +81,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         {
             if (transmissionAndTimeout.Transmission is null)
             {
-                owner.Return();
+                rentMemory.Return();
                 return NetResult.NoTransmission;
             }
 
             var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, tcs);
-            owner.Return();
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, rentMemory, tcs);
+            rentMemory.Return();
             if (result != NetResult.Success)
             {
                 return result;
@@ -577,13 +577,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     async Task<ServiceResponse<NetResult>> IClientConnectionInternal.UpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
-        if (!NetHelper.TrySerialize(a1, out var owner))
+        if (!NetHelper.TrySerialize(a1, out var rentMemory))
         {
             return new(NetResult.SerializationFailed, NetResult.SerializationFailed);
         }
 
-        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
-        owner.Return();
+        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(rentMemory, dataId).ConfigureAwait(false);
+        rentMemory.Return();
 
         try
         {
@@ -609,7 +609,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     async Task<ServiceResponse<NetResult>> IClientConnectionInternal.ConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
     {
-        if (!NetHelper.TrySerialize<CertificateToken<ConnectionAgreement>>(a1, out var rentMemory))
+        if (!NetHelper.TrySerialize(a1, out var rentMemory))
         {
             return new(NetResult.SerializationFailed, NetResult.SerializationFailed);
         }
