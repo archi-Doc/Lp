@@ -23,7 +23,7 @@ public interface ITestService3 : INetService
 
     public NetTask<BytePool.RentMemory> SendMemoryOwner(BytePool.RentMemory owner);
 
-    public NetTask<BytePool.RentReadOnlyMemory> SendReadOnlyMemoryOwner(BytePool.RentReadOnlyMemory owner);
+    public NetTask<BytePool.RentReadOnlyMemory> SendReadOnlyMemoryOwner(BytePool.RentReadOnlyMemory rentMemory);
 }
 
 [NetServiceObject]

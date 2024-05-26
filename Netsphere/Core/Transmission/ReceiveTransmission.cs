@@ -207,7 +207,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
-        BytePool.RentMemory owner = default;
+        BytePool.RentMemory rentMemory = default;
         lock (this.syncObject)
         {
             if (this.Mode == NetTransmissionMode.Disposed)
@@ -321,7 +321,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             if (completeFlag)
             {// Complete (Burst, Stream)
-                this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
+                this.ProcessReceive_GeneComplete(out dataKind, out dataId, out rentMemory);
             }
         }
 
@@ -376,16 +376,16 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             this.Connection.RemoveTransmission(this);
 
-            if (owner.IsRent)
+            if (rentMemory.IsRent)
             {
                 if (this.Connection is ServerConnection serverConnection)
                 {// InvokeServer: Connection, NetTransmission, Owner
-                    var transmissionContext = new TransmissionContext(serverConnection, this.TransmissionId, dataKind, dataId, owner.IncrementAndShare());
+                    var transmissionContext = new TransmissionContext(serverConnection, this.TransmissionId, dataKind, dataId, rentMemory.IncrementAndShare());
                     serverConnection.GetContext().InvokeSync(transmissionContext);
                 }
 
-                receivedTcs?.SetResult(new(NetResult.Success, dataId, 0, owner.IncrementAndShare()));
-                owner.Return();
+                receivedTcs?.SetResult(new(NetResult.Success, dataId, 0, rentMemory.IncrementAndShare()));
+                rentMemory.Return();
             }
         }
     }

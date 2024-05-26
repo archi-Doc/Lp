@@ -11,10 +11,10 @@ public class MultiplyIntFilter : IServiceFilter
     {
         if (TinyhandSerializer.TryDeserialize<int>(context.RentMemory.Memory.Span, out var value))
         {
-            if (NetHelper.TrySerialize(value * this.multiplier, out var owner))
+            if (NetHelper.TrySerialize(value * this.multiplier, out var rentMemory))
             {
                 context.RentMemory.Return();
-                context.RentMemory = owner;
+                context.RentMemory = rentMemory;
             }
         }
 

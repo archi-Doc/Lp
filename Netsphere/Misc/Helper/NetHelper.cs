@@ -224,7 +224,7 @@ public static class NetHelper
         owner = new BytePool.RentMemory(buffer, 0, 1);
     }
 
-    public static bool TrySerialize<T>(T value, out BytePool.RentMemory owner)
+    public static bool TrySerialize<T>(T value, out BytePool.RentMemory rentMemory)
     {
         var buffer = RentBuffer();
         try
@@ -235,25 +235,25 @@ public static class NetHelper
             writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
             if (isInitialBuffer)
             {
-                owner = new BytePool.RentMemory(buffer, 0, arrayLength);
+                rentMemory = new BytePool.RentMemory(buffer, 0, arrayLength);
                 return true;
             }
             else
             {
                 ReturnBuffer(buffer);
-                owner = new BytePool.RentMemory(array);
+                rentMemory = new BytePool.RentMemory(array);
                 return true;
             }
         }
         catch
         {
             ReturnBuffer(buffer);
-            owner = default;
+            rentMemory = default;
             return false;
         }
     }
 
-    public static bool TrySerializeWithLength<T>(T value, out BytePool.RentMemory owner)
+    public static bool TrySerializeWithLength<T>(T value, out BytePool.RentMemory rentMemory)
     {
         var buffer = RentBuffer();
         try
@@ -266,20 +266,20 @@ public static class NetHelper
             BitConverter.TryWriteBytes(array, arrayLength - sizeof(int));
             if (isInitialBuffer)
             {
-                owner = new BytePool.RentMemory(buffer, 0, arrayLength);
+                rentMemory = new BytePool.RentMemory(buffer, 0, arrayLength);
                 return true;
             }
             else
             {
                 ReturnBuffer(buffer);
-                owner = new BytePool.RentMemory(array);
+                rentMemory = new BytePool.RentMemory(array);
                 return true;
             }
         }
         catch
         {
             ReturnBuffer(buffer);
-            owner = default;
+            rentMemory = default;
             return false;
         }
     }

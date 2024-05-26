@@ -60,12 +60,12 @@ public abstract class SendStreamBase
 
     public async Task<NetResult> SendBlock<TSend>(TSend data, CancellationToken cancellationToken = default)
     {
-        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        if (!NetHelper.TrySerializeWithLength(data, out var rentMemory))
         {
             return NetResult.SerializationFailed;
         }
 
-        if (owner.Memory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
+        if (rentMemory.Memory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
         {
             return NetResult.BlockSizeLimit;
         }
@@ -73,11 +73,11 @@ public abstract class SendStreamBase
         NetResult result;
         try
         {
-            result = await this.Send(owner.Memory, cancellationToken).ConfigureAwait(false);
+            result = await this.Send(rentMemory.Memory, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
-            owner.Return();
+            rentMemory.Return();
         }
 
         return result;

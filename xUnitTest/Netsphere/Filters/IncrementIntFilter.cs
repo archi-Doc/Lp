@@ -11,10 +11,10 @@ public class IncrementIntFilter : IServiceFilter
     {
         if (TinyhandSerializer.TryDeserialize<int>(context.RentMemory.Memory.Span, out var value))
         {
-            if (NetHelper.TrySerialize(value + 1, out var owner))
+            if (NetHelper.TrySerialize(value + 1, out var rentMemory))
             {
                 context.RentMemory.Return();
-                context.RentMemory = owner;
+                context.RentMemory = rentMemory;
             }
         }
 

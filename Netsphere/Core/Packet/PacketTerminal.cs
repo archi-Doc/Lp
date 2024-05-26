@@ -96,8 +96,8 @@ public sealed partial class PacketTerminal
         }
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CreatePacket(0, packet, out var owner); // CreatePacketCode
-        var result = this.SendPacket(netAddress, owner, responseTcs, relayNumber);
+        CreatePacket(0, packet, out var rentMemory); // CreatePacketCode
+        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber);
         if (result != NetResult.Success)
         {
             return (result, default, 0);
@@ -305,8 +305,8 @@ public sealed partial class PacketTerminal
                     {
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
-                        CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-                        this.SendPacketWithoutRelay(endpoint, owner, default);
+                        CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                        this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     });
 
                     return;
@@ -317,8 +317,8 @@ public sealed partial class PacketTerminal
                 if (this.netBase.NetOptions.EnablePing)
                 {
                     var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.VersionInt);
-                    CreatePacket(packetId, packet, out var owner); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, owner, default);
+                    CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
 
                     if (NetConstants.LogLowLevelNet)
                     {

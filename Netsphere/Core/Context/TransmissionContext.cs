@@ -83,7 +83,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
             return this.SendAndForget(BytePool.RentMemory.Empty, Unsafe.As<TSend, ulong>(ref data));
         }
 
-        if (!NetHelper.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var rentMemory))
         {
             return NetResult.SerializationFailed;
         }
@@ -91,13 +91,13 @@ public sealed class TransmissionContext : ITransmissionContextInternal
         var transmission = this.ServerConnection.TryCreateSendTransmission(this.TransmissionId);
         if (transmission is null)
         {
-            owner.Return();
+            rentMemory.Return();
             return NetResult.NoTransmission;
         }
 
         this.IsSent = true;
-        var result = transmission.SendBlock(0, dataId, owner, default);
-        owner.Return();
+        var result = transmission.SendBlock(0, dataId, rentMemory, default);
+        rentMemory.Return();
         return result; // SendTransmission is automatically disposed either upon completion of transmission or in case of an Ack timeout.
     }
 
@@ -152,13 +152,13 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     /*public async NetTask<NetResult> InternalUpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
-        if (!NetHelper.TrySerialize(a1, out var owner))
+        if (!NetHelper.TrySerialize(a1, out var rentMemory))
         {
             return NetResult.SerializationFailed;
         }
 
-        var response = await this.RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
-        owner.Return();
+        var response = await this.RpcSendAndReceive(rentMemory, dataId).ConfigureAwait(false);
+        rentMemory.Return();
 
         try
         {
