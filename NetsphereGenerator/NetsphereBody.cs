@@ -331,7 +331,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ssb.AddUsing("System.Collections.Generic");
         ssb.AddUsing("System.Diagnostics.CodeAnalysis");
         ssb.AddUsing("System.Runtime.CompilerServices");
-        ssb.AddUsing("Arc.Unit");
+        ssb.AddUsing("Arc.Collections");
         ssb.AddUsing("Netsphere");
 
         ssb.AppendLine("#nullable enable", false);
