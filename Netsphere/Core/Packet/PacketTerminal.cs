@@ -507,7 +507,7 @@ public sealed partial class PacketTerminal
         return NetResult.Success;
     }
 
-    private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out BytePool.RentMemory owner)
+    private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out BytePool.RentMemory rentMemory)
         where TPacket : IPacket, ITinyhandSerialize<TPacket>
     {
         if (packetId == 0)
@@ -515,8 +515,7 @@ public sealed partial class PacketTerminal
             packetId = RandomVault.Pseudo.NextUInt64();
         }
 
-        var arrayOwner = PacketPool.Rent();
-        var writer = new TinyhandWriter(arrayOwner.ByteArray);
+        var writer = TinyhandWriter.CreateFromBytePool();
 
         // PacketHeaderCode
         scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
@@ -538,18 +537,11 @@ public sealed partial class PacketTerminal
 
         TinyhandSerializer.SerializeObject(ref writer, packet);
 
-        writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+        rentMemory = writer.FlushAndGetRentMemory();
         writer.Dispose();
 
         // Get checksum
-        span = array.AsSpan(0, arrayLength);
+        span = rentMemory.Span;
         BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
-
-        if (!isInitialBuffer)
-        {
-            arrayOwner = new(array);
-        }
-
-        owner = arrayOwner.AsMemory(0, arrayLength);
     }
 }

@@ -157,22 +157,22 @@ internal partial class AckBuffer
     {
         const int maxLength = PacketHeader.MaxFrameLength - 2;
 
-        BytePool.RentArray? owner = default;
+        BytePool.RentArray? rentArray = default;
         Span<byte> span = default;
 
         while (ackQueue.TryDequeue(out var item))
         {
 NewPacket:
-            if (owner is not null && span.Length < AckFrame.Margin)
+            if (rentArray is not null && span.Length < AckFrame.Margin)
             {// Send the packet when the remaining length falls below the margin.
                 Send(maxLength - span.Length);
             }
 
-            if (owner is null)
+            if (rentArray is null)
             {// Prepare
                 // ProtectedPacketCode
-                owner = PacketPool.Rent();
-                span = owner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfBurst, NumberOfBlock
+                rentArray = PacketPool.Rent();
+                span = rentArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length + 2, maxLength); // PacketHeader, FrameType, NumberOfBurst, NumberOfBlock
             }
 
             var ackGene = item.AckGene;
@@ -221,7 +221,7 @@ NewPacket:
                         span = span.Slice(sizeof(int));
                         numberOfPairs++;
 
-                        if (owner is not null && span.Length < AckFrame.Margin)
+                        if (rentArray is not null && span.Length < AckFrame.Margin)
                         {// Send the packet when the remaining length falls below the margin.
                             BitConverter.TryWriteBytes(numberOfPairsSpan, numberOfPairs);
                             goto NewPacket;
@@ -247,12 +247,12 @@ NewPacket:
             }
         }
 
-        if (owner is not null && span.Length > 0)
+        if (rentArray is not null && span.Length > 0)
         {// Send the packet if not empty.
             Send(maxLength - span.Length);
         }
 
-        owner?.Return(); // Return the rent buffer.
+        rentArray?.Return(); // Return the rent buffer.
         // ackQueue will be returned later for reuse.
 
         void Send(int spanLength)
@@ -262,23 +262,23 @@ NewPacket:
                 this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} to {connection.DestinationEndpoint.ToString()}, SendAck");
             }
 
-            connection.CreateAckPacket(owner, spanLength, out var packetLength);
+            connection.CreateAckPacket(rentArray, spanLength, out var packetLength);
             if (connection.MinimumNumberOfRelays == 0)
             {// No relay
-                netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, owner.AsMemory(0, packetLength));
+                netSender.Send_NotThreadSafe(connection.DestinationEndpoint.EndPoint, rentArray.AsMemory(0, packetLength));
             }
             else
             {// Relay
-                if (this.relayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, owner.AsMemory(0, packetLength).Span, out var encrypted, out var relayEndpoint))
+                if (this.relayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, rentArray.AsMemory(0, packetLength).Span, out var encrypted, out var relayEndpoint))
                 {
                     netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, encrypted);
                 }
 
-                owner.Return();
+                rentArray.Return();
             }
 
             // owner = owner.Return(); // Moved
-            owner = default;
+            rentArray = default;
         }
     }
 }

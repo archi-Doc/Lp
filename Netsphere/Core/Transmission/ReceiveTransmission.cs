@@ -431,7 +431,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 else if (this.totalGene == 2)
                 {
                     length += this.gene1!.Packet.Span.Length;
-                    toBeMoved = ByteArrayPool.Default.Rent(length).AsMemory(0, length);
+                    toBeMoved = BytePool.Default.Rent(length).AsMemory(0, length);
 
                     span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
@@ -442,7 +442,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {
                     length += this.gene1!.Packet.Span.Length;
                     length += this.gene2!.Packet.Span.Length;
-                    toBeMoved = ByteArrayPool.Default.Rent(length).AsMemory(0, length);
+                    toBeMoved = BytePool.Default.Rent(length).AsMemory(0, length);
 
                     span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
@@ -484,7 +484,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
             }
 
             length += (FollowingGeneFrame.MaxGeneLength * (this.totalGene - 2)) + lastGene.Packet.Span.Length;
-            toBeMoved = ByteArrayPool.Default.Rent(length).AsMemory(0, length);
+            toBeMoved = BytePool.Default.Rent(length).AsMemory(0, length);
             span = toBeMoved.Span;
 
             firstSpan.CopyTo(span);

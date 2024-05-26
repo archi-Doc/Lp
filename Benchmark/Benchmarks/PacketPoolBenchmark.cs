@@ -2,7 +2,7 @@
 
 using System.Buffers;
 using System.Collections.Concurrent;
-using Arc.Unit;
+using Arc.Collections;
 using BenchmarkDotNet.Attributes;
 using LP;
 
@@ -34,7 +34,7 @@ public class PacketPoolBenchmark
 
     public FixedArrayPool FixedArrayPool { get; set; } = default!;
 
-    public ByteArrayPool ByteArrayPool { get; set; } = default!;
+    public BytePool ByteArrayPool { get; set; } = default!;
 
     // public ByteArrayPoolObsolete ByteArrayPoolObsolete { get; set; } = default!;
 
@@ -67,7 +67,7 @@ public class PacketPoolBenchmark
     {
         // this.FixedArrayPoolObsolete = new(this.Length, N);
         this.FixedArrayPool = new(this.Length, N);
-        this.ByteArrayPool = ByteArrayPool.Create(1024 * 1024 * 16, N);
+        this.ByteArrayPool = BytePool.CreateExponential();
         // this.ByteArrayPoolObsolete = new(this.Length, N);
         this.Arrays = new byte[N][];
         this.ArrayMemoryPairs = new ArrayMemoryPair[N];
@@ -364,7 +364,7 @@ public class PacketPoolBenchmark
 
         for (var n = 0; n < N; n++)
         {
-            this.MemoryArray2[n].Owner?.Return();
+            this.MemoryArray2[n].RentArray?.Return();
         }
 
         return this.MemoryArray2;
