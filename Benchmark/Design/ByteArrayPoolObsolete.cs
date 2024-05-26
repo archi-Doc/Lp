@@ -46,9 +46,9 @@ public class ByteArrayPoolObsolete
 
         public void Dispose() => this.Return();
 
-        public MemoryOwner ToMemoryOwner() => new MemoryOwner(this);
+        public MemoryOwner AsMemory() => new MemoryOwner(this);
 
-        public MemoryOwner ToMemoryOwner(int start, int length) => new MemoryOwner(this, start, length);
+        public MemoryOwner AsMemory(int start, int length) => new MemoryOwner(this, start, length);
 
         /// <summary>
         /// Gets a byte array.

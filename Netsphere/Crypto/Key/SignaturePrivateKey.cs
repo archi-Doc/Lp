@@ -17,6 +17,8 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
 {
     #region Unique
 
+    public static readonly SignaturePrivateKey Empty = new();
+
     private ECDsa? ecdsa;
 
     public static int MaxStringLength => UnsafeStringLength;

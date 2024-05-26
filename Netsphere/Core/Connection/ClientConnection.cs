@@ -71,7 +71,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return NetResult.Closed;
         }
 
-        if (!NetHelper.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var rentMemory))
         {
             return NetResult.SerializationFailed;
         }
@@ -81,13 +81,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         {
             if (transmissionAndTimeout.Transmission is null)
             {
-                owner.Return();
+                rentMemory.Return();
                 return NetResult.NoTransmission;
             }
 
             var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, tcs);
-            owner.Return();
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, rentMemory, tcs);
+            rentMemory.Return();
             if (result != NetResult.Success)
             {
                 return result;
@@ -118,7 +118,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
 
         dataId = dataId != 0 ? dataId : NetHelper.GetDataId<TSend, TReceive>();
-        if (!NetHelper.TrySerialize(data, out var owner))
+        if (!NetHelper.TrySerialize(data, out var rentMemory))
         {
             return new(NetResult.SerializationFailed);
         }
@@ -129,12 +129,12 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         {
             if (transmissionAndTimeout.Transmission is null)
             {
-                owner.Return();
+                rentMemory.Return();
                 return new(NetResult.NoTransmission);
             }
 
-            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, default);
-            owner.Return();
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, rentMemory, default);
+            rentMemory.Return();
             if (result != NetResult.Success)
             {
                 return new(result);
@@ -192,25 +192,25 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     /*public async Task<(NetResult Result, SendStream? Stream)> SendBlockAndStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
-        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        if (!NetHelper.TrySerializeWithLength(data, out var rentMemory))
         {
             return (NetResult.SerializationFailed, default);
         }
 
-        if (owner.Memory.Length > this.Agreement.MaxBlockSize)
+        if (rentMemory.Memory.Length > this.Agreement.MaxBlockSize)
         {
             return (NetResult.BlockSizeLimit, default);
         }
 
         try
         {
-            var (result, stream) = await this.SendStream(owner.Memory.Length + maxLength, dataId).ConfigureAwait(false);
+            var (result, stream) = await this.SendStream(rentMemory.Memory.Length + maxLength, dataId).ConfigureAwait(false);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
             }
 
-            result = await stream.Send(owner.Memory);
+            result = await stream.Send(rentMemory.Memory);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -220,7 +220,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
         finally
         {
-            owner.Return();
+            rentMemory.Return();
         }
     }*/
 
@@ -279,25 +279,25 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     public async Task<(NetResult Result, SendStream? Stream)> SendBlockAndStream<TSend>(TSend data, long maxLength, ulong dataId = 0)
     {
-        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        if (!NetHelper.TrySerializeWithLength(data, out var rentMemory))
         {
             return (NetResult.SerializationFailed, default);
         }
 
-        if (owner.Memory.Length > this.Agreement.MaxBlockSize)
+        if (rentMemory.Memory.Length > this.Agreement.MaxBlockSize)
         {
             return (NetResult.BlockSizeLimit, default);
         }
 
         try
         {
-            var (result, stream) = this.SendStream(owner.Memory.Length + maxLength, dataId);
+            var (result, stream) = this.SendStream(rentMemory.Memory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
             }
 
-            result = await stream.Send(owner.Memory).ConfigureAwait(false);
+            result = await stream.Send(rentMemory.Memory).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -307,31 +307,31 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
         finally
         {
-            owner.Return();
+            rentMemory.Return();
         }
     }
 
     public async Task<(NetResult Result, SendStreamAndReceive<TReceive>? Stream)> SendBlockAndStreamAndReceive<TSend, TReceive>(TSend data, long maxLength, ulong dataId = 0)
     {
-        if (!NetHelper.TrySerializeWithLength(data, out var owner))
+        if (!NetHelper.TrySerializeWithLength(data, out var rentMemory))
         {
             return (NetResult.SerializationFailed, default);
         }
 
-        if (owner.Memory.Length > this.Agreement.MaxBlockSize)
+        if (rentMemory.Memory.Length > this.Agreement.MaxBlockSize)
         {
             return (NetResult.BlockSizeLimit, default);
         }
 
         try
         {
-            var (result, stream) = this.SendStreamAndReceive<TReceive>(owner.Memory.Length + maxLength, dataId);
+            var (result, stream) = this.SendStreamAndReceive<TReceive>(rentMemory.Memory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
             }
 
-            result = await stream.Send(owner.Memory).ConfigureAwait(false);
+            result = await stream.Send(rentMemory.Memory).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -341,7 +341,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
         finally
         {
-            owner.Return();
+            rentMemory.Return();
         }
     }
 
@@ -352,7 +352,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return (NetResult.Closed, default);
         }
 
-        if (!NetHelper.TrySerialize(packet, out var owner))
+        if (!NetHelper.TrySerialize(packet, out var rentMemory))
         {
             return (NetResult.SerializationFailed, default);
         }
@@ -364,12 +364,12 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         {
             if (transmissionAndTimeout.Transmission is null)
             {
-                owner.Return();
+                rentMemory.Return();
                 return (NetResult.NoTransmission, default);
             }
 
-            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, owner, default);
-            owner.Return();
+            var result = transmissionAndTimeout.Transmission.SendBlock(0, dataId, rentMemory, default);
+            rentMemory.Return();
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -462,7 +462,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return r.Result;
     }
 
-    async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> IClientConnectionInternal.RpcSendAndReceive(ByteArrayPool.MemoryOwner data, ulong dataId)
+    async Task<(NetResult Result, ulong DataId, BytePool.RentMemory Value)> IClientConnectionInternal.RpcSendAndReceive(BytePool.RentMemory data, ulong dataId)
     {
         if (!this.IsActive)
         {
@@ -514,7 +514,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         return new(NetResult.Success, response.DataId, response.Received);
     }
 
-    async Task<(NetResult Result, ReceiveStream? Stream)> IClientConnectionInternal.RpcSendAndReceiveStream(ByteArrayPool.MemoryOwner data, ulong dataId)
+    async Task<(NetResult Result, ReceiveStream? Stream)> IClientConnectionInternal.RpcSendAndReceiveStream(BytePool.RentMemory data, ulong dataId)
     {
         if (!this.IsActive)
         {
@@ -577,13 +577,13 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     async Task<ServiceResponse<NetResult>> IClientConnectionInternal.UpdateAgreement(ulong dataId, CertificateToken<ConnectionAgreement> a1)
     {
-        if (!NetHelper.TrySerialize(a1, out var owner))
+        if (!NetHelper.TrySerialize(a1, out var rentMemory))
         {
             return new(NetResult.SerializationFailed, NetResult.SerializationFailed);
         }
 
-        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
-        owner.Return();
+        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(rentMemory, dataId).ConfigureAwait(false);
+        rentMemory.Return();
 
         try
         {
@@ -609,14 +609,14 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
 
     async Task<ServiceResponse<NetResult>> IClientConnectionInternal.ConnectBidirectionally(ulong dataId, CertificateToken<ConnectionAgreement>? a1)
     {
-        if (!NetHelper.TrySerialize(a1, out var owner))
+        if (!NetHelper.TrySerialize(a1, out var rentMemory))
         {
             return new(NetResult.SerializationFailed, NetResult.SerializationFailed);
         }
 
         this.PrepareBidirectionalConnection(); // Create the ServerConnection in advance, as packets may not arrive in order.
-        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(owner, dataId).ConfigureAwait(false);
-        owner.Return();
+        var response = await ((IClientConnectionInternal)this).RpcSendAndReceive(rentMemory, dataId).ConfigureAwait(false);
+        rentMemory.Return();
 
         try
         {

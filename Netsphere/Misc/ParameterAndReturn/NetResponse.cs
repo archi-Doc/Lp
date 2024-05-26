@@ -9,7 +9,7 @@ namespace Netsphere;
 /// </summary>
 public readonly record struct NetResponse
 {
-    public NetResponse(NetResult result, ulong dataId, long additional, ByteArrayPool.MemoryOwner received)
+    public NetResponse(NetResult result, ulong dataId, long additional, BytePool.RentMemory received)
     {
         this.Result = result;
         this.DataId = dataId;
@@ -31,5 +31,5 @@ public readonly record struct NetResponse
     public readonly NetResult Result;
     public readonly ulong DataId;
     public readonly long Additional; // ElapsedMics, MaxStreamLength
-    public readonly ByteArrayPool.MemoryOwner Received;
+    public readonly BytePool.RentMemory Received;
 }

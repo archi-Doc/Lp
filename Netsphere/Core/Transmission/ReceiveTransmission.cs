@@ -202,12 +202,12 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
-    internal void ProcessReceive_Gene(DataControl dataControl, int dataPosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(DataControl dataControl, int dataPosition, BytePool.RentMemory toBeShared)
     {// this.Mode == NetTransmissionMode.Burst or NetTransmissionMode.Block or NetTransmissionMode.Stream
         var completeFlag = false;
         uint dataKind = 0;
         ulong dataId = 0;
-        ByteArrayPool.MemoryOwner owner = default;
+        BytePool.RentMemory rentMemory = default;
         lock (this.syncObject)
         {
             if (this.Mode == NetTransmissionMode.Disposed)
@@ -321,7 +321,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             if (completeFlag)
             {// Complete (Burst, Stream)
-                this.ProcessReceive_GeneComplete(out dataKind, out dataId, out owner);
+                this.ProcessReceive_GeneComplete(out dataKind, out dataId, out rentMemory);
             }
         }
 
@@ -376,16 +376,16 @@ internal sealed partial class ReceiveTransmission : IDisposable
 
             this.Connection.RemoveTransmission(this);
 
-            if (owner.IsRent)
+            if (rentMemory.IsRent)
             {
                 if (this.Connection is ServerConnection serverConnection)
                 {// InvokeServer: Connection, NetTransmission, Owner
-                    var transmissionContext = new TransmissionContext(serverConnection, this.TransmissionId, dataKind, dataId, owner.IncrementAndShare());
+                    var transmissionContext = new TransmissionContext(serverConnection, this.TransmissionId, dataKind, dataId, rentMemory.IncrementAndShare());
                     serverConnection.GetContext().InvokeSync(transmissionContext);
                 }
 
-                receivedTcs?.SetResult(new(NetResult.Success, dataId, 0, owner.IncrementAndShare()));
-                owner.Return();
+                receivedTcs?.SetResult(new(NetResult.Success, dataId, 0, rentMemory.IncrementAndShare()));
+                rentMemory.Return();
             }
         }
     }
@@ -405,7 +405,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         }
     }
 
-    internal void ProcessReceive_GeneComplete(out uint dataKind, out ulong dataId, out ByteArrayPool.MemoryOwner toBeMoved)
+    internal void ProcessReceive_GeneComplete(out uint dataKind, out ulong dataId, out BytePool.RentMemory toBeMoved)
     {// lock (this.syncObject)
         if (this.genes is null)
         {// Single send/recv
@@ -431,7 +431,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 else if (this.totalGene == 2)
                 {
                     length += this.gene1!.Packet.Span.Length;
-                    toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+                    toBeMoved = BytePool.Default.Rent(length).AsMemory(0, length);
 
                     span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
@@ -442,7 +442,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
                 {
                     length += this.gene1!.Packet.Span.Length;
                     length += this.gene2!.Packet.Span.Length;
-                    toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+                    toBeMoved = BytePool.Default.Rent(length).AsMemory(0, length);
 
                     span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
@@ -484,7 +484,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
             }
 
             length += (FollowingGeneFrame.MaxGeneLength * (this.totalGene - 2)) + lastGene.Packet.Span.Length;
-            toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+            toBeMoved = BytePool.Default.Rent(length).AsMemory(0, length);
             span = toBeMoved.Span;
 
             firstSpan.CopyTo(span);

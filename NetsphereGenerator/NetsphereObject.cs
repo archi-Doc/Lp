@@ -178,7 +178,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             this.ServiceInterfaces = new();
-            foreach (var x in this.InterfaceObjects) //
+            foreach (var x in this.InterfaceObjects)
             {
                 if (x.AllInterfaces.Any(x => x == INetService.FullName))
                 {
@@ -535,13 +535,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     ssb.AppendLine($"var owner = new {ServiceMethod.MemoryOwnerName}(a1);");
                 }
-                else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
+                else if (method.ParameterType == ServiceMethod.Type.RentMemory)
                 {
                     ssb.AppendLine("var owner = a1.IncrementAndShare();");
                 }
-                else if (method.ParameterType == ServiceMethod.Type.ReadOnlyMemoryOwner)
+                else if (method.ParameterType == ServiceMethod.Type.RentReadOnlyMemory)
                 {
-                    ssb.AppendLine("var owner = a1.IncrementAndShare().AsMemory();");
+                    ssb.AppendLine("var owner = a1.IncrementAndShare().UnsafeMemory;");
                 }
                 else if (method.ParameterLength == 0)
                 {
@@ -587,13 +587,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                         ssb.AppendLine("var result = response.Value.Memory.ToArray();");
                         ssb.AppendLine("response.Value.Return();");
                     }
-                    else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
+                    else if (method.ReturnType == ServiceMethod.Type.RentMemory)
                     {
                         ssb.AppendLine("var result = response.Value;");
                     }
-                    else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
+                    else if (method.ReturnType == ServiceMethod.Type.RentReadOnlyMemory)
                     {
-                        ssb.AppendLine("var result = response.Value.AsReadOnly();");
+                        ssb.AppendLine("var result = response.Value.ReadOnly;");
                     }
                     else
                     {
@@ -816,7 +816,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     {
         if (method.ParameterType == ServiceMethod.Type.NetResult)
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(context.Owner, out var value))"))
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserializeNetResult(context.RentMemory, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
                 // ssb.AppendLine("context.Return();"); -> try-finally
@@ -825,15 +825,15 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else if (method.ParameterType == ServiceMethod.Type.ByteArray)
         {// byte[]
-            ssb.AppendLine("var value = context.Owner.Memory.ToArray();");
+            ssb.AppendLine("var value = context.RentMemory.Memory.ToArray();");
         }
-        else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
-        {// ByteArrayPool.MemoryOwner
-            ssb.AppendLine("var value = context.Owner;");
+        else if (method.ParameterType == ServiceMethod.Type.RentMemory)
+        {// BytePool.RentMemory
+            ssb.AppendLine("var value = context.RentMemory;");
         }
-        else if (method.ParameterType == ServiceMethod.Type.ReadOnlyMemoryOwner)
-        {// ByteArrayPool.ReadOnlyMemoryOwner
-            ssb.AppendLine("var value = context.Owner.AsReadOnly();");
+        else if (method.ParameterType == ServiceMethod.Type.RentReadOnlyMemory)
+        {// BytePool.RentReadOnlyMemory
+            ssb.AppendLine("var value = context.RentMemory.ReadOnly;");
         }
         else if (method.ParameterLength == 0)
         {// No parameter
@@ -845,7 +845,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.Owner, out var value))"))
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.RentMemory, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
                 // ssb.AppendLine("context.Return();"); -> try-finally
@@ -924,25 +924,25 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         if (method.ReturnObject == null)
         {// NetTask
-            ssb.AppendLine($"context.Owner = {ServiceMethod.MemoryOwnerName}.Empty;");
+            ssb.AppendLine($"context.RentMemory = {ServiceMethod.MemoryOwnerName}.Empty;");
         }
         else if (method.ReturnType == ServiceMethod.Type.NetResult)
         {
             ssb.AppendLine("context.Result = result;");
             // ssb.AppendLine($"NetHelper.SerializeNetResult(result, out var owner2);");
-            // ssb.AppendLine("context.Owner = owner2;");
+            // ssb.AppendLine("context.RentMemory = owner2;");
         }
         else if (method.ReturnType == ServiceMethod.Type.ByteArray)
         {// byte[] result;
-            ssb.AppendLine($"context.Owner = result != null ? new {ServiceMethod.MemoryOwnerName}(result) : default;");
+            ssb.AppendLine($"context.RentMemory = result != null ? new {ServiceMethod.MemoryOwnerName}(result) : default;");
         }
-        else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
-        {// ByteArrayPool.MemoryOwner result;
-            ssb.AppendLine("context.Owner = result;");
+        else if (method.ReturnType == ServiceMethod.Type.RentMemory)
+        {// BytePool.RentMemory result;
+            ssb.AppendLine("context.RentMemory = result;");
         }
-        else if (method.ReturnType == ServiceMethod.Type.ReadOnlyMemoryOwner)
-        {// ByteArrayPool.ReadOnlyMemoryOwner result;
-            ssb.AppendLine("context.Owner = result.AsMemory();");
+        else if (method.ReturnType == ServiceMethod.Type.RentReadOnlyMemory)
+        {// BytePool.RentReadOnlyMemory result;
+            ssb.AppendLine("context.RentMemory = result.UnsafeMemory;");
         }
         else if (method.ReturnType == ServiceMethod.Type.ReceiveStream ||
             method.ReturnType == ServiceMethod.Type.SendStream ||
@@ -953,12 +953,12 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {// Other
             using (var scopeSerialize = ssb.ScopeBrace($"if (NetHelper.TrySerialize(result, out var owner2))"))
             {
-                ssb.AppendLine("context.Owner = owner2;");
+                ssb.AppendLine("context.RentMemory = owner2;");
             }
 
             using (var scopeElse = ssb.ScopeBrace("else"))
             {
-                ssb.AppendLine("context.Owner = default;");
+                ssb.AppendLine("context.RentMemory = default;");
                 ssb.AppendLine("context.Result = NetResult.SerializationFailed;");
             }
         }

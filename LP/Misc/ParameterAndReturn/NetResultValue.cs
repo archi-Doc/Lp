@@ -9,26 +9,26 @@ namespace LP;
 /// </summary>
 /// <typeparam name="TValue">The type of the value.</typeparam>
 [TinyhandObject]
-public readonly partial struct T3CSResultAndValue<TValue>
+public readonly partial struct T3csResultAndValue<TValue>
 {
-    public T3CSResultAndValue(T3CSResult result, TValue value)
+    public T3csResultAndValue(T3csResult result, TValue value)
     {
         this.Result = result;
         this.Value = value;
     }
 
-    public T3CSResultAndValue(TValue value)
+    public T3csResultAndValue(TValue value)
     {
-        this.Result = T3CSResult.Success;
+        this.Result = T3csResult.Success;
         this.Value = value;
     }
 
-    public T3CSResultAndValue(T3CSResult result)
+    public T3csResultAndValue(T3csResult result)
     {
         this.Result = result;
-        if (typeof(TValue) == typeof(T3CSResult))
+        if (typeof(TValue) == typeof(T3csResult))
         {
-            this.Value = Unsafe.As<T3CSResult, TValue>(ref result);
+            this.Value = Unsafe.As<T3csResult, TValue>(ref result);
         }
         else
         {
@@ -36,12 +36,12 @@ public readonly partial struct T3CSResultAndValue<TValue>
         }
     }
 
-    public bool IsFailure => this.Result != T3CSResult.Success;
+    public bool IsFailure => this.Result != T3csResult.Success;
 
-    public bool IsSuccess => this.Result == T3CSResult.Success;
+    public bool IsSuccess => this.Result == T3csResult.Success;
 
     [Key(0)]
-    public readonly T3CSResult Result;
+    public readonly T3csResult Result;
 
     [Key(1)]
     public readonly TValue? Value;

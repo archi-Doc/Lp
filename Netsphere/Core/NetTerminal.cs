@@ -248,31 +248,31 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.RelayAgent.ProcessSend(netSender);
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, BytePool.RentArray toBeShared, int packetSize)
     {// Checked: packetSize
         var currentSystemMics = Mics.FastSystem;
-        var owner = toBeShared.ToMemoryOwner(0, packetSize);
-        var span = owner.Span;
+        var rentMemory = toBeShared.AsMemory(0, packetSize);
+        var span = rentMemory.Span;
 
         // PacketHeaderCode
         var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
         var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
         if (destinationRelayId != 0)
         {// Relay
-            if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, owner, out var decrypted))
+            if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, rentMemory, out var decrypted))
             {
                 return;
             }
 
-            owner = decrypted;
+            rentMemory = decrypted;
             span = decrypted.Span;
         }
         else if (netEndpoint.RelayId != 0 &&
             this.RelayCircuit.RelayKey.NumberOfRelays > 0)
         {// Receive data from relays.
-            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref owner, out var originalAddress))
+            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out var originalAddress))
             {
-                span = owner.Span;
+                span = rentMemory.Span;
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
@@ -284,11 +284,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(netEndpoint, destinationRelayId, packetType, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, destinationRelayId, packetType, rentMemory, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene
-            this.ConnectionTerminal.ProcessReceive(netEndpoint, packetType, owner, currentSystemMics);
+            this.ConnectionTerminal.ProcessReceive(netEndpoint, packetType, rentMemory, currentSystemMics);
         }
     }
 }

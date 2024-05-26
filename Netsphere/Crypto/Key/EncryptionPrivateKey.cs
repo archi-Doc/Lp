@@ -16,6 +16,8 @@ public sealed partial class EncryptionPrivateKey : PrivateKeyBase, IEquatable<En
 {
     #region Unique
 
+    public static readonly EncryptionPrivateKey Empty = new();
+
     private ECDiffieHellman? ecdh;
 
     public static int MaxStringLength => UnsafeStringLength;

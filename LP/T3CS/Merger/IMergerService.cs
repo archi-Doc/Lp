@@ -22,27 +22,32 @@ public partial interface IMergerService : INetService
         private string mergerName = default!;
     }
 
-    NetTask<T3CSResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);
+    NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);
 }
 
 [NetServiceObject]
 internal class MergerServiceAgent : IMergerService
 {
-    public MergerServiceAgent(Merger.Provider mergerProvider)
+    public MergerServiceAgent(Merger merger)
     {
-        this.merger = mergerProvider.GetOrException();
+        this.merger = merger;
     }
 
     public async NetTask<IMergerService.InformationResult?> GetInformation()
     {
+        if (!this.merger.Initialized)
+        {
+            return default;
+        }
+
         return this.merger.Information.ToInformationResult();
     }
 
-    public NetTask<T3CSResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param)
+    public NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param)
     {
         if (!TransmissionContext.Current.AuthenticationTokenEquals(param.Proof.PublicKey))
         {
-            return new(new T3CSResultAndValue<Credit>(T3CSResult.NotAuthenticated));
+            return new(new T3csResultAndValue<Credit>(T3csResult.NotAuthenticated));
         }
 
         /*if (!TransmissionContext.Current.TryGetAuthenticationToken(out var token))

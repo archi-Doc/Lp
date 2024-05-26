@@ -2,9 +2,10 @@
 
 namespace LP;
 
-public enum T3CSResult
+public enum T3csResult
 {
     Success,
+    UnknownError,
     NotAuthenticated,
     InvalidProof,
     NoData,

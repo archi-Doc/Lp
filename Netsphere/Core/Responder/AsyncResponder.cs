@@ -11,7 +11,7 @@ public abstract class AsyncResponder<TSend, TReceive> : INetResponder
 
     public void Respond(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.Owner.Memory.Span, out var t))
+        if (!TinyhandSerializer.TryDeserialize<TSend>(transmissionContext.RentMemory.Memory.Span, out var t))
         {
             transmissionContext.Return();
             transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);

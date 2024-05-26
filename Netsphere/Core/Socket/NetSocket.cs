@@ -30,7 +30,7 @@ public sealed class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
-            ByteArrayPool.Owner? arrayOwner = null;
+            BytePool.RentArray? rentArray = null;
             while (!core.IsTerminated)
             {
                 var udp = core.socket.UnsafeUdpClient;
@@ -42,8 +42,8 @@ public sealed class NetSocket
                 try
                 {// nspi 10^5
                     var remoteEP = (EndPoint)anyEP;
-                    arrayOwner ??= PacketPool.Rent();
-                    var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    rentArray ??= PacketPool.Rent();
+                    var received = udp.Client.ReceiveFrom(rentArray.Array, 0, rentArray.Array.Length, SocketFlags.None, ref remoteEP);
                     // var vt = await udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP, core.CancellationToken);
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -53,10 +53,10 @@ public sealed class NetSocket
                     if (received > PacketHeader.Length &&
                         received <= NetConstants.MaxPacketLength)
                     {// nspi
-                        core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
-                        if (arrayOwner.Count > 1)
+                        core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, rentArray, received);
+                        if (rentArray.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
-                            arrayOwner = arrayOwner.Return();
+                            rentArray = rentArray.Return();
                         }
                     }
                 }

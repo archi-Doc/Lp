@@ -173,11 +173,11 @@ public class ServerConnectionContext
                         var result = transmissionContext.Result;
                         if (result == NetResult.Success)
                         {// Success
-                            transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                            transmissionContext.SendAndForget(transmissionContext.RentMemory, (ulong)result);
                         }
                         else
                         {// Failure
-                            transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)result);
+                            transmissionContext.SendAndForget(BytePool.RentMemory.Empty, (ulong)result);
                         }
                     }
                 }
@@ -187,7 +187,7 @@ public class ServerConnectionContext
             }
             catch
             {// Unknown exception
-                transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.UnknownError);
+                transmissionContext.SendAndForget(BytePool.RentMemory.Empty, (ulong)NetResult.UnknownError);
             }
             finally
             {
@@ -264,7 +264,7 @@ public class ServerConnectionContext
                     var result = transmissionContext.Result;
                     if (result == NetResult.Success)
                     {// Success
-                        transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                        transmissionContext.SendAndForget(transmissionContext.RentMemory, (ulong)result);
                     }
                     else
                     {// Failure
@@ -288,14 +288,14 @@ public class ServerConnectionContext
         return;
 
 SendNoNetService:
-        transmissionContext.SendAndForget(ByteArrayPool.MemoryOwner.Empty, (ulong)NetResult.NoNetService);
+        transmissionContext.SendAndForget(BytePool.RentMemory.Empty, (ulong)NetResult.NoNetService);
         transmissionContext.ReturnAndDisposeStream();
         return;
     }
 
     private void SetAuthenticationToken(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.Owner.Memory.Span, out var token))
+        if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.RentMemory.Memory.Span, out var token))
         {
             transmissionContext.Return();
             return;

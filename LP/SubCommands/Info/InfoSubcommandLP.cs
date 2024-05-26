@@ -19,20 +19,10 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
 
         logger?.Log($"Info: {target}");
 
-        if (string.Compare("bytearraypool", target, true) == 0)
-        {
-            if (logger != null)
-            {
-                ByteArrayPool.Default.Dump(logger);
-            }
-        }
-        else
-        {
-            var saa = DateTime.MinValue.Ticks;
-            logger?.Log(Environment.OSVersion.ToString());
-            logger?.Log($"Time.GetApplication(): {Time.GetApplication()}");
-            logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
-        }
+        var saa = DateTime.MinValue.Ticks;
+        logger?.Log(Environment.OSVersion.ToString());
+        logger?.Log($"Time.GetApplication(): {Time.GetApplication()}");
+        logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
     }
 
     public Control Control { get; set; }

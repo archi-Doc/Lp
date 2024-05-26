@@ -658,12 +658,12 @@ Wait:
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
     {// Close, Ack, Knock
-        if (!this.CreatePacket(frame, out var owner))
+        if (!this.CreatePacket(frame, out var rentArray))
         {
             return;
         }
 
-        this.PacketTerminal.SendPacket(this.DestinationNode.Address, owner, default, this.MinimumNumberOfRelays);
+        this.PacketTerminal.SendPacket(this.DestinationNode.Address, rentArray, default, this.MinimumNumberOfRelays);
     }
 
     internal void SendCloseFrame()
@@ -719,7 +719,7 @@ Wait:
         return this.SendList.Count == 0 ? ProcessSendResult.Complete : ProcessSendResult.Remaining;
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: endpoint, toBeShared.Length
         if (this.CurrentState == State.Disposed)
         {
@@ -765,7 +765,7 @@ Wait:
                 return;
             }
 
-            var owner = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
+            var rentMemory = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
             {// Close 2
@@ -773,28 +773,28 @@ Wait:
             }
             else if (frameType == FrameType.Ack)
             {// Ack
-                this.ProcessReceive_Ack(endpoint, owner);
+                this.ProcessReceive_Ack(endpoint, rentMemory);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.ProcessReceive_FirstGene(endpoint, owner);
+                this.ProcessReceive_FirstGene(endpoint, rentMemory);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.ProcessReceive_FollowingGene(endpoint, owner);
+                this.ProcessReceive_FollowingGene(endpoint, rentMemory);
             }
             else if (frameType == FrameType.Knock)
             {// Knock
-                this.ProcessReceive_Knock(endpoint, owner);
+                this.ProcessReceive_Knock(endpoint, rentMemory);
             }
             else if (frameType == FrameType.KnockResponse)
             {// KnockResponse
-                this.ProcessReceive_KnockResponse(endpoint, owner);
+                this.ProcessReceive_KnockResponse(endpoint, rentMemory);
             }
         }
     }
 
-    internal void ProcessReceive_Ack(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Ack(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
         lock (this.sendTransmissions.SyncObject)
@@ -854,7 +854,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FirstGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FirstGene(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// First gene
         var span = toBeShared.Span;
         if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
@@ -981,7 +981,7 @@ Wait:
         }
     }
 
-    internal void ProcessReceive_FollowingGene(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_FollowingGene(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// Following gene
         var span = toBeShared.Span;
         if (span.Length < FollowingGeneFrame.LengthExcludingFrameType)
@@ -1022,7 +1022,7 @@ Wait:
         transmission.ProcessReceive_Gene(dataControl, dataPosition, toBeShared.Slice(FollowingGeneFrame.LengthExcludingFrameType));
     }
 
-    internal void ProcessReceive_Knock(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Knock(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// KnockResponseFrameCode
         if (toBeShared.Memory.Length < (KnockFrame.Length - 2))
         {
@@ -1051,7 +1051,7 @@ Wait:
         this.SendPriorityFrame(frame);
     }
 
-    internal void ProcessReceive_KnockResponse(NetEndpoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_KnockResponse(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// KnockResponseFrameCode
         var span = toBeShared.Span;
         if (span.Length < (KnockResponseFrame.Length - 2))
@@ -1075,18 +1075,18 @@ Wait:
         }
     }
 
-    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out ByteArrayPool.MemoryOwner owner)
+    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out BytePool.RentMemory rentArray)
     {// ProtectedPacketCode
         Debug.Assert(frame.Length > 0);
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
-            owner = default;
+            rentArray = default;
             return false;
         }
 
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
-        var span = arrayOwner.ByteArray.AsSpan();
+        var span = arrayOwner.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
@@ -1105,26 +1105,26 @@ Wait:
         span = span.Slice(sizeof(ulong));
 
         int written = 0;
-        var span2 = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        var span2 = arrayOwner.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
         if (!this.TryEncryptCbc(salt, frame, span2, out written))
         {
-            owner = default;
+            rentArray = default;
             return false;
         }
 
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
-        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        rentArray = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
         return true;
     }
 
-    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out BytePool.RentMemory rentMemory)
     {// ProtectedPacketCode
         Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
-        var span = arrayOwner.ByteArray.AsSpan();
+        var span = arrayOwner.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
@@ -1148,18 +1148,18 @@ Wait:
         span2 = span2.Slice(frameHeader.Length);
         frameContent.CopyTo(span2);
 
-        span2 = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        span2 = arrayOwner.Array.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
         this.TryEncryptCbc(salt, span2.Slice(0, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
 
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
-        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        rentMemory = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
     }
 
-    internal void CreateAckPacket(ByteArrayPool.Owner owner, int length, out int packetLength)
+    internal void CreateAckPacket(BytePool.RentArray rentArray, int length, out int packetLength)
     {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
-        var span = owner.ByteArray.AsSpan();
+        var span = rentArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode

@@ -5,13 +5,14 @@ namespace Netsphere;
 internal static class PacketPool
 {
     public const int MaxPacketSize = 2048;
+    public const int PoolLimit = 1000;
 
     static PacketPool()
     {
-        packetPool = new ByteArrayPool(MaxPacketSize);
+        packetPool = BytePool.CreateFlat(MaxPacketSize, PoolLimit);
     }
 
-    public static ByteArrayPool.Owner Rent() => packetPool.Rent(MaxPacketSize);
+    public static BytePool.RentArray Rent() => packetPool.Rent(MaxPacketSize);
 
-    private static ByteArrayPool packetPool;
+    private static BytePool packetPool;
 }

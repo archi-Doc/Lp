@@ -9,8 +9,8 @@ namespace Netsphere.Generator;
 public class ServiceMethod
 {
     public const string ByteArrayName = "byte[]";
-    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
-    public const string ReadOnlyMemoryOwnerName = "Arc.Unit.ByteArrayPool.ReadOnlyMemoryOwner";
+    public const string MemoryOwnerName = "Arc.Collections.BytePool.RentMemory";
+    public const string ReadOnlyMemoryOwnerName = "Arc.Collections.BytePool.RentReadOnlyMemory";
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
@@ -23,8 +23,8 @@ public class ServiceMethod
         Other,
         NetResult,
         ByteArray,
-        MemoryOwner,
-        ReadOnlyMemoryOwner,
+        RentMemory,
+        RentReadOnlyMemory,
         ReceiveStream,
         SendStream,
         SendStreamAndReceive,
@@ -99,8 +99,9 @@ public class ServiceMethod
             method.Body.AddDiagnostic(NetsphereBody.Error_SendStreamRemoved, method.Location);
             return null;
         }
-        else */if (serviceMethod.ReturnType == Type.SendStream ||
-            serviceMethod.ReturnType == Type.SendStreamAndReceive)
+        else */
+        if (serviceMethod.ReturnType == Type.SendStream ||
+     serviceMethod.ReturnType == Type.SendStreamAndReceive)
         {
             if (/*method.Method_Parameters.Length > 1 || */method.Method_Parameters.Length == 0)
             {
@@ -276,8 +277,8 @@ public class ServiceMethod
     {
         NetResultName => Type.NetResult,
         ByteArrayName => Type.ByteArray,
-        MemoryOwnerName => Type.MemoryOwner,
-        ReadOnlyMemoryOwnerName => Type.ReadOnlyMemoryOwner,
+        MemoryOwnerName => Type.RentMemory,
+        ReadOnlyMemoryOwnerName => Type.RentReadOnlyMemory,
         ReceiveStreamName => Type.ReceiveStream,
         SendStreamName => Type.SendStream,
         SendStreamAndReceiveName => Type.SendStreamAndReceive,

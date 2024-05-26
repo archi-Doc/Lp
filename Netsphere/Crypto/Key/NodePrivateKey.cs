@@ -16,7 +16,9 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
 {
     #region Unique
 
-    public const string PrivateKeyPath = "NodePrivateKey";
+    public const string PrivateKeyName = "NodePrivateKey";
+
+    public static readonly NodePrivateKey Empty = new();
 
     private static NodePrivateKey? alternativePrivateKey;
 

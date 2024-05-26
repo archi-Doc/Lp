@@ -1,4 +1,4 @@
-﻿using Arc.Unit;
+﻿using Arc.Collections;
 
 namespace NetsphereTest;
 
@@ -21,9 +21,9 @@ public interface ITestService3 : INetService
 
     public NetTask<int> Increment3(int x);
 
-    public NetTask<ByteArrayPool.MemoryOwner> SendMemoryOwner(ByteArrayPool.MemoryOwner owner);
+    public NetTask<BytePool.RentMemory> SendMemoryOwner(BytePool.RentMemory rentMemory);
 
-    public NetTask<ByteArrayPool.ReadOnlyMemoryOwner> SendReadOnlyMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner owner);
+    public NetTask<BytePool.RentReadOnlyMemory> SendReadOnlyMemoryOwner(BytePool.RentReadOnlyMemory rentMemory);
 }
 
 [NetServiceObject]
@@ -71,14 +71,14 @@ public class ParentClass
         {
         }
 
-        public async NetTask<ByteArrayPool.MemoryOwner> SendMemoryOwner(ByteArrayPool.MemoryOwner owner)
+        public async NetTask<BytePool.RentMemory> SendMemoryOwner(BytePool.RentMemory rentMemory)
         {
-            return owner;
+            return rentMemory;
         }
 
-        public async NetTask<ByteArrayPool.ReadOnlyMemoryOwner> SendReadOnlyMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner owner)
+        public async NetTask<BytePool.RentReadOnlyMemory> SendReadOnlyMemoryOwner(BytePool.RentReadOnlyMemory rentMemory)
         {
-            return owner;
+            return rentMemory;
         }
     }
 

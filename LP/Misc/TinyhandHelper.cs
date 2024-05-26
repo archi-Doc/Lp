@@ -22,7 +22,7 @@ public static class TinyhandHelper
     public static Identifier GetIdentifier<T>(this T? value, int level)
         where T : ITinyhandSerialize<T>
     {
-        // var owner = ByteArrayPool.Default.Rent(BufferLength);
+        // var rentMemory = ByteArrayPool.Default.Rent(BufferLength);
 
         var buffer = RentBuffer();
         var writer = new TinyhandWriter(buffer) { Level = level, };
