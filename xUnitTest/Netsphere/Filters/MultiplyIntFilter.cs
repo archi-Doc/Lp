@@ -9,12 +9,12 @@ public class MultiplyIntFilter : IServiceFilter
 {
     public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
-        if (TinyhandSerializer.TryDeserialize<int>(context.Owner.Memory.Span, out var value))
+        if (TinyhandSerializer.TryDeserialize<int>(context.RentMemory.Memory.Span, out var value))
         {
             if (NetHelper.TrySerialize(value * this.multiplier, out var owner))
             {
-                context.Owner.Return();
-                context.Owner = owner;
+                context.RentMemory.Return();
+                context.RentMemory = owner;
             }
         }
 

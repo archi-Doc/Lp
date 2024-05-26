@@ -15,7 +15,7 @@ public class TestStreamResponder : INetResponder
 
     public void Respond(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<int>(transmissionContext.Owner.Memory.Span, out var size))
+        if (!TinyhandSerializer.TryDeserialize<int>(transmissionContext.RentMemory.Memory.Span, out var size))
         {
             transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
             transmissionContext.Return();

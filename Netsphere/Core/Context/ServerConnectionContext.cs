@@ -173,7 +173,7 @@ public class ServerConnectionContext
                         var result = transmissionContext.Result;
                         if (result == NetResult.Success)
                         {// Success
-                            transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                            transmissionContext.SendAndForget(transmissionContext.RentMemory, (ulong)result);
                         }
                         else
                         {// Failure
@@ -264,7 +264,7 @@ public class ServerConnectionContext
                     var result = transmissionContext.Result;
                     if (result == NetResult.Success)
                     {// Success
-                        transmissionContext.SendAndForget(transmissionContext.Owner, (ulong)result);
+                        transmissionContext.SendAndForget(transmissionContext.RentMemory, (ulong)result);
                     }
                     else
                     {// Failure
@@ -295,7 +295,7 @@ SendNoNetService:
 
     private void SetAuthenticationToken(TransmissionContext transmissionContext)
     {
-        if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.Owner.Memory.Span, out var token))
+        if (!TinyhandSerializer.TryDeserialize<AuthenticationToken>(transmissionContext.RentMemory.Memory.Span, out var token))
         {
             transmissionContext.Return();
             return;

@@ -765,7 +765,7 @@ Wait:
                 return;
             }
 
-            var owner = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
+            var rentMemory = toBeShared.Slice(PacketHeader.Length + ProtectedPacket.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Close)
             {// Close 2
@@ -773,23 +773,23 @@ Wait:
             }
             else if (frameType == FrameType.Ack)
             {// Ack
-                this.ProcessReceive_Ack(endpoint, owner);
+                this.ProcessReceive_Ack(endpoint, rentMemory);
             }
             else if (frameType == FrameType.FirstGene)
             {// FirstGene
-                this.ProcessReceive_FirstGene(endpoint, owner);
+                this.ProcessReceive_FirstGene(endpoint, rentMemory);
             }
             else if (frameType == FrameType.FollowingGene)
             {// FollowingGene
-                this.ProcessReceive_FollowingGene(endpoint, owner);
+                this.ProcessReceive_FollowingGene(endpoint, rentMemory);
             }
             else if (frameType == FrameType.Knock)
             {// Knock
-                this.ProcessReceive_Knock(endpoint, owner);
+                this.ProcessReceive_Knock(endpoint, rentMemory);
             }
             else if (frameType == FrameType.KnockResponse)
             {// KnockResponse
-                this.ProcessReceive_KnockResponse(endpoint, owner);
+                this.ProcessReceive_KnockResponse(endpoint, rentMemory);
             }
         }
     }

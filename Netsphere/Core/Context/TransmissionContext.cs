@@ -26,7 +26,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
         this.TransmissionId = transmissionId;
         this.DataKind = dataKind;
         this.DataId = dataId;
-        this.Owner = toBeShared;
+        this.RentMemory = toBeShared;
     }
 
     #region FieldAndProperty
@@ -42,7 +42,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
 
     public ulong DataId { get; }
 
-    public BytePool.RentMemory Owner { get; set; }
+    public BytePool.RentMemory RentMemory { get; set; }
 
     public NetResult Result { get; set; }
 
@@ -64,7 +64,7 @@ public sealed class TransmissionContext : ITransmissionContextInternal
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Return()
     {
-        this.Owner = this.Owner.Return();
+        this.RentMemory = this.RentMemory.Return();
     }
 
     public NetResult SendAndForget<TSend>(TSend data, ulong dataId = 0)
