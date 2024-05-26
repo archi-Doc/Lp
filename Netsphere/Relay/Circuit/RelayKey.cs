@@ -52,7 +52,7 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryDecrypt(NetEndpoint endpoint, ref BytePool.RentMemory owner, out NetAddress originalAddress)
+    public bool TryDecrypt(NetEndpoint endpoint, ref BytePool.RentMemory rentMemory, out NetAddress originalAddress)
     {
         if (!endpoint.Equals(this.FirstEndpoint))
         {
@@ -60,7 +60,7 @@ internal class RelayKey
             return false;
         }
 
-        var span = owner.Span;
+        var span = rentMemory.Span;
         if (span.Length < RelayHeader.Length)
         {
             goto Exit;
@@ -78,7 +78,7 @@ internal class RelayKey
         {
             for (var i = 0; i < this.NumberOfRelays; i++)
             {
-                if (owner.Owner is null)
+                if (rentMemory.RentArray is null)
                 {
                     goto Exit;
                 }
@@ -89,7 +89,7 @@ internal class RelayKey
                 var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
                 if (relayHeader.Zero == 0)
                 {// Decrypted
-                    var span2 = owner.Owner.ByteArray.AsSpan();
+                    var span2 = rentMemory.RentArray.AsSpan();
                     MemoryMarshal.Write(span2, relayHeader.NetAddress.RelayId);
                     span2 = span2.Slice(sizeof(ushort));
                     MemoryMarshal.Write(span2, (ushort)0);
@@ -98,7 +98,7 @@ internal class RelayKey
                     span = span.Slice(RelayHeader.Length);
                     var contentLength = span.Length - relayHeader.PaddingLength;
                     span.Slice(0, contentLength).CopyTo(span2);
-                    owner = owner.Owner.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
+                    rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
                     // owner = new(owner.Owner.ByteArray, 0, RelayHeader.RelayIdLength + contentLength);
 
                     originalAddress = relayHeader.NetAddress;

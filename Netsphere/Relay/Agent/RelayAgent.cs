@@ -180,7 +180,7 @@ public partial class RelayAgent
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if (source.Owner is null)
+        if (source.RentArray is null)
         {// Invalid data
             goto Exit;
         }
@@ -223,7 +223,7 @@ public partial class RelayAgent
                 if (relayHeader.Zero == 0)
                 { // Decrypted. Process the packet on this node.
                     span = span.Slice(RelayHeader.Length - RelayHeader.RelayIdLength);
-                    decrypted = source.Owner.AsMemory(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
+                    decrypted = source.RentArray.AsMemory(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
                     if (relayHeader.NetAddress == NetAddress.Relay)
                     {// Initiator -> This node
                         MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
@@ -312,7 +312,7 @@ public partial class RelayAgent
             var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
             if (sourceRelayId == 0)
             {// RelayId(Source/Destination), RelayHeader, Content, Padding
-                var sourceSpan = source.Owner.ByteArray.AsSpan(RelayHeader.RelayIdLength);
+                var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
                 var contentLength = span.Length;
@@ -327,7 +327,7 @@ public partial class RelayAgent
                 sourceSpan = sourceSpan.Slice(contentLength);
                 sourceSpan.Slice(0, paddingLength).Fill(0x07);
 
-                source = source.Owner.AsMemory(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
+                source = source.RentArray.AsMemory(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
                 span = source.Span.Slice(RelayHeader.RelayIdLength);
             }
 

@@ -658,12 +658,12 @@ Wait:
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
     {// Close, Ack, Knock
-        if (!this.CreatePacket(frame, out var owner))
+        if (!this.CreatePacket(frame, out var rentArray))
         {
             return;
         }
 
-        this.PacketTerminal.SendPacket(this.DestinationNode.Address, owner, default, this.MinimumNumberOfRelays);
+        this.PacketTerminal.SendPacket(this.DestinationNode.Address, rentArray, default, this.MinimumNumberOfRelays);
     }
 
     internal void SendCloseFrame()
@@ -1075,18 +1075,18 @@ Wait:
         }
     }
 
-    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out BytePool.RentMemory owner)
+    internal bool CreatePacket(scoped ReadOnlySpan<byte> frame, out BytePool.RentMemory rentArray)
     {// ProtectedPacketCode
         Debug.Assert(frame.Length > 0);
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
-            owner = default;
+            rentArray = default;
             return false;
         }
 
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
-        var span = arrayOwner.ByteArray.AsSpan();
+        var span = arrayOwner.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
@@ -1105,16 +1105,16 @@ Wait:
         span = span.Slice(sizeof(ulong));
 
         int written = 0;
-        var span2 = arrayOwner.ByteArray.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        var span2 = arrayOwner.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
         if (!this.TryEncryptCbc(salt, frame, span2, out written))
         {
-            owner = default;
+            rentArray = default;
             return false;
         }
 
         BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
 
-        owner = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        rentArray = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
         return true;
     }
 
@@ -1124,7 +1124,7 @@ Wait:
 
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
-        var span = arrayOwner.ByteArray.AsSpan();
+        var span = arrayOwner.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
@@ -1156,10 +1156,10 @@ Wait:
         owner = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
     }
 
-    internal void CreateAckPacket(BytePool.RentArray owner, int length, out int packetLength)
+    internal void CreateAckPacket(BytePool.RentArray rentArray, int length, out int packetLength)
     {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
-        var span = owner.ByteArray.AsSpan();
+        var span = rentArray.AsSpan();
         var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
