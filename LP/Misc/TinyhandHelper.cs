@@ -10,50 +10,40 @@ namespace LP;
 
 public static class TinyhandHelper
 {
-    private const int BufferLength = 64 * 1024;
-    private const int BufferMax = 16;
-
-    private static ArrayPool<byte> arrayPool { get; } = ArrayPool<byte>.Create(BufferLength, BufferMax);
-
-    public static byte[] RentBuffer() => arrayPool.Rent(BufferLength);
-
-    public static void ReturnBuffer(byte[] buffer) => arrayPool.Return(buffer);
-
     public static Identifier GetIdentifier<T>(this T? value, int level)
         where T : ITinyhandSerialize<T>
     {
-        // var rentMemory = ByteArrayPool.Default.Rent(BufferLength);
-
-        var buffer = RentBuffer();
-        var writer = new TinyhandWriter(buffer) { Level = level, };
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = level;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            return new Identifier(Sha3Helper.Get256_UInt64(span));
+            var rentMemory = writer.FlushAndGetRentMemory();
+            var identifier = new Identifier(Sha3Helper.Get256_UInt64(rentMemory.Span));
+            rentMemory.Return();
+            return identifier;
         }
         finally
         {
             writer.Dispose();
-            ReturnBuffer(buffer);
         }
     }
 
     public static ulong GetFarmHash<T>(this T? value)
         where T : ITinyhandSerialize<T>
     {
-        var buffer = RentBuffer();
-        var writer = new TinyhandWriter(buffer);
+        var writer = TinyhandWriter.CreateFromBytePool();
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Selection);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            return FarmHash.Hash64(span);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            var hash = FarmHash.Hash64(rentMemory.Span);
+            rentMemory.Return();
+            return hash;
         }
         finally
         {
             writer.Dispose();
-            ReturnBuffer(buffer);
         }
     }
 
@@ -133,15 +123,16 @@ public static class TinyhandHelper
             return false;
         }
 
-        var buffer = RentBuffer();
-        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = 0;
         try
         {
             value.SetInformationInternal(privateKey, proofMics);
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            Sha3Helper.Get256_Span(span, hash);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            Sha3Helper.Get256_Span(rentMemory.Span, hash);
+            rentMemory.Return();
 
             var sign = new byte[KeyHelper.SignatureLength];
             if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
@@ -155,7 +146,6 @@ public static class TinyhandHelper
         finally
         {
             writer.Dispose();
-            ReturnBuffer(buffer);
         }
     }
 
@@ -173,18 +163,19 @@ public static class TinyhandHelper
             return false;
         }
 
-        var buffer = RentBuffer();
-        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = 0;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            return value.PublicKey.VerifyData(span, value.Signature);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            var result = value.PublicKey.VerifyData(rentMemory.Span, value.Signature);
+            rentMemory.Return();
+            return result;
         }
         finally
         {
             writer.Dispose();
-            ReturnBuffer(buffer);
         }
     }
 }

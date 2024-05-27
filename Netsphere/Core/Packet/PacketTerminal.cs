@@ -105,7 +105,7 @@ public sealed partial class PacketTerminal
 
         if (NetConstants.LogLowLevelNet)
         {
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {rentMemory.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {rentMemory.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
         }
 
         try
@@ -166,7 +166,7 @@ public sealed partial class PacketTerminal
 
         if (NetConstants.LogLowLevelNet)
         {
-            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {rentMemory.Span.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
+            // this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} {rentMemory.Length} {typeof(TSend).Name}/{typeof(TReceive).Name}");
         }
 
         try

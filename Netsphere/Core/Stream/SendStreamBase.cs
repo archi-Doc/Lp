@@ -65,7 +65,7 @@ public abstract class SendStreamBase
             return NetResult.SerializationFailed;
         }
 
-        if (rentMemory.Memory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
+        if (rentMemory.Length > this.SendTransmission.Connection.Agreement.MaxBlockSize)
         {
             return NetResult.BlockSizeLimit;
         }

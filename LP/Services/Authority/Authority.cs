@@ -2,6 +2,7 @@
 
 using Arc.Collections;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace LP.T3CS;
 
@@ -95,22 +96,21 @@ public sealed partial class Authority
         var privateKey = this.privateKeyCache.TryGet(credit);
         if (privateKey == null)
         {// Create private key.
-            var buffer = TinyhandHelper.RentBuffer();
-            var writer = new Tinyhand.IO.TinyhandWriter(buffer);
+            var writer = TinyhandWriter.CreateFromBytePool();
             try
             {
                 writer.WriteSpan(this.seed);
                 TinyhandSerializer.SerializeObject(ref writer, credit);
 
                 Span<byte> span = stackalloc byte[32];
-                writer.FlushAndGetReadOnlySpan(out var input, out _);
-                Sha3Helper.Get256_Span(input, span);
+                var rentMemory = writer.FlushAndGetRentMemory();
+                Sha3Helper.Get256_Span(rentMemory.Span, span);
+                rentMemory.Return();
                 privateKey = SignaturePrivateKey.Create(span);
             }
             finally
             {
                 writer.Dispose();
-                TinyhandHelper.ReturnBuffer(buffer);
             }
         }
 
