@@ -13,7 +13,6 @@ public class NodeSubcommand : SimpleCommandGroup<NodeSubcommand>
         group.AddCommand(typeof(NodeSubcommandAdd));
         group.AddCommand(typeof(NodeSubcommandLs));
         group.AddCommand(typeof(NodeSubcommandInfo));
-        group.AddCommand(typeof(NodeSubcommandGet));
     }
 
     public NodeSubcommand(UnitContext context)
