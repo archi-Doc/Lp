@@ -96,10 +96,10 @@ public class ReceiveStream : IReceiveStreamInternal // , IDisposable
 
     async Task<NetResultValue<TReceive>> IReceiveStreamInternal.ReceiveBlock<TReceive>(CancellationToken cancellationToken)
     {
-        var buffer = NetHelper.RentBuffer();
+        var rentArray = BytePool.Default.Rent(TinyhandSerializer.InitialBufferSize);
         try
         {
-            var (result, written) = await this.Receive(buffer.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);
+            var (result, written) = await this.Receive(rentArray.AsMemory(0, sizeof(int)).Memory, cancellationToken).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return new(result);
@@ -110,24 +110,26 @@ public class ReceiveStream : IReceiveStreamInternal // , IDisposable
                 return new(NetResult.DeserializationFailed);
             }
 
-            var length = BitConverter.ToInt32(buffer);
+            var length = BitConverter.ToInt32(rentArray.AsSpan());
             if (length > this.ReceiveTransmission.Connection.Agreement.MaxBlockSize)
             {
                 this.Dispose();
                 return new(NetResult.BlockSizeLimit);
             }
 
-            var memory = buffer.AsMemory(sizeof(int));
+            var memory = rentArray.AsMemory(sizeof(int));
             if (memory.Length > length)
             {
                 memory = memory.Slice(0, length);
             }
             else
             {
-                memory = new byte[length];
+                rentArray.Return();
+                rentArray = BytePool.Default.Rent(length);
+                memory = rentArray.AsMemory(0, length);
             }
 
-            (result, written) = await this.Receive(memory, cancellationToken).ConfigureAwait(false);
+            (result, written) = await this.Receive(memory.Memory, cancellationToken).ConfigureAwait(false);
             if (result.IsError())
             {
                 return new(result);
@@ -150,7 +152,7 @@ public class ReceiveStream : IReceiveStreamInternal // , IDisposable
         }
         finally
         {
-            NetHelper.ReturnBuffer(buffer);
+            rentArray.Return();
         }
     }
 

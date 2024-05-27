@@ -41,15 +41,15 @@ public static class NetHelper
     public static async Task<NetResult> ReceiveStreamToStream(ReceiveStream receiveStream, Stream stream, CancellationToken cancellationToken = default)
     {
         var result = NetResult.UnknownError;
-        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        var rentArray = BytePool.Default.Rent(StreamBufferSize);
         try
         {
             while (true)
             {
-                (result, var written) = await receiveStream.Receive(buffer, cancellationToken).ConfigureAwait(false);
+                (result, var written) = await receiveStream.Receive(rentArray.AsMemory().Memory, cancellationToken).ConfigureAwait(false);
                 if (written > 0)
                 {
-                    await stream.WriteAsync(buffer.AsMemory(0, written), cancellationToken).ConfigureAwait(false);
+                    await stream.WriteAsync(rentArray.AsMemory(0, written).Memory, cancellationToken).ConfigureAwait(false);
                 }
 
                 if (result == NetResult.Success)
@@ -68,7 +68,7 @@ public static class NetHelper
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            rentArray.Return();
         }
 
         return result;
@@ -77,15 +77,15 @@ public static class NetHelper
     public static async Task<NetResult> ReceiveStreamToStream<TResponse>(ReceiveStream<TResponse> receiveStream, Stream stream, CancellationToken cancellationToken = default)
     {
         var result = NetResult.UnknownError;
-        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        var rentArray = BytePool.Default.Rent(StreamBufferSize);
         try
         {
             while (true)
             {
-                (result, var written) = await receiveStream.Receive(buffer, cancellationToken).ConfigureAwait(false);
+                (result, var written) = await receiveStream.Receive(rentArray.AsMemory().Memory, cancellationToken).ConfigureAwait(false);
                 if (written > 0)
                 {
-                    await stream.WriteAsync(buffer.AsMemory(0, written), cancellationToken).ConfigureAwait(false);
+                    await stream.WriteAsync(rentArray.AsMemory(0, written).Memory, cancellationToken).ConfigureAwait(false);
                 }
 
                 if (result == NetResult.Success)
@@ -104,7 +104,7 @@ public static class NetHelper
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            rentArray.Return();
         }
 
         return result;
@@ -113,14 +113,14 @@ public static class NetHelper
     public static async Task<NetResult> StreamToSendStream(Stream stream, SendStream sendStream, CancellationToken cancellationToken = default)
     {
         var result = NetResult.Success;
-        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        var rentArray = BytePool.Default.Rent(StreamBufferSize);
         long totalSent = 0;
         try
         {
             int length;
-            while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            while ((length = await stream.ReadAsync(rentArray.AsMemory().Memory, cancellationToken).ConfigureAwait(false)) > 0)
             {
-                result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
+                result = await sendStream.Send(rentArray.AsMemory(0, length).Memory, cancellationToken).ConfigureAwait(false);
                 if (result.IsError())
                 {
                     return result;
@@ -138,7 +138,7 @@ public static class NetHelper
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            rentArray.Return();
         }
 
         return result;
@@ -147,14 +147,14 @@ public static class NetHelper
     public static async Task<NetResultValue<TReceive>> StreamToSendStream<TReceive>(Stream stream, SendStreamAndReceive<TReceive> sendStream, CancellationToken cancellationToken = default)
     {
         var result = NetResult.Success;
-        var buffer = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
+        var rentArray = BytePool.Default.Rent(StreamBufferSize);
         long totalSent = 0;
         try
         {
             int length;
-            while ((length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            while ((length = await stream.ReadAsync(rentArray.AsMemory().Memory, cancellationToken).ConfigureAwait(false)) > 0)
             {
-                result = await sendStream.Send(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
+                result = await sendStream.Send(rentArray.AsMemory(0, length).Memory, cancellationToken).ConfigureAwait(false);
                 if (result.IsError())
                 {
                     return new(result);
@@ -173,7 +173,7 @@ public static class NetHelper
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            rentArray.Return();
         }
 
         return new(result);
@@ -309,18 +309,19 @@ public static class NetHelper
             return false;
         }
 
-        var buffer = RentBuffer();
-        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = 0;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            return value.PublicKey.VerifyData(span, value.Signature);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            var result = value.PublicKey.VerifyData(rentMemory.Span, value.Signature);
+            rentMemory.Return();
+            return result;
         }
         finally
         {
             writer.Dispose();
-            ReturnBuffer(buffer);
         }
     }
 
