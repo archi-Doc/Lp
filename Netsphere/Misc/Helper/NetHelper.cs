@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -16,17 +17,7 @@ public static class NetHelper
     internal const int BurstGenes = 3;
     internal const char Quote = '\"';
     internal const string TripleQuotes = "\"\"\"";
-    private const int BufferLength = 64 * 1024; // 64 KB
-    private const int BufferMax = 16;
     private const int StreamBufferSize = 1024 * 1024 * 4; // 4 MB
-
-    private static ArrayPool<byte> arrayPool { get; } = ArrayPool<byte>.Create(BufferLength, BufferMax);
-
-    internal static byte[] RentBuffer()
-        => arrayPool.Rent(BufferLength);
-
-    internal static void ReturnBuffer(byte[] buffer)
-    => arrayPool.Return(buffer);
 
     public static async Task<NetNode?> TryGetNetNode(NetTerminal netTerminal, string nodeString)
     {
@@ -219,66 +210,44 @@ public static class NetHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SerializeNetResult(NetResult value, out BytePool.RentMemory rentMemory)
     {
-        var buffer = RentBuffer();
-        buffer[0] = (byte)value;
-        rentMemory = new BytePool.RentMemory(buffer, 0, 1);
+        rentMemory = BytePool.Default.Rent(1).AsMemory();
+        rentMemory.Span[0] = (byte)value;
     }
 
     public static bool TrySerialize<T>(T value, out BytePool.RentMemory rentMemory)
     {
-        var buffer = RentBuffer();
+        var writer = TinyhandWriter.CreateFromBytePool();
         try
         {
-            var writer = new TinyhandWriter(buffer);
             TinyhandSerializer.Serialize(ref writer, value, TinyhandSerializerOptions.Standard);
-
-            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
-            if (isInitialBuffer)
-            {
-                rentMemory = new BytePool.RentMemory(buffer, 0, arrayLength);
-                return true;
-            }
-            else
-            {
-                ReturnBuffer(buffer);
-                rentMemory = new BytePool.RentMemory(array);
-                return true;
-            }
+            rentMemory = writer.FlushAndGetRentMemory();
+            return true;
         }
         catch
         {
-            ReturnBuffer(buffer);
             rentMemory = default;
             return false;
+        }
+        finally
+        {
+            writer.Dispose();
         }
     }
 
     public static bool TrySerializeWithLength<T>(T value, out BytePool.RentMemory rentMemory)
     {
-        var buffer = RentBuffer();
+        var writer = TinyhandWriter.CreateFromBytePool();
         try
         {
-            var writer = new TinyhandWriter(buffer);
             writer.Advance(4); // sizeof(int)
             TinyhandSerializer.Serialize(ref writer, value, TinyhandSerializerOptions.Standard);
 
-            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
-            BitConverter.TryWriteBytes(array, arrayLength - sizeof(int));
-            if (isInitialBuffer)
-            {
-                rentMemory = new BytePool.RentMemory(buffer, 0, arrayLength);
-                return true;
-            }
-            else
-            {
-                ReturnBuffer(buffer);
-                rentMemory = new BytePool.RentMemory(array);
-                return true;
-            }
+            rentMemory = writer.FlushAndGetRentMemory();
+            BitConverter.TryWriteBytes(rentMemory.Span, rentMemory.Length - sizeof(int));
+            return true;
         }
         catch
         {
-            ReturnBuffer(buffer);
             rentMemory = default;
             return false;
         }
@@ -290,25 +259,6 @@ public static class NetHelper
     public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory rentMemory, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    /*public static bool TryDeserializeWithLength<T>(ReadOnlySpan<byte> span, [MaybeNullWhen(false)] out T value, out int length)
-    {
-        value = default;
-        length = 0;
-        if (span.Length < sizeof(int))
-        {
-            return false;
-        }
-
-        length = BitConverter.ToInt32(span);
-        span = span.Slice(sizeof(int));
-        if (span.Length < length)
-        {
-            return false;
-        }
-
-        return TinyhandSerializer.TryDeserialize<T>(span, out value, TinyhandSerializerOptions.Standard);
-    }*/
-
     public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {
@@ -318,16 +268,17 @@ public static class NetHelper
             return false;
         }
 
-        var buffer = RentBuffer();
-        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = 0;
         try
         {
             value.PublicKey = privateKey.ToPublicKey();
             value.SignedMics = Mics.GetCorrected(); // signedMics;
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            Sha3Helper.Get256_Span(span, hash);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            Sha3Helper.Get256_Span(rentMemory.Span, hash);
+            rentMemory.Return();
 
             var sign = new byte[KeyHelper.SignatureLength];
             if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
@@ -341,7 +292,6 @@ public static class NetHelper
         finally
         {
             writer.Dispose();
-            ReturnBuffer(buffer);
         }
     }
 

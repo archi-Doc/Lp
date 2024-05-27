@@ -197,14 +197,14 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return (NetResult.SerializationFailed, default);
         }
 
-        if (rentMemory.Memory.Length > this.Agreement.MaxBlockSize)
+        if (rentMemory.Length > this.Agreement.MaxBlockSize)
         {
             return (NetResult.BlockSizeLimit, default);
         }
 
         try
         {
-            var (result, stream) = await this.SendStream(rentMemory.Memory.Length + maxLength, dataId).ConfigureAwait(false);
+            var (result, stream) = await this.SendStream(rentMemory.Length + maxLength, dataId).ConfigureAwait(false);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
@@ -284,14 +284,14 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return (NetResult.SerializationFailed, default);
         }
 
-        if (rentMemory.Memory.Length > this.Agreement.MaxBlockSize)
+        if (rentMemory.Length > this.Agreement.MaxBlockSize)
         {
             return (NetResult.BlockSizeLimit, default);
         }
 
         try
         {
-            var (result, stream) = this.SendStream(rentMemory.Memory.Length + maxLength, dataId);
+            var (result, stream) = this.SendStream(rentMemory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
@@ -318,14 +318,14 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
             return (NetResult.SerializationFailed, default);
         }
 
-        if (rentMemory.Memory.Length > this.Agreement.MaxBlockSize)
+        if (rentMemory.Length > this.Agreement.MaxBlockSize)
         {
             return (NetResult.BlockSizeLimit, default);
         }
 
         try
         {
-            var (result, stream) = this.SendStreamAndReceive<TReceive>(rentMemory.Memory.Length + maxLength, dataId);
+            var (result, stream) = this.SendStreamAndReceive<TReceive>(rentMemory.Length + maxLength, dataId);
             if (result != NetResult.Success || stream is null)
             {
                 return (result, default);
