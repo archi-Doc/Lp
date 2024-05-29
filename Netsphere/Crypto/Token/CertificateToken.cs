@@ -5,12 +5,27 @@ using Netsphere.Misc;
 
 namespace Netsphere.Crypto;
 
+[TinyhandObject]
+[ValueLinkObject(Integrality = true)]
+public partial class CredentialTest : CertificateToken<ConnectionAgreement>
+{
+    public CredentialTest()
+    {
+    }
+
+    [Key(6)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
+    public int Id { get; set; }
+
+    public SignaturePublicKey Key => this.PublicKey;
+}
+
 /// <summary>
 /// Represents a certificate token.
 /// </summary>
 /// <typeparam name="T">The type of the certificate object.</typeparam>
 [TinyhandObject]
-public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<CertificateToken<T>>, IStringConvertible<CertificateToken<T>>
+public partial class CertificateToken<T> : ISignAndVerify, IEquatable<CertificateToken<T>>, IStringConvertible<CertificateToken<T>>
     where T : ITinyhandSerialize<T>
 {
     private const char Identifier = 'C';
