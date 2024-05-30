@@ -5,21 +5,6 @@ using Netsphere.Misc;
 
 namespace Netsphere.Crypto;
 
-[TinyhandObject]
-[ValueLinkObject(Integrality = true)]
-public partial class CredentialTest : CertificateToken<ConnectionAgreement>
-{
-    public CredentialTest()
-    {
-    }
-
-    [Key(6)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
-    public int Id { get; set; }
-
-    public SignaturePublicKey Key => this.PublicKey;
-}
-
 /// <summary>
 /// Represents a certificate token.
 /// </summary>

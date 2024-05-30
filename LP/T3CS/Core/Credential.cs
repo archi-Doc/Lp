@@ -1,11 +1,40 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Collections;
+using Netsphere.Crypto;
+using ValueLink.Integrality;
+
 namespace LP.T3CS;
 
-/// <summary>
-/// Immutable credit object.
-/// </summary>
 [TinyhandObject]
+[ValueLinkObject(Integrality = true)]
+public partial class Credential : CertificateToken<Value>
+{
+    public class Integrality : Integrality<Credential.GoshujinClass, Credential>
+    {
+        public static readonly ObjectPool<Integrality> Pool = new(
+            () => new()
+            {
+                MaxItems = 1000,
+                RemoveIfItemNotFound = false,
+            },
+            4);
+
+        public override bool Validate(Credential newItem, Credential? oldItem)
+        {
+            return base.Validate(newItem, oldItem);
+        }
+    }
+
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
+    public Credential()
+    {
+    }
+
+    public SignaturePublicKey Originator => this.Target.Credit.Originator;
+}
+
+/*[TinyhandObject]
 public sealed partial class Credential : IValidatable, IEquatable<Credential>
 {
     public enum Type
@@ -57,4 +86,4 @@ public sealed partial class Credential : IValidatable, IEquatable<Credential>
 
     public override int GetHashCode()
         => HashCode.Combine(this.Credit);
-}
+}*/
