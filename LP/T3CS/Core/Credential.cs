@@ -20,9 +20,9 @@ public partial class Credential : CertificateToken<Value>
             },
             4);
 
-        public override bool Validate(Credential newItem, Credential? oldItem)
+        public override bool Validate(Credential.GoshujinClass goshujin, Credential newItem, Credential? oldItem)
         {
-            return base.Validate(newItem, oldItem);
+            return true;
         }
     }
 
