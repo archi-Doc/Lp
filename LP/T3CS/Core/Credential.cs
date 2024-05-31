@@ -10,18 +10,39 @@ namespace LP.T3CS;
 [ValueLinkObject(Integrality = true)]
 public partial class Credential : CertificateToken<Value>
 {
+    private const int MaxItems = 1_000;
+
     public class Integrality : Integrality<Credential.GoshujinClass, Credential>
     {
         public static readonly ObjectPool<Integrality> Pool = new(
             () => new()
             {
-                MaxItems = 1000,
+                MaxItems = Credential.MaxItems,
                 RemoveIfItemNotFound = false,
             },
             4);
 
         public override bool Validate(Credential.GoshujinClass goshujin, Credential newItem, Credential? oldItem)
         {
+            if (oldItem is not null &&
+                oldItem.SignedMics >= newItem.SignedMics)
+            {
+                return false;
+            }
+
+            if (!newItem.ValidateAndVerify())
+            {
+                return false;
+            }
+
+            if (newItem.PublicKey.Equals(LpConstants.LpKey))
+            {// LP key
+            }
+            else if (goshujin.OriginatorChain.FindFirst(newItem.PublicKey) is null)
+            {// Not found
+                return false;
+            }
+
             return true;
         }
     }
@@ -29,6 +50,11 @@ public partial class Credential : CertificateToken<Value>
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public Credential()
     {
+    }
+
+    public Credential(Value target)
+    {
+        this.Target = target;
     }
 
     public SignaturePublicKey Originator => this.Target.Credit.Originator;

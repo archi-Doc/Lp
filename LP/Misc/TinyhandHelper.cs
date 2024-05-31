@@ -29,7 +29,7 @@ public static class TinyhandHelper
         }
     }
 
-    public static ulong GetFarmHash<T>(this T? value)
+    /*public static ulong GetFarmHash<T>(this T? value)
         where T : ITinyhandSerialize<T>
     {
         var writer = TinyhandWriter.CreateFromBytePool();
@@ -73,7 +73,7 @@ public static class TinyhandHelper
         {
             return false;
         }
-    }
+    }*/
 
     public static bool VerifyIdentifierAndSignature<T>(this T value, int level, Identifier identifier, Signature signature)
         where T : ITinyhandSerialize<T>

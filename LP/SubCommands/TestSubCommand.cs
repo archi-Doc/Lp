@@ -11,11 +11,12 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityVault authorityVault, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.control = control;
+        this.authorityVault = authorityVault;
         this.seedPhrase = seedPhrase;
     }
 
@@ -61,6 +62,16 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bt.Start();
         encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
         this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
+
+        if (await this.authorityVault.GetAuthority("lp") is { } authority)
+        {
+            var g = new Credential.GoshujinClass();
+            var c = new Credential(new());
+            authority.Sign(c);
+            var integrality = Credential.Integrality.Pool.Get();
+            integrality.IntegrateObject(g, c);
+            Credential.Integrality.Pool.Return(integrality);
+        }
     }
 
     private async Task Test0()
@@ -113,10 +124,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         }*/
     }
 
-    private ILogger<TestSubcommand> logger;
-    private Control control;
-    private IUserInterfaceService userInterfaceService;
-    private Seedphrase seedPhrase;
+    private readonly ILogger logger;
+    private readonly Control control;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly AuthorityVault authorityVault;
+    private readonly Seedphrase seedPhrase;
 }
 
 public record TestOptions

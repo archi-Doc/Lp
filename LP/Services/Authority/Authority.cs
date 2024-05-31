@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using Arc.Collections;
 using Netsphere.Crypto;
 using Tinyhand.IO;
@@ -41,7 +42,7 @@ public sealed partial class Authority
         proof.SignProof<T>(privateKey, proofMics);
     }
 
-    public void SignToken<T>(T token)
+    public void Sign<T>(T token)
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {
         var privateKey = this.GetOrCreatePrivateKey();
@@ -89,7 +90,16 @@ public sealed partial class Authority
     private int hash;
 
     private SignaturePrivateKey GetOrCreatePrivateKey()
-        => this.GetOrCreatePrivateKey(Credit.Default);
+    {// this.GetOrCreatePrivateKey(Credit.Default);
+        var privateKey = this.privateKeyCache.TryGet(Credit.Default);
+        if (privateKey == null)
+        {// Create private key.
+            privateKey = SignaturePrivateKey.Create(this.seed);
+            this.CachePrivateKey(Credit.Default, privateKey);
+        }
+
+        return privateKey;
+    }
 
     private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)
     {
