@@ -60,6 +60,9 @@ public partial record LPOptions
     [SimpleOption("nodeprivatekey", Description = "Node private key")]
     public string NodePrivateKey { get; set; } = string.Empty;
 
+    [SimpleOption("relaypublickey", Description = "Relay public key (CertificateRelayControl)")]
+    public string RelayPublicKey { get; set; } = string.Empty;
+
     [SimpleOption("ping", Description = "Enable ping function")]
     public bool EnablePing { get; set; } = true;
 
@@ -79,6 +82,14 @@ public partial record LPOptions
             EnableServer = this.EnableServer,
             EnableAlternative = this.EnableAlternative,
         };
+    }
+
+    public void LoadEnvironmentVariables()
+    {
+        if (string.IsNullOrEmpty(this.RelayPublicKey))
+        {
+            this.RelayPublicKey = Environment.GetEnvironmentVariable("relaypublickey") ?? string.Empty;
+        }
     }
 
     public bool RequiredMergerPrivateKey

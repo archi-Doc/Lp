@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
@@ -296,7 +294,18 @@ public static class NetHelper
     }
 
     /// <summary>
-    /// Validate object members and verify that the signature is appropriate.
+    /// Validates the object members and verifies that the signature is appropriate with the specified salt.
+    /// </summary>
+    /// <typeparam name="T">The type of the object.</typeparam>
+    /// <param name="value">The object to be verified.</param>
+    /// <param name="salt">The salt value to compare with the object's salt.</param>
+    /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
+    public static bool ValidateAndVerifyWithSalt<T>(this T value, ulong salt)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+        => value.Salt == salt && value.ValidateAndVerify();
+
+    /// <summary>
+    /// Validates the object members and verifies that the signature is appropriate.
     /// </summary>
     /// <param name="value">The object to be verified.</param>
     /// <typeparam name="T">The type of the object.</typeparam>

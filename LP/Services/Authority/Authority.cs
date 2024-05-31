@@ -42,6 +42,14 @@ public sealed partial class Authority
         proof.SignProof<T>(privateKey, proofMics);
     }
 
+    public void SignWithSalt<T>(T token, ulong salt)
+        where T : ITinyhandSerialize<T>, ISignAndVerify
+    {
+        token.Salt = salt;
+        var privateKey = this.GetOrCreatePrivateKey();
+        NetHelper.Sign(token, privateKey);
+    }
+
     public void Sign<T>(T token)
         where T : ITinyhandSerialize<T>, ISignAndVerify
     {

@@ -2,7 +2,6 @@
 
 using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Packet;
 using Netsphere.Responder;
 
 namespace Netsphere.Relay;
@@ -22,7 +21,7 @@ public class CertificateRelayControl : IRelayControl
         {
             if (this.ServerConnection.NetTerminal.RelayControl is not CertificateRelayControl ||
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
-                !this.ServerConnection.ValidateAndVerifyWithSalt(token))
+                !token.ValidateAndVerifyWithSalt(this.ServerConnection.Salt))
             {
                 return new(NetResult.NotAuthenticated);
             }

@@ -8,5 +8,6 @@ public static class Subcommand
     {
         context.AddSubcommand(typeof(ShowRelayCircuitSubcommand));
         context.AddSubcommand(typeof(ShowRelayExchangeSubcommand));
+        context.AddSubcommand(typeof(NewCertificateRelaySubcommand));
     }
 }

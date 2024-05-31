@@ -19,6 +19,7 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
+using Netsphere.Relay;
 using SimpleCommandLine;
 
 namespace LP;
@@ -52,6 +53,7 @@ public class Control
                 context.AddSingleton<Seedphrase>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
+                ConfigureRelay(context);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
@@ -175,14 +177,25 @@ public class Control
                 options.EnableFilerLogger = false;
             });
 
-            var crystalControlBuilder = this.CrystalBuilder();
+            var crystalControlBuilder = CrystalBuilder();
 
             this.AddBuilder(new NetControl.Builder());
             this.AddBuilder(crystalControlBuilder);
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
         }
 
-        private CrystalControl.Builder CrystalBuilder()
+        private static void ConfigureRelay(IUnitConfigurationContext context)
+        {
+            if (context.TryGetOptions<LPOptions>(out var options))
+            {
+                if (SignaturePublicKey.TryParse(options.RelayPublicKey, out var relayPublicKey))
+                {// CertificateRelayControl
+                    context.AddSingleton<IRelayControl, CertificateRelayControl>();
+                }
+            }
+        }
+
+        private static CrystalControl.Builder CrystalBuilder()
         {
             return new CrystalControl.Builder()
                 .ConfigureCrystal(context =>
@@ -276,6 +289,8 @@ public class Control
                     }
                 }
 
+                options.LoadEnvironmentVariables();
+
                 options.EnableServer = true; // tempcode
                 var netOptions = options.ToNetOptions();
                 if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
@@ -330,6 +345,9 @@ public class Control
 
                 // Merger
                 await control.CreateMerger(this.Context);
+
+                // Relay
+                await control.CreateRelay(this.Context);
 
                 // Vault -> NodeKey
                 await control.LoadKeyVault_NodeKey();
@@ -437,6 +455,18 @@ public class Control
     public AuthorityVault AuthorityVault { get; }
 
     private SimpleParser subcommandParser;
+
+    public async Task CreateRelay(UnitContext context)
+    {
+        if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
+        {
+            if (SignaturePublicKey.TryParse(this.LPBase.Options.RelayPublicKey, out var relayPublicKey))
+            {
+                certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
+                this.Logger.Get<DefaultLog>().Log($"CertificateRelayControl: {relayPublicKey.ToString()}");
+            }
+        }
+    }
 
     public async Task CreateMerger(UnitContext context)
     {
