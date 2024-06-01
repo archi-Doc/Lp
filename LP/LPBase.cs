@@ -34,7 +34,7 @@ public class LPBase
 
     // public SignaturePublicKey RemotePublicKey { get; private set; }
 
-    public LPOptions Options { get; private set; } = default!;
+    public LpOptions Options { get; private set; } = default!;
 
     public LPSettings Settings { get; set; }
 
@@ -99,7 +99,7 @@ public class LPBase
         return false;
     }
 
-    public void Initialize(LPOptions options, bool isConsole, string defaultMode)
+    public void Initialize(LpOptions options, bool isConsole, string defaultMode)
     {
         this.Options = options;
         this.IsConsole = isConsole;

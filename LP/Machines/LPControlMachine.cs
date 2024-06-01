@@ -9,7 +9,7 @@ public partial class LPControlMachine : Machine
 {
     private const int IntervalInSeconds = 10;
 
-    public LPControlMachine(ILogger<LPControlMachine> logger, Control control, LPOptions options)
+    public LPControlMachine(ILogger<LPControlMachine> logger, Control control, LpOptions options)
     {
         this.logger = logger;
         this.control = control;
@@ -47,6 +47,6 @@ public partial class LPControlMachine : Machine
 
     private readonly ILogger logger;
     private readonly Control control;
-    private readonly LPOptions options;
+    private readonly LpOptions options;
     private long lifespan;
 }

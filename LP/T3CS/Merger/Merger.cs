@@ -10,8 +10,6 @@ namespace LP;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public const string MergerPrivateKeyName = "mergerprivatekey";
-
     public Merger(UnitContext context, UnitLogger unitLogger, LPBase lpBase)
         : base(context)
     {
@@ -51,7 +49,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        this.logger.TryGet()?.Log(this.Information.ToString());
+        // this.logger.TryGet()?.Log(this.Information.ToString());
 
         if (this.Information.MergerType == MergerInformation.Type.Single)
         {// Single credit

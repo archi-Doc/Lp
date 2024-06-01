@@ -473,6 +473,28 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
         address4 = BitConverter.ToUInt32(span);
 
+        int digitCount;
+        for (digitCount = 0; digitCount < sourcePort.Length; digitCount++)
+        {
+            if (sourcePort[digitCount] >= '0' && sourcePort[digitCount] <= '9')
+            {
+                digitCount++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (digitCount == 0)
+        {
+            return false;
+        }
+        else
+        {
+            sourcePort = sourcePort.Slice(0, digitCount - 1);
+        }
+
         if (!ushort.TryParse(sourcePort, out var p))
         {
             return false;
@@ -542,6 +564,28 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         address6a = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
         address6b = BitConverter.ToUInt64(span);
+
+        int digitCount;
+        for (digitCount = 0; digitCount < sourcePort.Length; digitCount++)
+        {
+            if (sourcePort[digitCount] >= '0' && sourcePort[digitCount] <= '9')
+            {
+                digitCount++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (digitCount == 0)
+        {
+            return false;
+        }
+        else
+        {
+            sourcePort = sourcePort.Slice(0, digitCount - 1);
+        }
 
         if (!ushort.TryParse(sourcePort, out var p))
         {
