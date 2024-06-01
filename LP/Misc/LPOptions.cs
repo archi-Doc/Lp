@@ -75,6 +75,9 @@ public partial record LPOptions
     [SimpleOption("relay_certificate_priauth", Description = "Private key or authority name for CertificateRelayControl")]
     public string RelayCertificatePriauth { get; set; } = string.Empty;
 
+    [SimpleOption("relay_peer_priauth", Description = "Private key or authority name for Relay peer")]
+    public string RelayPeerPriauth { get; set; } = "relay_peer";
+
     public NetOptions ToNetOptions()
     {
         return new NetOptions() with
