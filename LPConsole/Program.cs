@@ -61,7 +61,7 @@ public class Program
 
         unit = builder.Build(args);
 
-        var options = unit.Context.ServiceProvider.GetRequiredService<LPOptions>();
+        var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
         await unit.RunAsync(options);
 
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

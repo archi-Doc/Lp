@@ -21,7 +21,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
         {
             var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.Options with { OptionsPath = string.Empty, });
 
-            var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LPOptions.DefaultOptionsName);
+            var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LpOptions.DefaultOptionsName);
             if (File.Exists(path) &&
                 await this.userInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmOverwrite, path) != true)
             {

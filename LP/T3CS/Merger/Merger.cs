@@ -10,8 +10,6 @@ namespace LP;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public const string MergerPrivateKeyName = "mergerprivatekey";
-
     public Merger(UnitContext context, UnitLogger unitLogger, LPBase lpBase)
         : base(context)
     {

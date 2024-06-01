@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPOptions
+public partial record LpOptions
 {
     public const string DefaultOptionsName = "Options.tinyhand";
 
@@ -60,17 +60,17 @@ public partial record LPOptions
     [SimpleOption("certificate_relay_publickey", Description = "Public key for CertificateRelayControl", GetEnvironmentVariable = true)]
     public string CertificateRelayPublicKey { get; set; } = string.Empty;
 
-    [SimpleOption("relay_peer_priauth", Description = "Private key or authority name for Relay peer", GetEnvironmentVariable = true)]
-    public string RelayPeerPriauth { get; set; } = "relay_peer";
+    [SimpleOption("relay_peer_privault", Description = "Private key or vault name for Relay peer", GetEnvironmentVariable = true)]
+    public string RelayPeerPrivault { get; set; } = "relay_peer";
 
-    [SimpleOption("content_peer_priauth", Description = "Private key or authority name for Content peer", GetEnvironmentVariable = true)]
-    public string ContentPeerPriauth { get; set; } = "content_peer";
+    [SimpleOption("content_peer_privault", Description = "Private key or vault name for Content peer", GetEnvironmentVariable = true)]
+    public string ContentPeerPrivault { get; set; } = "content_peer";
 
-    [SimpleOption("credit_merger_priauth", Description = "Private key or authority name for Credit merger", GetEnvironmentVariable = true)]
-    public string CreditMergerPriauth { get; set; } = "credit_merger";
+    [SimpleOption("credit_merger_privault", Description = "Private key or vault name for Credit merger", GetEnvironmentVariable = true)]
+    public string CreditMergerPrivault { get; set; } = "credit_merger";
 
-    [SimpleOption("relay_merger_priauth", Description = "Private key or authority name for Relay merger", GetEnvironmentVariable = true)]
-    public string RelayMergerPriauth { get; set; } = "relay_merger";
+    [SimpleOption("relay_merger_privault", Description = "Private key or vault name for Relay merger", GetEnvironmentVariable = true)]
+    public string RelayMergerPrivault { get; set; } = "relay_merger";
 
     public NetOptions ToNetOptions()
     {
@@ -83,7 +83,4 @@ public partial record LPOptions
             EnableAlternative = this.EnableAlternative,
         };
     }
-
-    public bool RequiredMergerPrivateKey
-        => this.CreditMerger || this.RelayMerger;
 }

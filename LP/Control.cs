@@ -109,7 +109,7 @@ public class Control
             this.SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/Log.txt";
-                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                if (context.TryGetOptions<LpOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
                 }
@@ -124,7 +124,7 @@ public class Control
             this.SetupOptions<LP.Logging.NetsphereLoggerOptions>((context, options) =>
             {// NetsphereLoggerOptions, LogLowLevelNet
                 var logfile = "Logs/Net.txt";
-                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                if (context.TryGetOptions<LpOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
                 }
@@ -141,7 +141,7 @@ public class Control
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
             {// ConsoleLoggerOptions
-                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                if (context.TryGetOptions<LpOptions>(out var lpOptions))
                 {
                     options.Formatter.EnableColor = lpOptions.ColorConsole;
                 }
@@ -153,13 +153,13 @@ public class Control
 
             this.SetupOptions<LPBase>((context, lpBase) =>
             {// LPBase
-                context.GetOptions<LPOptions>(out var options);
+                context.GetOptions<LpOptions>(out var options);
                 lpBase.Initialize(options, true, "merger");
             });
 
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
-                context.GetOptions<LPOptions>(out var options);
+                context.GetOptions<LpOptions>(out var options);
                 netBase.SetOptions(options.ToNetOptions());
 
                 netBase.AllowUnsafeConnection = true; // betacode
@@ -168,7 +168,7 @@ public class Control
 
             this.SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
-                context.GetOptions<LPOptions>(out var lpOptions);
+                context.GetOptions<LpOptions>(out var lpOptions);
                 // options.RootPath = lpOptions.RootDirectory;
                 options.DefaultSaveFormat = SaveFormat.Utf8;
                 options.DefaultSavePolicy = SavePolicy.Periodic;
@@ -186,7 +186,7 @@ public class Control
 
         private static void ConfigureRelay(IUnitConfigurationContext context)
         {
-            if (context.TryGetOptions<LPOptions>(out var options))
+            if (context.TryGetOptions<LpOptions>(out var options))
             {
                 if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
                 {// CertificateRelayControl
@@ -244,7 +244,7 @@ public class Control
         private void LoadLPOptions(IUnitPreloadContext context)
         {
             var args = context.Arguments.RawArguments;
-            LPOptions? options = null;
+            LpOptions? options = null;
 
             if (context.Arguments.TryGetOption("loadoptions", out var optionFile))
             {// 1st: Option file
@@ -254,7 +254,7 @@ public class Control
                     try
                     {
                         var utf8 = File.ReadAllBytes(originalPath);
-                        var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
+                        var op = TinyhandSerializer.DeserializeFromUtf8<LpOptions>(utf8);
                         if (op != null)
                         {
                             options = op;
@@ -269,7 +269,7 @@ public class Control
             }
 
             // 2nd: Arguments
-            SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
+            SimpleParser.TryParseOptions<LpOptions>(args, out options, options);
 
             if (options is not null)
             {
@@ -288,7 +288,7 @@ public class Control
             TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
-        public async Task RunAsync(LPOptions options)
+        public async Task RunAsync(LpOptions options)
         {
             try
             {
@@ -446,39 +446,39 @@ public class Control
 
     public async Task CreateMerger(UnitContext context)
     {
-        if (this.LPBase.Options.RequiredMergerPrivateKey)
-        {// Merger private key
-            SignaturePrivateKey? mergerPrivateKey;
-
-            // 1st: Vault
-            if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
-            {
-                // 2nd: EnvironmentVariable
-                if (!CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(Merger.MergerPrivateKeyName, out mergerPrivateKey))
+        var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
+        if (!string.IsNullOrEmpty(this.LPBase.Options.CreditMergerPrivault))
+        {// CreditMergerPrivault is valid
+            var privault = this.LPBase.Options.CreditMergerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(privault, out privateKey))
                 {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.FormatAndTryAdd(privault, privateKey);
                 }
             }
 
-            if (mergerPrivateKey is null)
-            {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, Merger.MergerPrivateKeyName);
+            context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, privateKey);
+            this.NetControl.Services.Register<IMergerService>();
+        }
 
-                mergerPrivateKey = SignaturePrivateKey.Create();
-                this.Vault.FormatAndTryAdd(Merger.MergerPrivateKeyName, mergerPrivateKey);
+        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayMergerPrivault))
+        {// RelayMergerPrivault is valid
+            var privault = this.LPBase.Options.RelayMergerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(privault, out privateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.FormatAndTryAdd(privault, privateKey);
+                }
             }
 
-            var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-            if (!string.IsNullOrEmpty(this.LPBase.Options.CreditMergerPriauth))
-            {
-                context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, mergerPrivateKey);
-                this.NetControl.Services.Register<IMergerService>();
-            }
-
-            if (!string.IsNullOrEmpty(this.LPBase.Options.RelayMergerPriauth))
-            {
-                context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, mergerPrivateKey);
-                this.NetControl.Services.Register<IRelayMergerService>();
-            }
+            context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
+            this.NetControl.Services.Register<IRelayMergerService>();
         }
     }
 
@@ -497,7 +497,7 @@ public class Control
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
         // Vault
-        this.Vault.Add(NodePrivateKey.PrivateKeyName, this.NetControl.NetBase.SerializeNodePrivateKey());
+        this.Vault.Add(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.SerializeNodePrivateKey());
         await this.Vault.SaveAsync();
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
@@ -665,7 +665,7 @@ public class Control
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
         this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
 
-        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPriauth))
+        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))
         {
             this.BigMachine.RelayPeerMachine.GetOrCreate();
         }
@@ -673,11 +673,11 @@ public class Control
 
     private async Task LoadKeyVault_NodeKey()
     {
-        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.PrivateKeyName, out var key))
+        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NetConstants.NodePrivateKeyName, out var key))
         {// Failure
             if (!this.Vault.Created)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodePrivateKey.PrivateKeyName);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodePrivateKeyName);
             }
 
             return;
@@ -685,7 +685,7 @@ public class Control
 
         if (!this.NetControl.NetBase.SetNodePrivateKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyName);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodePrivateKeyName);
             return;
         }
     }
