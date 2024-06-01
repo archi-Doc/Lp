@@ -27,8 +27,7 @@ public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateR
             return;
         }
 
-        var netNode = await this.netTerminal.UnsafeGetNetNode(NetAddress.Alternative);
-        if (netNode is null)
+        if (!NetNode.TryParseNetNode(this.logger, options.RelayNode, out var netNode))
         {
             return;
         }
