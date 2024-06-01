@@ -439,7 +439,7 @@ public class Control
             if (SignaturePublicKey.TryParse(this.LPBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
-                this.Logger.Get<DefaultLog>().Log($"CertificateRelayControl: {relayPublicKey.ToString()}");
+                this.Logger.Get<CertificateRelayControl>().Log($"{relayPublicKey.ToString()}");
             }
         }
     }

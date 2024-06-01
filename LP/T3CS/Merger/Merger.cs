@@ -49,7 +49,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        this.logger.TryGet()?.Log(this.Information.ToString());
+        // this.logger.TryGet()?.Log(this.Information.ToString());
 
         if (this.Information.MergerType == MergerInformation.Type.Single)
         {// Single credit
