@@ -12,8 +12,8 @@ public partial record LPOptions
     [SimpleOption("loadoptions", Description = "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
-    [SimpleOption("pass", Description = "Passphrase for vault")]
-    public string? Pass { get; set; } = null;
+    [SimpleOption("vault_pass", Description = "Passphrase for vault")]
+    public string? VaultPass { get; set; } = null;
 
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }

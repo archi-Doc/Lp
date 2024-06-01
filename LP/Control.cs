@@ -274,14 +274,14 @@ public class Control
             if (options != null)
             {
                 // Passphrase
-                if (options.Pass == null)
+                if (options.VaultPass == null)
                 {
                     try
                     {
                         var lppass = Environment.GetEnvironmentVariable("lppass");
                         if (lppass != null)
                         {
-                            options.Pass = lppass;
+                            options.VaultPass = lppass;
                         }
                     }
                     catch
