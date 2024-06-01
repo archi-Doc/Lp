@@ -12,23 +12,11 @@ public partial record LPOptions
     [SimpleOption("loadoptions", Description = "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
-    [SimpleOption("pass", Description = "Passphrase for vault")]
-    public string? Pass { get; set; } = null;
+    [SimpleOption("vault_pass", Description = "Passphrase for vault", GetEnvironmentVariable = true)]
+    public string? VaultPass { get; set; } = null;
 
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
-
-    [SimpleOption("creditmerger", Description = "Enable credit merger feature")]
-    public bool CreditMerger { get; init; } = true;
-
-    [SimpleOption("relaymerger", Description = "Enable relay merger feature")]
-    public bool RelayMerger { get; init; } = true;
-
-    [SimpleOption("volatilepeer", Description = "Enable volatile peer feature")]
-    public bool VolatilePeer { get; init; } = true;
-
-    [SimpleOption("nonvolatilepeer", Description = "Enable non-volatile peer feature")]
-    public bool NonVolatilePeer { get; init; } = true;
 
     [SimpleOption("test", Description = "Enable test features")]
     public bool TestFeatures { get; set; } = false;
@@ -39,7 +27,7 @@ public partial record LPOptions
     [SimpleOption("datadir", Description = "Data directory")]
     public string DataDirectory { get; init; } = string.Empty;
 
-    [SimpleOption("vault", Description = "Vault path")]
+    [SimpleOption("vault_path", Description = "Vault path")]
     public string VaultPath { get; init; } = string.Empty;
 
     // [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
@@ -48,17 +36,14 @@ public partial record LPOptions
     [SimpleOption("name", Description = "Node name")]
     public string NodeName { get; init; } = string.Empty;
 
+    [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
+    public long Lifespan { get; init; }
+
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
 
     [SimpleOption("colorconsole", Description = "Enable color console")]
     public bool ColorConsole { get; init; } = true;
-
-    [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
-    public long Lifespan { get; init; }
-
-    [SimpleOption("nodeprivatekey", Description = "Node private key")]
-    public string NodePrivateKey { get; set; } = string.Empty;
 
     [SimpleOption("ping", Description = "Enable ping function")]
     public bool EnablePing { get; set; } = true;
@@ -68,6 +53,24 @@ public partial record LPOptions
 
     [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
+
+    [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key", GetEnvironmentVariable = true)]
+    public string NodePrivateKey { get; set; } = string.Empty;
+
+    [SimpleOption("certificate_relay_publickey", Description = "Public key for CertificateRelayControl", GetEnvironmentVariable = true)]
+    public string CertificateRelayPublicKey { get; set; } = string.Empty;
+
+    [SimpleOption("relay_peer_priauth", Description = "Private key or authority name for Relay peer", GetEnvironmentVariable = true)]
+    public string RelayPeerPriauth { get; set; } = "relay_peer";
+
+    [SimpleOption("content_peer_priauth", Description = "Private key or authority name for Content peer", GetEnvironmentVariable = true)]
+    public string ContentPeerPriauth { get; set; } = "content_peer";
+
+    [SimpleOption("credit_merger_priauth", Description = "Private key or authority name for Credit merger", GetEnvironmentVariable = true)]
+    public string CreditMergerPriauth { get; set; } = "credit_merger";
+
+    [SimpleOption("relay_merger_priauth", Description = "Private key or authority name for Relay merger", GetEnvironmentVariable = true)]
+    public string RelayMergerPriauth { get; set; } = "relay_merger";
 
     public NetOptions ToNetOptions()
     {

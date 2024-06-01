@@ -88,28 +88,6 @@ public class RemoteDataControl
             this.logger.TryGet(LogLevel.Information)?.Log($"Get: {identifier}");
             var result = await NetHelper.StreamToSendStream(fileStream, sendStream);
             this.logger.TryGet(LogLevel.Information)?.Log($"Get ({result}): {identifier} {sendStream.SentLength} bytes");
-
-            /*var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
-            long totalSent = 0;
-            try
-            {
-                int length;
-                while ((length = await fileStream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
-                {
-                    await sendStream.Send(buffer.AsMemory(0, length)).ConfigureAwait(false);
-                    totalSent += length;
-                }
-
-                await sendStream.Complete().ConfigureAwait(false);
-            }
-            catch
-            {
-                await sendStream.Cancel();
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }*/
         }
         catch
         {
@@ -143,43 +121,6 @@ public class RemoteDataControl
             this.logger.TryGet(LogLevel.Information)?.Log($"Put({result}): {identifier} {receiveStream.ReceivedLength} bytes");
 
             receiveStream.SendAndDispose(result);
-
-            /*long totalWritten = 0;
-            var buffer = ArrayPool<byte>.Shared.Rent(ReadBufferSize);
-            try
-            {
-                while (true)
-                {
-                    (result, var written) = await receiveStream.Receive(buffer).ConfigureAwait(false);
-                    if (written == 0)
-                    {// Completed or error.
-                        // transmissionContext.SendAndForget(result);
-                        break;
-                    }
-                    else
-                    {// written > 0
-                        await fileStream.WriteAsync(buffer.AsMemory(0, written)).ConfigureAwait(false);
-                        totalWritten += written;
-                    }
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-
-                if (result == NetResult.Completed)
-                {// Complete
-                 // transmissionContext.Result = NetResult.Success;
-                    result = NetResult.Success;
-                }
-                else
-                {
-                    PathHelper.TryDeleteFile(path);
-                    // transmissionContext.Result = result;
-                }
-
-                receiveStream.SendAndDispose(result);
-            }*/
         }
         catch
         {

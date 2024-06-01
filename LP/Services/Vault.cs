@@ -278,7 +278,7 @@ public partial class Vault
         }
         else
         {
-            var result = await this.LoadAsync(this.lpBase.Options.Pass).ConfigureAwait(false);
+            var result = await this.LoadAsync(this.lpBase.Options.VaultPass).ConfigureAwait(false);
             if (result)
             {
                 return;
@@ -296,7 +296,7 @@ public partial class Vault
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault
-        var password = this.lpBase.Options.Pass;
+        var password = this.lpBase.Options.VaultPass;
         if (string.IsNullOrEmpty(password))
         {
             password = await this.userInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);

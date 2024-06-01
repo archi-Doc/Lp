@@ -10,7 +10,7 @@ namespace Netsphere.Crypto;
 /// </summary>
 /// <typeparam name="T">The type of the certificate object.</typeparam>
 [TinyhandObject]
-public sealed partial class CertificateToken<T> : ISignAndVerify, IEquatable<CertificateToken<T>>, IStringConvertible<CertificateToken<T>>
+public partial class CertificateToken<T> : ISignAndVerify, IEquatable<CertificateToken<T>>, IStringConvertible<CertificateToken<T>>
     where T : ITinyhandSerialize<T>
 {
     private const char Identifier = 'C';

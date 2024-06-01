@@ -19,6 +19,7 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
+using Netsphere.Relay;
 using SimpleCommandLine;
 
 namespace LP;
@@ -52,6 +53,7 @@ public class Control
                 context.AddSingleton<Seedphrase>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
+                ConfigureRelay(context);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
@@ -175,14 +177,25 @@ public class Control
                 options.EnableFilerLogger = false;
             });
 
-            var crystalControlBuilder = this.CrystalBuilder();
+            var crystalControlBuilder = CrystalBuilder();
 
             this.AddBuilder(new NetControl.Builder());
             this.AddBuilder(crystalControlBuilder);
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
         }
 
-        private CrystalControl.Builder CrystalBuilder()
+        private static void ConfigureRelay(IUnitConfigurationContext context)
+        {
+            if (context.TryGetOptions<LPOptions>(out var options))
+            {
+                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
+                {// CertificateRelayControl
+                    context.AddSingleton<IRelayControl, CertificateRelayControl>();
+                }
+            }
+        }
+
+        private static CrystalControl.Builder CrystalBuilder()
         {
             return new CrystalControl.Builder()
                 .ConfigureCrystal(context =>
@@ -258,32 +271,10 @@ public class Control
             // 2nd: Arguments
             SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
 
-            if (options != null)
+            if (options is not null)
             {
-                // Passphrase
-                if (options.Pass == null)
-                {
-                    try
-                    {
-                        var lppass = Environment.GetEnvironmentVariable("lppass");
-                        if (lppass != null)
-                        {
-                            options.Pass = lppass;
-                        }
-                    }
-                    catch
-                    {
-                    }
-                }
-
                 options.EnableServer = true; // tempcode
                 var netOptions = options.ToNetOptions();
-                if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
-                Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
-                {
-                    netOptions.NodePrivateKey = privateKey;
-                }
-
                 context.SetOptions(options);
             }
         }
@@ -330,6 +321,9 @@ public class Control
 
                 // Merger
                 await control.CreateMerger(this.Context);
+
+                // Relay
+                await control.CreateRelay(this.Context);
 
                 // Vault -> NodeKey
                 await control.LoadKeyVault_NodeKey();
@@ -438,6 +432,18 @@ public class Control
 
     private SimpleParser subcommandParser;
 
+    public async Task CreateRelay(UnitContext context)
+    {
+        if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
+        {
+            if (SignaturePublicKey.TryParse(this.LPBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
+            {
+                certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
+                this.Logger.Get<DefaultLog>().Log($"CertificateRelayControl: {relayPublicKey.ToString()}");
+            }
+        }
+    }
+
     public async Task CreateMerger(UnitContext context)
     {
         if (this.LPBase.Options.RequiredMergerPrivateKey)
@@ -462,13 +468,13 @@ public class Control
             }
 
             var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-            if (this.LPBase.Options.CreditMerger)
+            if (!string.IsNullOrEmpty(this.LPBase.Options.CreditMergerPriauth))
             {
                 context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, mergerPrivateKey);
                 this.NetControl.Services.Register<IMergerService>();
             }
 
-            if (this.LPBase.Options.RelayMerger)
+            if (!string.IsNullOrEmpty(this.LPBase.Options.RelayMergerPriauth))
             {
                 context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, mergerPrivateKey);
                 this.NetControl.Services.Register<IRelayMergerService>();
@@ -659,7 +665,7 @@ public class Control
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
         this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
 
-        if (this.LPBase.Options.VolatilePeer)
+        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPriauth))
         {
             this.BigMachine.RelayPeerMachine.GetOrCreate();
         }

@@ -32,7 +32,7 @@ public class AuthenticatedTerminalFactory
 
         var context = connection.GetContext();
         var token = new AuthenticationToken(connection.Salt);
-        authority.SignToken(token);
+        authority.Sign(token);
         if (!context.AuthenticationTokenEquals(token.PublicKey))
         {
             var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
