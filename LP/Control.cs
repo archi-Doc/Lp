@@ -188,7 +188,7 @@ public class Control
         {
             if (context.TryGetOptions<LPOptions>(out var options))
             {
-                if (SignaturePublicKey.TryParse(options.RelayPublicKey, out var relayPublicKey))
+                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
                 {// CertificateRelayControl
                     context.AddSingleton<IRelayControl, CertificateRelayControl>();
                 }
@@ -271,34 +271,10 @@ public class Control
             // 2nd: Arguments
             SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
 
-            if (options != null)
+            if (options is not null)
             {
-                // Passphrase
-                if (options.VaultPass == null)
-                {
-                    try
-                    {
-                        var lppass = Environment.GetEnvironmentVariable("lppass");
-                        if (lppass != null)
-                        {
-                            options.VaultPass = lppass;
-                        }
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                options.LoadEnvironmentVariables();
-
                 options.EnableServer = true; // tempcode
                 var netOptions = options.ToNetOptions();
-                if (string.IsNullOrEmpty(netOptions.NodePrivateKey) &&
-                Environment.GetEnvironmentVariable(NetConstants.NodePrivateKeyName) is { } privateKey)
-                {
-                    netOptions.NodePrivateKey = privateKey;
-                }
-
                 context.SetOptions(options);
             }
         }
@@ -460,7 +436,7 @@ public class Control
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
         {
-            if (SignaturePublicKey.TryParse(this.LPBase.Options.RelayPublicKey, out var relayPublicKey))
+            if (SignaturePublicKey.TryParse(this.LPBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
                 this.Logger.Get<DefaultLog>().Log($"CertificateRelayControl: {relayPublicKey.ToString()}");
@@ -492,13 +468,13 @@ public class Control
             }
 
             var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-            if (this.LPBase.Options.CreditMerger)
+            if (!string.IsNullOrEmpty(this.LPBase.Options.CreditMergerPriauth))
             {
                 context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, mergerPrivateKey);
                 this.NetControl.Services.Register<IMergerService>();
             }
 
-            if (this.LPBase.Options.RelayMerger)
+            if (!string.IsNullOrEmpty(this.LPBase.Options.RelayMergerPriauth))
             {
                 context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, mergerPrivateKey);
                 this.NetControl.Services.Register<IRelayMergerService>();
@@ -689,7 +665,7 @@ public class Control
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
         this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
 
-        if (this.LPBase.Options.VolatilePeer)
+        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPriauth))
         {
             this.BigMachine.RelayPeerMachine.GetOrCreate();
         }
