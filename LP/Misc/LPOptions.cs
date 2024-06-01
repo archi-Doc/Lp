@@ -72,6 +72,9 @@ public partial record LPOptions
     [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
+    [SimpleOption("relay_certificate_priauth", Description = "Private key or authority name for CertificateRelayControl")]
+    public string RelayCertificatePriauth { get; set; } = string.Empty;
+
     public NetOptions ToNetOptions()
     {
         return new NetOptions() with
