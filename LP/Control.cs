@@ -388,6 +388,7 @@ public class Control
 
         if (this.LPBase.Options.TestFeatures)
         {
+            NetAddress.SkipValidation = true;
             this.NetControl.Services.Register<IRemoteBenchHost>();
         }
 

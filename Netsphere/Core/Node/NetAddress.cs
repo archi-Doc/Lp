@@ -17,6 +17,8 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
     public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
+    public static bool SkipValidation { get; set; }
+
     [Key(0)]
     public readonly ushort RelayId; // 2 bytes
 
@@ -360,6 +362,11 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         if (!ipv4 && !ipv6)
         {
             return false;
+        }
+
+        if (SkipValidation)
+        {
+            return true;
         }
 
         /* Port number is not checked because it may be changed by NAT
