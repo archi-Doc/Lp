@@ -293,6 +293,7 @@ public partial class RelayAgent
         }
         else
         {// OuterRelayId
+            Console.WriteLine($"{exchange.RelayId}");
             if (exchange.OuterEndpoint.IsValid)
             {// Inner relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
@@ -367,7 +368,7 @@ public partial class RelayAgent
                 MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
-                // Console.WriteLine($"Outer->Inner[{source.Memory.Length}] {endpoint} to {exchange.Endpoint}");
+                Console.WriteLine($"Outer->Inner[{source.Memory.Length}] {endpoint} to {exchange.Endpoint}");
             }
         }
 
