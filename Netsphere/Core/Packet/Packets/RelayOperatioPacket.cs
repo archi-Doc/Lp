@@ -19,7 +19,7 @@ public sealed partial class RelayOperatioPacket : IPacket
     {
     }
 
-    public static RelayOperatioPacket CreateSetOuterEndPoint(NetEndpoint outerEndPoint)
+    public static RelayOperatioPacket SetOuterEndPoint(NetEndpoint outerEndPoint)
     {
         return new()
         {
@@ -58,5 +58,5 @@ public sealed partial class RelayOperatioResponse : IPacket
     }
 
     [Key(0)]
-    public RelayResult Result { get; set; }
+    public RelayResult Result { get; private set; }
 }

@@ -97,7 +97,7 @@ public class RelayCommand : ISimpleCommandAsync
             Console.WriteLine(result.ToString());
             Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
 
-            var packet = RelayOperatioPacket.CreateSetOuterEndPoint(new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint));
+            var packet = RelayOperatioPacket.SetOuterEndPoint(new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint));
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
         }
 

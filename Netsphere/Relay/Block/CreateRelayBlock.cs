@@ -28,10 +28,12 @@ public partial class CreateRelayResponse
     {
     }
 
-    public CreateRelayResponse(RelayResult result, ushort relayId)
+    public CreateRelayResponse(RelayResult result, ushort relayId, ushort outerRelayId, long relayPoint)
     {
         this.Result = result;
         this.RelayId = relayId;
+        this.OuterRelayId = outerRelayId;
+        this.RelayPoint = relayPoint;
     }
 
     [Key(0)]
@@ -41,5 +43,8 @@ public partial class CreateRelayResponse
     public ushort RelayId { get; private set; }
 
     [Key(2)]
+    public ushort OuterRelayId { get; private set; }
+
+    [Key(3)]
     public long RelayPoint { get; private set; }
 }

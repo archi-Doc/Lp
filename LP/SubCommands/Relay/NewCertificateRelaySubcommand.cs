@@ -55,8 +55,17 @@ public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateR
             }
 
             var result = this.netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
-            Console.WriteLine(result.ToString());
+            Console.WriteLine($"AddRelay: {result.ToString()}");
             Console.WriteLine(this.netTerminal.RelayCircuit.NumberOfRelays);
+
+            var outerAddress = new NetAddress(r.Value.OuterRelayId, netNode.Address);
+            Console.WriteLine($"Outer address: {outerAddress.ToString()}");
+
+            /*var outerEndpoint = new NetEndpoint(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
+            var packet = RelayOperatioPacket.SetOuterEndPoint(outerEndpoint);
+            var result2 = await this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
+            Console.WriteLine($"CreateOuterEndPoint: {result2.Result.ToString()}");
+            Console.WriteLine($"OuterEndPoint: {outerEndpoint.ToString()}");*/
         }
     }
 

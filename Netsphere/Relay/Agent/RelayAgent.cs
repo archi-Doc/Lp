@@ -90,10 +90,10 @@ public partial class RelayAgent
 
     #endregion
 
-    public RelayResult Add(ServerConnection serverConnection, out ushort relayId)
+    public RelayResult Add(ServerConnection serverConnection, out ushort relayId, out ushort outerRelayId)
     {
         relayId = 0;
-        ushort outerRelayId = 0;
+        outerRelayId = 0;
         lock (this.items.SyncObject)
         {
             if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)

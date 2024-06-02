@@ -227,6 +227,9 @@ internal class NetSender
 
             this.previousSystemMics = currentSystemMics;
         }
+        catch
+        {
+        }
         finally
         {
             Monitor.Exit(this.syncObject);
@@ -261,6 +264,9 @@ internal class NetSender
                 {
                     ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
                 }
+                catch
+                {
+                }
                 finally
                 {
                     item.MemoryOwner.Return();
@@ -291,6 +297,9 @@ internal class NetSender
                 try
                 {
                     ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
+                }
+                catch
+                {
                 }
                 finally
                 {
