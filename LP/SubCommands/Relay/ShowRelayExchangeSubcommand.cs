@@ -18,8 +18,9 @@ public class ShowRelayExchangeSubcommand : ISimpleCommandAsync
     {
         this.logger.TryGet()?.Log("Show relay exchange");
 
-        var st = $"Number of relay exchange: {this.netTerminal.RelayAgent.NumberOfExchanges}";
-        this.userInterfaceService.WriteLine(st);
+        // var st = $"Number of relay exchange: {this.netTerminal.RelayAgent.NumberOfExchanges}";
+        // this.userInterfaceService.WriteLine(st);
+        this.netTerminal.RelayAgent.Show();
     }
 
     private readonly ILogger logger;

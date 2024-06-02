@@ -90,6 +90,17 @@ public partial class RelayAgent
 
     #endregion
 
+    public void Show()
+    {
+        lock (this.items.SyncObject)
+        {
+            foreach (var x in this.items)
+            {
+                Console.WriteLine($"[{x.RelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+            }
+        }
+    }
+
     public RelayResult Add(ServerConnection serverConnection, out ushort relayId, out ushort outerRelayId)
     {
         relayId = 0;
