@@ -274,7 +274,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 span = rentMemory.Span;
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
-                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
+                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);//
             }
         }
 

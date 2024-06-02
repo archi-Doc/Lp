@@ -293,7 +293,7 @@ public partial class RelayAgent
         }
         else
         {// OuterRelayId
-            Console.WriteLine($"{exchange.RelayId}");
+            // Console.WriteLine($"{exchange.RelayId}");
             if (exchange.OuterEndpoint.IsValid)
             {// Inner relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
