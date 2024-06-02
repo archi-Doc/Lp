@@ -46,7 +46,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
         var sw = Stopwatch.StartNew();
         var p = new PingPacket("test56789");
-        var result = await packetTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p);
+        var result = await packetTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p, 0, default, EndpointResolution.NetAddress);
 
         sw.Stop();
         if (result.Value != null)

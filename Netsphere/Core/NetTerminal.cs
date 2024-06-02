@@ -88,8 +88,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.RelayAgent.Clean();
     }
 
-    public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)
-        => this.NetStats.TryCreateEndpoint(in address, out endPoint);
+    public bool TryCreateEndpoint(ref NetAddress address, EndpointResolution endpointResolution, out NetEndpoint endPoint)
+        => this.NetStats.TryCreateEndpoint(ref address, endpointResolution, out endPoint);
 
     public void SetDeliveryFailureRatioForTest(double ratio)
     {

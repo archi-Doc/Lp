@@ -85,8 +85,9 @@ public sealed partial class PacketTerminal
     /// relayNumber == 0: Relays are not necessary.<br/>
     /// relayNumber &gt; 0: The minimum number of relays.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="endpointResolution">The endpoint resolution strategy.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="NetResult"/>, the received packet value of type <typeparamref name="TReceive"/>, and the round-trip time in microseconds.</returns>
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -97,7 +98,7 @@ public sealed partial class PacketTerminal
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var rentMemory); // CreatePacketCode
-        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber);
+        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber, endpointResolution);
         if (result != NetResult.Success)
         {
             return (result, default, 0);
@@ -395,7 +396,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber, EndpointResolution endpointResolution)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -423,7 +424,7 @@ public sealed partial class PacketTerminal
         NetEndpoint endpoint;
         if (relayNumber == 0)
         {// No relay
-            if (!this.netTerminal.TryCreateEndpoint(in netAddress, out endpoint))
+            if (!this.netTerminal.TryCreateEndpoint(ref netAddress, endpointResolution, out endpoint))
             {
                 return NetResult.NoNetwork;
             }
