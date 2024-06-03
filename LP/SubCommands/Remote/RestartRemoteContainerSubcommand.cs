@@ -22,12 +22,12 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
 
     public async Task RunAsync(RestartRemoteContainerOptions options, string[] args)
     {
-        if (await NetHelper.TryGetNetNode(this.netTerminal, options.Node) is not { } netNode)
+        if (await NetHelper.TryGetNetNode(this.netTerminal, options.RunnerNode) is not { } netNode)
         {
             return;
         }
 
-        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SignaturePrivateKey>(options.RemotePrivateKey, NetConstants.RemotePrivateKeyName, out var privateKey))
+        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SignaturePrivateKey>(options.RemotePrivault, NetConstants.RemotePrivateKeyName, out var privateKey))
         {
             return;
         }
@@ -113,11 +113,11 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
 
 public record RestartRemoteContainerOptions
 {
-    [SimpleOption("node", Description = "Node information", Required = true)]
-    public string Node { get; init; } = string.Empty;
+    [SimpleOption("runner_node", Description = "Runner node", Required = true)]
+    public string RunnerNode { get; init; } = string.Empty;
 
-    [SimpleOption("remote_privatekey", Description = "Private key for remote operation")]
-    public string RemotePrivateKey { get; init; } = string.Empty;
+    [SimpleOption("remote_privault", Description = "Private key or vault name for remote operation")]
+    public string RemotePrivault { get; init; } = string.Empty;
 
     [SimpleOption("containerport", Description = "Port number associated with the container")]
     public ushort ContainerPort { get; init; } = NetConstants.MinPort;
