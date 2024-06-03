@@ -18,7 +18,7 @@ public class ShowIncomingRelaySubcommand : ISimpleCommandAsync
     {
         this.logger.TryGet()?.Log("Show incoming relay circuit");
 
-        var st = await this.netTerminal.IncominigCircuit.UnsafeDetailedToString();
+        var st = await this.netTerminal.IncomingCircuit.UnsafeDetailedToString();
         this.userInterfaceService.WriteLine(st);
     }
 

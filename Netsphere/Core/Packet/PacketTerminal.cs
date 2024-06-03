@@ -86,8 +86,9 @@ public sealed partial class PacketTerminal
     /// relayNumber &gt; 0: The minimum number of relays.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="endpointResolution">The endpoint resolution strategy.</param>
+    /// <param name="incomingCircuit">true if the incoming circuit is used; otherwise, false.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="NetResult"/>, the received packet value of type <typeparamref name="TReceive"/>, and the round-trip time in microseconds.</returns>
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6, bool incomingCircuit = false)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -98,7 +99,7 @@ public sealed partial class PacketTerminal
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var rentMemory); // CreatePacketCode
-        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber, endpointResolution);
+        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber, endpointResolution, incomingCircuit);
         if (result != NetResult.Success)
         {
             return (result, default, 0);
@@ -402,7 +403,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber, EndpointResolution endpointResolution)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber, EndpointResolution endpointResolution, bool incomingCircuit)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -411,16 +412,17 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
+        var circuit = incomingCircuit ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
         if (relayNumber > 0)
         {// The minimum number of relays
-            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < relayNumber)
+            if (circuit.NumberOfRelays < relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
         }
         else if (relayNumber < 0)
         {// The target relay
-            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < -relayNumber)
+            if (circuit.NumberOfRelays < -relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
@@ -442,7 +444,7 @@ public sealed partial class PacketTerminal
         }
         else
         {// Relay
-            if (!this.netTerminal.OutgoingCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
+            if (!circuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
             {
                 dataToBeMoved.Return();
                 return NetResult.InvalidRelay;
@@ -484,7 +486,7 @@ public sealed partial class PacketTerminal
         return NetResult.Success;
     }
 
-    internal unsafe NetResult SendPacketWithRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, int relayNumber)
+    /*internal unsafe NetResult SendPacketWithRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, int relayNumber)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -540,7 +542,7 @@ public sealed partial class PacketTerminal
         }
 
         return NetResult.Success;
-    }
+    }*/
 
     internal unsafe NetResult SendPacketWithoutRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {

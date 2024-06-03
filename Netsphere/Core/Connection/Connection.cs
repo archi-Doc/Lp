@@ -663,7 +663,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.SendPacket(this.DestinationNode.Address, rentArray, default, this.MinimumNumberOfRelays, EndpointResolution.PreferIpv6);
+        this.PacketTerminal.SendPacket(this.DestinationNode.Address, rentArray, default, this.MinimumNumberOfRelays, EndpointResolution.PreferIpv6, false);
     }
 
     internal void SendCloseFrame()

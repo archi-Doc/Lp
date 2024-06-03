@@ -28,7 +28,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
-        this.IncominigCircuit = new(this, true);
+        this.IncomingCircuit = new(this, true);
         this.OutgoingCircuit = new(this, false);
         this.RelayControl = relayControl;
         this.RelayAgent = new(relayControl, this);
@@ -58,7 +58,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
-    public RelayCircuit IncominigCircuit { get; private set; }
+    public RelayCircuit IncomingCircuit { get; private set; }
 
     public RelayCircuit OutgoingCircuit { get; private set; }
 
@@ -285,8 +285,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
-            else if (this.IncominigCircuit.RelayKey.NumberOfRelays > 0 &&
-                this.IncominigCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out originalAddress, out relayNumber))
+            else if (this.IncomingCircuit.RelayKey.NumberOfRelays > 0 &&
+                this.IncomingCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out originalAddress, out relayNumber))
             {// Incoming relay
                 span = rentMemory.Span;
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);

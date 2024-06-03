@@ -54,9 +54,9 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
                 return;
             }
 
-            var result = this.netTerminal.IncominigCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = this.netTerminal.IncomingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
             Console.WriteLine($"AddRelay: {result.ToString()}");
-            Console.WriteLine(this.netTerminal.IncominigCircuit.NumberOfRelays);
+            Console.WriteLine(this.netTerminal.IncomingCircuit.NumberOfRelays);
 
             var outerAddress = new NetAddress(r.Value.OuterRelayId, netNode.Address);
             Console.WriteLine($"Outer address: {outerAddress.ToString()}");
