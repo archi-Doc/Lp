@@ -174,7 +174,7 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> ConnectForRelay(NetNode node, int targetNumberOfRelays)
+    public async Task<ClientConnection?> ConnectForOutgoingRelay(NetNode node, int targetNumberOfRelays)
     {
         if (!this.NetTerminal.IsActive)
         {
@@ -187,7 +187,7 @@ public class ConnectionTerminal
         }
 
         if (targetNumberOfRelays < 0 ||
-            this.NetTerminal.RelayCircuit.NumberOfRelays != targetNumberOfRelays)
+            this.NetTerminal.OutgoingCircuit.NumberOfRelays != targetNumberOfRelays)
         {// When making a relay connection, it is necessary to specify the appropriate number of relays (the outermost layer of relays).
             return null;
         }

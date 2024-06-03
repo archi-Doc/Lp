@@ -6,6 +6,7 @@ using Netsphere.Packet;
 using Netsphere.Relay;
 using Netsphere.Responder;
 using Netsphere.Stats;
+using static Tinyhand.TinyhandSerializerOptions;
 
 namespace Netsphere;
 
@@ -27,7 +28,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
-        this.RelayCircuit = new(this, false);
+        this.IncominigCircuit = new(this, true);
+        this.OutgoingCircuit = new(this, false);
         this.RelayControl = relayControl;
         this.RelayAgent = new(relayControl, this);
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
@@ -56,7 +58,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
-    public RelayCircuit RelayCircuit { get; private set; }
+    public RelayCircuit IncominigCircuit { get; private set; }
+
+    public RelayCircuit OutgoingCircuit { get; private set; }
 
     public RelayAgent RelayAgent { get; private set; }
 
@@ -120,8 +124,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
         => this.ConnectionTerminal.Connect(destination, mode, minimumNumberOfRelays);
 
-    public Task<ClientConnection?> ConnectForRelay(NetNode destination, int targetNumberOfRelays)
-        => this.ConnectionTerminal.ConnectForRelay(destination, targetNumberOfRelays);
+    public Task<ClientConnection?> ConnectForIncomingRelay(NetNode destination)
+        => this.ConnectionTerminal.Connect(destination, Connection.ConnectMode.NoReuse, 0);
+
+    public Task<ClientConnection?> ConnectForOutgoingRelay(NetNode destination, int targetNumberOfRelays)
+        => this.ConnectionTerminal.ConnectForOutgoingRelay(destination, targetNumberOfRelays);
 
     public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
@@ -268,16 +275,27 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             rentMemory = decrypted;
             span = decrypted.Span;
         }
-        else if (netEndpoint.RelayId != 0 &&
-            this.RelayCircuit.RelayKey.NumberOfRelays > 0)
+        else if (netEndpoint.RelayId != 0)
         {// Receive data from relays.
-            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out var originalAddress, out relayNumber))
-            {
+            NetAddress originalAddress;
+            if (this.OutgoingCircuit.RelayKey.NumberOfRelays > 0 &&
+                this.OutgoingCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out originalAddress, out relayNumber))
+            {// Outgoing relay
                 span = rentMemory.Span;
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
+            else if (this.IncominigCircuit.RelayKey.NumberOfRelays > 0 &&
+                this.IncominigCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out originalAddress, out relayNumber))
+            {// Incoming relay
+                span = rentMemory.Span;
+                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
+                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
+                relayNumber = -relayNumber;
+            }
         }
+
+        // relayNumber: 0 No relay, >0 Outgoing, <0 Incoming
 
         // Packet type
         span = span.Slice(8);

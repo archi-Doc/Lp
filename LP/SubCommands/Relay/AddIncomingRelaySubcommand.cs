@@ -7,10 +7,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.Relay;
 
-[SimpleCommand("new-certificate-relay", Description = "")]
-public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>
+[SimpleCommand("add-incomimg-relay", Description = "")]
+public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>
 {
-    public NewCertificateRelaySubcommand(ILogger<NewCertificateRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityVault authorityVault)
+    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityVault authorityVault)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -20,7 +20,7 @@ public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateR
 
     public async Task RunAsync(NewCertificateRelayOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New certificate relay");
+        this.logger.TryGet()?.Log("Add incoming relay");
 
         if (await this.authorityVault.GetAuthority(options.Authority) is not { } authority)
         {
@@ -32,7 +32,7 @@ public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateR
             return;
         }
 
-        using (var clientConnection = await this.netTerminal.ConnectForRelay(netNode, 0))
+        using (var clientConnection = await this.netTerminal.ConnectForIncomingRelay(netNode))
         {
             if (clientConnection is null)
             {
@@ -54,9 +54,9 @@ public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateR
                 return;
             }
 
-            var result = this.netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = this.netTerminal.IncominigCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
             Console.WriteLine($"AddRelay: {result.ToString()}");
-            Console.WriteLine(this.netTerminal.RelayCircuit.NumberOfRelays);
+            Console.WriteLine(this.netTerminal.IncominigCircuit.NumberOfRelays);
 
             var outerAddress = new NetAddress(r.Value.OuterRelayId, netNode.Address);
             Console.WriteLine($"Outer address: {outerAddress.ToString()}");

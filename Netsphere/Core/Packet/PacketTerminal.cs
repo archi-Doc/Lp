@@ -271,11 +271,6 @@ public sealed partial class PacketTerminal
             // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
         }
 
-        if (relayNumber > 0)
-        {//
-            // return;
-        }
-
         // PacketHeaderCode
         var span = toBeShared.Span;
         if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(8)))
@@ -289,6 +284,11 @@ public sealed partial class PacketTerminal
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
         {// Packet types (0-127), Client -> Server
+            if (relayNumber > 0)
+            {// Outgoing relay
+                return;
+            }
+
             if (packetType == PacketType.Connect)
             {// ConnectPacket
                 if (!this.netTerminal.IsActive)
@@ -324,8 +324,8 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.VersionInt);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
-                    this.SendPacketWithRelay(endpoint, rentMemory, relayNumber);
+                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithRelay(endpoint, rentMemory, relayNumber);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -413,14 +413,14 @@ public sealed partial class PacketTerminal
 
         if (relayNumber > 0)
         {// The minimum number of relays
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
         }
         else if (relayNumber < 0)
         {// The target relay
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < -relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
@@ -442,7 +442,7 @@ public sealed partial class PacketTerminal
         }
         else
         {// Relay
-            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
+            if (!this.netTerminal.OutgoingCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
             {
                 dataToBeMoved.Return();
                 return NetResult.InvalidRelay;
@@ -495,14 +495,14 @@ public sealed partial class PacketTerminal
 
         if (relayNumber > 0)
         {// The minimum number of relays
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
         }
         else if (relayNumber < 0)
         {// The target relay
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < -relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
@@ -518,7 +518,7 @@ public sealed partial class PacketTerminal
         }
         else
         {// Relay
-            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, new NetAddress(endpoint), dataToBeMoved.Span, out var encrypted, out endpoint))
+            if (!this.netTerminal.OutgoingCircuit.RelayKey.TryEncrypt(relayNumber, new NetAddress(endpoint), dataToBeMoved.Span, out var encrypted, out endpoint))
             {
                 dataToBeMoved.Return();
                 return NetResult.InvalidRelay;

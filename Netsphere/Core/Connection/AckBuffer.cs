@@ -24,7 +24,7 @@ internal partial class AckBuffer
     public AckBuffer(ConnectionTerminal connectionTerminal)
     {
         this.connectionTerminal = connectionTerminal;
-        this.relayCircuit = connectionTerminal.NetTerminal.RelayCircuit;
+        this.relayCircuit = connectionTerminal.NetTerminal.OutgoingCircuit;
         this.logger = connectionTerminal.UnitLogger.GetLogger<AckBuffer>();
     }
 

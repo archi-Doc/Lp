@@ -5,6 +5,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using Netsphere.Core;
 
 namespace Netsphere.Relay;
@@ -90,15 +91,18 @@ public partial class RelayAgent
 
     #endregion
 
-    public void Show()
+    public override string ToString()
     {
+        var sb = new StringBuilder();
         lock (this.items.SyncObject)
         {
             foreach (var x in this.items)
             {
-                Console.WriteLine($"[{x.RelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+                sb.AppendLine($"[{x.RelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
             }
         }
+
+        return sb.ToString();
     }
 
     public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out ushort relayId, out ushort outerRelayId)

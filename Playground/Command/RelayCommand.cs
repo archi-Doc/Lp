@@ -43,7 +43,7 @@ public class RelayCommand : ISimpleCommandAsync
             return;
         }
 
-        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, 0))
+        using (var clientConnection = await netTerminal.ConnectForOutgoingRelay(netNode, 0))
         {
             if (clientConnection is null)
             {
@@ -65,13 +65,13 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
             Console.WriteLine(result.ToString());
-            Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
+            Console.WriteLine(netTerminal.OutgoingCircuit.NumberOfRelays);
         }
 
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
-        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, 1))
+        using (var clientConnection = await netTerminal.ConnectForOutgoingRelay(netNode, 1))
         {
             if (clientConnection is null)
             {
@@ -93,9 +93,9 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.RelayCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
             Console.WriteLine(result.ToString());
-            Console.WriteLine(netTerminal.RelayCircuit.NumberOfRelays);
+            Console.WriteLine(netTerminal.OutgoingCircuit.NumberOfRelays);
 
             var packet = RelayOperatioPacket.SetOuterEndPoint(new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint));
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
@@ -104,7 +104,7 @@ public class RelayCommand : ISimpleCommandAsync
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
 
-        Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+        Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
 
         /*sing (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
         {
@@ -165,8 +165,8 @@ public class RelayCommand : ISimpleCommandAsync
         // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
         // Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
 
-        netTerminal.RelayCircuit.Clear();
-        Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
+        netTerminal.OutgoingCircuit.Clear();
+        Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
     }
 
     private readonly NetControl netControl;
