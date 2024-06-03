@@ -10,10 +10,13 @@ namespace Netsphere.Relay;
 /// </summary>
 public class RelayCircuit
 {
-    public RelayCircuit(NetTerminal netTerminal, IRelayControl relayControl)
+    private const int MaxOutgoingSerialRelays = 5;
+    private const int MaxIncomingSerialRelays = 1;
+
+    public RelayCircuit(NetTerminal netTerminal, bool incoming)
     {
         this.netTerminal = netTerminal;
-        this.relayControl = relayControl;
+        this.incoming = incoming;
     }
 
     #region FieldAndProperty
@@ -28,7 +31,7 @@ public class RelayCircuit
         => this.relayKey;
 
     private readonly NetTerminal netTerminal;
-    private readonly IRelayControl relayControl;
+    private readonly bool incoming;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
     private RelayKey relayKey = new();
@@ -168,15 +171,28 @@ public class RelayCircuit
         {
             return RelayResult.InvalidEndpoint;
         }
-        else if (this.relayNodes.Count >= this.relayControl.MaxSerialRelays)
-        {
-            return RelayResult.SerialRelayLimit;
+
+        if (this.incoming)
+        {// Incoming circuit
+            if (this.relayNodes.Count >= MaxIncomingSerialRelays)
+            {
+                return RelayResult.SerialRelayLimit;
+            }
         }
-        else if (this.relayNodes.RelayIdChain.ContainsKey(relayId))
+        else
+        {// Outgoing circuit
+            if (this.relayNodes.Count >= MaxOutgoingSerialRelays)
+            {
+                return RelayResult.SerialRelayLimit;
+            }
+        }
+
+        if (this.relayNodes.RelayIdChain.ContainsKey(relayId))
         {
             return RelayResult.DuplicateRelayId;
         }
-        else if (this.relayNodes.EndpointChain.ContainsKey(endpoint))
+
+        if (this.relayNodes.EndpointChain.ContainsKey(endpoint))
         {
             return RelayResult.DuplicateEndpoint;
         }
