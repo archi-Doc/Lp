@@ -101,7 +101,7 @@ public partial class RelayAgent
         }
     }
 
-    public RelayResult Add(ServerConnection serverConnection, out ushort relayId, out ushort outerRelayId)
+    public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out ushort relayId, out ushort outerRelayId)
     {
         relayId = 0;
         outerRelayId = 0;
@@ -130,7 +130,7 @@ public partial class RelayAgent
                 }
             }
 
-            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection));
+            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection, block));
         }
 
         return RelayResult.Success;
@@ -295,7 +295,7 @@ public partial class RelayAgent
         {// OuterRelayId
             // Console.WriteLine($"{exchange.RelayId}");
             if (exchange.OuterEndpoint.IsValid)
-            {// Inner relay
+            {// Not outermost relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                 }
@@ -310,7 +310,8 @@ public partial class RelayAgent
                 var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndPointOperation.None);
                 if (!ep2.Unrestricted)
                 {// Restricted
-                    if (exchange.RestrictedIntervalMics == 0 ||
+                    if (!exchange.AllowUnknownNode ||
+                        exchange.RestrictedIntervalMics == 0 ||
                         Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
                     {// Discard
                         goto Exit;

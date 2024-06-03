@@ -27,7 +27,7 @@ public class CertificateRelayControl : IRelayControl
             }
 
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
-            var result = relayAgent.Add(this.ServerConnection, out var relayId, out var outerRelayId);
+            var result = relayAgent.Add(this.ServerConnection, token.Target, out var relayId, out var outerRelayId);
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
             var response = new CreateRelayResponse(result, relayId, outerRelayId, relayPoint);
             relayAgent.AddRelayPoint(relayId, relayPoint);

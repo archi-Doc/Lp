@@ -9,13 +9,21 @@ public partial class CreateRelayBlock
     {
     }
 
+    public CreateRelayBlock(bool allowUnknownNode)
+    {
+        this.AllowUnknownNode = allowUnknownNode;
+    }
+
     /*public CreateRelayBlock(ushort relayId)
     {
         this.RelayId = relayId;
     }*/
 
-    // [Key(0)]
-    // public ushort RelayId { get; protected set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.
+    /// </summary>
+    [Key(0)]
+    public bool AllowUnknownNode { get; protected set; }
 
     // [Key(1)]
     // public Linkage? Linkage { get; private set; }

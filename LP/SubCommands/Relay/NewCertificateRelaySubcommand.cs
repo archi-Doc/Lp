@@ -39,7 +39,7 @@ public class NewCertificateRelaySubcommand : ISimpleCommandAsync<NewCertificateR
                 return;
             }
 
-            var block = new CreateRelayBlock();
+            var block = new CreateRelayBlock(true);
             var token = new CertificateToken<CreateRelayBlock>(block);
             authority.SignWithSalt(token, clientConnection.Salt);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);

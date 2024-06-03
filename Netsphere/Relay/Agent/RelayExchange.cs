@@ -6,7 +6,7 @@ namespace Netsphere.Relay;
 internal partial class RelayExchange
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
-    public RelayExchange(IRelayControl relayControl, ushort relayId, ushort outerRelayId, ServerConnection serverConnection)
+    public RelayExchange(IRelayControl relayControl, ushort relayId, ushort outerRelayId, ServerConnection serverConnection, CreateRelayBlock block)
     {
         this.RelayId = relayId;
         this.OuterRelayId = outerRelayId;
@@ -20,6 +20,7 @@ internal partial class RelayExchange
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
         this.RestrictedIntervalMics = relayControl.DefaultRestrictedIntervalMics;
+        this.AllowUnknownNode = block.AllowUnknownNode;
     }
 
     [Link(Type = ChainType.Unordered, AddValue = false)]
@@ -51,6 +52,8 @@ internal partial class RelayExchange
     /// If set to 0, all packets from unknown nodes will be discarded.
     /// </summary>
     public long RestrictedIntervalMics { get; private set; }
+
+    public bool AllowUnknownNode { get; private set; }
 
     internal byte[] Key { get; private set; }
 
