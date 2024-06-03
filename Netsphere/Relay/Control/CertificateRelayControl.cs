@@ -23,6 +23,8 @@ public class CertificateRelayControl : IRelayControl
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
                 !token.ValidateAndVerifyWithSalt(this.ServerConnection.Salt))
             {
+                Console.WriteLine(token.PublicKey.Equals(this.relayControl.CertificatePublicKey));
+                Console.WriteLine(token.ValidateAndVerifyWithSalt(this.ServerConnection.Salt));
                 return new(NetResult.NotAuthenticated);
             }
 
