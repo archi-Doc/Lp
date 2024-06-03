@@ -116,7 +116,7 @@ public record RestartRemoteContainerOptions
     [SimpleOption("node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("remoteprivatekey", Description = "Private key for remote operation")]
+    [SimpleOption("remote_privatekey", Description = "Private key for remote operation")]
     public string RemotePrivateKey { get; init; } = string.Empty;
 
     [SimpleOption("containerport", Description = "Port number associated with the container")]
