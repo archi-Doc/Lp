@@ -163,6 +163,7 @@ public class Control
                 netBase.SetOptions(options.ToNetOptions());
 
                 netBase.AllowUnsafeConnection = true; // betacode
+                netBase.NetOptions.EnableServer = true; // betacode
                 netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
             });
 
@@ -273,8 +274,6 @@ public class Control
 
             if (options is not null)
             {
-                options.EnableServer = true; // tempcode
-                var netOptions = options.ToNetOptions();
                 context.SetOptions(options);
             }
         }

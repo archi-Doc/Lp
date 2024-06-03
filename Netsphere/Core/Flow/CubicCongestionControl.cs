@@ -334,7 +334,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private void ProcessResend(NetSender netSender)
     {// lock (this.syncObject)
-        int resendCapacity = 1 + (int)this.boost; // tempcode
+        int resendCapacity = 1 + (int)this.boost; // betacode
         SendGene? gene;
 
         // Loss detection
