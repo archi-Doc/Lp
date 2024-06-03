@@ -32,7 +32,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
             return;
         }
 
-        using (var clientConnection = await this.netTerminal.ConnectForIncomingRelay(netNode))
+        using (var clientConnection = await this.netTerminal.ConnectForRelay(netNode, true, 0))
         {
             if (clientConnection is null)
             {

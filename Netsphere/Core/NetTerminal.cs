@@ -124,11 +124,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
         => this.ConnectionTerminal.Connect(destination, mode, minimumNumberOfRelays);
 
-    public Task<ClientConnection?> ConnectForIncomingRelay(NetNode destination)
-        => this.ConnectionTerminal.Connect(destination, Connection.ConnectMode.NoReuse, 0);
-
-    public Task<ClientConnection?> ConnectForOutgoingRelay(NetNode destination, int targetNumberOfRelays)
-        => this.ConnectionTerminal.ConnectForOutgoingRelay(destination, targetNumberOfRelays);
+    public Task<ClientConnection?> ConnectForRelay(NetNode destination, bool incomingRelay, int targetNumberOfRelays)
+        => this.ConnectionTerminal.ConnectForRelay(destination, incomingRelay, targetNumberOfRelays);
 
     public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {
@@ -264,6 +261,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         // PacketHeaderCode
         var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
         var relayNumber = 0;
+        var incomingRelay = false;
         var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
         if (destinationRelayId != 0)
         {// Relay
@@ -291,7 +289,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
                 span = rentMemory.Span;
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
-                relayNumber = -relayNumber;
+                incomingRelay = true;
             }
         }
 
@@ -303,7 +301,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(netEndpoint, relayNumber, destinationRelayId, packetType, rentMemory, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, relayNumber, incomingRelay, destinationRelayId, packetType, rentMemory, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene

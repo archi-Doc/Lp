@@ -44,7 +44,7 @@ public class RelayTest
         var netNode = (await netTerminal.UnsafeGetNetNode(NetAddress.Alternative))!;
         netNode.IsNotNull();
 
-        using (var clientConnection = (await netTerminal.ConnectForOutgoingRelay(netNode, 0))!)
+        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 0))!)
         {
             clientConnection.IsNotNull();
 
@@ -58,7 +58,7 @@ public class RelayTest
             var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
         }
 
-        using (var clientConnection = (await netTerminal.ConnectForOutgoingRelay(netNode, 1))!)
+        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 1))!)
         {
             clientConnection.IsNotNull();
 

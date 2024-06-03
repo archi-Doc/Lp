@@ -265,7 +265,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, int relayNumber, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, int relayNumber, bool incomingRelay, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
@@ -285,7 +285,7 @@ public sealed partial class PacketTerminal
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
         {// Packet types (0-127), Client -> Server
-            if (relayNumber > 0)
+            if (relayNumber != 0 && !incomingRelay)
             {// Outgoing relay
                 return;
             }
@@ -313,7 +313,8 @@ public sealed partial class PacketTerminal
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                        this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                     });
 
                     return;
@@ -325,8 +326,8 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.VersionInt);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
-                    // this.SendPacketWithRelay(endpoint, rentMemory, relayNumber);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -342,7 +343,8 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                 }
 
                 return;
@@ -353,7 +355,8 @@ public sealed partial class PacketTerminal
                 if (packet is not null)
                 {
                     CreatePacket(packetId, packet, out var rentMemory);
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                 }
 
                 return;
@@ -366,7 +369,8 @@ public sealed partial class PacketTerminal
                     if (packet is not null)
                     {
                         CreatePacket(packetId, packet, out var rentMemory);
-                        this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                     }
                 }
 
@@ -403,7 +407,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber, EndpointResolution endpointResolution, bool incomingCircuit)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber, EndpointResolution endpointResolution, bool incomingRelay)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -412,7 +416,7 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
-        var circuit = incomingCircuit ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
+        var circuit = incomingRelay ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
         if (relayNumber > 0)
         {// The minimum number of relays
             if (circuit.NumberOfRelays < relayNumber)
@@ -486,7 +490,7 @@ public sealed partial class PacketTerminal
         return NetResult.Success;
     }
 
-    /*internal unsafe NetResult SendPacketWithRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, int relayNumber)
+    internal unsafe NetResult SendPacketWithRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, bool incomingRelay, int relayNumber)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -495,16 +499,17 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
+        var circuit = incomingRelay ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
         if (relayNumber > 0)
         {// The minimum number of relays
-            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < relayNumber)
+            if (circuit.NumberOfRelays < relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
         }
         else if (relayNumber < 0)
         {// The target relay
-            if (this.netTerminal.OutgoingCircuit.NumberOfRelays < -relayNumber)
+            if (circuit.NumberOfRelays < -relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
@@ -520,7 +525,7 @@ public sealed partial class PacketTerminal
         }
         else
         {// Relay
-            if (!this.netTerminal.OutgoingCircuit.RelayKey.TryEncrypt(relayNumber, new NetAddress(endpoint), dataToBeMoved.Span, out var encrypted, out endpoint))
+            if (!circuit.RelayKey.TryEncrypt(relayNumber, new NetAddress(endpoint), dataToBeMoved.Span, out var encrypted, out endpoint))
             {
                 dataToBeMoved.Return();
                 return NetResult.InvalidRelay;
@@ -542,7 +547,7 @@ public sealed partial class PacketTerminal
         }
 
         return NetResult.Success;
-    }*/
+    }
 
     internal unsafe NetResult SendPacketWithoutRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {

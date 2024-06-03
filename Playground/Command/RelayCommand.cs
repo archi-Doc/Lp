@@ -43,7 +43,7 @@ public class RelayCommand : ISimpleCommandAsync
             return;
         }
 
-        using (var clientConnection = await netTerminal.ConnectForOutgoingRelay(netNode, 0))
+        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, false, 0))
         {
             if (clientConnection is null)
             {
@@ -71,7 +71,7 @@ public class RelayCommand : ISimpleCommandAsync
         }
 
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
-        using (var clientConnection = await netTerminal.ConnectForOutgoingRelay(netNode, 1))
+        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, false, 1))
         {
             if (clientConnection is null)
             {
