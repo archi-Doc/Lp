@@ -122,7 +122,9 @@ public class RelayCircuit
         cts.CancelAfter(NetConstants.DefaultPacketTransmissionTimeout);
         var task = Parallel.ForAsync(0, endpointArray.Length, cts.Token, async (i, cancellationToken) =>
         {
-            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -(1 + i), cancellationToken);
+            var relayNumber = this.incoming ? 0 : -(1 + i);
+            var netAddress = this.incoming ? new(endpointArray[i]) : NetAddress.Relay;
+            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(netAddress, new(), relayNumber, cancellationToken);
             if (rr.Result == NetResult.Success &&
             rr.Value is { } response)
             {

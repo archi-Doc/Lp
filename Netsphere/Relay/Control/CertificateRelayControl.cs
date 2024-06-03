@@ -45,7 +45,7 @@ public class CertificateRelayControl : IRelayControl
         => 100;
 
     public long DefaultRelayRetensionMics
-        => Mics.FromMinutes(10);
+        => Mics.FromMinutes(5);
 
     public long DefaultMaxRelayPoint
         => 100_000;
