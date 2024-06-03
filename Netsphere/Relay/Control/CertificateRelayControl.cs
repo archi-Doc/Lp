@@ -19,6 +19,7 @@ public class CertificateRelayControl : IRelayControl
 
         public override NetResultValue<CreateRelayResponse> RespondAsync(CertificateToken<CreateRelayBlock> token)
         {
+            Console.WriteLine("a");
             if (this.ServerConnection.NetTerminal.RelayControl is not CertificateRelayControl ||
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
                 !token.ValidateAndVerifyWithSalt(this.ServerConnection.Salt))
