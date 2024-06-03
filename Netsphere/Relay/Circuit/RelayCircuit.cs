@@ -10,10 +10,13 @@ namespace Netsphere.Relay;
 /// </summary>
 public class RelayCircuit
 {
-    public RelayCircuit(NetTerminal netTerminal, IRelayControl relayControl)
+    private const int MaxOutgoingSerialRelays = 5;
+    private const int MaxIncomingSerialRelays = 1;
+
+    public RelayCircuit(NetTerminal netTerminal, bool incoming)
     {
         this.netTerminal = netTerminal;
-        this.relayControl = relayControl;
+        this.incoming = incoming;
     }
 
     #region FieldAndProperty
@@ -28,7 +31,7 @@ public class RelayCircuit
         => this.relayKey;
 
     private readonly NetTerminal netTerminal;
-    private readonly IRelayControl relayControl;
+    private readonly bool incoming;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
     private RelayKey relayKey = new();
@@ -119,7 +122,8 @@ public class RelayCircuit
         cts.CancelAfter(NetConstants.DefaultPacketTransmissionTimeout);
         var task = Parallel.ForAsync(0, endpointArray.Length, cts.Token, async (i, cancellationToken) =>
         {
-            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -(1 + i), cancellationToken);
+            var relayNumber = -(1 + i); // this.incoming ? 0 : -(1 + i);
+            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), relayNumber, cancellationToken, EndpointResolution.PreferIpv6, this.incoming);
             if (rr.Result == NetResult.Success &&
             rr.Value is { } response)
             {
@@ -168,15 +172,28 @@ public class RelayCircuit
         {
             return RelayResult.InvalidEndpoint;
         }
-        else if (this.relayNodes.Count >= this.relayControl.MaxSerialRelays)
-        {
-            return RelayResult.SerialRelayLimit;
+
+        if (this.incoming)
+        {// Incoming circuit
+            if (this.relayNodes.Count >= MaxIncomingSerialRelays)
+            {
+                return RelayResult.SerialRelayLimit;
+            }
         }
-        else if (this.relayNodes.RelayIdChain.ContainsKey(relayId))
+        else
+        {// Outgoing circuit
+            if (this.relayNodes.Count >= MaxOutgoingSerialRelays)
+            {
+                return RelayResult.SerialRelayLimit;
+            }
+        }
+
+        if (this.relayNodes.RelayIdChain.ContainsKey(relayId))
         {
             return RelayResult.DuplicateRelayId;
         }
-        else if (this.relayNodes.EndpointChain.ContainsKey(endpoint))
+
+        if (this.relayNodes.EndpointChain.ContainsKey(endpoint))
         {
             return RelayResult.DuplicateEndpoint;
         }

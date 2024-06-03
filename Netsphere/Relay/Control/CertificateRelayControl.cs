@@ -27,10 +27,9 @@ public class CertificateRelayControl : IRelayControl
             }
 
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
-            var result = relayAgent.Add(this.ServerConnection, out var relayId);
-            var response = new CreateRelayResponse(result, relayId);
-
+            var result = relayAgent.Add(this.ServerConnection, token.Target, out var relayId, out var outerRelayId);
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
+            var response = new CreateRelayResponse(result, relayId, outerRelayId, relayPoint);
             relayAgent.AddRelayPoint(relayId, relayPoint);
 
             return new(NetResult.Success, response);
@@ -46,7 +45,7 @@ public class CertificateRelayControl : IRelayControl
         => 100;
 
     public long DefaultRelayRetensionMics
-        => Mics.FromMinutes(10);
+        => Mics.FromMinutes(5);
 
     public long DefaultMaxRelayPoint
         => 100_000;

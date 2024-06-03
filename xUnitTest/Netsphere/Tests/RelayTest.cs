@@ -44,7 +44,7 @@ public class RelayTest
         var netNode = (await netTerminal.UnsafeGetNetNode(NetAddress.Alternative))!;
         netNode.IsNotNull();
 
-        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, 0))!)
+        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 0))!)
         {
             clientConnection.IsNotNull();
 
@@ -55,10 +55,10 @@ public class RelayTest
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = netTerminal.RelayCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
         }
 
-        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, 1))!)
+        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 1))!)
         {
             clientConnection.IsNotNull();
 
@@ -69,7 +69,7 @@ public class RelayTest
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = netTerminal.RelayCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
 
             var setRelayPacket = new RelayOperatioPacket();
             setRelayPacket.OuterEndPoint = new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
@@ -107,7 +107,7 @@ public class RelayTest
             r2.Value.Is(NetResult.StreamLengthLimit);
         }
 
-        var st = await netTerminal.RelayCircuit.UnsafeDetailedToString();
+        var st = await netTerminal.OutgoingCircuit.UnsafeDetailedToString();
 
         using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse, 2))!)
         {
@@ -121,7 +121,7 @@ public class RelayTest
             await this.TestPutAndGetHash(service);
         }
 
-        netTerminal.RelayCircuit.Clear();
+        netTerminal.OutgoingCircuit.Clear();
     }
 
     public NetFixture NetFixture { get; }

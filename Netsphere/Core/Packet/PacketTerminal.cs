@@ -85,8 +85,10 @@ public sealed partial class PacketTerminal
     /// relayNumber == 0: Relays are not necessary.<br/>
     /// relayNumber &gt; 0: The minimum number of relays.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="endpointResolution">The endpoint resolution strategy.</param>
+    /// <param name="incomingCircuit">true if the incoming circuit is used; otherwise, false.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="NetResult"/>, the received packet value of type <typeparamref name="TReceive"/>, and the round-trip time in microseconds.</returns>
-    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6, bool incomingCircuit = false)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -97,7 +99,7 @@ public sealed partial class PacketTerminal
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var rentMemory); // CreatePacketCode
-        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber);
+        var result = this.SendPacket(netAddress, rentMemory, responseTcs, relayNumber, endpointResolution, incomingCircuit);
         if (result != NetResult.Success)
         {
             return (result, default, 0);
@@ -263,7 +265,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, int relayNumber, bool incomingRelay, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
@@ -283,6 +285,11 @@ public sealed partial class PacketTerminal
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
         {// Packet types (0-127), Client -> Server
+            if (relayNumber != 0 && !incomingRelay)
+            {// Outgoing relay
+                return;
+            }
+
             if (packetType == PacketType.Connect)
             {// ConnectPacket
                 if (!this.netTerminal.IsActive)
@@ -306,7 +313,8 @@ public sealed partial class PacketTerminal
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                        this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                     });
 
                     return;
@@ -318,7 +326,8 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.VersionInt);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -334,7 +343,8 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                 }
 
                 return;
@@ -345,7 +355,8 @@ public sealed partial class PacketTerminal
                 if (packet is not null)
                 {
                     CreatePacket(packetId, packet, out var rentMemory);
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                 }
 
                 return;
@@ -358,7 +369,8 @@ public sealed partial class PacketTerminal
                     if (packet is not null)
                     {
                         CreatePacket(packetId, packet, out var rentMemory);
-                        this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
                     }
                 }
 
@@ -395,7 +407,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber)
+    internal unsafe NetResult SendPacket(NetAddress netAddress, BytePool.RentMemory dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs, int relayNumber, EndpointResolution endpointResolution, bool incomingRelay)
     {
         var length = dataToBeMoved.Span.Length;
         if (length < PacketHeader.Length ||
@@ -404,16 +416,17 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
+        var circuit = incomingRelay ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
         if (relayNumber > 0)
         {// The minimum number of relays
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            if (circuit.NumberOfRelays < relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
         }
         else if (relayNumber < 0)
         {// The target relay
-            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            if (circuit.NumberOfRelays < -relayNumber)
             {
                 return NetResult.InvalidRelay;
             }
@@ -423,7 +436,7 @@ public sealed partial class PacketTerminal
         NetEndpoint endpoint;
         if (relayNumber == 0)
         {// No relay
-            if (!this.netTerminal.TryCreateEndpoint(in netAddress, out endpoint))
+            if (!this.netTerminal.TryCreateEndpoint(ref netAddress, endpointResolution, out endpoint))
             {
                 return NetResult.NoNetwork;
             }
@@ -435,7 +448,7 @@ public sealed partial class PacketTerminal
         }
         else
         {// Relay
-            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
+            if (!circuit.RelayKey.TryEncrypt(relayNumber, netAddress, dataToBeMoved.Span, out var encrypted, out endpoint))
             {
                 dataToBeMoved.Return();
                 return NetResult.InvalidRelay;
@@ -473,6 +486,65 @@ public sealed partial class PacketTerminal
         }
 
         // this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
+
+        return NetResult.Success;
+    }
+
+    internal unsafe NetResult SendPacketWithRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, bool incomingRelay, int relayNumber)
+    {
+        var length = dataToBeMoved.Span.Length;
+        if (length < PacketHeader.Length ||
+            length > NetConstants.MaxPacketLength)
+        {
+            return NetResult.InvalidData;
+        }
+
+        var circuit = incomingRelay ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
+        if (relayNumber > 0)
+        {// The minimum number of relays
+            if (circuit.NumberOfRelays < relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+        else if (relayNumber < 0)
+        {// The target relay
+            if (circuit.NumberOfRelays < -relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+        if (relayNumber == 0)
+        {// No relay
+            var span = dataToBeMoved.Span;
+            BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+            span = span.Slice(sizeof(ushort));
+            BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
+        }
+        else
+        {// Relay
+            if (!circuit.RelayKey.TryEncrypt(relayNumber, new NetAddress(endpoint), dataToBeMoved.Span, out var encrypted, out endpoint))
+            {
+                dataToBeMoved.Return();
+                return NetResult.InvalidRelay;
+            }
+
+            dataToBeMoved.Return();
+            dataToBeMoved = encrypted;
+        }
+
+        if (endpoint.EndPoint is null)
+        {
+            return NetResult.InvalidEndpoint;
+        }
+
+        var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, default);
+        lock (this.items.SyncObject)
+        {
+            item.Goshujin = this.items;
+        }
 
         return NetResult.Success;
     }

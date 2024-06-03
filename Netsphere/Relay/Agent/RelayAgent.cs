@@ -5,6 +5,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using Netsphere.Core;
 
 namespace Netsphere.Relay;
@@ -90,10 +91,24 @@ public partial class RelayAgent
 
     #endregion
 
-    public RelayResult Add(ServerConnection serverConnection, out ushort relayId)
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        lock (this.items.SyncObject)
+        {
+            foreach (var x in this.items)
+            {
+                sb.AppendLine($"[{x.RelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out ushort relayId, out ushort outerRelayId)
     {
         relayId = 0;
-        ushort outerRelayId = 0;
+        outerRelayId = 0;
         lock (this.items.SyncObject)
         {
             if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)
@@ -119,7 +134,7 @@ public partial class RelayAgent
                 }
             }
 
-            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection));
+            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection, block));
         }
 
         return RelayResult.Success;
@@ -282,8 +297,9 @@ public partial class RelayAgent
         }
         else
         {// OuterRelayId
+            // Console.WriteLine($"{exchange.RelayId}");
             if (exchange.OuterEndpoint.IsValid)
-            {// Inner relay
+            {// Not outermost relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                 }
@@ -298,7 +314,8 @@ public partial class RelayAgent
                 var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndPointOperation.None);
                 if (!ep2.Unrestricted)
                 {// Restricted
-                    if (exchange.RestrictedIntervalMics == 0 ||
+                    if (!exchange.AllowUnknownNode ||
+                        exchange.RestrictedIntervalMics == 0 ||
                         Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
                     {// Discard
                         goto Exit;
@@ -356,7 +373,7 @@ public partial class RelayAgent
                 MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
-                // Console.WriteLine($"Outer->Inner[{source.Memory.Length}] {endpoint} to {exchange.Endpoint}");
+                Console.WriteLine($"Outer->Inner[{source.Memory.Length}] {endpoint} to {exchange.Endpoint}");
             }
         }
 

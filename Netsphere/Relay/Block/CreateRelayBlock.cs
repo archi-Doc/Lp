@@ -9,13 +9,21 @@ public partial class CreateRelayBlock
     {
     }
 
+    public CreateRelayBlock(bool allowUnknownNode)
+    {
+        this.AllowUnknownNode = allowUnknownNode;
+    }
+
     /*public CreateRelayBlock(ushort relayId)
     {
         this.RelayId = relayId;
     }*/
 
-    // [Key(0)]
-    // public ushort RelayId { get; protected set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.
+    /// </summary>
+    [Key(0)]
+    public bool AllowUnknownNode { get; protected set; }
 
     // [Key(1)]
     // public Linkage? Linkage { get; private set; }
@@ -28,10 +36,12 @@ public partial class CreateRelayResponse
     {
     }
 
-    public CreateRelayResponse(RelayResult result, ushort relayId)
+    public CreateRelayResponse(RelayResult result, ushort relayId, ushort outerRelayId, long relayPoint)
     {
         this.Result = result;
         this.RelayId = relayId;
+        this.OuterRelayId = outerRelayId;
+        this.RelayPoint = relayPoint;
     }
 
     [Key(0)]
@@ -41,5 +51,8 @@ public partial class CreateRelayResponse
     public ushort RelayId { get; private set; }
 
     [Key(2)]
+    public ushort OuterRelayId { get; private set; }
+
+    [Key(3)]
     public long RelayPoint { get; private set; }
 }

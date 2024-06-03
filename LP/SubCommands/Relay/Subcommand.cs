@@ -6,8 +6,8 @@ public static class Subcommand
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddSubcommand(typeof(ShowRelayCircuitSubcommand));
+        context.AddSubcommand(typeof(ShowIncomingRelaySubcommand));
         context.AddSubcommand(typeof(ShowRelayExchangeSubcommand));
-        context.AddSubcommand(typeof(NewCertificateRelaySubcommand));
+        context.AddSubcommand(typeof(AddIncomingRelaySubcommand));
     }
 }

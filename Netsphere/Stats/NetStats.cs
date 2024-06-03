@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 
 namespace Netsphere.Stats;
@@ -36,24 +37,48 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     #endregion
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateEndpoint(in NetAddress address, out NetEndpoint endPoint)
+    public bool TryCreateEndpoint(ref NetAddress address, EndpointResolution endpointResolution, out NetEndpoint endPoint)
     {
         endPoint = default;
-        if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+        if (endpointResolution == EndpointResolution.PreferIpv6)
+        {
+            if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
             this.MyIpv6Address.AddressState == MyAddress.State.Changed)
-        {// Ipv6 supported
-            address.TryCreateIpv6(ref endPoint);
-            if (endPoint.IsValid)
+            {// Ipv6 supported
+                address.TryCreateIpv6(ref endPoint);
+                if (endPoint.IsValid)
+                {
+                    return true;
+                }
+            }
+
+            // Ipv4
+            return address.TryCreateIpv4(ref endPoint);
+        }
+        else if (endpointResolution == EndpointResolution.NetAddress)
+        {
+            if (address.IsValidIpv6)
             {
-                return true;
+                address.TryCreateIpv6(ref endPoint);
+                if (endPoint.IsValid)
+                {
+                    return true;
+                }
             }
 
             return address.TryCreateIpv4(ref endPoint);
         }
-        else
-        {// Ipv4
+        else if (endpointResolution == EndpointResolution.Ipv4)
+        {
             return address.TryCreateIpv4(ref endPoint);
+        }
+        else if (endpointResolution == EndpointResolution.Ipv6)
+        {
+            return address.TryCreateIpv6(ref endPoint);
+        }
+        else
+        {
+            return false;
         }
     }
 

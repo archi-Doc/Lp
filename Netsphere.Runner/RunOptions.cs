@@ -10,19 +10,16 @@ namespace Netsphere.Runner;
 
 public partial record RunOptions
 {
-    public const string NodePrivateKeyName = "nodeprivatekey";
-    public const string RemotePublicKeyName = "remotepublickey";
-
-    [SimpleOption("lifespan", Description = "Time in seconds until the runner automatically shuts down (set to -1 for infinite).")]
-    public long Lifespan { get; init; } = 6; // tempcode
+    // [SimpleOption("lifespan", Description = "Time in seconds until the runner automatically shuts down (set to -1 for infinite).")]
+    // public long Lifespan { get; init; } = 6;
 
     [SimpleOption("port", Description = "Port number associated with the runner")]
     public ushort Port { get; set; } = 49999;
 
-    [SimpleOption(NodePrivateKeyName, Description = "Node private key for connection")]
+    [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key for connection", GetEnvironmentVariable = true)]
     public string NodePrivateKeyString { get; set; } = string.Empty;
 
-    [SimpleOption(RemotePublicKeyName, Description = "Public key for remote operation")]
+    [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Public key for remote operation", GetEnvironmentVariable = true)]
     public string RemotePublicKeyString { get; set; } = string.Empty;
 
     [SimpleOption("image", Description = "Container image")]
@@ -42,7 +39,7 @@ public partial record RunOptions
         var result = true;
         if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
         {
-            logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{RemotePublicKeyName}) for authentication of remote operations.");
+            logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{NetConstants.RemotePublicKeyName}) for authentication of remote operations.");
             result = false;
         }
 
@@ -95,7 +92,7 @@ public partial record RunOptions
 
         if (this.NodePrivateKey is null)
         {
-            if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NodePrivateKeyName, out privateKey))
+            if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePublicKeyName, out privateKey))
             {
                 this.NodePrivateKey = privateKey;
             }
@@ -109,7 +106,7 @@ public partial record RunOptions
 
         if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
         {
-            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(RemotePublicKeyName, out publicKey))
+            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
             {
                 this.RemotePublicKey = publicKey;
             }

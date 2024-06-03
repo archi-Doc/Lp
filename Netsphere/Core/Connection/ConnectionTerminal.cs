@@ -174,7 +174,7 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> ConnectForRelay(NetNode node, int targetNumberOfRelays)
+    public async Task<ClientConnection?> ConnectForRelay(NetNode node, bool incomingRelay, int targetNumberOfRelays)
     {
         if (!this.NetTerminal.IsActive)
         {
@@ -186,8 +186,9 @@ public class ConnectionTerminal
             return null;
         }
 
+        var circuit = incomingRelay ? this.NetTerminal.IncomingCircuit : this.NetTerminal.OutgoingCircuit;
         if (targetNumberOfRelays < 0 ||
-            this.NetTerminal.RelayCircuit.NumberOfRelays != targetNumberOfRelays)
+            circuit.NumberOfRelays != targetNumberOfRelays)
         {// When making a relay connection, it is necessary to specify the appropriate number of relays (the outermost layer of relays).
             return null;
         }
@@ -198,7 +199,7 @@ public class ConnectionTerminal
 
         // Create a new connection
         var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
-        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, -targetNumberOfRelays).ConfigureAwait(false); // < 0: target
+        var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, -targetNumberOfRelays, default, EndpointResolution.PreferIpv6, incomingRelay).ConfigureAwait(false); // < 0: target
         if (t.Value is null)
         {
             return default;
