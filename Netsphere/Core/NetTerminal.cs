@@ -256,6 +256,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         // PacketHeaderCode
         var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
+        var relayNumber = 0;
         var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
         if (destinationRelayId != 0)
         {// Relay
@@ -270,11 +271,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         else if (netEndpoint.RelayId != 0 &&
             this.RelayCircuit.RelayKey.NumberOfRelays > 0)
         {// Receive data from relays.
-            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out var originalAddress))
+            if (this.RelayCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out var originalAddress, out relayNumber))
             {
                 span = rentMemory.Span;
                 var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
-                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);//
+                netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
         }
 
@@ -284,7 +285,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(netEndpoint, destinationRelayId, packetType, rentMemory, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(netEndpoint, relayNumber, destinationRelayId, packetType, rentMemory, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene

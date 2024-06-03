@@ -264,11 +264,16 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, int relayNumber, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"Receive actual");
+        }
+
+        if (relayNumber > 0)
+        {//
+            // return;
         }
 
         // PacketHeaderCode
@@ -319,7 +324,8 @@ public sealed partial class PacketTerminal
                 {
                     var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.VersionInt);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                    this.SendPacketWithRelay(endpoint, rentMemory, relayNumber);
 
                     if (NetConstants.LogLowLevelNet)
                     {
@@ -474,6 +480,64 @@ public sealed partial class PacketTerminal
         }
 
         // this.logger.TryGet(LogLevel.Debug)?.Log("AddSendPacket");
+
+        return NetResult.Success;
+    }
+
+    internal unsafe NetResult SendPacketWithRelay(NetEndpoint endpoint, BytePool.RentMemory dataToBeMoved, int relayNumber)
+    {
+        var length = dataToBeMoved.Span.Length;
+        if (length < PacketHeader.Length ||
+            length > NetConstants.MaxPacketLength)
+        {
+            return NetResult.InvalidData;
+        }
+
+        if (relayNumber > 0)
+        {// The minimum number of relays
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+        else if (relayNumber < 0)
+        {// The target relay
+            if (this.netTerminal.RelayCircuit.NumberOfRelays < -relayNumber)
+            {
+                return NetResult.InvalidRelay;
+            }
+        }
+
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+        if (relayNumber == 0)
+        {// No relay
+            var span = dataToBeMoved.Span;
+            BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+            span = span.Slice(sizeof(ushort));
+            BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
+        }
+        else
+        {// Relay
+            if (!this.netTerminal.RelayCircuit.RelayKey.TryEncrypt(relayNumber, new NetAddress(endpoint), dataToBeMoved.Span, out var encrypted, out endpoint))
+            {
+                dataToBeMoved.Return();
+                return NetResult.InvalidRelay;
+            }
+
+            dataToBeMoved.Return();
+            dataToBeMoved = encrypted;
+        }
+
+        if (endpoint.EndPoint is null)
+        {
+            return NetResult.InvalidEndpoint;
+        }
+
+        var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, default);
+        lock (this.items.SyncObject)
+        {
+            item.Goshujin = this.items;
+        }
 
         return NetResult.Success;
     }

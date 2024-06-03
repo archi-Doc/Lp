@@ -51,8 +51,9 @@ internal class RelayKey
 
     public byte[][] IvArray { get; } = [];
 
-    public bool TryDecrypt(NetEndpoint endpoint, ref BytePool.RentMemory rentMemory, out NetAddress originalAddress)
+    public bool TryDecrypt(NetEndpoint endpoint, ref BytePool.RentMemory rentMemory, out NetAddress originalAddress, out int relayNumber)
     {
+        relayNumber = 0;
         if (!endpoint.Equals(this.FirstEndpoint))
         {
             originalAddress = default;
@@ -100,6 +101,7 @@ internal class RelayKey
                     rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
 
                     originalAddress = relayHeader.NetAddress;
+                    relayNumber = i + 1;
                     return true;
                 }
             }
