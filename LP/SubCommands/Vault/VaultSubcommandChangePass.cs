@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("changepass")]
-public class VaultSubcommandChangePass : ISimpleCommandAsync
+[SimpleCommand("change-vault-pass")]
+public class ChangeVaultPassSubcommand : ISimpleCommandAsync
 {
-    public VaultSubcommandChangePass(ILogger<VaultSubcommandChangePass> logger, Control control)
+    public ChangeVaultPassSubcommand(ILogger<ChangeVaultPassSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -45,5 +45,5 @@ public class VaultSubcommandChangePass : ISimpleCommandAsync
 
     public Control Control { get; set; }
 
-    private ILogger<VaultSubcommandChangePass> logger;
+    private readonly ILogger logger;
 }
