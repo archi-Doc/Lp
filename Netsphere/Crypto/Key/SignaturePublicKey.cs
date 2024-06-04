@@ -81,7 +81,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
     {
         if (KeyHelper.TryParsePublicKey(source, out var keyValue, out var x) &&
-            KeyHelper.GetKeyClass(keyValue) == KeyClass.T3CS_Signature)
+            KeyHelper.GetKeyClass(keyValue) == KeyClass.Signature)
         {
             publicKey = new(keyValue, x);
             return true;
@@ -164,7 +164,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     }
 
     public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
-        => this.KeyClass == KeyClass.T3CS_Signature;
+        => this.KeyClass == KeyClass.Signature;
 
     public bool Equals(SignaturePublicKey other)
         => this.keyValue == other.keyValue &&

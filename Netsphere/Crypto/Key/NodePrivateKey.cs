@@ -34,7 +34,7 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
 
     public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
     {
-        if (TryParseKey(KeyClass.Node_Encryption, base64url, out var key))
+        if (TryParseKey(KeyClass.NodeEncryption, base64url, out var key))
         {
             privateKey = new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
             return true;
@@ -72,7 +72,7 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
     }
 
     private NodePrivateKey(byte[] x, byte[] y, byte[] d)
-        : base(KeyClass.Node_Encryption, x, y, d)
+        : base(KeyClass.NodeEncryption, x, y, d)
     {
     }
 
@@ -80,7 +80,7 @@ public sealed partial class NodePrivateKey : PrivateKeyBase, IEquatable<NodePriv
         => new(this.keyValue, this.x.AsSpan());
 
     public override bool Validate()
-        => this.KeyClass == KeyClass.Node_Encryption && base.Validate();
+        => this.KeyClass == KeyClass.NodeEncryption && base.Validate();
 
     public bool IsSameKey(NodePublicKey publicKey)
         => publicKey.IsSameKey(this);

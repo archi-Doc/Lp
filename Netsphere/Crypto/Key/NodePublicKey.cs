@@ -42,7 +42,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NodePublicKey publicKey)
     {
         if (KeyHelper.TryParsePublicKey(source, out var keyValue, out var x) &&
-            KeyHelper.GetKeyClass(keyValue) == KeyClass.Node_Encryption)
+            KeyHelper.GetKeyClass(keyValue) == KeyClass.NodeEncryption)
         {
             publicKey = new(keyValue, x);
             return true;
@@ -125,7 +125,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     }
 
     public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
-        => this.KeyClass == KeyClass.Node_Encryption;
+        => this.KeyClass == KeyClass.NodeEncryption;
 
     public bool Equals(NodePublicKey other)
         => this.keyValue == other.keyValue &&
