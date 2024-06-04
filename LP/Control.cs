@@ -90,6 +90,7 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.NewSignatureKeySubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GetNetNodeSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RevealVaultKeySubcommand));
 
                 // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
