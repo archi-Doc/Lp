@@ -51,15 +51,18 @@ public sealed partial class PingPacketResponse : IPacket
     [Key(2)]
     public int VersionInt { get; set; }
 
+    [Key(3)]
+    public int Phase { get; set; }
+
     public override string ToString()
     {
         if (string.IsNullOrEmpty(this.Message))
         {
-            return $"{this.Address}";
+            return $"{this.Address} {this.VersionInt}";
         }
         else
         {
-            return $"{this.Message} {this.Address}";
+            return $"{this.Message} {this.Address} {this.VersionInt}";
         }
     }
 }

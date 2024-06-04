@@ -52,6 +52,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         if (result.Value != null)
         {
             this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+            this.logger.TryGet()?.Log(result.Value.ToString());
         }
         else
         {
