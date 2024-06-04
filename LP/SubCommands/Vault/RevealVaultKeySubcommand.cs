@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace LP.Subcommands;
 
 [SimpleCommand("reveal-vault-key")]
-public class RevealVaultKeySubcommand : ISimpleCommandAsync<RevealVaultKeyOptions>
+public class RevealVaultKeySubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
     public RevealVaultKeySubcommand(IConsoleService consoleService, ILogger<RevealVaultKeySubcommand> logger, Vault vault)
     {
@@ -15,7 +15,7 @@ public class RevealVaultKeySubcommand : ISimpleCommandAsync<RevealVaultKeyOption
         this.vault = vault;
     }
 
-    public async Task RunAsync(RevealVaultKeyOptions option, string[] args)
+    public async Task RunAsync(SimpleVaultOptions option, string[] args)
     {//
         if (!this.vault.TryGetAndParse<SignaturePrivateKey>(option.Name, out var key))
         {
@@ -29,10 +29,4 @@ public class RevealVaultKeySubcommand : ISimpleCommandAsync<RevealVaultKeyOption
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
     private readonly Vault vault;
-}
-
-public record RevealVaultKeyOptions
-{
-    [SimpleOption("name", Description = "Vault name", Required = true)]
-    public string Name { get; init; } = string.Empty;
 }
