@@ -90,9 +90,9 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return true;
     }
 
-    public bool GetUncheckedNode([NotNullWhen(true)] out NetAddress? address)
+    public bool GetUncheckedNode(out NetAddress address)
     {
-        address = null;
+        address = default;
         lock (this.data.SyncObject)
         {
             if (this.data.UncheckedChain.TryDequeue(out var node))

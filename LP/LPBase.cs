@@ -3,7 +3,6 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 using LP.Data;
-using Netsphere.Crypto;
 
 namespace LP;
 

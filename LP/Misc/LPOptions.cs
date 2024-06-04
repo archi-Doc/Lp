@@ -36,6 +36,9 @@ public partial record LpOptions
     [SimpleOption("name", Description = "Node name")]
     public string NodeName { get; init; } = string.Empty;
 
+    [SimpleOption("node_list", Description = "Node list", GetEnvironmentVariable = true)]
+    public string NodeList { get; init; } = string.Empty;
+
     [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
     public long Lifespan { get; init; }
 
