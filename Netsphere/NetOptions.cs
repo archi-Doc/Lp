@@ -16,10 +16,10 @@ public partial record NetOptions
     [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
 
-    [SimpleOption("nodeprivatekey", Description = "Node private key")]
+    [SimpleOption("node_privatekey", Description = "Node private key")]
     public string NodePrivateKey { get; set; } = string.Empty;
 
-    [SimpleOption("nodelist", Description = "Node addresses to connect")]
+    [SimpleOption("node_list", Description = "Node addresses to connect")]
     public string NodeList { get; set; } = string.Empty;
 
     [SimpleOption("ping", Description = "Enable ping function")]

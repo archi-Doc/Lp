@@ -186,7 +186,7 @@ public partial class RunnerMachine : Machine
 
     [CommandMethod]
     protected async Task<CommandResult> Restart()
-    {//
+    {
         this.logger.TryGet()?.Log("Restart");
 
         var state = this.GetState();

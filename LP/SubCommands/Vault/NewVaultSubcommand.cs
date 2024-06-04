@@ -18,7 +18,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 
     public void Run(NewVaultOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log($"New vault key ({options.KeyClass.ToString()})");
+        this.logger.TryGet()?.Log($"New vault key");
 
         var phrase = options.Seedphrase?.Trim();
         byte[]? seed;
@@ -41,7 +41,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             }
         }
 
-        var prefix = string.IsNullOrEmpty(options.Name) ? "Temporary: " : $"{options.Name}: ";
+        var prefix = options.KeyClass.ToString() + (string.IsNullOrEmpty(options.Name) ? " Temporary: " : $" {options.Name}: ");
         if (options.KeyClass == KeyClass.Signature)
         {
             var key = seed is null ? SignaturePrivateKey.Create() : SignaturePrivateKey.Create(seed);

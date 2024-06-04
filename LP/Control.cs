@@ -95,7 +95,7 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.NewVaultSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.RemoveVaultSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.ListVaultSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.RevealVaultKeySubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ShowVaultSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.ChangeVaultPassSubcommand));
 
                 // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
@@ -324,10 +324,9 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
 
-                // Merger
+                // Merger, Relay, Peer
                 await control.CreateMerger(this.Context);
-
-                // Relay
+                await control.CreatePeer(this.Context);
                 await control.CreateRelay(this.Context);
 
                 // Vault -> NodeKey
@@ -438,6 +437,37 @@ public class Control
 
     private SimpleParser subcommandParser;
 
+    public async Task CreatePeer(UnitContext context)
+    {
+        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))
+        {// RelayPeerPrivault is valid
+            var privault = this.LPBase.Options.RelayPeerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                }
+            }
+        }
+
+        if (!string.IsNullOrEmpty(this.LPBase.Options.ContentPeerPrivault))
+        {// ContentPeerPrivault is valid
+            var privault = this.LPBase.Options.ContentPeerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                }
+            }
+        }
+    }
+
     public async Task CreateRelay(UnitContext context)
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
@@ -458,11 +488,11 @@ public class Control
             var privault = this.LPBase.Options.CreditMergerPrivault;
             if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(privault, out privateKey))
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.FormatAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
                 }
             }
 
@@ -475,11 +505,11 @@ public class Control
             var privault = this.LPBase.Options.RelayMergerPrivault;
             if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(privault, out privateKey))
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.FormatAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
                 }
             }
 
