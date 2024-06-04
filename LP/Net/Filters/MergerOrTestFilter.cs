@@ -6,7 +6,7 @@ namespace LP.NetServices;
 
 public class MergerOrTestFilter : IServiceFilter
 {
-    public MergerOrTestFilter(NetBase netBase, LPBase lpBase)
+    public MergerOrTestFilter(NetBase netBase, LpBase lpBase)
     {
         this.NetBase = netBase;
         this.LPBase = lpBase;
@@ -26,5 +26,5 @@ public class MergerOrTestFilter : IServiceFilter
 
     public NetBase NetBase { get; }
 
-    public LPBase LPBase { get; }
+    public LpBase LPBase { get; }
 }

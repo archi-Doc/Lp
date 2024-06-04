@@ -40,11 +40,11 @@ public class Control
             this.Configure(context =>
             {
                 // Base
-                LPBase.Configure(context);
+                LpBase.Configure(context);
 
                 // Main services
                 context.AddSingleton<Control>();
-                context.AddSingleton<LPBase>();
+                context.AddSingleton<LpBase>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
@@ -68,9 +68,9 @@ public class Control
                 // Machines
                 context.AddSingleton<BigMachine>();
                 context.AddSingleton<BigMachineBase, BigMachine>();
-                context.AddTransient<Machines.SingleMachine>();
+                context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
-                context.AddTransient<Machines.LPControlMachine>();
+                context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
 
                 // Subcommands
@@ -157,7 +157,7 @@ public class Control
                 }
             });
 
-            this.SetupOptions<LPBase>((context, lpBase) =>
+            this.SetupOptions<LpBase>((context, lpBase) =>
             {// LPBase
                 context.GetOptions<LpOptions>(out var options);
                 lpBase.Initialize(options, true, "merger");
@@ -180,7 +180,7 @@ public class Control
                 options.DefaultSaveFormat = SaveFormat.Utf8;
                 options.DefaultSavePolicy = SavePolicy.Periodic;
                 options.DefaultSaveInterval = TimeSpan.FromMinutes(10);
-                options.GlobalDirectory = new LocalDirectoryConfiguration(LPBase.DataDirectoryName);
+                options.GlobalDirectory = new LocalDirectoryConfiguration(LpBase.DataDirectoryName);
                 options.EnableFilerLogger = false;
             });
 
@@ -376,7 +376,7 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings, Merger merger, RelayMerger relayMerger)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings, Merger merger, RelayMerger relayMerger)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -419,7 +419,7 @@ public class Control
 
     public IUserInterfaceService UserInterfaceService { get; }
 
-    public LPBase LPBase { get; }
+    public LpBase LPBase { get; }
 
     public BigMachine BigMachine { get; }
 
