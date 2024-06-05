@@ -10,14 +10,12 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
     private const int ValidTimeInMinutes = 5;
     private const int FailureLimit = 3;
 
-    public EssentialAddress(UnitLogger logger, NetBase netBase)
+    public EssentialAddress(NetBase netBase)
     {
-        this.logger = logger;
         this.netBase = netBase;
     }
 
-    private NetBase netBase;
-    private UnitLogger logger;
+    private readonly NetBase netBase;
 
     [Key(0)]
     private Item.GoshujinClass data = new();
@@ -162,7 +160,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         string st;
         lock (this.data.SyncObject)
         {
-            st = $"Ipv4+Ipv6/Total {this.data.Ipv4ListChain.Count}+{this.data.Ipv6ListChain.Count}/{this.data.LinkedListChain.Count}";
+            st = $"Ipv4/Ipv6 {this.data.Ipv4ListChain.Count}/{this.data.Ipv6ListChain.Count}";
         }
 
         return st;

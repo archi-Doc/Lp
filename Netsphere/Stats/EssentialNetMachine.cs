@@ -39,7 +39,7 @@ public partial class EssentialNetMachine : Machine
             return StateResult.Terminate;
         }
 
-        var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
+        // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
         var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netAddress, new());
 
         if (r.Result == NetResult.Success && r.Value is { } value)

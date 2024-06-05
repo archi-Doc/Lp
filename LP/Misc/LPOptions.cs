@@ -81,6 +81,7 @@ public partial record LpOptions
         {
             Port = this.Port,
             NodePrivateKey = this.NodePrivateKey,
+            NodeList = this.NodeList,
             EnablePing = this.EnablePing,
             EnableServer = this.EnableServer,
             EnableAlternative = this.EnableAlternative,
