@@ -176,4 +176,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable,
         return this.Address.Equals(other.Address) &&
             this.PublicKey.Equals(other.PublicKey);
     }
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Address, this.PublicKey);
 }

@@ -5,7 +5,7 @@ using Netsphere.Stats;
 
 namespace Netsphere.Machines;
 
-/// <summary>
+/*/// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
 /// 1: Connect and get nodes.<br/>
 /// 2: Determine MyStatus.ConnectionType.<br/>
@@ -59,4 +59,4 @@ public partial class EssentialNetMachine : Machine
     {
         return StateResult.Terminate;
     }
-}
+}*/

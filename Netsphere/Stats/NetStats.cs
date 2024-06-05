@@ -10,11 +10,11 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public NetStats(ILogger<NetStats> logger, NetBase netBase, EssentialAddress essentialAddress)
+    public NetStats(ILogger<NetStats> logger, NetBase netBase, EssentialNode essentialNode)
     {
         this.logger = logger;
         this.netBase = netBase;
-        this.EssentialAddress = essentialAddress;
+        this.EssentialNode = essentialNode;
     }
 
     #region FieldAndProperty
@@ -27,7 +27,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public long LastMics { get; private set; }
 
     [Key(1)]
-    public EssentialAddress EssentialAddress { get; private set; }
+    public EssentialNode EssentialNode { get; private set; }
 
     [Key(3)]
     public MyAddress MyIpv4Address { get; private set; } = new();
@@ -142,7 +142,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     public string Dump()
     {
-        return $"NetStats: EssentialAddress: {this.EssentialAddress.Dump()}, Ipv4 Address: {this.MyIpv4Address.Dump()}, Ipv6 Address: {this.MyIpv6Address.Dump()}, ";
+        return $"NetStats: EssentialAddress: {this.EssentialNode.Dump()}, Ipv4 Address: {this.MyIpv4Address.Dump()}, Ipv6 Address: {this.MyIpv6Address.Dump()}, ";
     }
 
     void ITinyhandSerializationCallback.OnBeforeSerialize()

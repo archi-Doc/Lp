@@ -4,13 +4,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Netsphere.Stats;
 
-/*[TinyhandObject(UseServiceProvider = true)]
-public sealed partial class EssentialAddress : ITinyhandSerializationCallback
+[TinyhandObject(UseServiceProvider = true)]
+public sealed partial class EssentialNode : ITinyhandSerializationCallback
 {
     private const int ValidTimeInMinutes = 5;
     private const int FailureLimit = 3;
 
-    public EssentialAddress(NetBase netBase)
+    public EssentialNode(NetBase netBase)
     {
         this.netBase = netBase;
     }
@@ -30,7 +30,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
     {
         [Link(Type = ChainType.Unordered)]
         [Key(0)]
-        public NetAddress Address { get; private set; }
+        public NetNode Node { get; private set; }
 
         [Key(1)]
         public long ValidMics { get; private set; }
@@ -42,13 +42,14 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         [Link(Type = ChainType.QueueList, Name = "Unchecked")]
         [Link(Type = ChainType.LinkedList, Name = "Ipv4List", AutoLink = false)]
         [Link(Type = ChainType.LinkedList, Name = "Ipv6List", AutoLink = false)]
-        public Item(NetAddress address)
+        public Item(NetNode node)
         {
-            this.Address = address;
+            this.Node = node;
         }
 
         public Item()
         {
+            this.Node = NetNode.Default;
         }
 
         public bool IncrementFailureCount()
@@ -63,24 +64,24 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         }
 
         public override string ToString()
-            => $"{this.Address.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
+            => $"{this.Node.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
     }
 
-    public bool TryAdd(NetAddress address)
+    public bool TryAdd(NetNode node)
     {
-        if (!address.Validate())
+        if (!node.Validate())
         {
             return false;
         }
 
         lock (this.data.SyncObject)
         {
-            if (this.data.AddressChain.ContainsKey(address))
+            if (this.data.NodeChain.ContainsKey(node))
             {// Already exists
                 return false;
             }
 
-            var x = new Item(address);
+            var x = new Item(node);
             this.data.Add(x);
             this.data.UncheckedChain.Enqueue(x);
         }
@@ -88,15 +89,15 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return true;
     }
 
-    public bool GetUncheckedNode(out NetAddress address)
+    public bool GetUncheckedNode([NotNullWhen(true)] out NetNode? node)
     {
-        address = default;
+        node = default;
         lock (this.data.SyncObject)
         {
-            if (this.data.UncheckedChain.TryDequeue(out var node))
+            if (this.data.UncheckedChain.TryDequeue(out var iten))
             {
-                this.data.UncheckedChain.Enqueue(node);
-                address = node.Address;
+                this.data.UncheckedChain.Enqueue(iten);
+                node = iten.Node;
                 return true;
             }
         }
@@ -104,17 +105,17 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return false;
     }
 
-    public bool GetNode([NotNullWhen(true)] out NetAddress? address)
+    public bool GetNode([NotNullWhen(true)] out NetNode? node)
     {
-        address = null;
+        node = null;
         lock (this.data.SyncObject)
         {
-            var node = this.data.LinkedListChain.First;
-            if (node != null)
+            var item = this.data.LinkedListChain.First;
+            if (item is not null)
             {
-                this.data.LinkedListChain.Remove(node);
-                this.data.LinkedListChain.AddLast(node);
-                address = node.Address;
+                this.data.LinkedListChain.Remove(item);
+                this.data.LinkedListChain.AddLast(item);
+                node = item.Node;
                 return true;
             }
         }
@@ -122,25 +123,25 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return false;
     }
 
-    public void Report(NetAddress nodeAddress, ConnectionResult result)
+    public void Report(NetNode node, ConnectionResult result)
     {
         lock (this.data.SyncObject)
         {
-            var node = this.data.AddressChain.FindFirst(nodeAddress);
-            if (node != null)
+            var item = this.data.NodeChain.FindFirst(node);
+            if (item != null)
             {
-                if (node.UncheckedLink.IsLinked)
+                if (item.UncheckedLink.IsLinked)
                 {// Unchecked
                     if (result == ConnectionResult.Success)
                     {// Success
-                        node.UpdateValidMics();
-                        this.data.UncheckedChain.Remove(node);
+                        item.UpdateValidMics();
+                        this.data.UncheckedChain.Remove(item);
                     }
                     else
                     {// Failure
-                        if (node.IncrementFailureCount())
+                        if (item.IncrementFailureCount())
                         {// Remove
-                            node.Goshujin = null;
+                            item.Goshujin = null;
                         }
                     }
                 }
@@ -148,7 +149,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
                 {// Checked
                     if (result == ConnectionResult.Success)
                     {// Success
-                        node.UpdateValidMics();
+                        item.UpdateValidMics();
                     }
                 }
             }
@@ -172,7 +173,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         List<Item> toDelete = new();
         foreach (var x in this.data.LinkedListChain)
         {
-            if (!x.Address.Validate())
+            if (!x.Node.Validate())
             {
                 toDelete.Add(x);
             }
@@ -199,18 +200,18 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         var nodes = this.netBase.NetOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            if (NetAddress.TryParse(x, out var address))
+            if (NetNode.TryParse(x, out var node))
             {
-                if (!this.data.AddressChain.ContainsKey(address))
+                if (!this.data.NodeChain.ContainsKey(node))
                 {
-                    var item = new Item(address);
+                    var item = new Item(node);
                     this.data.Add(item);
-                    if (address.IsValidIpv4)
+                    if (node.Address.IsValidIpv4)
                     {
                         this.data.Ipv4ListChain.AddLast(item);
                     }
 
-                    if (address.IsValidIpv6)
+                    if (node.Address.IsValidIpv6)
                     {
                         this.data.Ipv6ListChain.AddLast(item);
                     }
@@ -234,4 +235,4 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
 
         this.Validate();
     }
-}*/
+}

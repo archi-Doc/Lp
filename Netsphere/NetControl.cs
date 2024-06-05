@@ -35,7 +35,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 // Main services
                 context.AddSingleton<NetControl>();
                 context.AddSingleton<NetBase>();
-                context.AddSingleton<EssentialAddress>();
+                // context.AddSingleton<EssentialAddress>();
+                context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
@@ -47,7 +48,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.TryAddSingleton<IdFileLoggerOptions>();
 
                 // Machines
-                context.AddTransient<EssentialNetMachine>();
+                context.AddTransient<EssentialNodeMachine>();
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<NetStatsMachine>();
 
