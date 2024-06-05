@@ -22,6 +22,9 @@ public partial record NetOptions
     [SimpleOption("node_list", Description = "Node addresses to connect")]
     public string NodeList { get; set; } = string.Empty;
 
+    [SimpleOption("phase", Description = "Network phase")]
+    public int Phase { get; set; }
+
     [SimpleOption("ping", Description = "Enable ping function")]
     public bool EnablePing { get; set; } = true;
 

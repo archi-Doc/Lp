@@ -34,11 +34,12 @@ public sealed partial class PingPacketResponse : IPacket
     {
     }
 
-    public PingPacketResponse(NetAddress address, string message, int versionInt)
+    public PingPacketResponse(NetAddress address, string message, int versionInt, int phase)
     {
         this.Address = address;
         this.Message = message;
         this.VersionInt = versionInt;
+        this.Phase = phase;
     }
 
     [Key(0, AddProperty = "Message", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]

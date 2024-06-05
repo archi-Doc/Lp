@@ -322,9 +322,10 @@ public sealed partial class PacketTerminal
             }
             else if (packetType == PacketType.Ping)
             {// PingPacket
-                if (this.netBase.NetOptions.EnablePing)
+                var netOptions = this.netBase.NetOptions;
+                if (netOptions.EnablePing)
                 {
-                    var packet = new PingPacketResponse(new(endpoint), this.netBase.NetOptions.NodeName, Version.VersionInt);
+                    var packet = new PingPacketResponse(new(endpoint), netOptions.NodeName, Version.VersionInt, netOptions.Phase);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
