@@ -49,7 +49,7 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
 
         public Item()
         {
-            this.Node = NetNode.Default;
+            this.Node = default!; // Do not use default values as instances are reused during deserialization, leading to inconsistency.
         }
 
         public bool IncrementFailureCount()
@@ -94,10 +94,10 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
         node = default;
         lock (this.data.SyncObject)
         {
-            if (this.data.UncheckedChain.TryDequeue(out var iten))
+            if (this.data.UncheckedChain.TryDequeue(out var item))
             {
-                this.data.UncheckedChain.Enqueue(iten);
-                node = iten.Node;
+                this.data.UncheckedChain.Enqueue(item);
+                node = item.Node;
                 return true;
             }
         }
@@ -200,22 +200,22 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
         var nodes = this.netBase.NetOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            if (NetNode.TryParse(x, out var node))
+            if (!NetNode.TryParse(x, out var node) ||
+                this.data.NodeChain.ContainsKey(node))
             {
-                if (!this.data.NodeChain.ContainsKey(node))
-                {
-                    var item = new Item(node);
-                    this.data.Add(item);
-                    if (node.Address.IsValidIpv4)
-                    {
-                        this.data.Ipv4ListChain.AddLast(item);
-                    }
+                continue;
+            }
 
-                    if (node.Address.IsValidIpv6)
-                    {
-                        this.data.Ipv6ListChain.AddLast(item);
-                    }
-                }
+            var item = new Item(node);
+            this.data.Add(item);
+            if (node.Address.IsValidIpv4)
+            {
+                this.data.Ipv4ListChain.AddLast(item);
+            }
+
+            if (node.Address.IsValidIpv6)
+            {
+                this.data.Ipv6ListChain.AddLast(item);
             }
         }
 

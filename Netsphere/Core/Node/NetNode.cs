@@ -12,7 +12,7 @@ namespace Netsphere;
 [TinyhandObject]
 public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
-    public static readonly NetNode Default = new();
+    // public static readonly NetNode Default = new(); // Do not use default values as instances are reused during deserialization, leading to inconsistency.
     private static NetNode? alternative;
 
     public static NetNode Alternative

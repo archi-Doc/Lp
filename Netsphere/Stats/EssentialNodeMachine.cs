@@ -5,16 +5,16 @@ using Netsphere.Stats;
 
 namespace Netsphere.Machines;
 
-/*/// <summary>
+/// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
 /// 1: Connect and get nodes.<br/>
 /// 2: Determine MyStatus.ConnectionType.<br/>
 /// 3: Check essential nodes.
 /// </summary>
 [MachineObject(UseServiceProvider = true)]
-public partial class EssentialNetMachine : Machine
+public partial class EssentialNodeMachine : Machine
 {
-    public EssentialNetMachine(ILogger<EssentialNetMachine> logger, NetBase netBase, NetControl netControl, NetStats netStats)
+    public EssentialNodeMachine(ILogger<EssentialNodeMachine> logger, NetBase netBase, NetControl netControl, NetStats netStats)
         : base()
     {
         this.logger = logger;
@@ -34,21 +34,21 @@ public partial class EssentialNetMachine : Machine
     {//
         this.logger.TryGet(LogLevel.Information)?.Log($"Essential net machine");
 
-        if (!this.netStats.EssentialAddress.GetUncheckedNode(out var netAddress))
+        if (!this.netStats.EssentialNode.GetUncheckedNode(out var netNode))
         {
             return StateResult.Terminate;
         }
 
         // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
-        var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netAddress, new());
+        var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new());
 
         if (r.Result == NetResult.Success && r.Value is { } value)
         {// Success
-            this.netStats.EssentialAddress.Report(netAddress, ConnectionResult.Success);
+            this.netStats.EssentialNode.Report(netNode, ConnectionResult.Success);
         }
         else
         {
-            this.netStats.EssentialAddress.Report(netAddress, ConnectionResult.Failure);
+            this.netStats.EssentialNode.Report(netNode, ConnectionResult.Failure);
         }
 
         return StateResult.Continue;
@@ -59,4 +59,4 @@ public partial class EssentialNetMachine : Machine
     {
         return StateResult.Terminate;
     }
-}*/
+}

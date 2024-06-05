@@ -699,7 +699,7 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.EssentialNetMachine.GetOrCreate().RunAsync();
+        _ = this.BigMachine.EssentialNodeMachine.GetOrCreate().RunAsync();
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
 
         if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))
