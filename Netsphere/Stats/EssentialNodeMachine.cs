@@ -32,7 +32,7 @@ public partial class EssentialNodeMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {//
-        this.logger.TryGet(LogLevel.Information)?.Log($"Essential net machine");
+        
 
         if (!this.netStats.EssentialNode.GetUncheckedNode(out var netNode))
         {
@@ -42,6 +42,7 @@ public partial class EssentialNodeMachine : Machine
         // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
         var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new());
 
+        this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
         if (r.Result == NetResult.Success && r.Value is { } value)
         {// Success
             this.netStats.EssentialNode.Report(netNode, ConnectionResult.Success);
