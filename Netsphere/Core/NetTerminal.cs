@@ -26,7 +26,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetStats = netStats;
 
         this.NetSender = new(this, this.NetBase, unitLogger.GetLogger<NetSender>());
-        this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
+        this.PacketTerminal = new(this.NetBase, this, unitLogger.GetLogger<PacketTerminal>());
         this.IncomingCircuit = new(this, true);
         this.OutgoingCircuit = new(this, false);
         this.RelayControl = relayControl;

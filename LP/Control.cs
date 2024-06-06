@@ -19,6 +19,7 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
+using Netsphere.Machines;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
@@ -72,6 +73,7 @@ public class Control
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
+                context.AddSingleton<EssentialNodeMachine>();//
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));

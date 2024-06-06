@@ -48,7 +48,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.TryAddSingleton<IdFileLoggerOptions>();
 
                 // Machines
-                context.AddTransient<EssentialNodeMachine>();
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<NetStatsMachine>();
 

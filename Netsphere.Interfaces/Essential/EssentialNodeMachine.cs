@@ -1,7 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Collections;
+using Arc.Unit;
+using BigMachines;
 using Netsphere.Packet;
 using Netsphere.Stats;
+using Tinyhand;
+using ValueLink;
 using ValueLink.Integrality;
 
 namespace Netsphere.Machines;
@@ -59,8 +64,11 @@ public partial class EssentialNodeMachine : Machine
 
         using (var connection = await this.netControl.NetTerminal.Connect(netNode))
         {
-            var service = connection.GetService<IEssentialService>();
-            await this.netStats.EssentialNode.Integrate(async (x, y) => await service.IntegrateEssentialNode(x));
+            if (connection is not null)
+            {
+                var service = connection.GetService<IEssentialService>();
+                await this.netStats.EssentialNode.Integrate(async (x, y) => await service.IntegrateEssentialNode(x));
+            }
         }
 
         return StateResult.Continue;
