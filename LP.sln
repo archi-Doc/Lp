@@ -29,9 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.DataServer", "Net
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Runner", "Netsphere.Runner\Netsphere.Runner.csproj", "{F83D97AB-6A7A-4AD4-BDDC-840C2F8DAF84}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Interfaces", "Netsphere.Interfaces\Netsphere.Interfaces.csproj", "{E789687D-4CE4-45B5-8291-16C3EDCDA533}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetsphereGenerator", "NetsphereGenerator\NetsphereGenerator.csproj", "{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Shared", "Netsphere.Shared\Netsphere.Shared.csproj", "{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,14 +87,14 @@ Global
 		{F83D97AB-6A7A-4AD4-BDDC-840C2F8DAF84}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F83D97AB-6A7A-4AD4-BDDC-840C2F8DAF84}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F83D97AB-6A7A-4AD4-BDDC-840C2F8DAF84}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E789687D-4CE4-45B5-8291-16C3EDCDA533}.Release|Any CPU.Build.0 = Release|Any CPU
 		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64DF3C03-7C5C-473D-9EE0-76F95B9420E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

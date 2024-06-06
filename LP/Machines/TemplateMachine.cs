@@ -4,9 +4,9 @@ namespace LP.Machines;
 
 [MachineObject(UseServiceProvider = true)]
 // [TinyhandObject(UseServiceProvider = true)]
-public partial class SingleMachine : Machine
+public partial class TemplateMachine : Machine
 {// Control: context.AddSingleton<Machines.RelayPeerMachine>();
-    public SingleMachine(IUserInterfaceService consoleSeuserInterfaceServicevice)
+    public TemplateMachine(IUserInterfaceService consoleSeuserInterfaceServicevice)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
         this.TimeUntilRun = TimeSpan.FromSeconds(1);

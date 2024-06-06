@@ -3,21 +3,20 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 using LP.Data;
-using Netsphere.Crypto;
 
 namespace LP;
 
-public class LPBase
+public class LpBase
 {
     public const string DataDirectoryName = "Local";
 
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
-        context.AddSingleton<LPBase>();
+        context.AddSingleton<LpBase>();
     }
 
-    public LPBase()
+    public LpBase()
     {
         this.Settings = TinyhandSerializer.Reconstruct<LPSettings>();
     }

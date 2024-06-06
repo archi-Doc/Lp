@@ -29,7 +29,7 @@ public sealed partial class EncryptionPrivateKey : PrivateKeyBase, IEquatable<En
 
     public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out EncryptionPrivateKey privateKey)
     {
-        if (TryParseKey(KeyClass.T3CS_Encryption, base64url, out var key))
+        if (TryParseKey(KeyClass.Encryption, base64url, out var key))
         {
             privateKey = new EncryptionPrivateKey(key.Q.X!, key.Q.Y!, key.D!);
             return true;
@@ -67,7 +67,7 @@ public sealed partial class EncryptionPrivateKey : PrivateKeyBase, IEquatable<En
     }
 
     private EncryptionPrivateKey(byte[] x, byte[] y, byte[] d)
-        : base(KeyClass.T3CS_Encryption, x, y, d)
+        : base(KeyClass.Encryption, x, y, d)
     {
     }
 
@@ -75,7 +75,7 @@ public sealed partial class EncryptionPrivateKey : PrivateKeyBase, IEquatable<En
         => new(this.keyValue, this.x.AsSpan());
 
     public override bool Validate()
-        => this.KeyClass == KeyClass.T3CS_Encryption && base.Validate();
+        => this.KeyClass == KeyClass.Encryption && base.Validate();
 
     public bool IsSameKey(EncryptionPublicKey publicKey)
         => publicKey.IsSameKey(this);

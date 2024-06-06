@@ -5,11 +5,11 @@ using LP.Data;
 namespace LP.Machines;
 
 [MachineObject(UseServiceProvider = true)]
-public partial class LPControlMachine : Machine
+public partial class LpControlMachine : Machine
 {
     private const int IntervalInSeconds = 10;
 
-    public LPControlMachine(ILogger<LPControlMachine> logger, Control control, LpOptions options)
+    public LpControlMachine(ILogger<LpControlMachine> logger, Control control, LpOptions options)
     {
         this.logger = logger;
         this.control = control;

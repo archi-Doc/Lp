@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Arc.Crypto;
 using Netsphere.Crypto;
 
 namespace Netsphere;
@@ -13,7 +12,7 @@ namespace Netsphere;
 [TinyhandObject]
 public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
-    public static readonly NetNode Default = new();
+    // public static readonly NetNode Default = new(); // Do not use default values as instances are reused during deserialization, leading to inconsistency.
     private static NetNode? alternative;
 
     public static NetNode Alternative
@@ -177,4 +176,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable,
         return this.Address.Equals(other.Address) &&
             this.PublicKey.Equals(other.PublicKey);
     }
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Address, this.PublicKey);
 }

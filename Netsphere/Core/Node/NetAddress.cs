@@ -9,7 +9,7 @@ namespace Netsphere;
 /// Represents ipv4/ipv6 address information.
 /// </summary>
 [TinyhandObject]
-public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
+public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable // , IEquatable<NetAddress>
 {// 24 bytes. IEquatable<NetAddress> -> record struct
     public const char RelayIdSeparator = '&';
     public const string AlternativeName = "alternative";

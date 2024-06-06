@@ -4,20 +4,18 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Netsphere.Stats;
 
-[TinyhandObject(UseServiceProvider = true)]
+/*[TinyhandObject(UseServiceProvider = true)]
 public sealed partial class EssentialAddress : ITinyhandSerializationCallback
 {
     private const int ValidTimeInMinutes = 5;
     private const int FailureLimit = 3;
 
-    public EssentialAddress(UnitLogger logger, NetBase netBase)
+    public EssentialAddress(NetBase netBase)
     {
-        this.logger = logger;
         this.netBase = netBase;
     }
 
-    private NetBase netBase;
-    private UnitLogger logger;
+    private readonly NetBase netBase;
 
     [Key(0)]
     private Item.GoshujinClass data = new();
@@ -90,9 +88,9 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return true;
     }
 
-    public bool GetUncheckedNode([NotNullWhen(true)] out NetAddress? address)
+    public bool GetUncheckedNode(out NetAddress address)
     {
-        address = null;
+        address = default;
         lock (this.data.SyncObject)
         {
             if (this.data.UncheckedChain.TryDequeue(out var node))
@@ -162,7 +160,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         string st;
         lock (this.data.SyncObject)
         {
-            st = $"Ipv4+Ipv6/Total {this.data.Ipv4ListChain.Count}+{this.data.Ipv6ListChain.Count}/{this.data.LinkedListChain.Count}";
+            st = $"Ipv4/Ipv6 {this.data.Ipv4ListChain.Count}/{this.data.Ipv6ListChain.Count}";
         }
 
         return st;
@@ -236,4 +234,4 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
 
         this.Validate();
     }
-}
+}*/

@@ -7,15 +7,15 @@ public enum KeyClass : byte
     /// <summary>
     /// T3CS key for encryption (secp256r1/ECDH).
     /// </summary>
-    T3CS_Encryption,
+    Encryption,
 
     /// <summary>
     /// T3CS key for signature (secp256r1/ECDsa).
     /// </summary>
-    T3CS_Signature,
+    Signature,
 
     /// <summary>
     /// Node key for encryption (secp256r1/ECDH).
     /// </summary>
-    Node_Encryption,
+    NodeEncryption,
 }

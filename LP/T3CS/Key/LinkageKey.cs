@@ -107,7 +107,7 @@ public readonly partial record struct LinkageKey
     private readonly ulong encrypted3;
 
     public bool IsEncrypted
-        => KeyHelper.GetKeyClass(this.Key.KeyValue) == KeyClass.T3CS_Encryption;
+        => KeyHelper.GetKeyClass(this.Key.KeyValue) == KeyClass.Encryption;
 
     #endregion
 

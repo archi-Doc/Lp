@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("ls")]
-public class VaultSubcommandLs : ISimpleCommandAsync
+[SimpleCommand("list-vault")]
+public class ListVaultSubcommand : ISimpleCommandAsync
 {
-    public VaultSubcommandLs(IUserInterfaceService userInterfaceService, Vault vault)
+    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, Vault vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;

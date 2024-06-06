@@ -103,7 +103,7 @@ public record DefaultCommandOptions
     [SimpleOption("punchnode", Description = "Punch node")]
     public string PunchNode { get; init; } = string.Empty;
 
-    [SimpleOption("nodeprivatekey", Description = "Node private key")]
+    [SimpleOption("node_privatekey", Description = "Node private key")]
     public string NodePrivateKey { get; init; } = string.Empty;
 
     [SimpleOption("remotepublickey", Description = "Remote public key")]

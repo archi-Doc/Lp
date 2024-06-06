@@ -10,7 +10,7 @@ namespace LP;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public Merger(UnitContext context, UnitLogger unitLogger, LPBase lpBase)
+    public Merger(UnitContext context, UnitLogger unitLogger, LpBase lpBase)
         : base(context)
     {
         this.logger = unitLogger.GetLogger<Merger>();
@@ -139,7 +139,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public MergerInformation? Information { get; protected set; }
 
     protected ILogger logger;
-    protected LPBase lpBase;
+    protected LpBase lpBase;
     protected ICrystal<CreditData.GoshujinClass>? creditDataCrystal;
     protected CreditData.GoshujinClass? creditData;
     protected SignaturePrivateKey? mergerPrivateKey;

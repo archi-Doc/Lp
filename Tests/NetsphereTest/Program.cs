@@ -151,7 +151,7 @@ public class Program
             .SetupOptions<NetOptions>((context, options) =>
             {
                 if (string.IsNullOrEmpty(options.NodePrivateKey) &&
-                Environment.GetEnvironmentVariable("nodeprivatekey") is { } nodePrivateKey)
+                Environment.GetEnvironmentVariable("node_privatekey") is { } nodePrivateKey)
                 {
                     options.NodePrivateKey = nodePrivateKey;
                 }

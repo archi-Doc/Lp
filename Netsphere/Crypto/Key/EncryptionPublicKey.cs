@@ -36,7 +36,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey)
     {
         if (KeyHelper.TryParsePublicKey(source, out var keyValue, out var x) &&
-            KeyHelper.GetKeyClass(keyValue) == KeyClass.T3CS_Encryption)
+            KeyHelper.GetKeyClass(keyValue) == KeyClass.Encryption)
         {
             publicKey = new(keyValue, x);
             return true;
@@ -119,7 +119,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
     }
 
     public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
-        => this.KeyClass == KeyClass.T3CS_Encryption;
+        => this.KeyClass == KeyClass.Encryption;
 
     public bool Equals(EncryptionPublicKey other)
         => this.keyValue == other.keyValue &&

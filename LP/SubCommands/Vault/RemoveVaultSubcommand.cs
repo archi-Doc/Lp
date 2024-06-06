@@ -4,16 +4,16 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("delete")]
-public class VaultSubcommandDelete : ISimpleCommandAsync<KeyVaultSubcommandDeleteOptions>
+[SimpleCommand("remove-vault")]
+public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public VaultSubcommandDelete(IUserInterfaceService userInterfaceService, Vault vault)
+    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, Vault vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;
     }
 
-    public async Task RunAsync(KeyVaultSubcommandDeleteOptions options, string[] args)
+    public async Task RunAsync(SimpleVaultOptions options, string[] args)
     {
         if (this.vault.Remove(options.Name))
         {
@@ -27,10 +27,4 @@ public class VaultSubcommandDelete : ISimpleCommandAsync<KeyVaultSubcommandDelet
 
     private Vault vault;
     private IUserInterfaceService userInterfaceService;
-}
-
-public record KeyVaultSubcommandDeleteOptions
-{
-    [SimpleOption("name", Description = "Name", Required = true)]
-    public string Name { get; init; } = string.Empty;
 }

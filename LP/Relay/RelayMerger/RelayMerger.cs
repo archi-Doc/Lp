@@ -7,7 +7,7 @@ namespace LP.T3CS;
 
 public class RelayMerger : Merger
 {
-    public RelayMerger(UnitContext context, UnitLogger unitLogger, LPBase lpBase)
+    public RelayMerger(UnitContext context, UnitLogger unitLogger, LpBase lpBase)
         : base(context, unitLogger, lpBase)
     {
         this.logger = unitLogger.GetLogger<RelayMerger>();

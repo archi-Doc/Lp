@@ -42,6 +42,7 @@ Vault = {
     NoData = "Vault could not get '{0}'"
     NoRestore = "Vault could not restore data '{0}'"
     NotFound = "{0} is not found"
+    NotAvailable = "Could not get vault '{0}'"
     AddSuccess = "{0} is successfully added"
     DeleteSuccess = "{0} is successfully deleted"
     AlreadyExists = "{0} already exists"

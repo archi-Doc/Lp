@@ -4,7 +4,7 @@ namespace LP.Logging;
 
 internal class MachineLogFilter : ILogFilter
 {
-    public MachineLogFilter(LPBase lpBase)
+    public MachineLogFilter(LpBase lpBase)
     {
         this.lpBase = lpBase;
     }
@@ -19,5 +19,5 @@ internal class MachineLogFilter : ILogFilter
         return param.OriginalLogger;
     }
 
-    private LPBase lpBase;
+    private LpBase lpBase;
 }

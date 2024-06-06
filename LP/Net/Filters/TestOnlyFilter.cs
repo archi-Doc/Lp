@@ -6,7 +6,7 @@ namespace LP.NetServices;
 
 public class TestOnlyFilter : IServiceFilter
 {
-    public TestOnlyFilter(LPBase lpBase)
+    public TestOnlyFilter(LpBase lpBase)
     {
         this.LpBase = lpBase;
     }
@@ -23,5 +23,5 @@ public class TestOnlyFilter : IServiceFilter
         }
     }
 
-    public LPBase LpBase { get; }
+    public LpBase LpBase { get; }
 }

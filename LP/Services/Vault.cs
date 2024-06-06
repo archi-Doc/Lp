@@ -11,7 +11,7 @@ public partial class Vault
 {
     public const string Filename = "Vault.tinyhand";
 
-    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, LPBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
+    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
     {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -33,7 +33,7 @@ public partial class Vault
 
     private readonly ILogger<Vault> logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly LPBase lpBase;
+    private readonly LpBase lpBase;
     // private readonly CrystalDataInterface vaultData;
     private readonly string path;
 

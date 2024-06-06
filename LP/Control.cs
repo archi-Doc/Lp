@@ -19,6 +19,7 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
+using Netsphere.Machines;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
@@ -40,11 +41,11 @@ public class Control
             this.Configure(context =>
             {
                 // Base
-                LPBase.Configure(context);
+                LpBase.Configure(context);
 
                 // Main services
                 context.AddSingleton<Control>();
-                context.AddSingleton<LPBase>();
+                context.AddSingleton<LpBase>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
@@ -68,10 +69,11 @@ public class Control
                 // Machines
                 context.AddSingleton<BigMachine>();
                 context.AddSingleton<BigMachineBase, BigMachine>();
-                context.AddTransient<Machines.SingleMachine>();
+                context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
-                context.AddTransient<Machines.LPControlMachine>();
+                context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
+                context.AddSingleton<EssentialNodeMachine>();//
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
@@ -91,12 +93,18 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GetNetNodeSubcommand));
 
+                // Vault
+                context.AddSubcommand(typeof(LP.Subcommands.NewVaultSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RemoveVaultSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ListVaultSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ShowVaultSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ChangeVaultPassSubcommand));
+
                 // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
                 LP.Subcommands.InfoSubcommand.Configure(context);
                 LP.Subcommands.ExportSubcommand.Configure(context);
-                LP.Subcommands.VaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
                 LP.Subcommands.NodeKeySubcommand.Configure(context);
@@ -151,7 +159,7 @@ public class Control
                 }
             });
 
-            this.SetupOptions<LPBase>((context, lpBase) =>
+            this.SetupOptions<LpBase>((context, lpBase) =>
             {// LPBase
                 context.GetOptions<LpOptions>(out var options);
                 lpBase.Initialize(options, true, "merger");
@@ -174,7 +182,7 @@ public class Control
                 options.DefaultSaveFormat = SaveFormat.Utf8;
                 options.DefaultSavePolicy = SavePolicy.Periodic;
                 options.DefaultSaveInterval = TimeSpan.FromMinutes(10);
-                options.GlobalDirectory = new LocalDirectoryConfiguration(LPBase.DataDirectoryName);
+                options.GlobalDirectory = new LocalDirectoryConfiguration(LpBase.DataDirectoryName);
                 options.EnableFilerLogger = false;
             });
 
@@ -318,10 +326,9 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
 
-                // Merger
+                // Merger, Relay, Peer
                 await control.CreateMerger(this.Context);
-
-                // Relay
+                await control.CreatePeer(this.Context);
                 await control.CreateRelay(this.Context);
 
                 // Vault -> NodeKey
@@ -371,7 +378,7 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings, Merger merger, RelayMerger relayMerger)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings, Merger merger, RelayMerger relayMerger)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -414,7 +421,7 @@ public class Control
 
     public IUserInterfaceService UserInterfaceService { get; }
 
-    public LPBase LPBase { get; }
+    public LpBase LPBase { get; }
 
     public BigMachine BigMachine { get; }
 
@@ -431,6 +438,37 @@ public class Control
     public AuthorityVault AuthorityVault { get; }
 
     private SimpleParser subcommandParser;
+
+    public async Task CreatePeer(UnitContext context)
+    {
+        if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))
+        {// RelayPeerPrivault is valid
+            var privault = this.LPBase.Options.RelayPeerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                }
+            }
+        }
+
+        if (!string.IsNullOrEmpty(this.LPBase.Options.ContentPeerPrivault))
+        {// ContentPeerPrivault is valid
+            var privault = this.LPBase.Options.ContentPeerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                }
+            }
+        }
+    }
 
     public async Task CreateRelay(UnitContext context)
     {
@@ -452,11 +490,11 @@ public class Control
             var privault = this.LPBase.Options.CreditMergerPrivault;
             if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(privault, out privateKey))
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.FormatAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
                 }
             }
 
@@ -469,11 +507,11 @@ public class Control
             var privault = this.LPBase.Options.RelayMergerPrivault;
             if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.Vault.TryGetAndParse<SignaturePrivateKey>(privault, out privateKey))
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.FormatAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndTryAdd(privault, privateKey);
                 }
             }
 
@@ -663,7 +701,8 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        this.BigMachine.LPControlMachine.GetOrCreate(); // .RunAsync();
+        _ = this.BigMachine.EssentialNodeMachine.GetOrCreate().RunAsync();
+        this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
 
         if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))
         {

@@ -30,7 +30,7 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
 
     public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out SignaturePrivateKey privateKey)
     {
-        if (TryParseKey(KeyClass.T3CS_Signature, base64url, out var key))
+        if (TryParseKey(KeyClass.Signature, base64url, out var key))
         {
             privateKey = new SignaturePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
             return true;
@@ -139,7 +139,7 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
     }
 
     private SignaturePrivateKey(byte[] x, byte[] y, byte[] d)
-        : base(KeyClass.T3CS_Signature, x, y, d)
+        : base(KeyClass.Signature, x, y, d)
     {
     }
 
@@ -147,7 +147,7 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
         => new(this.keyValue, this.x.AsSpan());
 
     public override bool Validate()
-        => this.KeyClass == KeyClass.T3CS_Signature && base.Validate();
+        => this.KeyClass == KeyClass.Signature && base.Validate();
 
     public bool IsSameKey(SignaturePublicKey publicKey)
         => publicKey.IsSameKey(this);

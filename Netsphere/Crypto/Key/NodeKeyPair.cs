@@ -22,8 +22,8 @@ public readonly partial record struct NodeKeyPair
             return material;
         }
 
-        if (this.privateKey.KeyClass != KeyClass.Node_Encryption ||
-            this.publicKey.KeyClass != KeyClass.Node_Encryption)
+        if (this.privateKey.KeyClass != KeyClass.NodeEncryption ||
+            this.publicKey.KeyClass != KeyClass.NodeEncryption)
         {
             return null;
         }
