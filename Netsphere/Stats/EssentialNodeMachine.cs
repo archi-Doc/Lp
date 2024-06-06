@@ -2,8 +2,15 @@
 
 using Netsphere.Packet;
 using Netsphere.Stats;
+using ValueLink.Integrality;
 
 namespace Netsphere.Machines;
+
+[NetServiceInterface]
+public interface IEssentialService : INetService
+{
+    NetTask<IntegralityResultMemory> IntegrateEssentialNode(BytePool.RentMemory memory);
+}
 
 /// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
@@ -32,8 +39,6 @@ public partial class EssentialNodeMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {//
-        
-
         if (!this.netStats.EssentialNode.GetUncheckedNode(out var netNode))
         {
             return StateResult.Terminate;
@@ -50,6 +55,12 @@ public partial class EssentialNodeMachine : Machine
         else
         {
             this.netStats.EssentialNode.Report(netNode, ConnectionResult.Failure);
+        }
+
+        using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+        {
+            var service = connection.GetService<IEssentialService>();
+            await this.netStats.EssentialNode.Integrate(async (x, y) => await service.IntegrateEssentialNode(x));
         }
 
         return StateResult.Continue;

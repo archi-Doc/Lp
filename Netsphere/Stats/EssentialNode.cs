@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
+using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
@@ -24,11 +26,19 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
 
     public int CountIpv6 => this.data.Ipv6ListChain.Count;
 
-    [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+    internal class Integrality : Integrality<Item.GoshujinClass, Item>
+    {
+        public static readonly Integrality Instance = new()
+        {
+            MaxItems = 10,
+            RemoveIfItemNotFound = false,
+        };
+    }
+
+    [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
     [TinyhandObject]
     internal partial class Item
     {
-        [Link(Type = ChainType.Unordered)]
         [Key(0)]
         public NetNode Node { get; private set; }
 
@@ -37,6 +47,9 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
 
         [IgnoreMember]
         public int FailureCount { get; private set; }
+
+        [Link(Unique = true, Type = ChainType.Unordered)]
+        public NetAddress Address => this.Node.Address;
 
         [Link(Primary = true, Type = ChainType.LinkedList, Name = "LinkedList")]
         [Link(Type = ChainType.QueueList, Name = "Unchecked")]
@@ -67,6 +80,11 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
             => $"{this.Node.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
     }
 
+    public Task<IntegralityResult> Integrate(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken = default)
+    {
+        return Integrality.Instance.Integrate(this.data, brokerDelegate, cancellationToken);
+    }
+
     public bool TryAdd(NetNode node)
     {
         if (!node.Validate())
@@ -76,7 +94,7 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
 
         lock (this.data.SyncObject)
         {
-            if (this.data.NodeChain.ContainsKey(node))
+            if (this.data.AddressChain.ContainsKey(node.Address))
             {// Already exists
                 return false;
             }
@@ -127,7 +145,7 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
     {
         lock (this.data.SyncObject)
         {
-            var item = this.data.NodeChain.FindFirst(node);
+            var item = this.data.AddressChain.FindFirst(node.Address);
             if (item != null)
             {
                 if (item.UncheckedLink.IsLinked)
@@ -201,7 +219,7 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (!NetNode.TryParse(x, out var node) ||
-                this.data.NodeChain.ContainsKey(node))
+                this.data.AddressChain.ContainsKey(node.Address))
             {
                 continue;
             }
