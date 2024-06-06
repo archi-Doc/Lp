@@ -52,10 +52,9 @@ public sealed partial class PacketTerminal
         }
     }
 
-    public PacketTerminal(NetBase netBase, NetStats netStats, NetTerminal netTerminal, ILogger<PacketTerminal> logger)
+    public PacketTerminal(NetBase netBase, NetTerminal netTerminal, ILogger<PacketTerminal> logger)
     {
         this.netBase = netBase;
-        this.netStats = netStats;
         this.netTerminal = netTerminal;
         this.logger = logger;
 
@@ -68,7 +67,6 @@ public sealed partial class PacketTerminal
     public int MaxResendCount { get; set; }
 
     private readonly NetBase netBase;
-    private readonly NetStats netStats;
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();

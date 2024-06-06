@@ -6,7 +6,6 @@ using Netsphere.Packet;
 using Netsphere.Relay;
 using Netsphere.Responder;
 using Netsphere.Stats;
-using static Tinyhand.TinyhandSerializerOptions;
 
 namespace Netsphere;
 
