@@ -1,21 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Collections;
 using Arc.Unit;
 using BigMachines;
+using Netsphere.Interfaces;
 using Netsphere.Packet;
 using Netsphere.Stats;
-using Tinyhand;
-using ValueLink;
-using ValueLink.Integrality;
 
 namespace Netsphere.Machines;
-
-[NetServiceInterface]
-public interface IEssentialService : INetService
-{
-    NetTask<IntegralityResultMemory> IntegrateEssentialNode(BytePool.RentMemory memory);
-}
 
 /// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
