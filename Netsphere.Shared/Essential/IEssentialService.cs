@@ -8,5 +8,5 @@ namespace Netsphere.Interfaces;
 [NetServiceInterface]
 public interface IEssentialService : INetService
 {
-    NetTask<IntegralityResultMemory> IntegrateEssentialNode(BytePool.RentMemory memory);
+    NetTask<IntegralityResultMemory> DifferentiateEssentialNode(BytePool.RentMemory memory);
 }

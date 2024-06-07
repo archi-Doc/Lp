@@ -58,7 +58,7 @@ public partial class EssentialNodeMachine : Machine
             if (connection is not null)
             {
                 var service = connection.GetService<IEssentialService>();
-                await this.netStats.EssentialNode.Integrate(async (x, y) => await service.IntegrateEssentialNode(x));
+                await this.netStats.EssentialNode.Integrate(async (x, y) => await service.DifferentiateEssentialNode(x));
             }
         }
 
