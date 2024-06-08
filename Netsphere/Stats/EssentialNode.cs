@@ -13,6 +13,7 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
 {
     private const int ValidTimeInMinutes = 5;
     private const int FailureLimit = 3;
+    private const int MaxPriorityItems = 32;
 
     public EssentialNode(NetBase netBase)
     {
@@ -35,6 +36,48 @@ public sealed partial class EssentialNode : ITinyhandSerializationCallback
             MaxItems = 10,
             RemoveIfItemNotFound = false,
         };
+    }
+
+    [ValueLinkObject]
+    [TinyhandObject]
+    internal partial class PriorityItem
+    {
+        [Key(0)]
+        public NetNode Node { get; private set; }
+
+        [Key(1)]
+        public long ValidMics { get; private set; }
+
+        [IgnoreMember]
+        public int FailureCount { get; private set; }
+
+        [Link(Unique = true, Type = ChainType.Unordered)]
+        public NetAddress Address => this.Node.Address;
+
+        [Link(Primary = true, Type = ChainType.LinkedList, Name = "LinkedList")]
+        public PriorityItem(NetNode node)
+        {
+            this.Node = node;
+        }
+
+        public PriorityItem()
+        {
+            this.Node = default!; // Do not use default values as instances are reused during deserialization, leading to inconsistency.
+        }
+
+        public bool IncrementFailureCount()
+        {
+            return ++this.FailureCount >= FailureLimit;
+        }
+
+        public void UpdateValidMics()
+        {
+            this.ValidMics = Mics.GetSystem();
+            this.FailureCount = 0;
+        }
+
+        public override string ToString()
+            => $"{this.Node.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
     }
 
     [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
