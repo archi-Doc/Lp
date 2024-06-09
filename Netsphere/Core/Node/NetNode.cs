@@ -10,7 +10,7 @@ namespace Netsphere;
 /// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
-public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
+public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
     // public static readonly NetNode Default = new(); // Do not use default values as instances are reused during deserialization, leading to inconsistency.
     private static NetNode? alternative;
@@ -44,11 +44,17 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable,
         this.PublicKey = publicKey;
     }
 
+    public NetNode(NetNode netNode)
+    {
+        this.Address = netNode.Address;
+        this.PublicKey = netNode.PublicKey;
+    }
+
     [Key(0)]
-    public NetAddress Address { get; private set; }
+    public NetAddress Address { get; protected set; }
 
     [Key(1)]
-    public NodePublicKey PublicKey { get; private set; }
+    public NodePublicKey PublicKey { get; protected set; }
 
     public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
     {

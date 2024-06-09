@@ -10,11 +10,13 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public NetStats(ILogger<NetStats> logger, NetBase netBase, EssentialNode essentialNode)
+    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl, EssentialNode essentialNode)
     {
         this.logger = logger;
         this.netBase = netBase;
         this.EssentialNode = essentialNode;
+        this.NodeControl = nodeControl;
+        this.NodeControl.Prepare(this.netBase.NetOptions.NodeList);
     }
 
     #region FieldAndProperty
@@ -28,6 +30,9 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     [Key(1)]
     public EssentialNode EssentialNode { get; private set; }
+
+    [Key(2)]
+    public NodeControl NodeControl { get; private set; }
 
     [Key(3)]
     public MyAddress MyIpv4Address { get; private set; } = new();
