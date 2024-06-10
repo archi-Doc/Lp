@@ -23,7 +23,6 @@ public partial class NodeControlMachine : Machine
         this.logger = logger;
         this.netBase = netBase;
         this.netControl = netControl;
-        // this.netStats = netStats;
         this.nodeControl = nodeControl;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -31,12 +30,16 @@ public partial class NodeControlMachine : Machine
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly NetBase netBase;
-    // private readonly NetStats netStats;
     private readonly NodeControl nodeControl;
 
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {//
+        if (!this.netControl.NetTerminal.IsActive)
+        {
+            // return StateResult.Continue;
+        }
+
         if (!this.nodeControl.TryGetLifelineNode(out var netNode))
         {
             return StateResult.Terminate;
@@ -44,6 +47,7 @@ public partial class NodeControlMachine : Machine
 
         // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
         var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new());
+        Console.WriteLine($"{netNode.Address.ToString()} {r.ToString()}");
 
         this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
         if (r.Result == NetResult.Success && r.Value is { } value)
