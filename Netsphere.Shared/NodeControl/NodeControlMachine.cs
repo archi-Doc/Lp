@@ -34,10 +34,10 @@ public partial class NodeControlMachine : Machine
 
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
-    {//
+    {
         if (!this.netControl.NetTerminal.IsActive)
         {
-            // return StateResult.Continue;
+            return StateResult.Continue;
         }
 
         if (!this.nodeControl.TryGetLifelineNode(out var netNode))
@@ -47,7 +47,6 @@ public partial class NodeControlMachine : Machine
 
         // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
         var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new());
-        Console.WriteLine($"{netNode.Address.ToString()} {r.ToString()}");
 
         this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
         if (r.Result == NetResult.Success && r.Value is { } value)

@@ -15,7 +15,6 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         this.logger = logger;
         this.netBase = netBase;
         this.NodeControl = nodeControl;
-        this.NodeControl.Prepare(this.netBase.NetOptions.NodeList);
     }
 
     #region FieldAndProperty
@@ -154,5 +153,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         {
             this.Reset();
         }
+
+        this.NodeControl.Prepare(this.netBase.NetOptions.NodeList);
     }
 }

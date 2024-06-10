@@ -494,7 +494,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndAdd(privault, privateKey);
                 }
             }
 
@@ -511,7 +511,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndAdd(privault, privateKey);
                 }
             }
 

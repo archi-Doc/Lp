@@ -24,16 +24,16 @@ public sealed partial class NodeControl
     private readonly object syncObject = new();
 
     [Key(0)]
-    private OnlineNode.GoshujinClass lifelineNodes = new();
+    private OnlineNode.GoshujinClass lifelineNodes = default!;
 
     [Key(1)]
-    private OnlineNode.GoshujinClass onlineNodes = new();
+    private OnlineNode.GoshujinClass onlineNodes = default!;
 
     #endregion
 
     public bool TryGetLifelineNode([NotNullWhen(true)] out NetNode? node)
     {
-        var range = MicsRange.FromFastSystemInDuration(LifelineValidMics);
+        var range = MicsRange.FromPastToFastSystem(LifelineValidMics);
         node = default;
         lock (this.syncObject)
         {
@@ -44,7 +44,8 @@ public sealed partial class NodeControl
             }
 
             if (range.IsWithin(obj.LastConnectionMics))
-            {//
+            {
+                return false;
             }
 
             node = obj;
@@ -58,14 +59,17 @@ public sealed partial class NodeControl
     {
         lock (this.syncObject)
         {
-            var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
-            if (item is null)
-            {
-                return;
-            }
-
             if (result == ConnectionResult.Success)
             {
+                var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
+                if (item is null)
+                {
+                    item = new(node);
+                    item.Goshujin = this.lifelineNodes;
+                }
+
+                item.LastConnectionMicsValue = Mics.FastSystem;
+
                 var item2 = this.onlineNodes.AddressChain.FindFirst(node.Address);
                 if (item2 is null)
                 {
@@ -73,11 +77,15 @@ public sealed partial class NodeControl
                     item2.Goshujin = this.onlineNodes;
                 }
 
-                item2.LastConnectionMicsValue = Mics.GetSystem();
+                item2.LastConnectionMicsValue = Mics.FastSystem;
             }
             else if (result == ConnectionResult.Failure)
             {
-                item.Goshujin = default;
+                var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
+                if (item is not null)
+                {
+                    item.Goshujin = default;
+                }
             }
         }
     }
