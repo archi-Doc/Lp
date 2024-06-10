@@ -7,9 +7,10 @@ namespace Netsphere.Stats;
 [TinyhandObject(UseServiceProvider = true)]
 public sealed partial class NodeControl
 {
-    private const int ValidTimeInMinutes = 5;
-    private const int FailureLimit = 3;
-    private static readonly long LifelineValidMics = Mics.FromMinutes(5); // Mics.FromHours(1);
+    public static readonly int MaxLifelineNodes = 32;
+    public static readonly int MaxOnlineNodes = 256;
+    public static readonly int SufficientOnlineNodes = 128;
+    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromHours(1);
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
     public NodeControl(NetBase netBase)
@@ -29,6 +30,12 @@ public sealed partial class NodeControl
     [Key(1)]
     private OnlineNode.GoshujinClass onlineNodes = default!;
 
+    public int CountLinfelineOnline => this.lifelineNodes.OnlineLinkChain.Count;
+
+    public int CountLinfelineOffline => this.lifelineNodes.OfflineLinkChain.Count;
+
+    public int CountOnline => this.onlineNodes.Count;
+
     #endregion
 
     public bool TryGetLifelineNode([NotNullWhen(true)] out NetNode? node)
@@ -41,11 +48,6 @@ public sealed partial class NodeControl
             {
                 return false;
             }
-
-            /*if (range.IsWithin(obj.LastCheckedMics))
-            {
-                // return false;
-            }*/
 
             node = obj;
             this.lifelineNodes.UncheckedListChain.Remove(obj);
@@ -66,12 +68,12 @@ public sealed partial class NodeControl
                 {
                     g.UncheckedListChain.Remove(item);
                     if (result == ConnectionResult.Success)
-                    {
+                    {// Online link
                         g.OnlineLinkChain.AddLast(item);
                         g.OfflineLinkChain.Remove(item);
                     }
                     else
-                    {
+                    {// Offline link
                         g.OnlineLinkChain.Remove(item);
                         g.OfflineLinkChain.AddLast(item);
                     }
@@ -138,7 +140,7 @@ public sealed partial class NodeControl
     internal void Prepare(string nodeList)
     {
         // Load NetOptions.NodeList
-        var range = MicsRange.FromPastToFastSystem(LifelineValidMics);
+        var range = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
         var nodes = this.netBase.NetOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
@@ -156,12 +158,12 @@ public sealed partial class NodeControl
             }
 
             if (range.IsWithin(item.LastCheckedMics))
-            {
+            {// Keep Online/Offline links.
                 continue;
             }
 
             if (item.Goshujin is { } g)
-            {
+            {// Online/Offline -> Unchecked
                 g.UncheckedListChain.AddFirst(item);
                 g.OfflineLinkChain.Remove(item);
                 g.OfflineLinkChain.Remove(item);

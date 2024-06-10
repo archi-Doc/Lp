@@ -33,46 +33,64 @@ public partial class NodeControlMachine : Machine
     private readonly NodeControl nodeControl;
 
     [StateMethod(0)]
-    protected async Task<StateResult> Initial(StateParameter parameter)
+    protected async Task<StateResult> CheckLifelineNode(StateParameter parameter)
     {
         if (!this.netControl.NetTerminal.IsActive)
         {
             return StateResult.Continue;
         }
 
-        if (!this.nodeControl.TryGetLifelineNode(out var netNode))
+        while (!this.CancellationToken.IsCancellationRequested)
         {
-            return StateResult.Terminate;
-        }
-
-        // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
-        var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new());
-
-        this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
-        if (r.Result == NetResult.Success && r.Value is { } value)
-        {// Success
-            this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
-        }
-        else
-        {
-            this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
-        }
-
-        using (var connection = await this.netControl.NetTerminal.Connect(netNode))
-        {
-            if (connection is not null)
-            {
-                var service = connection.GetService<INodeControlService>();
-                // await this.nodeControl.Integrate(async (x, y) => await service.DifferentiateEssentialNode(x));
+            if (this.nodeControl.CountOnline >= NodeControl.SufficientOnlineNodes)
+            {// KeepOnlineNode
+                this.ShowStatus();
+                this.ChangeState(State.KeepOnlineNode, true);
+                return StateResult.Continue;
             }
+
+            if (!this.nodeControl.TryGetLifelineNode(out var netNode))
+            {// No lifeline node
+                this.ShowStatus();
+                this.ChangeState(State.KeepOnlineNode, true);
+                return StateResult.Continue;
+            }
+
+            // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
+            var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new(), 0, this.CancellationToken);
+
+            this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
+            if (r.Result == NetResult.Success && r.Value is { } value)
+            {// Success
+                this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
+            }
+            else
+            {
+                this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
+            }
+
+            // Integrate online nodes.
+            /*using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            {
+                if (connection is not null)
+                {
+                    var service = connection.GetService<INodeControlService>();
+                    await this.nodeControl.Integrate(async (x, y) => await service.DifferentiateEssentialNode(x));
+                }
+            }*/
         }
 
-        return StateResult.Continue;
+        return StateResult.Terminate;
     }
 
     [StateMethod(1)]
-    protected async Task<StateResult> First(StateParameter parameter)
+    protected async Task<StateResult> KeepOnlineNode(StateParameter parameter)
     {
         return StateResult.Terminate;
+    }
+
+    private void ShowStatus()
+    {
+        this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountOnline}");
     }
 }
