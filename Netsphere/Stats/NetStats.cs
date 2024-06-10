@@ -10,11 +10,10 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl, EssentialNode essentialNode)
+    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
     {
         this.logger = logger;
         this.netBase = netBase;
-        this.EssentialNode = essentialNode;
         this.NodeControl = nodeControl;
         this.NodeControl.Prepare(this.netBase.NetOptions.NodeList);
     }
@@ -29,15 +28,12 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public long LastMics { get; private set; }
 
     [Key(1)]
-    public EssentialNode EssentialNode { get; private set; }
-
-    [Key(2)]
     public NodeControl NodeControl { get; private set; }
 
-    [Key(3)]
+    [Key(2)]
     public MyAddress MyIpv4Address { get; private set; } = new();
 
-    [Key(4)]
+    [Key(3)]
     public MyAddress MyIpv6Address { get; private set; } = new();
 
     #endregion
@@ -143,11 +139,6 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         }
 
         // this.logger.TryGet()?.Log(result.ToString());
-    }
-
-    public string Dump()
-    {
-        return $"NetStats: EssentialAddress: {this.EssentialNode.Dump()}, Ipv4 Address: {this.MyIpv4Address.Dump()}, Ipv6 Address: {this.MyIpv6Address.Dump()}, ";
     }
 
     void ITinyhandSerializationCallback.OnBeforeSerialize()

@@ -46,7 +46,7 @@ public partial class NetStatsMachine : Machine
         var tasks = new List<Task<AddressQueryResult>>();
         if (this.netStats.MyIpv4Address.AddressState == MyAddress.State.Unknown)
         {
-            if (this.netStats.EssentialNode.CountIpv4 < NodeThreshold)
+            if (this.nodeControl.CountIpv4 < NodeThreshold)
             {
                 tasks.Add(NetStatsHelper.GetIcanhazipIPv4(this.CancellationToken));
             }
@@ -85,7 +85,6 @@ public partial class NetStatsMachine : Machine
     [StateMethod]
     protected async Task<StateResult> AddressFixed(StateParameter parameter)
     {
-        this.logger.TryGet()?.Log(this.netStats.Dump());
         this.logger.TryGet()?.Log(this.netStats.GetMyNetNode().ToString());
 
         return StateResult.Terminate;
@@ -94,4 +93,5 @@ public partial class NetStatsMachine : Machine
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly NetStats netStats;
+    private readonly NodeControl nodeControl;
 }
