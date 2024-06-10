@@ -73,7 +73,7 @@ public class Control
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
-                context.AddSingleton<EssentialNodeMachine>();//
+                context.AddSingleton<EssentialNodeMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
