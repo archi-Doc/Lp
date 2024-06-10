@@ -61,7 +61,10 @@ public partial class NodeControlMachine : Machine
             if (r.Result == NetResult.Success && r.Value is { } value)
             {// Success
                 this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
-                this.netControl.NetStats.ReportAddress(value.Address);
+                if (value.Endpoint.EndPoint is { } endoint)
+                {//
+                    this.netControl.NetStats.ReportAddress(endoint.Address);
+                }
             }
             else
             {
