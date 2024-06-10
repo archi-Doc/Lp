@@ -1,11 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true)]
-public sealed partial class NodeControl
+public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;
     public static readonly int MaxOnlineNodes = 256;
@@ -137,10 +138,26 @@ public sealed partial class NodeControl
         }
     }
 
+    public void Trim()
+    {
+        lock (this.syncObject)
+        {
+            this.TrimInternal();
+        }
+    }
+
+    void ITinyhandSerializationCallback.OnBeforeSerialize()
+    {
+    }
+
+    void ITinyhandSerializationCallback.OnAfterDeserialize()
+    {
+        this.Prepare(this.netBase.NetOptions.NodeList);
+    }
+
     internal void Prepare(string nodeList)
     {
         // Load NetOptions.NodeList
-        var range = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
         var nodes = this.netBase.NetOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
@@ -156,21 +173,45 @@ public sealed partial class NodeControl
                 this.lifelineNodes.UncheckedListChain.AddFirst(item);
                 continue;
             }
-
-            if (range.IsWithin(item.LastCheckedMics))
-            {// Keep Online/Offline links.
-                continue;
-            }
-
-            if (item.Goshujin is { } g)
-            {// Online/Offline -> Unchecked
-                g.UncheckedListChain.AddFirst(item);
-                g.OfflineLinkChain.Remove(item);
-                g.OfflineLinkChain.Remove(item);
-            }
         }
 
         this.ValidateInternal();
+        this.TrimInternal();
+    }
+
+    private void TrimInternal()
+    {
+        var lifelineRange = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
+        foreach (var x in this.lifelineNodes)
+        {
+            if (!lifelineRange.IsWithin(x.LastCheckedMics) &&
+                x.Goshujin is { } g)
+            {// Online/Offline -> Unchecked
+                g.UncheckedListChain.AddFirst(x);
+                g.OfflineLinkChain.Remove(x);
+                g.OfflineLinkChain.Remove(x);
+            }
+        }
+
+        var onlineRange = MicsRange.FromPastToFastSystem(OnlineValidMics);
+        List<OnlineNode>? deleteList = default;
+        foreach (var x in this.onlineNodes)
+        {
+            if (!lifelineRange.IsWithin(x.LastConnectionMics) &&
+                x.Goshujin is { } g)
+            {
+                deleteList ??= new();
+                deleteList.Add(x);
+            }
+        }
+
+        if (deleteList is not null)
+        {
+            foreach (var x in deleteList)
+            {
+                x.Goshujin = default;
+            }
+        }
     }
 
     private void ValidateInternal()

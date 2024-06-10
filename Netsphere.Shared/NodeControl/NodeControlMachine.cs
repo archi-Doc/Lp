@@ -44,15 +44,13 @@ public partial class NodeControlMachine : Machine
         {
             if (this.nodeControl.CountOnline >= NodeControl.SufficientOnlineNodes)
             {// KeepOnlineNode
-                this.ShowStatus();
-                this.ChangeState(State.KeepOnlineNode, true);
+                this.ChangeState(State.CheckStatus, true);
                 return StateResult.Continue;
             }
 
             if (!this.nodeControl.TryGetLifelineNode(out var netNode))
             {// No lifeline node
-                this.ShowStatus();
-                this.ChangeState(State.KeepOnlineNode, true);
+                this.ChangeState(State.CheckStatus, true);
                 return StateResult.Continue;
             }
 
@@ -63,6 +61,7 @@ public partial class NodeControlMachine : Machine
             if (r.Result == NetResult.Success && r.Value is { } value)
             {// Success
                 this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
+                this.netControl.NetStats.ReportAddress(value.Address);
             }
             else
             {
@@ -84,8 +83,25 @@ public partial class NodeControlMachine : Machine
     }
 
     [StateMethod(1)]
+    protected async Task<StateResult> CheckStatus(StateParameter parameter)
+    {// KeepOnlineNode
+        if (this.nodeControl.CountOnline == 0)
+        {// No online node
+            this.logger.TryGet(LogLevel.Fatal)?.Log("There are no online nodes. Please check your network connection and add nodes to node_list.");
+            return StateResult.Terminate;
+        }
+
+        this.ShowStatus();
+
+        return StateResult.Terminate;
+    }
+
+    [StateMethod(2)]
     protected async Task<StateResult> KeepOnlineNode(StateParameter parameter)
     {
+        // Online -> Lifeline
+        // Lifeline offline -> Remove
+
         return StateResult.Terminate;
     }
 

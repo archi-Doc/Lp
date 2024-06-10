@@ -136,8 +136,18 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         {// Ipv4
             this.MyIpv4Address.ReportAddress(priority, result.Address);
         }
+    }
 
-        // this.logger.TryGet()?.Log(result.ToString());
+    public void ReportAddress(IPAddress address)
+    {
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {// Ipv6
+            this.MyIpv6Address.ReportAddress(false, address);
+        }
+        else if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {// Ipv4
+            this.MyIpv4Address.ReportAddress(false, address);
+        }
     }
 
     void ITinyhandSerializationCallback.OnBeforeSerialize()
@@ -153,7 +163,5 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         {
             this.Reset();
         }
-
-        this.NodeControl.Prepare(this.netBase.NetOptions.NodeList);
     }
 }
