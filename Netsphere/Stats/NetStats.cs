@@ -150,7 +150,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     {
         var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
-        if (!range.IsIn(this.LastMics))
+        if (!range.IsWithin(this.LastMics))
         {
             this.Reset();
         }

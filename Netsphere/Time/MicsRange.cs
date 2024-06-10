@@ -16,10 +16,16 @@ public readonly record struct MicsRange
         return new MicsRange(current - error, current + mics + error);
     }
 
-    public MicsRange(long mics)
+    public static MicsRange FromFastSystemInDuration(long duration)
     {
-        this.LowerBound = Mics.GetSystem();
-        this.UpperBound = this.LowerBound + mics;
+        var lower = Mics.FastSystem;
+        return new(lower, lower + duration);
+    }
+
+    public static MicsRange FromCorrectedInDuration(long duration)
+    {
+        var lower = Mics.GetCorrected();
+        return new(lower, lower + duration);
     }
 
     public MicsRange(long lowerBoundMics, long upperBoundMics)
@@ -28,21 +34,31 @@ public readonly record struct MicsRange
         this.UpperBound = upperBoundMics;
     }
 
-    public static MicsRange DaysFromNow(double days) => new MicsRange((long)(days * Mics.MicsPerDay));
-
-    public static MicsRange HoursFromNow(double hours) => new MicsRange((long)(hours * Mics.MicsPerHour));
-
-    public static MicsRange MinutesFromNow(double minutes) => new MicsRange((long)(minutes * Mics.MicsPerMinute));
-
-    public static MicsRange SecondsFromNow(double seconds) => new MicsRange((long)(seconds * Mics.MicsPerSecond));
-
-    public static MicsRange MillisecondsFromNow(double milliseconds) => new MicsRange((long)(milliseconds * Mics.MicsPerMillisecond));
-
-    public static MicsRange MicrosecondsFromNow(double microseconds) => new MicsRange((long)microseconds);
-
-    public bool IsIn(long mics) => this.LowerBound <= mics && mics <= this.UpperBound;
+    #region FieldAndProperty
 
     public readonly long LowerBound;
-
     public readonly long UpperBound;
+
+    #endregion
+
+    public static MicsRange DaysFromFastSystem(double days)
+        => FromFastSystemInDuration((long)(days * Mics.MicsPerDay));
+
+    public static MicsRange HoursFromFastSystem(double hours)
+        => FromFastSystemInDuration((long)(hours * Mics.MicsPerHour));
+
+    public static MicsRange MinutesFromFastSystem(double minutes)
+        => FromFastSystemInDuration((long)(minutes * Mics.MicsPerMinute));
+
+    public static MicsRange SecondsFromFastSystem(double seconds)
+        => FromFastSystemInDuration((long)(seconds * Mics.MicsPerSecond));
+
+    public static MicsRange MillisecondsFromFastSystem(double milliseconds)
+        => FromFastSystemInDuration((long)(milliseconds * Mics.MicsPerMillisecond));
+
+    public static MicsRange MicrosecondsFromFastSystem(double microseconds)
+        => FromFastSystemInDuration((long)microseconds);
+
+    public bool IsWithin(long mics)
+        => this.LowerBound <= mics && mics <= this.UpperBound;
 }

@@ -11,11 +11,12 @@ public partial class NetStatsMachine : Machine
 {
     private const int NodeThreshold = 4;
 
-    public NetStatsMachine(ILogger<NetStatsMachine> logger, NetControl netControl, NetStats statsData)
+    public NetStatsMachine(ILogger<NetStatsMachine> logger, NetControl netControl, NetStats statsData, NodeControl nodeControl)
     {
         this.logger = logger;
         this.netControl = netControl;
         this.netStats = statsData;
+        this.nodeControl = nodeControl;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
 
@@ -46,23 +47,17 @@ public partial class NetStatsMachine : Machine
         var tasks = new List<Task<AddressQueryResult>>();
         if (this.netStats.MyIpv4Address.AddressState == MyAddress.State.Unknown)
         {
-            if (this.nodeControl.CountIpv4 < NodeThreshold)
+            // if (this.nodeControl.CountIpv4 < NodeThreshold)
             {
                 tasks.Add(NetStatsHelper.GetIcanhazipIPv4(this.CancellationToken));
-            }
-            else
-            {
             }
         }
 
         if (this.netStats.MyIpv6Address.AddressState == MyAddress.State.Unknown)
         {
-            if (this.netStats.EssentialNode.CountIpv6 < NodeThreshold)
+            // if (this.netStats.EssentialNode.CountIpv6 < NodeThreshold)
             {
                 tasks.Add(NetStatsHelper.GetIcanhazipIPv6(this.CancellationToken));
-            }
-            else
-            {
             }
         }
 

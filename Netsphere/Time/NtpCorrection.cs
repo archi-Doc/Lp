@@ -72,7 +72,7 @@ Retry:
         {
             var current = Mics.GetFixedUtcNow();
             var range = new MicsRange(current - Mics.FromHours(1), current);
-            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsIn(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
+            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsWithin(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
         }
 
         if (hostnames.Length == 0)

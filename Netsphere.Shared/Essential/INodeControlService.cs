@@ -6,7 +6,7 @@ using ValueLink.Integrality;
 namespace Netsphere.Interfaces;
 
 [NetServiceInterface]
-public interface IEssentialService : INetService
+public interface INodeControlService : INetService
 {
-    NetTask<IntegralityResultMemory> DifferentiateEssentialNode(BytePool.RentMemory memory);
+    NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory);
 }

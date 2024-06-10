@@ -73,7 +73,7 @@ public class Control
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
-                context.AddSingleton<EssentialNodeMachine>();
+                context.AddSingleton<NodeControlMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
@@ -701,7 +701,7 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.EssentialNodeMachine.GetOrCreate().RunAsync();
+        _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
 
         if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))
