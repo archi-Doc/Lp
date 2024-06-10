@@ -545,10 +545,10 @@ public class Control
 
     public async Task StartAsync(UnitContext context)
     {
-        this.BigMachine.Start(null);
-        this.RunMachines();
-
         await context.SendStartAsync(new(this.Core));
+
+        this.BigMachine.Start(null);
+        this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
