@@ -324,7 +324,7 @@ public class Control
             try
             {
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
+                control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.VersionHelper.VersionString})");
 
                 // Merger, Relay, Peer
                 await control.CreateMerger(this.Context);

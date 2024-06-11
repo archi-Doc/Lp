@@ -90,13 +90,15 @@ public partial class NodeControlMachine : Machine
     {// KeepOnlineNode
         if (this.nodeControl.CountOnline == 0)
         {// No online node
-            this.logger.TryGet(LogLevel.Fatal)?.Log("There are no online nodes. Please check your network connection and add nodes to node_list.");
-            return StateResult.Terminate;
+            this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to node_list.");
+        }
+        else
+        {
+            this.ShowStatus();
         }
 
-        this.ShowStatus();
-
-        return StateResult.Terminate;
+        this.ChangeState(State.KeepOnlineNode);
+        return StateResult.Continue;
     }
 
     [StateMethod(2)]
@@ -105,7 +107,7 @@ public partial class NodeControlMachine : Machine
         // Online -> Lifeline
         // Lifeline offline -> Remove
 
-        return StateResult.Terminate;
+        return StateResult.Continue;
     }
 
     private void ShowStatus()
