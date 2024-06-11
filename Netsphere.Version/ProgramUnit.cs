@@ -4,6 +4,7 @@ using Arc.Threading;
 using Arc.Unit;
 using BigMachines;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.Packet;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -78,6 +79,12 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
+            /*var netOptions = new NetOptions() with
+            {
+                EnableServer = true,
+            };
+            await this.Run(netOptions, false);*/
+
             var args = SimpleParserHelper.GetCommandLineArguments();
             var parserOptions = SimpleParserOptions.Standard with
             {
@@ -87,6 +94,8 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
             };
 
             await SimpleParser.ParseAndRunAsync(this.Context.Commands, args, parserOptions);
+
+            // await this.Terminate();
         }
     }
 
