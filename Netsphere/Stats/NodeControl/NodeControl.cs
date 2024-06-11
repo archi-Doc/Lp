@@ -175,6 +175,22 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             }
         }
 
+        List<LifelineNode>? offlineToUnchecked = default;
+        foreach (var x in this.lifelineNodes.OfflineLinkChain)
+        {// Offline -> Unchecked
+            offlineToUnchecked ??= new();
+            offlineToUnchecked.Add(x);
+        }
+
+        if (offlineToUnchecked is not null)
+        {
+            foreach (var x in offlineToUnchecked)
+            {
+                this.lifelineNodes.OfflineLinkChain.Remove(x);
+                this.lifelineNodes.UncheckedListChain.AddFirst(x);
+            }
+        }
+
         this.ValidateInternal();
         this.TrimInternal();
     }
