@@ -319,7 +319,7 @@ public sealed partial class PacketTerminal
                 }
             }
             else if (packetType == PacketType.Ping)
-            {// PingPacket
+            {//PingPacket
                 var netOptions = this.netBase.NetOptions;
                 if (netOptions.EnablePing)
                 {
