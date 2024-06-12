@@ -1,10 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using Arc.Collections;
 using Arc.Crypto;
 using Arc.Threading;
 using Arc.Unit;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 using Netsphere.Relay;
 using Netsphere.Stats;
 using SimpleCommandLine;
@@ -31,6 +33,7 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
             return;
         }
 
+        this.netControl.NetBase.SetRespondPacketFunc(RespondPacketFunc);
         var address = await NetStatsHelper.GetOwnAddress((ushort)options.Port);
         var token = await this.LoadToken();
 
@@ -50,6 +53,27 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
                 runner.TerminateMachine();
             }*/
         }
+    }
+
+    private static BytePool.RentMemory? RespondPacketFunc(ulong packetId, PacketType packetType, ReadOnlyMemory<byte> packet)
+    {
+        if (packetType == PacketType.GetVersion)
+        {
+            // var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(new GetVersionResponse());
+            PacketTerminal.CreatePacket(packetId, new GetVersionResponse(), out var rentMemory);
+            return rentMemory;
+        }
+        else if (packetType == PacketType.UpdateVersion)
+        {
+            if (TinyhandSerializer.TryDeserialize<UpdateVersionPacket>(packet.Span, out var updateVersionPacket) &&
+                updateVersionPacket.Token is { } token &&
+                token.Target.VersionIdentifier == 0)
+            {
+
+            }
+        }
+
+        return default;
     }
 
     private async Task<CertificateToken<VersionInfo>?> LoadToken()

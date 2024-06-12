@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
+using Netsphere.Packet;
 
 namespace Netsphere;
 
@@ -37,6 +38,8 @@ public class NetBase : UnitBase, IUnitPreparable
 
     internal Func<ClientConnection, ClientConnectionContext> NewClientConnectionContext { get; set; }
 
+    internal Func<ulong, PacketType, ReadOnlyMemory<byte>, BytePool.RentMemory?>? RespondPacketFunc { get; set; }
+
     #endregion
 
     public void Prepare(UnitMessage.Prepare message)
@@ -66,6 +69,11 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NodePrivateKey = NodePrivateKey.Create();
             this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
         }
+    }
+
+    public void SetRespondPacketFunc(Func<ulong, PacketType, ReadOnlyMemory<byte>, BytePool.RentMemory?> func)
+    {
+        this.RespondPacketFunc = func;
     }
 
     public void SetOptions(NetOptions netsphereOptions)

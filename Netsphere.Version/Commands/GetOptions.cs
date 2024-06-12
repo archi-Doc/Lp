@@ -6,6 +6,6 @@ namespace Netsphere.Version;
 
 public partial record GetOptions
 {
-    [SimpleOption("node", Description = "Target node")]
-    public string Node { get; init; } = string.Empty;
+    [SimpleOption("address", Description = "Target address")]
+    public string Address { get; init; } = string.Empty;
 }

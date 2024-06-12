@@ -2,6 +2,7 @@
 
 using Arc.Unit;
 using Netsphere.Packet;
+using Netsphere.Relay;
 using SimpleCommandLine;
 
 namespace Netsphere.Version;
@@ -20,13 +21,16 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
     {
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
-        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(options.Address, out var address))
         {
             return;
         }
 
-        var p = new PingPacket("test56789");
-        var result = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
+        // var p = new PingPacket("test56789");
+        // var result = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p);
+        var p = new GetVersionPacket();
+        var result = await this.netTerminal.PacketTerminal.SendAndReceive<GetVersionPacket, GetVersionResponse>(address, p);
+        this.logger.TryGet()?.Log($"{result.ToString()}");
     }
 
     /*public async Task RunAsync(GetOptions options, string[] args)

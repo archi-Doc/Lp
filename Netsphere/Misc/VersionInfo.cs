@@ -10,7 +10,7 @@ public sealed partial record class VersionInfo
     }
 
     [Key(0)]
-    public int Identifier { get; private set; }
+    public int VersionIdentifier { get; private set; }
 
     [Key(1)]
     public long DevelopmentMics { get; private set; }
