@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
-using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Packet;
 using SimpleCommandLine;
 
@@ -23,7 +22,6 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
 
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
-            // this.logger.TryGet(LogLevel.Fatal)?.Log($"Cannot parse node: {options.Node}");
             return;
         }
 

@@ -8,7 +8,7 @@ using SimpleCommandLine;
 
 namespace Netsphere.Runner;
 
-public partial record RunOptions
+public partial record RunnerOptions
 {
     // [SimpleOption("lifespan", Description = "Time in seconds until the runner automatically shuts down (set to -1 for infinite).")]
     // public long Lifespan { get; init; } = 6;

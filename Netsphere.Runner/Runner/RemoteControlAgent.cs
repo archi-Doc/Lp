@@ -9,7 +9,7 @@ namespace Netsphere.Runner;
 [NetServiceObject]
 internal class RemoteControlAgent : IRemoteControl
 {// Remote -> Netsphere.Runner
-    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, BigMachine bigMachine, RunOptions runOptions)
+    public RemoteControlAgent(ILogger<RemoteControlAgent> logger, BigMachine bigMachine, RunnerOptions runOptions)
     {
         this.logger = logger;
         this.bigMachine = bigMachine;
@@ -79,5 +79,5 @@ internal class RemoteControlAgent : IRemoteControl
 
     private readonly ILogger logger;
     private readonly BigMachine bigMachine;
-    private readonly RunOptions runOptions;
+    private readonly RunnerOptions runOptions;
 }

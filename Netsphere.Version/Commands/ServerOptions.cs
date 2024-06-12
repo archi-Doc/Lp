@@ -9,7 +9,7 @@ namespace Netsphere.Version;
 
 public partial record ServerOptions
 {
-    [SimpleOption("port", Description = "Port number associated with the address")]
+    [SimpleOption("port", Description = "Port number associated with the address", Required = true)]
     public int Port { get; set; }
 
     public bool Check(ILogger logger)
