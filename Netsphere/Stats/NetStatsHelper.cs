@@ -1,15 +1,47 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net.Http;
-
 namespace Netsphere.Stats;
 
 public static class NetStatsHelper
 {
     private const string IcanhazipUriIPv4 = "http://ipv4.icanhazip.com";
-    private const string IcanhazipUriIPv6 = "http://ipv6.icanhazip.com";
+    private const string IcanhazipUriIPv6 = "http://icanhazip.com"; // "http://ipv6.icanhazip.com"
     private const string DynDnsUri = "http://checkip.dyndns.org";
-    private static readonly TimeSpan GetTimeout = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan GetTimeout = TimeSpan.FromSeconds(1);
+
+    public static async Task<NetAddress> GetOwnAddress(ushort port)
+    {
+        var tasks = new Task<AddressQueryResult>[]
+        {
+            NetStatsHelper.GetIcanhazipIPv4(ThreadCore.Root.CancellationToken),
+            NetStatsHelper.GetIcanhazipIPv6(ThreadCore.Root.CancellationToken),
+        };
+
+        var results = await Task.WhenAll(tasks);
+        if (results is null)
+        {
+            return default;
+        }
+
+        IPAddress? ipv4 = default;
+        IPAddress? ipv6 = default;
+        foreach (var x in results)
+        {
+            if (x.Address is not null)
+            {
+                if (x.Ipv6)
+                {
+                    ipv6 ??= x.Address;
+                }
+                else
+                {
+                    ipv4 ??= x.Address;
+                }
+            }
+        }
+
+        return new NetAddress(ipv4, ipv6, port);
+    }
 
     public static async Task<AddressQueryResult> GetIcanhazipIPv4(CancellationToken cancellationToken = default)
     {

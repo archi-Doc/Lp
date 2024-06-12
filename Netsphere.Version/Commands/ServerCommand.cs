@@ -1,8 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Threading;
 using Arc.Unit;
+using Netsphere.Crypto;
 using Netsphere.Relay;
+using Netsphere.Stats;
 using SimpleCommandLine;
 
 namespace Netsphere.Version;
@@ -26,7 +29,9 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
             return;
         }
 
-        this.logger.TryGet()?.Log($"Online");
+        var address = await NetStatsHelper.GetOwnAddress((ushort)options.Port);
+
+        this.logger.TryGet()?.Log($"{address.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit");
 
         while (await ThreadCore.Root.Delay(1_000))

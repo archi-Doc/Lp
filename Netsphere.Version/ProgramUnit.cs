@@ -62,6 +62,25 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 options.Formatter.EnableColor = true;
             });
 
+            this.SetupOptions<NetOptions>((context, options) =>
+            {// NetOptions
+                var args = SimpleParserHelper.GetCommandLineArguments();
+                var cmd = SimpleParserHelper.PeekCommand(args);
+                if (string.IsNullOrEmpty(cmd) || cmd == "server")
+                {// Server command (default)
+                    options.EnableServer = true;
+                    if (SimpleParser.TryParseOptions<ServerOptions>(args, out var serverOptions))
+                    {
+                        options.Port = serverOptions.Port;
+                    }
+                }
+                else
+                {
+                    options.Port = 0;
+                    options.EnableServer = false;
+                }
+            });
+
             this.AddBuilder(new NetControl.Builder());
         }
     }
@@ -79,7 +98,7 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
-            var args = SimpleParserHelper.GetCommandLineArguments();
+            /*var args = SimpleParserHelper.GetCommandLineArguments();
             int port = 0;
             bool enableServer = false;
             var cmd = SimpleParserHelper.PeekCommand(args);
@@ -96,16 +115,17 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 Port = port,
                 EnableServer = enableServer,
-            };
+            };*/
+            var netOptions = this.Context.ServiceProvider.GetRequiredService<NetOptions>();
             await this.Run(netOptions, false);
 
+            var args = SimpleParserHelper.GetCommandLineArguments();
             var parserOptions = SimpleParserOptions.Standard with
             {
                 ServiceProvider = this.Context.ServiceProvider,
                 RequireStrictCommandName = false,
                 RequireStrictOptionName = false,
             };
-
             await SimpleParser.ParseAndRunAsync(this.Context.Commands, args, parserOptions);
 
             await this.Terminate();
