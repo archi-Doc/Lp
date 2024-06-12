@@ -2,7 +2,7 @@
 
 using System.Reflection;
 
-namespace Netsphere;
+namespace Netsphere.Version;
 
 public static class VersionHelper
 {

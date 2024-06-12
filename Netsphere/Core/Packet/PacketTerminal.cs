@@ -7,6 +7,7 @@ using Netsphere.Core;
 using Netsphere.Relay;
 using Netsphere.Stats;
 using Tinyhand.IO;
+using static Arc.Collections.BytePool;
 
 namespace Netsphere.Packet;
 
@@ -319,11 +320,11 @@ public sealed partial class PacketTerminal
                 }
             }
             else if (packetType == PacketType.Ping)
-            {//PingPacket
+            {// PingPacket
                 var netOptions = this.netBase.NetOptions;
                 if (netOptions.EnablePing)
                 {
-                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, VersionHelper.VersionInt, netOptions.Phase);
+                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, Netsphere.Version.VersionHelper.VersionInt, netOptions.Phase);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
@@ -374,6 +375,10 @@ public sealed partial class PacketTerminal
                 }
 
                 return;
+            }
+            else if (packetType == PacketType.GetVersion)
+            {// GetVersion
+                this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
             }
         }
         else if (packetUInt16 < 255)
