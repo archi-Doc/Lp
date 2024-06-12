@@ -79,13 +79,20 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
-            /*var netOptions = new NetOptions() with
+            var args = SimpleParserHelper.GetCommandLineArguments();
+            int port = 0;
+            if (SimpleParser.TryParseOptions<ServerOptions>(args, out var options))
             {
+                port = options.Port;
+            }
+
+            var netOptions = new NetOptions() with
+            {
+                Port = port,
                 EnableServer = true,
             };
-            await this.Run(netOptions, false);*/
+            await this.Run(netOptions, false);
 
-            var args = SimpleParserHelper.GetCommandLineArguments();
             var parserOptions = SimpleParserOptions.Standard with
             {
                 ServiceProvider = this.Context.ServiceProvider,
@@ -95,7 +102,7 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             await SimpleParser.ParseAndRunAsync(this.Context.Commands, args, parserOptions);
 
-            // await this.Terminate();
+            await this.Terminate();
         }
     }
 

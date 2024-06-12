@@ -10,27 +10,28 @@ namespace Netsphere.Version;
 [SimpleCommand("get")]
 internal class GetCommand : ISimpleCommandAsync<GetOptions>
 {
-    public GetCommand(ILogger<GetCommand> logger, ProgramUnit.Unit unit, NetTerminal netTerminal)
+    public GetCommand(ILogger<GetCommand> logger, NetTerminal netTerminal)
     {
         this.logger = logger;
-        this.unit = unit;
+        // this.unit = unit;
         this.netTerminal = netTerminal;
     }
 
-    /*public async Task RunAsync(GetOptions options, string[] args)
+    public async Task RunAsync(GetOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log($"Netsphere.Version get: {options.ToString()}");
+        this.logger.TryGet()?.Log($"{options.ToString()}");
 
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Cannot parse node: {options.Node}");
+            // this.logger.TryGet(LogLevel.Fatal)?.Log($"Cannot parse node: {options.Node}");
+            return;
         }
 
         var p = new PingPacket("test56789");
         var result = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
-    }*/
+    }
 
-    public async Task RunAsync(GetOptions options, string[] args)
+    /*public async Task RunAsync(GetOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
@@ -51,9 +52,9 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
         var result = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(node.Address, p);
 
         await this.unit.Terminate();
-    }
+    }*/
 
     private readonly ILogger logger;
-    private readonly ProgramUnit.Unit unit;
+    // private readonly ProgramUnit.Unit unit;
     private readonly NetTerminal netTerminal;
 }

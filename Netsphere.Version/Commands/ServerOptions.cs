@@ -9,8 +9,8 @@ namespace Netsphere.Version;
 
 public partial record ServerOptions
 {
-    [SimpleOption("node", Description = "Target node")]
-    public string Node { get; init; } = string.Empty;
+    [SimpleOption("port", Description = "Port number associated with the address")]
+    public int Port { get; set; }
 
     public bool Check(ILogger logger)
     {
