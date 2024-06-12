@@ -1,12 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using Arc.Crypto;
 using Arc.Threading;
 using Arc.Unit;
 using Netsphere.Crypto;
 using Netsphere.Relay;
 using Netsphere.Stats;
 using SimpleCommandLine;
+using Tinyhand;
 
 namespace Netsphere.Version;
 
@@ -30,6 +32,7 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
         }
 
         var address = await NetStatsHelper.GetOwnAddress((ushort)options.Port);
+        var token = await this.LoadToken();
 
         this.logger.TryGet()?.Log($"{address.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit");
@@ -47,6 +50,16 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
                 runner.TerminateMachine();
             }*/
         }
+    }
+
+    private async Task<CertificateToken<VersionInfo>?> LoadToken()
+    {
+        return default;
+    }
+
+    private async Task SaveToken(CertificateToken<VersionInfo> token)
+    {
+        var st = CryptoHelper.ConvertToUtf8(token);
     }
 
     private readonly ILogger logger;
