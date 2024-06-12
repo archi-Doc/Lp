@@ -3,6 +3,7 @@
 using System.Net;
 using Arc.Crypto;
 using Arc.Unit;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Netsphere.Version;
@@ -12,23 +13,29 @@ public partial record ServerOptions
     [SimpleOption("port", Description = "Port number associated with the address", Required = true)]
     public int Port { get; set; }
 
+    [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key for connection", GetEnvironmentVariable = true)]
+    public string NodePrivateKeyString { get; set; } = string.Empty;
+
+    [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Public key for remote operation", GetEnvironmentVariable = true)]
+    public string RemotePublicKeyString { get; set; } = string.Empty;
+
+    [SimpleOption("version_identifier", Description = "Version identifier", GetEnvironmentVariable = true)]
+    public int VersionIdentifier { get; set; }
+
     public bool Check(ILogger logger)
     {
         var result = true;
-        /*if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
+
+        if (!SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var remotePublicKey))
         {
             logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{NetConstants.RemotePublicKeyName}) for authentication of remote operations.");
             result = false;
         }
 
-        if (string.IsNullOrEmpty(this.Image))
-        {
-            logger.TryGet(LogLevel.Fatal)?.Log($"Specify the container image (-image).");
-            result = false;
-        }*/
+        this.RemotePublicKey = remotePublicKey;
 
         return result;
     }
 
-    private NetNode? containerNode;
+    internal SignaturePublicKey RemotePublicKey { get; private set; }
 }

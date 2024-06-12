@@ -82,9 +82,9 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var args = SimpleParserHelper.GetCommandLineArguments();
             int port = 0;
             bool enableServer = false;
-            var cmd = SimpleParser.PeekCommand(args);
+            var cmd = SimpleParserHelper.PeekCommand(args);
             if (string.IsNullOrEmpty(cmd) || cmd == "server")
-            {
+            {// Server command (default)
                 enableServer = true;
                 if (SimpleParser.TryParseOptions<ServerOptions>(args, out var options))
                 {
