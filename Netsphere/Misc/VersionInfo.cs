@@ -23,4 +23,6 @@ public sealed partial record class VersionInfo
 
     [Key(4)]
     public int ReleaseVersionInt { get; private set; }
+
+    // public override string ToString()
 }

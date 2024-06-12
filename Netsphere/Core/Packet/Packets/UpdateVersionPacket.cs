@@ -29,6 +29,11 @@ public sealed partial class UpdateVersionResponse : IPacket
     {
     }
 
+    public UpdateVersionResponse(NetResult result)
+    {
+        this.Result = result;
+    }
+
     [Key(0)]
     public NetResult Result { get; set; }
 }

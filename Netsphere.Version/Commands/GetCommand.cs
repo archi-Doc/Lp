@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
 using Arc.Unit;
-using Netsphere.Packet;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
@@ -28,9 +28,25 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
 
         // var p = new PingPacket("test56789");
         // var result = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p);
+
         var p = new GetVersionPacket();
         var result = await this.netTerminal.PacketTerminal.SendAndReceive<GetVersionPacket, GetVersionResponse>(address, p);
-        this.logger.TryGet()?.Log($"{result.ToString()}");
+        if (result.Value is { } value)
+        {
+            if (value.Token is { } token)
+            {
+                this.logger.TryGet()?.Log($"Token: {CryptoHelper.ConvertToString(token)}");
+                this.logger.TryGet()?.Log($"Version: {token.Target.ToString()}");
+            }
+            else
+            {
+                this.logger.TryGet()?.Log($"No version token");
+            }
+        }
+        else
+        {
+            this.logger.TryGet()?.Log($"{result.ToString()}");
+        }
     }
 
     /*public async Task RunAsync(GetOptions options, string[] args)
