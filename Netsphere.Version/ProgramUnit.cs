@@ -30,6 +30,7 @@ internal class ProgramUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 // Command
                 context.AddCommand(typeof(ServerCommand));
                 context.AddCommand(typeof(GetCommand));
+                context.AddCommand(typeof(UpdateCommand));
 
                 // Machines
                 // context.AddTransient<RunnerMachine>();

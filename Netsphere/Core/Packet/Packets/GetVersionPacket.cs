@@ -34,6 +34,11 @@ public sealed partial class GetVersionResponse : IPacket
     {
     }
 
+    public GetVersionResponse(CertificateToken<VersionInfo> token)
+    {
+        this.Token = token;
+    }
+
     [Key(0)]
     public CertificateToken<VersionInfo>? Token { get; set; }
 }

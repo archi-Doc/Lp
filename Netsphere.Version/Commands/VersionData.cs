@@ -38,6 +38,34 @@ public partial record VersionData
     private GetVersionResponse developmentResponse = new();
     private GetVersionResponse releaseResponse = new();
 
+    public void Update(CertificateToken<VersionInfo> token)
+    {
+        if (token.Target.VersionKind == VersionInfo.Kind.Development)
+        {
+            this.Development = token;
+            this.developmentResponse = new(token);
+        }
+        else if (token.Target.VersionKind == VersionInfo.Kind.Release)
+        {
+            this.Release = token;
+            this.releaseResponse = new(token);
+        }
+
+        _ = Task.Run(() => this.Save());
+    }
+
+    public void Save()
+    {
+        try
+        {
+            var bin = TinyhandSerializer.SerializeObjectToUtf8(this);
+            File.WriteAllBytes(Filename, bin);
+        }
+        catch
+        {
+        }
+    }
+
     public GetVersionResponse? GetVersionResponse(VersionInfo.Kind versionKind)
     {
         if (versionKind == VersionInfo.Kind.Development)
@@ -52,6 +80,26 @@ public partial record VersionData
         {
             return default;
         }
+    }
+
+    public long GetCurrentMics(VersionInfo.Kind versionKind)
+    {
+        CertificateToken<VersionInfo>? token = default;
+        if (versionKind == VersionInfo.Kind.Development)
+        {
+            token = this.Development;
+        }
+        else if (versionKind == VersionInfo.Kind.Release)
+        {
+            token = this.Release;
+        }
+
+        if (token is null)
+        {
+            return 0;
+        }
+
+        return token.Target.VersionMics;
     }
 
     public void Log(ILogger logger)

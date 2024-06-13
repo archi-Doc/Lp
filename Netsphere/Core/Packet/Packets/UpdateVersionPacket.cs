@@ -15,6 +15,11 @@ public sealed partial class UpdateVersionPacket : IPacket
     {
     }
 
+    public UpdateVersionPacket(CertificateToken<VersionInfo> token)
+    {
+        this.Token = token;
+    }
+
     [Key(0)]
     public CertificateToken<VersionInfo>? Token { get; set; }
 }

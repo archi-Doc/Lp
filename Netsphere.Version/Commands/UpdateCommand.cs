@@ -2,23 +2,26 @@
 
 using Arc.Crypto;
 using Arc.Unit;
+using Netsphere.Crypto;
+using Netsphere.Misc;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
 namespace Netsphere.Version;
 
-[SimpleCommand("get")]
-internal class GetCommand : ISimpleCommandAsync<GetOptions>
+[SimpleCommand("update")]
+internal class UpdateCommand : ISimpleCommandAsync<UpdateOptions>
 {
-    public GetCommand(ILogger<GetCommand> logger, NetTerminal netTerminal)
+    public UpdateCommand(ILogger<UpdateCommand> logger, NetTerminal netTerminal, NtpCorrection ntpCorrection)
     {
         this.logger = logger;
-        // this.unit = unit;
         this.netTerminal = netTerminal;
+        this.ntpCorrection = ntpCorrection;
     }
 
-    public async Task RunAsync(GetOptions options, string[] args)
+    public async Task RunAsync(UpdateOptions options, string[] args)
     {
+        options.Prepare();
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
         if (!NetAddress.TryParse(options.Address, out var address))
@@ -27,22 +30,24 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
             return;
         }
 
-        // var p = new PingPacket("test56789");
-        // var result = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p);
+        if (options.RemotePrivateKey is not { } privateKey)
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote private key");
+            return;
+        }
 
-        var p = new GetVersionPacket(options.VersionKind);
-        var result = await this.netTerminal.PacketTerminal.SendAndReceive<GetVersionPacket, GetVersionResponse>(address, p);
+        await this.ntpCorrection.CorrectMicsAndUnitLogger(this.logger);
+
+        var versionInfo = new VersionInfo(options.VersionIdentifier, options.VersionKind, Mics.GetCorrected(), 0);
+        var token = new CertificateToken<VersionInfo>(versionInfo);
+        token.Sign(privateKey);
+        this.logger.TryGet()?.Log($"{versionInfo.ToString()}");
+
+        var p = new UpdateVersionPacket(token);
+        var result = await this.netTerminal.PacketTerminal.SendAndReceive<UpdateVersionPacket, UpdateVersionResponse>(address, p);
         if (result.Value is { } value)
         {
-            if (value.Token is { } token)
-            {
-                this.logger.TryGet()?.Log($"Token: {CryptoHelper.ConvertToString(token)}");
-                this.logger.TryGet()?.Log($"Version: {token.Target.ToString()}");
-            }
-            else
-            {
-                this.logger.TryGet()?.Log($"No version token");
-            }
+            this.logger.TryGet()?.Log($"{value.Result.ToString()}");
         }
         else
         {
@@ -76,4 +81,5 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
     private readonly ILogger logger;
     // private readonly ProgramUnit.Unit unit;
     private readonly NetTerminal netTerminal;
+    private readonly NtpCorrection ntpCorrection;
 }

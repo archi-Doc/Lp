@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
-using System.Runtime.CompilerServices;
 using Arc.Collections;
 using Arc.Crypto;
 using Arc.Threading;
@@ -24,6 +22,7 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
 
     public ServerCommand(ILogger<ServerCommand> logger, NetControl netControl, IRelayControl relayControl, NtpCorrection ntpCorrection)
     {
+        staticInstance = this;
         this.logger = logger;
         this.netControl = netControl;
         this.relayControl = relayControl;
@@ -41,12 +40,14 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
             return;
         }
 
+        this.versionIdentifier = options.VersionIdentifier;
+        this.publicKey = options.RemotePublicKey;
+
         await this.ntpCorrection.CorrectMicsAndUnitLogger(this.logger);
         // Console.WriteLine($"{Mics.ToDateTime(Mics.GetCorrected())}");
 
         this.netControl.NetBase.SetRespondPacketFunc(RespondPacketFunc);
         var address = await NetStatsHelper.GetOwnAddress((ushort)options.Port);
-        var token = await this.LoadToken();
 
         this.logger.TryGet()?.Log($"{address.ToString()}");
         this.versionData.Log(this.logger);
@@ -76,6 +77,8 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
 
     private static BytePool.RentMemory? RespondPacketFunc(ulong packetId, PacketType packetType, ReadOnlyMemory<byte> packet)
     {
+        UpdateVersionResponse? updateResponse = default;
+
         if (packetType == PacketType.GetVersion)
         {
             var versionKind = VersionInfo.Kind.Development;
@@ -84,7 +87,7 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
                 versionKind = (VersionInfo.Kind)packet.Span[1];
             }
 
-            if (instance?.versionData.GetVersionResponse(versionKind) is { } response)
+            if (staticInstance?.versionData.GetVersionResponse(versionKind) is { } response)
             {
                 PacketTerminal.CreatePacket(packetId, response, out var rentMemory);
                 return rentMemory;
@@ -92,32 +95,73 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
         }
         else if (packetType == PacketType.UpdateVersion)
         {
-            if (TinyhandSerializer.TryDeserialize<UpdateVersionPacket>(packet.Span, out var updateVersionPacket) &&
-                updateVersionPacket.Token is { } token &&
-                token.Target.VersionIdentifier == 0)
+            if (staticInstance is not { } instance)
             {
+                return default;
+            }
 
+            if (!TinyhandSerializer.TryDeserialize<UpdateVersionPacket>(packet.Span, out var updateVersionPacket) ||
+                updateVersionPacket.Token is not { } token)
+            {
+                updateResponse = new(UpdateVersionResult.DeserializationFailed);
+            }
+            else
+            {
+                updateResponse = instance.CreateResponse(token);
+            }
+
+            if (updateResponse is not null)
+            {
+                PacketTerminal.CreatePacket(packetId, updateResponse, out var rentMemory);
+                return rentMemory;
             }
         }
 
         return default;
     }
 
-    private async Task<CertificateToken<VersionInfo>?> LoadToken()
+    private UpdateVersionResponse CreateResponse(CertificateToken<VersionInfo> token)
     {
-        return default;
+        var versionInfo = token.Target;
+        if (versionInfo.VersionIdentifier != this.versionIdentifier)
+        {// Wrong version identifier
+            return new(UpdateVersionResult.WrongVersionIdentifier);
+        }
+
+        if (!token.PublicKey.Equals(this.publicKey))
+        {// Wrong public key
+            return new(UpdateVersionResult.WrongPublicKey);
+        }
+
+        if (!token.ValidateAndVerify())
+        {// Wrong signature
+            return new(UpdateVersionResult.WrongSignature);
+        }
+
+        // Check mics
+        var currentMics = this.versionData.GetCurrentMics(versionInfo.VersionKind);
+        if (currentMics >= versionInfo.VersionMics)
+        {
+            return new(UpdateVersionResult.OldMics);
+        }
+
+        if (versionInfo.VersionMics > Mics.GetCorrected() + Mics.FromSeconds(5))
+        {
+            return new(UpdateVersionResult.FutureMics);
+        }
+
+        this.versionData.Update(token);
+        this.logger.TryGet()?.Log($"Updated: {token.Target.ToString()}");
+        return new(UpdateVersionResult.Success);
     }
 
-    private async Task SaveToken(CertificateToken<VersionInfo> token)
-    {
-        var st = CryptoHelper.ConvertToUtf8(token);
-    }
-
-    private static ServerCommand? instance;
+    private static ServerCommand? staticInstance;
 
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly IRelayControl relayControl;
     private readonly VersionData versionData;
     private readonly NtpCorrection ntpCorrection;
+    private int versionIdentifier;
+    private SignaturePublicKey publicKey;
 }

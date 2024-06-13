@@ -9,6 +9,14 @@ public sealed partial record class VersionInfo
     {
     }
 
+    public VersionInfo(int versionIdentifier, Kind versionKind, long versionMics, int versionInt)
+    {
+        this.VersionIdentifier = versionIdentifier;
+        this.VersionKind = versionKind;
+        this.VersionMics = versionMics;
+        this.VersionInt = versionInt;
+    }
+
     public enum Kind : byte
     {
         Development,

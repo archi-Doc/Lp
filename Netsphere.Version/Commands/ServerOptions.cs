@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
-using Arc.Crypto;
 using Arc.Unit;
 using Netsphere.Crypto;
 using SimpleCommandLine;

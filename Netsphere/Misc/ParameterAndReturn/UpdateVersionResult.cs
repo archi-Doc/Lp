@@ -8,6 +8,10 @@ namespace Netsphere;
 public enum UpdateVersionResult : byte
 {
     Success,
+    DeserializationFailed,
     WrongVersionIdentifier,
     WrongPublicKey,
+    WrongSignature,
+    OldMics,
+    FutureMics,
 }
