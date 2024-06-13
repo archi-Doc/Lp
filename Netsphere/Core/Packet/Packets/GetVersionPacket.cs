@@ -15,6 +15,14 @@ public sealed partial class GetVersionPacket : IPacket
     public GetVersionPacket()
     {
     }
+
+    public GetVersionPacket(VersionInfo.Kind versionKind)
+    {
+        this.VersionKind = versionKind;
+    }
+
+    [Key(0)]
+    public VersionInfo.Kind VersionKind { get; set; }
 }
 
 [TinyhandObject]

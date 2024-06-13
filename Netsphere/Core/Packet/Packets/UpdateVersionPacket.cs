@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using Netsphere.Crypto;
 using Netsphere.Packet;
 using Netsphere.Version;
@@ -29,11 +28,11 @@ public sealed partial class UpdateVersionResponse : IPacket
     {
     }
 
-    public UpdateVersionResponse(NetResult result)
+    public UpdateVersionResponse(UpdateVersionResult result)
     {
         this.Result = result;
     }
 
     [Key(0)]
-    public NetResult Result { get; set; }
+    public UpdateVersionResult Result { get; set; }
 }

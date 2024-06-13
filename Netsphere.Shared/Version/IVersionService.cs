@@ -4,10 +4,10 @@ using Netsphere.Crypto;
 
 namespace Netsphere.Version;
 
-[NetServiceInterface]
+/*[NetServiceInterface]
 public interface IVersionService : INetService
 {
     NetTask<NetResultValue<CertificateToken<VersionInfo>?>> Get();
 
     NetTask<NetResult> Update(CertificateToken<VersionInfo> versionToken);
-}
+}*/

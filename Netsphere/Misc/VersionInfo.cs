@@ -9,20 +9,21 @@ public sealed partial record class VersionInfo
     {
     }
 
+    public enum Kind : byte
+    {
+        Development,
+        Release,
+    }
+
     [Key(0)]
     public int VersionIdentifier { get; private set; }
 
     [Key(1)]
-    public long DevelopmentMics { get; private set; }
+    public Kind VersionKind { get; private set; }
 
     [Key(2)]
-    public int DevelopmentVersionInt { get; private set; }
+    public long VersionMics { get; private set; }
 
     [Key(3)]
-    public long ReleaseMics { get; private set; }
-
-    [Key(4)]
-    public int ReleaseVersionInt { get; private set; }
-
-    // public override string ToString()
+    public int VersionInt { get; private set; }
 }

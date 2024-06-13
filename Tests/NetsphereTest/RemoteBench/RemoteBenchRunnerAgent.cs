@@ -74,7 +74,7 @@ public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler
         // ThreadPool.SetMinThreads(3000, ioMin);
 
         // NtpCorrection
-        await ntpCorrection.CorrectUnitLogger();
+        await ntpCorrection.CorrectMicsAndUnitLogger();
 
         var sw = Stopwatch.StartNew();
         var array = new Task[concurrent];

@@ -29,7 +29,7 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
         // var p = new PingPacket("test56789");
         // var result = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p);
 
-        var p = new GetVersionPacket();
+        var p = new GetVersionPacket(options.VersionKind);
         var result = await this.netTerminal.PacketTerminal.SendAndReceive<GetVersionPacket, GetVersionResponse>(address, p);
         if (result.Value is { } value)
         {

@@ -110,11 +110,17 @@ Retry:
         return packet.TimeOffset;
     }
 
-    public async Task CorrectUnitLogger(CancellationToken cancellationToken = default)
+    public async Task CorrectMicsAndUnitLogger(ILogger? logger = default, CancellationToken cancellationToken = default)
     {
         var offset = await this.SendAndReceiveOffset();
         UnitLogger.SetTimeOffset(offset);
-        // await Console.Out.WriteLineAsync($"Corrected: {offset.ToString()}");
+        if (this.timeoffsetCount <= 1)
+        {
+            this.meanTimeoffset = (long)offset.TotalMilliseconds;
+            this.timeoffsetCount = 1;
+        }
+
+        logger?.TryGet(LogLevel.Information)?.Log($"Corrected: {offset.ToString()}");
     }
 
     public async Task<bool> CheckConnection(CancellationToken cancellationToken)
