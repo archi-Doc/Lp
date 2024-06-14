@@ -1,8 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Threading;
-using Arc.Unit;
-using BigMachines;
+#pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
+global using Arc.Crypto;
+global using Arc.Threading;
+global using Arc.Unit;
+global using Netsphere;
+global using SimpleCommandLine;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Netsphere.Version;
