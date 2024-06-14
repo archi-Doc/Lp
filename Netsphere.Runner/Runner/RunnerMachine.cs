@@ -4,6 +4,7 @@ using System.Net;
 using Arc.Unit;
 using BigMachines;
 using Netsphere.Packet;
+using Netsphere.Stats;
 
 namespace Netsphere.Runner;
 
@@ -44,6 +45,16 @@ public partial class RunnerMachine : Machine
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"{this.options.ToString()}");
+
+        var address = await NetStatsHelper.GetOwnAddress((ushort)this.options.Port);
+        if (address.IsValid)
+        {
+            var node = new NetNode(address, this.netTerminal.NetBase.NodePublicKey);
+            this.logger.TryGet()?.Log($"{node.ToString()}");
+        }
+
+        this.logger.TryGet()?.Log($"Remote public key: {this.options.RemotePublicKey.ToString()}");
+
         this.logger.TryGet()?.Log("Press Ctrl+C to exit, Ctrl+R to restart container, Ctrl+Q to stop container and exit");
         await Console.Out.WriteLineAsync();
 
