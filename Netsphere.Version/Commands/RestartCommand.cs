@@ -20,11 +20,13 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
     }
 
     public async Task RunAsync(RestartOptions options, string[] args)
-    {
+    {//
         if (await NetHelper.TryGetNetNode(this.netTerminal, options.Node) is not { } netNode)
         {
             return;
         }
+
+        // Parallel.For
 
         if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SignaturePrivateKey>(options.RemotePrivateKeyString, NetConstants.RemotePrivateKeyName, out var privateKey))
         {
@@ -43,7 +45,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
         {
             if (connection == null)
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, netNode.ToString());
+                this.logger.TryGet()?.Log($"Could not connect {netNode.ToString()}");
                 return;
             }
 
@@ -52,7 +54,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
             var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
+                this.logger.TryGet(LogLevel.Error)?.Log("Error.Authorization");
                 return;
             }
 
