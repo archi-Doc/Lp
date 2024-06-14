@@ -11,7 +11,7 @@ internal class DockerRunner
 {
     private const int ListContainersLimit = 100;
 
-    public static async Task<DockerRunner?> Create(ILogger logger, RunOptions options)
+    public static async Task<DockerRunner?> Create(ILogger logger, RunnerOptions options)
     {
         var client = new DockerClientConfiguration().CreateClient();
         try
@@ -26,7 +26,7 @@ internal class DockerRunner
         return new DockerRunner(client, logger, options);
     }
 
-    private DockerRunner(DockerClient client, ILogger logger, RunOptions options)
+    private DockerRunner(DockerClient client, ILogger logger, RunnerOptions options)
     {
         this.client = client;
         this.logger = logger;
@@ -187,5 +187,5 @@ internal class DockerRunner
 
     private readonly DockerClient client;
     private readonly ILogger logger;
-    private readonly RunOptions options;
+    private readonly RunnerOptions options;
 }

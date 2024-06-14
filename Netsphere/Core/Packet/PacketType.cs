@@ -11,6 +11,8 @@ public enum PacketType : ushort
     GetInformation,
     PingRelay,
     RelayOperation,
+    GetVersion,
+    UpdateVersion,
 
     // Response packet types (128-255)
     ConnectResponse = 128,
@@ -19,6 +21,8 @@ public enum PacketType : ushort
     GetInformationResponse,
     PingRelayResponse,
     RelayOperationResponse,
+    GetVersionResponse,
+    UpdateVersionResponse,
 
     // Gene types (256-383)
     Protected = 256,

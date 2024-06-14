@@ -73,7 +73,7 @@ public class Control
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
-                context.AddSingleton<EssentialNodeMachine>();
+                context.AddSingleton<NodeControlMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
@@ -324,7 +324,7 @@ public class Control
             try
             {
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionString})");
+                control.Logger.Get<DefaultLog>().Log($"LP ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Merger, Relay, Peer
                 await control.CreateMerger(this.Context);
@@ -494,7 +494,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndAdd(privault, privateKey);
                 }
             }
 
@@ -511,7 +511,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.Vault.SerializeAndTryAdd(privault, privateKey);
+                    this.Vault.SerializeAndAdd(privault, privateKey);
                 }
             }
 
@@ -545,10 +545,10 @@ public class Control
 
     public async Task StartAsync(UnitContext context)
     {
-        this.BigMachine.Start(null);
-        this.RunMachines();
-
         await context.SendStartAsync(new(this.Core));
+
+        this.BigMachine.Start(null);
+        this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
@@ -701,7 +701,7 @@ public class Control
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.EssentialNodeMachine.GetOrCreate().RunAsync();
+        _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
 
         if (!string.IsNullOrEmpty(this.LPBase.Options.RelayPeerPrivault))

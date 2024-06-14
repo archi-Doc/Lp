@@ -2,11 +2,11 @@
 
 using System.Reflection;
 
-namespace Netsphere;
+namespace Netsphere.Version;
 
-public static class Version
+public static class VersionHelper
 {
-    static Version()
+    static VersionHelper()
     {
         var assembly = Assembly.GetEntryAssembly();
         if (assembly is not null)

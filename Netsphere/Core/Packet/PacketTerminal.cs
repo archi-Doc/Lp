@@ -2,11 +2,13 @@
 
 using System;
 using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using Netsphere.Core;
 using Netsphere.Relay;
 using Netsphere.Stats;
 using Tinyhand.IO;
+using static Arc.Collections.BytePool;
 
 namespace Netsphere.Packet;
 
@@ -70,6 +72,44 @@ public sealed partial class PacketTerminal
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
+
+    public static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out BytePool.RentMemory rentMemory)
+        where TPacket : IPacket, ITinyhandSerialize<TPacket>
+    {
+        if (packetId == 0)
+        {
+            packetId = RandomVault.Pseudo.NextUInt64();
+        }
+
+        var writer = TinyhandWriter.CreateFromBytePool();
+
+        // PacketHeaderCode
+        scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
+        var span = header;
+
+        BitConverter.TryWriteBytes(span, 0u); // SourceRelayId/DestinationRelayId
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, 0u); // Hash
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, (ushort)TPacket.PacketType); // PacketType
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, packetId); // Id
+        span = span.Slice(sizeof(ulong));
+
+        writer.WriteSpan(header);
+
+        TinyhandSerializer.SerializeObject(ref writer, packet);
+
+        rentMemory = writer.FlushAndGetRentMemory();
+        writer.Dispose();
+
+        // Get checksum
+        span = rentMemory.Span;
+        BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
+    }
 
     /// <summary>
     /// Sends a packet to a specified address and waits for a response.
@@ -323,7 +363,7 @@ public sealed partial class PacketTerminal
                 var netOptions = this.netBase.NetOptions;
                 if (netOptions.EnablePing)
                 {
-                    var packet = new PingPacketResponse(new(endpoint), netOptions.NodeName, Version.VersionInt, netOptions.Phase);
+                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, Netsphere.Version.VersionHelper.VersionInt, netOptions.Phase);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
@@ -374,6 +414,15 @@ public sealed partial class PacketTerminal
                 }
 
                 return;
+            }
+            else if (this.netBase.RespondPacketFunc is { } func)
+            {
+                var memory = toBeShared.Slice(toBeShared.Length - span.Length).Memory;
+                if (func(packetId, packetType, memory) is { } rentMemory)
+                {
+                    // CreatePacket(packetId, packet, out var rentMemory);
+                    this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
+                }
             }
         }
         else if (packetUInt16 < 255)
@@ -576,43 +625,5 @@ public sealed partial class PacketTerminal
         }
 
         return NetResult.Success;
-    }
-
-    private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out BytePool.RentMemory rentMemory)
-        where TPacket : IPacket, ITinyhandSerialize<TPacket>
-    {
-        if (packetId == 0)
-        {
-            packetId = RandomVault.Pseudo.NextUInt64();
-        }
-
-        var writer = TinyhandWriter.CreateFromBytePool();
-
-        // PacketHeaderCode
-        scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
-        var span = header;
-
-        BitConverter.TryWriteBytes(span, 0u); // SourceRelayId/DestinationRelayId
-        span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, 0u); // Hash
-        span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)TPacket.PacketType); // PacketType
-        span = span.Slice(sizeof(ushort));
-
-        BitConverter.TryWriteBytes(span, packetId); // Id
-        span = span.Slice(sizeof(ulong));
-
-        writer.WriteSpan(header);
-
-        TinyhandSerializer.SerializeObject(ref writer, packet);
-
-        rentMemory = writer.FlushAndGetRentMemory();
-        writer.Dispose();
-
-        // Get checksum
-        span = rentMemory.Span;
-        BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
     }
 }

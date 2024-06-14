@@ -4,6 +4,7 @@ using System.Net;
 using Arc.Unit;
 using BigMachines;
 using Netsphere.Packet;
+using Netsphere.Stats;
 
 namespace Netsphere.Runner;
 
@@ -18,7 +19,7 @@ public partial class RunnerMachine : Machine
     private const int TerminatingInvervalInSeconds = 2;
     private const int TerminatingRetries = 30;
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunOptions options)
+    public RunnerMachine(ILogger<RunnerMachine> logger, NetTerminal netTerminal, RunnerOptions options)
     {
         this.logger = logger;
         this.netTerminal = netTerminal;
@@ -38,12 +39,22 @@ public partial class RunnerMachine : Machine
         this.docker = await DockerRunner.Create(this.logger, this.options);
         if (this.docker == null)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker is not available");
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker engine is not available");
             return StateResult.Terminate;
         }
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"{this.options.ToString()}");
+
+        var address = await NetStatsHelper.GetOwnAddress((ushort)this.options.Port);
+        if (address.IsValid)
+        {
+            var node = new NetNode(address, this.netTerminal.NetBase.NodePublicKey);
+            this.logger.TryGet()?.Log($"{node.ToString()}");
+        }
+
+        this.logger.TryGet()?.Log($"Remote public key: {this.options.RemotePublicKey.ToString()}");
+
         this.logger.TryGet()?.Log("Press Ctrl+C to exit, Ctrl+R to restart container, Ctrl+Q to stop container and exit");
         await Console.Out.WriteLineAsync();
 
@@ -248,7 +259,7 @@ public partial class RunnerMachine : Machine
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
-    private readonly RunOptions options;
+    private readonly RunnerOptions options;
     private DockerRunner? docker;
     private int retries;
     private int createContainerRetries;

@@ -83,7 +83,7 @@ public class Program
 
         // NtpCorrection
         var ntpCorrection = unit.Context.ServiceProvider.GetRequiredService<Netsphere.Misc.NtpCorrection>();
-        await ntpCorrection.CorrectUnitLogger();
+        await ntpCorrection.CorrectMicsAndUnitLogger();
 
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
         await Console.Out.WriteLineAsync();

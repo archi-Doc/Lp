@@ -72,7 +72,7 @@ Retry:
         {
             var current = Mics.GetFixedUtcNow();
             var range = new MicsRange(current - Mics.FromHours(1), current);
-            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsIn(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
+            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsWithin(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
         }
 
         if (hostnames.Length == 0)
@@ -110,11 +110,17 @@ Retry:
         return packet.TimeOffset;
     }
 
-    public async Task CorrectUnitLogger(CancellationToken cancellationToken = default)
+    public async Task CorrectMicsAndUnitLogger(ILogger? logger = default, CancellationToken cancellationToken = default)
     {
         var offset = await this.SendAndReceiveOffset();
         UnitLogger.SetTimeOffset(offset);
-        // await Console.Out.WriteLineAsync($"Corrected: {offset.ToString()}");
+        if (this.timeoffsetCount <= 1)
+        {
+            this.meanTimeoffset = (long)offset.TotalMilliseconds;
+            this.timeoffsetCount = 1;
+        }
+
+        logger?.TryGet(LogLevel.Information)?.Log($"Corrected: {offset.ToString()}");
     }
 
     public async Task<bool> CheckConnection(CancellationToken cancellationToken)

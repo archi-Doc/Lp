@@ -22,7 +22,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingleton<RunnerUnit>();
-                context.AddSingleton<RunOptions>();
+                context.AddSingleton<RunnerOptions>();
                 context.CreateInstance<RunnerUnit>();
                 context.AddSingleton<BigMachine>();
 
@@ -81,18 +81,21 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Context.CreateInstances();
 
             var args = SimpleParserHelper.GetCommandLineArguments();
-            var options = this.Context.ServiceProvider.GetRequiredService<RunOptions>();
-            SimpleParser.TryParseOptions<RunOptions>(args, out _, options);
+            var options = this.Context.ServiceProvider.GetRequiredService<RunnerOptions>();
+            SimpleParser.TryParseOptions<RunnerOptions>(args, out _, options);
             options.Prepare();
 
             var netOptions = new NetOptions()
             {
                 NodeName = "Netsphere.Runner",
                 Port = options.Port,
+                NodePrivateKey = options.NodePrivateKeyString,
                 EnablePing = false,
                 EnableServer = true,
                 EnableAlternative = false,
             };
+
+            options.NodePrivateKeyString = string.Empty;
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             netControl.Services.Register<IRemoteControl>();

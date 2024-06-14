@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetsphereGenerator", "Netsp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Shared", "Netsphere.Shared\Netsphere.Shared.csproj", "{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere.Version", "Netsphere.Version\Netsphere.Version.csproj", "{14867688-4E45-41F6-AE67-66B87F72AF73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,10 @@ Global
 		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE1DA749-F26B-47BE-8EC4-595478DAFF4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14867688-4E45-41F6-AE67-66B87F72AF73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14867688-4E45-41F6-AE67-66B87F72AF73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14867688-4E45-41F6-AE67-66B87F72AF73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14867688-4E45-41F6-AE67-66B87F72AF73}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
