@@ -89,10 +89,13 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 NodeName = "Netsphere.Runner",
                 Port = options.Port,
+                NodePrivateKey = options.NodePrivateKeyString,
                 EnablePing = false,
                 EnableServer = true,
                 EnableAlternative = false,
             };
+
+            options.NodePrivateKeyString = string.Empty;
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             netControl.Services.Register<IRemoteControl>();

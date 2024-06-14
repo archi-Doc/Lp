@@ -38,7 +38,7 @@ public partial class RunnerMachine : Machine
         this.docker = await DockerRunner.Create(this.logger, this.options);
         if (this.docker == null)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker is not available");
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Docker engine is not available");
             return StateResult.Terminate;
         }
 

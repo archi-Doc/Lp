@@ -25,13 +25,13 @@ public partial record RunnerOptions
     [SimpleOption("image", Description = "Container image")]
     public string Image { get; init; } = string.Empty;
 
-    [SimpleOption("dockerparam", Description = "Parameters to be passed to the docker run command.")]
+    [SimpleOption("docker_param", Description = "Parameters to be passed to the docker run command.")]
     public string DockerParameters { get; init; } = string.Empty;
 
-    [SimpleOption("containerport", Description = "Port number associated with the container")]
+    [SimpleOption("container_port", Description = "Port number associated with the container")]
     public ushort ContainerPort { get; set; } = 0; // 0: Disabled
 
-    [SimpleOption("containerparam", Description = "Parameters to be passed to the container.")]
+    [SimpleOption("container_param", Description = "Parameters to be passed to the container.")]
     public string ContainerParameters { get; init; } = string.Empty;
 
     public bool Check(ILogger logger)
@@ -84,7 +84,7 @@ public partial record RunnerOptions
     public void Prepare()
     {
         // 1st Argument, 2nd: Environment variable
-        if (!string.IsNullOrEmpty(this.NodePrivateKeyString) &&
+        /*if (!string.IsNullOrEmpty(this.NodePrivateKeyString) &&
             NodePrivateKey.TryParse(this.NodePrivateKeyString, out var privateKey))
         {
             this.NodePrivateKey = privateKey;
@@ -97,6 +97,8 @@ public partial record RunnerOptions
                 this.NodePrivateKey = privateKey;
             }
         }
+
+        this.NodePrivateKeyString = string.Empty;*/
 
         if (!string.IsNullOrEmpty(this.RemotePublicKeyString) &&
             SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var publicKey))
@@ -115,7 +117,7 @@ public partial record RunnerOptions
 
     private NetNode? containerNode;
 
-    internal NodePrivateKey? NodePrivateKey { get; set; }
+    // internal NodePrivateKey? NodePrivateKey { get; set; }
 
     internal SignaturePublicKey RemotePublicKey { get; set; }
 }

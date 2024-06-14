@@ -20,26 +20,47 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
     }
 
     public async Task RunAsync(RestartOptions options, string[] args)
-    {//
-        if (await NetHelper.TryGetNetNode(this.netTerminal, options.Node) is not { } netNode)
+    {
+        options.Prepare();
+        this.logger.TryGet()?.Log($"{options.ToString()}");
+
+        if (options.RemotePrivateKey is not { } privateKey)
         {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote private key");
             return;
         }
 
-        // Parallel.For
-
-        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SignaturePrivateKey>(options.RemotePrivateKeyString, NetConstants.RemotePrivateKeyName, out var privateKey))
+        var list = options.RunnerNode.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var nodeList = new List<NetNode>();
+        foreach (var x in list)
         {
-            return;
+            if (NetNode.TryParseNetNode(this.logger, x, out var node))
+            {
+                nodeList.Add(node);
+            }
         }
 
-        // Ping container
-        this.containerAddress = new(netNode.Address, options.ContainerPort);
-        if (await this.Ping() == false)
+        await Parallel.ForEachAsync(nodeList, async (netNode, cancellationToken) =>
         {
-            this.logger.TryGet(LogLevel.Error)?.Log("NoPingFromContainer");
-        }
+            // Ping container
+            var address = new NetAddress(netNode.Address, options.ContainerPort);
+            if (await this.Ping(address) == false)
+            {// No ping
+                return;
+            }
 
+            // Restart
+            using (var connection = await this.netTerminal.Connect(netNode))
+            {
+                if (connection == null)
+                {
+                    this.logger.TryGet()?.Log($"Could not connect {netNode.ToString()}");
+                    return;
+                }
+            }
+        });
+
+        /*
         // Restart
         using (var connection = await this.netTerminal.Connect(netNode))
         {
@@ -82,13 +103,13 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
 
             await Task.Delay(TimeSpan.FromSeconds(sec));
             sec *= 2;
-        }
+        }*/
     }
 
-    private async Task<bool> Ping()
+    private async Task<bool> Ping(NetAddress address)
     {
-        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(this.containerAddress, new());
-        this.logger.TryGet()?.Log($"Ping {this.containerAddress.ToString()}: {r.Result}");
+        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, new());
+        this.logger.TryGet()?.Log($"Ping({r.Result}): {address.ToString()}");
 
         if (r.Result == NetResult.Success)
         {
@@ -102,5 +123,4 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
-    private NetAddress containerAddress;
 }

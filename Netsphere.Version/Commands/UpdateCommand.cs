@@ -21,15 +21,15 @@ internal class UpdateCommand : ISimpleCommandAsync<UpdateOptions>
         options.Prepare();
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
-        if (!NetAddress.TryParse(options.Address, out var address))
-        {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse address: {options.Address}");
-            return;
-        }
-
         if (options.RemotePrivateKey is not { } privateKey)
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote private key");
+            return;
+        }
+
+        if (!NetAddress.TryParse(options.Address, out var address))
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse address: {options.Address}");
             return;
         }
 
