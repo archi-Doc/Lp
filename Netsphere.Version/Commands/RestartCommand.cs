@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
 using Netsphere.Crypto;
 using Netsphere.Interfaces;
 using Netsphere.Packet;
@@ -12,7 +11,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
 {
     private const int WaitIntervalInSeconds = 20;
     private const int PingIntervalInSeconds = 1;
-    private const int PingRetries = 5;
+    private const int PingRetries = 7;
 
     public RestartCommand(ILogger<RestartCommand> logger, NetTerminal terminal)
     {
