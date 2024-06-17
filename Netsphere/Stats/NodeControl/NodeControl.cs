@@ -152,29 +152,17 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     void ITinyhandSerializationCallback.OnAfterDeserialize()
     {
-        this.Prepare(this.netBase.NetOptions.NodeList);
+        this.LoadNodeList();
+        this.Prepare();
     }
 
-    internal void Prepare(string nodeList)
+    void ITinyhandSerializationCallback.OnAfterReconstruct()
     {
-        // Load NetOptions.NodeList
-        var nodes = this.netBase.NetOptions.NodeList;
-        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (!NetNode.TryParse(x, out var node))
-            {
-                continue;
-            }
+        this.LoadNodeList();
+    }
 
-            if (!this.lifelineNodes.AddressChain.TryGetValue(node.Address, out var item))
-            {// New
-                item = new LifelineNode(node);
-                this.lifelineNodes.Add(item);
-                this.lifelineNodes.UncheckedListChain.AddFirst(item);
-                continue;
-            }
-        }
-
+    internal void Prepare()
+    {
         List<LifelineNode>? offlineToUnchecked = default;
         foreach (var x in this.lifelineNodes.OfflineLinkChain)
         {// Offline -> Unchecked
@@ -193,6 +181,26 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
         this.ValidateInternal();
         this.TrimInternal();
+    }
+
+    private void LoadNodeList()
+    {// Load NetOptions.NodeList
+        var nodes = this.netBase.NetOptions.NodeList;
+        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!NetNode.TryParse(x, out var node))
+            {
+                continue;
+            }
+
+            if (!this.lifelineNodes.AddressChain.TryGetValue(node.Address, out var item))
+            {// New
+                item = new LifelineNode(node);
+                this.lifelineNodes.Add(item);
+                this.lifelineNodes.UncheckedListChain.AddFirst(item);
+                continue;
+            }
+        }
     }
 
     private void TrimInternal()
