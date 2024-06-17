@@ -40,6 +40,10 @@ public partial record MergerInformation : ITinyhandSerializationCallback
     [DefaultValue(DefaultMaxCredit)]
     public int MaxCredits { get; set; }
 
+    public void OnAfterReconstruct()
+    {
+    }
+
     public void OnBeforeSerialize()
     {
     }

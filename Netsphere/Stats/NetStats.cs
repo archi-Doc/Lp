@@ -150,6 +150,10 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         }
     }
 
+    void ITinyhandSerializationCallback.OnAfterReconstruct()
+    {
+    }
+
     void ITinyhandSerializationCallback.OnBeforeSerialize()
     {
         this.LastMics = Mics.GetUtcNow();
