@@ -73,14 +73,14 @@ public partial class NodeControlMachine : Machine
             }
 
             // Integrate online nodes.
-            using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            /*using (var connection = await this.netControl.NetTerminal.Connect(netNode))
             {
                 if (connection is not null)
                 {
                     var service = connection.GetService<INodeControlService>();
-                    await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
+                    var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
                 }
-            }
+            }*/
         }
 
         return StateResult.Terminate;
