@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands.CrystalData;
+namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("ls", Description = "List storages.")]
 public class CrystalStorageSubcommandLs : ISimpleCommandAsync

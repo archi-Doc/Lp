@@ -1,7 +1,7 @@
 ﻿using Arc.Crypto;
 using Netsphere.Crypto;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 [NetServiceObject]
 public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService

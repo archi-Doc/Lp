@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands.Relay;
+namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("show-incoming-relay", Description = "Check the incoming relay circuit and display detailed status.")]
 public class ShowIncomingRelaySubcommand : ISimpleCommandAsync

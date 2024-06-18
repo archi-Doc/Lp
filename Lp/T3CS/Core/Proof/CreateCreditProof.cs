@@ -21,6 +21,6 @@ public partial class CreateCreditProof : Proof
 
     public bool ValidateAndVerify()
     {
-        return LP.TinyhandHelper.ValidateAndVerify(this);
+        return Lp.TinyhandHelper.ValidateAndVerify(this);
     }
 }

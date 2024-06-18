@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.NetServices;
+using Lp.NetServices;
 using Netsphere.Misc;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("remotebench")]
 internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>

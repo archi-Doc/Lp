@@ -2,7 +2,7 @@
 
 using System.Text;
 
-namespace LP;
+namespace Lp;
 
 internal class StorageKeyVault : IStorageKey
 {

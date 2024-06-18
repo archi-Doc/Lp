@@ -3,7 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Arc.Collections;
 
-namespace LP;
+namespace Lp;
 
 // public class VaultData : CrystalDataInterface;
 

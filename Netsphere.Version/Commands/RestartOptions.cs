@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 public record RestartOptions
 {

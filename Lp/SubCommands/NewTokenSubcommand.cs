@@ -4,7 +4,7 @@ using Lp.T3cs;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("new-token")]
 public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>

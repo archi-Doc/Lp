@@ -8,13 +8,13 @@ global using Arc.Threading;
 global using Arc.Unit;
 global using BigMachines;
 global using CrystalData;
-global using LP;
+global using Lp;
 global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
-using LP.Data;
-using LP.NetServices;
-using LP.Services;
+using Lp.Data;
+using Lp.NetServices;
+using Lp.Services;
 using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -23,7 +23,7 @@ using Netsphere.Machines;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
-namespace LP;
+namespace Lp;
 
 public class Control
 {
@@ -76,42 +76,42 @@ public class Control
                 context.AddSingleton<NodeControlMachine>();
 
                 // Subcommands
-                context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.RestartRemoteContainerSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.RemoteBenchSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.RemoteDataSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.MergerSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.NewTokenSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.RevealAuthoritySubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.NewSignatureKeySubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.GetNetNodeSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.MicsSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.PingSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RestartRemoteContainerSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RemoteBenchSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RemoteDataSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.PunchSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.BenchmarkSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.SeedphraseSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.MergerSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RevealAuthoritySubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.NewSignatureKeySubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
 
                 // Vault
-                context.AddSubcommand(typeof(LP.Subcommands.NewVaultSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.RemoveVaultSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.ListVaultSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.ShowVaultSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.ChangeVaultPassSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.NewVaultSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RemoveVaultSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ListVaultSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ShowVaultSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ChangeVaultPassSubcommand));
 
-                // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
-                // LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
+                // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
+                // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
-                LP.Subcommands.InfoSubcommand.Configure(context);
-                LP.Subcommands.ExportSubcommand.Configure(context);
-                LP.Subcommands.FlagSubcommand.Configure(context);
-                LP.Subcommands.NodeSubcommand.Configure(context);
-                LP.Subcommands.NodeKeySubcommand.Configure(context);
-                LP.Subcommands.AuthoritySubcommand.Configure(context);
-                LP.Subcommands.CustomSubcommand.Configure(context);
-                LP.Subcommands.MergerNestedcommand.Configure(context);
-                LP.Subcommands.Relay.Subcommand.Configure(context);
+                Lp.Subcommands.InfoSubcommand.Configure(context);
+                Lp.Subcommands.ExportSubcommand.Configure(context);
+                Lp.Subcommands.FlagSubcommand.Configure(context);
+                Lp.Subcommands.NodeSubcommand.Configure(context);
+                Lp.Subcommands.NodeKeySubcommand.Configure(context);
+                Lp.Subcommands.AuthoritySubcommand.Configure(context);
+                Lp.Subcommands.CustomSubcommand.Configure(context);
+                Lp.Subcommands.MergerNestedcommand.Configure(context);
+                Lp.Subcommands.Relay.Subcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>

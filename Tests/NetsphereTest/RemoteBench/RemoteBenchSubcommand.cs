@@ -2,7 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Unit;
-using LP.NetServices;
+using Lp.NetServices;
 using Netsphere.Crypto;
 using Netsphere.Misc;
 using Netsphere.Packet;

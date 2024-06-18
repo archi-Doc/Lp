@@ -5,7 +5,7 @@ using LP.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Interfaces;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 public class RemoteBenchControl
 {

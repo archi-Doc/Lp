@@ -2,9 +2,9 @@
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-using LP.Data;
+using Lp.Data;
 
-namespace LP;
+namespace Lp;
 
 public class LpBase
 {

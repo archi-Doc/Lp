@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Interfaces;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("remotedata")]
 internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>

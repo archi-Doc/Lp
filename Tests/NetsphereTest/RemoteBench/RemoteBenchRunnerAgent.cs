@@ -6,7 +6,7 @@ using Netsphere.Misc;
 using Netsphere.Interfaces;
 using NetsphereTest;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 [NetServiceObject]
 public class RemoteBenchRunnerAgent : IRemoteBenchRunner, INetServiceHandler

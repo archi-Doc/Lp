@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Services;
+namespace Lp.Services;
 
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {

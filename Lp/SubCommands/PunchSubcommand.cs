@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("punch")]
 public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>

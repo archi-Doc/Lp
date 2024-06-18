@@ -2,7 +2,7 @@
 /*
 using Netsphere.Crypto;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 [NetServiceInterface]
 public interface IRemoteControlService : INetService

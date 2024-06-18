@@ -2,7 +2,7 @@
 
 using Tinyhand;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record RemoteBenchRecord

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Netsphere.Packet;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("ping")]
 public class PingSubcommand : ISimpleCommandAsync<PingOptions>

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Data;
+namespace Lp.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record LPSettings

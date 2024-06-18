@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 
 #pragma warning disable SA1401
 
-namespace LP;
+namespace Lp;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {

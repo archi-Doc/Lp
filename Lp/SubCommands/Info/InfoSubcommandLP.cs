@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("lp")]
 public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>

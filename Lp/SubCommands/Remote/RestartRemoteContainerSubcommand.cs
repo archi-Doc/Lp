@@ -5,7 +5,7 @@ using Netsphere.Interfaces;
 using Netsphere.Packet;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("restart-remote-container")]
 public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemoteContainerOptions>

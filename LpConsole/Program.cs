@@ -2,8 +2,8 @@
 
 global using Arc.Threading;
 global using Arc.Unit;
-global using LP;
-using LP.Data;
+global using Lp;
+using Lp.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 

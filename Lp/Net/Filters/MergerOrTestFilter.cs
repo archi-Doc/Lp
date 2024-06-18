@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 public class MergerOrTestFilter : IServiceFilter
 {

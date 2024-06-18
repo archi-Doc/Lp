@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.NetServices;
+using Lp.NetServices;
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("create-credit")]
 public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>

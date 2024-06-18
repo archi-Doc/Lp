@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP;
+namespace Lp;
 
 public static class LpConstants
 {

@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("mics", Description = "Shows mics(microseconds) status")]
 public class MicsSubcommand : ISimpleCommand

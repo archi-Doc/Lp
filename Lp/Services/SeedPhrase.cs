@@ -3,7 +3,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace LP;
+namespace Lp;
 
 public class Seedphrase
 {

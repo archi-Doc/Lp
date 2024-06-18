@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("custom", IsSubcommand = true)]
 public class CustomSubcommand : SimpleCommandGroup<CustomSubcommand>

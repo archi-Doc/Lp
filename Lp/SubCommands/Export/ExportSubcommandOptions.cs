@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Data;
+using Lp.Data;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("options")]
 public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>

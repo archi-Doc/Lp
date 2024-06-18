@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands.CrystalData;
+namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("storage", IsSubcommand = true, Description = "Crystal storage subcommand")]
 public class CrystalStorageSubcommand : SimpleCommandGroup<CrystalStorageSubcommand>

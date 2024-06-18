@@ -3,7 +3,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace LP;
+namespace Lp;
 
 /// <summary>
 /// A thread-safe pool of byte arrays (uses <see cref="ArrayPool{T}"/>).<br/>

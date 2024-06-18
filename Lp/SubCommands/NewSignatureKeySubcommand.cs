@@ -3,7 +3,7 @@
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("new-signature-key")]
 public class NewSignatureKeySubcommand : ISimpleCommand<NodeKeySubcommandNewOptions>

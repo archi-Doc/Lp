@@ -3,7 +3,7 @@
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("new-vault")]
 public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>

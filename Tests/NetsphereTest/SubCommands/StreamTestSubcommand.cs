@@ -2,7 +2,7 @@
 
 using Arc.Crypto;
 using Arc.Unit;
-using LP.NetServices;
+using Lp.NetServices;
 using SimpleCommandLine;
 
 namespace NetsphereTest;

@@ -3,7 +3,7 @@
 using LP.Crystal;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.CrystalData;
+namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("delete", Description = "Delete storage.")]
 public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorageOptionsDelete>

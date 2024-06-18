@@ -3,7 +3,7 @@
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("get-net-node")]
 public class GetNetNodeSubcommand : ISimpleCommandAsync<GetNetNodeOptions>

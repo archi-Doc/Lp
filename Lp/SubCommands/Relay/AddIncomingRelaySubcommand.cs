@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.Relay;
+namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("add-incomimg-relay", Description = "")]
 public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>

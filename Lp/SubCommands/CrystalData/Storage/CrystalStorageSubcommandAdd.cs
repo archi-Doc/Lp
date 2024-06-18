@@ -4,7 +4,7 @@ using CrystalData.Filer;
 using CrystalData.Results;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.CrystalData;
+namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("add", Description = "Add storage.")]
 public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOptionsAdd>

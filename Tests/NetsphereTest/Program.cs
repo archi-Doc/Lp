@@ -7,7 +7,7 @@ global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using LP.NetServices;
+using Lp.NetServices;
 using SimpleCommandLine;
 using Netsphere.Misc;
 

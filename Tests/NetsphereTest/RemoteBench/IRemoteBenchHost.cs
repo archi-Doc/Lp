@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 [NetServiceInterface]
 public interface IRemoteBenchHost : IRemoteBenchService, INetServiceBidirectional, INetServiceAgreement

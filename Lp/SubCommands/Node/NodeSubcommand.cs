@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("node", IsSubcommand = true)]
 public class NodeSubcommand : SimpleCommandGroup<NodeSubcommand>

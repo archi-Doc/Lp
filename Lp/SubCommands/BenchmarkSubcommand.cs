@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 using Netsphere.Misc;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("benchmark", Description = "Executes a simple benchmark")]
 public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>

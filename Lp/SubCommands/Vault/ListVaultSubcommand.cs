@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("list-vault")]
 public class ListVaultSubcommand : ISimpleCommandAsync

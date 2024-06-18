@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 using Netsphere.Misc;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>

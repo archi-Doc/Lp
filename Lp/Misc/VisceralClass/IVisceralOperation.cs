@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace LP.Data;
+namespace Lp.Data;
 
 public interface IVisceralOperation<T>
 {

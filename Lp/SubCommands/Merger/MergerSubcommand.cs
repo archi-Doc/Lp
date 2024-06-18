@@ -3,7 +3,7 @@
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("merger")]
 public class MergerSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>

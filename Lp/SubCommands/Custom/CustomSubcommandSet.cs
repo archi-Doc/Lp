@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("set")]
 public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOptions>

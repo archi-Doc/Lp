@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Data;
+namespace Lp.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record LpOptions
