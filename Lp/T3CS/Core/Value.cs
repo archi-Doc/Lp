@@ -18,10 +18,10 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     {
     }
 
-    public Value(long point, SignaturePublicKey originator, SignaturePublicKey standard, SignaturePublicKey[] mergers)
+    public Value(long point, SignaturePublicKey originator, /*SignaturePublicKey standard, */SignaturePublicKey[] mergers)
     {
         this.Point = point;
-        this.Credit = new(originator, standard, mergers);
+        this.Credit = new(originator, mergers);
 
         if (!this.Validate())
         {
