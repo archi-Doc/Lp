@@ -717,6 +717,11 @@ public class Control
 
     private async Task LoadKeyVault_NodeKey()
     {
+        if (this.NetControl.NetBase.IsValidNodeKey)
+        {
+            return;
+        }
+
         if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NetConstants.NodePrivateKeyName, out var key))
         {// Failure
             if (!this.Vault.Created)
