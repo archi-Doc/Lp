@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\..\stylecop.json" Link="stylecop.json" />
+    <None Remove="ExampleUnit\strings-en.tinyhand" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,10 +15,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Lp\Lp.csproj" />
+    <EmbeddedResource Include="ExampleUnit\strings-en.tinyhand" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lp\Lp.csproj" />
   </ItemGroup>
 
 </Project>
