@@ -2,6 +2,7 @@
 
 using Arc.Unit;
 using BigMachines;
+using Netsphere.Interfaces;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
@@ -41,7 +42,7 @@ public partial class NodeControlMachine : Machine
 
         while (!this.CancellationToken.IsCancellationRequested)
         {
-            if (this.nodeControl.CountOnline >= NodeControl.SufficientOnlineNodes)
+            if (this.nodeControl.HasSufficientOnlineNodes)
             {// KeepOnlineNode
                 this.ChangeState(State.CheckStatus, true);
                 return StateResult.Continue;
@@ -61,24 +62,25 @@ public partial class NodeControlMachine : Machine
             {// Success
                 this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
                 if (value.Endpoint.EndPoint is { } endoint)
-                {//
+                {
                     this.netControl.NetStats.ReportAddress(endoint.Address);
                 }
             }
             else
-            {
+            {// Failure
                 this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
+                continue;
             }
 
             // Integrate online nodes.
-            /*using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            using (var connection = await this.netControl.NetTerminal.Connect(netNode))
             {
                 if (connection is not null)
                 {
                     var service = connection.GetService<INodeControlService>();
-                    await this.nodeControl.Integrate(async (x, y) => await service.DifferentiateEssentialNode(x));
+                    await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
                 }
-            }*/
+            }
         }
 
         return StateResult.Terminate;

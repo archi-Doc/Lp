@@ -5,8 +5,8 @@ using ValueLink.Integrality;
 
 namespace Lp.Basal;
 
-[NetServiceInterface]
+/*[NetServiceInterface]
 public interface IBasalService : INetService
 {
     NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory);
-}
+}*/

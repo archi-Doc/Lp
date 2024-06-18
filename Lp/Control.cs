@@ -12,6 +12,7 @@ global using Lp;
 global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
+using Lp.Basal;
 using Lp.Data;
 using Lp.NetServices;
 using Lp.Services;
@@ -19,6 +20,7 @@ using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
+using Netsphere.Interfaces;
 using Netsphere.Machines;
 using Netsphere.Relay;
 using SimpleCommandLine;
@@ -61,6 +63,7 @@ public class Control
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerServiceAgent>();
+                context.AddTransient<BasalServiceAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -441,6 +444,8 @@ public class Control
 
     public async Task CreatePeer(UnitContext context)
     {
+        this.NetControl.Services.Register<INodeControlService>();
+
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
             var privault = this.LpBase.Options.RelayPeerPrivault;

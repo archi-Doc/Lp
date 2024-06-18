@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
-using Arc.Collections;
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
@@ -397,6 +395,7 @@ public class ConnectionTerminal
         var node = new NetNode(in endPoint, p.ClientPublicKey);
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
+        this.netStats.NodeControl.TryAddUnknownNode(node);
         connection.Initialize(p2.Agreement, embryo);
 
         lock (this.serverConnections.SyncObject)
