@@ -3,10 +3,10 @@
 using Arc.Collections;
 using ValueLink.Integrality;
 
-namespace Netsphere.Interfaces;
+namespace Lp.Basal;
 
-/*[NetServiceInterface]
-public interface INodeControlService : INetService
+[NetServiceInterface]
+public interface IBasalService : INetService
 {
     NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory);
-}*/
+}

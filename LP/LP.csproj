@@ -4,13 +4,13 @@
     <TargetFramework>net8.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <PackageId>LP</PackageId>
+    <PackageId>Lp</PackageId>
     <Authors>archi-Doc</Authors>
-    <Product>LP</Product>
-    <Description>LP is an experimental program that create value.</Description>
+    <Product>Lp</Product>
+    <Description>Lp is an experimental program that create value.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/archi-Doc/LP</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/archi-Doc/LP</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/archi-Doc/Lp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/archi-Doc/Lp</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -33,6 +33,9 @@
 
   <ItemGroup>
     <Compile Remove="Generated\*" />
+    <Compile Remove="Net\NetNode\**" />
+    <EmbeddedResource Remove="Net\NetNode\**" />
+    <None Remove="Net\NetNode\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,10 +50,6 @@
     <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
     <ProjectReference Include="..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <ProjectReference Include="..\Netsphere.Shared\Netsphere.Shared.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Net\NetNode\" />
   </ItemGroup>
 
 </Project>
