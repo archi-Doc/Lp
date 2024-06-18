@@ -10,7 +10,7 @@ public class InfoSubcommand : SimpleCommandGroup<InfoSubcommand>
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(InfoSubcommandLP));
+        group.AddCommand(typeof(InfoSubcommandLp));
     }
 
     public InfoSubcommand(UnitContext context)

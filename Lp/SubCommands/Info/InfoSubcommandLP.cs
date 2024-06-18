@@ -5,9 +5,9 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("lp")]
-public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
+public class InfoSubcommandLp : ISimpleCommand<DumpSubcommandInfoOptions>
 {
-    public InfoSubcommandLP(Control control)
+    public InfoSubcommandLp(Control control)
     {
         this.Control = control;
     }
@@ -15,7 +15,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
-        var logger = this.Control.Logger.TryGet<InfoSubcommandLP>(LogLevel.Information);
+        var logger = this.Control.Logger.TryGet<InfoSubcommandLp>(LogLevel.Information);
 
         logger?.Log($"Info: {target}");
 

@@ -26,7 +26,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
     {// NetTask<NetResult> is recommended.
         if (TransmissionContext.Current.ServerConnection.DestinationEndpoint.IsPrivateOrLocalLoopbackAddress() &&
             TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
-            token.PublicKey.Equals(this.control.LPBase.RemotePublicKey))
+            token.PublicKey.Equals(this.control.LpBase.RemotePublicKey))
         {
             this.token = token;
             TransmissionContext.Current.Result = NetResult.Success;

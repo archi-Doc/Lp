@@ -54,7 +54,7 @@ public class Program
                 {
                 });
             });
-        // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
+        // .ConfigureBuilder(new LpConsole.Example.ExampleUnit.Builder()); // Alternative
 
         var args = SimpleParserHelper.GetCommandLineArguments();
         SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");

@@ -3,7 +3,7 @@
 namespace Netsphere.Crypto;
 
 /// <summary>
-/// Immutable identifier of objects in LP.
+/// Immutable identifier of objects in Lp.
 /// </summary>
 [TinyhandObject]
 public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<Identifier>

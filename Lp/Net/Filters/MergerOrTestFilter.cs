@@ -15,7 +15,7 @@ public class MergerOrTestFilter : IServiceFilter
     public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
         if (this.LpBase.Options.TestFeatures)
-        {// this.LPBase.Mode == LPMode.Merger
+        {// this.LpBase.Mode == LpMode.Merger
             await invoker(context);
         }
         else
