@@ -67,8 +67,8 @@ public partial class NetStatsMachine : Machine
             this.netStats.ReportAddress(x);
         }
 
-        if (this.netStats.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
-             this.netStats.MyIpv6Address.AddressState != MyAddress.State.Unknown)
+        /*if (this.netStats.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+             this.netStats.MyIpv6Address.AddressState != MyAddress.State.Unknown)*/
         {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;

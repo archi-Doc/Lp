@@ -128,7 +128,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public void ReportAddress(AddressQueryResult result)
     {
         var priority = result.Uri is not null;
-        if (result.Ipv6)
+        if (result.IsValidIpv6)
         {// Ipv6
             this.MyIpv6Address.ReportAddress(priority, result.Address);
         }
