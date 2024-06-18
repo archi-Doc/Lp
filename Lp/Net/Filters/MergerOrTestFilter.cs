@@ -9,12 +9,12 @@ public class MergerOrTestFilter : IServiceFilter
     public MergerOrTestFilter(NetBase netBase, LpBase lpBase)
     {
         this.NetBase = netBase;
-        this.LPBase = lpBase;
+        this.LpBase = lpBase;
     }
 
     public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
-        if (this.LPBase.Options.TestFeatures)
+        if (this.LpBase.Options.TestFeatures)
         {// this.LPBase.Mode == LPMode.Merger
             await invoker(context);
         }
@@ -26,5 +26,5 @@ public class MergerOrTestFilter : IServiceFilter
 
     public NetBase NetBase { get; }
 
-    public LpBase LPBase { get; }
+    public LpBase LpBase { get; }
 }

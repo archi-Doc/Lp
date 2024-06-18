@@ -3,9 +3,9 @@
 namespace Lp.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPSettings
+public partial record LpSettings
 {
     public const string Filename = "Settings.tinyhand";
 
-    public LPFlags Flags { get; set; } = default!;
+    public LpFlags Flags { get; set; } = default!;
 }

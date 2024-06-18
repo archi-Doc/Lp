@@ -2,7 +2,7 @@
 
 using Tinyhand;
 
-namespace LPConsole.Example;
+namespace LpConsole.Example;
 
 public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 {

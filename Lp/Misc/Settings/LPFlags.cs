@@ -3,7 +3,7 @@
 namespace Lp.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPFlags
+public partial record LpFlags
 {
     [ShortName("logm1")]
     public bool LogEssentialNetMachine { get; set; }

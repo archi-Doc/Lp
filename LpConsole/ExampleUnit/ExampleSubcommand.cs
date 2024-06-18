@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LPConsole.Example;
+namespace LpConsole.Example;
 
 [SimpleCommand("example")]
 public class ExampleSubcommand : ISimpleCommandAsync

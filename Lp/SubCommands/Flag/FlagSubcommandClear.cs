@@ -16,7 +16,7 @@ public class FlagSubcommandClear : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var ope = VisceralClass.TryGet(this.Control.LPBase.Settings.Flags);
+        var ope = VisceralClass.TryGet(this.Control.LpBase.Settings.Flags);
         if (ope == null)
         {
             return;

@@ -36,7 +36,7 @@ public partial class Credential : CertificateToken<Value>
             }
 
             if (newItem.PublicKey.Equals(LpConstants.LpKey))
-            {// LP key
+            {// Lp key
             }
             else if (goshujin.OriginatorChain.FindFirst(newItem.PublicKey) is null)
             {// Not found

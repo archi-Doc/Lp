@@ -7,7 +7,7 @@ using Lp.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
-namespace LPConsole;
+namespace LpConsole;
 
 public class Program
 {
@@ -47,7 +47,7 @@ public class Program
                 // ServiceFilter
 
                 // Unit
-                LPConsole.Example.ExampleUnit.Configure(context);
+                LpConsole.Example.ExampleUnit.Configure(context);
 
                 // Looger resolver
                 context.AddLoggerResolver(context =>

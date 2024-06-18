@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using LP.Logging;
+using Lp.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Interfaces;
 

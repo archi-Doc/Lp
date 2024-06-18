@@ -3,7 +3,7 @@
 using Netsphere.Crypto;
 using ValueLink;
 
-namespace LP.Crystal;
+namespace Lp.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
