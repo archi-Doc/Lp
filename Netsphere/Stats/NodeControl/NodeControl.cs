@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
@@ -55,6 +56,14 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
 
         return true;
+    }
+
+    public IntegralityResultMemory DifferentiateOnlineNode(BytePool.RentMemory memory)
+    {
+        lock (this.syncObject)
+        {
+            return ((IIntegralityObject)this.onlineNodes).Differentiate(OnlineNode.Integrality.Instance, memory);
+        }
     }
 
     public void ReportLifelineNode(NetNode node, ConnectionResult result)
