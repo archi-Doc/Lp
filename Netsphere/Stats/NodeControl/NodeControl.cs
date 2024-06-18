@@ -33,7 +33,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     [Key(1)]
     private OnlineNode.GoshujinClass onlineNodes = default!; // this.syncObject
 
-    private OnlineNode.GoshujinClass unknownNodes = default!; // this.syncObject
+    private OnlineNode.GoshujinClass unknownNodes = new(); // this.syncObject
 
     public int CountLinfelineOnline => this.lifelineNodes.OnlineLinkChain.Count;
 
