@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS.NetService;
+namespace Lp.T3cs.NetService;
 
 [NetServiceInterface]
 public interface IBorrowerService : INetService

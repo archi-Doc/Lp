@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 /// <summary>
 /// Represents a credit information (@Originator:Standard/Merger1+Merger2).

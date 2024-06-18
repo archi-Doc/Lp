@@ -5,7 +5,7 @@ using Arc.Collections;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [TinyhandObject]
 public sealed partial class Authority

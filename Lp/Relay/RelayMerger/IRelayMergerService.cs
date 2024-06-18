@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [NetServiceInterface]
 public partial interface IRelayMergerService : IMergerService

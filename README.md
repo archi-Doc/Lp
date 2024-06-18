@@ -5,9 +5,11 @@ Work in progress
 
 ## Monolith
 
-Lp is an experimental program that creates value (actually, evaluates value).
+Lp is an experimental program designed to create value (in reality, it evaluates value).
 
 L represents both value and constraints.
 
 No eureka.
+
+Lp is an alternative security.
 

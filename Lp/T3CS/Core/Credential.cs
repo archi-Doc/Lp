@@ -4,7 +4,7 @@ using Arc.Collections;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Integrality = true)]

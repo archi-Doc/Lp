@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 /// <summary>
 /// Represents a linkage key.

@@ -3,7 +3,7 @@
 using Netsphere;
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 /// <summary>
 /// Represents a value (Owner#Point@Originator:Standard/Mergers).

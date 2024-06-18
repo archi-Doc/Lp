@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 /// <summary>
 /// Represents a value token (Owner#Point@Originator:Standard/Mergers + Signature).

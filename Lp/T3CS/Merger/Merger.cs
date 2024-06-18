@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using LP.T3CS;
+using Lp.T3cs;
 using Netsphere.Crypto;
 
 #pragma warning disable SA1401

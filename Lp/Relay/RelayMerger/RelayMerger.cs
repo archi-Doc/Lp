@@ -3,7 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 public class RelayMerger : Merger
 {

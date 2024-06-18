@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using LP.NetServices;
-using LP.T3CS;
+using Lp.T3cs;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

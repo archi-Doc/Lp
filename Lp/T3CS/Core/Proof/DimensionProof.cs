@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [TinyhandObject]
 public partial class IdentificationProof : Proof
@@ -14,7 +14,7 @@ public partial class IdentificationProof : Proof
 
     public bool ValidateAndVerify()
     {
-        return TinyhandHelper.ValidateAndVerify(this);
+        return LP.TinyhandHelper.ValidateAndVerify(this);
     }
 
     public override bool Validate()

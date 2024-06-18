@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [TinyhandObject]
 public partial class TransferProof : Proof
@@ -19,6 +19,6 @@ public partial class TransferProof : Proof
 
     public bool ValidateAndVerify()
     {
-        return TinyhandHelper.ValidateAndVerify(this);
+        return LP.TinyhandHelper.ValidateAndVerify(this);
     }
 }

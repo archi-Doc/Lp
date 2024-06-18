@@ -2,7 +2,7 @@
 
 using System;
 using System.Buffers;
-using LP.T3CS;
+using Lp.T3cs;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 

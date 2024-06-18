@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [TinyhandObject(Structual = false)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead, Restricted = true)]

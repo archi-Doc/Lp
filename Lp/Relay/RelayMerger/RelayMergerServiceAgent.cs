@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 [NetServiceObject]
 internal class RelayMergerServiceAgent : MergerServiceAgent, IRelayMergerService
@@ -15,6 +15,6 @@ internal class RelayMergerServiceAgent : MergerServiceAgent, IRelayMergerService
 
     private readonly RelayMerger relayMerger;
 
-    NetTask<RelayStatus?> IRelayMergerService.GetRelayStatus(LP.T3CS.Credit relayCredit)
+    NetTask<RelayStatus?> IRelayMergerService.GetRelayStatus(Lp.T3cs.Credit relayCredit)
         => this.relayMerger.GetRelayStatus(relayCredit);
 }

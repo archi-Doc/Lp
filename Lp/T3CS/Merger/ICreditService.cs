@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.T3CS;
+using Lp.T3cs;
 using Netsphere;
 
-namespace LP.T3CS.NetService;
+namespace Lp.T3cs.NetService;
 
 [NetServiceInterface]
 public interface ICreditService : INetService

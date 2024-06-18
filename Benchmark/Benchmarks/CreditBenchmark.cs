@@ -74,10 +74,10 @@ public sealed partial class CreditB
     public SignaturePublicKey Merger1 { get; private set; } = default!;
 
     /*[Key(3)]
-    public LP.T3CS.PublicKey? Merger2 { get; private set; } = default!;
+    public Lp.T3cs.PublicKey? Merger2 { get; private set; } = default!;
 
     [Key(4)]
-    public LP.T3CS.PublicKey? Merger3 { get; private set; } = default!;*/
+    public Lp.T3cs.PublicKey? Merger3 { get; private set; } = default!;*/
 }
 
 [Config(typeof(BenchmarkConfig))]

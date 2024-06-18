@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace LP.T3CS;
+namespace Lp.T3cs;
 
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.

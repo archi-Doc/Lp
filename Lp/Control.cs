@@ -15,7 +15,7 @@ global using ValueLink;
 using LP.Data;
 using LP.NetServices;
 using LP.Services;
-using LP.T3CS;
+using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
@@ -60,7 +60,7 @@ public class Control
                 context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<LP.T3CS.MergerServiceAgent>();
+                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
