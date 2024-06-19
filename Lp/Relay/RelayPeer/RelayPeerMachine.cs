@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Machines;
+namespace Lp.Machines;
 
 [MachineObject(UseServiceProvider = true)]
 public partial class RelayPeerMachine : Machine

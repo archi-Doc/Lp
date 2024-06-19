@@ -18,7 +18,7 @@ public partial class PublicIPMachine : Machine
         public IPAddress? IPAddress { get; set; }
     }
 
-    public PublicIPMachine(ILogger<PublicIPMachine> logger, LPBase lpBase, NetControl netControl, Crystalizer crystalizer)
+    public PublicIPMachine(ILogger<PublicIPMachine> logger, LpBase lpBase, NetControl netControl, Crystalizer crystalizer)
     {
         this.logger = logger;
         this.lpBase = lpBase;
@@ -155,6 +155,6 @@ public partial class PublicIPMachine : Machine
 
     private ILogger? logger;
     private NetControl netControl;
-    private LPBase lpBase;
+    private LpBase lpBase;
     private ICrystal<Data> crystal;
 }*/

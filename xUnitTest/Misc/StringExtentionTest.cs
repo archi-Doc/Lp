@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP;
+using Lp;
 using Xunit;
 
 #pragma warning disable SA1122 // Use string.Empty for empty strings

@@ -2,12 +2,12 @@
 
 global using Arc.Threading;
 global using Arc.Unit;
-global using LP;
-using LP.Data;
+global using Lp;
+using Lp.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
-namespace LPConsole;
+namespace LpConsole;
 
 public class Program
 {
@@ -47,14 +47,14 @@ public class Program
                 // ServiceFilter
 
                 // Unit
-                LPConsole.Example.ExampleUnit.Configure(context);
+                LpConsole.Example.ExampleUnit.Configure(context);
 
                 // Looger resolver
                 context.AddLoggerResolver(context =>
                 {
                 });
             });
-        // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
+        // .ConfigureBuilder(new LpConsole.Example.ExampleUnit.Builder()); // Alternative
 
         var args = SimpleParserHelper.GetCommandLineArguments();
         SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");

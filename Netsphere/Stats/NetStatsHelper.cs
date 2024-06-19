@@ -29,7 +29,7 @@ public static class NetStatsHelper
         {
             if (x.Address is not null)
             {
-                if (x.Ipv6)
+                if (x.IsValidIpv6)
                 {
                     ipv6 ??= x.Address;
                 }
@@ -52,12 +52,12 @@ public static class NetStatsHelper
                 var result = await httpClient.GetStringAsync(IcanhazipUriIPv4, cancellationToken).WaitAsync(GetTimeout).ConfigureAwait(false);
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 IPAddress.TryParse(ipString, out var ipAddress);
-                return new(false, IcanhazipUriIPv4, ipAddress);
+                return new(IcanhazipUriIPv4, ipAddress);
             }
         }
         catch
         {
-            return new(false, IcanhazipUriIPv4, default);
+            return new(IcanhazipUriIPv4, default);
         }
     }
 
@@ -71,12 +71,12 @@ public static class NetStatsHelper
                 var result = await httpClient.GetStringAsync(IcanhazipUriIPv6, cancellationToken).WaitAsync(GetTimeout).ConfigureAwait(false);
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 IPAddress.TryParse(ipString, out var ipAddress);
-                return new(true, IcanhazipUriIPv6, ipAddress);
+                return new(IcanhazipUriIPv6, ipAddress);
             }
         }
         catch
         {
-            return new(true, IcanhazipUriIPv6, default);
+            return new(IcanhazipUriIPv6, default);
         }
     }
 
@@ -102,7 +102,7 @@ public static class NetStatsHelper
 
                 var ipString = result.Substring(start + 1, end - start - 1).Trim();
                 IPAddress.TryParse(ipString, out var ipAddress);
-                return new(false, DynDnsUri, ipAddress);
+                return new(DynDnsUri, ipAddress);
             }
         }
         catch

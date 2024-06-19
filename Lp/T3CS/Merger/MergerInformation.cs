@@ -4,7 +4,7 @@ using System.ComponentModel;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
-namespace LP;
+namespace Lp;
 
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
 public partial record MergerInformation : ITinyhandSerializationCallback

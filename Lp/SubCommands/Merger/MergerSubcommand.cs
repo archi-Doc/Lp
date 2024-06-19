@@ -3,7 +3,7 @@
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("merger")]
 public class MergerSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
@@ -34,7 +34,7 @@ public class MergerSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
 
 public record MergerSubcommandOptions
 {
-    [SimpleOption("node", Description = "Node information", Required = true)]
+    [SimpleOption("Node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

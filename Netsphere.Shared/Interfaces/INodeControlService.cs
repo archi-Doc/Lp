@@ -5,8 +5,8 @@ using ValueLink.Integrality;
 
 namespace Netsphere.Interfaces;
 
-/*[NetServiceInterface]
+[NetServiceInterface]
 public interface INodeControlService : INetService
 {
     NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory);
-}*/
+}

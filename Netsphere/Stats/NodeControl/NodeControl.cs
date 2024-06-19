@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
@@ -10,6 +11,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;
     public static readonly int MaxOnlineNodes = 256;
+    public static readonly int MaxUnknownNodes = 32;
     public static readonly int SufficientOnlineNodes = 128;
     private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromHours(1);
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
@@ -25,11 +27,13 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     private readonly object syncObject = new();
 
-    [Key(0)]
-    private LifelineNode.GoshujinClass lifelineNodes = default!;
+    [Key(0)]//
+    private LifelineNode.GoshujinClass lifelineNodes = new(); // this.syncObject
 
-    [Key(1)]
-    private OnlineNode.GoshujinClass onlineNodes = default!;
+    [Key(1)]//
+    private OnlineNode.GoshujinClass onlineNodes = new(); // this.syncObject
+
+    private OnlineNode.GoshujinClass unknownNodes = new(); // this.syncObject
 
     public int CountLinfelineOnline => this.lifelineNodes.OnlineLinkChain.Count;
 
@@ -37,7 +41,40 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public int CountOnline => this.onlineNodes.Count;
 
+    public bool HasSufficientOnlineNodes => this.CountOnline >= SufficientOnlineNodes;
+
     #endregion
+
+    /// <summary>
+    /// Tries to add a NetNode from the incoming connection and check the node later.
+    /// </summary>
+    /// <param name="node">The NetNode to add.</param>
+    /// <returns>True if the node was added successfully, false otherwise.</returns>
+    public bool TryAddUnknownNode(NetNode node)
+    {
+        if (this.HasSufficientOnlineNodes)
+        {
+            return false;
+        }
+
+        if (this.unknownNodes.Count >= MaxUnknownNodes)
+        {
+            return false;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.onlineNodes.AddressChain.ContainsKey(node.Address))
+            {
+                return false;
+            }
+
+            var item = new OnlineNode(node);
+            item.Goshujin = this.unknownNodes;
+        }
+
+        return true;
+    }
 
     public bool TryGetLifelineNode([NotNullWhen(true)] out NetNode? node)
     {
@@ -55,6 +92,19 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
 
         return true;
+    }
+
+    public IntegralityResultMemory DifferentiateOnlineNode(BytePool.RentMemory memory)
+    {
+        lock (this.syncObject)
+        {
+            return ((IIntegralityObject)this.onlineNodes).Differentiate(OnlineNode.Integrality.Instance, memory);
+        }
+    }
+
+    public Task<IntegralityResult> IntegrateOnlineNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
+    {
+        return OnlineNode.Integrality.Instance.Integrate(this.onlineNodes, brokerDelegate, cancellationToken);
     }
 
     public void ReportLifelineNode(NetNode node, ConnectionResult result)

@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("change-vault-pass")]
 public class ChangeVaultPassSubcommand : ISimpleCommandAsync

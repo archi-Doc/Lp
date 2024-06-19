@@ -3,11 +3,21 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TemplateProof : Proof
-{// Remember to add the TinyhandUnion attribute to the Proof class.
-    public TemplateProof()
+public sealed partial class CredentialProof : Proof
+{
+    public CredentialProof()
     {
     }
+
+    #region FieldAndProperty
+
+    [Key(5)]
+    public Value Value { get; private set; }
+
+    [Key(6)]
+    public NetAddress NetAddress { get; private set; }
+
+    #endregion
 
     public override bool Validate()
     {

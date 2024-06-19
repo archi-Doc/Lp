@@ -2,11 +2,11 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("template-subcommand")]
 public class TemplateSubcommand : ISimpleCommandAsync
-{// Control -> context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
+{// Control -> context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
     public TemplateSubcommand(ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;

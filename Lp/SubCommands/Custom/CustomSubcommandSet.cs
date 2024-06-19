@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("set")]
 public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOptions>
@@ -33,9 +33,9 @@ public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOption
 
 public record CustomSubcommandSetOptions
 {
-    [SimpleOption("name", Description = "Customized command name", Required = true)]
+    [SimpleOption("Name", Description = "Customized command name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("command", Description = "Command", Required = true)]
+    [SimpleOption("Command", Description = "Command", Required = true)]
     public string Command { get; init; } = string.Empty;
 }

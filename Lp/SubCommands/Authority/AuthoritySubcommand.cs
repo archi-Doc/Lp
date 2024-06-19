@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("authority", IsSubcommand = true)]
 public class AuthoritySubcommand : SimpleCommandGroup<AuthoritySubcommand>

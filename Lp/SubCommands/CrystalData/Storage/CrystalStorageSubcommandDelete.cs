@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Crystal;
+using Lp.Crystal;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.CrystalData;
+namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("delete", Description = "Delete storage.")]
 public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorageOptionsDelete>

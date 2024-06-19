@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 using Netsphere.Interfaces;
 using Netsphere.Packet;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("restart")]
 public class RestartCommand : ISimpleCommandAsync<RestartOptions>

@@ -3,7 +3,7 @@
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("rm")]
 public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
@@ -35,6 +35,6 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
 
 public record AuthoritySubcommandNameOptions
 {
-    [SimpleOption("name", Description = "Authority name", Required = true)]
+    [SimpleOption("Name", Description = "Authority name", Required = true)]
     public string AuthorityName { get; init; } = string.Empty;
 }

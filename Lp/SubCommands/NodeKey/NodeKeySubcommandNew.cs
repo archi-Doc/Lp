@@ -3,7 +3,7 @@
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("new")]
 public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
@@ -58,6 +58,6 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
 
 public record NodeKeySubcommandNewOptions
 {
-    [SimpleOption("seed", Description = "Seedphrase")]
+    [SimpleOption("Seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
 }

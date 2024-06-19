@@ -14,7 +14,7 @@ public partial class IdentificationProof : Proof
 
     public bool ValidateAndVerify()
     {
-        return LP.TinyhandHelper.ValidateAndVerify(this);
+        return Lp.TinyhandHelper.ValidateAndVerify(this);
     }
 
     public override bool Validate()

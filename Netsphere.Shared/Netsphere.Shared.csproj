@@ -9,8 +9,8 @@
     <Product>Netsphere.Shared</Product>
     <Description>Netsphere.Shared</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/archi-Doc/LP</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/archi-Doc/LP</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/archi-Doc/Lp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/archi-Doc/Lp</RepositoryUrl>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 

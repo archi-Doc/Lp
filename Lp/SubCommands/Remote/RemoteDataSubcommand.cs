@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Logging;
+using Lp.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Interfaces;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("remotedata")]
 internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
@@ -77,9 +77,9 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
 
 public record RemoteDataOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = false)]
+    [SimpleOption("Node", Description = "Node address", Required = false)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("remoteprivatekey", Description = "Remote private key", Required = false)]
+    [SimpleOption("Remoteprivatekey", Description = "Remote private key", Required = false)]
     public string RemotePrivateKey { get; init; } = string.Empty;
 }

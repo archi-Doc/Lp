@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Buffers;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
-namespace LP;
+namespace Lp;
 
 public static class TinyhandHelper
 {

@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Data;
+using Lp.Data;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("off")]
 public class FlagSubcommandOff : ISimpleCommand
@@ -16,7 +16,7 @@ public class FlagSubcommandOff : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var ope = VisceralClass.TryGet(this.Control.LPBase.Settings.Flags);
+        var ope = VisceralClass.TryGet(this.Control.LpBase.Settings.Flags);
         if (ope == null)
         {
             return;

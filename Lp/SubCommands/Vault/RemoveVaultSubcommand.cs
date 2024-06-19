@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("remove-vault")]
 public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>

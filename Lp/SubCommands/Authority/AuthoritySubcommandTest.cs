@@ -3,7 +3,7 @@
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("test")]
 public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTestOptions>
@@ -36,10 +36,10 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
 
 public record AuthoritySubcommandTestOptions
 {
-    [SimpleOption("name", Description = "Key name", Required = true)]
+    [SimpleOption("Name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("pass", Description = "Passphrase")]
+    [SimpleOption("Pass", Description = "Passphrase")]
     public string? Passphrase { get; init; }
 
     public override string ToString() => $"{this.Name}";

@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("nodekey", IsSubcommand = true)]
 public class NodeKeySubcommand : SimpleCommandGroup<NodeKeySubcommand>

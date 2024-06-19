@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 // [SimpleCommand("mergernested", IsSubcommand = true)]
 public class MergerNestedcommand : Nestedcommand<MergerNestedcommand>

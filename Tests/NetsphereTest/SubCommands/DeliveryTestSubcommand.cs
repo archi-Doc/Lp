@@ -69,7 +69,7 @@ public class DeliveryTestSubcommand : ISimpleCommandAsync<DeliveryTestOptions>
 
 public record DeliveryTestOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = false)]
+    [SimpleOption("Node", Description = "Node address", Required = false)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

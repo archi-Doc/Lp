@@ -3,7 +3,7 @@
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("new")]
 public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
@@ -49,19 +49,19 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
 
 public record AuthoritySubcommandNewOptions
 {
-    [SimpleOption("name", Description = "Key name", Required = true)]
+    [SimpleOption("Name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("pass", Description = "Passphrase")]
+    [SimpleOption("Pass", Description = "Passphrase")]
     public string? Passphrase { get; init; }
 
-    [SimpleOption("seed", Description = "Seedphrase")]
+    [SimpleOption("Seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
 
-    [SimpleOption("lifetime", Description = "Lifetime")]
+    [SimpleOption("Lifetime", Description = "Lifetime")]
     public AuthorityLifetime Lifetime { get; init; }
 
-    [SimpleOption("seconds", Description = "Lifetime in seconds")]
+    [SimpleOption("Seconds", Description = "Lifetime in seconds")]
     public int LifetimeInSeconds { get; init; }
 
     public override string ToString() => $"{this.Name}";

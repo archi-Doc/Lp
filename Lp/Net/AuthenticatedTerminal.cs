@@ -3,7 +3,7 @@
 using Lp.T3cs;
 using Netsphere.Crypto;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 public class AuthenticatedTerminalFactory
 {

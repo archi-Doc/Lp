@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace LP;
+namespace Lp;
 
 /// <summary>
 /// Represents a T3CS result and value.

@@ -2,9 +2,9 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LP.Logging;
+namespace Lp.Logging;
 
-public class LPLogger
+public class LpLogger
 {
     public class Builder : UnitBuilder
     {
@@ -62,7 +62,7 @@ public class LPLogger
 
                     /*if (context.LogSourceType == typeof(ClientTerminal))
                     {// ClientTerminal
-                        if (context.TryGetOptions<LPOptions>(out var options) &&
+                        if (context.TryGetOptions<LpOptions>(out var options) &&
                         options.NetsphereOptions.EnableLogger)
                         {
                             context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
@@ -72,7 +72,7 @@ public class LPLogger
                     }
                     else if (context.LogSourceType == typeof(ServerTerminal))
                     {// ServerTerminal
-                        if (context.TryGetOptions<LPOptions>(out var options) &&
+                        if (context.TryGetOptions<LpOptions>(out var options) &&
                         options.NetsphereOptions.EnableLogger)
                         {
                             context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();

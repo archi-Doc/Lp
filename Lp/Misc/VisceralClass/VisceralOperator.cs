@@ -2,7 +2,7 @@
 
 using System.Reflection;
 
-namespace LP.Data;
+namespace Lp.Data;
 
 internal class VisceralOperator<T>
 {

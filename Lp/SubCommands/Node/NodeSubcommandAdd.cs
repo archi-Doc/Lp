@@ -3,7 +3,7 @@
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("add")]
 public class NodeSubcommandAdd : ISimpleCommand

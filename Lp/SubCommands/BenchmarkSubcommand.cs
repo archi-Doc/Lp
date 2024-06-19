@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 using Netsphere.Misc;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("benchmark", Description = "Executes a simple benchmark")]
 public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
@@ -149,7 +149,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
 public record BenchmarkOptions
 {
-    [SimpleOption("repetition", ShortName = "r", Description = "Number of repetitions")]
+    [SimpleOption("Repetition", ShortName = "r", Description = "Number of repetitions")]
     public int Repetition { get; set; } = 3;
 }
 

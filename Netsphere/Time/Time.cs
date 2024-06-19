@@ -38,7 +38,7 @@ public static class Time
     public static DateTime GetSystem() => new DateTime((long)(Stopwatch.GetTimestamp() * TimestampToTicks));
 
     /// <summary>
-    /// Gets a <see cref="DateTime"/> since LP has started (0001/01/01 0:00:00).<br/>
+    /// Gets a <see cref="DateTime"/> since Lp has started (0001/01/01 0:00:00).<br/>
     /// Not affected by manual date/time changes.
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>

@@ -3,11 +3,11 @@
 using Netsphere.Stats;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("show-own-node")]
 public class ShowOwnNodeSubcommand : ISimpleCommandAsync
-{// Control -> context.AddSubcommand(typeof(LP.Subcommands.ShowOwnNodeSubcommand));
+{// Control -> context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
     public ShowOwnNodeSubcommand(ILogger<ShowOwnNodeSubcommand> logger, IUserInterfaceService userInterfaceService, NetStats netStats)
     {
         this.logger = logger;
@@ -19,7 +19,7 @@ public class ShowOwnNodeSubcommand : ISimpleCommandAsync
     {
         // this.userInterfaceService.WriteLine(typeof(ShowOwnNodeSubcommand).Name);
 
-        var node = this.netStats.GetMyNetNode();
+        var node = this.netStats.GetOwnNetNode();
         this.userInterfaceService.WriteLine(node.ToString());
     }
 

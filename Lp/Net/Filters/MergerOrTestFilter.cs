@@ -2,20 +2,20 @@
 
 using Netsphere;
 
-namespace LP.NetServices;
+namespace Lp.NetServices;
 
 public class MergerOrTestFilter : IServiceFilter
 {
     public MergerOrTestFilter(NetBase netBase, LpBase lpBase)
     {
         this.NetBase = netBase;
-        this.LPBase = lpBase;
+        this.LpBase = lpBase;
     }
 
     public async Task Invoke(TransmissionContext context, Func<TransmissionContext, Task> invoker)
     {
-        if (this.LPBase.Options.TestFeatures)
-        {// this.LPBase.Mode == LPMode.Merger
+        if (this.LpBase.Options.TestFeatures)
+        {// this.LpBase.Mode == LpMode.Merger
             await invoker(context);
         }
         else
@@ -26,5 +26,5 @@ public class MergerOrTestFilter : IServiceFilter
 
     public NetBase NetBase { get; }
 
-    public LpBase LPBase { get; }
+    public LpBase LpBase { get; }
 }

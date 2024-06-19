@@ -3,7 +3,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
-namespace LP;
+namespace Lp;
 
 /// <summary>
 /// A fast and thread-safe pool of fixed-length (1 kbytes or more) byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>

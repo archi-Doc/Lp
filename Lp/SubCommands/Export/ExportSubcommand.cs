@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("export", IsSubcommand = true)]
 public class ExportSubcommand : SimpleCommandGroup<ExportSubcommand>

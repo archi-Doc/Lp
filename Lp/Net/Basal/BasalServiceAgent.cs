@@ -1,15 +1,28 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Collections;
+using Netsphere.Interfaces;
+using Netsphere.Stats;
 using ValueLink.Integrality;
 
 namespace Lp.Basal;
 
 [NetServiceObject]
-internal partial class BasalServiceAgent : IBasalService
+internal partial class BasalServiceAgent : INodeControlService
 {
-    public NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory)
+    public BasalServiceAgent(NetStats netStats)
     {
-        throw new NotImplementedException();
+        this.netStats = netStats;
+    }
+
+    #region FieldAndProperty
+
+    private readonly NetStats netStats;
+
+    #endregion
+
+    public async NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory)
+    {
+        return this.netStats.NodeControl.DifferentiateOnlineNode(memory);
     }
 }

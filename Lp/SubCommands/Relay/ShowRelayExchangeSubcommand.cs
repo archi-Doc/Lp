@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands.Relay;
+namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("show-relay-exchange", Description = "Display relay exchange.")]
 public class ShowRelayExchangeSubcommand : ISimpleCommandAsync

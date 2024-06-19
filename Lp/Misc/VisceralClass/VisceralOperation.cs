@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace LP.Data;
+namespace Lp.Data;
 
 internal readonly struct VisceralOperation<T> : IVisceralOperation<T>
 {

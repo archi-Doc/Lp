@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 public class Nestedcommand<TCommand>
     where TCommand : Nestedcommand<TCommand>

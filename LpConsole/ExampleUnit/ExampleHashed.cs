@@ -2,7 +2,7 @@
 
 using Tinyhand;
 
-namespace LPConsole.Example;
+namespace LpConsole.Example;
 
 [TinyhandGenerateHash("strings-en.tinyhand")]
 public static partial class ExampleHashed

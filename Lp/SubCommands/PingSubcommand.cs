@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Netsphere.Packet;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("ping")]
 public class PingSubcommand : ISimpleCommandAsync<PingOptions>
@@ -67,13 +67,13 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
 public record PingOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = true)]
+    [SimpleOption("Node", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("count", Description = "Count")]
+    [SimpleOption("Count", Description = "Count")]
     public int Count { get; init; } = 1;
 
-    [SimpleOption("interval", Description = "Interval (seconds)")]
+    [SimpleOption("Interval", Description = "Interval (seconds)")]
     public int Interval { get; init; } = 2;
 
     public override string ToString() => $"{this.Node}";

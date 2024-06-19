@@ -2,9 +2,9 @@
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-using LP.Data;
+using Lp.Data;
 
-namespace LP;
+namespace Lp;
 
 public class LpBase
 {
@@ -18,7 +18,7 @@ public class LpBase
 
     public LpBase()
     {
-        this.Settings = TinyhandSerializer.Reconstruct<LPSettings>();
+        this.Settings = TinyhandSerializer.Reconstruct<LpSettings>();
     }
 
     public bool IsFirstRun { get; private set; }
@@ -35,7 +35,7 @@ public class LpBase
 
     public LpOptions Options { get; private set; } = default!;
 
-    public LPSettings Settings { get; set; }
+    public LpSettings Settings { get; set; }
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 

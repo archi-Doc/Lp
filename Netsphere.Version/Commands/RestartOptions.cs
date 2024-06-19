@@ -2,17 +2,17 @@
 
 using Netsphere.Crypto;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 public record RestartOptions
 {
-    [SimpleOption("runner_node", Description = "Runner nodes", Required = true)]
+    [SimpleOption("RunnerNode", Description = "Runner nodes", Required = true)]
     public string RunnerNode { get; init; } = string.Empty;
 
     [SimpleOption(NetConstants.RemotePrivateKeyName, Description = "Private key for remote operation", GetEnvironmentVariable = true)]
     public string RemotePrivateKeyString { get; set; } = string.Empty;
 
-    [SimpleOption("container_port", Description = "Port number associated with the container")]
+    [SimpleOption("ContainerPort", Description = "Port number associated with the container")]
     public ushort ContainerPort { get; init; } = NetConstants.MinPort;
 
     public void Prepare()

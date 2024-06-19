@@ -2,12 +2,12 @@
 
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("lp")]
-public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
+public class InfoSubcommandLp : ISimpleCommand<DumpSubcommandInfoOptions>
 {
-    public InfoSubcommandLP(Control control)
+    public InfoSubcommandLp(Control control)
     {
         this.Control = control;
     }
@@ -15,7 +15,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
-        var logger = this.Control.Logger.TryGet<InfoSubcommandLP>(LogLevel.Information);
+        var logger = this.Control.Logger.TryGet<InfoSubcommandLp>(LogLevel.Information);
 
         logger?.Log($"Info: {target}");
 
@@ -30,7 +30,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
 
 public record DumpSubcommandInfoOptions
 {
-    [SimpleOption("count", Description = "Count")]
+    [SimpleOption("Count", Description = "Count")]
     public int Count { get; init; }
 
     public override string ToString() => $"{this.Count}";

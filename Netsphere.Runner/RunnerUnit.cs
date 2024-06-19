@@ -166,7 +166,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             await File.WriteAllBytesAsync(path, TinyhandSerializer.SerializeToUtf8(newInformation));
 
             logger.TryGet(LogLevel.Error)?.Log($"'{path}' could not be found and was created.");
-            logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart LPRunner.");
+            logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart LpRunner.");
 
             return null;
         }*/

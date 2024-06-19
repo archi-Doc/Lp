@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Data;
+using Lp.Data;
 using SimpleCommandLine;
 
-namespace LP.Subcommands;
+namespace Lp.Subcommands;
 
 [SimpleCommand("options")]
 public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>
@@ -19,9 +19,9 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
     {
         try
         {
-            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.Options with { OptionsPath = string.Empty, });
+            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LpBase.Options with { OptionsPath = string.Empty, });
 
-            var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LpOptions.DefaultOptionsName);
+            var path = this.Control.LpBase.CombineDataPathAndPrepareDirectory(options.Output, LpOptions.DefaultOptionsName);
             if (File.Exists(path) &&
                 await this.userInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmOverwrite, path) != true)
             {
@@ -44,7 +44,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
 
 public record ExportSubcommandOptionsOptions
 {
-    [SimpleOption("output", Description = "Output path")]
+    [SimpleOption("Output", Description = "Output path")]
     public string Output { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Output}";

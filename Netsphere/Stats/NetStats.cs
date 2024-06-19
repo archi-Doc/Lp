@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 
 namespace Netsphere.Stats;
@@ -10,18 +9,15 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
+    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl, PublicAccess publicAccess)
     {
         this.logger = logger;
         this.netBase = netBase;
         this.NodeControl = nodeControl;
+        this.PublicAccess = publicAccess;
     }
 
     #region FieldAndProperty
-
-    private readonly object syncObject = new();
-    private readonly ILogger logger;
-    private readonly NetBase netBase;
 
     [Key(0)]
     public long LastMics { get; private set; }
@@ -30,10 +26,17 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public NodeControl NodeControl { get; private set; }
 
     [Key(2)]
-    public MyAddress MyIpv4Address { get; private set; } = new();
+    public PublicAddress PublicIpv4Address { get; private set; } = new();
 
     [Key(3)]
-    public MyAddress MyIpv6Address { get; private set; } = new();
+    public PublicAddress PublicIpv6Address { get; private set; } = new();
+
+    [Key(4)]
+    public PublicAccess PublicAccess { get; private set; }
+
+    private readonly object syncObject = new();
+    private readonly ILogger logger;
+    private readonly NetBase netBase;
 
     #endregion
 
@@ -42,8 +45,8 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         endPoint = default;
         if (endpointResolution == EndpointResolution.PreferIpv6)
         {
-            if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
-            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+            if (this.PublicIpv6Address.AddressState == PublicAddress.State.Fixed ||
+            this.PublicIpv6Address.AddressState == PublicAddress.State.Changed)
             {// Ipv6 supported
                 address.TryCreateIpv6(ref endPoint);
                 if (endPoint.IsValid)
@@ -86,8 +89,8 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
     {
         endPoint = default;
-        if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
-            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        if (this.PublicIpv6Address.AddressState == PublicAddress.State.Fixed ||
+            this.PublicIpv6Address.AddressState == PublicAddress.State.Changed)
         {// Ipv6 supported
             node.Address.TryCreateIpv6(ref endPoint);
             if (endPoint.IsValid)
@@ -103,38 +106,38 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         }
     }
 
-    public NetNode GetMyNetNode()
+    public NetNode GetOwnNetNode()
     {
-        var address = new NetAddress(this.MyIpv4Address.Address, this.MyIpv6Address.Address, (ushort)this.netBase.NetOptions.Port);
+        var address = new NetAddress(this.PublicIpv4Address.Address, this.PublicIpv6Address.Address, (ushort)this.netBase.NetOptions.Port);
         return new(address, this.netBase.NodePublicKey);
     }
 
     public void UpdateStats()
     {
-        if (this.MyIpv4Address.AddressState == MyAddress.State.Changed ||
-            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        if (this.PublicIpv4Address.AddressState == PublicAddress.State.Changed ||
+            this.PublicIpv6Address.AddressState == PublicAddress.State.Changed)
         {// Reset
-            this.MyIpv4Address.Reset();
-            this.MyIpv6Address.Reset();
+            this.PublicIpv4Address.Reset();
+            this.PublicIpv6Address.Reset();
         }
     }
 
     public void Reset()
     {
-        this.MyIpv4Address.Reset();
-        this.MyIpv6Address.Reset();
+        this.PublicIpv4Address.Reset();
+        this.PublicIpv6Address.Reset();
     }
 
     public void ReportAddress(AddressQueryResult result)
     {
         var priority = result.Uri is not null;
-        if (result.Ipv6)
+        if (result.IsValidIpv6)
         {// Ipv6
-            this.MyIpv6Address.ReportAddress(priority, result.Address);
+            this.PublicIpv6Address.ReportAddress(priority, result.Address);
         }
         else
         {// Ipv4
-            this.MyIpv4Address.ReportAddress(priority, result.Address);
+            this.PublicIpv4Address.ReportAddress(priority, result.Address);
         }
     }
 
@@ -142,11 +145,11 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     {
         if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
         {// Ipv6
-            this.MyIpv6Address.ReportAddress(false, address);
+            this.PublicIpv6Address.ReportAddress(false, address);
         }
         else if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {// Ipv4
-            this.MyIpv4Address.ReportAddress(false, address);
+            this.PublicIpv4Address.ReportAddress(false, address);
         }
     }
 

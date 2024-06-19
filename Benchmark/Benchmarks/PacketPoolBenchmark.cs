@@ -4,7 +4,7 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using Arc.Collections;
 using BenchmarkDotNet.Attributes;
-using LP;
+using Lp;
 
 namespace Benchmark;
 

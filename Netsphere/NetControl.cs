@@ -37,6 +37,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetBase>();
                 // context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NodeControl>();
+                context.AddSingleton<PublicAccess>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();

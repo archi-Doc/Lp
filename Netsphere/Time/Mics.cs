@@ -44,7 +44,7 @@ public static class Mics
     public static long UpdateFastSystem() => fastSystemMics = GetSystem();
 
     /// <summary>
-    /// Gets the <see cref="Mics"/> (microseconds) since LP has started.<br/>
+    /// Gets the <see cref="Mics"/> (microseconds) since Lp has started.<br/>
     /// Not affected by manual date/time changes.
     /// </summary>
     /// <returns><see cref="Mics"/> (microseconds).</returns>
