@@ -245,7 +245,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
 public record NetbenchOptions
 {
-    [SimpleOption("node", Description = "Node address")]
+    [SimpleOption("Node", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

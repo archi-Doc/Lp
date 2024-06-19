@@ -85,12 +85,12 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 
 public record NewVaultOptions
 {
-    [SimpleOption("name", Description = "Vault name", Required = true)]
+    [SimpleOption("Name", Description = "Vault name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("class", Description = "Key class")]
+    [SimpleOption("Class", Description = "Key class")]
     public KeyClass KeyClass { get; init; } = KeyClass.Signature;
 
-    [SimpleOption("seed", Description = "Seedphrase")]
+    [SimpleOption("Seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
 }

@@ -4,11 +4,11 @@ namespace Netsphere;
 
 public static class NetConstants
 {
-    public const string NodeName = "node";
-    public const string NodePrivateKeyName = "node_privatekey";
-    public const string NodePublicKeyName = "node_publickey";
-    public const string RemotePrivateKeyName = "remote_privatekey";
-    public const string RemotePublicKeyName = "remote_publickey";
+    public const string NodeName = "NodeName";
+    public const string NodePrivateKeyName = "NodePrivatekey";
+    public const string NodePublicKeyName = "NodePublickey";
+    public const string RemotePrivateKeyName = "RemotePrivatekey";
+    public const string RemotePublicKeyName = "RemotePublickey";
 
     public const int MaxPacketLength = 1350; // 1500 - 60 - 8 = 1432 bytes
     public const int RelayLength = 48; // RelayHeader(32) + Padding(0-15)

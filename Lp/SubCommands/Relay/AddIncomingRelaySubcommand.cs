@@ -77,9 +77,9 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
 
 public record NewCertificateRelayOptions
 {
-    [SimpleOption("authority", Required = true, Description = "Authority")]
+    [SimpleOption("Authority", Required = true, Description = "Authority")]
     public string Authority { get; init; } = string.Empty;
 
-    [SimpleOption("relaynode", Required = true, Description = "Relay node")]
+    [SimpleOption("RelayNode", Required = true, Description = "Relay node")]
     public string RelayNode { get; init; } = string.Empty;
 }

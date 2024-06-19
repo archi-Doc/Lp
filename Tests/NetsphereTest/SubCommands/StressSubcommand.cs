@@ -148,13 +148,13 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
 public record StressOptions
 {
-    [SimpleOption("node", Description = "Node address")]
+    [SimpleOption("Node", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("total", Description = "")]
+    [SimpleOption("Total", Description = "")]
     public int Total { get; init; } = 1_000; // 1_000;
 
-    [SimpleOption("concurrent", Description = "")]
+    [SimpleOption("Concurrent", Description = "")]
     public int Concurrent { get; init; } = 100; // 25;
 
     public override string ToString() => $"{this.Node}";

@@ -97,15 +97,15 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
 public record DefaultCommandOptions
 {
-    [SimpleOption("directory", Description = "Directory")]
+    [SimpleOption("Directory", Description = "Directory")]
     public string Directory { get; init; } = "Data";
 
-    [SimpleOption("punchnode", Description = "Punch node")]
+    [SimpleOption("PunchNode", Description = "Punch node")]
     public string PunchNode { get; init; } = string.Empty;
 
-    [SimpleOption("node_privatekey", Description = "Node private key")]
+    [SimpleOption("NodePrivatekey", Description = "Node private key")]
     public string NodePrivateKey { get; init; } = string.Empty;
 
-    [SimpleOption("remotepublickey", Description = "Remote public key")]
+    [SimpleOption("RemotePublickey", Description = "Remote public key")]
     public string RemotePublicKey { get; set; } = string.Empty;
 }

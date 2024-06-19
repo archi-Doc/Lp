@@ -55,6 +55,6 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
 
 public record CreateCreditOptions
 {
-    [SimpleOption("authority", Description = "Authority name", Required = true)]
+    [SimpleOption("Authority", Description = "Authority name", Required = true)]
     public string AuthorityName { get; init; } = string.Empty;
 }

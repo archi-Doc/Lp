@@ -7,30 +7,30 @@ namespace Netsphere;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record NetOptions
 {
-    [SimpleOption("nodename", Description = "Node name")]
+    [SimpleOption("NodeName", Description = "Node name")]
     public string NodeName { get; set; } = string.Empty;
 
     // [SimpleOption("address", Description = "Global IP address")]
     // public string Address { get; set; } = string.Empty;
 
-    [SimpleOption("port", Description = "Port number associated with the address")]
+    [SimpleOption("Port", Description = "Port number associated with the address")]
     public int Port { get; set; }
 
-    [SimpleOption("node_privatekey", Description = "Node private key")]
+    [SimpleOption("NodePrivatekey", Description = "Node private key")]
     public string NodePrivateKey { get; set; } = string.Empty;
 
-    [SimpleOption("node_list", Description = "Node addresses to connect")]
+    [SimpleOption("NodeList", Description = "Node addresses to connect")]
     public string NodeList { get; set; } = string.Empty;
 
-    [SimpleOption("phase", Description = "Network phase")]
+    [SimpleOption("Phase", Description = "Network phase")]
     public int Phase { get; set; }
 
-    [SimpleOption("ping", Description = "Enable ping function")]
+    [SimpleOption("Ping", Description = "Enable ping function")]
     public bool EnablePing { get; set; } = true;
 
-    [SimpleOption("server", Description = "Enable server function")]
+    [SimpleOption("Server", Description = "Enable server function")]
     public bool EnableServer { get; set; } = false;
 
-    [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
+    [SimpleOption("Alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 }

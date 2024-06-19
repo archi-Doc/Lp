@@ -13,7 +13,7 @@ public partial record RunnerOptions
     // [SimpleOption("lifespan", Description = "Time in seconds until the runner automatically shuts down (set to -1 for infinite).")]
     // public long Lifespan { get; init; } = 6;
 
-    [SimpleOption("port", Description = "Port number associated with the runner")]
+    [SimpleOption("Port", Description = "Port number associated with the runner")]
     public ushort Port { get; set; } = 49999;
 
     [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key for connection", GetEnvironmentVariable = true)]
@@ -22,16 +22,16 @@ public partial record RunnerOptions
     [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Public key for remote operation", GetEnvironmentVariable = true)]
     public string RemotePublicKeyString { get; set; } = string.Empty;
 
-    [SimpleOption("image", Description = "Container image")]
+    [SimpleOption("Image", Description = "Container image")]
     public string Image { get; init; } = string.Empty;
 
-    [SimpleOption("docker_param", Description = "Parameters to be passed to the docker run command.")]
+    [SimpleOption("DockerParam", Description = "Parameters to be passed to the docker run command.")]
     public string DockerParameters { get; init; } = string.Empty;
 
-    [SimpleOption("container_port", Description = "Port number associated with the container")]
+    [SimpleOption("ContainerPort", Description = "Port number associated with the container")]
     public ushort ContainerPort { get; set; } = 0; // 0: Disabled
 
-    [SimpleOption("container_param", Description = "Parameters to be passed to the container.")]
+    [SimpleOption("ContainerParam", Description = "Parameters to be passed to the container.")]
     public string ContainerParameters { get; init; } = string.Empty;
 
     public bool Check(ILogger logger)

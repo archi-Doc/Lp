@@ -113,12 +113,12 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
 
 public record RestartRemoteContainerOptions
 {
-    [SimpleOption("runner_node", Description = "Runner node", Required = true)]
+    [SimpleOption("RunnerNode", Description = "Runner node", Required = true)]
     public string RunnerNode { get; init; } = string.Empty;
 
-    [SimpleOption("remote_privault", Description = "Private key or vault name for remote operation")]
+    [SimpleOption("RemotePrivault", Description = "Private key or vault name for remote operation")]
     public string RemotePrivault { get; init; } = string.Empty;
 
-    [SimpleOption("containerport", Description = "Port number associated with the container")]
+    [SimpleOption("ContainerPort", Description = "Port number associated with the container")]
     public ushort ContainerPort { get; init; } = NetConstants.MinPort;
 }

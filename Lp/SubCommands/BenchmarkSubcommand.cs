@@ -149,7 +149,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
 public record BenchmarkOptions
 {
-    [SimpleOption("repetition", ShortName = "r", Description = "Number of repetitions")]
+    [SimpleOption("Repetition", ShortName = "r", Description = "Number of repetitions")]
     public int Repetition { get; set; } = 3;
 }
 

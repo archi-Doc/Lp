@@ -6,7 +6,7 @@ namespace Netsphere.Version;
 
 public partial record ServerOptions
 {
-    [SimpleOption("port", Description = "Port number associated with the address")]
+    [SimpleOption("Port", Description = "Port number associated with the address")]
     public int Port { get; set; } = 55555;
 
     // [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key for connection", GetEnvironmentVariable = true)]
@@ -15,7 +15,7 @@ public partial record ServerOptions
     [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Public key for remote operation", GetEnvironmentVariable = true)]
     public string RemotePublicKeyString { get; set; } = string.Empty;
 
-    [SimpleOption("version_identifier", Description = "Version identifier", GetEnvironmentVariable = true)]
+    [SimpleOption("VersionIdentifier", Description = "Version identifier", GetEnvironmentVariable = true)]
     public int VersionIdentifier { get; set; }
 
     public bool Check(ILogger logger)

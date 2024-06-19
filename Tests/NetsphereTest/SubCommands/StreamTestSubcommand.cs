@@ -63,9 +63,9 @@ public class StreamTestSubcommand : ISimpleCommandAsync<StreamTestOptions>
 
 public record StreamTestOptions
 {
-    [SimpleOption("node", Description = "Node address")]
+    [SimpleOption("Node", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("remoteprivatekey", Description = "Remote private key")]
+    [SimpleOption("RemotePrivatekey", Description = "Remote private key")]
     public string RemotePrivateKey { get; init; } = string.Empty;
 }

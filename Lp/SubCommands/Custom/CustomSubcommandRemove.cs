@@ -33,6 +33,6 @@ public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOp
 
 public record CustomSubcommandNameOptions
 {
-    [SimpleOption("name", Description = "Customized command name", Required = true)]
+    [SimpleOption("Name", Description = "Customized command name", Required = true)]
     public string Name { get; init; } = string.Empty;
 }

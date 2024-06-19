@@ -58,6 +58,6 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
 
 public record NodeKeySubcommandNewOptions
 {
-    [SimpleOption("seed", Description = "Seedphrase")]
+    [SimpleOption("Seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
 }

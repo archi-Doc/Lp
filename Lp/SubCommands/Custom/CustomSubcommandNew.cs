@@ -40,10 +40,10 @@ public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOption
 
 public record CustomSubcommandNewOptions
 {
-    [SimpleOption("name", Description = "Customized command name", Required = true)]
+    [SimpleOption("Name", Description = "Customized command name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("command", Description = "Command")]
+    [SimpleOption("Command", Description = "Command")]
     public string Command { get; init; } = string.Empty;
 
     /*[SimpleOption("array", Description = "Command array")]

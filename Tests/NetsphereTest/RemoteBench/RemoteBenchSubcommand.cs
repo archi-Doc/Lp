@@ -142,7 +142,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
 public record RemoteBenchOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = true)]
+    [SimpleOption("Node", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

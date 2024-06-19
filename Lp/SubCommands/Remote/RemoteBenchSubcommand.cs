@@ -33,15 +33,15 @@ internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
 public record RemoteBenchOptions
 {
-    [SimpleOption("total", Description = "Total")]
+    [SimpleOption("Total", Description = "Total")]
     public int Total { get; init; } = 10_000;
 
-    [SimpleOption("concurrent", Description = "Concurrent")]
+    [SimpleOption("Concurrent", Description = "Concurrent")]
     public int Concurrent { get; init; } = 25;
 
-    [SimpleOption("node", Description = "Node address", Required = false)]
+    [SimpleOption("Node", Description = "Node address", Required = false)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("remoteprivatekey", Description = "Remote private key", Required = false)]
+    [SimpleOption("RemotePrivatekey", Description = "Remote private key", Required = false)]
     public string RemotePrivateKey { get; init; } = string.Empty;
 }
