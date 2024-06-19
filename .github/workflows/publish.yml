@@ -23,7 +23,7 @@ jobs:
     - name: Package2
       run: dotnet pack -c Release -o bin Netsphere.Shared/Netsphere.Shared.csproj
     - name: Package3
-      run: dotnet pack -c Release -o bin LP/LP.csproj
+      run: dotnet pack -c Release -o bin Lp/Lp.csproj
       
     - name: Publish
       run: dotnet nuget push bin/*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json
