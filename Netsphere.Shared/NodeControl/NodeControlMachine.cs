@@ -64,6 +64,7 @@ public partial class NodeControlMachine : Machine
                 if (value.Endpoint.EndPoint is { } endoint)
                 {
                     this.netControl.NetStats.ReportAddress(endoint.Address);
+                    this.netControl.NetStats.PublicAccess.ReportPortNumber(value.Endpoint.EndPoint.Port);
                 }
             }
             else

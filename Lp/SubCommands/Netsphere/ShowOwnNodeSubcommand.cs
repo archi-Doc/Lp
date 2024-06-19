@@ -19,7 +19,7 @@ public class ShowOwnNodeSubcommand : ISimpleCommandAsync
     {
         // this.userInterfaceService.WriteLine(typeof(ShowOwnNodeSubcommand).Name);
 
-        var node = this.netStats.GetMyNetNode();
+        var node = this.netStats.GetOwnNetNode();
         this.userInterfaceService.WriteLine(node.ToString());
     }
 

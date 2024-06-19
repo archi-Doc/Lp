@@ -3,7 +3,7 @@
 namespace Netsphere.Stats;
 
 [TinyhandObject]
-public partial class MyAddress
+public partial class PublicAddress
 {
     private const int MaxItems = 30;
     private const int PriorityWeight = 10;
@@ -16,7 +16,7 @@ public partial class MyAddress
         Changed,
     }
 
-    public MyAddress()
+    public PublicAddress()
     {
     }
 
