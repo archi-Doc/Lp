@@ -27,10 +27,10 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     private readonly object syncObject = new();
 
-    [Key(0)]//
+    [Key(0)]
     private LifelineNode.GoshujinClass lifelineNodes = new(); // this.syncObject
 
-    [Key(1)]//
+    [Key(1)]
     private OnlineNode.GoshujinClass onlineNodes = new(); // this.syncObject
 
     private OnlineNode.GoshujinClass unknownNodes = new(); // this.syncObject

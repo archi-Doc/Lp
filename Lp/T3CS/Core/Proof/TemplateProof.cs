@@ -21,6 +21,6 @@ public partial class TemplateProof : Proof
 
     public bool ValidateAndVerify()
     {
-        return Lp.TinyhandHelper.ValidateAndVerify(this);
+        return LpHelper.ValidateAndVerify(this);
     }
 }
