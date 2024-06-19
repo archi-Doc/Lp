@@ -65,13 +65,19 @@ public partial class PublicAccess
 
     public void ReportPortNumber(int port)
     {
+        if (port == 0)
+        {
+            return;
+        }
+
         Console.WriteLine(port);
         lock (this.syncObject)
         {
             PortCounter? counter;
-            if (this.portArray[this.portIndex] != 0)
+            var originalValue = this.portArray[this.portIndex];
+            if (originalValue != 0)
             {// Decrement
-                if (this.portCounters.PortChain.TryGetValue(this.portArray[this.portIndex], out counter))
+                if (this.portCounters.PortChain.TryGetValue(originalValue, out counter))
                 {
                     counter.Decrement();
                 }
