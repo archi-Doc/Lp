@@ -5,7 +5,8 @@ namespace Netsphere.Stats;
 [TinyhandObject(UseServiceProvider = true)]
 public partial class PublicAccess
 {
-    private const int PortArrayLength = 32;
+    private const int PortArrayLength = 256;
+    private const int PortArrayMask = PortArrayLength - 1;
 
     public enum Type
     {
@@ -18,30 +19,21 @@ public partial class PublicAccess
     [ValueLinkObject]
     private partial class PortCounter
     {
-        public PortCounter(int port)
+        public PortCounter()
         {
-            this.Port = port;
         }
 
         [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
-        public int Port { get; private set; }
+        public int Port { get; internal set; }
 
         [Link(Type = ChainType.Ordered)]
         public int Counter { get; private set; }
 
-        public void Increment()
-        {
-            this.CounterValue++;
-        }
+        public int Increment()
+            => ++this.CounterValue;
 
-        public void Decrement()
-        {
-            this.CounterValue--;
-            if (this.Counter == 0)
-            {
-                this.Goshujin = default;
-            }
-        }
+        public int Decrement()
+            => --this.CounterValue;
     }
 
     public PublicAccess(NetBase netBase)
@@ -57,6 +49,7 @@ public partial class PublicAccess
 
     private object syncObject = new();
     private PortCounter.GoshujinClass portCounters = new();
+    private ObjectPool<PortCounter> portCounterPool = new(() => new(), PortArrayLength);
     private int portIndex;
     private int[] portArray = new int[PortArrayLength];
     private int portMode;
@@ -70,7 +63,6 @@ public partial class PublicAccess
             return;
         }
 
-        Console.WriteLine(port);
         lock (this.syncObject)
         {
             PortCounter? counter;
@@ -79,28 +71,28 @@ public partial class PublicAccess
             {// Decrement
                 if (this.portCounters.PortChain.TryGetValue(originalValue, out counter))
                 {
-                    counter.Decrement();
+                    if (counter.Decrement() == 0)
+                    {
+                        counter.Goshujin = default;
+                        this.portCounterPool.Return(counter);
+                    }
                 }
             }
 
             this.portArray[this.portIndex] = port;
             if (!this.portCounters.PortChain.TryGetValue(port, out counter))
             {
-                counter = new(port);
+                counter = this.portCounterPool.Get();
+                counter.Port = port;
                 counter.Goshujin = this.portCounters;
             }
 
             counter.Increment();
 
-            this.portMode = this.portCounters.CounterChain.Last!.Counter;
-            if (this.portIndex < PortArrayLength - 1)
-            {
-                this.portIndex++;
-            }
-            else
-            {
-                this.portIndex = 0;
-            }
+            this.portMode = this.portCounters.CounterChain.Last!.Port;
+            this.portIndex = (this.portIndex + 1) & PortArrayMask;
         }
+
+        Console.WriteLine($"{port} {this.portMode}");//
     }
 }
