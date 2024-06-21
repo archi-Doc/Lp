@@ -12,6 +12,7 @@ public partial class PublicAccess
     {
         Unknown,
         Direct,
+        Concrete,
         Cone,
         Symmetric,
     }
