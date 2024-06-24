@@ -8,6 +8,7 @@ using Netsphere.Stats;
 
 namespace Netsphere.Machines;
 
+/*
 /// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
 /// 1: Connect and get nodes.<br/>
@@ -74,14 +75,14 @@ public partial class NodeControlMachine : Machine
             }
 
             // Integrate online nodes.
-            /*using (var connection = await this.netControl.NetTerminal.Connect(netNode))
-            {
-                if (connection is not null)
-                {
-                    var service = connection.GetService<INodeControlService>();
-                    var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
-                }
-            }*/
+            // using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            // {
+            //    if (connection is not null)
+            //    {
+            //        var service = connection.GetService<INodeControlService>();
+            //        var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
+            //    }
+            // }
         }
 
         return StateResult.Terminate;
@@ -116,4 +117,4 @@ public partial class NodeControlMachine : Machine
     {
         this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountOnline}");
     }
-}
+}*/
