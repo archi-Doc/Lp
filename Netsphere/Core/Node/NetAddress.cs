@@ -199,6 +199,8 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     public bool IsValidIpv6 => this.Port != 0 && (this.Address6A != 0 || this.Address6B != 0);
 
+    public bool IsValidIpv4AndIpv6 => this.Port != 0 && this.Address4 != 0 && (this.Address6A != 0 || this.Address6B != 0);
+
     public bool IsValid => this.Port != 0 && (this.Address4 != 0 || this.Address6A != 0 || this.Address6B != 0);
 
     public static int MaxStringLength

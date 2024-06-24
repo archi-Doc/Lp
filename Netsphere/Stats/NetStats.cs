@@ -7,8 +7,6 @@ namespace Netsphere.Stats;
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NetStats : ITinyhandSerializationCallback
 {
-    private static readonly long ResetMics = Mics.FromMinutes(5);
-
     public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl, PublicAccess publicAccess)
     {
         this.logger = logger;
@@ -126,6 +124,18 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     {
         this.PublicIpv4Address.Reset();
         this.PublicIpv6Address.Reset();
+    }
+
+    public void ReportOutboundAccess(bool isIpv6, IPEndPoint? endPoint)
+    {
+        if (isIpv6)
+        {
+            this.PublicIpv6Address.ReportOutboundAccess(endPoint);
+        }
+        else
+        {
+            this.PublicIpv4Address.ReportOutboundAccess(endPoint);
+        }
     }
 
     public void ReportAddress(AddressQueryResult result)
