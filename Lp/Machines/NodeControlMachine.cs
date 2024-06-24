@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
-using BigMachines;
-using Netsphere.Interfaces;
+using System.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
-namespace Netsphere.Machines;
+namespace Lp.Machines;
 
 /// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
@@ -54,34 +52,55 @@ public partial class NodeControlMachine : Machine
                 return StateResult.Continue;
             }
 
-            // var node = await this.netControl.NetTerminal.UnsafeGetNetNode(netAddress);
-            var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new(), 0, this.CancellationToken);
-
-            this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
-            if (r.Result == NetResult.Success && r.Value is { } value)
-            {// Success
-                this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
-                if (value.Endpoint.EndPoint is { } endoint)
-                {
-                    this.netControl.NetStats.ReportAddress(endoint.Address);
-                    this.netControl.NetStats.PublicAccess.ReportPortNumber(value.Endpoint.EndPoint.Port);
-                }
-            }
-            else
-            {// Failure
+            if (!netNode.Address.IsValidIpv4AndIpv6)
+            {
                 this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
                 continue;
             }
 
-            // Integrate online nodes.
-            /*using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            var ipv6Task = this.PingNetNode(netNode, true);
+            var ipv4Task = this.PingNetNode(netNode, false);
+            var result = await Task.WhenAll(ipv6Task, ipv4Task);
+
+            if (result[0] is null)
             {
-                if (connection is not null)
-                {
-                    var service = connection.GetService<INodeControlService>();
-                    var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
+                if (result[1] is null)
+                {// Ipv6 not available, Ipv4 not available
+                    this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
+                    continue;
                 }
-            }*/
+                else
+                {// Ipv6 not available, Ipv4 available
+                    this.netControl.NetStats.PublicAccess.ReportPortNumber(result[1]!.Port);
+                }
+            }
+            else
+            {
+                if (result[1] is null)
+                {// Ipv6 available, Ipv4 not available
+                    this.netControl.NetStats.PublicAccess.ReportPortNumber(result[0]!.Port);
+                }
+                else
+                {// Ipv6 available, Ipv4 available
+                    this.netControl.NetStats.PublicAccess.ReportPortNumber(result[0]!.Port);
+                }
+            }
+
+            this.netControl.NetStats.ReportOutboundAccess(true, result[0]);
+            this.netControl.NetStats.ReportOutboundAccess(false, result[1]);
+            this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
+
+            // this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
+
+            // Integrate online nodes.
+            // using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            // {
+            //    if (connection is not null)
+            //    {
+            //        var service = connection.GetService<INodeControlService>();
+            //        var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
+            //    }
+            // }
         }
 
         return StateResult.Terminate;
@@ -115,5 +134,20 @@ public partial class NodeControlMachine : Machine
     private void ShowStatus()
     {
         this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountOnline}");
+    }
+
+    private async Task<IPEndPoint?> PingNetNode(NetNode netNode, bool ipv6)
+    {
+        var endpointResolution = ipv6 ? EndpointResolution.Ipv6 : EndpointResolution.Ipv4;
+        var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new(), 0, this.CancellationToken, endpointResolution);
+
+        if (r.Result == NetResult.Success && r.Value is { } value)
+        {// Success
+            return value.Endpoint.EndPoint;
+        }
+        else
+        {
+            return default;
+        }
     }
 }

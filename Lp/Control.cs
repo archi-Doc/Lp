@@ -21,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
 using Netsphere.Interfaces;
-using Netsphere.Machines;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
@@ -76,7 +75,7 @@ public class Control
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
-                context.AddSingleton<NodeControlMachine>();
+                context.AddSingleton<Machines.NodeControlMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
