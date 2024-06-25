@@ -6,7 +6,7 @@ using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
-[TinyhandObject(UseServiceProvider = true)]
+[TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;

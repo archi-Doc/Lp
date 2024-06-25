@@ -8,7 +8,7 @@ namespace Netsphere;
 
 [TinyhandObject]
 public sealed partial class TrustSource<T>
-    where T : IEquatable<T>, ITinyhandSerialize<T>
+    where T : IEquatable<T> // , ITinyhandSerialize<T>
 {
     public enum TrustState
     {
@@ -48,6 +48,9 @@ public sealed partial class TrustSource<T>
 
         // [Key(1)]
         // public long AddedMics { get; set; }
+
+        public override string ToString()
+            => $"Item {this.Counter.ToString()}";
     }
 
     [TinyhandObject]
@@ -56,6 +59,7 @@ public sealed partial class TrustSource<T>
     {
         public Counter()
         {
+            this.Value = default!;
         }
 
         public Counter(T value)
@@ -65,11 +69,14 @@ public sealed partial class TrustSource<T>
 
         [Key(0)]
         [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
-        public T? Value { get; set; }
+        public T Value { get; set; }
 
         [Key(1)]
         [Link(Type = ChainType.Ordered)]
         public long Count { get; set; }
+
+        public override string ToString()
+            => $"{this.Count} x {this.Value?.ToString()}";
     }
 
     #region FieldAndProperty
@@ -146,7 +153,7 @@ public sealed partial class TrustSource<T>
                 }
 
                 var last = this.counters.CountChain.Last;
-                if (last is not null && this.CanFix(last))
+                if (last is not null && !last.Value.Equals(this.fixedValue) && this.CanFix(last))
                 {// Fix -> Unfix
                     this.ClearInternal();
                 }
@@ -156,6 +163,7 @@ public sealed partial class TrustSource<T>
                 var last = this.counters.CountChain.Last;
                 if (last is not null && this.CanFix(last))
                 {// Fix
+                    // this.ClearInternal(false);
                     this.isFixed = true;
                     this.fixedValue = last.Value;
                 }

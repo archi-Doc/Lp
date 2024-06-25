@@ -66,10 +66,12 @@ public partial class NodeControlMachine : Machine
             {
                 if (result[1].IsValid)
                 {// Ipv6 available, Ipv4 available
+                    this.netControl.NetStats.OutboundPort.Add(result[0].EndPoint!.Port);
                     this.netControl.NetStats.PublicAccess.ReportPortNumber(result[0].EndPoint!.Port);
                 }
                 else
                 {// Ipv6 available, Ipv4 not available
+                    this.netControl.NetStats.OutboundPort.Add(result[0].EndPoint!.Port);
                     this.netControl.NetStats.PublicAccess.ReportPortNumber(result[0].EndPoint!.Port);
                 }
             }
@@ -77,6 +79,7 @@ public partial class NodeControlMachine : Machine
             {
                 if (result[1].IsValid)
                 {// Ipv6 not available, Ipv4 available
+                    this.netControl.NetStats.OutboundPort.Add(result[1].EndPoint!.Port);
                     this.netControl.NetStats.PublicAccess.ReportPortNumber(result[1].EndPoint!.Port);
                 }
                 else

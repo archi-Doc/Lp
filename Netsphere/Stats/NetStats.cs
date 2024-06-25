@@ -7,6 +7,11 @@ namespace Netsphere.Stats;
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NetStats : ITinyhandSerializationCallback
 {
+    private const int EndpointTrustCapacity = 32;
+    private const int EndpointTrustMinimum = 4;
+    private const int PortTrustCapacity = 32;
+    private const int PortTrustMinimum = 4;
+
     public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl, PublicAccess publicAccess)
     {
         this.logger = logger;
@@ -33,10 +38,13 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public PublicAccess PublicAccess { get; private set; }
 
     [IgnoreMember]
-    public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new(32, 4);
+    public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     [IgnoreMember]
-    public TrustSource<NetEndpoint> Ipv6Endpoint { get; private set; } = new(32, 4);
+    public TrustSource<NetEndpoint> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+
+    [IgnoreMember]
+    public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     private readonly object syncObject = new();
     private readonly ILogger logger;
@@ -154,18 +162,6 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         else
         {// Ipv4
             this.PublicIpv4Address.ReportAddress(priority, result.Address);
-        }
-    }
-
-    public void ReportAddress(IPAddress address)
-    {
-        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-        {// Ipv6
-            this.PublicIpv6Address.ReportAddress(false, address);
-        }
-        else if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-        {// Ipv4
-            this.PublicIpv4Address.ReportAddress(false, address);
         }
     }
 
