@@ -28,7 +28,7 @@ public sealed partial class TrustSource<T>
         this.counterPool = new(() => new(), this.Capacity);
     }
 
-    internal TrustSource()
+    private TrustSource()
     {
         // this.itemPool = default!;
         this.counterPool = default!;
@@ -74,8 +74,10 @@ public sealed partial class TrustSource<T>
 
     #region FieldAndProperty
 
+    [IgnoreMember]
     public int Capacity { get; private set; }
 
+    [IgnoreMember]
     public int TrustMinimum { get; private set; }
 
     public bool IsFixed => this.isFixed;
@@ -90,7 +92,10 @@ public sealed partial class TrustSource<T>
     [Key(1)]
     private Counter.GoshujinClass counters = new(); // lock (this.syncObject)
 
+    [Key(2)]
     private bool isFixed;
+
+    [Key(3)]
     private T? fixedValue;
 
     #endregion
@@ -131,7 +136,7 @@ public sealed partial class TrustSource<T>
             }
 
             item.Counter = counter;
-            this.items.QueueChain.Enqueue(item);
+            item.Goshujin = this.items;
 
             if (this.isFixed)
             {// Fixed

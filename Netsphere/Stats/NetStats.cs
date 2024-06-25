@@ -33,10 +33,10 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public PublicAccess PublicAccess { get; private set; }
 
     [IgnoreMember]
-    public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new();
+    public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new(32, 4);
 
     [IgnoreMember]
-    public TrustSource<NetEndpoint> Ipv6Endpoint { get; private set; } = new();
+    public TrustSource<NetEndpoint> Ipv6Endpoint { get; private set; } = new(32, 4);
 
     private readonly object syncObject = new();
     private readonly ILogger logger;
