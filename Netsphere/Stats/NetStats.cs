@@ -32,6 +32,12 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     [Key(4)]
     public PublicAccess PublicAccess { get; private set; }
 
+    [IgnoreMember]
+    public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new();
+
+    [IgnoreMember]
+    public TrustSource<NetEndpoint> Ipv6Endpoint { get; private set; } = new();
+
     private readonly object syncObject = new();
     private readonly ILogger logger;
     private readonly NetBase netBase;
@@ -126,15 +132,15 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         this.PublicIpv6Address.Reset();
     }
 
-    public void ReportOutboundAccess(bool isIpv6, IPEndPoint? endPoint)
+    public void ReportEndpoint(bool isIpv6, NetEndpoint endpoint)
     {
         if (isIpv6)
         {
-            this.PublicIpv6Address.ReportOutboundAccess(endPoint);
+            this.Ipv6Endpoint.Add(endpoint);
         }
         else
         {
-            this.PublicIpv4Address.ReportOutboundAccess(endPoint);
+            this.Ipv4Endpoint.Add(endpoint);
         }
     }
 
