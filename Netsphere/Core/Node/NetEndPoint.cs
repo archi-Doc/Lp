@@ -54,7 +54,7 @@ public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
             return endPoint.EndPoint is null;
         }
 
-        return this.EndPoint.Equals(endPoint);
+        return this.EndPoint.Equals(endPoint.EndPoint);
     }
 
     public override int GetHashCode()
