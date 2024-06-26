@@ -28,7 +28,7 @@ public sealed partial class TrustSource<T>
         this.counterPool = new(() => new(), this.Capacity);
     }
 
-    private TrustSource()
+    public TrustSource()
     {
         // this.itemPool = default!;
         this.counterPool = default!;

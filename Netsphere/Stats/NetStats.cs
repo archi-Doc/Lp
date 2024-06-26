@@ -33,13 +33,13 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     [Key(3)]
     public PublicAddress PublicIpv6Address { get; private set; } = new();*/
 
-    [IgnoreMember]
+    [Key(2)]
     public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
-    [IgnoreMember]
+    [Key(3)]
     public TrustSource<IPEndPoint?> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
-    [IgnoreMember]
+    [Key(4)]
     public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     private readonly object syncObject = new();

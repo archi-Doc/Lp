@@ -44,24 +44,17 @@ public partial class NodeControlMachine : Machine
         }
 
         var count = 0;
-        while (!this.CancellationToken.IsCancellationRequested)
+        var tasks = new List<Task<bool>>();
+        while (true)
         {
             if (count++ >= ConsumeLifelineCount)
             {
-                this.ChangeState(State.FixEndpoint, true);
-                return StateResult.Continue;
+                break;
             }
-
-            /*if (this.nodeControl.HasSufficientOnlineNodes)
-            {// KeepOnlineNode
-                this.ChangeState(State.CheckStatus, true);
-                return StateResult.Continue;
-            }*/
 
             if (!this.nodeControl.TryGetLifelineNode(out var netNode))
             {// No lifeline node
-                this.ChangeState(State.FixEndpoint, true);
-                return StateResult.Continue;
+                break;
             }
 
             if (!netNode.Address.IsValidIpv4AndIpv6)
@@ -70,7 +63,7 @@ public partial class NodeControlMachine : Machine
                 continue;
             }
 
-            var result = await this.PingIpv4AndIpv6(netNode, true);
+            tasks.Add(this.PingIpv4AndIpv6(netNode, true));
 
             // this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
 
@@ -85,13 +78,22 @@ public partial class NodeControlMachine : Machine
             // }
         }
 
-        return StateResult.Terminate;
+        try
+        {
+            var results = await Task.WhenAll(tasks).WaitAsync(this.CancellationToken);
+        }
+        catch
+        {
+            return StateResult.Terminate;
+        }
+
+        this.ChangeState(State.FixEndpoint, true);
+        return StateResult.Continue;
     }
 
     [StateMethod(1)]
     protected async Task<StateResult> FixEndpoint(StateParameter parameter)
     {
-        Console.WriteLine("FixEndpoint");
         while (!this.CancellationToken.IsCancellationRequested)
         {
             if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
@@ -111,6 +113,7 @@ public partial class NodeControlMachine : Machine
             }
 
             var result = await this.PingIpv4AndIpv6(node, false);
+            await Task.Delay(1000);
         }
 
         return StateResult.Terminate;
