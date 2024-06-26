@@ -8,7 +8,7 @@ namespace Netsphere;
 
 [TinyhandObject]
 public sealed partial class TrustSource<T>
-    // where T : IEquatable<T> // , ITinyhandSerialize<T>
+// where T : IEquatable<T> // , ITinyhandSerialize<T>
 {
     public enum TrustState
     {
@@ -41,16 +41,22 @@ public sealed partial class TrustSource<T>
         [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
         public Item()
         {
+            this.Value = default!;
+        }
+
+        public Item(T value)
+        {
+            this.Value = value;
         }
 
         [Key(0)]
-        public Counter Counter { get; set; } = default!;
+        public T Value { get; set; }
 
         // [Key(1)]
         // public long AddedMics { get; set; }
 
         public override string ToString()
-            => $"Item {this.Counter.ToString()}";
+            => $"Item {this.Value?.ToString()}";
     }
 
     [TinyhandObject]
@@ -130,13 +136,14 @@ public sealed partial class TrustSource<T>
             if (this.items.Count >= this.Capacity)
             {
                 item = this.items.QueueChain.Dequeue();
-
-                counter = item.Counter;
-                counter.CountValue--;
-                if (counter.CountValue == 0)
-                {// Return counter
-                    counter.Goshujin = null;
-                    this.counterPool.Return(counter);
+                if (this.counters.ValueChain.TryGetValue(item.Value, out var counter2))
+                {
+                    counter2.CountValue--;
+                    if (counter2.CountValue == 0)
+                    {// Return counter
+                        counter2.Goshujin = null;
+                        this.counterPool.Return(counter2);
+                    }
                 }
             }
             else
@@ -144,7 +151,7 @@ public sealed partial class TrustSource<T>
                 item = new();
             }
 
-            item.Counter = counter;
+            item.Value = value;
             item.Goshujin = this.items;
 
             if (this.isFixed)

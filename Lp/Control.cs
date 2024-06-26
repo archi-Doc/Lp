@@ -227,6 +227,7 @@ public class Control
 
                     context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
+                        // SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
                     });
