@@ -12,12 +12,11 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     private const int PortTrustCapacity = 32;
     private const int PortTrustMinimum = 4;
 
-    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl, PublicAccess publicAccess)
+    public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
     {
         this.logger = logger;
         this.netBase = netBase;
         this.NodeControl = nodeControl;
-        this.PublicAccess = publicAccess;
     }
 
     #region FieldAndProperty
@@ -33,9 +32,6 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     [Key(3)]
     public PublicAddress PublicIpv6Address { get; private set; } = new();
-
-    [Key(4)]
-    public PublicAccess PublicAccess { get; private set; }
 
     [IgnoreMember]
     public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);

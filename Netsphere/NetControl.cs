@@ -37,7 +37,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetBase>();
                 // context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NodeControl>();
-                context.AddSingleton<PublicAccess>();
                 context.AddSingleton<NetStats>();
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
@@ -50,7 +49,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
                 // Machines
                 context.AddTransient<NtpMachine>();
-                context.AddTransient<NetStatsMachine>();
+                // context.AddTransient<NetStatsMachine>();
 
                 var customContext = context.GetCustomContext<NetsphereUnitContext>();
                 foreach (var x in this.actions)

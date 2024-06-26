@@ -704,7 +704,7 @@ public class Control
     private void RunMachines()
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
+        // _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
 

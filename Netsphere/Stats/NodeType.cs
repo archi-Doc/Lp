@@ -5,9 +5,8 @@ namespace Netsphere.Stats;
 public enum NodeType
 {
     Unknown,
-    Unavailable,
-    Available,
-    Global,
+    Direct,
+    Concrete,
     Cone,
     Symmetric,
 }

@@ -15,12 +15,15 @@ namespace Lp.Machines;
 [MachineObject(UseServiceProvider = true)]
 public partial class NodeControlMachine : Machine
 {
+    private const int ConsumeLifelineCount = 10;
+
     public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl)
         : base()
     {
         this.logger = logger;
         this.netBase = netBase;
         this.netControl = netControl;
+        this.netStats = this.netStats;
         this.nodeControl = nodeControl;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -28,27 +31,35 @@ public partial class NodeControlMachine : Machine
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly NetBase netBase;
+    private readonly NetStats netStats;
     private readonly NodeControl nodeControl;
 
     [StateMethod(0)]
-    protected async Task<StateResult> CheckLifelineNode(StateParameter parameter)
+    protected async Task<StateResult> ConsumeLifelineNode(StateParameter parameter)
     {
         if (!this.netControl.NetTerminal.IsActive)
         {
             return StateResult.Continue;
         }
 
+        var count = 0;
         while (!this.CancellationToken.IsCancellationRequested)
         {
-            if (this.nodeControl.HasSufficientOnlineNodes)
-            {// KeepOnlineNode
-                this.ChangeState(State.CheckStatus, true);
+            if (count++ >= ConsumeLifelineCount)
+            {
+                this.ChangeState(State.FixEndpoint, true);
                 return StateResult.Continue;
             }
 
+            /*if (this.nodeControl.HasSufficientOnlineNodes)
+            {// KeepOnlineNode
+                this.ChangeState(State.CheckStatus, true);
+                return StateResult.Continue;
+            }*/
+
             if (!this.nodeControl.TryGetLifelineNode(out var netNode))
             {// No lifeline node
-                this.ChangeState(State.CheckStatus, true);
+                this.ChangeState(State.FixEndpoint, true);
                 return StateResult.Continue;
             }
 
@@ -58,40 +69,7 @@ public partial class NodeControlMachine : Machine
                 continue;
             }
 
-            var ipv6Task = this.PingNetNode(netNode, true);
-            var ipv4Task = this.PingNetNode(netNode, false);
-            var result = await Task.WhenAll(ipv6Task, ipv4Task);
-
-            if (result[0].IsValid)
-            {
-                if (result[1].IsValid)
-                {// Ipv6 available, Ipv4 available
-                    this.netControl.NetStats.OutboundPort.Add(result[0].EndPoint!.Port);
-                    this.netControl.NetStats.PublicAccess.ReportPortNumber(result[0].EndPoint!.Port);
-                }
-                else
-                {// Ipv6 available, Ipv4 not available
-                    this.netControl.NetStats.OutboundPort.Add(result[0].EndPoint!.Port);
-                    this.netControl.NetStats.PublicAccess.ReportPortNumber(result[0].EndPoint!.Port);
-                }
-            }
-            else
-            {
-                if (result[1].IsValid)
-                {// Ipv6 not available, Ipv4 available
-                    this.netControl.NetStats.OutboundPort.Add(result[1].EndPoint!.Port);
-                    this.netControl.NetStats.PublicAccess.ReportPortNumber(result[1].EndPoint!.Port);
-                }
-                else
-                {// Ipv6 not available, Ipv4 not available
-                    this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
-                    continue;
-                }
-            }
-
-            this.netControl.NetStats.ReportEndpoint(true, result[0]);
-            this.netControl.NetStats.ReportEndpoint(false, result[1]);
-            this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
+            var result = await this.PingIpv4AndIpv6(netNode);
 
             // this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
 
@@ -110,23 +88,33 @@ public partial class NodeControlMachine : Machine
     }
 
     [StateMethod(1)]
-    protected async Task<StateResult> CheckStatus(StateParameter parameter)
-    {// KeepOnlineNode
+    protected async Task<StateResult> FixEndpoint(StateParameter parameter)
+    {
+        while (!this.CancellationToken.IsCancellationRequested)
+        {
+            if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
+            {// Fixed
+
+                break;
+            }
+        }
+
         if (this.nodeControl.CountOnline == 0)
         {// No online node
             this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to node_list.");
+            this.ChangeState(State.NoOnlineNode);
         }
         else
         {
             this.ShowStatus();
         }
 
-        this.ChangeState(State.KeepOnlineNode);
+        this.ChangeState(State.MaintainOnlineNode);
         return StateResult.Continue;
     }
 
     [StateMethod(2)]
-    protected async Task<StateResult> KeepOnlineNode(StateParameter parameter)
+    protected async Task<StateResult> MaintainOnlineNode(StateParameter parameter)
     {
         // Online -> Lifeline
         // Lifeline offline -> Remove
@@ -134,9 +122,51 @@ public partial class NodeControlMachine : Machine
         return StateResult.Continue;
     }
 
+    [StateMethod]
+    protected async Task<StateResult> NoOnlineNode(StateParameter parameter)
+    {
+        return StateResult.Continue;
+    }
+
     private void ShowStatus()
     {
         this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountOnline}");
+    }
+
+    private async Task<bool> PingIpv4AndIpv6(NetNode netNode)
+    {
+        var ipv6Task = this.PingNetNode(netNode, true);
+        var ipv4Task = this.PingNetNode(netNode, false);
+        var result = await Task.WhenAll(ipv6Task, ipv4Task);
+
+        if (result[0].IsValid)
+        {
+            if (result[1].IsValid)
+            {// Ipv6 available, Ipv4 available
+                this.netStats.OutboundPort.Add(result[0].EndPoint!.Port);
+            }
+            else
+            {// Ipv6 available, Ipv4 not available
+                this.netStats.OutboundPort.Add(result[0].EndPoint!.Port);
+            }
+        }
+        else
+        {
+            if (result[1].IsValid)
+            {// Ipv6 not available, Ipv4 available
+                this.netStats.OutboundPort.Add(result[1].EndPoint!.Port);
+            }
+            else
+            {// Ipv6 not available, Ipv4 not available
+                this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Failure);
+                return false;
+            }
+        }
+
+        this.netStats.ReportEndpoint(true, result[0]);
+        this.netStats.ReportEndpoint(false, result[1]);
+        this.nodeControl.ReportLifelineNode(netNode, ConnectionResult.Success);
+        return true;
     }
 
     private async Task<NetEndpoint> PingNetNode(NetNode netNode, bool ipv6)
