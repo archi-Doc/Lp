@@ -77,19 +77,6 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
         this.logger.TryGet()?.Log($"Punch: {result.ToString()} {sw.ElapsedMilliseconds} ms");
     }
 
-    private async Task PrepareNodeAddress()
-    {
-        var tasks = new List<Task<AddressQueryResult>>();
-        tasks.Add(NetStatsHelper.GetIcanhazipIPv4());
-        tasks.Add(NetStatsHelper.GetIcanhazipIPv6());
-
-        var results = await Task.WhenAll(tasks);
-        foreach (var x in results)
-        {
-            this.netControl.NetStats.ReportAddress(x);
-        }
-    }
-
     private readonly NetControl netControl;
     private readonly ILogger logger;
     private readonly RemoteDataControl remoteData;

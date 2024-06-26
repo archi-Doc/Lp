@@ -89,6 +89,8 @@ public sealed partial class TrustSource<T>
 
     public bool IsFixed => this.isFixed;
 
+    public T? FixedOrDefault => this.fixedValue;
+
     private readonly object syncObject = new();
     // private readonly ObjectPool<Item> itemPool;
     private readonly ObjectPool<Counter> counterPool;
