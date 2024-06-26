@@ -144,22 +144,22 @@ public partial class NodeControlMachine : Machine
         var ipv4Task = this.PingNetNode(netNode, false);
         var result = await Task.WhenAll(ipv6Task, ipv4Task);
 
-        if (result[0].IsValid)
+        if (result[0] is not null)
         {
-            if (result[1].IsValid)
+            if (result[1] is not null)
             {// Ipv6 available, Ipv4 available
-                this.netStats.OutboundPort.Add(result[0].EndPoint!.Port);
+                this.netStats.OutboundPort.Add(result[0]!.Port);
             }
             else
             {// Ipv6 available, Ipv4 not available
-                this.netStats.OutboundPort.Add(result[0].EndPoint!.Port);
+                this.netStats.OutboundPort.Add(result[0]!.Port);
             }
         }
         else
         {
-            if (result[1].IsValid)
+            if (result[1] is not null)
             {// Ipv6 not available, Ipv4 available
-                this.netStats.OutboundPort.Add(result[1].EndPoint!.Port);
+                this.netStats.OutboundPort.Add(result[1]!.Port);
             }
             else
             {// Ipv6 not available, Ipv4 not available
@@ -191,14 +191,14 @@ public partial class NodeControlMachine : Machine
         return true;
     }
 
-    private async Task<NetEndpoint> PingNetNode(NetNode netNode, bool ipv6)
+    private async Task<IPEndPoint?> PingNetNode(NetNode netNode, bool ipv6)
     {
         var endpointResolution = ipv6 ? EndpointResolution.Ipv6 : EndpointResolution.Ipv4;
         var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new(), 0, this.CancellationToken, endpointResolution);
 
         if (r.Result == NetResult.Success && r.Value is { } value)
         {// Success
-            return value.Endpoint;
+            return value.Endpoint.EndPoint;
         }
         else
         {

@@ -8,7 +8,7 @@ namespace Netsphere;
 
 [TinyhandObject]
 public sealed partial class TrustSource<T>
-    where T : IEquatable<T> // , ITinyhandSerialize<T>
+    // where T : IEquatable<T> // , ITinyhandSerialize<T>
 {
     public enum TrustState
     {
@@ -149,7 +149,7 @@ public sealed partial class TrustSource<T>
 
             if (this.isFixed)
             {// Fixed
-                if (this.fixedValue!.Equals(value))
+                if (this.fixedValue.Equals(value))
                 {// Identical
                     return;
                 }

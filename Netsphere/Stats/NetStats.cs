@@ -34,10 +34,10 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public PublicAddress PublicIpv6Address { get; private set; } = new();*/
 
     [IgnoreMember]
-    public TrustSource<NetEndpoint> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     [IgnoreMember]
-    public TrustSource<NetEndpoint> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    public TrustSource<IPEndPoint?> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     [IgnoreMember]
     public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
@@ -114,7 +114,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     public NetNode GetOwnNetNode()
     {
-        var address = new NetAddress(this.Ipv4Endpoint.FixedOrDefault.EndPoint?.Address, this.Ipv6Endpoint.FixedOrDefault.EndPoint?.Address, (ushort)this.netBase.NetOptions.Port);
+        var address = new NetAddress(this.Ipv4Endpoint.FixedOrDefault?.Address, this.Ipv6Endpoint.FixedOrDefault?.Address, (ushort)this.netBase.NetOptions.Port);
         return new(address, this.netBase.NodePublicKey);
     }
 
@@ -124,7 +124,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         // this.PublicIpv6Address.Reset();
     }
 
-    public void ReportEndpoint(bool isIpv6, NetEndpoint endpoint)
+    public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)
     {
         if (isIpv6)
         {
