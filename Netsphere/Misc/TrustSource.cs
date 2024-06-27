@@ -156,15 +156,31 @@ public sealed partial class TrustSource<T>
 
             if (this.isFixed)
             {// Fixed
-                if (this.fixedValue.Equals(value))
+                if (this.fixedValue is null)
+                {
+                    if (value is null)
+                    {// Identical
+                        return;
+                    }
+                }
+                else if (this.fixedValue.Equals(value))
                 {// Identical
                     return;
                 }
 
-                var last = this.counters.CountChain.Last;
-                if (last is not null && !last.Value.Equals(this.fixedValue) && this.CanFix(last))
-                {// Fix -> Unfix
-                    this.ClearInternal();
+                if (this.counters.CountChain.Last is { } last)
+                {
+                    if (last.Value is null)
+                    {
+                        if (this.fixedValue is not null && this.CanFix(last))
+                        {// Fix -> Unfix
+                            this.ClearInternal();
+                        }
+                    }
+                    else if (!last.Value.Equals(this.fixedValue) && this.CanFix(last))
+                    {// Fix -> Unfix
+                        this.ClearInternal();
+                    }
                 }
             }
             else
@@ -172,7 +188,7 @@ public sealed partial class TrustSource<T>
                 var last = this.counters.CountChain.Last;
                 if (last is not null && this.CanFix(last))
                 {// Fix
-                    // this.ClearInternal(false);
+                 // this.ClearInternal(false);
                     this.isFixed = true;
                     this.fixedValue = last.Value;
                 }
