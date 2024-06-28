@@ -8,7 +8,6 @@ namespace Netsphere;
 
 [TinyhandObject]
 public sealed partial class TrustSource<T>
-// where T : IEquatable<T> // , ITinyhandSerialize<T>
 {
     public enum TrustState
     {
@@ -24,13 +23,11 @@ public sealed partial class TrustSource<T>
 
         this.Capacity = capacity;
         this.TrustMinimum = trustMinimum;
-        // this.itemPool = new(() => new(), this.Capacity);
         this.counterPool = new(() => new(), this.Capacity);
     }
 
     public TrustSource()
     {
-        // this.itemPool = default!;
         this.counterPool = default!;
     }
 
@@ -225,16 +222,4 @@ public sealed partial class TrustSource<T>
         return counter.Count >= this.TrustMinimum &&
             counter.Count >= (this.items.Count >> 1);
     }
-
-    /*void ITinyhandSerializationCallback.OnAfterReconstruct()
-    {
-    }
-
-    void ITinyhandSerializationCallback.OnAfterDeserialize()
-    {
-    }
-
-    void ITinyhandSerializationCallback.OnBeforeSerialize()
-    {
-    }*/
 }
