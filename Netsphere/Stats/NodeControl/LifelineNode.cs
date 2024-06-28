@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace Netsphere.Stats;
 
 [TinyhandObject]
@@ -18,6 +20,12 @@ public sealed partial class LifelineNode : NetNode
     {
         this.Address = netNode.Address;
         this.PublicKey = netNode.PublicKey;
+    }
+
+    public LifelineNode(NetAddress netAddress, NodePublicKey publicKey)
+    {
+        this.Address = netAddress;
+        this.PublicKey = publicKey;
     }
 
     #region FieldAndProperty

@@ -127,9 +127,10 @@ public partial class NodeControlMachine : Machine
     [StateMethod(2)]
     protected async Task<StateResult> MaintainOnlineNode(StateParameter parameter)
     {
-        // Online -> Lifeline
-        // Lifeline offline -> Remove
+        // Online -> Lifeline, Lifeline offline -> Remove
+        this.nodeControl.MaintainLifelineNode();
 
+        this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
     }
 

@@ -6,10 +6,37 @@ using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
+public ref struct DeleteList<TGoshujin, TObject>
+{
+    public DeleteList(TGoshujin goshujin)
+    {
+        this.Goshujin = goshujin;
+    }
+
+    public readonly TGoshujin Goshujin;
+    private List<TObject>? list;
+
+    public int Count => this.list?.Count ?? 0;
+
+    public void Delete()
+    {
+        if (this.list is not null)
+        {
+            foreach (var x in this.list)
+            {
+                this.Goshujin.Remove(x);
+            }
+
+            this.list = default;
+        }
+    }
+}
+
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;
+    public static readonly int SufficientLifelineNodes = 24;
     public static readonly int MaxOnlineNodes = 256;
     public static readonly int MaxUnknownNodes = 32;
     public static readonly int SufficientOnlineNodes = 128;
@@ -48,6 +75,56 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool HasSufficientOnlineNodes => this.CountOnline >= SufficientOnlineNodes;
 
     #endregion
+
+    public void MaintainLifelineNode()
+    {
+        if (!this.CanAddLifelineNode)
+        {
+            return;
+        }
+
+        lock (this.syncObject)
+        {
+            // Online -> Lifeline
+            foreach (var x in this.onlineNodes)
+            {
+                if (this.lifelineNodes.AddressChain.ContainsKey(x.Address))
+                {
+                    continue;
+                }
+
+                if (!this.CanAddLifelineNode)
+                {
+                    return;
+                }
+
+                var item = new LifelineNode(x.Address, x.PublicKey);
+                item.LastCheckedMics = Mics.FastSystem;
+                this.lifelineNodes.Add(item);
+                this.lifelineNodes.OnlineLinkChain.AddLast(item);
+            }
+
+            // Lifeline offline -> Remove
+            var deleteList = new DeleteList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
+
+            List<LifelineNode>? deleteList = default;
+            foreach (var x in this.lifelineNodes.OfflineLinkChain)
+            {
+                if (deleteList is not null && (this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
+                {
+                    deleteList.Add(x);
+                }
+            }
+
+            if (deleteList is not null)
+            {
+                foreach (var x in deleteList)
+                {
+                    this.lifelineNodes.Remove(x);
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Tries to add a NetNode from the incoming connection and check the node later.
