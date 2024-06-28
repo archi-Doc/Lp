@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
 using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
@@ -27,6 +28,12 @@ public sealed partial class OnlineNode : NetNode
     {
         this.Address = netNode.Address;
         this.PublicKey = netNode.PublicKey;
+    }
+
+    public OnlineNode(NetAddress netAddress, NodePublicKey publicKey)
+    {
+        this.Address = netAddress;
+        this.PublicKey = publicKey;
     }
 
     #region FieldAndProperty
