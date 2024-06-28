@@ -6,32 +6,6 @@ using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
-public ref struct DeleteList<TGoshujin, TObject>
-{
-    public DeleteList(TGoshujin goshujin)
-    {
-        this.Goshujin = goshujin;
-    }
-
-    public readonly TGoshujin Goshujin;
-    private List<TObject>? list;
-
-    public int Count => this.list?.Count ?? 0;
-
-    public void Delete()
-    {
-        if (this.list is not null)
-        {
-            foreach (var x in this.list)
-            {
-                this.Goshujin.Remove(x);
-            }
-
-            this.list = default;
-        }
-    }
-}
-
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
@@ -105,24 +79,16 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             }
 
             // Lifeline offline -> Remove
-            var deleteList = new DeleteList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
-
-            List<LifelineNode>? deleteList = default;
+            var deleteList = new DeferredList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
             foreach (var x in this.lifelineNodes.OfflineLinkChain)
             {
-                if (deleteList is not null && (this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
+                if ((this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
                 {
                     deleteList.Add(x);
                 }
             }
 
-            if (deleteList is not null)
-            {
-                foreach (var x in deleteList)
-                {
-                    this.lifelineNodes.Remove(x);
-                }
-            }
+            deleteList.DeferredRemove();
         }
     }
 
