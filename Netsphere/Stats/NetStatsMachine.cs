@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Net;
 using Netsphere.Stats;
 
 namespace Netsphere.Machines;
 
-[MachineObject(UseServiceProvider = true)]
+/*[MachineObject(UseServiceProvider = true)]
 public partial class NetStatsMachine : Machine
 {
     private const int NodeThreshold = 4;
@@ -19,8 +17,6 @@ public partial class NetStatsMachine : Machine
         this.nodeControl = nodeControl;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
-
-        // var port = this.netControl.NetBase.NetsphereOptions.Port;
     }
 
     [StateMethod(0)]
@@ -67,13 +63,8 @@ public partial class NetStatsMachine : Machine
             this.netStats.ReportAddress(x);
         }
 
-        /*if (this.netStats.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
-             this.netStats.MyIpv6Address.AddressState != MyAddress.State.Unknown)*/
-        {// Address has been fixed.
-            this.ChangeState(State.AddressFixed, true);
-            return StateResult.Continue;
-        }
-
+        // Address has been fixed.
+        this.ChangeState(State.AddressFixed, true);
         return StateResult.Continue;
     }
 
@@ -89,4 +80,4 @@ public partial class NetStatsMachine : Machine
     private readonly NetControl netControl;
     private readonly NetStats netStats;
     private readonly NodeControl nodeControl;
-}
+}*/

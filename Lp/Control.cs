@@ -227,6 +227,7 @@ public class Control
 
                     context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
+                        // SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
                     });
@@ -704,7 +705,7 @@ public class Control
     private void RunMachines()
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
+        // _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
 

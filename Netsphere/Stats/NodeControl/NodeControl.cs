@@ -6,7 +6,7 @@ using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
-[TinyhandObject(UseServiceProvider = true)]
+[TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;
@@ -40,6 +40,10 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public int CountLinfelineOffline => this.lifelineNodes.OfflineLinkChain.Count;
 
     public int CountOnline => this.onlineNodes.Count;
+
+    public bool CanAddLifelineNode => this.lifelineNodes.Count < MaxLifelineNodes;
+
+    public bool CanAddOnlineNode => this.onlineNodes.Count < MaxOnlineNodes;
 
     public bool HasSufficientOnlineNodes => this.CountOnline >= SufficientOnlineNodes;
 
@@ -76,7 +80,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         return true;
     }
 
-    public bool TryGetLifelineNode([NotNullWhen(true)] out NetNode? node)
+    public bool TryGetLifelineNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         lock (this.syncObject)
@@ -89,6 +93,23 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
             node = obj;
             this.lifelineNodes.UncheckedListChain.Remove(obj);
+        }
+
+        return true;
+    }
+
+    public bool TryGetOnlineNode([MaybeNullWhen(false)] out NetNode node)
+    {
+        node = default;
+        lock (this.syncObject)
+        {
+            var obj = this.onlineNodes.LastConnectionMicsChain.First;
+            if (obj is null)
+            {
+                return false;
+            }
+
+            node = obj;
         }
 
         return true;
@@ -107,7 +128,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         return OnlineNode.Integrality.Instance.Integrate(this.onlineNodes, brokerDelegate, cancellationToken);
     }
 
-    public void ReportLifelineNode(NetNode node, ConnectionResult result)
+    public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)
     {
         lock (this.syncObject)
         {
@@ -134,13 +155,16 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             if (result == ConnectionResult.Success)
             {
                 var item2 = this.onlineNodes.AddressChain.FindFirst(node.Address);
-                if (item2 is null)
+                if (item2 is not null)
+                {
+                    item2.LastConnectionMicsValue = Mics.FastSystem;
+                }
+                else if (this.CanAddOnlineNode)
                 {
                     item2 = new(node);
+                    item2.LastConnectionMicsValue = Mics.FastSystem;
                     item2.Goshujin = this.onlineNodes;
                 }
-
-                item2.LastConnectionMicsValue = Mics.FastSystem;
             }
             else if (result == ConnectionResult.Failure)
             {
@@ -148,23 +172,31 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
     }
 
-    public void ReportOnlineNode(NetNode node, ConnectionResult result)
+    public void ReportOnlineNodeConnection(NetNode node, ConnectionResult result)
     {
         lock (this.syncObject)
         {
             var item = this.onlineNodes.AddressChain.FindFirst(node.Address);
-            if (item is null)
+            if (item is not null)
             {
-                return;
+                if (result == ConnectionResult.Success)
+                {
+                    item.LastConnectionMicsValue = Mics.FastSystem;
+                }
+                else if (result == ConnectionResult.Failure)
+                {
+                    item.Goshujin = default;
+                }
             }
-
-            if (result == ConnectionResult.Success)
+            else
             {
-                item.LastConnectionMicsValue = Mics.GetSystem();
-            }
-            else if (result == ConnectionResult.Failure)
-            {
-                item.Goshujin = default;
+                if (result == ConnectionResult.Success &&
+                    this.CanAddOnlineNode)
+                {
+                    item = new(node);
+                    item.LastConnectionMicsValue = Mics.FastSystem;
+                    item.Goshujin = this.onlineNodes;
+                }
             }
         }
     }

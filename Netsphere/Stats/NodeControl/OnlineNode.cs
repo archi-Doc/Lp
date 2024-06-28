@@ -13,7 +13,7 @@ public sealed partial class OnlineNode : NetNode
     {
         public static readonly Integrality Instance = new()
         {
-            MaxItems = 10,
+            MaxItems = 100,
             RemoveIfItemNotFound = false,
         };
     }
