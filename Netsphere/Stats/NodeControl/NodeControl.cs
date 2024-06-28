@@ -48,8 +48,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public bool HasSufficientOnlineNodes => this.CountOnline >= SufficientOnlineNodes;
 
-    #endregion
-
+    /// <summary>
+    /// Maintains the lifeline nodes by adding online nodes to the lifeline and removing offline lifeline nodes if there are sufficient lifeline nodes.
+    /// </summary>
     public void MaintainLifelineNode()
     {
         if (!this.CanAddLifelineNode)
@@ -123,7 +124,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         return true;
     }
 
-    public bool TryGetLifelineNode([MaybeNullWhen(false)] out NetNode node)
+    public bool TryGetUncheckedLifelineNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         lock (this.syncObject)

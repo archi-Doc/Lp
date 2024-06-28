@@ -52,7 +52,7 @@ public partial class NodeControlMachine : Machine
                 break;
             }
 
-            if (!this.nodeControl.TryGetLifelineNode(out var netNode))
+            if (!this.nodeControl.TryGetUncheckedLifelineNode(out var netNode))
             {// No lifeline node
                 break;
             }
@@ -129,6 +129,18 @@ public partial class NodeControlMachine : Machine
     {
         // Online -> Lifeline, Lifeline offline -> Remove
         this.nodeControl.MaintainLifelineNode();
+
+        // Check lifeline node
+        if (this.nodeControl.TryGetUncheckedLifelineNode(out var netNode))
+        {
+            _ = await this.PingIpv4AndIpv6(netNode, true);
+        }
+
+        // Check unknown node
+
+        if (this.nodeControl.CountOnline == 0)
+        {
+        }
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
