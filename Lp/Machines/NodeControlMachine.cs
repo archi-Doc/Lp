@@ -99,7 +99,13 @@ public partial class NodeControlMachine : Machine
             if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
             {// Fixed
                 this.ShowStatus();
+                this.ChangeState(State.MaintainOnlineNode);
+                return StateResult.Continue;
+            }
 
+            if (this.netStats.OutboundPort.UnableToFix)
+            {// Symmetric (random port)
+                this.ShowStatus();
                 this.ChangeState(State.MaintainOnlineNode);
                 return StateResult.Continue;
             }
@@ -113,7 +119,6 @@ public partial class NodeControlMachine : Machine
             }
 
             var result = await this.PingIpv4AndIpv6(node, false);
-            await Task.Delay(1000);
         }
 
         return StateResult.Terminate;
@@ -136,7 +141,7 @@ public partial class NodeControlMachine : Machine
 
     private void ShowStatus()
     {
-        this.logger.TryGet()?.Log($"Fixed: {this.netStats.GetOwnNetNode().ToString()}");
+        this.logger.TryGet()?.Log($"{this.netStats.NodeType.ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
         this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountOnline}");
     }
 

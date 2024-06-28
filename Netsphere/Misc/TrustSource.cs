@@ -92,6 +92,8 @@ public sealed partial class TrustSource<T>
 
     public bool IsFixed => this.isFixed;
 
+    public bool UnableToFix => !this.isFixed && this.items.Count >= this.TrustMinimum;
+
     public T? FixedOrDefault => this.fixedValue;
 
     private readonly object syncObject = new();

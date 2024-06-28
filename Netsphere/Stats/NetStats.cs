@@ -21,6 +21,23 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     #region FieldAndProperty
 
+    public NodeType NodeType
+    {
+        get
+        {
+            if (this.OutboundPort.TryGet(out var port))
+            {
+                return port == this.netBase.NetOptions.Port ? NodeType.Direct : NodeType.Cone;
+            }
+            else if (this.OutboundPort.UnableToFix)
+            {
+                return NodeType.Symmetric;
+            }
+
+            return NodeType.Unknown;
+        }
+    }
+
     [Key(0)]
     public long LastMics { get; private set; }
 
@@ -120,8 +137,9 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 
     public void Reset()
     {
-        // this.PublicIpv4Address.Reset();
-        // this.PublicIpv6Address.Reset();
+        this.Ipv4Endpoint.Clear();
+        this.Ipv6Endpoint.Clear();
+        this.OutboundPort.Clear();
     }
 
     public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)

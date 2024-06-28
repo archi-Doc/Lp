@@ -2,7 +2,7 @@
 
 namespace Netsphere.Stats;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial class PublicAddress
 {
     private const int MaxItems = 30;
@@ -192,4 +192,4 @@ public partial class PublicAddress
             }
         }
     }
-}
+}*/
