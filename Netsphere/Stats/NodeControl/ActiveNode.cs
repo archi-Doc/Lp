@@ -6,7 +6,7 @@ using ValueLink.Integrality;
 namespace Netsphere.Stats;
 
 [TinyhandObject]
-[ValueLinkObject(Integrality = true)]
+[ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
 public sealed partial class ActiveNode : NetNode
 {
     internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
@@ -18,7 +18,7 @@ public sealed partial class ActiveNode : NetNode
         };
     }
 
-    [Link(Primary = true, Type = ChainType.LinkedList, Name = "Queue")]
+    [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
     [Link(Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
     public ActiveNode()
     {

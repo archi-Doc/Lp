@@ -11,9 +11,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;
     public static readonly int SufficientLifelineNodes = 24;
-    public static readonly int MaxOnlineNodes = 256;
+    public static readonly int MaxActiveNodes = 256;
     public static readonly int MaxUnknownNodes = 32;
-    public static readonly int SufficientOnlineNodes = 128;
+    public static readonly int SufficientActiveNodes = 128;
     private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromHours(1);
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
@@ -32,7 +32,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     private LifelineNode.GoshujinClass lifelineNodes = new(); // this.syncObject
 
     [Key(1)]
-    private ActiveNode.GoshujinClass avtiveNodes = new(); // this.syncObject
+    private ActiveNode.GoshujinClass activeNodes = new(); // this.syncObject
 
     private ActiveNode.GoshujinClass unknownNodes = new(); // this.syncObject
 
@@ -40,17 +40,39 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public int CountLinfelineOffline => this.lifelineNodes.OfflineLinkChain.Count;
 
-    public int CountActive => this.avtiveNodes.Count;
+    public int CountActive => this.activeNodes.Count;
 
     public int CountUnknown => this.unknownNodes.Count;
 
     public bool CanAddLifelineNode => this.lifelineNodes.Count < MaxLifelineNodes;
 
-    public bool CanAddOnlineNode => this.avtiveNodes.Count < MaxOnlineNodes;
+    public bool CanAddActiveNode => this.activeNodes.Count < MaxActiveNodes;
 
-    public bool HasSufficientOnlineNodes => this.CountActive >= SufficientOnlineNodes;
+    public bool HasSufficientActiveNodes => this.CountActive >= SufficientActiveNodes;
 
     #endregion
+
+    public void FromLifelineNodeToActiveNode()
+    {
+        lock (this.syncObject)
+        {
+            foreach (var x in this.lifelineNodes.OnlineLinkChain)
+            {
+                if (this.activeNodes.AddressChain.ContainsKey(x.Address))
+                {
+                    continue;
+                }
+
+                if (!this.CanAddActiveNode)
+                {
+                    return;
+                }
+
+                var item = new ActiveNode(x.Address, x.PublicKey);
+                this.activeNodes.Add(item);
+            }
+        }
+    }
 
     /// <summary>
     /// Maintains the lifeline nodes by adding online nodes to the lifeline and removing offline lifeline nodes if there are sufficient lifeline nodes.
@@ -65,7 +87,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         lock (this.syncObject)
         {
             // Online -> Lifeline
-            foreach (var x in this.avtiveNodes)
+            foreach (var x in this.activeNodes)
             {
                 if (this.lifelineNodes.AddressChain.ContainsKey(x.Address))
                 {
@@ -104,7 +126,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     /// <returns>True if the node was added successfully, false otherwise.</returns>
     public bool TryAddUnknownNode(NetNode node)
     {
-        if (this.HasSufficientOnlineNodes)
+        if (this.HasSufficientActiveNodes)
         {
             return false;
         }
@@ -116,7 +138,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
         lock (this.syncObject)
         {
-            if (this.avtiveNodes.AddressChain.ContainsKey(node.Address))
+            if (this.activeNodes.AddressChain.ContainsKey(node.Address))
             {
                 return false;
             }
@@ -151,12 +173,12 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         node = default;
         lock (this.syncObject)
         {
-            var obj = this.avtiveNodes.LastConnectionMicsChain.First;
-            if (obj is null)
+            if (!this.activeNodes.GetChain.TryDequeue(out var obj))
             {
                 return false;
             }
 
+            this.activeNodes.GetChain.Enqueue(obj);
             node = obj;
         }
 
@@ -168,12 +190,12 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         node = default;
         lock (this.syncObject)
         {
-            var obj = this.unknownNodes.LastConnectionMicsChain.First;
-            if (obj is null)
+            if (!this.unknownNodes.GetChain.TryPeek(out var obj))
             {
                 return false;
             }
 
+            obj.Goshujin = default;
             node = obj;
         }
 
@@ -184,13 +206,13 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     {
         lock (this.syncObject)
         {
-            return ((IIntegralityObject)this.avtiveNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
+            return ((IIntegralityObject)this.activeNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
         }
     }
 
     public Task<IntegralityResult> IntegrateOnlineNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
     {
-        return ActiveNode.Integrality.Instance.Integrate(this.avtiveNodes, brokerDelegate, cancellationToken);
+        return ActiveNode.Integrality.Instance.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
     }
 
     public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)
@@ -219,16 +241,16 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
             if (result == ConnectionResult.Success)
             {
-                var item2 = this.avtiveNodes.AddressChain.FindFirst(node.Address);
+                var item2 = this.activeNodes.AddressChain.FindFirst(node.Address);
                 if (item2 is not null)
                 {
                     item2.LastConnectionMicsValue = Mics.FastSystem;
                 }
-                else if (this.CanAddOnlineNode)
+                else if (this.CanAddActiveNode)
                 {
                     item2 = new(node);
                     item2.LastConnectionMicsValue = Mics.FastSystem;
-                    item2.Goshujin = this.avtiveNodes;
+                    item2.Goshujin = this.activeNodes;
                 }
             }
             else if (result == ConnectionResult.Failure)
@@ -237,11 +259,11 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
     }
 
-    public void ReportOnlineNodeConnection(NetNode node, ConnectionResult result)
+    public void ReportActiveNodeConnection(NetNode node, ConnectionResult result)
     {
         lock (this.syncObject)
         {
-            var item = this.avtiveNodes.AddressChain.FindFirst(node.Address);
+            var item = this.activeNodes.AddressChain.FindFirst(node.Address);
             if (item is not null)
             {
                 if (result == ConnectionResult.Success)
@@ -256,11 +278,11 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             else
             {
                 if (result == ConnectionResult.Success &&
-                    this.CanAddOnlineNode)
+                    this.CanAddActiveNode)
                 {
                     item = new(node);
                     item.LastConnectionMicsValue = Mics.FastSystem;
-                    item.Goshujin = this.avtiveNodes;
+                    item.Goshujin = this.activeNodes;
                 }
             }
         }
@@ -271,7 +293,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         string st;
         lock (this.syncObject)
         {
-            st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.avtiveNodes.Count}";
+            st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.activeNodes.Count}";
         }
 
         return st;
@@ -366,7 +388,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
         var onlineRange = MicsRange.FromPastToFastSystem(OnlineValidMics);
         List<ActiveNode>? deleteList = default;
-        foreach (var x in this.avtiveNodes)
+        foreach (var x in this.activeNodes)
         {
             if (!lifelineRange.IsWithin(x.LastConnectionMics) &&
                 x.Goshujin is { } g)
@@ -407,7 +429,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
 
         List<ActiveNode>? onlineList = default;
-        foreach (var x in this.avtiveNodes)
+        foreach (var x in this.activeNodes)
         {
             if (!x.Validate())
             {

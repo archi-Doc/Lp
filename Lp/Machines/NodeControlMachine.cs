@@ -64,18 +64,6 @@ public partial class NodeControlMachine : Machine
             }
 
             tasks.Add(this.PingIpv4AndIpv6(netNode, true));
-
-            // this.logger.TryGet(LogLevel.Information)?.Log($"{netNode.Address.ToString()} - {r.Result.ToString()}");
-
-            // Integrate online nodes.
-            // using (var connection = await this.netControl.NetTerminal.Connect(netNode))
-            // {
-            //    if (connection is not null)
-            //    {
-            //        var service = connection.GetService<INodeControlService>();
-            //        var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), default);
-            //    }
-            // }
         }
 
         try
@@ -137,9 +125,35 @@ public partial class NodeControlMachine : Machine
         }
 
         // Check unknown node
+        if (this.nodeControl.TryGetUnknownNode(out netNode))
+        {
+            _ = await this.PingIpv4AndIpv6(netNode, false);
+        }
 
+        // Add active nodes from lifeline nodes.
         if (this.nodeControl.CountActive == 0)
         {
+            this.nodeControl.FromLifelineNodeToActiveNode();
+        }
+
+        // Integrate active nodes.
+        if (this.nodeControl.TryGetActiveNode(out netNode))
+        {
+            using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+            {
+                if (connection is null)
+                {
+                    this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
+                }
+                else
+                {
+                    var service = connection.GetService<Netsphere.Interfaces.INodeControlService>();
+                    if (service is not null)
+                    {
+                        var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateOnlineNode(x), this.CancellationToken);
+                    }
+                }
+            }
         }
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);
@@ -190,7 +204,7 @@ public partial class NodeControlMachine : Machine
                 }
                 else
                 {
-                    this.nodeControl.ReportOnlineNodeConnection(netNode, ConnectionResult.Failure);
+                    this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
                 }
 
                 return false;
@@ -206,7 +220,7 @@ public partial class NodeControlMachine : Machine
         }
         else
         {
-            this.nodeControl.ReportOnlineNodeConnection(netNode, ConnectionResult.Success);
+            this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
         }
 
         return true;
