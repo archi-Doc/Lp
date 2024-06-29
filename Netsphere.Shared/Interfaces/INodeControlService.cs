@@ -8,5 +8,5 @@ namespace Netsphere.Interfaces;
 [NetServiceInterface]
 public interface INodeControlService : INetService
 {
-    NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory);
+    NetTask<IntegralityResultMemory> DifferentiateActiveNode(BytePool.RentMemory memory);
 }
