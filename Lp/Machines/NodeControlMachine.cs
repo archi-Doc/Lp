@@ -110,7 +110,7 @@ public partial class NodeControlMachine : Machine
                 return StateResult.Continue;
             }
 
-            if (!this.nodeControl.TryGetOnlineNode(out var node))
+            if (!this.nodeControl.TryGetActiveNode(out var node))
             {
                 // No online node
                 this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to node_list.");
@@ -138,7 +138,7 @@ public partial class NodeControlMachine : Machine
 
         // Check unknown node
 
-        if (this.nodeControl.CountOnline == 0)
+        if (this.nodeControl.CountActive == 0)
         {
         }
 
@@ -155,7 +155,7 @@ public partial class NodeControlMachine : Machine
     private void ShowStatus()
     {
         this.logger.TryGet()?.Log($"{this.netStats.NodeType.ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
-        this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountOnline}");
+        this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountActive}");
     }
 
     private async Task<bool> PingIpv4AndIpv6(NetNode netNode, bool isLifelineNode)
