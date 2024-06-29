@@ -1,16 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
-using ValueLink.Integrality;
+// using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
 [TinyhandObject]
-[ValueLinkObject(Integrality = true)]
-public sealed partial class OnlineNode : NetNode
+[ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
+public sealed partial class ActiveNode : NetNode
 {
-    internal class Integrality : Integrality<OnlineNode.GoshujinClass, OnlineNode>
+    internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
     {
         public static readonly Integrality Instance = new()
         {
@@ -19,18 +18,19 @@ public sealed partial class OnlineNode : NetNode
         };
     }
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
-    public OnlineNode()
+    [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
+    [Link(Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
+    public ActiveNode()
     {
     }
 
-    public OnlineNode(NetNode netNode)
+    public ActiveNode(NetNode netNode)
     {
         this.Address = netNode.Address;
         this.PublicKey = netNode.PublicKey;
     }
 
-    public OnlineNode(NetAddress netAddress, NodePublicKey publicKey)
+    public ActiveNode(NetAddress netAddress, NodePublicKey publicKey)
     {
         this.Address = netAddress;
         this.PublicKey = publicKey;
