@@ -9,8 +9,10 @@ namespace Netsphere.Generator;
 public class ServiceMethod
 {
     public const string ByteArrayName = "byte[]";
-    public const string MemoryOwnerName = "Arc.Collections.BytePool.RentMemory";
-    public const string ReadOnlyMemoryOwnerName = "Arc.Collections.BytePool.RentReadOnlyMemory";
+    public const string MemoryName = "System.Memory<byte>";
+    public const string ReadOnlyMemoryName = "System.ReadOnlyMemory<byte>";
+    public const string RentMemoryName = "Arc.Collections.BytePool.RentMemory";
+    public const string RentReadOnlyMemoryName = "Arc.Collections.BytePool.RentReadOnlyMemory";
     public const string ReceiveStreamName = "Netsphere.ReceiveStream";
     public const string SendStreamName = "Netsphere.SendStream";
     public const string SendStreamAndReceiveName = "Netsphere.SendStreamAndReceive<TReceive>";
@@ -23,6 +25,8 @@ public class ServiceMethod
         Other,
         NetResult,
         ByteArray,
+        Memory,
+        ReadOnlyMemory,
         RentMemory,
         RentReadOnlyMemory,
         ReceiveStream,
@@ -277,8 +281,10 @@ public class ServiceMethod
     {
         NetResultName => Type.NetResult,
         ByteArrayName => Type.ByteArray,
-        MemoryOwnerName => Type.RentMemory,
-        ReadOnlyMemoryOwnerName => Type.RentReadOnlyMemory,
+        MemoryName => Type.Memory,
+        ReadOnlyMemoryName => Type.ReadOnlyMemory,
+        RentMemoryName => Type.RentMemory,
+        RentReadOnlyMemoryName => Type.RentReadOnlyMemory,
         ReceiveStreamName => Type.ReceiveStream,
         SendStreamName => Type.SendStream,
         SendStreamAndReceiveName => Type.SendStreamAndReceive,

@@ -31,7 +31,7 @@ public class NetSenderBenchmark
     public NetSenderBenchmark()
     {
         this.endPoint = new(IPAddress.Loopback, 1234);
-        this.memoryOwner = new BytePool.RentMemory(new byte[100]);
+        this.memoryOwner = BytePool.RentMemory.CreateFrom(new byte[100]);
     }
 
     [GlobalSetup]
