@@ -805,17 +805,16 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             using (var scopeCore = ssb.ScopeBrace("static async Task Core(object obj, TransmissionContext context)"))
             {
+                // ssb.AppendLine("var rent = context.RentMemory;");
                 // using (var scopeTry = ssb.ScopeBrace("try"))
                 {
                     this.GenerateBackend_MethodCore(ssb, info, serviceInterface, method);
                 }
 
-                /*using (var scopeCatch = ssb.ScopeBrace("catch (NetException ne)"))
-                {
-                    ssb.AppendLine("context.RentData.Return();");
-                    ssb.AppendLine($"context.RentData = {ServiceMethod.MemoryOwnerName}.Empty;");
-                    ssb.AppendLine("context.Result = ne.Result;");
-                }*/
+                // using (var scopeFinally = ssb.ScopeBrace("finally"))
+                // {
+                //    ssb.AppendLine("rent.Return();");
+                // }
             }
         }
     }
@@ -937,7 +936,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         if (method.ReturnObject == null)
         {// NetTask
-            ssb.AppendLine($"context.RentMemory = {ServiceMethod.RentMemoryName}.Empty;");
+            ssb.AppendLine($"context.RentMemory = {ServiceMethod.RentMemoryName}.Empty;");//
         }
         else if (method.ReturnType == ServiceMethod.Type.NetResult)
         {
