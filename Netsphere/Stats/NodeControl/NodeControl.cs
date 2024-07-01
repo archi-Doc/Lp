@@ -202,7 +202,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         return true;
     }
 
-    public IntegralityResultMemory DifferentiateOnlineNode(BytePool.RentMemory memory)
+    public BytePool.RentMemory DifferentiateOnlineNode(ReadOnlyMemory<byte> memory)
     {
         lock (this.syncObject)
         {

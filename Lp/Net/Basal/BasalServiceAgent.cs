@@ -21,15 +21,8 @@ internal partial class BasalServiceAgent : INodeControlService
 
     #endregion
 
-    public async NetTask<IntegralityResultMemory> DifferentiateActiveNode(BytePool.RentMemory memory)
+    public async NetTask<BytePool.RentMemory> DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
-        try
-        {
-            return this.netStats.NodeControl.DifferentiateOnlineNode(memory);
-        }
-        finally
-        {
-            memory.Return();
-        }
+        return this.netStats.NodeControl.DifferentiateOnlineNode(memory);//return memory
     }
 }
