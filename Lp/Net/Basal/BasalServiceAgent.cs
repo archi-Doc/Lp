@@ -21,7 +21,7 @@ internal partial class BasalServiceAgent : INodeControlService
 
     #endregion
 
-    public async NetTask<BytePool.RentMemory> DifferentiateActiveNode(BytePool.RentMemory memory)
+    public async NetTask<BytePool.RentMemory> DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
         try
         {
@@ -29,7 +29,7 @@ internal partial class BasalServiceAgent : INodeControlService
         }
         finally
         {
-            memory.Return();
+            //memory.Return();
         }
     }
 }

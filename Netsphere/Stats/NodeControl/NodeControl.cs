@@ -202,11 +202,11 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         return true;
     }
 
-    public BytePool.RentMemory DifferentiateOnlineNode(BytePool.RentMemory memory)
+    public BytePool.RentMemory DifferentiateOnlineNode(ReadOnlyMemory<byte> memory)
     {
         lock (this.syncObject)
         {
-            return default;//((IIntegralityObject)this.activeNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
+            return ((IIntegralityObject)this.activeNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
         }
     }
 
