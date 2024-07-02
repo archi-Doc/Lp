@@ -12,8 +12,8 @@ global using Lp;
 global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
-using Lp.Basal;
 using Lp.Data;
+using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
 using Lp.T3cs;
@@ -62,7 +62,7 @@ public class Control
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerServiceAgent>();
-                context.AddTransient<BasalServiceAgent>();
+                context.AddTransient<Lp.Net.BasalServiceAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -444,7 +444,7 @@ public class Control
 
     public async Task CreatePeer(UnitContext context)
     {
-        this.NetControl.Services.Register<INodeControlService>();
+        this.NetControl.Services.Register<IBasalService>();
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
