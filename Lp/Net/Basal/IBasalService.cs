@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Collections;
-using ValueLink.Integrality;
 
-namespace Lp.Basal;
+namespace Lp.Net;
 
-/*[NetServiceInterface]
+[NetServiceInterface]
 public interface IBasalService : INetService
 {
-    NetTask<IntegralityResultMemory> DifferentiateOnlineNode(BytePool.RentMemory memory);
-}*/
+    NetTask<BytePool.RentMemory> DifferentiateActiveNode(ReadOnlyMemory<byte> memory);
+}

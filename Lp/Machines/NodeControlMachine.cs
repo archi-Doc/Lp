@@ -147,7 +147,7 @@ public partial class NodeControlMachine : Machine
                 }
                 else
                 {
-                    var service = connection.GetService<Netsphere.Interfaces.INodeControlService>();
+                    var service = connection.GetService<Lp.Net.IBasalService>();
                     if (service is not null)
                     {
                         var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
