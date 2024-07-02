@@ -6,7 +6,7 @@ using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
 
-[TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
+[TinyhandObject(UseServiceProvider = true)]
 public sealed partial class NodeControl : ITinyhandSerializationCallback
 {
     public static readonly int MaxLifelineNodes = 32;
@@ -26,15 +26,13 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     #region FieldAndProperty
 
-    private readonly object syncObject = new();
-
     [Key(0)]
-    private LifelineNode.GoshujinClass lifelineNodes = new(); // this.syncObject
+    private LifelineNode.GoshujinClass lifelineNodes = new(); // this.lifelineNodes.SyncObject
 
     [Key(1)]
-    private ActiveNode.GoshujinClass activeNodes = new(); // this.syncObject
+    private ActiveNode.GoshujinClass activeNodes = new(); // this.activeNodes.SyncObject
 
-    private ActiveNode.GoshujinClass unknownNodes = new(); // this.syncObject
+    private ActiveNode.GoshujinClass unknownNodes = new(); // this.unknownNodes.SyncObject
 
     public int CountLinfelineOnline => this.lifelineNodes.OnlineLinkChain.Count;
 
@@ -54,22 +52,25 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void FromLifelineNodeToActiveNode()
     {
-        lock (this.syncObject)
+        lock (this.lifelineNodes.SyncObject)
         {
-            foreach (var x in this.lifelineNodes.OnlineLinkChain)
+            lock (this.activeNodes.SyncObject)
             {
-                if (this.activeNodes.AddressChain.ContainsKey(x.Address))
+                foreach (var x in this.lifelineNodes.OnlineLinkChain)
                 {
-                    continue;
-                }
+                    if (this.activeNodes.AddressChain.ContainsKey(x.Address))
+                    {
+                        continue;
+                    }
 
-                if (!this.CanAddActiveNode)
-                {
-                    return;
-                }
+                    if (!this.CanAddActiveNode)
+                    {
+                        return;
+                    }
 
-                var item = new ActiveNode(x.Address, x.PublicKey);
-                this.activeNodes.Add(item);
+                    var item = new ActiveNode(x.Address, x.PublicKey);
+                    this.activeNodes.Add(item);
+                }
             }
         }
     }
@@ -84,38 +85,41 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             return;
         }
 
-        lock (this.syncObject)
+        lock (this.lifelineNodes.SyncObject)
         {
-            // Online -> Lifeline
-            foreach (var x in this.activeNodes)
+            lock (this.activeNodes.SyncObject)
             {
-                if (this.lifelineNodes.AddressChain.ContainsKey(x.Address))
+                // Online -> Lifeline
+                foreach (var x in this.activeNodes)
                 {
-                    continue;
+                    if (this.lifelineNodes.AddressChain.ContainsKey(x.Address))
+                    {
+                        continue;
+                    }
+
+                    if (!this.CanAddLifelineNode)
+                    {
+                        return;
+                    }
+
+                    var item = new LifelineNode(x.Address, x.PublicKey);
+                    item.LastCheckedMics = Mics.FastSystem;
+                    this.lifelineNodes.Add(item);
+                    this.lifelineNodes.OnlineLinkChain.AddLast(item);
                 }
 
-                if (!this.CanAddLifelineNode)
+                // Lifeline offline -> Remove
+                var deleteList = new DeferredList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
+                foreach (var x in this.lifelineNodes.OfflineLinkChain)
                 {
-                    return;
+                    if ((this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
+                    {
+                        deleteList.Add(x);
+                    }
                 }
 
-                var item = new LifelineNode(x.Address, x.PublicKey);
-                item.LastCheckedMics = Mics.FastSystem;
-                this.lifelineNodes.Add(item);
-                this.lifelineNodes.OnlineLinkChain.AddLast(item);
+                deleteList.DeferredRemove();
             }
-
-            // Lifeline offline -> Remove
-            var deleteList = new DeferredList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
-            foreach (var x in this.lifelineNodes.OfflineLinkChain)
-            {
-                if ((this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
-                {
-                    deleteList.Add(x);
-                }
-            }
-
-            deleteList.DeferredRemove();
         }
     }
 
@@ -136,13 +140,16 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             return false;
         }
 
-        lock (this.syncObject)
+        lock (this.activeNodes.SyncObject)
         {
             if (this.activeNodes.AddressChain.ContainsKey(node.Address))
             {
                 return false;
             }
+        }
 
+        lock (this.unknownNodes.SyncObject)
+        {
             var item = new ActiveNode(node);
             item.Goshujin = this.unknownNodes;
         }
@@ -153,7 +160,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool TryGetUncheckedLifelineNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        lock (this.syncObject)
+        lock (this.lifelineNodes.SyncObject)
         {
             var obj = this.lifelineNodes.UncheckedListChain.First;
             if (obj is null)
@@ -171,7 +178,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool TryGetActiveNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        lock (this.syncObject)
+        lock (this.activeNodes.SyncObject)
         {
             if (!this.activeNodes.GetChain.TryDequeue(out var obj))
             {
@@ -188,7 +195,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool TryGetUnknownNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        lock (this.syncObject)
+        lock (this.unknownNodes.SyncObject)
         {
             if (!this.unknownNodes.GetChain.TryPeek(out var obj))
             {
@@ -204,10 +211,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public BytePool.RentMemory DifferentiateOnlineNode(ReadOnlyMemory<byte> memory)
     {
-        lock (this.syncObject)
-        {
-            return ((IIntegralityObject)this.activeNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
-        }
+        return ((IIntegralityObject)this.activeNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
     }
 
     public Task<IntegralityResult> IntegrateOnlineNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
@@ -217,51 +221,54 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)
     {
-        lock (this.syncObject)
+        lock (this.lifelineNodes.SyncObject)
         {
-            var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
-            if (item is not null)
+            lock (this.activeNodes.SyncObject)
             {
-                item.LastCheckedMics = Mics.FastSystem;
-                if (item.Goshujin is { } g)
+                var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
+                if (item is not null)
                 {
-                    g.UncheckedListChain.Remove(item);
-                    if (result == ConnectionResult.Success)
-                    {// Online link
-                        g.OnlineLinkChain.AddLast(item);
-                        g.OfflineLinkChain.Remove(item);
-                    }
-                    else
-                    {// Offline link
-                        g.OnlineLinkChain.Remove(item);
-                        g.OfflineLinkChain.AddLast(item);
+                    item.LastCheckedMics = Mics.FastSystem;
+                    if (item.Goshujin is { } g)
+                    {
+                        g.UncheckedListChain.Remove(item);
+                        if (result == ConnectionResult.Success)
+                        {// Online link
+                            g.OnlineLinkChain.AddLast(item);
+                            g.OfflineLinkChain.Remove(item);
+                        }
+                        else
+                        {// Offline link
+                            g.OnlineLinkChain.Remove(item);
+                            g.OfflineLinkChain.AddLast(item);
+                        }
                     }
                 }
-            }
 
-            if (result == ConnectionResult.Success)
-            {
-                var item2 = this.activeNodes.AddressChain.FindFirst(node.Address);
-                if (item2 is not null)
+                if (result == ConnectionResult.Success)
                 {
-                    item2.LastConnectionMicsValue = Mics.FastSystem;
+                    var item2 = this.activeNodes.AddressChain.FindFirst(node.Address);
+                    if (item2 is not null)
+                    {
+                        item2.LastConnectionMicsValue = Mics.FastSystem;
+                    }
+                    else if (this.CanAddActiveNode)
+                    {
+                        item2 = new(node);
+                        item2.LastConnectionMicsValue = Mics.FastSystem;
+                        item2.Goshujin = this.activeNodes;
+                    }
                 }
-                else if (this.CanAddActiveNode)
+                else if (result == ConnectionResult.Failure)
                 {
-                    item2 = new(node);
-                    item2.LastConnectionMicsValue = Mics.FastSystem;
-                    item2.Goshujin = this.activeNodes;
                 }
-            }
-            else if (result == ConnectionResult.Failure)
-            {
             }
         }
     }
 
     public void ReportActiveNodeConnection(NetNode node, ConnectionResult result)
     {
-        lock (this.syncObject)
+        lock (this.activeNodes.SyncObject)
         {
             var item = this.activeNodes.AddressChain.FindFirst(node.Address);
             if (item is not null)
@@ -291,27 +298,29 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public string Dump()
     {
         string st;
-        lock (this.syncObject)
-        {
-            st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.activeNodes.Count}";
-        }
-
+        st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.activeNodes.Count}";
         return st;
     }
 
     public void Validate()
     {
-        lock (this.syncObject)
+        lock (this.lifelineNodes.SyncObject)
         {
-            this.ValidateInternal();
+            lock (this.activeNodes.SyncObject)
+            {
+                this.ValidateInternal();
+            }
         }
     }
 
     public void Trim()
     {
-        lock (this.syncObject)
+        lock (this.lifelineNodes.SyncObject)
         {
-            this.TrimInternal();
+            lock (this.activeNodes.SyncObject)
+            {
+                this.TrimInternal();
+            }
         }
     }
 

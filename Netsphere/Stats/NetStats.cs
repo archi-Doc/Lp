@@ -70,7 +70,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         endPoint = default;
         if (endpointResolution == EndpointResolution.PreferIpv6)
         {
-            if (this.Ipv6Endpoint.IsFixed)
+            if (this.Ipv6Endpoint.FixedOrDefault is not null)
             {// Ipv6 supported
                 address.TryCreateIpv6(ref endPoint);
                 if (endPoint.IsValid)
@@ -113,7 +113,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
     {
         endPoint = default;
-        if (this.Ipv6Endpoint.IsFixed)
+        if (this.Ipv6Endpoint.FixedOrDefault is not null)
         {// Ipv6 supported
             node.Address.TryCreateIpv6(ref endPoint);
             if (endPoint.IsValid)

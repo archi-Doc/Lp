@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Netsphere.Stats;
 
 [TinyhandObject]
-[ValueLinkObject]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public sealed partial class LifelineNode : NetNode
 {
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
