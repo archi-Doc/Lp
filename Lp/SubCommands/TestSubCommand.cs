@@ -24,7 +24,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
-        await this.TestLinkageKey();
+        var privateKey = NodePrivateKey.Create();
+        Console.WriteLine($"{privateKey.UnsafeToString()}");
+        Console.WriteLine($"{privateKey.ToPublicKey().ToString()}");
+
+        // await this.TestLinkageKey();
     }
 
     private async Task TestLinkageKey()
