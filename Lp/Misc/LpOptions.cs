@@ -64,16 +64,16 @@ public partial record LpOptions
     public string CertificateRelayPublicKey { get; set; } = string.Empty;
 
     [SimpleOption("RelayPeerPrivault", Description = "Private key or vault name for Relay peer", GetEnvironmentVariable = true)]
-    public string RelayPeerPrivault { get; set; } = "relay_peer";
+    public string RelayPeerPrivault { get; set; } = "RelayPeer";
 
     [SimpleOption("ContentPeerPrivault", Description = "Private key or vault name for Content peer", GetEnvironmentVariable = true)]
-    public string ContentPeerPrivault { get; set; } = "content_peer";
+    public string ContentPeerPrivault { get; set; } = "ContentPeer";
 
     [SimpleOption("CreditMergerPrivault", Description = "Private key or vault name for Credit merger", GetEnvironmentVariable = true)]
-    public string CreditMergerPrivault { get; set; } = "credit_merger";
+    public string CreditMergerPrivault { get; set; } = "CreditMerger";
 
     [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", GetEnvironmentVariable = true)]
-    public string RelayMergerPrivault { get; set; } = "relay_merger";
+    public string RelayMergerPrivault { get; set; } = "RelayMerger";
 
     public NetOptions ToNetOptions()
     {

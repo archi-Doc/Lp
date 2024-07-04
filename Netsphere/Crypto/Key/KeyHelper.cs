@@ -13,6 +13,7 @@ public static class KeyHelper
     public const int PrivateKeyLength = 32;
     public const int SignatureLength = 64;
     public const int EncodedLength = 1 + (sizeof(ulong) * 4);
+    public const int ChecksumLength = 3;
 
     public static readonly HashAlgorithmName HashAlgorithmName;
     public static readonly ECCurveBase CurveInstance;
@@ -225,6 +226,47 @@ public static class KeyHelper
         var b = bytes.AsSpan();
         keyValue = b[0];
         x = b.Slice(1);
+        return true;
+    }
+
+    public static void SetChecksum(Span<byte> span)
+    {
+        if (span.Length < 3)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        var s = span.Slice(span.Length - 3);
+        var checksum = XxHash3.Hash64(span.Slice(0, span.Length - 3));
+        s[0] = (byte)(checksum & 0x0000_0000_0000_00FF);
+        s[1] = (byte)((checksum & 0x0000_0000_00FF_0000) >> 16);
+        s[2] = (byte)((checksum & 0x0000_00FF_0000_0000) >> 32);
+    }
+
+    public static bool VerifyChecksum(Span<byte> span)
+    {
+        if (span.Length < 3)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        var s = span.Slice(span.Length - 3);
+        var checksum = XxHash3.Hash64(span.Slice(0, span.Length - 3));
+        if (s[0] != (byte)(checksum & 0x0000_0000_0000_00FF))
+        {
+            return false;
+        }
+
+        if (s[1] != (byte)((checksum & 0x0000_0000_00FF_0000) >> 16))
+        {
+            return false;
+        }
+
+        if (s[2] != (byte)((checksum & 0x0000_00FF_0000_0000) >> 32))
+        {
+            return false;
+        }
+
         return true;
     }
 

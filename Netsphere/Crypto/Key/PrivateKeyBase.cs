@@ -9,7 +9,7 @@ namespace Netsphere.Crypto;
 
 public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateKeyBase>
 {
-    internal const int UnsafeStringLength = 96; // 3 + Base64.Url.GetEncodedLength(1 + KeyHelper.PrivateKeyLength) + 3 + 1 + Base64.Url.GetEncodedLength(1 + KeyHelper.PublicKeyHalfLength) + 1
+    internal const int UnsafeStringLength = 104; // 3 + Base64.Url.GetEncodedLength(1 + KeyHelper.PrivateKeyLength + KeyHelper.ChecksumLength) + 3 + 1 + Base64.Url.GetEncodedLength(1 + KeyHelper.PublicKeyHalfLength + KeyHelper.ChecksumLength) + 1
 
     public PrivateKeyBase()
     {
@@ -42,12 +42,17 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
         }
 
         var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
-        if (privateBytes == null || privateBytes.Length != (KeyHelper.PrivateKeyLength + 1))
+        if (privateBytes == null || privateBytes.Length != (KeyHelper.PrivateKeyLength + 1 + KeyHelper.ChecksumLength))
         {
             return false;
         }
 
         if (KeyHelper.GetKeyClass(privateBytes[0]) != keyClass)
+        {
+            return false;
+        }
+
+        if (!KeyHelper.VerifyChecksum(privateBytes))
         {
             return false;
         }
@@ -161,13 +166,15 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
             return false;
         }
 
-        Span<byte> privateSpan = stackalloc byte[1 + KeyHelper.PrivateKeyLength]; // scoped
+        Span<byte> privateSpan = stackalloc byte[1 + KeyHelper.PrivateKeyLength + KeyHelper.ChecksumLength]; // scoped
         privateSpan[0] = this.keyValue;
         this.d.CopyTo(privateSpan.Slice(1));
+        KeyHelper.SetChecksum(privateSpan);
 
-        Span<byte> publicSpan = stackalloc byte[1 + KeyHelper.PublicKeyHalfLength];
+        Span<byte> publicSpan = stackalloc byte[1 + KeyHelper.PublicKeyHalfLength + KeyHelper.ChecksumLength];
         publicSpan[0] = KeyHelper.ToPublicKeyValue(this.keyValue);
         this.x.CopyTo(publicSpan.Slice(1));
+        KeyHelper.SetChecksum(publicSpan);
 
         Span<char> span = destination;
         span[0] = '!';
