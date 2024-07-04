@@ -26,7 +26,7 @@ public static class KeyHelper
         CurveInstance = P256R1Curve.Instance;
         ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
-        PublicKeyLengthInBase64 = Base64.Url.GetEncodedLength(EncodedLength);
+        PublicKeyLengthInBase64 = Base64.Url.GetEncodedLength(EncodedLength + ChecksumLength);
     }
 
     public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";
@@ -216,7 +216,8 @@ public static class KeyHelper
         }
 
         var bytes = Base64.Url.FromStringToByteArray(chars.Slice(0, KeyHelper.PublicKeyLengthInBase64));
-        if (bytes.Length != KeyHelper.EncodedLength)
+        if (bytes.Length != (KeyHelper.EncodedLength + KeyHelper.ChecksumLength) ||
+            !VerifyChecksum(bytes))
         {
             keyValue = default;
             x = default;
