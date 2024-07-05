@@ -61,8 +61,9 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
             return false;
         }
 
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength + KeyHelper.ChecksumLength];
         this.TryWriteBytes(span, out _);
+        KeyHelper.SetChecksum(span);
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
     }
 
@@ -191,8 +192,9 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     public string ToBase64()
     {
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength + KeyHelper.ChecksumLength];
         this.TryWriteBytes(span, out _);
+        KeyHelper.SetChecksum(span);
         return $"{Base64.Url.FromByteArrayToString(span)}";
     }
 

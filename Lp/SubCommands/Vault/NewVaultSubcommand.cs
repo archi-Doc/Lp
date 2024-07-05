@@ -88,7 +88,7 @@ public record NewVaultOptions
     [SimpleOption("Name", Description = "Vault name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("Class", Description = "Key class")]
+    [SimpleOption("Class", Description = "Key class [Encryption, Signature, NodeEncryption]")]
     public KeyClass KeyClass { get; init; } = KeyClass.Signature;
 
     [SimpleOption("Seed", Description = "Seedphrase")]
