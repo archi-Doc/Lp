@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -24,7 +25,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
-        var privateKey = NodePrivateKey.Create();
+        /*var privateKey = NodePrivateKey.Create();
         var publicKey = privateKey.ToPublicKey();
         Console.WriteLine($"{privateKey.UnsafeToString()}");
         Console.WriteLine($"{publicKey.ToString()}");
@@ -34,9 +35,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         Console.WriteLine($"{privateKey.Equals(privateKey2).ToString()}");
         st = publicKey.ToString();
         NodePublicKey.TryParse(st, out var publicKey2);
-        Console.WriteLine($"{publicKey.Equals(publicKey2).ToString()}");
+        Console.WriteLine($"{publicKey.Equals(publicKey2).ToString()}");*/
 
-        // await this.TestLinkageKey();
+        await this.TestLinkageKey();
     }
 
     private async Task TestLinkageKey()
@@ -55,6 +56,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.UnsafeToString()}");
         this.userInterfaceService.WriteLine($"Public(encryption): {publicEncryptionKey.ToString()}");
 
+        this.userInterfaceService.WriteLine($"SizeOf LinkageKey {Unsafe.SizeOf<LinkageKey>()}");
         var rawLinkageKey = LinkageKey.CreateRaw(publicKey);
         this.userInterfaceService.WriteLine($"Raw: {rawLinkageKey.ToString()}");
         bt.Start();
