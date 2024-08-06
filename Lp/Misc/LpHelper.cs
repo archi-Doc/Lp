@@ -127,7 +127,7 @@ public static class LpHelper
         {
             value.SetInformationInternal(privateKey, proofMics);
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[Sha3_256.HashLength 32];
+            Span<byte> hash = stackalloc byte[Sha3_256.HashLength];
             var rentMemory = writer.FlushAndGetRentMemory();
             Sha3Helper.Get256_Span(rentMemory.Span, hash);
             rentMemory.Return();
