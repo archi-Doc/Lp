@@ -16,11 +16,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<AddressBenchmark>();
+        DebugRun<KeyBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(KeyBenchmark),
             typeof(ResendListBenchmark),
             typeof(NetSenderBenchmark),
             typeof(PacketBenchmark),
@@ -30,7 +31,6 @@ public class Program
             typeof(SignatureBenchmark),
             typeof(CreditBenchmark),
             typeof(DoubleDecimalBenchmark),
-            typeof(ZenIOBenchmark),
             typeof(MicsBenchmark),
             typeof(PacketPoolBenchmark),
             typeof(AesBenchmark),
