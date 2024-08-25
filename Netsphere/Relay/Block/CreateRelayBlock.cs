@@ -2,7 +2,7 @@
 
 namespace Netsphere.Relay;
 
-[TinyhandObject(ReservedKeys = 2)]
+[TinyhandObject(ReservedKeyCount = 2)]
 public partial class CreateRelayBlock
 {
     public CreateRelayBlock()

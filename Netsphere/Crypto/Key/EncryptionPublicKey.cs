@@ -22,10 +22,13 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     public ObjectCache<EncryptionPublicKey, ECDiffieHellman>.Interface TryGetEcdh()
     {
-        var x = new byte[32];
-        this.WriteX(x);
+        if (Cache.TryGet(this) is not { } e)
+        {
+            var x = new byte[32];
+            this.WriteX(x);
+            e = KeyHelper.CreateEcdhFromX(x, this.YTilde);
+        }
 
-        var e = Cache.TryGet(this) ?? KeyHelper.CreateEcdhFromX(x, this.YTilde);
         return Cache.CreateInterface(this, e);
     }
 
