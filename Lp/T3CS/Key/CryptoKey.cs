@@ -1,44 +1,40 @@
 // Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents a crypto key.
-/// 
+/// Represents a crypto key (Raw or Encrypted SignaturePublicKey).
 /// </summary>
 [TinyhandObject]
-public partial record class CryptoKey
+public sealed partial record class CryptoKey
 {
-    #region FieldAndProperty
+    #region Static
 
-    #endregion
-
-    public static bool TryCreate(SignaturePrivateKey privateKey, EncryptionPublicKey mergerKey, uint seed, [MaybeNullWhen(false)] out CryptoKey cryptoKey)
+    public static bool TryCreate(SignaturePrivateKey originalKey, EncryptionPublicKey mergerKey, uint encryption, [MaybeNullWhen(false)] out CryptoKey cryptoKey)
     {
-        while (seed == 0)
+        while (encryption == 0)
         {
-            seed = RandomVault.Pseudo.NextUInt32();
+            encryption = RandomVault.Pseudo.NextUInt32();
         }
 
         Span<byte> buffer = stackalloc byte[4 + KeyHelper.PrivateKeyLength + 4]; // Seed[4] + PrivateKey[32] + Seedn[4]
-        Span<byte> destination = stackalloc byte[32];
         var span = buffer;
-        MemoryMarshal.Write(span, seed);
+        MemoryMarshal.Write(span, encryption);
         span = span.Slice(4);
-        privateKey.UnsafeTryWriteX(span, out _);
+        originalKey.UnsafeTryWriteX(span, out _);
         span = span.Slice(KeyHelper.PrivateKeyLength);
-        MemoryMarshal.Write(span, seed);
+        MemoryMarshal.Write(span, encryption);
 
         // Span<byte> cryptoKeySource = stackalloc byte[KeyHelper.PrivateKeyLength];
         // Sha3Helper.Get256_Span(buffer, cryptoKeySource);
 
+        Span<byte> destination = stackalloc byte[32];
+        var originalPublicKey = originalKey.ToPublicKey();
         var encryptionKey = EncryptionPrivateKey.Create(buffer);
         using (var ecdh = encryptionKey.TryGetEcdh())
         using (var cache = mergerKey.TryGetEcdh())
@@ -63,7 +59,7 @@ public partial record class CryptoKey
 
                     Span<byte> source = stackalloc byte[32];
                     Span<byte> iv = stackalloc byte[16];
-                    privateKey.ToPublicKey().WriteX(source);
+                    originalPublicKey.WriteX(source);
                     aes.TryEncryptCbc(source, iv, destination, out _, PaddingMode.None);
                 }
             }
@@ -74,11 +70,33 @@ public partial record class CryptoKey
             }
         }
 
-        cryptoKey = new(publicKey, newKey, destination);
+        cryptoKey = new(encryption, (uint)originalPublicKey.GetChecksum(), originalPublicKey.KeyValue, encryptionKey, destination);
         return true;
     }
 
+    #endregion
+
+    #region FieldAndProperty
+
+    [Key(0)]
+    private readonly uint encryption; // 0: Raw, 0<: Encrypted
+
+    [Key(1)]
+    private readonly uint checksum; // (uint)originalPublicKey.GetChecksum()
+
+    [Key(2)]
+    private readonly byte originalKeyValue;
+
+    #endregion
+
     public CryptoKey()
     {
+    }
+
+    private CryptoKey(uint encryption, uint checksum, byte originalKeyValue, EncryptionPrivateKey encryptionKey, Span<byte> encrypted)
+    {
+        this.checksum = checksum;
+        this.originalKeyValue = originalKeyValue;
+        this.encryption = encryption;
     }
 }
