@@ -11,7 +11,7 @@ namespace Lp.T3cs;
 /// Represents a crypto key (Raw or Encrypted SignaturePublicKey).
 /// </summary>
 [TinyhandObject]
-public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>
+public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IEquatable<CryptoKey>
 {
     public const int EncodedLength = RawLength + EncryptedLength;
     private const int RawLength = sizeof(uint) + (sizeof(ulong) * 4); // 36
@@ -59,7 +59,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>
             }
         }
 
-        instance = new(destination);
+        instance = new(destination.Slice(0, written));
         return true;
     }
 
@@ -188,7 +188,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>
 
     private CryptoKey(ReadOnlySpan<byte> bytes)
     {// Byte array
-        if (bytes.Length < EncodedLength)
+        if (bytes.Length < RawLength)
         {
             throw new InvalidOperationException();
         }
@@ -211,10 +211,11 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>
         }
     }
 
-    public bool IsOriginalKey(SignaturePrivateKey originalKey, uint encryption)
+    public bool IsOriginalKey(SignaturePrivateKey originalKey)
     {
         if (this.IsEncrypted)
         {// Encrypted
+            var encryption = this.Encryption & EncryptionMask;
             Span<byte> encryptionKeySource = stackalloc byte[4 + KeyHelper.PrivateKeyLength + 4]; // Seed[4] + PrivateKey[32] + Seed[4]
             var span = encryptionKeySource;
             MemoryMarshal.Write(span, encryption);
@@ -320,6 +321,52 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>
         this.TryWriteBytes(span, out var w);
         span = span.Slice(0, w);
         return this.IsEncrypted ? $"[{Base64.Url.FromByteArrayToString(span)}]" : $"[!{Base64.Url.FromByteArrayToString(span)}]";
+    }
+
+    public override int GetHashCode()
+    {
+        if (this.encrypted is null)
+        {
+            return HashCode.Combine(this.encryptionAndYTilde, this.x0, this.x1, this.x2, this.x3);
+        }
+        else
+        {
+            return HashCode.Combine(this.encryptionAndYTilde, this.x0, this.x1, this.x2, this.x3, this.encrypted);
+        }
+    }
+
+    public bool Equals(CryptoKey? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (this.encrypted is null)
+        {
+            if (other.encrypted is not null)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (other.encrypted is null)
+            {
+                return false;
+            }
+
+            if (this.encrypted.SequenceEqual(other.encrypted) == false)
+            {
+                return false;
+            }
+        }
+
+        return this.encryptionAndYTilde == other.encryptionAndYTilde &&
+            this.x0 == other.x0 &&
+            this.x1 == other.x1 &&
+            this.x2 == other.x2 &&
+            this.x3 == other.x3;
     }
 
     public string ToBase64()

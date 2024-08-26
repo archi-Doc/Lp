@@ -59,11 +59,16 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         // CryptoKey (Raw)
         var cryptoKey = CryptoKey.CreateRaw(publicKey);
         this.userInterfaceService.WriteLine($"CryptoKey (Raw) : {cryptoKey.ToString()}");
-        this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey, 0)}");
+        this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey)}");
         if (cryptoKey.TryGetRawKey(out var originalKey))
         {
             this.userInterfaceService.WriteLine($"CryptoKey.TryGetRawKey() success.");
             this.userInterfaceService.WriteLine($"{originalKey.Equals(publicKey)}");
+        }
+
+        if (CryptoKey.TryParse(cryptoKey.ToString(), out var cryptoKey2))
+        {
+            var eq = cryptoKey.Equals(cryptoKey2);
         }
 
         // CryptoKey (Encrypted)
@@ -73,7 +78,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         {
             this.userInterfaceService.WriteLine($"CryptoKey (Encrypted): {cryptoKey.ToString()}");
 
-            this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey, encryption)}");
+            this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey)}");
 
             if (cryptoKey.TryGetEncryptedKey(mergerKey, out originalKey) &&
                 publicKey.Equals(originalKey))
