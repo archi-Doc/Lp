@@ -125,6 +125,15 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         this.x3 = BitConverter.ToUInt64(b);
     }
 
+    public SignaturePublicKey(ulong x0, ulong x1, ulong x2, ulong x3, bool yTilde)
+    {
+        this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.Signature, yTilde);
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
+    }
+
     public bool IsSameKey(SignaturePrivateKey privateKey)
     {
         if (KeyHelper.ToPublicKeyValue(privateKey.KeyValue) != this.KeyValue)

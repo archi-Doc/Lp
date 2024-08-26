@@ -88,6 +88,12 @@ public sealed partial record class CryptoKey
     [Key(2)]
     private readonly byte originalKeyValue;
 
+    public uint Encryption => this.encryptionAndYTilde & EncryptionMask;
+
+    public bool IsEncrypted => this.Encryption != 0;
+
+    private bool YTilde => (this.encryptionAndYTilde & 1) == 1;
+
     #endregion
 
     public CryptoKey()
@@ -98,5 +104,17 @@ public sealed partial record class CryptoKey
     {
         this.encryptionAndYTilde = encryption | KeyHelper.GetYTilde(originalPublicKey.KeyValue);
         //this.encryption = encryption;
+    }
+
+    public bool TryGetRawKey(out SignaturePublicKey signaturePublicKey)
+    {
+        if (this.IsEncrypted)
+        {
+            signaturePublicKey = default;
+            return false;
+        }
+
+        signaturePublicKey = new SignaturePublicKey(0, 0, 0, 0, this.YTilde);
+        return true;
     }
 }
