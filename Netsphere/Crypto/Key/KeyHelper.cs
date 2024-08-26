@@ -280,8 +280,8 @@ public static class KeyHelper
         => (uint)(keyValue & 1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte CreatePublicKeyValue(KeyClass keyClass, bool yTilde)
-        => (byte)((((byte)keyClass << 2) & 15) | (yTilde ? 1 : 0));
+    public static byte CreatePublicKeyValue(KeyClass keyClass, uint yTilde)
+        => (byte)((((uint)keyClass << 2) & 15) | (yTilde & 1));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static byte ToPublicKeyValue(byte keyValue)

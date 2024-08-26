@@ -56,26 +56,29 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.UnsafeToString()}");
         this.userInterfaceService.WriteLine($"Public(encryption): {publicEncryptionKey.ToString()}");
 
-        this.userInterfaceService.WriteLine($"SizeOf LinkageKey {Unsafe.SizeOf<LinkageKey>()}");
-        var rawLinkageKey = LinkageKey.CreateRaw(publicKey);
-        this.userInterfaceService.WriteLine($"Raw: {rawLinkageKey.ToString()}");
-        bt.Start();
-        LinkageKey.TryCreateEncrypted(publicKey, publicEncryptionKey, out var encryptedLinkageKey);
-        this.userInterfaceService.WriteLine($"Create encrypted linkage key: {bt.StopAndGetText()}");
-        this.userInterfaceService.WriteLine($"Encrypted: {encryptedLinkageKey.ToString()}");
+        // CryptoKey (Raw)
+        var cryptoKey = CryptoKey.CreateRaw(publicKey);
+        this.userInterfaceService.WriteLine($"CryptoKey (Raw) : {cryptoKey.ToString()}");
+        if (cryptoKey.TryGetRawKey(out var originalKey))
+        {
+            this.userInterfaceService.WriteLine($"CryptoKey.TryGetRawKey() success.");
+        }
 
-        bt.Start();
-        encryptedLinkageKey.TryDecrypt(privateEncryptionKey.TryGetEcdh()!, out var decryptedLinkageKey);
-        this.userInterfaceService.WriteLine($"Decrypt linkage key: {bt.StopAndGetText()}");
-        this.userInterfaceService.WriteLine($"Decrypted: {decryptedLinkageKey.ToString()}");
+        // CryptoKey (Encrypted)
+        var mergerKey = EncryptionPrivateKey.Create();
+        uint encryption = 100;
+        if (CryptoKey.TryCreateEncrypted(privateKey, mergerKey.ToPublicKey(), encryption, out cryptoKey))
+        {
+            this.userInterfaceService.WriteLine($"CryptoKey (Encrypted): {cryptoKey.ToString()}");
 
-        var ecdh = privateEncryptionKey.TryGetEcdh()!;
-        bt.Start();
-        encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
-        this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
-        bt.Start();
-        encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
-        this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
+            this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey, encryption)}");
+
+            if (cryptoKey.TryGetEncryptedKey(mergerKey, out originalKey) &&
+                publicKey.Equals(originalKey))
+            {
+                this.userInterfaceService.WriteLine($"CryptoKey.TryGetEncryptedKey() success.");
+            }
+        }
 
         if (await this.authorityVault.GetAuthority("lp") is { } authority)
         {

@@ -85,7 +85,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public NodePublicKey(ulong x0, ulong x1, ulong x2, ulong x3, bool yTilde)
+    public NodePublicKey(ulong x0, ulong x1, ulong x2, ulong x3, uint yTilde)
     {
         this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.NodeEncryption, yTilde);
         this.x0 = x0;

@@ -70,6 +70,15 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
     }
 
+    public EncryptionPublicKey(ulong x0, ulong x1, ulong x2, ulong x3, uint yTilde)
+    {
+        this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.Encryption, yTilde);
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
+    }
+
     internal EncryptionPublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
@@ -81,15 +90,6 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         this.x2 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
-    }
-
-    internal EncryptionPublicKey(ulong x0, ulong x1, ulong x2, ulong x3, bool yTilde)
-    {
-        this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.Encryption, yTilde);
-        this.x0 = x0;
-        this.x1 = x1;
-        this.x2 = x2;
-        this.x3 = x3;
     }
 
     public bool IsSameKey(EncryptionPrivateKey privateKey)
