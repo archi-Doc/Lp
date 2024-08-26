@@ -276,16 +276,16 @@ public static class KeyHelper
         => (KeyClass)((keyValue >> 2) & 15);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint GetYTilde(byte keyValue)
+        => (uint)(keyValue & 1);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static byte ToPublicKeyValue(byte keyValue)
         => (byte)(keyValue & ~(1 << 7));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static byte CreatePrivateKeyValue(KeyClass keyClass, uint yTilde)
         => (byte)(128 | (((uint)keyClass << 2) & 15) | (yTilde & 1));
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static uint GetYTilde(byte keyValue)
-        => (uint)(keyValue & 1);
 
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsPrivate(byte keyValue)

@@ -13,11 +13,12 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial record class CryptoKey
 {
+    private const uint EncryptionMask = 0xFFFFFFFE;
     #region Static
 
     public static bool TryCreate(SignaturePrivateKey originalKey, EncryptionPublicKey mergerKey, uint encryption, [MaybeNullWhen(false)] out CryptoKey cryptoKey)
     {
-        while (encryption == 0)
+        while ((encryption &= EncryptionMask) == 0)
         {
             encryption = RandomVault.Pseudo.NextUInt32();
         }
@@ -70,7 +71,7 @@ public sealed partial record class CryptoKey
             }
         }
 
-        cryptoKey = new(encryption, (uint)originalPublicKey.GetChecksum(), originalPublicKey.KeyValue, encryptionKey, destination);
+        cryptoKey = new(encryption, ref originalPublicKey, encryptionKey, destination);
         return true;
     }
 
@@ -79,7 +80,7 @@ public sealed partial record class CryptoKey
     #region FieldAndProperty
 
     [Key(0)]
-    private readonly uint encryption; // 0: Raw, 0<: Encrypted
+    private readonly uint encryptionAndYTilde; // 0 bit: YTilde, 1-31 bit: Encryption
 
     [Key(1)]
     private readonly uint checksum; // (uint)originalPublicKey.GetChecksum()
@@ -93,10 +94,9 @@ public sealed partial record class CryptoKey
     {
     }
 
-    private CryptoKey(uint encryption, uint checksum, byte originalKeyValue, EncryptionPrivateKey encryptionKey, Span<byte> encrypted)
+    private CryptoKey(uint encryption, ref SignaturePublicKey originalPublicKey, EncryptionPrivateKey encryptionKey, Span<byte> encrypted)
     {
-        this.checksum = checksum;
-        this.originalKeyValue = originalKeyValue;
-        this.encryption = encryption;
+        this.encryptionAndYTilde = encryption | KeyHelper.GetYTilde(originalPublicKey.KeyValue);
+        //this.encryption = encryption;
     }
 }
