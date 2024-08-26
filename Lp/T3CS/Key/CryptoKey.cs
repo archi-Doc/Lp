@@ -14,6 +14,7 @@ namespace Lp.T3cs;
 public sealed partial record class CryptoKey
 {
     private const uint EncryptionMask = 0xFFFFFFFE;
+
     #region Static
 
     public static bool TryCreate(SignaturePrivateKey originalKey, EncryptionPublicKey mergerKey, uint encryption, [MaybeNullWhen(false)] out CryptoKey cryptoKey)
@@ -23,8 +24,8 @@ public sealed partial record class CryptoKey
             encryption = RandomVault.Pseudo.NextUInt32();
         }
 
-        Span<byte> buffer = stackalloc byte[4 + KeyHelper.PrivateKeyLength + 4]; // Seed[4] + PrivateKey[32] + Seedn[4]
-        var span = buffer;
+        Span<byte> encryptionKeySource = stackalloc byte[4 + KeyHelper.PrivateKeyLength + 4]; // Seed[4] + PrivateKey[32] + Seed[4]
+        var span = encryptionKeySource;
         MemoryMarshal.Write(span, encryption);
         span = span.Slice(4);
         originalKey.UnsafeTryWriteX(span, out _);
@@ -34,9 +35,9 @@ public sealed partial record class CryptoKey
         // Span<byte> cryptoKeySource = stackalloc byte[KeyHelper.PrivateKeyLength];
         // Sha3Helper.Get256_Span(buffer, cryptoKeySource);
 
-        Span<byte> destination = stackalloc byte[32];
+        var encrypted = new byte[48];
         var originalPublicKey = originalKey.ToPublicKey();
-        var encryptionKey = EncryptionPrivateKey.Create(buffer);
+        var encryptionKey = EncryptionPrivateKey.Create(encryptionKeySource);
         using (var ecdh = encryptionKey.TryGetEcdh())
         using (var cache = mergerKey.TryGetEcdh())
         {
@@ -58,10 +59,17 @@ public sealed partial record class CryptoKey
                     aes.KeySize = 256;
                     aes.Key = material;
 
-                    Span<byte> source = stackalloc byte[32];
+                    Span<byte> source = stackalloc byte[48];
                     Span<byte> iv = stackalloc byte[16];
-                    originalPublicKey.WriteX(source);
-                    aes.TryEncryptCbc(source, iv, destination, out _, PaddingMode.None);
+
+                    span = source;
+                    MemoryMarshal.Write(span, RandomVault.Pseudo.NextUInt32()); // Salt
+                    span = span.Slice(4);
+                    MemoryMarshal.Write(span, (uint)originalPublicKey.GetChecksum()); // Checksum
+                    span = span.Slice(4);
+                    originalPublicKey.TryWriteBytes(span, out _); // Original PublicKey
+
+                    aes.TryEncryptCbc(source, iv, encrypted, out _, PaddingMode.None);
                 }
             }
             catch
@@ -71,22 +79,35 @@ public sealed partial record class CryptoKey
             }
         }
 
-        cryptoKey = new(encryption, ref originalPublicKey, encryptionKey, destination);
+        var encryptionPublicKey = encryptionKey.ToPublicKey();
+        cryptoKey = new(encryption, ref encryptionPublicKey, encrypted);
         return true;
     }
+
+    public static CryptoKey Create(SignaturePublicKey originalKey)
+        => new(originalKey);
 
     #endregion
 
     #region FieldAndProperty
 
     [Key(0)]
-    private readonly uint encryptionAndYTilde; // 0 bit: YTilde, 1-31 bit: Encryption
+    private uint encryptionAndYTilde; // 0 bit: YTilde, 1-31 bit: Encryption
 
     [Key(1)]
-    private readonly uint checksum; // (uint)originalPublicKey.GetChecksum()
+    private ulong x0;
 
     [Key(2)]
-    private readonly byte originalKeyValue;
+    private ulong x1;
+
+    [Key(3)]
+    private ulong x2;
+
+    [Key(4)]
+    private ulong x3;
+
+    [Key(5)]
+    private byte[]? encrypted;
 
     public uint Encryption => this.encryptionAndYTilde & EncryptionMask;
 
@@ -100,10 +121,23 @@ public sealed partial record class CryptoKey
     {
     }
 
-    private CryptoKey(uint encryption, ref SignaturePublicKey originalPublicKey, EncryptionPrivateKey encryptionKey, Span<byte> encrypted)
-    {
-        this.encryptionAndYTilde = encryption | KeyHelper.GetYTilde(originalPublicKey.KeyValue);
-        //this.encryption = encryption;
+    private CryptoKey(uint encryption, ref EncryptionPublicKey encryptionKey, byte[] encrypted)
+    {// Encrypted
+        this.encryptionAndYTilde = encryption | KeyHelper.GetYTilde(encryptionKey.KeyValue);
+        this.x0 = encryptionKey.X0;
+        this.x1 = encryptionKey.X1;
+        this.x2 = encryptionKey.X2;
+        this.x3 = encryptionKey.X3;
+        this.encrypted = encrypted;
+    }
+
+    private CryptoKey(SignaturePublicKey publicKey)
+    {// Raw
+        this.encryptionAndYTilde = KeyHelper.GetYTilde(publicKey.KeyValue);
+        this.x0 = publicKey.X0;
+        this.x1 = publicKey.X1;
+        this.x2 = publicKey.X2;
+        this.x3 = publicKey.X3;
     }
 
     public bool TryGetRawKey(out SignaturePublicKey signaturePublicKey)

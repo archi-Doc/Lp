@@ -208,6 +208,14 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
+    public ulong X0 => this.x0;
+
+    public ulong X1 => this.x1;
+
+    public ulong X2 => this.x2;
+
+    public ulong X3 => this.x3;
+
     public bool TryWriteBytes(Span<byte> destination, out int written)
     {
         if (destination.Length < KeyHelper.EncodedLength)
