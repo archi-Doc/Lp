@@ -59,9 +59,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         // CryptoKey (Raw)
         var cryptoKey = CryptoKey.CreateRaw(publicKey);
         this.userInterfaceService.WriteLine($"CryptoKey (Raw) : {cryptoKey.ToString()}");
+        this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey, 0)}");
         if (cryptoKey.TryGetRawKey(out var originalKey))
         {
             this.userInterfaceService.WriteLine($"CryptoKey.TryGetRawKey() success.");
+            this.userInterfaceService.WriteLine($"{originalKey.Equals(publicKey)}");
         }
 
         // CryptoKey (Encrypted)

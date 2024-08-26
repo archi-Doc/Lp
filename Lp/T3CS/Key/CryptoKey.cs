@@ -11,13 +11,57 @@ namespace Lp.T3cs;
 /// Represents a crypto key (Raw or Encrypted SignaturePublicKey).
 /// </summary>
 [TinyhandObject]
-public sealed partial record class CryptoKey
+public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>
 {
-    public const int EncodedLength = sizeof(uint) + (sizeof(ulong) * 4) + EncryptedLength;
+    public const int EncodedLength = RawLength + EncryptedLength;
+    private const int RawLength = sizeof(uint) + (sizeof(ulong) * 4); // 36
     private const int EncryptedLength = 48;
+    private const int RawStringLength = (RawLength * 4 / 3) + 3;
     private const uint EncryptionMask = 0xFFFFFFFE;
 
     #region Static
+
+    public static int MaxStringLength => (EncodedLength * 4 / 3) + 2;
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? instance)
+    {
+        var span = source.Trim();
+        if (span.Length < RawStringLength)
+        {
+            instance = default;
+            return false;
+        }
+
+        if (span[0] != '[' || span[^1] != ']')
+        {
+            instance = default;
+            return false;
+        }
+
+        Span<byte> destination = stackalloc byte[EncodedLength];
+        int written;
+        if (span[1] == '!')
+        {// Raw
+            if (span.Length != RawStringLength ||
+                !Base64.Url.FromStringToSpan(span.Slice(2, span.Length - 3), destination, out written))
+            {
+                instance = default;
+                return false;
+            }
+        }
+        else
+        {
+            if (span.Length != MaxStringLength ||
+                !Base64.Url.FromStringToSpan(span.Slice(2, span.Length - 2), destination, out written))
+            {
+                instance = default;
+                return false;
+            }
+        }
+
+        instance = new(destination);
+        return true;
+    }
 
     public static bool TryCreateEncrypted(SignaturePrivateKey originalKey, EncryptionPublicKey mergerKey, uint encryption, [MaybeNullWhen(false)] out CryptoKey cryptoKey)
     {
@@ -142,6 +186,31 @@ public sealed partial record class CryptoKey
         this.x3 = publicKey.X3;
     }
 
+    private CryptoKey(ReadOnlySpan<byte> bytes)
+    {// Byte array
+        if (bytes.Length < EncodedLength)
+        {
+            throw new InvalidOperationException();
+        }
+
+        var span = bytes;
+        this.x0 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x1 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x2 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x3 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.encryptionAndYTilde = MemoryMarshal.Read<uint>(span);
+        span = span.Slice(sizeof(uint));
+
+        if (span.Length == EncryptedLength)
+        {
+            this.encrypted = span.ToArray();
+        }
+    }
+
     public bool IsOriginalKey(SignaturePrivateKey originalKey, uint encryption)
     {
         if (this.IsEncrypted)
@@ -153,9 +222,13 @@ public sealed partial record class CryptoKey
             originalKey.UnsafeTryWriteX(span, out _);
             span = span.Slice(KeyHelper.PrivateKeyLength);
             MemoryMarshal.Write(span, encryption);
-            var encryptionKey = EncryptionPrivateKey.Create(encryptionKeySource);
+            var encryptionKey = EncryptionPrivateKey.Create(encryptionKeySource).ToPublicKey();
 
-            return originalKey.Equals(encryptionKey);
+            return this.x0 == encryptionKey.X0 &&
+                this.x1 == encryptionKey.X1 &&
+                this.x2 == encryptionKey.X2 &&
+                this.x3 == encryptionKey.X3 &&
+                this.YTilde == encryptionKey.YTilde;
         }
         else
         {// Raw
@@ -243,9 +316,9 @@ public sealed partial record class CryptoKey
 
     public override string ToString()
     {
-
         Span<byte> span = stackalloc byte[EncodedLength];
-        this.TryWriteBytes(span, out _);
+        this.TryWriteBytes(span, out var w);
+        span = span.Slice(0, w);
         return this.IsEncrypted ? $"[{Base64.Url.FromByteArrayToString(span)}]" : $"[!{Base64.Url.FromByteArrayToString(span)}]";
     }
 
@@ -257,6 +330,37 @@ public sealed partial record class CryptoKey
         return $"{Base64.Url.FromByteArrayToString(span)}";
     }
 
+    public int GetStringLength()
+        => this.IsEncrypted ? MaxStringLength : RawStringLength;
+
+    public bool TryFormat(Span<char> destination, out int written)
+    {
+        if (destination.Length < this.GetStringLength())
+        {
+            written = 0;
+            return false;
+        }
+
+        Span<byte> span = stackalloc byte[EncodedLength];
+        this.TryWriteBytes(span, out var w);
+
+        var c = destination;
+        c[0] = '[';
+        c = c.Slice(1);
+        if (!this.IsEncrypted)
+        {
+            c[0] = '!';
+            c = c.Slice(1);
+        }
+
+        Base64.Url.FromByteArrayToSpan(span, c, out written);
+        c = c.Slice(written);
+        c[0] = ']';
+
+        written += this.IsEncrypted ? 2 : 3;
+        return true;
+    }
+
     private bool TryWriteBytes(Span<byte> span, out int written)
     {
         if (span.Length < EncodedLength)
@@ -266,8 +370,6 @@ public sealed partial record class CryptoKey
         }
 
         var b = span;
-        MemoryMarshal.Write(b, this.encryptionAndYTilde);
-        b = b.Slice(sizeof(uint));
         MemoryMarshal.Write(b, this.x0);
         b = b.Slice(sizeof(ulong));
         MemoryMarshal.Write(b, this.x1);
@@ -276,11 +378,13 @@ public sealed partial record class CryptoKey
         b = b.Slice(sizeof(ulong));
         MemoryMarshal.Write(b, this.x3);
         b = b.Slice(sizeof(ulong));
+        MemoryMarshal.Write(b, this.encryptionAndYTilde);
+        b = b.Slice(sizeof(uint));
 
         if (this.encrypted is null ||
             this.encrypted.Length != EncryptedLength)
         {
-            written = EncodedLength - EncryptedLength;
+            written = RawLength;
             return true;
         }
         else
