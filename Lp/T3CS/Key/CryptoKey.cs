@@ -52,7 +52,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         else
         {
             if (span.Length != MaxStringLength ||
-                !Base64.Url.FromStringToSpan(span.Slice(2, span.Length - 2), destination, out written))
+                !Base64.Url.FromStringToSpan(span.Slice(1, span.Length - 2), destination, out written))
             {
                 instance = default;
                 return false;
