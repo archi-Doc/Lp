@@ -25,7 +25,7 @@ public partial interface IMergerService : INetService
     NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 internal class MergerServiceAgent : IMergerService
 {
     public MergerServiceAgent(Merger merger)

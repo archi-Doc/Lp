@@ -12,7 +12,7 @@ internal class NetsphereUnitContext : INetsphereUnitContext, IUnitCustomContext
         context.SetOptions(this);
     }
 
-    void INetsphereUnitContext.AddService<TService>()
+    void INetsphereUnitContext.AddNetService<TService>()
     {
         this.services.Add(typeof(TService));
     }

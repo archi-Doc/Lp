@@ -18,7 +18,7 @@ public interface IBasicService : INetService
     public NetTask<NetResult> TestResult2();
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 public class BasicServiceImpl : IBasicService
 {
     public async NetTask SendInt(int x)

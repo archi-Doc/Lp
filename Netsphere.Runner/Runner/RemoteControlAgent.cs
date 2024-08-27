@@ -6,7 +6,7 @@ using Netsphere.Interfaces;
 
 namespace Netsphere.Runner;
 
-[NetServiceObject]
+// [NetServiceObject]
 internal class RemoteControlAgent : IRemoteControl
 {// Remote -> Netsphere.Runner
     public RemoteControlAgent(ILogger<RemoteControlAgent> logger, BigMachine bigMachine, RunnerOptions runOptions)

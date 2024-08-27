@@ -26,7 +26,7 @@ public interface ITestService3 : INetService
     public NetTask<BytePool.RentReadOnlyMemory> SendReadOnlyMemoryOwner(BytePool.RentReadOnlyMemory rentMemory);
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 public class TestServiceImpl0 : ITestService2
 {
     public void Test()
@@ -47,7 +47,7 @@ public class TestServiceImpl : ITestService
     }
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 public class TestServiceImpl2 : TestServiceImpl
 {
     public async NetTask Send2(int x)
@@ -58,7 +58,7 @@ public class TestServiceImpl2 : TestServiceImpl
 
 public class ParentClass
 {
-    [NetServiceObject]
+    // [NetServiceObject]
     internal class NestedServiceImpl3 : ITestService3
     {
         public async NetTask<int> Increment3(int x)

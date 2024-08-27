@@ -20,7 +20,7 @@ public interface IFilterTestService : INetService
     public NetTask<int> Multiply2AndIncrement(int x);
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 public class FilterTestServiceImpl : IFilterTestService
 {
     public async NetTask<int> NoFilter(int x) => x;

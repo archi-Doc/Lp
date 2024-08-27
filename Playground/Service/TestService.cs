@@ -13,7 +13,7 @@ public interface ITestService : INetService, INetServiceAgreement
     NetTask<byte[]?> Pingpong(byte[] data);
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 internal class TestServiceImpl : ITestService
 {
     async NetTask<string?> ITestService.DoubleString(string input)

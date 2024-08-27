@@ -35,11 +35,11 @@ public class NetFixture : IDisposable
                 // ServiceFilter
                 context.AddSingleton<NullFilter>();
             })
-            .ConfigureService(context =>
+            .ConfigureNetsphere(context =>
             {
-                context.AddService<IBasicService>();
-                context.AddService<IFilterTestService>();
-                context.AddService<IStreamService>();
+                context.AddNetService<IBasicService>();
+                context.AddNetService<IFilterTestService>();
+                context.AddNetService<IStreamService>();
             });
 
         var options = new NetOptions();

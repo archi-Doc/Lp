@@ -53,11 +53,6 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
                 {
                     return typeSyntax;
                 }
-                else if (name.EndsWith(NetServiceObjectAttributeMock.StandardName) ||
-                    name.EndsWith(NetServiceObjectAttributeMock.SimpleName))
-                {
-                    return typeSyntax;
-                }
                 else if (name.EndsWith(NetServiceInterfaceAttributeMock.StandardName) ||
                     name.EndsWith(NetServiceInterfaceAttributeMock.SimpleName))
                 {
@@ -83,12 +78,6 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
     private void Emit(SourceProductionContext context, (Compilation Compilation, ImmutableArray<TypeDeclarationSyntax?> Types) source)
     {
         var compilation = source.Compilation;
-
-        var netServiceObjectAttributeSymbol = compilation.GetTypeByMetadataName(NetServiceObjectAttributeMock.FullName);
-        if (netServiceObjectAttributeSymbol == null)
-        {
-            return;
-        }
 
         var netServiceInterfaceAttributeSymbol = compilation.GetTypeByMetadataName(NetServiceInterfaceAttributeMock.FullName);
         if (netServiceInterfaceAttributeSymbol == null)
@@ -141,12 +130,7 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
 
                 foreach (var y in s.GetAttributes())
                 {
-                    if (SymbolEqualityComparer.Default.Equals(y.AttributeClass, netServiceObjectAttributeSymbol))
-                    { // NetServiceObject
-                        body.Add(s);
-                        break;
-                    }
-                    else if (SymbolEqualityComparer.Default.Equals(y.AttributeClass, netServiceInterfaceAttributeSymbol))
+                    if (SymbolEqualityComparer.Default.Equals(y.AttributeClass, netServiceInterfaceAttributeSymbol))
                     { // NetServiceInterface
                         body.Add(s);
                         break;

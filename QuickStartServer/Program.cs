@@ -32,9 +32,9 @@ public class Program
                 options.EnablePing = true;
                 options.EnableServer = true;
             })
-            .ConfigureService(context =>
+            .ConfigureNetsphere(context =>
             {// Register the services provided by the server.
-                context.AddService<ITestService>();
+                context.AddNetService<ITestService>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.

@@ -22,7 +22,7 @@ public interface IStreamService : INetService, INetServiceAgreement
     NetTask<SendStreamAndReceive<NetResult>?> Put2(ulong hash, long maxLength);
 }
 
-[NetServiceObject]
+// [NetServiceObject]
 public class StreamServiceImpl : IStreamService
 {
     public const long MaxStreamLength = 100_000_000;

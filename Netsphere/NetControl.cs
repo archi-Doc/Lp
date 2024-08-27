@@ -59,7 +59,7 @@ public class NetControl : UnitBase, IUnitPreparable
             });
         }
 
-        public Builder ConfigureService(Action<INetsphereUnitContext> @delegate)
+        public Builder ConfigureNetsphere(Action<INetsphereUnitContext> @delegate)
         {
             this.actions.Add(@delegate);
             return this;

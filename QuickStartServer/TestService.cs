@@ -12,8 +12,7 @@ public interface ITestService : INetService // An interface for NetService must 
     // Ensure that both arguments and return values are serializable by Tinyhand serializer, and the return type must be NetTask or NetTask<T>.
 }
 
-// On the server side, define a class that implements the interface and annotate it with NetServiceObject attribute.
-[NetServiceObject] // Annotate NetServiceObject attribute.
+// [NetServiceObject] // Annotate NetServiceObject attribute.
 internal class TestServiceImpl : ITestService
 {
     async NetTask<string?> ITestService.DoubleString(string input)

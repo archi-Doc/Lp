@@ -5,7 +5,7 @@ using Netsphere.Stats;
 
 namespace Lp.Net;
 
-[NetServiceObject]
+// [NetServiceObject]
 internal partial class BasalServiceAgent : IBasalService
 {
     public BasalServiceAgent(NetStats netStats)

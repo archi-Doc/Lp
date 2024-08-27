@@ -5,7 +5,7 @@ using Netsphere.Interfaces;
 
 namespace RemoteDataServer;
 
-[NetServiceObject]
+// [NetServiceObject]
 public class RemoteDataAgent : IRemoteData
 {
     public RemoteDataAgent(RemoteDataControl control)

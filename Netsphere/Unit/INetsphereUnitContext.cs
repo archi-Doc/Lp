@@ -4,6 +4,6 @@ namespace Netsphere;
 
 public interface INetsphereUnitContext
 {
-    void AddService<TService>()
+    void AddNetService<TService>()
         where TService : INetService;
 }
