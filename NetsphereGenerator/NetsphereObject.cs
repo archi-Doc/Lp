@@ -683,7 +683,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             using (var scopeIf = ssb.ScopeBrace($"if (impl == null)"))
             {
                 if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor))
-                {
+                {//
                     ssb.AppendLine($"impl = new {this.FullName}();");
                 }
                 else

@@ -32,7 +32,7 @@ public class Program
                 options.EnablePing = true;
                 options.EnableServer = true;
             })
-            .ConfigureSerivice(context =>
+            .ConfigureService(context =>
             {// Register the services provided by the server.
                 context.AddService<ITestService>();
             });

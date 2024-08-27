@@ -71,7 +71,7 @@ public class Program
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
             })
-            .ConfigureSerivice(context =>
+            .ConfigureService(context =>
             {// Register the services provided by the server.
                 context.AddService<Netsphere.Interfaces.IRemoteData>();
             });

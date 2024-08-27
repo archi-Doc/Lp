@@ -35,7 +35,7 @@ public class NetFixture : IDisposable
                 // ServiceFilter
                 context.AddSingleton<NullFilter>();
             })
-            .ConfigureSerivice(context =>
+            .ConfigureService(context =>
             {
                 context.AddService<IBasicService>();
                 context.AddService<IFilterTestService>();

@@ -49,7 +49,7 @@ public class Program
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
-             .ConfigureSerivice(context =>
+             .ConfigureService(context =>
              {// Register the services provided by the server.
                  context.AddService<ITestService>();
              })
