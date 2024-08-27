@@ -13,3 +13,5 @@ No eureka.
 
 Lp is an alternative security.
 
+Every linkage has its positive and negative aspects.
+

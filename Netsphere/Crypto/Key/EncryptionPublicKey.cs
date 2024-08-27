@@ -22,10 +22,13 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     public ObjectCache<EncryptionPublicKey, ECDiffieHellman>.Interface TryGetEcdh()
     {
-        var x = new byte[32];
-        this.WriteX(x);
+        if (Cache.TryGet(this) is not { } e)
+        {
+            var x = new byte[32];
+            this.WriteX(x);
+            e = KeyHelper.CreateEcdhFromX(x, this.YTilde);
+        }
 
-        var e = Cache.TryGet(this) ?? KeyHelper.CreateEcdhFromX(x, this.YTilde);
         return Cache.CreateInterface(this, e);
     }
 
@@ -65,6 +68,15 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         this.TryWriteBytes(span, out _);
         KeyHelper.SetChecksum(span);
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
+    }
+
+    public EncryptionPublicKey(ulong x0, ulong x1, ulong x2, ulong x3, uint yTilde)
+    {
+        this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.Encryption, yTilde);
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
     }
 
     internal EncryptionPublicKey(byte keyValue, ReadOnlySpan<byte> x)
@@ -153,6 +165,14 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
     public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
+
+    public ulong X0 => this.x0;
+
+    public ulong X1 => this.x1;
+
+    public ulong X2 => this.x2;
+
+    public ulong X3 => this.x3;
 
     public bool TryWriteBytes(Span<byte> destination, out int written)
     {

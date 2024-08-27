@@ -14,10 +14,11 @@ namespace Lp.T3cs;
 [TinyhandUnion(3, typeof(DimensionProof))]
 [TinyhandUnion(4, typeof(IdentificationProof))]
 [TinyhandUnion(5, typeof(CredentialProof))]
-[TinyhandObject(ReservedKeys = 4)]
+[TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
+    public const int ReservedKeyCount = 4;
     /*public enum Kind
     {
         CreateCredit,

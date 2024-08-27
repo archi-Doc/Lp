@@ -85,6 +85,15 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         this.x3 = BitConverter.ToUInt64(b);
     }
 
+    public NodePublicKey(ulong x0, ulong x1, ulong x2, ulong x3, uint yTilde)
+    {
+        this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.NodeEncryption, yTilde);
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
+    }
+
     public bool IsSameKey(NodePrivateKey privateKey)
     {
         if (KeyHelper.ToPublicKeyValue(privateKey.KeyValue) != this.KeyValue)
@@ -158,6 +167,14 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
+
+    public ulong X0 => this.x0;
+
+    public ulong X1 => this.x1;
+
+    public ulong X2 => this.x2;
+
+    public ulong X3 => this.x3;
 
     public bool TryWriteBytes(Span<byte> destination, out int written)
     {

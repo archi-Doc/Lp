@@ -158,6 +158,19 @@ public abstract partial class PrivateKeyBase : IValidatable, IEquatable<PrivateK
         return $"!!!{Base64.Url.FromByteArrayToString(privateSpan)}!!!({Base64.Url.FromByteArrayToString(publicSpan)})";*/
     }
 
+    public bool UnsafeTryWriteX(Span<byte> destination, out int written)
+    {
+        if (destination.Length < KeyHelper.PrivateKeyLength)
+        {
+            written = 0;
+            return false;
+        }
+
+        this.x.CopyTo(destination);
+        written = KeyHelper.PrivateKeyLength;
+        return true;
+    }
+
     protected bool UnsafeTryFormat(Span<char> destination, out int written)
     {
         if (destination.Length < UnsafeStringLength)
