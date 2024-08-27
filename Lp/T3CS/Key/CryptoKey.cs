@@ -13,8 +13,8 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IEquatable<CryptoKey>
 {
-    public const int EncodedLength = RawLength + EncryptedLength;
-    private const int RawLength = sizeof(uint) + (sizeof(ulong) * 4); // 36
+    public const int EncodedLength = 36 + EncryptedLength;
+    private const int RawLength = sizeof(byte) + (sizeof(ulong) * 4); // 33
     private const int EncryptedLength = 48;
     private const int RawStringLength = (RawLength * 4 / 3) + 3;
     private const uint EncryptionMask = 0xFFFFFFFE;
@@ -161,6 +161,8 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
 
     private uint YTilde => this.encryptionAndYTilde & 1;
 
+    private byte KeyValue => KeyHelper.CreatePublicKeyValue(KeyClass.Signature, this.YTilde);
+
     #endregion
 
     public CryptoKey()
@@ -188,26 +190,38 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
 
     private CryptoKey(ReadOnlySpan<byte> bytes)
     {// Byte array
-        if (bytes.Length < RawLength)
-        {
-            throw new InvalidOperationException();
-        }
-
         var span = bytes;
-        this.x0 = MemoryMarshal.Read<ulong>(span);
-        span = span.Slice(sizeof(ulong));
-        this.x1 = MemoryMarshal.Read<ulong>(span);
-        span = span.Slice(sizeof(ulong));
-        this.x2 = MemoryMarshal.Read<ulong>(span);
-        span = span.Slice(sizeof(ulong));
-        this.x3 = MemoryMarshal.Read<ulong>(span);
-        span = span.Slice(sizeof(ulong));
-        this.encryptionAndYTilde = MemoryMarshal.Read<uint>(span);
-        span = span.Slice(sizeof(uint));
 
-        if (span.Length == EncryptedLength)
+        if (bytes.Length == RawLength)
         {
+            this.encryptionAndYTilde = KeyHelper.GetYTilde(span[0]);
+            span = span.Slice(sizeof(byte));
+            this.x0 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.x1 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.x2 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.x3 = MemoryMarshal.Read<ulong>(span);
+        }
+        else if (bytes.Length == EncodedLength)
+        {
+            this.x0 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.x1 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.x2 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.x3 = MemoryMarshal.Read<ulong>(span);
+            span = span.Slice(sizeof(ulong));
+            this.encryptionAndYTilde = MemoryMarshal.Read<uint>(span);
+            span = span.Slice(sizeof(uint));
+
             this.encrypted = span.ToArray();
+        }
+        else
+        {
+            throw new InvalidDataException();
         }
     }
 
@@ -417,6 +431,12 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         }
 
         var b = span;
+        if (!this.IsEncrypted)
+        {
+            b[0] = this.KeyValue;
+            b = b.Slice(sizeof(byte));
+        }
+
         MemoryMarshal.Write(b, this.x0);
         b = b.Slice(sizeof(ulong));
         MemoryMarshal.Write(b, this.x1);
@@ -425,19 +445,19 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         b = b.Slice(sizeof(ulong));
         MemoryMarshal.Write(b, this.x3);
         b = b.Slice(sizeof(ulong));
-        MemoryMarshal.Write(b, this.encryptionAndYTilde);
-        b = b.Slice(sizeof(uint));
 
-        if (this.encrypted is null ||
-            this.encrypted.Length != EncryptedLength)
+        if (this.IsEncrypted)
         {
-            written = RawLength;
+            MemoryMarshal.Write(b, this.encryptionAndYTilde);
+            b = b.Slice(sizeof(uint));
+
+            this.encrypted.CopyTo(b);
+            written = EncodedLength;
             return true;
         }
         else
         {
-            this.encrypted.CopyTo(b);
-            written = EncodedLength;
+            written = RawLength;
             return true;
         }
     }
