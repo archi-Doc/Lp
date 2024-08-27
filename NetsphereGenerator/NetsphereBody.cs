@@ -93,8 +93,6 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
     internal Dictionary<uint, NetsphereObject> IdToNetInterface = new();
 
-    internal List<NetsphereObject> NetObjects = new();
-
     internal Dictionary<uint, NetsphereObject> IdToNetObject = new();
 
     internal Dictionary<string, List<NetsphereObject>> Namespaces = new();
@@ -114,7 +112,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
             return;
         }
 
-        array = this.IdToNetInterface.Values.Concat(this.NetObjects).ToArray();
+        array = this.IdToNetInterface.Values.ToArray();
         foreach (var x in array)
         {
             x.ConfigureRelation();
@@ -170,7 +168,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                 foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                 {
-                    ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                    ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.FrontendName}(x));");
                 }
             }
 
@@ -203,7 +201,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ScopingStringBuilder ssb = new();
         GeneratorInformation info = new();
 
-        var array = this.NetObjects.ToArray();
+        var array = this.IdToNetInterface.Values.ToArray();
 
         this.GenerateHeader(ssb);
         ssb.AppendLine($"namespace Netsphere.Generated;");
@@ -221,21 +219,15 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
                 ssb.AppendLine("Initialized = true;");
                 ssb.AppendLine();
 
-                foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceObject)))
+                foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
                 {
-                    if (y.ServiceInterfaces != null)
-                    {
-                        foreach (var z in y.ServiceInterfaces)
-                        {
-                            ssb.AppendLine($"StaticNetService.SetServiceInfo({y.ClassName}.ServiceInfo_{z.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
-                        }
-                    }
+                    ssb.AppendLine($"StaticNetService.SetServiceInfo({y.BackendName}.ServiceInfo_{y.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
                 }
             }
 
             foreach (var y in array)
             {
-                if (y.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceObject))
+                if (y.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface))
                 {// NetServiceObject (Backend)
                     ssb.AppendLine();
                     y.GenerateBackend(ssb, info);

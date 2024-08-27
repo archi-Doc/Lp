@@ -106,6 +106,11 @@ public class ServerConnectionContext
 
     #endregion
 
+    public TService GetService<TService>()
+    {
+
+    }
+
     /*public virtual bool RespondUpdateAgreement(CertificateToken<ConnectionAgreement> token)
         => false;
 
