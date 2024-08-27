@@ -1,5 +1,6 @@
 // Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -206,6 +207,8 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         }
         else if (bytes.Length == EncodedLength)
         {
+            this.encryptionAndYTilde = MemoryMarshal.Read<uint>(span);
+            span = span.Slice(sizeof(uint));
             this.x0 = MemoryMarshal.Read<ulong>(span);
             span = span.Slice(sizeof(ulong));
             this.x1 = MemoryMarshal.Read<ulong>(span);
@@ -214,8 +217,6 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
             span = span.Slice(sizeof(ulong));
             this.x3 = MemoryMarshal.Read<ulong>(span);
             span = span.Slice(sizeof(ulong));
-            this.encryptionAndYTilde = MemoryMarshal.Read<uint>(span);
-            span = span.Slice(sizeof(uint));
 
             this.encrypted = span.ToArray();
         }
@@ -436,6 +437,11 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
             b[0] = this.KeyValue;
             b = b.Slice(sizeof(byte));
         }
+        else
+        {
+            MemoryMarshal.Write(b, this.encryptionAndYTilde);
+            b = b.Slice(sizeof(uint));
+        }
 
         MemoryMarshal.Write(b, this.x0);
         b = b.Slice(sizeof(ulong));
@@ -448,9 +454,6 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
 
         if (this.IsEncrypted)
         {
-            MemoryMarshal.Write(b, this.encryptionAndYTilde);
-            b = b.Slice(sizeof(uint));
-
             this.encrypted.CopyTo(b);
             written = EncodedLength;
             return true;

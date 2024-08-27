@@ -73,7 +73,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         // CryptoKey (Encrypted)
         var mergerKey = EncryptionPrivateKey.Create();
-        uint encryption = 100;
+        uint encryption = 0;
         if (CryptoKey.TryCreateEncrypted(privateKey, mergerKey.ToPublicKey(), encryption, out cryptoKey))
         {
             this.userInterfaceService.WriteLine($"CryptoKey (Encrypted): {cryptoKey.ToString()}");
