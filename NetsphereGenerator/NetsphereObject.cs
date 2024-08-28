@@ -866,16 +866,16 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     ssb.AppendLine("return;");
                 }
 
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})obj).{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
             else
             {
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})obj).{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
         }
         else
         {
-            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
+            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})obj).{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
         }
 
         // ssb.AppendLine("context.Return();"); -> try-finally
@@ -964,8 +964,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
         using (var scopeMethod = ssb.ScopeBrace($"public static ServerConnectionContext.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            var createAgent = this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor) ? $"x => new {this.ClassName}()" : "null";
-            ssb.AppendLine($"var si = new ServerConnectionContext.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x), {createAgent});");
+            var createAgent = this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor) ? $"{{}} => new {this.FullName}()" : "null";
+            ssb.AppendLine($"var si = new ServerConnectionContext.ServiceInfo(0x{serviceIdString}u, typeof({this.FullName}), static x => new {this.ClassName}(x), default);");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)
