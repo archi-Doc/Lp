@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Core;
 using Netsphere.Crypto;
@@ -50,10 +51,12 @@ public class ServerConnectionContext
 
     public class ServiceInfo
     {
-        public ServiceInfo(uint serviceId, CreateBackendDelegate createBackend)
+        public ServiceInfo(uint serviceId, Type agentType, CreateBackendDelegate createBackend, Func<object>? createAgent)
         {
             this.ServiceId = serviceId;
+            this.AgentType = agentType;
             this.CreateBackend = createBackend;
+            this.CreateAgent = createAgent;
         }
 
         public void AddMethod(ServiceMethod serviceMethod) => this.serviceMethods.TryAdd(serviceMethod.Id, serviceMethod);
@@ -62,10 +65,16 @@ public class ServerConnectionContext
 
         public uint ServiceId { get; }
 
+        public Type AgentType { get; }
+
         public CreateBackendDelegate CreateBackend { get; }
+
+        public Func<object>? CreateAgent { get; }
 
         private Dictionary<ulong, ServiceMethod> serviceMethods = new();
     }
+
+    private readonly record struct ServiceInfoInstance(ServiceInfo ServiceInfo, object AgentInstance);
 
     public record class ServiceMethod
     {
@@ -103,6 +112,7 @@ public class ServerConnectionContext
 
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
+    private readonly UInt32Hashtable<ServiceInfoInstance> serviceIdToBackend = new();
 
     #endregion
 
@@ -364,13 +374,36 @@ SendNoNetService:
 
     private ServiceMethod? TryGetServiceMethod(ulong dataId)
     {//
+        var serviceId = (uint)(dataId >> 32);
+        var methodId = (uint)dataId;
+
+        var s = this.serviceIdToBackend.GetOrAdd(serviceId, id =>
+        {
+            object? agentInstance = default;
+            if (this.NetTerminal.Services.TryGet(serviceId, out var info))
+            {
+                agentInstance = this.ServiceProvider?.GetService(info.AgentType);
+                agentInstance ??= info.CreateAgent?.Invoke();
+                return new(info, agentInstance);
+            }
+
+            return agentInstance;
+        });
+
+        if (s.ServiceInfo.TryGetMethod(methodId, out var serviceMethod))
+        {
+            return serviceMethod;
+        }
+
+        return default;
+
         ServiceMethod? serviceMethod;
         lock (this.idToServiceMethod)
         {
             if (!this.idToServiceMethod.TryGetValue(dataId, out serviceMethod))
             {
                 // Get ServiceInfo.
-                var serviceId = (uint)(dataId >> 32);
+
                 if (!this.NetTerminal.Services.TryGet(serviceId, out var serviceInfo))
                 {
                     return null;
