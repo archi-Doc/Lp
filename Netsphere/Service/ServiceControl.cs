@@ -11,7 +11,7 @@ public sealed class ServiceControl
     {
     }
 
-    private UInt32Hashtable<ServerConnectionContext.AgentInfo> serviceIdToAgentInfo = new();
+    private UInt32Hashtable<ServerConnectionContext.AgentInfo?> serviceIdToAgentInfo = new();
 
     public void Register<TService, TAgent>()
         where TService : INetService
@@ -25,6 +25,19 @@ public sealed class ServiceControl
     {
         var serviceId = ServiceTypeToId(serviceType);
         this.Register(serviceId, agentType);
+    }
+
+    public void Unregister<TService>()
+        where TService : INetService
+    {
+        var serviceId = ServiceTypeToId<TService>();
+        this.serviceIdToAgentInfo.TryAdd(serviceId, default);//
+    }
+
+    public void Unregister(Type serviceType)
+    {
+        var serviceId = ServiceTypeToId(serviceType);
+        this.serviceIdToAgentInfo.TryAdd(serviceId, default);//
     }
 
     public bool TryGet<TService>([MaybeNullWhen(false)] out ServerConnectionContext.AgentInfo info)
