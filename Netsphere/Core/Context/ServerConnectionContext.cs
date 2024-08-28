@@ -74,10 +74,10 @@ public class ServerConnectionContext
 
     public record class ServiceMethod
     {
-        public ServiceMethod(ulong id, ServiceDelegate process)
-        {
+        public ServiceMethod(ulong id, ServiceDelegate invoke)
+        {// Id = ServiceId + MethodId
             this.Id = id;
-            this.Invoke = process;
+            this.Invoke = invoke;
         }
 
         public ulong Id { get; }

@@ -11,7 +11,21 @@ public sealed class ServiceControl
     {
     }
 
-    private UInt64Hashtable<ServerConnectionContext.ServiceInfo> dataIdToResponder = new();
+    private UInt32Hashtable<ServerConnectionContext.ServiceInfo> serviceIdToServiceInfo = new();
+
+    public void Register<TService, TAgent>()
+        where TService : INetService
+        where TAgent : class, TService
+    {
+        var serviceId = ServiceTypeToId<TService>();
+        this.Register(serviceId);
+    }
+
+    public void Register(Type serviceType, Type agentType)
+    {
+        var serviceId = ServiceTypeToId(serviceType);
+        this.Register(serviceId);
+    }
 
     public void Register<TService>()
         where TService : INetService
@@ -34,7 +48,7 @@ public sealed class ServiceControl
             throw new InvalidOperationException("Failed to register the class with the corresponding ServiceId.");
         }
 
-        this.dataIdToResponder.TryAdd(serviceId, info);
+        this.serviceIdToServiceInfo.TryAdd(serviceId, info);
     }
 
     public bool TryGet<TService>([MaybeNullWhen(false)] out ServerConnectionContext.ServiceInfo info)
@@ -46,7 +60,7 @@ public sealed class ServiceControl
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out ServerConnectionContext.ServiceInfo info)
-        => this.dataIdToResponder.TryGetValue(serviceId, out info);
+        => this.serviceIdToServiceInfo.TryGetValue(serviceId, out info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ServiceTypeToId<TService>()

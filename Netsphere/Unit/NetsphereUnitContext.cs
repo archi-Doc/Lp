@@ -12,12 +12,23 @@ internal class NetsphereUnitContext : INetsphereUnitContext, IUnitCustomContext
         context.SetOptions(this);
     }
 
-    void INetsphereUnitContext.AddService<TService>()
+    /// <summary>
+    /// Adds a network service to the Netsphere unit context.
+    /// </summary>
+    /// <typeparam name="TService">The type of the network service to add.</typeparam>
+    void INetsphereUnitContext.AddNetService<TService>()
     {
         this.services.Add(typeof(TService));
     }
 
+    void INetsphereUnitContext.AddNetService<TService, TAgent>()
+    {
+        this.ServiceToAgent.TryAdd(typeof(TService), typeof(TAgent));
+    }
+
     public FrozenSet<Type> Services { get; private set; } = FrozenSet<Type>.Empty;
+
+    internal Dictionary<Type, Type> ServiceToAgent { get; } = new();
 
     private readonly HashSet<Type> services = new();
 }

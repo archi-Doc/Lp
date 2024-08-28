@@ -71,9 +71,9 @@ public class Program
                 options.ClearLogsAtStartup = true;
                 options.MaxQueue = 100_000;
             })
-            .ConfigureService(context =>
+            .ConfigureNetsphere(context =>
             {// Register the services provided by the server.
-                context.AddService<Netsphere.Interfaces.IRemoteData>();
+                context.AddNetService<Netsphere.Interfaces.IRemoteData>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.
