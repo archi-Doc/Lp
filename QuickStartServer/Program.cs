@@ -34,7 +34,7 @@ public class Program
             })
             .ConfigureNetsphere(context =>
             {// Register the services provided by the server.
-                context.AddNetService<ITestService>();
+                context.AddNetService<ITestService, TestServiceImpl>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.

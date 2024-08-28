@@ -136,11 +136,6 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Services = new();
 
         var netsphereContext = context.ServiceProvider.GetRequiredService<NetsphereUnitContext>();
-        foreach (var x in netsphereContext.Services)
-        {
-            this.Services.Register(x);
-        }
-
         foreach (var x in netsphereContext.ServiceToAgent)
         {
             this.Services.Register(x.Key, x.Value);

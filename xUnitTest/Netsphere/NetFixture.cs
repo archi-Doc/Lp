@@ -2,6 +2,7 @@
 
 using Arc.Threading;
 using Arc.Unit;
+using Lp.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using Netsphere.Relay;
@@ -37,9 +38,9 @@ public class NetFixture : IDisposable
             })
             .ConfigureNetsphere(context =>
             {
-                context.AddNetService<IBasicService>();
-                context.AddNetService<IFilterTestService>();
-                context.AddNetService<IStreamService>();
+                context.AddNetService<IBasicService, BasicServiceImpl>();
+                context.AddNetService<IFilterTestService, FilterTestServiceImpl>();
+                context.AddNetService<IStreamService, StreamServiceImpl>();
             });
 
         var options = new NetOptions();

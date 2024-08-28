@@ -682,7 +682,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
 
         ssb.AppendLine();
-        this.GenerateBackend_ServiceInfo(ssb, info, serviceInterface);
+        this.GenerateBackend_AgentInfo(ssb, info, serviceInterface);
     }
 
     internal ServiceFilterGroup? GetServiceFilter(NetsphereObject serviceInterface, ServiceMethod method)
@@ -947,22 +947,22 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         ssb.AppendLine("context.RentMemory = context.RentMemory.Return();");
     }
 
-    internal void GenerateBackend_ServiceInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
+    internal void GenerateBackend_AgentInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
     {
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
-        using (var scopeMethod = ssb.ScopeBrace($"public static ServerConnectionContext.ServiceInfo ServiceInfo_{serviceIdString}()"))
+        using (var scopeMethod = ssb.ScopeBrace($"public static ServerConnectionContext.AgentInfo AgentInfo_{serviceIdString}()"))
         {
             var createAgent = this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor) ? $"static () => new {this.FullName}()" : "null";
-            ssb.AppendLine($"var si = new ServerConnectionContext.ServiceInfo(0x{serviceIdString}u, typeof({this.FullName}), {createAgent});");
+            ssb.AppendLine($"var info = new ServerConnectionContext.AgentInfo(0x{serviceIdString}u, typeof({this.FullName}), {createAgent});");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)
                 {
-                    ssb.AppendLine($"si.AddMethod(new ServerConnectionContext.ServiceMethod({x.IdString}, {x.MethodString}));");
+                    ssb.AppendLine($"info.AddMethod(new ServerConnectionContext.ServiceMethod({x.IdString}, {x.MethodString}));");
                 }
             }
 
-            ssb.AppendLine("return si;");
+            ssb.AppendLine("return info;");
         }
     }
 

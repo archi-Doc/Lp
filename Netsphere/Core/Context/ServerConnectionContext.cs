@@ -48,9 +48,9 @@ public class ServerConnectionContext
 
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
 
-    public class ServiceInfo
+    public class AgentInfo
     {
-        public ServiceInfo(uint serviceId, Type agentType, Func<object>? createAgent)
+        public AgentInfo(uint serviceId, Type agentType, Func<object>? createAgent)
         {
             this.ServiceId = serviceId;
             this.AgentType = agentType;
@@ -70,7 +70,7 @@ public class ServerConnectionContext
         private Dictionary<ulong, ServiceMethod> serviceMethods = new();
     }
 
-    private readonly record struct ServiceInfoInstance(ServiceInfo ServiceInfo, object AgentInstance);
+    private readonly record struct ServiceInfoInstance(AgentInfo ServiceInfo, object AgentInstance);//
 
     public record class ServiceMethod
     {

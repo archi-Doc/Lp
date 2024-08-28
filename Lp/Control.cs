@@ -398,7 +398,7 @@ public class Control
         if (this.LpBase.Options.TestFeatures)
         {
             NetAddress.SkipValidation = true;
-            this.NetControl.Services.Register<IRemoteBenchHost>();
+            this.NetControl.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
         }
 
         this.Core = core;
@@ -444,7 +444,7 @@ public class Control
 
     public async Task CreatePeer(UnitContext context)
     {
-        this.NetControl.Services.Register<IBasalService>();
+        this.NetControl.Services.Register<IBasalService, BasalServiceAgent>();
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
@@ -504,7 +504,7 @@ public class Control
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, privateKey);
-            this.NetControl.Services.Register<IMergerService>();
+            this.NetControl.Services.Register<IMergerService, MergerServiceAgent>();
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -521,7 +521,7 @@ public class Control
             }
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
-            this.NetControl.Services.Register<IRelayMergerService>();
+            this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
         }
     }
 

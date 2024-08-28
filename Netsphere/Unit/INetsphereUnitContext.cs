@@ -4,9 +4,6 @@ namespace Netsphere;
 
 public interface INetsphereUnitContext
 {
-    void AddNetService<TService>()
-        where TService : INetService;
-
     /// <summary>
     /// Register the type of net service and the type of agent that implements it.<br/>
     /// The net service is enabled throughout NetControl.<br/>

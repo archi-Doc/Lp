@@ -51,7 +51,7 @@ public class Program
             })
              .ConfigureNetsphere(context =>
              {// Register the services provided by the server.
-                 context.AddNetService<ITestService>();
+                 context.AddNetService<ITestService, TestServiceImpl>();
              })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
