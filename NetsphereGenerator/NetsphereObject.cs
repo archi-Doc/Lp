@@ -648,10 +648,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        using (var cls = ssb.ScopeBrace($"private class {this.ClassName}"))
+        using (var cls = ssb.ScopeBrace($"private static class {this.ClassName}"))
         {
-            this.GenerateBackend_Constructor(ssb, info);
-
             if (this.ServiceInterfaces != null)
             {
                 foreach (var x in this.ServiceInterfaces)
@@ -669,15 +667,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     x.GenerateDefinition(ssb);
                 }
             }
-        }
-    }
-
-    internal void GenerateBackend_Constructor(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(ServerConnectionContext connectionContext)"))
-        {
-            // Service filters
-            ServiceFilterGroup.GenerateInitialize(ssb, "this", "connectionContext.ServiceProvider", this.ClassFilters?.Items);
         }
     }
 
@@ -725,12 +714,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             var methodFilters = this.GetServiceFilter(serviceInterface, method);
             var filters = ServiceFilterGroup.FromClassAndMethod(this.ClassFilters, methodFilters);
 
-            var code = "Core(obj, c0)";
+            var code = $"Core(({serviceInterface.FullName})obj, c0)";
             var previousAsync = true;
             if (filters != null)
             {
-                ssb.AppendLine($"var b = ({this.ClassName})obj;");
-                ServiceFilterGroup.GenerateInitialize(ssb, "b", "c0.ConnectionContext.ServiceProvider", methodFilters?.Items);
+                ServiceFilterGroup.GenerateInitialize(ssb, "c0.ConnectionContext.ServiceProvider", methodFilters?.Items);
                 ssb.AppendLine();
 
                 var sb = new StringBuilder();
@@ -743,15 +731,15 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                         var filterType = item.CallContextObject == null ? string.Empty : $"({item.CallContextObject.FullName})";
                         if (item.IsAsync == previousAsync)
                         {
-                            code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
+                            code = $"{item.Identifier}.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
                         }
                         else if (item.IsAsync)
                         {
-                            code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, async c{n} => {code})";
+                            code = $"{item.Identifier}.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, async c{n} => {code})";
                         }
                         else
                         {
-                            code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code}.Wait())";
+                            code = $"{item.Identifier}.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code}.Wait())";
                         }
 
                         previousAsync = item.IsAsync;
@@ -770,7 +758,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine();
 
-            using (var scopeCore = ssb.ScopeBrace("static async Task Core(object obj, TransmissionContext context)"))
+            using (var scopeCore = ssb.ScopeBrace($"static async Task Core({serviceInterface.FullName} obj, TransmissionContext context)"))
             {
                 // ssb.AppendLine("var rent = context.RentMemory;");
                 // using (var scopeTry = ssb.ScopeBrace("try"))
@@ -866,16 +854,16 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     ssb.AppendLine("return;");
                 }
 
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})obj).{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await obj.{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
             else
             {
-                ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})obj).{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await obj.{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
         }
         else
         {
-            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})obj).{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
+            ssb.AppendLine($"{prefix}await obj.{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
         }
 
         // ssb.AppendLine("context.Return();"); -> try-finally
@@ -964,8 +952,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
         using (var scopeMethod = ssb.ScopeBrace($"public static ServerConnectionContext.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            var createAgent = this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor) ? $"{{}} => new {this.FullName}()" : "null";
-            ssb.AppendLine($"var si = new ServerConnectionContext.ServiceInfo(0x{serviceIdString}u, typeof({this.FullName}), static x => new {this.ClassName}(x), default);");
+            var createAgent = this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor) ? $"static () => new {this.FullName}()" : "null";
+            ssb.AppendLine($"var si = new ServerConnectionContext.ServiceInfo(0x{serviceIdString}u, typeof({this.FullName}), {createAgent});");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)

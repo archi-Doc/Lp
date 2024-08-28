@@ -48,15 +48,12 @@ public class ServerConnectionContext
 
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
 
-    public delegate object CreateBackendDelegate(ServerConnectionContext connectionContext);
-
     public class ServiceInfo
     {
-        public ServiceInfo(uint serviceId, Type agentType, CreateBackendDelegate createBackend, Func<object>? createAgent)
+        public ServiceInfo(uint serviceId, Type agentType, Func<object>? createAgent)
         {
             this.ServiceId = serviceId;
             this.AgentType = agentType;
-            this.CreateBackend = createBackend;
             this.CreateAgent = createAgent;
         }
 
@@ -67,8 +64,6 @@ public class ServerConnectionContext
         public uint ServiceId { get; }
 
         public Type AgentType { get; }
-
-        public CreateBackendDelegate CreateBackend { get; }
 
         public Func<object>? CreateAgent { get; }
 
