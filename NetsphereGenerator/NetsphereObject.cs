@@ -758,7 +758,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine();
 
-            using (var scopeCore = ssb.ScopeBrace($"static async Task Core({serviceInterface.FullName} obj, TransmissionContext context)"))
+            using (var scopeCore = ssb.ScopeBrace($"static async Task Core({serviceInterface.FullName} agent, TransmissionContext context)"))
             {
                 // ssb.AppendLine("var rent = context.RentMemory;");
                 // using (var scopeTry = ssb.ScopeBrace("try"))
@@ -854,16 +854,16 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     ssb.AppendLine("return;");
                 }
 
-                ssb.AppendLine($"{prefix}await obj.{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await agent.{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
             else
             {
-                ssb.AppendLine($"{prefix}await obj.{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await agent.{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
             }
         }
         else
         {
-            ssb.AppendLine($"{prefix}await obj.{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
+            ssb.AppendLine($"{prefix}await agent.{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
         }
 
         // ssb.AppendLine("context.Return();"); -> try-finally
