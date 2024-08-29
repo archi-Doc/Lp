@@ -11,7 +11,7 @@ public sealed class ServiceControl
     {
     }
 
-    private UInt32Hashtable<AgentInfo?> serviceIdToAgentInfo = new();
+    private UInt32Hashtable<AgentInformation?> serviceIdToAgentInfo = new();
 
     public void Register<TService, TAgent>()
         where TService : INetService
@@ -40,7 +40,7 @@ public sealed class ServiceControl
         this.serviceIdToAgentInfo.TryAdd(serviceId, default);//
     }
 
-    public bool TryGet<TService>([MaybeNullWhen(false)] out AgentInfo info)
+    public bool TryGet<TService>([MaybeNullWhen(false)] out AgentInformation info)
         where TService : INetService
     {
         var serviceId = ServiceTypeToId<TService>();
@@ -48,7 +48,7 @@ public sealed class ServiceControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out AgentInfo info)
+    public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out AgentInformation info)
         => this.serviceIdToAgentInfo.TryGetValue(serviceId, out info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

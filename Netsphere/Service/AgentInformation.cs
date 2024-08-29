@@ -4,11 +4,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Netsphere;
 
-public class AgentInfo
+public class AgentInformation
 {
-    public AgentInfo(uint serviceId, Type agentType, Func<object>? createAgent)
+    public AgentInformation(Type agentType, Func<object>? createAgent)
     {
-        this.ServiceId = serviceId;
+        // this.ServiceId = serviceId;
         this.AgentType = agentType;
         this.CreateAgent = createAgent;
     }
@@ -17,7 +17,7 @@ public class AgentInfo
 
     public bool TryGetMethod(ulong id, [MaybeNullWhen(false)] out ServiceMethod serviceMethod) => this.serviceMethods.TryGetValue(id, out serviceMethod);
 
-    public uint ServiceId { get; }
+    // public uint ServiceId { get; }
 
     public Type AgentType { get; }
 
