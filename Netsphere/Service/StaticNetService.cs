@@ -12,10 +12,10 @@ public static class StaticNetService
         DelegateCache<TService>.Create = @delegate;
     }
 
-    public static void TryAddAgentInfo(ServerConnectionContext.AgentInfo info)
+    public static void TryAddAgentInfo(AgentInfo info)
         => typeToAgentInfo.TryAdd(info.AgentType, info);
 
-    public static bool TryGetAgentInfo(Type agentType, [MaybeNullWhen(false)] out ServerConnectionContext.AgentInfo info)
+    public static bool TryGetAgentInfo(Type agentType, [MaybeNullWhen(false)] out AgentInfo info)
         => typeToAgentInfo.TryGetValue(agentType, out info);
 
     public static TService CreateClient<TService>(ClientConnection clientConnection)
@@ -30,8 +30,8 @@ public static class StaticNetService
         throw new InvalidOperationException($"Could not create an instance of the net service {typeof(TService).ToString()}.");
     }
 
-    private static ThreadsafeTypeKeyHashtable<ServerConnectionContext.AgentInfo> typeToAgentInfo = new();
-    private static UInt32Hashtable<ServerConnectionContext.AgentInfo> serviceIdToAgentInfo = new();
+    private static ThreadsafeTypeKeyHashtable<AgentInfo> typeToAgentInfo = new();
+    private static UInt32Hashtable<AgentInfo> serviceIdToAgentInfo = new();
 
     private static class DelegateCache<T>
     {

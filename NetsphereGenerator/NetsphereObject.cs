@@ -950,15 +950,15 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     internal void GenerateBackend_AgentInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
     {
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
-        using (var scopeMethod = ssb.ScopeBrace($"public static ServerConnectionContext.AgentInfo AgentInfo_{serviceIdString}()"))
+        using (var scopeMethod = ssb.ScopeBrace($"public static AgentInfo AgentInfo_{serviceIdString}()"))
         {
             var createAgent = this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor) ? $"static () => new {this.FullName}()" : "null";
-            ssb.AppendLine($"var info = new ServerConnectionContext.AgentInfo(0x{serviceIdString}u, typeof({this.FullName}), {createAgent});");
+            ssb.AppendLine($"var info = new AgentInfo(0x{serviceIdString}u, typeof({this.FullName}), {createAgent});");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)
                 {
-                    ssb.AppendLine($"info.AddMethod(new ServerConnectionContext.ServiceMethod({x.IdString}, {x.MethodString}));");
+                    ssb.AppendLine($"info.AddMethod(new ServiceMethod({x.IdString}, {x.MethodString}));");
                 }
             }
 

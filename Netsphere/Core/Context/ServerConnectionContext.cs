@@ -2,10 +2,8 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Packet;
 
 #pragma warning disable SA1202
 
@@ -44,46 +42,7 @@ public class ServerConnectionContext
 {
     #region Service
 
-    public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
-
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
-
-    public class AgentInfo
-    {
-        public AgentInfo(uint serviceId, Type agentType, Func<object>? createAgent)
-        {
-            this.ServiceId = serviceId;
-            this.AgentType = agentType;
-            this.CreateAgent = createAgent;
-        }
-
-        public void AddMethod(ServiceMethod serviceMethod) => this.serviceMethods.TryAdd(serviceMethod.Id, serviceMethod);
-
-        public bool TryGetMethod(ulong id, [MaybeNullWhen(false)] out ServiceMethod serviceMethod) => this.serviceMethods.TryGetValue(id, out serviceMethod);
-
-        public uint ServiceId { get; }
-
-        public Type AgentType { get; }
-
-        public Func<object>? CreateAgent { get; }
-
-        private Dictionary<ulong, ServiceMethod> serviceMethods = new();
-    }
-
-    private readonly record struct ServiceInfoInstance(AgentInfo ServiceInfo, object AgentInstance);//
-
-    public record class ServiceMethod
-    {
-        public ServiceMethod(ulong id, ServiceDelegate invoke)
-        {// Id = ServiceId + MethodId
-            this.Id = id;
-            this.Invoke = invoke;
-        }
-
-        public ulong Id { get; }
-
-        public ServiceDelegate Invoke { get; }
-    }
 
     public ServerConnectionContext(ServerConnection serverConnection)
     {
@@ -106,7 +65,6 @@ public class ServerConnectionContext
 
     private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
     private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
-    private readonly UInt32Hashtable<ServiceInfoInstance> serviceIdToBackend = new();
 
     #endregion
 
@@ -372,7 +330,7 @@ SendNoNetService:
         var methodId = (uint)dataId;
 
         //var ss = this.ServiceProvider.CreateScope();
-        var s = this.serviceIdToBackend.GetOrAdd(serviceId, id =>
+        /*var s = this.serviceIdToBackend.GetOrAdd(serviceId, id =>
         {
             object? agentInstance = default;
             if (this.NetTerminal.Services.TryGet(serviceId, out var info))
@@ -388,7 +346,7 @@ SendNoNetService:
         if (s.ServiceInfo.TryGetMethod(methodId, out var serviceMethod))
         {
             return (serviceMethod, s.AgentInstance);
-        }
+        }*/
 
         return default;
     }
