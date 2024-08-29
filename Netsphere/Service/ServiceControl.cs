@@ -7,40 +7,98 @@ namespace Netsphere;
 
 public sealed class ServiceControl
 {
-    public ServiceControl()
+    public sealed class Table
     {
+        public readonly record struct Agent(AgentInformation AgentInformation, int Index);
+
+        public Table(Dictionary<uint, AgentInformation> serviceIdToAgentInformation)
+        {
+            var typeToIndex = new Dictionary<Type, int>();
+            foreach (var (serviceId, agentInformation) in serviceIdToAgentInformation)
+            {
+                if (!typeToIndex.TryGetValue(agentInformation.AgentType, out var index))
+                {
+                    index = typeToIndex.Count;
+                    typeToIndex.TryAdd(agentInformation.AgentType, index);
+                }
+
+                this.serviceIdToAgentInformation.TryAdd(serviceId, new Agent(agentInformation, index));
+            }
+
+            this.Count = typeToIndex.Count;
+        }
+
+        private UInt32Hashtable<Agent> serviceIdToAgentInformation = new();
+
+        public int Count { get; }
+
+        public bool TryGetAgent(uint serviceId, [MaybeNullWhen(false)] out Agent agent)
+            => this.serviceIdToAgentInformation.TryGetValue(serviceId, out agent);
     }
 
-    private UInt32Hashtable<AgentInformation?> serviceIdToAgentInfo = new();
+    public ServiceControl()
+    {
+        this.table = new Table(this.serviceIdToAgentInformation);
+    }
+
+    #region FieldAndProperty
+
+    private readonly object syncObject = new();
+    private readonly Dictionary<uint, AgentInformation> serviceIdToAgentInformation = new();
+    private Table table;
+
+    public Table GetTable() => this.table;
+
+    #endregion
 
     public void Register<TService, TAgent>()
         where TService : INetService
         where TAgent : class, TService
     {
-        var serviceId = ServiceTypeToId<TService>();
-        this.Register(serviceId, typeof(TAgent));
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId<TService>();
+            this.Register(serviceId, typeof(TAgent));
+
+            this.RebuildTable();
+        }
     }
 
     public void Register(Type serviceType, Type agentType)
     {
-        var serviceId = ServiceTypeToId(serviceType);
-        this.Register(serviceId, agentType);
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId(serviceType);
+            this.Register(serviceId, agentType);
+
+            this.RebuildTable();
+        }
     }
 
     public void Unregister<TService>()
         where TService : INetService
     {
-        var serviceId = ServiceTypeToId<TService>();
-        this.serviceIdToAgentInfo.TryAdd(serviceId, default);//
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId<TService>();
+            this.serviceIdToAgentInformation.Remove(serviceId);
+
+            this.RebuildTable();
+        }
     }
 
     public void Unregister(Type serviceType)
     {
-        var serviceId = ServiceTypeToId(serviceType);
-        this.serviceIdToAgentInfo.TryAdd(serviceId, default);//
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId(serviceType);
+            this.serviceIdToAgentInformation.Remove(serviceId);
+
+            this.RebuildTable();
+        }
     }
 
-    public bool TryGet<TService>([MaybeNullWhen(false)] out AgentInformation info)
+    /*public bool TryGet<TService>([MaybeNullWhen(false)] out AgentInformation info)
         where TService : INetService
     {
         var serviceId = ServiceTypeToId<TService>();
@@ -49,7 +107,7 @@ public sealed class ServiceControl
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out AgentInformation info)
-        => this.serviceIdToAgentInfo.TryGetValue(serviceId, out info);
+        => this.serviceIdToAgentInfo.TryGetValue(serviceId, out info);*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ServiceTypeToId<TService>()
@@ -68,6 +126,12 @@ public sealed class ServiceControl
             throw new InvalidOperationException("Failed to register the class with the corresponding ServiceId.");
         }
 
-        this.serviceIdToAgentInfo.TryAdd(serviceId, info);
+        this.serviceIdToAgentInformation.TryAdd(serviceId, info);
+    }
+
+    private void RebuildTable()
+    {// lock (this.syncObject)
+        var newTable = new Table(this.serviceIdToAgentInformation);
+        Volatile.Write(ref this.table, newTable);
     }
 }

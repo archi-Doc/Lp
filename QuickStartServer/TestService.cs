@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
 using Netsphere;
 
 namespace QuickStart;
@@ -14,8 +15,19 @@ public interface ITestService : INetService // An interface for NetService must 
 
 // On the server side, define a class that implements the interface and annotate it with NetServiceObject attribute.
 [NetServiceObject] // Annotate NetServiceObject attribute.
-internal class TestServiceImpl : ITestService
+internal class TestServiceImpl : ITestService, ITestService2
 {
+    private readonly int number = RandomVault.Pseudo.NextInt31();
+
     async NetTask<string?> ITestService.DoubleString(string input)
         => input + input; // Simply repeat a string twice and return it.
+
+    NetTask<int> ITestService2.ScopedRandom()
+        => NetTask.FromResult(this.number);
+}
+
+[NetServiceInterface]
+public interface ITestService2 : INetService
+{
+    NetTask<int> ScopedRandom();
 }

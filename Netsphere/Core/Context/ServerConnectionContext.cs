@@ -49,6 +49,9 @@ public class ServerConnectionContext
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
+
+        this.serviceTable = this.NetTerminal.Services.GetTable();
+        this.agentInstances = new object[this.serviceTable.Count];
     }
 
     #endregion
@@ -63,8 +66,8 @@ public class ServerConnectionContext
 
     public AuthenticationToken? AuthenticationToken { get; private set; }
 
-    private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
-    private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
+    private readonly ServiceControl.Table serviceTable;
+    private readonly object[] agentInstances;
 
     #endregion
 
@@ -325,29 +328,41 @@ SendNoNetService:
     }*/
 
     private (ServiceMethod? ServiceMethod, object AgentInstance) TryGetServiceMethod(ulong dataId)
-    {//
-        var serviceId = (uint)(dataId >> 32);
-        var methodId = (uint)dataId;
+    {//this.ServiceProvider.CreateScope();
 
-        //var ss = this.ServiceProvider.CreateScope();
-        /*var s = this.serviceIdToBackend.GetOrAdd(serviceId, id =>
+        var serviceId = unchecked((uint)(dataId >> 32));
+        var methodId = unchecked((uint)dataId);
+        if (!this.serviceTable.TryGetAgent(serviceId, out var agent))
         {
-            object? agentInstance = default;
-            if (this.NetTerminal.Services.TryGet(serviceId, out var info))
+            return default;
+        }
+
+        var agentInformation = agent.AgentInformation;
+        if (agentInformation.TryGetMethod(methodId, out var serviceMethod))
+        {
+            return default;
+        }
+
+        while (true)
+        {
+            if (this.agentInstances[agent.Index] is not null)
             {
-                agentInstance = this.ServiceProvider?.GetService(info.AgentType);
-                agentInstance ??= info.CreateAgent?.Invoke();
-                return new(info, agentInstance);
+                break;
             }
 
-            return new(default, agentInstance);
-        });
+            var instance = this.ServiceProvider?.GetService(agent.AgentInformation.AgentType);
+            instance ??= agent.AgentInformation.CreateAgent?.Invoke();
+            if (instance is null)
+            {
+                return default;
+            }
 
-        if (s.ServiceInfo.TryGetMethod(methodId, out var serviceMethod))
-        {
-            return (serviceMethod, s.AgentInstance);
-        }*/
+            if (Interlocked.CompareExchange(ref this.agentInstances[agent.Index], instance, null) != null)
+            {
+                break;
+            }
+        }
 
-        return default;
+        return (serviceMethod, this.agentInstances[agent.Index]);
     }
 }
