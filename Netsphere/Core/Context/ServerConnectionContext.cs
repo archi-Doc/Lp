@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Core;
 using Netsphere.Crypto;
 
@@ -46,7 +47,8 @@ public class ServerConnectionContext
 
     public ServerConnectionContext(ServerConnection serverConnection)
     {
-        this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
+        // this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
+        this.serviceScope = serverConnection.ConnectionTerminal.ServiceProvider.CreateScope();//
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
 
@@ -58,7 +60,7 @@ public class ServerConnectionContext
 
     #region FieldAndProperty
 
-    public IServiceProvider? ServiceProvider { get; }
+    public IServiceProvider ServiceProvider => this.serviceScope.ServiceProvider;
 
     public NetTerminal NetTerminal { get; }
 
@@ -66,6 +68,7 @@ public class ServerConnectionContext
 
     public AuthenticationToken? AuthenticationToken { get; private set; }
 
+    private readonly IServiceScope serviceScope;
     private readonly ServiceControl.Table serviceTable;
     private readonly object[] agentInstances;
 
