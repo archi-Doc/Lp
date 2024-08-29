@@ -331,25 +331,19 @@ SendNoNetService:
     {//this.ServiceProvider.CreateScope();
 
         var serviceId = unchecked((uint)(dataId >> 32));
-        var methodId = unchecked((uint)dataId);
         if (!this.serviceTable.TryGetAgent(serviceId, out var agent))
         {
             return default;
         }
 
         var agentInformation = agent.AgentInformation;
-        if (agentInformation.TryGetMethod(methodId, out var serviceMethod))
+        if (!agentInformation.TryGetMethod(dataId, out var serviceMethod))
         {
             return default;
         }
 
-        while (true)
+        if (this.agentInstances[agent.Index] is null)
         {
-            if (this.agentInstances[agent.Index] is not null)
-            {
-                break;
-            }
-
             var instance = this.ServiceProvider?.GetService(agent.AgentInformation.AgentType);
             instance ??= agent.AgentInformation.CreateAgent?.Invoke();
             if (instance is null)
@@ -357,10 +351,7 @@ SendNoNetService:
                 return default;
             }
 
-            if (Interlocked.CompareExchange(ref this.agentInstances[agent.Index], instance, null) != null)
-            {
-                break;
-            }
+            Interlocked.CompareExchange(ref this.agentInstances[agent.Index], instance, null);
         }
 
         return (serviceMethod, this.agentInstances[agent.Index]);

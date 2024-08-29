@@ -11,3 +11,9 @@ public interface ITestService : INetService // An interface for NetService must 
     NetTask<string?> DoubleString(string input); // Declare the service method.
     // Ensure that both arguments and return values are serializable by Tinyhand serializer, and the return type must be NetTask or NetTask<T>.
 }
+
+[NetServiceInterface]
+public interface ITestService2 : INetService
+{
+    NetTask<int> ScopedRandom();
+}

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 
@@ -13,9 +14,9 @@ public class Program
         await unit.Run(new NetOptions(), true); // Execute the created unit with default options.
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>(); // Get a NetControl instance.
-        // using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 49152)))
-        NetNode.TryParse("127.0.0.1:49152(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)", out var netNode);
-        using (var connection = await netControl.NetTerminal.Connect(netNode!))
+        using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 49152)))
+        // NetNode.TryParse("127.0.0.1:49152(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)", out var netNode);
+        // using (var connection = await netControl.NetTerminal.Connect(netNode!))
         {// Connect to the server's address (loopback address).
          // All communication in Netsphere is encrypted, and connecting by specifying only the address is not recommended due to the risk of man-in-the-middle attacks.
             if (connection is null)
@@ -28,6 +29,12 @@ public class Program
                 var input = "Nupo";
                 var output = await service.DoubleString(input); // Arguments are sent to the server through the Tinyhand serializer, processed, and the results are received.
                 await Console.Out.WriteLineAsync($"{input} -> {output}");
+
+                var service2 = connection.GetService<ITestService2>();
+                var result = await service2.ScopedRandom();
+                await Console.Out.WriteLineAsync($"{result}");
+                result = await service2.ScopedRandom();
+                await Console.Out.WriteLineAsync($"{result}");
             }
         }
 
