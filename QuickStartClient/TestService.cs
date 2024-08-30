@@ -15,5 +15,5 @@ public interface ITestService : INetService // An interface for NetService must 
 [NetServiceInterface]
 public interface ITestService2 : INetService
 {
-    NetTask<int> ScopedRandom();
+    NetTask<int> Random();
 }

@@ -28,13 +28,13 @@ public class Program
             {// Modify NetOptions
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
-                options.NodePrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.
+                options.NodePrivateKey = "!!!iSaplN1bFckpIfvcGeb_FVh1jDMuZgEapNLdQ270-AUzuZhF!!!(Ca-GIp9sQeF0WB7zcQ1HLcWcI9q1Te6sskIUSJMZrQrl34uP)"; // Test Private key.
                 options.EnablePing = true;
                 options.EnableServer = true;
             })
             .Configure(context =>
             {
-                context.Services.AddScoped<TestServiceImpl>(); // Register the services.
+                context.Services.AddTransient<TestServiceImpl>(); // Register the services.
             })
             .ConfigureNetsphere(context =>
             {// Register the services provided by the server.

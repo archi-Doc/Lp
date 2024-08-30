@@ -92,6 +92,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RevealAuthoritySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewSignatureKeySubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.NewNodeKeySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
 

@@ -14,9 +14,9 @@ public class Program
         await unit.Run(new NetOptions(), true); // Execute the created unit with default options.
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>(); // Get a NetControl instance.
-        using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 49152)))
-        // NetNode.TryParse("127.0.0.1:49152(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)", out var netNode);
-        // using (var connection = await netControl.NetTerminal.Connect(netNode!))
+        // using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 49152)))
+        NetNode.TryParse("127.0.0.1:49152(Ca-GIp9sQeF0WB7zcQ1HLcWcI9q1Te6sskIUSJMZrQrl34uP)", out var netNode);
+        using (var connection = await netControl.NetTerminal.Connect(netNode!))
         {// Connect to the server's address (loopback address).
          // All communication in Netsphere is encrypted, and connecting by specifying only the address is not recommended due to the risk of man-in-the-middle attacks.
             if (connection is null)
@@ -31,9 +31,9 @@ public class Program
                 await Console.Out.WriteLineAsync($"{input} -> {output}");
 
                 var service2 = connection.GetService<ITestService2>();
-                var result = await service2.ScopedRandom();
+                var result = await service2.Random();
                 await Console.Out.WriteLineAsync($"{result}");
-                result = await service2.ScopedRandom();
+                result = await service2.Random();
                 await Console.Out.WriteLineAsync($"{result}");
             }
         }

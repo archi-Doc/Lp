@@ -22,12 +22,12 @@ internal class TestServiceImpl : ITestService, ITestService2
     async NetTask<string?> ITestService.DoubleString(string input)
         => input + input; // Simply repeat a string twice and return it.
 
-    NetTask<int> ITestService2.ScopedRandom()
+    NetTask<int> ITestService2.Random()
         => NetTask.FromResult(this.number);
 }
 
 [NetServiceInterface]
 public interface ITestService2 : INetService
 {
-    NetTask<int> ScopedRandom();
+    NetTask<int> Random();
 }
