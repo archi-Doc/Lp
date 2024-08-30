@@ -334,13 +334,13 @@ SendNoNetService:
     {
         var serviceId = unchecked((uint)(dataId >> 32));
         if (!this.serviceTable.TryGetAgent(serviceId, out var agent))
-        {
+        {// No agent (implementation)
             return default;
         }
 
         var agentInformation = agent.AgentInformation;
         if (!agentInformation.TryGetMethod(dataId, out var serviceMethod))
-        {
+        {// No method
             return default;
         }
 
@@ -349,7 +349,7 @@ SendNoNetService:
             var instance = this.ServiceProvider?.GetService(agent.AgentInformation.AgentType);
             instance ??= agent.AgentInformation.CreateAgent?.Invoke();
             if (instance is null)
-            {
+            {// No instance
                 return default;
             }
 

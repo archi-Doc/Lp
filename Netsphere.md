@@ -1,7 +1,7 @@
 ## Netsphere is a network library for C#
 ![Nuget](https://img.shields.io/nuget/v/Netsphere) ![Build and Test](https://github.com/archi-Doc/Netsphere/workflows/Build%20and%20Test/badge.svg)
 
-- Netsphere is a transport protocol based on UDP.
+- **Netsphere** is a transport protocol based on UDP.
 
 - Very versatile and easy to use.
 
@@ -87,7 +87,7 @@ await unit.Terminate(); // Perform the termination process for the unit.
 
 On the server side:
 
-Define a class that implements the interface and annotate it with **NetServiceObject** attribute.
+Define a class that implements the interface and annotate it with `NetServiceObject` attribute.
 
 ```csharp
 [NetServiceObject] // Annotate NetServiceObject attribute.
@@ -117,6 +117,10 @@ var builder = new NetControl.Builder() // Create a NetControl builder.
 var unit = builder.Build(); // Create a unit that provides network functionality.
 var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();
 await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
+
+// It is possible to unregister services, but frequent changes are not recommended (as the service table will be rebuilt). If frequent changes are necessary, consider using NetFilter or modifying the processing in the implementation class.
+var netTerminal = unit.Context.ServiceProvider.GetRequiredService<NetTerminal>();
+netTerminal.Services.Unregister<ITestService2>();
 
 await unit.Run(options, true); // Execute the created unit with the specified options.
 await Console.Out.WriteLineAsync("Server: Ctrl+C to exit");

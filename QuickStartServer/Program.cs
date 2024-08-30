@@ -34,7 +34,7 @@ public class Program
             })
             .Configure(context =>
             {
-                context.Services.AddTransient<TestServiceImpl>(); // Register the services.
+                context.Services.AddTransient<TestServiceImpl>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
             })
             .ConfigureNetsphere(context =>
             {// Register the services provided by the server.
@@ -49,6 +49,10 @@ public class Program
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
         var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
         var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
+
+        // It is possible to unregister services, but frequent changes are not recommended (as the service table will be rebuilt). If frequent changes are necessary, consider using NetFilter or modifying the processing in the implementation class.
+        var netTerminal = unit.Context.ServiceProvider.GetRequiredService<NetTerminal>();
+        netTerminal.Services.Unregister<ITestService2>();
 
         await Console.Out.WriteLineAsync($"{options.NodeName}: {node.ToString()}");
         await Console.Out.WriteLineAsync("Ctrl+C to exit");

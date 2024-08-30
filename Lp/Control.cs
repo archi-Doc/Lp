@@ -63,6 +63,7 @@ public class Control
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerServiceAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
+                context.AddTransient<RelayMergerServiceAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
