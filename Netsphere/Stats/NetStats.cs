@@ -7,6 +7,8 @@ namespace Netsphere.Stats;
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class NetStats : ITinyhandSerializationCallback
 {
+    public const string Filename = "NetStat.tinyhand";
+
     private const int EndpointTrustCapacity = 32;
     private const int EndpointTrustMinimum = 4;
     private const int PortTrustCapacity = 32;

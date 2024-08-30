@@ -9,11 +9,11 @@ namespace Netsphere;
 [TinyhandObject]
 public sealed partial class TrustSource<T>
 {
-    public enum TrustState
+    /*public enum TrustState
     {
         Unfixed,
         Fixed,
-    }
+    }*/
 
     public TrustSource(int capacity, int trustMinimum)
     {

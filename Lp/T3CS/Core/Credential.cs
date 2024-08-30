@@ -20,7 +20,7 @@ public partial class Credential : CertificateToken<Value>
                 MaxItems = Credential.MaxItems,
                 RemoveIfItemNotFound = false,
             },
-            4);
+            NetConstants.IntegralityDefaultPoolSize);
 
         public override bool Validate(Credential.GoshujinClass goshujin, Credential newItem, Credential? oldItem)
         {

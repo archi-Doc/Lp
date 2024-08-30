@@ -2,6 +2,7 @@
 
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Lp.Data;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Netsphere.Misc;
@@ -12,13 +13,15 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityVault authorityVault, Seedphrase seedPhrase)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityVault authorityVault, Seedphrase seedPhrase, LpStats lpStats)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.control = control;
         this.authorityVault = authorityVault;
         this.seedPhrase = seedPhrase;
+
+        lpStats.Credentials.Add(new(new Value()));
     }
 
     public async Task RunAsync(TestOptions options, string[] args)

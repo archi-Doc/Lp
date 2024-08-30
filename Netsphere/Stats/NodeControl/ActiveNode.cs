@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Microsoft.VisualBasic;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -11,11 +12,13 @@ public sealed partial class ActiveNode : NetNode
 {
     internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
     {
-        public static readonly Integrality Instance = new()
-        {
-            MaxItems = 100,
-            RemoveIfItemNotFound = false,
-        };
+        public static readonly ObjectPool<Integrality> Pool = new(
+            () => new()
+            {
+                MaxItems = 100,
+                RemoveIfItemNotFound = false,
+            },
+            NetConstants.IntegralityDefaultPoolSize);
     }
 
     [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
