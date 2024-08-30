@@ -8,16 +8,13 @@ internal class NetsphereUnitContext : INetsphereUnitContext, IUnitCustomContext
 {
     void IUnitCustomContext.Configure(IUnitConfigurationContext context)
     {
-        this.Services = this.services.ToFrozenSet();
         context.SetOptions(this);
     }
 
-    void INetsphereUnitContext.AddService<TService>()
+    void INetsphereUnitContext.AddNetService<TService, TAgent>()
     {
-        this.services.Add(typeof(TService));
+        this.ServiceToAgent.TryAdd(typeof(TService), typeof(TAgent));
     }
 
-    public FrozenSet<Type> Services { get; private set; } = FrozenSet<Type>.Empty;
-
-    private readonly HashSet<Type> services = new();
+    internal Dictionary<Type, Type> ServiceToAgent { get; } = new();
 }

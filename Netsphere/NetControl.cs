@@ -59,7 +59,7 @@ public class NetControl : UnitBase, IUnitPreparable
             });
         }
 
-        public Builder ConfigureSerivice(Action<INetsphereUnitContext> @delegate)
+        public Builder ConfigureNetsphere(Action<INetsphereUnitContext> @delegate)
         {
             this.actions.Add(@delegate);
             return this;
@@ -136,9 +136,9 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Services = new();
 
         var netsphereContext = context.ServiceProvider.GetRequiredService<NetsphereUnitContext>();
-        foreach (var x in netsphereContext.Services)
+        foreach (var x in netsphereContext.ServiceToAgent)
         {
-            this.Services.Register(x);
+            this.Services.Register(x.Key, x.Value);
         }
 
         this.NetTerminal = netTerminal;

@@ -69,7 +69,7 @@ public class ServiceFilterGroup
         return items;
     }
 
-    public static void GenerateInitialize(ScopingStringBuilder ssb, string objectName, string serviceProvider, Item[]? items)
+    public static void GenerateInitialize(ScopingStringBuilder ssb, string serviceProvider, Item[]? items)
     {
         if (items == null)
         {
@@ -94,21 +94,21 @@ public class ServiceFilterGroup
             // ssb.AppendLine($"this.{x.Identifier} = ({x.Object.FullName}){context}.ServiceFilters.GetOrAdd(typeof({x.Object.FullName}), x => (IServiceFilter){newInstance});");
             if (hasDefaultConstructor)
             {
-                ssb.AppendLine($"{objectName}.{x.Identifier} ??= new {x.Object.FullName}();");
+                ssb.AppendLine($"{x.Identifier} ??= new {x.Object.FullName}();");
             }
             else
             {
-                ssb.AppendLine($"{objectName}.{x.Identifier} ??= {serviceProvider}?.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
+                ssb.AppendLine($"{x.Identifier} ??= {serviceProvider}?.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
             }
 
-            using (var scopeNull = ssb.ScopeBrace($"if ({objectName}.{x.Identifier} == null)"))
+            using (var scopeNull = ssb.ScopeBrace($"if ({x.Identifier} == null)"))
             {
                 ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of the net filter '{x.Object.FullName}'.\");");
             }
 
             if (x.Arguments != null)
             {
-                ssb.AppendLine($"(({NetsphereBody.ServiceFilterBaseName}){objectName}.{x.Identifier}).{NetsphereBody.ServiceFilterSetArgumentsName}({x.Arguments});");
+                ssb.AppendLine($"(({NetsphereBody.ServiceFilterBaseName}){x.Identifier}).{NetsphereBody.ServiceFilterSetArgumentsName}({x.Arguments});");
             }
         }
     }
@@ -193,7 +193,7 @@ public class ServiceFilterGroup
 
         foreach (var x in this.Items)
         {
-            ssb.AppendLine($"private {x.Object.FullName}? {x.Identifier};");
+            ssb.AppendLine($"private static {x.Object.FullName}? {x.Identifier};");
         }
     }
 

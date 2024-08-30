@@ -19,6 +19,7 @@ internal class TestServiceImpl : ITestService
     async NetTask<string?> ITestService.DoubleString(string input)
         => input + input;
 
+    [NetServiceFilter<NullFilter>]
     public async NetTask<byte[]?> Pingpong(byte[] data)
     {
         return data;

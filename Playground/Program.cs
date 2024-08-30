@@ -49,9 +49,9 @@ public class Program
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
-             .ConfigureSerivice(context =>
+             .ConfigureNetsphere(context =>
              {// Register the services provided by the server.
-                 context.AddService<ITestService>();
+                 context.AddNetService<ITestService, TestServiceImpl>();
              })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions

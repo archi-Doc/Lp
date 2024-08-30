@@ -1,9 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Core;
 using Netsphere.Crypto;
-using Netsphere.Packet;
 
 #pragma warning disable SA1202
 
@@ -42,58 +43,24 @@ public class ServerConnectionContext
 {
     #region Service
 
-    public delegate Task ServiceDelegate(object instance, TransmissionContext transmissionContext);
-
     public delegate INetService CreateFrontendDelegate(ClientConnection clientConnection);
-
-    public delegate object CreateBackendDelegate(ServerConnectionContext connectionContext);
-
-    public class ServiceInfo
-    {
-        public ServiceInfo(uint serviceId, CreateBackendDelegate createBackend)
-        {
-            this.ServiceId = serviceId;
-            this.CreateBackend = createBackend;
-        }
-
-        public void AddMethod(ServiceMethod serviceMethod) => this.serviceMethods.TryAdd(serviceMethod.Id, serviceMethod);
-
-        public bool TryGetMethod(ulong id, [MaybeNullWhen(false)] out ServiceMethod serviceMethod) => this.serviceMethods.TryGetValue(id, out serviceMethod);
-
-        public uint ServiceId { get; }
-
-        public CreateBackendDelegate CreateBackend { get; }
-
-        private Dictionary<ulong, ServiceMethod> serviceMethods = new();
-    }
-
-    public record class ServiceMethod
-    {
-        public ServiceMethod(ulong id, ServiceDelegate process)
-        {
-            this.Id = id;
-            this.Invoke = process;
-        }
-
-        public ulong Id { get; }
-
-        public object? ServerInstance { get; init; }
-
-        public ServiceDelegate Invoke { get; }
-    }
 
     public ServerConnectionContext(ServerConnection serverConnection)
     {
         this.ServiceProvider = serverConnection.ConnectionTerminal.ServiceProvider;
+        // this.serviceScope = serverConnection.ConnectionTerminal.ServiceProvider.CreateScope();
         this.NetTerminal = serverConnection.ConnectionTerminal.NetTerminal;
         this.ServerConnection = serverConnection;
+
+        this.serviceTable = this.NetTerminal.Services.GetTable();
+        this.agentInstances = new object[this.serviceTable.Count];
     }
 
     #endregion
 
     #region FieldAndProperty
 
-    public IServiceProvider? ServiceProvider { get; }
+    public IServiceProvider ServiceProvider { get; }
 
     public NetTerminal NetTerminal { get; }
 
@@ -101,8 +68,9 @@ public class ServerConnectionContext
 
     public AuthenticationToken? AuthenticationToken { get; private set; }
 
-    private readonly Dictionary<ulong, ServiceMethod> idToServiceMethod = new(); // lock (this.idToServiceMethod)
-    private readonly Dictionary<uint, object> idToInstance = new(); // lock (this.idToServiceMethod)
+    // private readonly IServiceScope serviceScope;
+    private readonly ServiceControl.Table serviceTable;
+    private readonly object[] agentInstances;
 
     #endregion
 
@@ -144,7 +112,7 @@ public class ServerConnectionContext
     internal void InvokeStream(ReceiveTransmission receiveTransmission, ulong dataId, long maxStreamLength)
     {
         // Get ServiceMethod
-        var serviceMethod = this.TryGetServiceMethod(dataId);
+        (var serviceMethod, var agentInstance) = this.TryGetServiceMethod(dataId);
         if (serviceMethod is null)
         {
             return;
@@ -164,7 +132,7 @@ public class ServerConnectionContext
             TransmissionContext.AsyncLocal.Value = transmissionContext;
             try
             {
-                await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
+                await serviceMethod.Invoke(agentInstance, transmissionContext).ConfigureAwait(false);
                 try
                 {
                     if (!transmissionContext.IsSent)
@@ -242,7 +210,7 @@ public class ServerConnectionContext
     internal async Task InvokeRPC(TransmissionContext transmissionContext)
     {
         // Get ServiceMethod
-        var serviceMethod = this.TryGetServiceMethod(transmissionContext.DataId);
+        (var serviceMethod, var agentInstance) = this.TryGetServiceMethod(transmissionContext.DataId);
         if (serviceMethod == null)
         {
             goto SendNoNetService;
@@ -252,7 +220,7 @@ public class ServerConnectionContext
         TransmissionContext.AsyncLocal.Value = transmissionContext;
         try
         {
-            await serviceMethod.Invoke(serviceMethod.ServerInstance!, transmissionContext).ConfigureAwait(false);
+            await serviceMethod.Invoke(agentInstance, transmissionContext).ConfigureAwait(false);
             try
             {
                 if (transmissionContext.ServerConnection.IsClosedOrDisposed)
@@ -362,47 +330,32 @@ SendNoNetService:
         });
     }*/
 
-    private ServiceMethod? TryGetServiceMethod(ulong dataId)
+    private (ServiceMethod? ServiceMethod, object AgentInstance) TryGetServiceMethod(ulong dataId)
     {
-        ServiceMethod? serviceMethod;
-        lock (this.idToServiceMethod)
-        {
-            if (!this.idToServiceMethod.TryGetValue(dataId, out serviceMethod))
-            {
-                // Get ServiceInfo.
-                var serviceId = (uint)(dataId >> 32);
-                if (!this.NetTerminal.Services.TryGet(serviceId, out var serviceInfo))
-                {
-                    return null;
-                }
-
-                // Get ServiceMethod.
-                if (!serviceInfo.TryGetMethod(dataId, out serviceMethod))
-                {
-                    return null;
-                }
-
-                // Get Backend instance.
-                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
-                {
-                    try
-                    {
-                        backendInstance = serviceInfo.CreateBackend(this);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.ToString());
-                        return null;
-                    }
-
-                    this.idToInstance.TryAdd(serviceId, backendInstance);
-                }
-
-                serviceMethod = serviceMethod with { ServerInstance = backendInstance, };
-                this.idToServiceMethod.TryAdd(dataId, serviceMethod);
-            }
+        var serviceId = unchecked((uint)(dataId >> 32));
+        if (!this.serviceTable.TryGetAgent(serviceId, out var agent))
+        {// No agent (implementation)
+            return default;
         }
 
-        return serviceMethod;
+        var agentInformation = agent.AgentInformation;
+        if (!agentInformation.TryGetMethod(dataId, out var serviceMethod))
+        {// No method
+            return default;
+        }
+
+        if (this.agentInstances[agent.Index] is null)
+        {
+            var instance = this.ServiceProvider?.GetService(agent.AgentInformation.AgentType);
+            instance ??= agent.AgentInformation.CreateAgent?.Invoke();
+            if (instance is null)
+            {// No instance
+                return default;
+            }
+
+            Interlocked.CompareExchange(ref this.agentInstances[agent.Index], instance, null);
+        }
+
+        return (serviceMethod, this.agentInstances[agent.Index]);
     }
 }

@@ -98,7 +98,7 @@ public class RunnerUnit : UnitBase, IUnitPreparable, IUnitExecutable
             options.NodePrivateKeyString = string.Empty;
 
             var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
-            netControl.Services.Register<IRemoteControl>();
+            netControl.Services.Register<IRemoteControl, RemoteControlAgent>();
 
             await this.Run(netOptions, true);
 

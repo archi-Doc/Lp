@@ -7,37 +7,98 @@ namespace Netsphere;
 
 public sealed class ServiceControl
 {
-    public ServiceControl()
+    public sealed class Table
     {
-    }
+        public readonly record struct Agent(AgentInformation AgentInformation, int Index);
 
-    private UInt64Hashtable<ServerConnectionContext.ServiceInfo> dataIdToResponder = new();
-
-    public void Register<TService>()
-        where TService : INetService
-    {
-        var serviceId = ServiceTypeToId<TService>();
-        this.Register(serviceId);
-    }
-
-    public void Register(Type serviceType)
-    {
-        var serviceId = ServiceTypeToId(serviceType);
-        this.Register(serviceId);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Register(uint serviceId)
-    {
-        if (!StaticNetService.TryGetServiceInfo(serviceId, out var info))
+        public Table(Dictionary<uint, AgentInformation> serviceIdToAgentInformation)
         {
-            throw new InvalidOperationException("Failed to register the class with the corresponding ServiceId.");
+            var typeToIndex = new Dictionary<Type, int>();
+            foreach (var (serviceId, agentInformation) in serviceIdToAgentInformation)
+            {
+                if (!typeToIndex.TryGetValue(agentInformation.AgentType, out var index))
+                {
+                    index = typeToIndex.Count;
+                    typeToIndex.TryAdd(agentInformation.AgentType, index);
+                }
+
+                this.serviceIdToAgentInformation.TryAdd(serviceId, new Agent(agentInformation, index));
+            }
+
+            this.Count = typeToIndex.Count;
         }
 
-        this.dataIdToResponder.TryAdd(serviceId, info);
+        private UInt32Hashtable<Agent> serviceIdToAgentInformation = new();
+
+        public int Count { get; }
+
+        public bool TryGetAgent(uint serviceId, [MaybeNullWhen(false)] out Agent agent)
+            => this.serviceIdToAgentInformation.TryGetValue(serviceId, out agent);
     }
 
-    public bool TryGet<TService>([MaybeNullWhen(false)] out ServerConnectionContext.ServiceInfo info)
+    public ServiceControl()
+    {
+        this.table = new Table(this.serviceIdToAgentInformation);
+    }
+
+    #region FieldAndProperty
+
+    private readonly object syncObject = new();
+    private readonly Dictionary<uint, AgentInformation> serviceIdToAgentInformation = new();
+    private Table table;
+
+    public Table GetTable() => this.table;
+
+    #endregion
+
+    public void Register<TService, TAgent>()
+        where TService : INetService
+        where TAgent : class, TService
+    {
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId<TService>();
+            this.Register(serviceId, typeof(TAgent));
+
+            this.RebuildTable();
+        }
+    }
+
+    public void Register(Type serviceType, Type agentType)
+    {
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId(serviceType);
+            this.Register(serviceId, agentType);
+
+            this.RebuildTable();
+        }
+    }
+
+    public void Unregister<TService>()
+        where TService : INetService
+    {
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId<TService>();
+            this.serviceIdToAgentInformation.Remove(serviceId);
+
+            this.RebuildTable();
+        }
+    }
+
+    public void Unregister(Type serviceType)
+    {
+        lock (this.syncObject)
+        {
+            var serviceId = ServiceTypeToId(serviceType);
+            this.serviceIdToAgentInformation.Remove(serviceId);
+
+            this.RebuildTable();
+        }
+    }
+
+    /*public bool TryGet<TService>([MaybeNullWhen(false)] out AgentInformation info)
         where TService : INetService
     {
         var serviceId = ServiceTypeToId<TService>();
@@ -45,15 +106,32 @@ public sealed class ServiceControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out ServerConnectionContext.ServiceInfo info)
-        => this.dataIdToResponder.TryGetValue(serviceId, out info);
+    public bool TryGet(uint serviceId, [MaybeNullWhen(false)] out AgentInformation info)
+        => this.serviceIdToAgentInfo.TryGetValue(serviceId, out info);*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ServiceTypeToId<TService>()
         where TService : INetService
-        => (uint)Arc.Crypto.FarmHash.Hash64(typeof(TService).FullName ?? string.Empty);
+        => (uint)FarmHash.Hash64(typeof(TService).FullName ?? string.Empty);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ServiceTypeToId(Type serviceType)
-        => (uint)Arc.Crypto.FarmHash.Hash64(serviceType.FullName ?? string.Empty);
+        => (uint)FarmHash.Hash64(serviceType.FullName ?? string.Empty);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Register(uint serviceId, Type agentType)
+    {
+        if (!StaticNetService.TryGetAgentInfo(agentType, out var info))
+        {
+            throw new InvalidOperationException("Failed to register the class with the corresponding ServiceId.");
+        }
+
+        this.serviceIdToAgentInformation.TryAdd(serviceId, info);
+    }
+
+    private void RebuildTable()
+    {// lock (this.syncObject)
+        var newTable = new Table(this.serviceIdToAgentInformation);
+        Volatile.Write(ref this.table, newTable);
+    }
 }

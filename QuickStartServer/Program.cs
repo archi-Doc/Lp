@@ -28,13 +28,18 @@ public class Program
             {// Modify NetOptions
                 options.NodeName = "Test server";
                 options.Port = 49152; // Specify the port number.
-                options.NodePrivateKey = "!!!iZ9a5kHn1fwxBfSIM3gav_8wja-9j7TguTdzg13H1uRO!!!(CXDwPL2ZAaDgX8edj_0Xl4Q_jKcJS9EUh_4EbgORc30I)"; // Test Private key.
+                options.NodePrivateKey = "!!!iSaplN1bFckpIfvcGeb_FVh1jDMuZgEapNLdQ270-AUzuZhF!!!(Ca-GIp9sQeF0WB7zcQ1HLcWcI9q1Te6sskIUSJMZrQrl34uP)"; // Test Private key.
                 options.EnablePing = true;
                 options.EnableServer = true;
             })
-            .ConfigureSerivice(context =>
+            .Configure(context =>
+            {
+                context.Services.AddTransient<TestServiceImpl>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
+            })
+            .ConfigureNetsphere(context =>
             {// Register the services provided by the server.
-                context.AddService<ITestService>();
+                context.AddNetService<ITestService, TestServiceImpl>();
+                context.AddNetService<ITestService2, TestServiceImpl>();
             });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.
@@ -44,6 +49,10 @@ public class Program
         await Console.Out.WriteLineAsync(options.ToString()); // Display the NetOptions.
         var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
         var node = new NetNode(new(IPAddress.Loopback, (ushort)options.Port), netBase.NodePublicKey);
+
+        // It is possible to unregister services, but frequent changes are not recommended (as the service table will be rebuilt). If frequent changes are necessary, consider using NetFilter or modifying the processing in the implementation class.
+        var netTerminal = unit.Context.ServiceProvider.GetRequiredService<NetTerminal>();
+        netTerminal.Services.Unregister<ITestService2>();
 
         await Console.Out.WriteLineAsync($"{options.NodeName}: {node.ToString()}");
         await Console.Out.WriteLineAsync("Ctrl+C to exit");
