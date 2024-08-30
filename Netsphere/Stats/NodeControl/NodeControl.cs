@@ -211,9 +211,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public BytePool.RentMemory DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
-        var integrality = ActiveNode.Integrality.Pool.Get();// Necessary?
-        var result = ((IIntegralityObject)this.activeNodes).Differentiate(integrality, memory);
-        ActiveNode.Integrality.Pool.Return(integrality);
+        var result = ((IIntegralityObject)this.activeNodes).Differentiate(memory, ActiveNode.Integrality.DefaultMaxItems);
         return result;
     }
 

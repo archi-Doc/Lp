@@ -10,14 +10,14 @@ namespace Lp.T3cs;
 [ValueLinkObject(Integrality = true)]
 public partial class Credential : CertificateToken<Value>
 {
-    private const int MaxItems = 1_000;
-
     public class Integrality : Integrality<Credential.GoshujinClass, Credential>
     {
+        public const int DefaultMaxItems = 1_000;
+
         public static readonly ObjectPool<Integrality> Pool = new(
             () => new()
             {
-                MaxItems = Credential.MaxItems,
+                MaxItems = DefaultMaxItems,
                 RemoveIfItemNotFound = false,
             },
             NetConstants.IntegralityDefaultPoolSize);
