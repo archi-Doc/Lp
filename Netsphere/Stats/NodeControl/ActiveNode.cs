@@ -12,15 +12,11 @@ public sealed partial class ActiveNode : NetNode
 {
     internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
     {
-        public const int DefaultMaxItems = 100;
-
-        public static readonly ObjectPool<Integrality> Pool = new(
-            () => new()
-            {
-                MaxItems = DefaultMaxItems,
-                RemoveIfItemNotFound = false,
-            },
-            NetConstants.IntegralityDefaultPoolSize);
+        public static readonly Integrality Default = new()
+        {
+            MaxItems = 100,
+            RemoveIfItemNotFound = false,
+        };
     }
 
     [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]

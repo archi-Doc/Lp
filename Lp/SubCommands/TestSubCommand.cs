@@ -95,9 +95,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             var g = new Credential.GoshujinClass();
             var c = new Credential(new());
             authority.Sign(c);
-            var integrality = Credential.Integrality.Pool.Get();
-            integrality.IntegrateObject(g, c);
-            Credential.Integrality.Pool.Return(integrality);
+            Credential.Integrality.Default.IntegrateObject(g, c);
         }
     }
 

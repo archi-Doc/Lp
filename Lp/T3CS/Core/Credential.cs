@@ -12,15 +12,11 @@ public partial class Credential : CertificateToken<Value>
 {
     public class Integrality : Integrality<Credential.GoshujinClass, Credential>
     {
-        public const int DefaultMaxItems = 1_000;
-
-        public static readonly ObjectPool<Integrality> Pool = new(
-            () => new()
-            {
-                MaxItems = DefaultMaxItems,
-                RemoveIfItemNotFound = false,
-            },
-            NetConstants.IntegralityDefaultPoolSize);
+        public static readonly Integrality Default = new()
+        {
+            MaxItems = 1_000,
+            RemoveIfItemNotFound = false,
+        };
 
         public override bool Validate(Credential.GoshujinClass goshujin, Credential newItem, Credential? oldItem)
         {

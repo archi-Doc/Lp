@@ -211,16 +211,12 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public BytePool.RentMemory DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
-        var result = ((IIntegralityObject)this.activeNodes).Differentiate(memory, ActiveNode.Integrality.DefaultMaxItems);
-        return result;
+        return ActiveNode.Integrality.Default.Differentiate(this.activeNodes, memory);
     }
 
     public Task<IntegralityResult> IntegrateOnlineNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
     {
-        var integrality = ActiveNode.Integrality.Pool.Get();
-        var result = integrality.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
-        ActiveNode.Integrality.Pool.Return(integrality);
-        return result;
+        return ActiveNode.Integrality.Default.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
     }
 
     public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)
