@@ -8,12 +8,13 @@ namespace Lp.T3cs;
 /// Represents a proof object.
 /// </summary>
 // [TinyhandUnion(0, typeof(EngageProof))]
-[TinyhandUnion(0, typeof(CreateCreditProof))]
-[TinyhandUnion(1, typeof(EvolProof))]
-[TinyhandUnion(2, typeof(TransferProof))]
-[TinyhandUnion(3, typeof(DimensionProof))]
-[TinyhandUnion(4, typeof(IdentificationProof))]
-[TinyhandUnion(5, typeof(CredentialProof))]
+[TinyhandUnion(0, typeof(ValueProof))]
+[TinyhandUnion(1, typeof(CreateCreditProof))]
+[TinyhandUnion(2, typeof(EvolProof))]
+[TinyhandUnion(3, typeof(TransferProof))]
+[TinyhandUnion(4, typeof(DimensionProof))]
+[TinyhandUnion(5, typeof(IdentificationProof))]
+[TinyhandUnion(6, typeof(CredentialProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>

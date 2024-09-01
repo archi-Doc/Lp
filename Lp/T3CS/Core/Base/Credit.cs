@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -19,7 +20,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #region IStringConvertible
 
-    public static bool TryParse(ReadOnlySpan<char> source, out Credit? instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance)
     {
         instance = default;
         var span = source.Trim();
@@ -47,8 +48,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         return true;
     }
 
-    public static int MaxStringLength
-        => (1 + SignaturePublicKey.MaxStringLength) * (2 + MaxMergers);
+    public static int MaxStringLength => (1 + SignaturePublicKey.MaxStringLength) * (2 + MaxMergers); // @Originator/Merger1+Merger2
 
     public int GetStringLength()
     {
@@ -140,12 +140,12 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     [Key(0)]
     public SignaturePublicKey Originator { get; private set; } = default!;
 
-    // [Key(1)]
-    // public SignaturePublicKey Standard { get; private set; } = default!;
-
-    [Key(2, AddProperty = "Mergers")]
+    [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
     private SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
+
+    // [Key(2)]
+    // public SignaturePublicKey Standard { get; private set; } = default!;
 
     #endregion
 
@@ -161,9 +161,10 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         {
             return false;
         }
-        else */if (this.mergers == null ||
-            this.mergers.Length == 0 ||
-            this.mergers.Length > MaxMergers)
+        else */
+        if (this.mergers == null ||
+     this.mergers.Length == 0 ||
+     this.mergers.Length > MaxMergers)
         {
             return false;
         }
