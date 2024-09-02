@@ -59,6 +59,12 @@ public sealed partial class CredentialProof : Proof
     {
     }
 
+    public CredentialProof(Evidence valueProofEvidence, NetAddress netAddress)
+    {
+        this.ValueProofEvidence = valueProofEvidence;
+        this.NetAddress = netAddress;
+    }
+
     #region FieldAndProperty
 
     [Key(Proof.ReservedKeyCount)]

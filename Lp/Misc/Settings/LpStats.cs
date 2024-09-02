@@ -10,5 +10,5 @@ public partial record LpStats
     public const string Filename = "LpStats.tinyhand";
 
     [KeyAsName]
-    public Credential.GoshujinClass Credentials { get; private set; } = new();
+    public CredentialProof.GoshujinClass Credentials { get; private set; } = new();
 }

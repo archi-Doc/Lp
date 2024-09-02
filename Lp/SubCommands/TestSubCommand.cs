@@ -20,8 +20,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.control = control;
         this.authorityVault = authorityVault;
         this.seedPhrase = seedPhrase;
-
-        lpStats.Credentials.Add(new(new Value()));
     }
 
     public async Task RunAsync(TestOptions options, string[] args)
@@ -90,12 +88,22 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             }
         }
 
-        if (await this.authorityVault.GetAuthority("lp") is { } authority)
+        // if (await this.authorityVault.GetAuthority("lp") is { } authority)
         {
-            var g = new Credential.GoshujinClass();
-            var c = new Credential(new());
-            authority.Sign(c);
-            Credential.Integrality.Default.IntegrateObject(g, c);
+            var g = new CredentialProof.GoshujinClass();
+
+            var owner = SignaturePrivateKey.Create();
+            var credit = new Credit(SignaturePrivateKey.Create().ToPublicKey(), [SignaturePrivateKey.Create().ToPublicKey()]);
+            var value = new Value(owner.ToPublicKey(), 111, credit);
+            this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
+            this.userInterfaceService.WriteLine($"Value: {value.ToString()}");
+
+            var valueProof = new ValueProof(value);
+
+            valueProof.SignProof(owner, 123);
+            var c = new CredentialProof();
+            // authority.Sign(valueProof);
+            // Credential.Integrality.Default.IntegrateObject(g, c);
         }
     }
 
@@ -122,31 +130,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Alternative(public): {publicKey.ToString()}");
         this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
-
-        var originator = SignaturePrivateKey.Create();
-        var pub = originator.ToPublicKey();
-        var value = new Value(1, pub, [pub]);
-        this.userInterfaceService.WriteLine(value.GetHashCode().ToString());
-
-        var bin = TinyhandSerializer.Serialize(value);
-        var sign = originator.SignData(bin);
-        var flag = pub.VerifyData(bin, sign);
-
-        this.userInterfaceService.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
-        this.userInterfaceService.WriteLine($"{pub.ToString()}");
-
-        // this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
-
-        /*using (var terminal = this.control.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
-        {
-            if (terminal is null)
-            {
-                return;
-            }
-
-            var service = terminal.GetService<IBenchmarkService>();
-            await service.Report(new());
-        }*/
     }
 
     private readonly ILogger logger;

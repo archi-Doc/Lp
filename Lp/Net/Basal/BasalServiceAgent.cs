@@ -31,6 +31,6 @@ internal partial class BasalServiceAgent : IBasalService
 
     public async NetTask<BytePool.RentMemory> DifferentiateCredential(ReadOnlyMemory<byte> memory)
     {
-        return Credential.Integrality.Default.Differentiate(this.lpStats.Credentials, memory);
+        return CredentialProof.Integrality.Default.Differentiate(this.lpStats.Credentials, memory);
     }
 }

@@ -85,17 +85,6 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     {
     }
 
-    public Value(Point point, SignaturePublicKey originator, /*SignaturePublicKey standard, */SignaturePublicKey[] mergers)
-    {
-        this.Point = point;
-        this.Credit = new(originator, mergers);
-
-        if (!this.Validate())
-        {
-            throw new ArgumentOutOfRangeException();
-        }
-    }
-
     public Value(SignaturePublicKey owner, Point point, Credit credit)
     {//
         this.Owner = owner;
@@ -157,4 +146,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
         return hash.ToHashCode();
     }
+
+    public override string ToString()
+        => this.ConvertToString();
 }
