@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace Lp.T3cs;
 
 [TinyhandObject]
@@ -18,6 +20,9 @@ public sealed partial class CredentialProof : Proof
     public NetAddress NetAddress { get; private set; }
 
     #endregion
+
+    public override SignaturePublicKey GetPublicKey()
+        => this.Value.Owner;
 
     public override bool Validate()
     {

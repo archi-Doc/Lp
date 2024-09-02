@@ -27,8 +27,10 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 
     #region FieldAndProperty
 
-    [Key(0)]
-    public SignaturePublicKey PublicKey { get; protected set; }
+    SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
+
+    // [Key(0)] -> ProofAndPublicKey
+    // public SignaturePublicKey PublicKey { get; }
 
     [Key(1, Level = 1)]
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
@@ -41,6 +43,8 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
     // public long ExpirationMics { get; protected set; }
 
     #endregion
+
+    public abstract SignaturePublicKey GetPublicKey();
 
     public virtual bool Validate()
     {
@@ -71,9 +75,8 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         return true;
     }
 
-    internal void SetInformationInternal(SignaturePrivateKey privateKey, long proofMics)
+    internal void SetInformationInternal(long proofMics)
     {
-        this.PublicKey = privateKey.ToPublicKey();
         this.ProofMics = proofMics;
     }
 

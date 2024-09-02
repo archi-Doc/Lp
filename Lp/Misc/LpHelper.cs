@@ -115,6 +115,11 @@ public static class LpHelper
     public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long proofMics)
         where T : Proof, ITinyhandSerialize<T>
     {
+        if (!value.GetPublicKey().Equals(privateKey.ToPublicKey()))
+        {
+            return false;
+        }
+
         var ecdsa = privateKey.TryGetEcdsa();
         if (ecdsa == null)
         {
@@ -125,7 +130,15 @@ public static class LpHelper
         writer.Level = 0;
         try
         {
-            value.SetInformationInternal(privateKey, proofMics);
+            if (value is ProofAndPublicKey proofAndPublicKey)
+            {
+                proofAndPublicKey.SetInformationInternal(privateKey, proofMics);
+            }
+            else
+            {
+                value.SetInformationInternal(proofMics);
+            }
+
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[Sha3_256.HashLength];
             var rentMemory = writer.FlushAndGetRentMemory();

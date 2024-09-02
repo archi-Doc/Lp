@@ -1,14 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
 public sealed partial class ValueProof : Proof, IEquatable<ValueProof>
 {
-
     #region FieldAndProperty
+
+    public override SignaturePublicKey GetPublicKey()
+        => this.Value.Owner;
 
     public Value Value { get; private set; } = default!;
 
@@ -21,7 +23,6 @@ public sealed partial class ValueProof : Proof, IEquatable<ValueProof>
     public ValueProof(Value value)
     {
         this.Value = value;
-        this.PublicKey = value.Owner;
     }
 
     public override bool Validate()

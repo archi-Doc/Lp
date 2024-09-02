@@ -3,13 +3,13 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class IdentificationProof : Proof
+public partial class IdentificationProof : ProofAndPublicKey
 {
     public IdentificationProof()
     {
     }
 
-    [Key(5)]
+    [Key(Proof.ReservedKeyCount)]
     public string Name { get; private set; } = string.Empty;
 
     public bool ValidateAndVerify()
