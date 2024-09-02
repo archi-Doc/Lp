@@ -18,6 +18,24 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public const int MaxMergers = 3;
     public static readonly Credit Default = new();
 
+    public static bool TryCreate(SignaturePublicKey originator, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
+    {
+        var obj = new Credit();
+        obj.Originator = originator;
+        obj.mergers = mergers;
+
+        if (obj.Validate())
+        {
+            credit = obj;
+            return true;
+        }
+        else
+        {
+            credit = default;
+            return false;
+        }
+    }
+
     #region IStringConvertible
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance)
@@ -202,18 +220,6 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public Credit()
     {
-    }
-
-    public Credit(SignaturePublicKey originator, SignaturePublicKey[] mergers)
-    {// SignaturePublicKey standard
-        this.Originator = originator;
-        // this.Standard = standard;
-        this.mergers = mergers;
-
-        if (!this.Validate())
-        {
-            throw new ArgumentOutOfRangeException();
-        }
     }
 
     #region FieldAndProperty

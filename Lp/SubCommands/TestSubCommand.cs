@@ -93,19 +93,19 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             var g = new CredentialProof.GoshujinClass();
 
             var owner = SignaturePrivateKey.Create();
-            var credit = new Credit(SignaturePrivateKey.Create().ToPublicKey(), [SignaturePrivateKey.Create().ToPublicKey()]);
-            var value = new Value(owner.ToPublicKey(), 111, credit);
-            this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
-            this.userInterfaceService.WriteLine($"Value: {value.ToString()}");
-            Value.TryParse(value.ToString(), out var value2);
-            this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
+            if (Credit.TryCreate(SignaturePrivateKey.Create().ToPublicKey(), [SignaturePrivateKey.Create().ToPublicKey()], out var credit) &&
+                Value.TryCreate(owner.ToPublicKey(), 111, credit, out var value))
+            {
+                this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
+                this.userInterfaceService.WriteLine($"Value: {value.ToString()}");
+                Value.TryParse(value.ToString(), out var value2);
+                this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
 
-            var valueProof = new ValueProof(value);
+                var valueProof = new ValueProof(value);
 
-            valueProof.SignProof(owner, 123);
-            var c = new CredentialProof();
-            // authority.Sign(valueProof);
-            // Credential.Integrality.Default.IntegrateObject(g, c);
+                valueProof.SignProof(owner, 123);
+                var c = new CredentialProof();
+            }
         }
     }
 

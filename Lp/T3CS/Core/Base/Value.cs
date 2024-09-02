@@ -17,6 +17,25 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const long MinPoint = 1; // -MaxPoint;
 
+    public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
+    {
+        var v = new Value();
+        v.Owner = owner;
+        v.Point = point;
+        v.Credit = credit;
+
+        if (v.Validate())
+        {
+            value = v;
+            return true;
+        }
+        else
+        {
+            value = default;
+            return false;
+        }
+    }
+
     #region IStringConvertible
 
     public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
@@ -57,7 +76,12 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
             return false;
         }
 
-        instance = new(owner, point, credit);
+        if (!Value.TryCreate(owner, point, credit, out var value))
+        {
+            return false;
+        }
+
+        instance = value;
         return true;
     }
 
@@ -113,18 +137,6 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public Value()
     {
-    }
-
-    public Value(SignaturePublicKey owner, Point point, Credit credit)
-    {//
-        this.Owner = owner;
-        this.Point = point;
-        this.Credit = credit;
-
-        if (!this.Validate())
-        {
-            throw new ArgumentOutOfRangeException();
-        }
     }
 
     public bool Validate()

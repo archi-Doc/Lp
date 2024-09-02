@@ -111,7 +111,10 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         var mergerPublicKey = SignaturePrivateKey.Create().ToPublicKey();
-        var credit = new Credit(param.Proof.PublicKey, [mergerPublicKey,]);
+        if (!Credit.TryCreate(param.Proof.PublicKey, [mergerPublicKey,], out var credit))
+        {
+            return new(T3csResult.UnknownError);
+        }
 
         var borrowers = await creditData.Borrowers.Get();
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
