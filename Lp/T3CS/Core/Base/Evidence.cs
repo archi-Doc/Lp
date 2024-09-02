@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Lp.T3cs;
 
 /// <summary>
@@ -9,12 +11,22 @@ namespace Lp.T3cs;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public sealed partial class Evidence : IValidatable
 {
-    [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
-    public Evidence(Proof proof)
+    public static bool TryCreate(Proof proof, [MaybeNullWhen(false)] out Evidence evidence)
     {
-        this.Proof = proof;
+        if (!proof.TryGetCredit(out var credit))
+        {
+            evidence = default;
+            return false;
+        }
+
+        var obj = new Evidence();
+        obj.Proof = proof;
+
+        evidence = obj;
+        return true;
     }
 
+    [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
     public Evidence()
     {
         this.Proof = default!;

@@ -234,6 +234,8 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     // [Key(2)]
     // public SignaturePublicKey Standard { get; private set; } = default!;
 
+    public int MergerCount => this.mergers.Length;
+
     #endregion
 
     public bool Validate()
