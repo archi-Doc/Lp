@@ -10,6 +10,8 @@ namespace Lp.T3cs;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public sealed partial class CredentialProof : Proof
 {// Credentials = CredentialProof.Goshujin
+    #region Integrality
+
     public class Integrality : Integrality<CredentialProof.GoshujinClass, CredentialProof>
     {
         public static readonly Integrality Default = new()
@@ -49,6 +51,8 @@ public sealed partial class CredentialProof : Proof
             return true;
         }
     }
+
+    #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public CredentialProof()
