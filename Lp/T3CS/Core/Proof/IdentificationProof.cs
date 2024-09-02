@@ -3,32 +3,18 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class DimensionProof : Proof
+public partial class IdentificationProof : ProofAndPublicKey
 {
-    private const double MinDimension = -1d;
-    private const double MaxDimension = 1d;
-
-    public DimensionProof()
+    public IdentificationProof()
     {
     }
 
-    [Key(5)]
-    public double Dimension { get; private set; }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
+    [Key(Proof.ReservedKeyCount)]
+    public string Name { get; private set; } = string.Empty;
 
     public override bool Validate()
     {
         if (!base.Validate())
-        {
-            return false;
-        }
-
-        if (this.Dimension < MinDimension ||
-            this.Dimension > MaxDimension)
         {
             return false;
         }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -7,26 +8,18 @@ namespace Lp.T3cs;
 /// <summary>
 /// Represents a proof object.
 /// </summary>
-// [TinyhandUnion(0, typeof(EngageProof))]
-[TinyhandUnion(0, typeof(CreateCreditProof))]
-[TinyhandUnion(1, typeof(EvolProof))]
-[TinyhandUnion(2, typeof(TransferProof))]
-[TinyhandUnion(3, typeof(DimensionProof))]
-[TinyhandUnion(4, typeof(IdentificationProof))]
-[TinyhandUnion(5, typeof(CredentialProof))]
+[TinyhandUnion(0, typeof(ValueProof))]
+[TinyhandUnion(1, typeof(CreateCreditProof))]
+[TinyhandUnion(2, typeof(EvolProof))]
+[TinyhandUnion(3, typeof(TransferProof))]
+[TinyhandUnion(4, typeof(DimensionProof))]
+[TinyhandUnion(5, typeof(IdentificationProof))]
+[TinyhandUnion(6, typeof(CredentialProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+// [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
     public const int ReservedKeyCount = 4;
-    /*public enum Kind
-    {
-        CreateCredit,
-        Engage,
-        Transfer,
-        Merge,
-        CloseBorrower,
-    }*/
 
     public Proof()
     {
@@ -34,8 +27,10 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 
     #region FieldAndProperty
 
-    [Key(0)]
-    public SignaturePublicKey PublicKey { get; protected set; }
+    SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
+
+    // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
+    // public SignaturePublicKey PublicKey { get; }
 
     [Key(1, Level = 1)]
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
@@ -48,6 +43,20 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
     // public long ExpirationMics { get; protected set; }
 
     #endregion
+
+    public abstract SignaturePublicKey GetPublicKey();
+
+    public virtual bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
+    {
+        credit = default;
+        return false;
+    }
+
+    public virtual bool TryGetValue([MaybeNullWhen(false)] out Value value)
+    {
+        value = default;
+        return false;
+    }
 
     public virtual bool Validate()
     {
@@ -78,9 +87,8 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         return true;
     }
 
-    internal void SetInformationInternal(SignaturePrivateKey privateKey, long proofMics)
+    internal void SetInformationInternal(long proofMics)
     {
-        this.PublicKey = privateKey.ToPublicKey();
         this.ProofMics = proofMics;
     }
 

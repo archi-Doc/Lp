@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class CreateCreditProof : Proof
+public partial class CreateCreditProof : ProofAndPublicKey
 {
     public CreateCreditProof()
     {
@@ -17,10 +17,5 @@ public partial class CreateCreditProof : Proof
         }
 
         return true;
-    }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
     }
 }

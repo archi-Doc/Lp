@@ -209,14 +209,14 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         return true;
     }
 
-    public BytePool.RentMemory DifferentiateOnlineNode(ReadOnlyMemory<byte> memory)
+    public BytePool.RentMemory DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
-        return ((IIntegralityObject)this.activeNodes).Differentiate(ActiveNode.Integrality.Instance, memory);
+        return ActiveNode.Integrality.Default.Differentiate(this.activeNodes, memory);
     }
 
     public Task<IntegralityResult> IntegrateOnlineNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
     {
-        return ActiveNode.Integrality.Instance.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
+        return ActiveNode.Integrality.Default.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
     }
 
     public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)

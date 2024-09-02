@@ -3,8 +3,8 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TemplateProof : Proof
-{// Remember to add the TinyhandUnion attribute to the Proof class.
+public partial class TemplateProof : ProofAndPublicKey
+{// Don't forget to add the TinyhandUnion attribute to the Proof class.
     public TemplateProof()
     {
     }
@@ -19,8 +19,8 @@ public partial class TemplateProof : Proof
         return true;
     }
 
-    public bool ValidateAndVerify()
+    /*public bool ValidateAndVerify()
     {
         return LpHelper.ValidateAndVerify(this);
-    }
+    }*/
 }

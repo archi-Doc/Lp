@@ -8,4 +8,6 @@ namespace Lp.Net;
 public interface IBasalService : INetService
 {
     NetTask<BytePool.RentMemory> DifferentiateActiveNode(ReadOnlyMemory<byte> memory);
+
+    NetTask<BytePool.RentMemory> DifferentiateCredential(ReadOnlyMemory<byte> memory);
 }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Microsoft.VisualBasic;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -11,7 +12,7 @@ public sealed partial class ActiveNode : NetNode
 {
     internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
     {
-        public static readonly Integrality Instance = new()
+        public static readonly Integrality Default = new()
         {
             MaxItems = 100,
             RemoveIfItemNotFound = false,

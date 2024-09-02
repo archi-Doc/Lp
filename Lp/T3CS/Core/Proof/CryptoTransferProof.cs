@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class CryptoTransferProof : Proof
+public sealed partial class CryptoTransferProof : ProofAndPublicKey
 {
     private const int OriginalKeyLevel = 1_000;
 
@@ -45,10 +45,5 @@ public sealed partial class CryptoTransferProof : Proof
     {
         senderKey = default;
         return false;
-    }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
     }
 }

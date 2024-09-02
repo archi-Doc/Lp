@@ -14,6 +14,7 @@ public static class NetConstants
     public const int RelayLength = 48; // RelayHeader(32) + Padding(0-15)
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
+    public const int IntegralityDefaultPoolSize = 4;
 
     internal const bool LogLowLevelNet = true;
     internal const int AckDelayMics = 10_000; // 10ms

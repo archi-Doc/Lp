@@ -47,6 +47,7 @@ public class Control
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
+                context.AddSingleton<LpStats>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
@@ -220,24 +221,31 @@ public class Control
                         RequiredForLoading = true,
                     });
 
+                    context.AddCrystal<LpStats>(new CrystalConfiguration() with
+                    {
+                        // SaveFormat = SaveFormat.Binary,
+                        NumberOfFileHistories = 2,
+                        FileConfiguration = new GlobalFileConfiguration(LpStats.Filename),
+                    });
+
                     context.AddCrystal<Mono>(new()
                     {
                         SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration("Mono"),
+                        FileConfiguration = new GlobalFileConfiguration(Mono.Filename),
                     });
 
                     context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
                         // SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 2,
-                        FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
+                        FileConfiguration = new GlobalFileConfiguration(Netsphere.Stats.NetStats.Filename),
                     });
 
                     context.AddCrystal<Netsphere.Misc.NtpCorrection>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration("NtpCorrection.tinyhand"),
+                        FileConfiguration = new GlobalFileConfiguration(Netsphere.Misc.NtpCorrection.Filename),
                     });
                 }));
         }

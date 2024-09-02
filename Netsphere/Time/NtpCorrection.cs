@@ -9,6 +9,8 @@ namespace Netsphere.Misc;
 [TinyhandObject(LockObject = "syncObject", ExplicitKeyOnly = true, UseServiceProvider = true)]
 public sealed partial class NtpCorrection : UnitBase, IUnitPreparable
 {
+    public const string Filename = "NtpCorrection.tinyhand";
+
     private const int ParallelNumber = 2;
     private const int MaxRoundtripMilliseconds = 1000;
     private readonly string[] hostNames =
