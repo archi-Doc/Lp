@@ -2,6 +2,7 @@
 
 namespace Lp.T3cs;
 
+/*
 /// <summary>
 /// Represents a linkage address.
 /// </summary>
@@ -56,4 +57,4 @@ public sealed partial class LinkageAddress // : IValidatable, IEquatable<Linkage
             return $"{key}{Credit.CreditSymbol}";
         }
     }
-}
+}*/

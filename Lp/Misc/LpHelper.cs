@@ -92,7 +92,7 @@ public static class LpHelper
         }
     }
 
-    public static bool VerifyValueToken<T>(this T value, int level, ValueToken valueToken)
+    /*public static bool VerifyValueToken<T>(this T value, int level, ValueToken valueToken)
         where T : ITinyhandSerialize<T>
     {
         try
@@ -110,7 +110,7 @@ public static class LpHelper
         {
             return false;
         }
-    }
+    }*/
 
     public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long proofMics)
         where T : Proof, ITinyhandSerialize<T>

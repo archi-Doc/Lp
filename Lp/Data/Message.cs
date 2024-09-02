@@ -34,8 +34,8 @@ public partial class Message : IVerifiable, IUnity
     [Key(2, AddProperty = "Signature", Level = 0)]
     private Signature signature = default!;
 
-    [Key(3, AddProperty = "ValueToken", Level = 2)]
-    private ValueToken valueToken = ValueToken.Default;
+    // [Key(3, AddProperty = "ValueToken", Level = 2)]
+    // private ValueToken valueToken = ValueToken.Default;
 
     [Key(4, AddProperty = "Type")]
     private MessageType type;
@@ -52,8 +52,8 @@ public partial class Message : IVerifiable, IUnity
     [MaxLength(MaxContentLength)]
     private string content = default!;
 
-    [Link(Type = ChainType.Ordered, AddValue = false)]
-    public long SignedMics => this.valueToken.Signature.SignedMics;
+    // [Link(Type = ChainType.Ordered, AddValue = false)]
+    // public long SignedMics => this.valueToken.Signature.SignedMics;
 
     [IgnoreMember]
     public ulong Hash { get; set; }
@@ -74,14 +74,15 @@ public partial class Message : IVerifiable, IUnity
         {
             return false;
         }
-        else if (this.ValueToken.Signature.SignatureType != Signature.Type.Attest)
+
+        /*else if (this.ValueToken.Signature.SignatureType != Signature.Type.Attest)
         {
             return false;
         }
         else if (!this.VerifyValueToken(3, this.ValueToken))
         {
             return false;
-        }
+        }*/
 
         return true;
     }

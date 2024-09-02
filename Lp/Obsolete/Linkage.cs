@@ -2,6 +2,7 @@
 
 namespace Lp.T3cs;
 
+/*
 /// <summary>
 /// Immutable linkage object.
 /// </summary>
@@ -39,4 +40,4 @@ public sealed partial class Linkage : IValidatable
     {
         return this.Proof.Validate();
     }
-}
+}*/

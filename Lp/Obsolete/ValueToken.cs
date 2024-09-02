@@ -4,6 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+/*
 /// <summary>
 /// Represents a value token (Owner#Point@Originator:Standard/Mergers + Signature).
 /// </summary>
@@ -82,4 +83,4 @@ public sealed partial class ValueToken : IValidatable, IEquatable<ValueToken>
 
         return hash.ToHashCode();
     }
-}
+}*/

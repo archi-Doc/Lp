@@ -6,6 +6,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+/*
 /// <summary>
 /// Represents a linkage key.
 /// </summary>
@@ -226,4 +227,4 @@ public readonly partial record struct LinkageKey
             return true;
         }
     }
-}
+}*/
