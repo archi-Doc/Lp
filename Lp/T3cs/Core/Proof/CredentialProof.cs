@@ -14,7 +14,7 @@ public sealed partial class CredentialProof : Proof
     #region FieldAndProperty
 
     [Key(5)]
-    public Value Value { get; private set; }
+    public Value Value { get; private set; } = new();
 
     [Key(6)]
     public NetAddress NetAddress { get; private set; }

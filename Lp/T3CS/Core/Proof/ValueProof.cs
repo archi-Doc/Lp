@@ -5,14 +5,9 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class ValueProof : Proof, IEquatable<ValueProof>
+public sealed partial class ValueProof : ProofAndValue, IEquatable<ValueProof>
 {
     #region FieldAndProperty
-
-    public override SignaturePublicKey GetPublicKey()
-        => this.Value.Owner;
-
-    public Value Value { get; private set; } = default!;
 
     #endregion
 

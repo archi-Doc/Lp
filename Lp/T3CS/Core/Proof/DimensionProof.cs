@@ -15,6 +15,8 @@ public partial class DimensionProof : ProofAndPublicKey
     [Key(5)]
     public double Dimension { get; private set; }
 
+    public Value Value { get; private set; } = new();//
+
     public bool ValidateAndVerify()
     {
         return LpHelper.ValidateAndVerify(this);

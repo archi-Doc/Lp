@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -7,7 +8,6 @@ namespace Lp.T3cs;
 /// <summary>
 /// Represents a proof object.
 /// </summary>
-// [TinyhandUnion(0, typeof(EngageProof))]
 [TinyhandUnion(0, typeof(ValueProof))]
 [TinyhandUnion(1, typeof(CreateCreditProof))]
 [TinyhandUnion(2, typeof(EvolProof))]
@@ -29,7 +29,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 
     SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
 
-    // [Key(0)] -> ProofAndPublicKey
+    // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
     // public SignaturePublicKey PublicKey { get; }
 
     [Key(1, Level = 1)]
@@ -45,6 +45,18 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
     #endregion
 
     public abstract SignaturePublicKey GetPublicKey();
+
+    public virtual bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
+    {
+        credit = default;
+        return false;
+    }
+
+    public virtual bool TryGetValue([MaybeNullWhen(false)] out Value value)
+    {
+        value = default;
+        return false;
+    }
 
     public virtual bool Validate()
     {
