@@ -16,7 +16,7 @@ namespace Lp.T3cs;
 [TinyhandUnion(5, typeof(IdentificationProof))]
 [TinyhandUnion(6, typeof(CredentialProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+// [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
     public const int ReservedKeyCount = 4;

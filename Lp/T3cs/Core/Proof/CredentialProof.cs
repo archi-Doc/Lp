@@ -2,12 +2,55 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
+using ValueLink.Integrality;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public sealed partial class CredentialProof : Proof
 {// Credentials = CredentialProof.Goshujin
+    public class Integrality : Integrality<CredentialProof.GoshujinClass, CredentialProof>
+    {
+        public static readonly Integrality Default = new()
+        {
+            MaxItems = 1_000,
+            RemoveIfItemNotFound = false,
+        };
+
+        public override bool Validate(CredentialProof.GoshujinClass goshujin, CredentialProof newItem, CredentialProof? oldItem)
+        {
+            if (!newItem.TryGetValueProof(out var valueProof))
+            {
+                return false;
+            }
+
+            if (oldItem is not null &&
+                oldItem.TryGetValueProof(out var valueProof2) &&
+                valueProof2.ProofMics >= valueProof.ProofMics)
+            {
+                return false;
+            }
+
+            if (!newItem.ValidateAndVerify())
+            {
+                return false;
+            }
+
+            var publicKey = valueProof.GetPublicKey();
+            if (publicKey.Equals(LpConstants.LpKey))
+            {// Lp key
+            }
+            else if (goshujin.OriginatorChain.FindFirst(publicKey) is null)
+            {// Not found
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public CredentialProof()
     {
     }
@@ -15,10 +58,12 @@ public sealed partial class CredentialProof : Proof
     #region FieldAndProperty
 
     [Key(Proof.ReservedKeyCount)]
-    public Evidence ValueProofEvidence { get; private set; } = new(); // ValueProof
+    public Evidence ValueProofEvidence { get; private set; } = new();
 
     [Key(Proof.ReservedKeyCount + 1)]
     public NetAddress NetAddress { get; private set; }
+
+    public SignaturePublicKey Originator => this.GetPublicKey();
 
     #endregion
 
