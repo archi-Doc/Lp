@@ -33,9 +33,9 @@
 
   <ItemGroup>
     <Compile Remove="Generated\*" />
-    <Compile Remove="Net\NetNode\**" />
-    <EmbeddedResource Remove="Net\NetNode\**" />
-    <None Remove="Net\NetNode\**" />
+    <Compile Remove="NetServices\NetNode\**" />
+    <EmbeddedResource Remove="NetServices\NetNode\**" />
+    <None Remove="NetServices\NetNode\**" />
   </ItemGroup>
 
   <ItemGroup>
