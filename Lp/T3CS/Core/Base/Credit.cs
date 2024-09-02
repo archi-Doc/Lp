@@ -21,7 +21,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     #region IStringConvertible
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance)
-    {
+    {// @Originator/Merger1+Merger2
         instance = default;
         var span = source.Trim();
 
@@ -38,14 +38,95 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         span = span.Slice(KeyHelper.PublicKeyLengthInBase64);
 
-        /*if (span.Length < 1 || span[0] != StandardSymbol)
-        {// :
-            return false;
-        }*/
+        if (span.Length == (1 + SignaturePublicKey.MaxStringLength))
+        {
+            if (span[0] != MergerSymbol)
+            {
+                return false;
+            }
 
-        instance = new Credit();
-        instance.Originator = originator;
-        return true;
+            span = span.Slice(1);
+            if (!SignaturePublicKey.TryParse(span, out var merger1))
+            {
+                return false;
+            }
+
+            instance = new Credit();
+            instance.Originator = originator;
+            instance.mergers = [merger1,];
+            return true;
+        }
+        else if (span.Length == (1 + SignaturePublicKey.MaxStringLength) * 2)
+        {
+            if (span[0] != MergerSymbol)
+            {
+                return false;
+            }
+
+            span = span.Slice(1);
+            if (!SignaturePublicKey.TryParse(span, out var merger1))
+            {
+                return false;
+            }
+
+            if (span[0] != MergerSeparatorSymbol)
+            {
+                return false;
+            }
+
+            span = span.Slice(1);
+            if (!SignaturePublicKey.TryParse(span, out var merger2))
+            {
+                return false;
+            }
+
+            instance = new Credit();
+            instance.Originator = originator;
+            instance.mergers = [merger1, merger2,];
+            return true;
+        }
+        else if (span.Length == (1 + SignaturePublicKey.MaxStringLength) * 3)
+        {
+            if (span[0] != MergerSymbol)
+            {
+                return false;
+            }
+
+            span = span.Slice(1);
+            if (!SignaturePublicKey.TryParse(span, out var merger1))
+            {
+                return false;
+            }
+
+            if (span[0] != MergerSeparatorSymbol)
+            {
+                return false;
+            }
+
+            span = span.Slice(1);
+            if (!SignaturePublicKey.TryParse(span, out var merger2))
+            {
+                return false;
+            }
+
+            if (span[0] != MergerSeparatorSymbol)
+            {
+                return false;
+            }
+
+            span = span.Slice(1);
+            if (!SignaturePublicKey.TryParse(span, out var merger3))
+            {
+                return false;
+            }
+
+            instance = new Credit();
+            instance.Originator = originator;
+            instance.mergers = [merger1, merger2, merger3,];
+            return true;
+        }
+
+        return false;
     }
 
     public static int MaxStringLength => (1 + SignaturePublicKey.MaxStringLength) * (2 + MaxMergers); // @Originator/Merger1+Merger2
@@ -163,8 +244,8 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
         else */
         if (this.mergers == null ||
-     this.mergers.Length == 0 ||
-     this.mergers.Length > MaxMergers)
+            this.mergers.Length == 0 ||
+            this.mergers.Length > MaxMergers)
         {
             return false;
         }

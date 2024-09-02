@@ -22,7 +22,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance)
-    {
+    {// Owner#Point@Originator/Mergers
         instance = default;
         var span = source.Trim();
 
@@ -63,8 +63,38 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public int GetStringLength() => -1;
 
-    public bool TryFormat(Span<char> destination, out int written) { throw new NotImplementedException(); }
+    public bool TryFormat(Span<char> destination, out int written)
+    {
+        written = 0;
+        if (destination.Length < MaxStringLength)
+        {
+            return false;
+        }
 
+        var span = destination;
+        if (!this.Owner.TryFormat(span, out var ownerWritten))
+        {
+            return false;
+        }
+
+        span = span.Slice(ownerWritten);
+        span[0] = PointSymbol;
+        span = span.Slice(1);
+        if (!this.Point.TryFormat(span, out var pointWritten))
+        {
+            return false;
+        }
+
+        span = span.Slice(pointWritten);
+
+        if (!this.Credit.TryFormat(span, out var creditWritten))
+        {
+            return false;
+        }
+
+        written = ownerWritten + 1 + pointWritten + creditWritten;
+        return true;
+    }
 
     #endregion
 
