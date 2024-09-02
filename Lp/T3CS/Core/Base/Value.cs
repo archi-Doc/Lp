@@ -63,7 +63,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public int GetStringLength() => -1;
 
-    public bool TryFormat(Span<char> destination, out int written)
+    public bool TryFormat(Span<char> destination, out int written) { throw new NotImplementedException(); }
 
 
     #endregion

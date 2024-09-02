@@ -20,14 +20,6 @@ namespace Lp.T3cs;
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
     public const int ReservedKeyCount = 4;
-    /*public enum Kind
-    {
-        CreateCredit,
-        Engage,
-        Transfer,
-        Merge,
-        CloseBorrower,
-    }*/
 
     public Proof()
     {
