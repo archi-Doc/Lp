@@ -15,7 +15,7 @@ public sealed partial class Evidence : IValidatable
         this.Proof = proof;
     }
 
-    private Evidence()
+    public Evidence()
     {
         this.Proof = default!;
     }

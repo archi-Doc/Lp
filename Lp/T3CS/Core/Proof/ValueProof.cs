@@ -30,11 +30,6 @@ public sealed partial class ValueProof : ProofAndValue, IEquatable<ValueProof>
         return true;
     }
 
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
-
     public bool Equals(ValueProof? other)
     {
         throw new NotImplementedException();

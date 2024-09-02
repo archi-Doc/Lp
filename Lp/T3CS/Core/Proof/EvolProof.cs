@@ -11,9 +11,4 @@ public partial class EvolProof : ProofAndPublicKey
 
     [Key(Proof.ReservedKeyCount)]
     public Point Point { get; private set; }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
 }

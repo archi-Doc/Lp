@@ -12,11 +12,6 @@ public partial class IdentificationProof : ProofAndPublicKey
     [Key(Proof.ReservedKeyCount)]
     public string Name { get; private set; } = string.Empty;
 
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
-
     public override bool Validate()
     {
         if (!base.Validate())

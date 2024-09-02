@@ -19,8 +19,8 @@ public partial class TemplateProof : ProofAndPublicKey
         return true;
     }
 
-    public bool ValidateAndVerify()
+    /*public bool ValidateAndVerify()
     {
         return LpHelper.ValidateAndVerify(this);
-    }
+    }*/
 }

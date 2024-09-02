@@ -18,9 +18,4 @@ public partial class CreateCreditProof : ProofAndPublicKey
 
         return true;
     }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
 }

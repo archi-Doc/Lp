@@ -17,11 +17,6 @@ public partial class DimensionProof : ProofAndPublicKey
 
     public Value Value { get; private set; } = new();//
 
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
-
     public override bool Validate()
     {
         if (!base.Validate())

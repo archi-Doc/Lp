@@ -46,9 +46,4 @@ public sealed partial class CryptoTransferProof : ProofAndPublicKey
         senderKey = default;
         return false;
     }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
 }

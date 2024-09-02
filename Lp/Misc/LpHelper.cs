@@ -166,7 +166,7 @@ public static class LpHelper
     /// <param name="value">The object to be verified.</param>
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify<T>(T value)
+    public static bool ValidateAndVerify<T>(this T value)
         where T : ITinyhandSerialize<T>, IVerifiable
     {
         if (!value.Validate())

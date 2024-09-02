@@ -16,9 +16,4 @@ public partial class TransferProof : ProofAndPublicKey
 
     [Key(Proof.ReservedKeyCount + 1)]
     public SignaturePublicKey RecipientKey { get; protected set; }
-
-    public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
-    }
 }
