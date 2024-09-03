@@ -255,8 +255,8 @@ public class Control
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
             try
             {
-                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly(null, asm, "Misc.Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Misc.Strings.strings-en.tinyhand");
             }
             catch
             {
