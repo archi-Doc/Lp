@@ -87,7 +87,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             var g = new CredentialProof.GoshujinClass();
 
             var owner = SignaturePrivateKey.Create();
-            if (Credit.TryCreate(SignaturePrivateKey.Create().ToPublicKey(), [SignaturePrivateKey.Create().ToPublicKey()], out var credit) &&
+            if (Credit.TryCreate(LpConstants.LpPublicKey, [SignaturePrivateKey.Create().ToPublicKey()], out var credit) &&
                 Value.TryCreate(owner.ToPublicKey(), 111, credit, out var value))
             {
                 this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");

@@ -40,7 +40,7 @@ public sealed partial class CredentialProof : Proof
             }
 
             var publicKey = valueProof.GetPublicKey();
-            if (publicKey.Equals(LpConstants.LpKey))
+            if (publicKey.Equals(LpConstants.LpPublicKey))
             {// Lp key
             }
             else if (goshujin.OriginatorChain.FindFirst(publicKey) is null)

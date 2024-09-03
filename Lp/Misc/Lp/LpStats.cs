@@ -12,11 +12,24 @@ public partial record LpStats
 {
     public const string Filename = "LpStats.tinyhand";
 
+    #region FieldAndProperty
+
     [KeyAsName]
     public CredentialProof.GoshujinClass Credentials { get; private set; } = new();
 
     private ConcurrentDictionary<string, SignaturePublicKey> aliasToPublicKey = new();
     private ConcurrentDictionary<SignaturePublicKey, string> publicKeyToAlias = new();
+
+    #endregion
+
+    public void UpdateAlias()
+    {
+        lock (this.Credentials.SyncObject)
+        {
+        }
+
+        this.aliasToPublicKey.TryAdd(LpConstants.LpAlias, LpConstants.LpPublicKey);
+    }
 
     public bool TryGetAlias(SignaturePublicKey publicKey, [MaybeNullWhen(false)] out string alias)
         => this.publicKeyToAlias.TryGetValue(publicKey, out alias);
