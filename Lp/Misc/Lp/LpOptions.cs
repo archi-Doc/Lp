@@ -60,7 +60,7 @@ public partial record LpOptions
     [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key", GetEnvironmentVariable = true)]
     public string NodePrivateKey { get; set; } = string.Empty;
 
-    [SimpleOption(NetConstants.OperationPublicKeyName, Description = "Operation public key")]
+    [SimpleOption(NetConstants.OperationPublicKeyName, Description = "Operation public key", GetEnvironmentVariable = true)]
     public string OperationPublicKey { get; set; } = string.Empty;
 
     [SimpleOption("CertificateRelayPublickey", Description = "Public key for CertificateRelayControl", GetEnvironmentVariable = true)]

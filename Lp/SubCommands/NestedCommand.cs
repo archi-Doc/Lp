@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public class Nestedcommand<TCommand>
-    where TCommand : Nestedcommand<TCommand>
+public class NestedCommand<TCommand>
+    where TCommand : NestedCommand<TCommand>
 {
-    public Nestedcommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
+    public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
     {
         this.Core = core;
         this.userInterfaceService = userInterfaceService;
@@ -20,6 +20,7 @@ public class Nestedcommand<TCommand>
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
             DisplayCommandListAsHelp = true,
+            AutoAlias = true,
         };
     }
 
@@ -85,9 +86,6 @@ public class Nestedcommand<TCommand>
             else
             {
                 return;
-
-                // this.userInterfaceService.WriteLine();
-                // this.Core.Sleep(100, 100);
             }
         }
     }

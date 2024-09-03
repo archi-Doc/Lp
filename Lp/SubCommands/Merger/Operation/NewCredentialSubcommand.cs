@@ -3,16 +3,15 @@
 using Netsphere;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.MergerOperation;
 
-[SimpleCommand("merger")]
-public class MergerSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
+[SimpleCommand("new-credential")]
+public class NewCredentialSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
 {
-    public MergerSubcommand(ILogger<MergerSubcommand> logger, IUserInterfaceService userInterfaceService, MergerNestedcommand nestedcommand)
+    public NewCredentialSubcommand(ILogger<MergerClientSubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.nestedcommand = nestedcommand;
     }
 
     public async Task RunAsync(MergerSubcommandOptions options, string[] args)
@@ -22,20 +21,15 @@ public class MergerSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
             return;
         }
 
-        this.nestedcommand.Node = node;
         this.userInterfaceService.WriteLine(node.ToString());
-        await this.nestedcommand.MainAsync();
     }
 
-    private ILogger<MergerSubcommand> logger;
-    private IUserInterfaceService userInterfaceService;
-    private MergerNestedcommand nestedcommand;
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
 }
 
-public record MergerSubcommandOptions
+public record MergerOperationOptions
 {
     [SimpleOption("Node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
-
-    public override string ToString() => $"{this.Node}";
 }

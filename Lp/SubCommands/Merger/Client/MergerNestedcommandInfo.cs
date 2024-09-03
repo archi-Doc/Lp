@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("info")]
 public class MergerNestedcommandInfo : ISimpleCommandAsync
 {
-    public MergerNestedcommandInfo(ILogger<MergerNestedcommandInfo> logger, NetTerminal terminal, MergerNestedcommand nestedcommand)
+    public MergerNestedcommandInfo(ILogger<MergerNestedcommandInfo> logger, NetTerminal terminal, MergerClientNestedCommand nestedcommand)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -62,5 +62,5 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
 
     private ILogger logger;
     private NetTerminal terminal;
-    private MergerNestedcommand nestedcommand;
+    private MergerClientNestedCommand nestedcommand;
 }
