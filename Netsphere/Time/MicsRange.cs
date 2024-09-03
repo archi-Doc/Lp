@@ -4,6 +4,12 @@ namespace Netsphere;
 
 public readonly record struct MicsRange
 {
+    public static bool IsWithin(long targetMics, long lowerBoundMics, long upperBoundMics)
+        => lowerBoundMics <= targetMics && targetMics <= upperBoundMics;
+
+    public static bool IsWithinMargin(long targetMics, long lowerBoundMics, long upperBoundMics, long margin = Mics.DefaultMarginMics)
+        => (lowerBoundMics - margin <= targetMics) && (targetMics <= upperBoundMics + margin);
+
     /// <summary>
     /// Creates a <see cref="MicsRange"/> from the present mics (<see cref="Mics.GetCorrected"/>) to the present+specified mics.
     /// </summary>
