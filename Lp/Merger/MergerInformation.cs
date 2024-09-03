@@ -24,9 +24,9 @@ public partial record MergerInformation : ITinyhandSerializationCallback
     {
     }
 
-    public IMergerService.InformationResult ToInformationResult()
+    public IMergerClient.InformationResult ToInformationResult()
     {
-        return new IMergerService.InformationResult() with { MergerName = this.MergerName, };
+        return new IMergerClient.InformationResult() with { MergerName = this.MergerName, };
     }
 
     [DefaultValue(DefaultName)]

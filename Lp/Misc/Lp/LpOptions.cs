@@ -60,6 +60,9 @@ public partial record LpOptions
     [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key", GetEnvironmentVariable = true)]
     public string NodePrivateKey { get; set; } = string.Empty;
 
+    [SimpleOption(NetConstants.OperationPublicKeyName, Description = "Operation public key")]
+    public string OperationPublicKey { get; set; } = string.Empty;
+
     [SimpleOption("CertificateRelayPublickey", Description = "Public key for CertificateRelayControl", GetEnvironmentVariable = true)]
     public string CertificateRelayPublicKey { get; set; } = string.Empty;
 
@@ -69,8 +72,8 @@ public partial record LpOptions
     [SimpleOption("ContentPeerPrivault", Description = "Private key or vault name for Content peer", GetEnvironmentVariable = true)]
     public string ContentPeerPrivault { get; set; } = "ContentPeer";
 
-    [SimpleOption("CreditMergerPrivault", Description = "Private key or vault name for Credit merger", GetEnvironmentVariable = true)]
-    public string CreditMergerPrivault { get; set; } = "CreditMerger";
+    [SimpleOption("MergerPrivault", Description = "Private key or vault name for Merger", GetEnvironmentVariable = true)]
+    public string MergerPrivault { get; set; } = "Merger";
 
     [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", GetEnvironmentVariable = true)]
     public string RelayMergerPrivault { get; set; } = "RelayMerger";

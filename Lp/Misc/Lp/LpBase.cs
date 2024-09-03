@@ -3,6 +3,7 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 using Lp.Data;
+using Netsphere.Crypto;
 
 namespace Lp;
 
@@ -36,6 +37,8 @@ public class LpBase
     public LpOptions Options { get; private set; } = default!;
 
     public LpSettings Settings { get; set; }
+
+    private SignaturePublicKey operationPublicKey;
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
@@ -123,9 +126,32 @@ public class LpBase
             this.NodeName = System.Environment.OSVersion.ToString();
         }
 
+        if (SignaturePublicKey.TryParse(options.OperationPublicKey, out var publicKey))
+        {
+            this.operationPublicKey = publicKey;
+        }
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.OperationPublicKeyName, out publicKey))
+        {
+            this.operationPublicKey = publicKey;
+        }
+
         // Remote public key
         // SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
         // this.RemotePublicKey = remoteKey;
+    }
+
+    public bool TryGetOperationPublicKey(out SignaturePublicKey publicKey)
+    {
+        if (this.operationPublicKey.IsValid)
+        {
+            publicKey = this.operationPublicKey;
+            return true;
+        }
+        else
+        {
+            publicKey = default;
+            return false;
+        }
     }
 
     public void LogInformation(ILogWriter logger)
@@ -133,6 +159,12 @@ public class LpBase
         logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");
         logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
+
+        if (this.TryGetOperationPublicKey(out var publicKey))
+        {
+            logger.Log($"Operation public key: {publicKey}");
+        }
+
         // logger.Log(this.Options.ToString());
     }
 

@@ -115,11 +115,6 @@ public static class VerificationHelper
     public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long validMics)
         where T : Proof, ITinyhandSerialize<T>
     {
-        if (!value.GetPublicKey().Equals(privateKey.ToPublicKey()))
-        {
-            return false;
-        }
-
         var ecdsa = privateKey.TryGetEcdsa();
         if (ecdsa == null)
         {
@@ -136,6 +131,11 @@ public static class VerificationHelper
             }
             else
             {
+                if (!value.GetPublicKey().Equals(privateKey.ToPublicKey()))
+                {
+                    return false;
+                }
+
                 value.PrepareSignInternal(validMics);
             }
 

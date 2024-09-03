@@ -28,7 +28,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
                 return;
             }
 
-            var service = authenticated.Connection.GetService<IMergerService>();
+            var service = authenticated.Connection.GetService<IMergerClient>();
 
             /*var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
             authorized.Authority.SignToken(token);

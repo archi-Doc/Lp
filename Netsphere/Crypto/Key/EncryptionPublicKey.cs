@@ -160,6 +160,8 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
     [Key(4)]
     private readonly ulong x3;
 
+    public bool IsValid => this.x0 != 0;
+
     public byte KeyValue => this.keyValue;
 
     public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);

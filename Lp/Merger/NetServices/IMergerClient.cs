@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerService : INetService
+public partial interface IMergerClient : INetService
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -26,14 +26,14 @@ public partial interface IMergerService : INetService
 }
 
 [NetServiceObject]
-internal class MergerServiceAgent : IMergerService
+internal class MergerClientAgent : IMergerClient
 {
-    public MergerServiceAgent(Merger merger)
+    public MergerClientAgent(Merger merger)
     {
         this.merger = merger;
     }
 
-    public async NetTask<IMergerService.InformationResult?> GetInformation()
+    public async NetTask<IMergerClient.InformationResult?> GetInformation()
     {
         if (!this.merger.Initialized)
         {

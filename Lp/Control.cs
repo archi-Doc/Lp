@@ -62,9 +62,10 @@ public class Control
                 context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
+                context.AddTransient<Lp.T3cs.MergerClientAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
+                context.AddTransient<MergerOperationAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -500,9 +501,9 @@ public class Control
     public async Task CreateMerger(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-        if (!string.IsNullOrEmpty(this.LpBase.Options.CreditMergerPrivault))
-        {// CreditMergerPrivault is valid
-            var privault = this.LpBase.Options.CreditMergerPrivault;
+        if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
+        {// MergerPrivault is valid
+            var privault = this.LpBase.Options.MergerPrivault;
             if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
@@ -514,7 +515,8 @@ public class Control
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, privateKey);
-            this.NetControl.Services.Register<IMergerService, MergerServiceAgent>();
+            this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
+            this.NetControl.Services.Register<IMergerOperation, MergerOperationAgent>();
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -532,6 +534,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
+            this.NetControl.Services.Register<IMergerOperation, MergerOperationAgent>();
         }
     }
 

@@ -9,6 +9,8 @@ public static class NetConstants
     public const string NodePublicKeyName = "NodePublickey";
     public const string RemotePrivateKeyName = "RemotePrivatekey";
     public const string RemotePublicKeyName = "RemotePublickey";
+    public const string OperationPrivateKeyName = "OperationPrivatekey";
+    public const string OperationPublicKeyName = "OperationPublickey";
 
     public const int MaxPacketLength = 1350; // 1500 - 60 - 8 = 1432 bytes
     public const int RelayLength = 48; // RelayHeader(32) + Padding(0-15)
