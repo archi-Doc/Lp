@@ -7,13 +7,13 @@ public readonly record struct MicsRange
     /// <summary>
     /// Creates a <see cref="MicsRange"/> from the present mics (<see cref="Mics.GetCorrected"/>) to the present+specified mics.
     /// </summary>
-    /// <param name="mics">Mics ahead from the present mics.</param>
-    /// <param name="error">Allowable error in mics.</param>
+    /// <param name="duration">Mics ahead from the present mics.</param>
+    /// <param name="margin">Allowed margin of error.</param>
     /// <returns><see cref="MicsRange"/>.</returns>
-    public static MicsRange FromCorrectedToMics(long mics, long error)
+    public static MicsRange FromCorrectedToMics(long duration, long margin = Mics.DefaultMargin)
     {
         var current = Mics.GetCorrected();
-        return new MicsRange(current - error, current + mics + error);
+        return new MicsRange(current - margin, current + duration + margin);
     }
 
     public static MicsRange FromFastSystemToFuture(long duration)
@@ -65,6 +65,9 @@ public readonly record struct MicsRange
     public static MicsRange MicrosecondsFromFastSystem(double microseconds)
         => FromFastSystemToFuture((long)microseconds);
 
-    public bool IsWithin(long mics)
-        => this.LowerBound <= mics && mics <= this.UpperBound;
+    public bool IsWithin(long targetMics)
+        => this.LowerBound <= targetMics && targetMics <= this.UpperBound;
+
+    public bool IsWithinMargin(long targetMics, long margin = Mics.DefaultMargin)
+        => (this.LowerBound - margin) <= targetMics && targetMics <= (this.UpperBound + margin);
 }

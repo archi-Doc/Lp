@@ -112,7 +112,7 @@ public static class VerificationHelper
         }
     }*/
 
-    public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long proofMics)
+    public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long validMics)
         where T : Proof, ITinyhandSerialize<T>
     {
         if (!value.GetPublicKey().Equals(privateKey.ToPublicKey()))
@@ -132,11 +132,11 @@ public static class VerificationHelper
         {
             if (value is ProofAndPublicKey proofAndPublicKey)
             {
-                proofAndPublicKey.SetInformationInternal(privateKey, proofMics);
+                proofAndPublicKey.PrepareSignInternal(privateKey, validMics);
             }
             else
             {
-                value.SetInformationInternal(proofMics);
+                value.PrepareSignInternal(validMics);
             }
 
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);

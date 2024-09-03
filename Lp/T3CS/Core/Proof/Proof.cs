@@ -20,6 +20,7 @@ namespace Lp.T3cs;
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
     public const long MaxExpirationMics = Mics.MicsPerDay * 10;
+    public const long TruncateExpirationMics = Mics.MicsPerDay;
     public const int ReservedKeyCount = 4;
 
     public Proof()
@@ -88,9 +89,11 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         return true;
     }
 
-    internal void SetInformationInternal(long verificationMics)
+    internal void PrepareSignInternal(long validMics)
     {
-        this.VerificationMics = verificationMics;
+        this.VerificationMics = Mics.GetCorrected();
+        var mics = this.VerificationMics + (validMics > MaxExpirationMics ? MaxExpirationMics : validMics);
+        this.ExpirationMics = mics / TruncateExpirationMics * TruncateExpirationMics;
     }
 
     internal void SetSignInternal(byte[] sign)

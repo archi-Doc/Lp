@@ -11,6 +11,7 @@ namespace Netsphere;
 /// </summary>
 public static class Mics
 {
+    public const long DefaultMargin = MicsPerSecond * 5; // 5 seconds
     public const long MicsPerYear = 31_536_000_000_000;
     public const long MicsPerDay = 86_400_000_000;
     public const long MicsPerHour = 3_600_000_000;
