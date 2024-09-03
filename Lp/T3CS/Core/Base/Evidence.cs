@@ -45,7 +45,7 @@ public sealed partial class Evidence : IValidatable
     public byte[]? MergerSignature2 { get; private set; }
 
     public long ProofMics
-        => this.Proof.ProofMics;
+        => this.Proof.VerificationMics;
 
     public bool Validate()
     {

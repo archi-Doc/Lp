@@ -51,7 +51,8 @@ public static class Mics
     public static long GetApplication() => (long)(Stopwatch.GetTimestamp() * TimestampToMics) - TimeCorrection.InitialSystemMics;
 
     /// <summary>
-    /// Gets the <see cref="Mics"/> (microseconds) expressed as UTC.
+    /// Gets the <see cref="Mics"/> (microseconds) expressed as UTC.<br/>
+    /// Mics since 0000-01-01 00:00:00.
     /// </summary>
     /// <returns><see cref="Mics"/> (microseconds).</returns>
     public static long GetUtcNow() => (long)(DateTime.UtcNow.Ticks * 0.1d);

@@ -15,6 +15,6 @@ public abstract partial class ProofAndPublicKey : Proof
     internal void SetInformationInternal(SignaturePrivateKey privateKey, long proofMics)
     {
         this.PublicKey = privateKey.ToPublicKey();
-        this.ProofMics = proofMics;
+        this.VerificationMics = proofMics;
     }
 }

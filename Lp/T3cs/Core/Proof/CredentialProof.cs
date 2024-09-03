@@ -29,7 +29,7 @@ public sealed partial class CredentialProof : Proof
 
             if (oldItem is not null &&
                 oldItem.TryGetValueProof(out var valueProof2) &&
-                valueProof2.ProofMics >= valueProof.ProofMics)
+                valueProof2.VerificationMics >= valueProof.VerificationMics)
             {
                 return false;
             }

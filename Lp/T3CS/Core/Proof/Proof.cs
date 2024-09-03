@@ -19,6 +19,7 @@ namespace Lp.T3cs;
 // [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
+    public const long MaxExpirationMics = Mics.MicsPerDay * 10;
     public const int ReservedKeyCount = 4;
 
     public Proof()
@@ -37,10 +38,10 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 
     [Key(2)]
     [Link(Primary = true, Type = ChainType.Ordered)]
-    public long ProofMics { get; protected set; }
+    public long VerificationMics { get; protected set; }
 
-    // [Key(3)]
-    // public long ExpirationMics { get; protected set; }
+    [Key(3)]
+    public long ExpirationMics { get; protected set; }
 
     #endregion
 
@@ -60,7 +61,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 
     public virtual bool Validate()
     {
-        if (this.ProofMics == 0)
+        if (this.VerificationMics == 0)
         {
             return false;
         }
@@ -74,7 +75,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         {
             return false;
         }
-        else if (this.ProofMics != other.ProofMics)
+        else if (this.VerificationMics != other.VerificationMics)
         {
             return false;
         }
@@ -87,9 +88,9 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         return true;
     }
 
-    internal void SetInformationInternal(long proofMics)
+    internal void SetInformationInternal(long verificationMics)
     {
-        this.ProofMics = proofMics;
+        this.VerificationMics = verificationMics;
     }
 
     internal void SetSignInternal(byte[] sign)
