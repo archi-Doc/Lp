@@ -180,6 +180,7 @@ internal class NetSender
 
     private object syncObject = new();
     private long previousSystemMics;
+    private long previousUpdateMics;
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
     private double deliveryFailureRatio = 0;
@@ -208,6 +209,16 @@ internal class NetSender
     {// Invoked by multiple threads(SendCore or MultimediaTimer).
         // Check interval.
         var currentSystemMics = Mics.UpdateFastSystem();
+        if (currentSystemMics > this.previousUpdateMics + Mics.DefaultUpdateIntervalMics)
+        {
+            this.previousUpdateMics = currentSystemMics;
+
+            Mics.UpdateFastApplication();
+            Mics.UpdateFastUtcNow();
+            Mics.UpdateFastFixedUtcNow();
+            Mics.UpdateFastCorrected();
+        }
+
         var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
         if (currentSystemMics < (this.previousSystemMics + interval))
         {

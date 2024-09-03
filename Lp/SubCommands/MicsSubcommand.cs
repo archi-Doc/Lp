@@ -22,9 +22,13 @@ public class MicsSubcommand : ISimpleCommand
             logger.Log($"Stopwatch.Frequency: {Stopwatch.Frequency}");
             logger.Log($"Mics.TimestampToMics: {Mics.TimestampToMics}");
             logger.Log($"Mics.GetSystem(): {Mics.GetSystem()}");
+            logger.Log($"Mics.FastSystem: {Mics.FastSystem}");
             logger.Log($"Mics.GetApplication(): {Mics.GetApplication()}");
+            logger.Log($"Mics.FastApplication: {Mics.FastApplication}");
             logger.Log($"Mics.GetUtcNow(): {Mics.GetUtcNow()}");
+            logger.Log($"Mics.FastUtcNow: {Mics.FastUtcNow}");
             logger.Log($"Mics.GetCorrected(): {Mics.GetCorrected()}");
+            logger.Log($"Mics.FastCorrected: {Mics.FastCorrected}");
             logger.Log($"Mics.GetCorrected() : {Mics.ToDateTime(Mics.GetCorrected()).ToString()}");
             logger.Log($"Time.TimestampToTicks: {Time.TimestampToTicks}");
             logger.Log($"Time.GetSystem(): {Time.GetSystem()}");

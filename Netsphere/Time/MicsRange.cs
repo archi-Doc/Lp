@@ -7,31 +7,30 @@ public readonly record struct MicsRange
     /// <summary>
     /// Creates a <see cref="MicsRange"/> from the present mics (<see cref="Mics.GetCorrected"/>) to the present+specified mics.
     /// </summary>
-    /// <param name="duration">Mics ahead from the present mics.</param>
-    /// <param name="margin">Allowed margin of error.</param>
+    /// <param name="period">Mics ahead from the present mics.</param>
     /// <returns><see cref="MicsRange"/>.</returns>
-    public static MicsRange FromCorrectedToMics(long duration, long margin = Mics.DefaultMargin)
+    public static MicsRange FromFastCorrectedToFuture(long period)
     {
-        var current = Mics.GetCorrected();
-        return new MicsRange(current - margin, current + duration + margin);
+        var current = Mics.FastCorrected;
+        return new MicsRange(current, current + period);
     }
 
-    public static MicsRange FromFastSystemToFuture(long duration)
+    public static MicsRange FromFastSystemToFuture(long period)
     {
         var lower = Mics.FastSystem;
-        return new(lower, lower + duration);
+        return new(lower, lower + period);
     }
 
-    public static MicsRange FromCorrectedToFuture(long duration)
-    {
-        var lower = Mics.GetCorrected();
-        return new(lower, lower + duration);
-    }
-
-    public static MicsRange FromPastToFastSystem(long duration)
+    public static MicsRange FromPastToFastSystem(long period)
     {
         var upper = Mics.FastSystem;
-        return new(upper - duration, upper);
+        return new(upper - period, upper);
+    }
+
+    public static MicsRange FromPastToFastCorrected(long period)
+    {
+        var upper = Mics.FastCorrected;
+        return new(upper - period, upper);
     }
 
     public MicsRange(long lowerBoundMics, long upperBoundMics)
@@ -68,6 +67,6 @@ public readonly record struct MicsRange
     public bool IsWithin(long targetMics)
         => this.LowerBound <= targetMics && targetMics <= this.UpperBound;
 
-    public bool IsWithinMargin(long targetMics, long margin = Mics.DefaultMargin)
+    public bool IsWithinMargin(long targetMics, long margin = Mics.DefaultMarginMics)
         => (this.LowerBound - margin) <= targetMics && targetMics <= (this.UpperBound + margin);
 }
