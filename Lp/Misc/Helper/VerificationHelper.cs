@@ -6,7 +6,7 @@ using Tinyhand.IO;
 
 namespace Lp;
 
-public static class LpHelper
+public static class VerificationHelper
 {
     public static Identifier GetIdentifier<T>(this T? value, int level)
         where T : ITinyhandSerialize<T>

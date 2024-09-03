@@ -2,9 +2,9 @@
 
 namespace Lp.NetServices;
 
-public class LpClientContext
+/*public class LpClientContext
 {
     public LpClientContext()
     {
     }
-}
+}*/

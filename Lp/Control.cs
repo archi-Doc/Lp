@@ -339,7 +339,7 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
-                // Merger, Relay, Peer
+                // ZenMerger, RelayMerger, ContentMerger, Peer, Relay
                 await control.CreateMerger(this.Context);
                 await control.CreatePeer(this.Context);
                 await control.CreateRelay(this.Context);
