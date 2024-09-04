@@ -102,6 +102,7 @@ public class RobustConnection
                     var result = await newConnection.SetAuthenticationToken(token).ConfigureAwait(false);
                     if (result != NetResult.Success)
                     {
+                        this.options = default;//
                         return default;
                     }
                 }

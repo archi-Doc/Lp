@@ -59,7 +59,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
     public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        if (string.Compare(source, "alternative", true) == 0)
+        if (string.Compare(source, "alt", true) == 0)
         {
             node = NetNode.Alternative;
             return true;

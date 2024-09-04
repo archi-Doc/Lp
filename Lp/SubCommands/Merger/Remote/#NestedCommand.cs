@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -24,7 +25,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 
     public override string Prefix => "merger-remote >> ";
 
-    public NetNode Node { get; set; } = NetNode.Alternative;
+    public RobustConnection? RobustConnection { get; set; }
 
     public SignaturePrivateKey RemoteKey { get; set; } = SignaturePrivateKey.Empty;
 }
@@ -43,14 +44,15 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     public async Task RunAsync(CommandOptions options, string[] args)
     {
+        NetNode? node = NetNode.Alternative;
         if (!string.IsNullOrEmpty(options.Node))
         {
-            if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+            if (!NetNode.TryParseNetNode(this.logger, options.Node, out var n))
             {
                 return;
             }
 
-            this.nestedcommand.Node = node;
+            node = n;
         }
 
         var authority = options.Authority;
@@ -65,11 +67,15 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             return;
         }
 
-        this.userInterfaceService.WriteLine(this.nestedcommand.Node.ToString());
+        this.userInterfaceService.WriteLine(node.ToString());
         this.userInterfaceService.WriteLine($"Remote key: {privateKey.ToPublicKey()}");
 
-        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node);
-        var r = await robustConnection.Get();
+        this.nestedcommand.RobustConnection = this.robustConnectionTerminal.Open(node, new(privateKey));
+        if (await this.nestedcommand.RobustConnection.Get() is null)
+        {
+            this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+            return;
+        }
 
         await this.nestedcommand.MainAsync();
     }
