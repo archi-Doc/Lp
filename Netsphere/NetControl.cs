@@ -41,7 +41,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetTerminal>();
                 context.AddSingleton<ServiceControl>();
-                context.AddSingleton<RobustConnection.Factory>();
+                context.AddSingleton<RobustConnection.Terminal>();
                 context.TryAddSingleton<IRelayControl, NoRelayControl>();
 
                 // Stream logger
@@ -126,7 +126,7 @@ public class NetControl : UnitBase, IUnitPreparable
             => this.Context.SendTerminateAsync(new());
     }
 
-    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal, IRelayControl relayControl)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal, IRelayControl relayControl, RobustConnection.Terminal robustConnectionTerminal)
         : base(context)
     {
         this.unitLogger = unitLogger;
@@ -143,11 +143,11 @@ public class NetControl : UnitBase, IUnitPreparable
         }
 
         this.NetTerminal = netTerminal;
-        this.NetTerminal.Initialize(this.Responders, this.Services, false);
+        this.NetTerminal.Initialize(this.Responders, this.Services, robustConnectionTerminal, false);
         if (this.NetBase.NetOptions.EnableAlternative)
         {// For debugging
             this.Alternative = new(context, unitLogger, netBase, netStats, CertificateRelayControl.Instance);
-            this.Alternative.Initialize(this.Responders, this.Services, true);
+            this.Alternative.Initialize(this.Responders, this.Services, robustConnectionTerminal, true);
         }
     }
 

@@ -448,7 +448,7 @@ public class ConnectionTerminal
             ServerConnection? bidirectionalConnection;
             lock (g.SyncObject)
             {
-                clientConnection.ResetOpenCountl();
+                clientConnection.ResetOpenCount();
                 if (connection.CurrentState == Connection.State.Open)
                 {// Open -> Close
                     connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");

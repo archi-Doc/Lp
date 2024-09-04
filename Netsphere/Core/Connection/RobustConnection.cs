@@ -1,49 +1,92 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
-using System.Collections.Generic;
 
 namespace Netsphere;
 
+/// <summary>
+/// RobustConnection is designed to maintain a limited number of connections and is not intended for a large number of connections.<br/>
+/// If the number exceeds <see cref="MaxConnections"/>, it will be reinitialized.
+/// </summary>
 public class RobustConnection
 {
-    public class Factory
+    public const int MaxConnections = 1_000;
+
+    public class Terminal
     {
-        public Factory(NetTerminal netTerminal)
+        public Terminal(NetTerminal netTerminal)
         {
             this.netTerminal = netTerminal;
         }
 
         private readonly NetTerminal netTerminal;
+        private readonly NotThreadsafeHashtable<NetNode, RobustConnection> connections = new();
 
-        public async Task<RobustConnection?> Create(NetNode node, ILogger? logger)
+        public RobustConnection Open(NetNode node)
         {
-            // Connect
-            var connection = await this.netTerminal.Connect(node, Connection.ConnectMode.ReuseIfAvailable);
-            if (connection is null)
-            {
-                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, node.ToString());
-                return default;
-            }
+            return this.connections.GetOrAdd(node, x => new RobustConnection(this.netTerminal, x));
+        }
 
-            var context = connection.GetContext();
-            var token = new AuthenticationToken(connection.Salt);
-            authority.Sign(token);
-            if (!context.AuthenticationTokenEquals(token.PublicKey))
+        public void Clean()
+        {
+            if (this.connections.Count > MaxConnections)
             {
-                var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
-                if (result != NetResult.Success)
-                {
-                    logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
-                    return null;
-                }
+                this.connections.Clear();
             }
-
-            return default;
         }
     }
 
-    private RobustConnection()
+    public record class Options();
+
+    #region FieldAndProperty
+
+    private readonly NetTerminal netTerminal;
+    private readonly NetNode netNode;
+    private readonly SemaphoreLock semaphore = new();
+    private ClientConnection? connection;
+
+    #endregion
+
+    private RobustConnection(NetTerminal netTerminal, NetNode netNode)
     {
+        this.netTerminal = netTerminal;
+        this.netNode = netNode;
+    }
+
+    public async ValueTask<ClientConnection?> Get()
+    {
+        if (this.connection?.IsActive == true)
+        {
+            return this.connection;
+        }
+
+        await this.semaphore.EnterAsync().ConfigureAwait(false);
+        try
+        {
+            if (this.connection?.IsActive == true)
+            {
+                return this.connection;
+            }
+
+            if (this.connection is not null)
+            {
+                this.connection.Dispose();
+                this.connection = null;
+            }
+
+            var newConnection = await this.netTerminal.Connect(this.netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false);
+            if (newConnection is null)
+            {// Failed to connect
+                return default;
+            }
+
+            this.connection = newConnection;
+        }
+        finally
+        {
+            this.semaphore.Exit();
+        }
+
+        return default;
     }
 }

@@ -703,7 +703,7 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ResetOpenCountl()
+    internal void ResetOpenCount()
     {
         Volatile.Write(ref this.openCount, 0);
     }
