@@ -114,12 +114,12 @@ public class Control
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.NodeSubcommand.Configure(context);
-                Lp.Subcommands.NodeKeySubcommand.Configure(context);
                 Lp.Subcommands.AuthoritySubcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);
                 Lp.Subcommands.MergerClientNestedCommand.Configure(context);
                 Lp.Subcommands.MergerOperation.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
+                Lp.Subcommands.KeySubcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>

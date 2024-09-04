@@ -1,25 +1,26 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Subcommands;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("new-signature-key")]
-public class NewSignatureKeySubcommand : ISimpleCommand<NodeKeySubcommandNewOptions>
+[SimpleCommand("new-node-key")]
+public class NewNodeKeySubcommand : ISimpleCommand<KeySubcommand.NewKeyOptions>
 {
-    public NewSignatureKeySubcommand(ILogger<NewSignatureKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
+    public NewNodeKeySubcommand(ILogger<NewNodeKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.seedPhrase = seedPhrase;
     }
 
-    public void Run(NodeKeySubcommandNewOptions options, string[] args)
+    public void Run(KeySubcommand.NewKeyOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New signature key");
+        this.logger.TryGet()?.Log("New node key");
 
-        SignaturePrivateKey key;
+        NodePrivateKey key;
         var phrase = options.Seedphrase?.Trim();
         if (string.IsNullOrEmpty(phrase))
         {
@@ -28,11 +29,11 @@ public class NewSignatureKeySubcommand : ISimpleCommand<NodeKeySubcommandNewOpti
             if (seed is not null)
             {
                 this.userInterfaceService.WriteLine($"Seedphrase: {phrase}");
-                key = SignaturePrivateKey.Create(seed);
+                key = NodePrivateKey.Create(seed);
             }
             else
             {
-                key = SignaturePrivateKey.Create();
+                key = NodePrivateKey.Create();
             }
         }
         else
@@ -44,7 +45,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<NodeKeySubcommandNewOpti
                 return;
             }
 
-            key = SignaturePrivateKey.Create(seed);
+            key = NodePrivateKey.Create(seed);
         }
 
         this.userInterfaceService.WriteLine(key.UnsafeToString());
