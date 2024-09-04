@@ -24,6 +24,9 @@ public class NestedCommand<TCommand>
         };
     }
 
+    /// <summary>
+    /// Gets <see cref="UnitCore"/>.
+    /// </summary>
     public UnitCore Core { get; }
 
     /// <summary>
@@ -118,7 +121,7 @@ public class NestedCommand<TCommand>
         return true;*/
     }
 
-    private IUserInterfaceService userInterfaceService;
-    private Type[] commandTypes;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly Type[] commandTypes;
     private SimpleParser? simpleParser;
 }

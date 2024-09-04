@@ -10,7 +10,6 @@ public class MergerClientNestedCommand : NestedCommand<MergerClientNestedCommand
         context.TryAddSingleton(t);
 
         var group = context.GetCommandGroup(t);
-        // var group = ConfigureGroup(context);
         group.AddCommand(typeof(MergerNestedcommandInfo));
         group.AddCommand(typeof(MergerNestedcommandCreateCredit));
     }
