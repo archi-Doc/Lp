@@ -47,43 +47,31 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             }
         }
 
-        var prefix = this.GetPrefix(options.KeyClass, options);
+        var prefix = GetPrefix(options.KeyClass, options);
         if (options.KeyClass == KeyClass.Signature)
         {
             var key = seed is null ? SignaturePrivateKey.Create() : SignaturePrivateKey.Create(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
             this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-
-            if (!string.IsNullOrEmpty(options.Name))
-            {
-                this.vault.SerializeAndTryAdd(options.Name, key);
-            }
+            this.AddVault(options.Name, key);
         }
         else if (options.KeyClass == KeyClass.NodeEncryption)
         {
             var key = seed is null ? NodePrivateKey.Create() : NodePrivateKey.Create(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
             this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-
-            if (!string.IsNullOrEmpty(options.Name))
-            {
-                this.vault.SerializeAndTryAdd(options.Name, key);
-            }
+            this.AddVault(options.Name, key);
         }
         else
         {
             var key = seed is null ? EncryptionPrivateKey.Create() : EncryptionPrivateKey.Create(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
             this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-
-            if (!string.IsNullOrEmpty(options.Name))
-            {
-                this.vault.SerializeAndTryAdd(options.Name, key);
-            }
+            this.AddVault(options.Name, key);
         }
     }
 
-    private string GetPrefix(KeyClass keyClass, NewVaultOptions options)
+    private static string GetPrefix(KeyClass keyClass, NewVaultOptions options)
         => keyClass.ToString() + (string.IsNullOrEmpty(options.Name) ? " Temporary: " : $" {options.Name}: ");
 
     private void ParsePrivateKey(NewVaultOptions options)
@@ -91,38 +79,38 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         if (SignaturePrivateKey.TryParse(options.PrivateKey, out var signaturePrivateKey))
         {
             this.userInterfaceService.WriteLine(signaturePrivateKey.UnsafeToString());
-            var prefix = this.GetPrefix(signaturePrivateKey.KeyClass, options);
+            var prefix = GetPrefix(signaturePrivateKey.KeyClass, options);
             this.logger.TryGet()?.Log(prefix + signaturePrivateKey.ToPublicKey().ToString());
-
-            if (!string.IsNullOrEmpty(options.Name))
-            {
-                this.vault.SerializeAndTryAdd(options.Name, signaturePrivateKey);
-            }
+            this.AddVault(options.Name, signaturePrivateKey);
         }
         else if (EncryptionPrivateKey.TryParse(options.PrivateKey, out var encryptionPrivateKey))
         {
             this.userInterfaceService.WriteLine(encryptionPrivateKey.UnsafeToString());
-            var prefix = this.GetPrefix(encryptionPrivateKey.KeyClass, options);
+            var prefix = GetPrefix(encryptionPrivateKey.KeyClass, options);
             this.logger.TryGet()?.Log(prefix + encryptionPrivateKey.ToPublicKey().ToString());
-
-            if (!string.IsNullOrEmpty(options.Name))
-            {
-                this.vault.SerializeAndTryAdd(options.Name, encryptionPrivateKey);
-            }
+            this.AddVault(options.Name, encryptionPrivateKey);
         }
         else if (NodePrivateKey.TryParse(options.PrivateKey, out var nodePrivateKey))
         {
             this.userInterfaceService.WriteLine(nodePrivateKey.UnsafeToString());
-            var prefix = this.GetPrefix(nodePrivateKey.KeyClass, options);
+            var prefix = GetPrefix(nodePrivateKey.KeyClass, options);
             this.logger.TryGet()?.Log(prefix + nodePrivateKey.ToPublicKey().ToString());
-
-            if (!string.IsNullOrEmpty(options.Name))
-            {
-                this.vault.SerializeAndTryAdd(options.Name, nodePrivateKey);
-            }
+            this.AddVault(options.Name, nodePrivateKey);
         }
         else
         {
+            this.userInterfaceService.WriteLine(Hashed.Error.InvalidPrivateKey);
+        }
+    }
+
+    private void AddVault<T>(string name, T data)
+    {
+        if (!string.IsNullOrEmpty(name))
+        {
+            if (!this.vault.SerializeAndTryAdd(name, data))
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
+            }
         }
     }
 

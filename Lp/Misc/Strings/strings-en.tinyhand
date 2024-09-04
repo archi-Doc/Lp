@@ -32,6 +32,7 @@ Error = {
     Connect = "Could not connect to '{0}'"
     Authorization = "Authorization error"
     NoPingFromContainer = "Failed to receive a Ping response from the container"
+    InvalidPrivateKey = "PrivateKey is invalid"
 }
 
 Vault = {
