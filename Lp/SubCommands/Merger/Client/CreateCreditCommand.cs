@@ -9,48 +9,49 @@ namespace Lp.Subcommands.MergerClient;
 [SimpleCommand("create-credit")]
 public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal terminal, NestedCommand nestedcommand, AuthorityVault authorityVault, AuthenticatedConnectionFactory authorizedTerminalFactory)
+    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityVault authorityVault, RobustConnection.Terminal robustConnectionTerminal)
     {
         this.logger = logger;
-        this.terminal = terminal;
+        this.netTerminal = netTerminal;
         this.nestedcommand = nestedcommand;
         this.authorityVault = authorityVault;
-        this.authenticatedTerminalFactory = authorizedTerminalFactory;
+        this.robustConnectionTerminal = robustConnectionTerminal;
     }
 
     public async Task RunAsync(CreateCreditOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log(string.Empty);
-        using (var authenticated = await this.authenticatedTerminalFactory.Create(this.terminal, this.nestedcommand.Node, options.AuthorityName, this.logger))
+        var authority = await this.authorityVault.GetAuthority(options.AuthorityName);
+        if (authority is null)
         {
-            if (authenticated == null)
-            {
-                return;
-            }
+            this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
+            return;
+        }
 
-            var service = authenticated.Connection.GetService<IMergerClient>();
+        this.logger.TryGet()?.Log(string.Empty);
+        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(authority.UnsafeGetPrivateKey())); // options.AuthorityName
+        if (await robustConnection.Get() is not { } connection)
+        {
+            return;
+        }
 
-            /*var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
-            authorized.Authority.SignToken(token);
-            var param = new Merger.CreateCreditParams(token);*/
+        var service = connection.GetService<IMergerClient>();
 
-            var proof = new CreateCreditProof();
-            authenticated.Authority.SignProof(proof, Mics.GetCorrected());
-            var param = new Merger.CreateCreditParams(proof);
+        var proof = new CreateCreditProof();
+        authority.SignProof(proof, Mics.GetCorrected());
+        var param = new Merger.CreateCreditParams(proof);
 
-            var response2 = await service.CreateCredit(param).ResponseAsync;
-            if (response2.IsSuccess && response2.Value is { } result2)
-            {
-                this.logger.TryGet()?.Log(result2.ToString());
-            }
+        var response2 = await service.CreateCredit(param).ResponseAsync;
+        if (response2.IsSuccess && response2.Value is { } result2)
+        {
+            this.logger.TryGet()?.Log(result2.ToString());
         }
     }
 
     private readonly ILogger logger;
-    private readonly NetTerminal terminal;
+    private readonly NetTerminal netTerminal;
     private readonly NestedCommand nestedcommand;
     private readonly AuthorityVault authorityVault;
-    private readonly AuthenticatedConnectionFactory authenticatedTerminalFactory;
+    private readonly RobustConnection.Terminal robustConnectionTerminal;
 }
 
 public record CreateCreditOptions

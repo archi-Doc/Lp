@@ -83,6 +83,9 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
 public record CommandOptions
 {
+    [SimpleOption("Node", Description = "Node information", Required = true)]
+    public string Node { get; init; } = string.Empty;
+
     [SimpleOption("Authority", Description = "Authority name")]
     public string Authority { get; init; } = string.Empty;
 
@@ -91,7 +94,4 @@ public record CommandOptions
 
     [SimpleOption("PrivateKey", Description = "Signature private key string")]
     public string PrivateKey { get; init; } = string.Empty;
-
-    [SimpleOption("Node", Description = "Node information")]
-    public string Node { get; init; } = string.Empty;
 }

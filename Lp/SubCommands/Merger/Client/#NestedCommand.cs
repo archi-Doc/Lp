@@ -60,7 +60,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
 public record CommandOptions
 {
-    [SimpleOption("Node", Description = "Node information")]
+    [SimpleOption("Node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

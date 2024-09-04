@@ -71,6 +71,7 @@ public class RobustConnection
             return currentConnection;
         }
 
+        ClientConnection? newConnection = default;
         await this.semaphore.EnterAsync().ConfigureAwait(false);
         try
         {
@@ -85,7 +86,7 @@ public class RobustConnection
                 this.connection = null;
             }
 
-            var newConnection = await this.netTerminal.Connect(this.netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false);
+            newConnection = await this.netTerminal.Connect(this.netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false);
             if (newConnection is null)
             {// Failed to connect
                 return default;
@@ -113,7 +114,7 @@ public class RobustConnection
             this.semaphore.Exit();
         }
 
-        return default;
+        return newConnection;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
