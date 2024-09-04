@@ -3,22 +3,22 @@
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerOperation : INetService
+public partial interface IMergerRemote : INetService
 {
     NetTask<T3csResult> SendValueProofEvidence(Evidence evidence);
 }
 
 [NetServiceObject]
-internal class MergerOperationAgent : IMergerOperation
+internal class MergerRemoteAgent : IMergerRemote
 {
-    public MergerOperationAgent(Merger merger)
+    public MergerRemoteAgent(Merger merger)
     {
         this.merger = merger;
     }
 
     private Merger merger;
 
-    async NetTask<T3csResult> IMergerOperation.SendValueProofEvidence(Evidence evidence)
+    async NetTask<T3csResult> IMergerRemote.SendValueProofEvidence(Evidence evidence)
     {
         return T3csResult.Success;
     }

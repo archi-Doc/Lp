@@ -38,7 +38,7 @@ public class LpBase
 
     public LpSettings Settings { get; set; }
 
-    private SignaturePublicKey operationPublicKey;
+    private SignaturePublicKey remotePublicKey;
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
@@ -126,13 +126,13 @@ public class LpBase
             this.NodeName = System.Environment.OSVersion.ToString();
         }
 
-        if (SignaturePublicKey.TryParse(options.OperationPublicKey, out var publicKey))
+        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
         {
-            this.operationPublicKey = publicKey;
+            this.remotePublicKey = publicKey;
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.OperationPublicKeyName, out publicKey))
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
         {
-            this.operationPublicKey = publicKey;
+            this.remotePublicKey = publicKey;
         }
 
         // Remote public key
@@ -140,11 +140,11 @@ public class LpBase
         // this.RemotePublicKey = remoteKey;
     }
 
-    public bool TryGetOperationPublicKey(out SignaturePublicKey publicKey)
+    public bool TryGetRemotePublicKey(out SignaturePublicKey publicKey)
     {
-        if (this.operationPublicKey.IsValid)
+        if (this.remotePublicKey.IsValid)
         {
-            publicKey = this.operationPublicKey;
+            publicKey = this.remotePublicKey;
             return true;
         }
         else
@@ -160,9 +160,9 @@ public class LpBase
         logger.Log($"Data directory: {this.DataDirectory}");
         logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
 
-        if (this.TryGetOperationPublicKey(out var publicKey))
+        if (this.TryGetRemotePublicKey(out var publicKey))
         {
-            logger.Log($"Operation public key: {publicKey}");
+            logger.Log($"Remote public key: {publicKey}");
         }
 
         // logger.Log(this.Options.ToString());

@@ -65,7 +65,7 @@ public class Control
                 context.AddTransient<Lp.T3cs.MergerClientAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<MergerOperationAgent>();
+                context.AddTransient<MergerRemoteAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -92,7 +92,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.SeedphraseSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerClientSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.MergerOperation.MergerOperationSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.MergerRemoteSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
@@ -108,7 +108,7 @@ public class Control
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);
                 Lp.Subcommands.MergerClientNestedCommand.Configure(context);
-                Lp.Subcommands.MergerOperation.NestedCommand.Configure(context);
+                Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
                 Lp.Subcommands.KeyCommand.Subcommand.Configure(context);
             });
@@ -509,7 +509,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, privateKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
-            this.NetControl.Services.Register<IMergerOperation, MergerOperationAgent>();
+            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -527,7 +527,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
-            this.NetControl.Services.Register<IMergerOperation, MergerOperationAgent>();
+            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
     }
 

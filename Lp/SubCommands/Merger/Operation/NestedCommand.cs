@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace Lp.Subcommands.MergerOperation;
+namespace Lp.Subcommands.MergerRemote;
 
 public class NestedCommand : NestedCommand<NestedCommand>
 {
@@ -20,15 +20,15 @@ public class NestedCommand : NestedCommand<NestedCommand>
     {
     }
 
-    public override string Prefix => "merger-operation >> ";
+    public override string Prefix => "merger-remote >> ";
 
     public NetNode Node { get; set; } = NetNode.Alternative;
 }
 
-[SimpleCommand("merger-operation")]
-public class MergerOperationSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
+[SimpleCommand("merger-remote")]
+public class MergerRemoteSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
 {
-    public MergerOperationSubcommand(ILogger<MergerOperationSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
+    public MergerRemoteSubcommand(ILogger<MergerRemoteSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;

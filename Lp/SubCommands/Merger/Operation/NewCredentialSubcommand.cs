@@ -3,7 +3,7 @@
 using Netsphere;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands.MergerOperation;
+namespace Lp.Subcommands.MergerRemote;
 
 [SimpleCommand("new-credential")]
 public class NewCredentialSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
