@@ -271,7 +271,7 @@ public static class NetHelper
         try
         {
             value.PublicKey = privateKey.ToPublicKey();
-            value.SignedMics = Mics.GetCorrected(); // signedMics;
+            value.SignedMics = Mics.FastCorrected;
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
             var rentMemory = writer.FlushAndGetRentMemory();

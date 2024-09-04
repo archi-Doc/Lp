@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
+using Tinyhand.Logging;
 
 namespace Netsphere;
 
@@ -10,7 +13,7 @@ namespace Netsphere;
 /// </summary>
 public class RobustConnection
 {
-    public const int MaxConnections = 1_000;
+    public const int MaxConnections = 100;
 
     public class Terminal
     {
@@ -22,9 +25,15 @@ public class RobustConnection
         private readonly NetTerminal netTerminal;
         private readonly NotThreadsafeHashtable<NetNode, RobustConnection> connections = new();
 
-        public RobustConnection Open(NetNode node)
+        public RobustConnection Open(NetNode node, Options? options = default)
         {
-            return this.connections.GetOrAdd(node, x => new RobustConnection(this.netTerminal, x));
+            var robustConnection = this.connections.GetOrAdd(node, x => new RobustConnection(this.netTerminal, x));
+            if (options is not null)
+            {
+                robustConnection.TrySetOptions(options);
+            }
+
+            return robustConnection;
         }
 
         public void Clean()
@@ -36,13 +45,14 @@ public class RobustConnection
         }
     }
 
-    public record class Options();
+    public record class Options(SignaturePrivateKey? PrivateKey);
 
     #region FieldAndProperty
 
     private readonly NetTerminal netTerminal;
     private readonly NetNode netNode;
     private readonly SemaphoreLock semaphore = new();
+    private Options? options;
     private ClientConnection? connection;
 
     #endregion
@@ -55,16 +65,17 @@ public class RobustConnection
 
     public async ValueTask<ClientConnection?> Get()
     {
-        if (this.connection?.IsActive == true)
+        var currentConnection = this.connection; // Since it is outside the lock statement, the reference to connection is not safe.
+        if (currentConnection?.IsActive == true)
         {
-            return this.connection;
+            return currentConnection;
         }
 
         await this.semaphore.EnterAsync().ConfigureAwait(false);
         try
         {
             if (this.connection?.IsActive == true)
-            {
+            {// Safe
                 return this.connection;
             }
 
@@ -80,6 +91,21 @@ public class RobustConnection
                 return default;
             }
 
+            if (this.options?.PrivateKey is { } privateKey)
+            {
+                var context = newConnection.GetContext();
+                var token = new AuthenticationToken(newConnection.Salt);
+                token.Sign(privateKey);
+                if (!context.AuthenticationTokenEquals(token.PublicKey))
+                {
+                    var result = await newConnection.SetAuthenticationToken(token).ConfigureAwait(false);
+                    if (result != NetResult.Success)
+                    {
+                        return default;
+                    }
+                }
+            }
+
             this.connection = newConnection;
         }
         finally
@@ -88,5 +114,12 @@ public class RobustConnection
         }
 
         return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void TrySetOptions(Options options)
+    {
+        // Interlocked.CompareExchange(ref this.options, options, null);
+        this.options ??= options;
     }
 }
