@@ -3,12 +3,12 @@
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("new-vault")]
 public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 {
-    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, Vault vault)
+    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, Lp.Vault vault)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -80,7 +80,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Seedphrase seedPhrase;
-    private readonly Vault vault;
+    private readonly Lp.Vault vault;
 }
 
 public record NewVaultOptions

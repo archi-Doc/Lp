@@ -2,12 +2,12 @@
 
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("remove-vault")]
 public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, Vault vault)
+    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.Vault vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;
@@ -25,6 +25,6 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
         }
     }
 
-    private Vault vault;
-    private IUserInterfaceService userInterfaceService;
+    private readonly Lp.Vault vault;
+    private readonly IUserInterfaceService userInterfaceService;
 }

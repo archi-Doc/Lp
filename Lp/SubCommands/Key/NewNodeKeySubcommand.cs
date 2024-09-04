@@ -4,7 +4,7 @@ using Lp.Subcommands;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.KeyCommand;
 
 [SimpleCommand("new-node-key")]
 public class NewNodeKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>

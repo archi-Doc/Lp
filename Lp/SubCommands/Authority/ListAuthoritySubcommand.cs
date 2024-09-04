@@ -3,7 +3,7 @@
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands.Authority;
+namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("list-authority")]
 public class ListAuthoritySubcommand : ISimpleCommandAsync

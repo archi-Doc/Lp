@@ -94,16 +94,8 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerClientSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerOperation.MergerOperationSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ShowAuthoritySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
-
-                // Vault
-                context.AddSubcommand(typeof(Lp.Subcommands.NewVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.RemoveVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ListVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ShowVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ChangeVaultPassSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
@@ -112,12 +104,13 @@ public class Control
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.NodeSubcommand.Configure(context);
-                Lp.Subcommands.Authority.Subcommand.Configure(context);
+                Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
+                Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);
                 Lp.Subcommands.MergerClientNestedCommand.Configure(context);
                 Lp.Subcommands.MergerOperation.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
-                Lp.Subcommands.Subcommand.Configure(context);
+                Lp.Subcommands.KeyCommand.Subcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>

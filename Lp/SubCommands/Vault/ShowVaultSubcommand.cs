@@ -3,12 +3,12 @@
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("show-vault")]
 public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, Vault vault)
+    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, Lp.Vault vault)
     {
         this.consoleService = consoleService;
         this.logger = logger;
@@ -40,5 +40,5 @@ public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly Vault vault;
+    private readonly Lp.Vault vault;
 }

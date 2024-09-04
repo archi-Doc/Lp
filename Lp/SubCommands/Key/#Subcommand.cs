@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.KeyCommand;
 
 public static class Subcommand
 {

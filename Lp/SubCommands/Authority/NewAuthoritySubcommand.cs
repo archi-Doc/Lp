@@ -4,7 +4,7 @@ using Lp.T3cs;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands.Authority;
+namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
