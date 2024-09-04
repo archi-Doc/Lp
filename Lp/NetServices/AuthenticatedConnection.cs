@@ -5,14 +5,14 @@ using Netsphere.Crypto;
 
 namespace Lp.NetServices;
 
-public class AuthenticatedTerminalFactory
+public class AuthenticatedConnectionFactory
 {
-    public AuthenticatedTerminalFactory(AuthorityVault authorityVault)
+    public AuthenticatedConnectionFactory(AuthorityVault authorityVault)
     {
         this.authorityVault = authorityVault;
     }
 
-    public async Task<AuthenticatedTerminal?> Create(NetTerminal terminal, NetNode node, string authorityName, ILogger? logger)
+    public async Task<AuthenticatedConnection?> Create(NetTerminal terminal, NetNode node, string authorityName, ILogger? logger)
     {
         // Authority key
         var authority = await this.authorityVault.GetAuthority(authorityName);
@@ -49,9 +49,9 @@ public class AuthenticatedTerminalFactory
     private AuthorityVault authorityVault;
 }
 
-public class AuthenticatedTerminal : IDisposable, IEquatable<AuthenticatedTerminal>
+public class AuthenticatedConnection : IDisposable, IEquatable<AuthenticatedConnection>
 {
-    internal AuthenticatedTerminal(ClientConnection terminal, ClientConnectionContext context, Authority authority, ILogger? logger)
+    internal AuthenticatedConnection(ClientConnection terminal, ClientConnectionContext context, Authority authority, ILogger? logger)
     {
         this.Connection = terminal;
         this.Context = context;
@@ -59,7 +59,7 @@ public class AuthenticatedTerminal : IDisposable, IEquatable<AuthenticatedTermin
         this.logger = logger;
     }
 
-    public bool Equals(AuthenticatedTerminal? other)
+    public bool Equals(AuthenticatedConnection? other)
     {
         if (other == null)
         {
@@ -90,9 +90,9 @@ public class AuthenticatedTerminal : IDisposable, IEquatable<AuthenticatedTermin
     private bool disposed = false; // To detect redundant calls.
 
     /// <summary>
-    /// Finalizes an instance of the <see cref="AuthenticatedTerminal"/> class.
+    /// Finalizes an instance of the <see cref="AuthenticatedConnection"/> class.
     /// </summary>
-    ~AuthenticatedTerminal()
+    ~AuthenticatedConnection()
     {
         this.Dispose(false);
     }

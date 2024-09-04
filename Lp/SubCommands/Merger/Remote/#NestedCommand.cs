@@ -32,12 +32,13 @@ public class NestedCommand : NestedCommand<NestedCommand>
 [SimpleCommand("merger-remote")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
-    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService)
+    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.nestedcommand = nestedcommand;
         this.lpService = lpService;
+        this.robustConnectionFactory = robustConnectionFactory;
     }
 
     public async Task RunAsync(CommandOptions options, string[] args)
@@ -66,6 +67,19 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
         this.userInterfaceService.WriteLine(this.nestedcommand.Node.ToString());
         this.userInterfaceService.WriteLine($"Remote key: {privateKey.ToPublicKey()}");
+
+        var robustConnection = this.robustConnectionFactory.Create();
+        if (robustConnection is null)
+        {
+            return;
+        }
+
+        var r = await robustConnection.Get();
+        if (r.IsSuccess)
+        {
+            r.Connection.
+        }
+
         await this.nestedcommand.MainAsync();
     }
 
@@ -73,6 +87,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NestedCommand nestedcommand;
     private readonly LpService lpService;
+    private readonly RobustConnection.Factory robustConnectionFactory;
 }
 
 public record CommandOptions

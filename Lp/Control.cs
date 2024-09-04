@@ -60,7 +60,7 @@ public class Control
                 ConfigureRelay(context);
 
                 // RPC / Services
-                context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
+                context.AddSingleton<NetServices.AuthenticatedConnectionFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerClientAgent>();
