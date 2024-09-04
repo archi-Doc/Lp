@@ -7,6 +7,8 @@ namespace Lp.T3cs;
 [NetServiceInterface]
 public partial interface IMergerRemote : INetService
 {
+    NetTask<NetResult> Authenticate(AuthenticationToken token);
+
     NetTask<T3csResult> SendValueProofEvidence(int evidence);
 }
 
@@ -16,6 +18,7 @@ internal class MergerRemoteAgent : IMergerRemote
     private readonly LpBase lpBase;
     private readonly Merger merger;
     private readonly SignaturePublicKey remotePublicKey;
+    private bool authenticated;
 
     public MergerRemoteAgent(LpBase lpBase, Merger merger)
     {
@@ -24,12 +27,37 @@ internal class MergerRemoteAgent : IMergerRemote
         this.lpBase.TryGetRemotePublicKey(out this.remotePublicKey);
     }
 
+    async NetTask<NetResult> IMergerRemote.Authenticate(AuthenticationToken token)
+    {
+        if (!this.lpBase.TryGetRemotePublicKey(out var publicKey))
+        {
+            return NetResult.NotAuthenticated;
+        }
+
+        if (token.ValidateAndVerifyWithSalt(TransmissionContext.Current.ServerConnection.Salt))
+        {
+            // Console.WriteLine("Authentication success");
+            this.authenticated = true;
+            return NetResult.Success;
+        }
+        else
+        {
+            this.authenticated = false;
+            return NetResult.NotAuthenticated;
+        }
+    }
+
     async NetTask<T3csResult> IMergerRemote.SendValueProofEvidence(/*Evidence? evidence*/ int x)
     {
-        if (!TransmissionContext.Current.AuthenticationTokenEquals(this.remotePublicKey))
+        if (!this.authenticated)
         {
             return T3csResult.NotAuthenticated;
         }
+
+        /*if (!TransmissionContext.Current.AuthenticationTokenEquals(this.remotePublicKey))
+        {
+            return T3csResult.NotAuthenticated;
+        }*/
 
         return T3csResult.Success;
     }

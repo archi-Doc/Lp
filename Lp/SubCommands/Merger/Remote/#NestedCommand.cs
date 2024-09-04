@@ -70,7 +70,17 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.userInterfaceService.WriteLine(node.ToString());
         this.userInterfaceService.WriteLine($"Remote key: {privateKey.ToPublicKey()}");
 
-        this.nestedcommand.RobustConnection = this.robustConnectionTerminal.Open(node, new(privateKey));
+        this.nestedcommand.RobustConnection = this.robustConnectionTerminal.Open(
+            node,
+            new(
+                privateKey,
+                async connection =>
+                {
+                    var token = new AuthenticationToken(connection.Salt);
+                    token.Sign(privateKey);
+                    return await connection.GetService<IMergerRemote>().Authenticate(token) == NetResult.Success;
+                }));
+
         if (await this.nestedcommand.RobustConnection.Get() is null)
         {
             this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());

@@ -45,7 +45,7 @@ public class RobustConnection
         }
     }
 
-    public record class Options(SignaturePrivateKey? PrivateKey);
+    public record class Options(SignaturePrivateKey? PrivateKey, Func<ClientConnection, Task<bool>>? Authenticate);
 
     #region FieldAndProperty
 
@@ -92,7 +92,15 @@ public class RobustConnection
                 return default;
             }
 
-            if (this.options?.PrivateKey is { } privateKey)
+            if (this.options?.Authenticate is { } authenticate)
+            {
+                if (!await authenticate(newConnection).ConfigureAwait(false))
+                {
+                    this.options = default; // Authentication failed
+                    return default;
+                }
+            }
+            else if (this.options?.PrivateKey is { } privateKey)
             {
                 var context = newConnection.GetContext();
                 var token = new AuthenticationToken(newConnection.Salt);
@@ -102,7 +110,7 @@ public class RobustConnection
                     var result = await newConnection.SetAuthenticationToken(token).ConfigureAwait(false);
                     if (result != NetResult.Success)
                     {
-                        this.options = default;//
+                        this.options = default;
                         return default;
                     }
                 }

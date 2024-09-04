@@ -28,7 +28,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         }
 
         this.logger.TryGet()?.Log(string.Empty);
-        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(authority.UnsafeGetPrivateKey())); // options.AuthorityName
+        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(authority.UnsafeGetPrivateKey(), default)); // options.AuthorityName
         if (await robustConnection.Get() is not { } connection)
         {
             return;
