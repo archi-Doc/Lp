@@ -8,9 +8,9 @@ public static class Subcommand
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddCommand(typeof(ListAuthoritySubcommand));
-        context.AddCommand(typeof(NewAuthoritySubcommand));
-        context.AddCommand(typeof(RemoveAuthoritySubcommand));
-        context.AddCommand(typeof(ShowAuthoritySubcommand));
+        context.AddSubcommand(typeof(ListAuthoritySubcommand));
+        context.AddSubcommand(typeof(NewAuthoritySubcommand));
+        context.AddSubcommand(typeof(RemoveAuthoritySubcommand));
+        context.AddSubcommand(typeof(ShowAuthoritySubcommand));
     }
 }

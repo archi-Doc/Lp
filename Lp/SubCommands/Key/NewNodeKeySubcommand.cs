@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("new-node-key")]
-public class NewNodeKeySubcommand : ISimpleCommand<KeySubcommand.NewKeyOptions>
+public class NewNodeKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 {
     public NewNodeKeySubcommand(ILogger<NewNodeKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
     {
@@ -16,7 +16,7 @@ public class NewNodeKeySubcommand : ISimpleCommand<KeySubcommand.NewKeyOptions>
         this.seedPhrase = seedPhrase;
     }
 
-    public void Run(KeySubcommand.NewKeyOptions options, string[] args)
+    public void Run(Subcommand.NewKeyOptions options, string[] args)
     {
         this.logger.TryGet()?.Log("New node key");
 

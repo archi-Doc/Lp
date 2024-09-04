@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("new-signature-key")]
-public class NewSignatureKeySubcommand : ISimpleCommand<KeySubcommand.NewKeyOptions>
+public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 {
     public NewSignatureKeySubcommand(ILogger<NewSignatureKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
     {
@@ -16,7 +16,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<KeySubcommand.NewKeyOpti
         this.seedPhrase = seedPhrase;
     }
 
-    public void Run(KeySubcommand.NewKeyOptions options, string[] args)
+    public void Run(Subcommand.NewKeyOptions options, string[] args)
     {
         this.logger.TryGet()?.Log("New signature key");
 

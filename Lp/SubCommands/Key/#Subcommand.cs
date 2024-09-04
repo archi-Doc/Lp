@@ -4,12 +4,12 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public static class KeySubcommand
+public static class Subcommand
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddCommand(typeof(NewSignatureKeySubcommand));
-        context.AddCommand(typeof(NewNodeKeySubcommand));
+        context.AddSubcommand(typeof(NewSignatureKeySubcommand));
+        context.AddSubcommand(typeof(NewNodeKeySubcommand));
     }
 
     public record NewKeyOptions

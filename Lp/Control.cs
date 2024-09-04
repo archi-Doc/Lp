@@ -95,8 +95,6 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerOperation.MergerOperationSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowAuthoritySubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.NewSignatureKeySubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.NewNodeKeySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
 
@@ -119,7 +117,7 @@ public class Control
                 Lp.Subcommands.MergerClientNestedCommand.Configure(context);
                 Lp.Subcommands.MergerOperation.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
-                Lp.Subcommands.KeySubcommand.Configure(context);
+                Lp.Subcommands.Subcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
