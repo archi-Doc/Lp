@@ -5,18 +5,18 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("rm")]
-public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+[SimpleCommand("remove-authority")]
+public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public AuthoritySubcommandRemove(ILogger<AuthoritySubcommandRemove> logger, Control control)
+    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, Control control)
     {
-        this.Control = control;
+        this.control = control;
         this.logger = logger;
     }
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var result = this.Control.AuthorityVault.RemoveAuthority(option.AuthorityName);
+        var result = this.control.AuthorityVault.RemoveAuthority(option.AuthorityName);
 
         if (result == AuthorityResult.Success)
         {
@@ -28,9 +28,8 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
         }
     }
 
-    public Control Control { get; set; }
-
-    private ILogger<AuthoritySubcommandRemove> logger;
+    private readonly Control control;
+    private readonly ILogger logger;
 }
 
 public record AuthoritySubcommandNameOptions

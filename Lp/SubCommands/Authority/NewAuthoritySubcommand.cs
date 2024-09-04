@@ -4,12 +4,12 @@ using Lp.T3cs;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.Authority;
 
-[SimpleCommand("new")]
-public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
+[SimpleCommand("new-authority")]
+public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public AuthoritySubcommandNew(ILogger<AuthoritySubcommandNew> logger, AuthorityVault authorityVault, Seedphrase seedphrase)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityVault authorityVault, Seedphrase seedphrase)
     {
         this.logger = logger;
         this.authorityVault = authorityVault;
@@ -30,7 +30,7 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
         }
 
         var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
-        var authorityInfo = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
+        var authorityInfo = new Lp.T3cs.Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
         var result = this.authorityVault.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
 
         if (result == AuthorityResult.Success)

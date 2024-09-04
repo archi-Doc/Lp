@@ -5,10 +5,10 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("reveal-authority")]
-public class RevealAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+[SimpleCommand("show-authority")]
+public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public RevealAuthoritySubcommand(IConsoleService consoleService, ILogger<RevealAuthoritySubcommand> logger, AuthorityVault authorityVault)
+    public ShowAuthoritySubcommand(IConsoleService consoleService, ILogger<ShowAuthoritySubcommand> logger, AuthorityVault authorityVault)
     {
         this.consoleService = consoleService;
         this.logger = logger;

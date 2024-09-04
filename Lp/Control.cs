@@ -94,7 +94,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerClientSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerOperation.MergerOperationSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.RevealAuthoritySubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ShowAuthoritySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewSignatureKeySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewNodeKeySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
@@ -114,7 +114,7 @@ public class Control
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.NodeSubcommand.Configure(context);
-                Lp.Subcommands.AuthoritySubcommand.Configure(context);
+                Lp.Subcommands.Authority.Subcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);
                 Lp.Subcommands.MergerClientNestedCommand.Configure(context);
                 Lp.Subcommands.MergerOperation.NestedCommand.Configure(context);

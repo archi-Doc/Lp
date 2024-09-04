@@ -3,12 +3,12 @@
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.Authority;
 
-[SimpleCommand("ls")]
-public class AuthoritySubcommandLs : ISimpleCommandAsync
+[SimpleCommand("list-authority")]
+public class ListAuthoritySubcommand : ISimpleCommandAsync
 {
-    public AuthoritySubcommandLs(IUserInterfaceService userInterfaceService, AuthorityVault authorityVault)
+    public ListAuthoritySubcommand(IUserInterfaceService userInterfaceService, AuthorityVault authorityVault)
     {
         this.userInterfaceService = userInterfaceService;
         this.authorityVault = authorityVault;
@@ -20,6 +20,6 @@ public class AuthoritySubcommandLs : ISimpleCommandAsync
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private AuthorityVault authorityVault;
-    private IUserInterfaceService userInterfaceService;
+    private readonly AuthorityVault authorityVault;
+    private readonly IUserInterfaceService userInterfaceService;
 }
