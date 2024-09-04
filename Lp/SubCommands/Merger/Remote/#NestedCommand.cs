@@ -32,13 +32,13 @@ public class NestedCommand : NestedCommand<NestedCommand>
 [SimpleCommand("merger-remote")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
-    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
+    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Terminal robustConnectionTerminal)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.nestedcommand = nestedcommand;
         this.lpService = lpService;
-        this.robustConnectionFactory = robustConnectionFactory;
+        this.robustConnectionTerminal = robustConnectionTerminal;
     }
 
     public async Task RunAsync(CommandOptions options, string[] args)
@@ -68,17 +68,8 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.userInterfaceService.WriteLine(this.nestedcommand.Node.ToString());
         this.userInterfaceService.WriteLine($"Remote key: {privateKey.ToPublicKey()}");
 
-        var robustConnection = this.robustConnectionFactory.Create();
-        if (robustConnection is null)
-        {
-            return;
-        }
-
+        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node);
         var r = await robustConnection.Get();
-        if (r.IsSuccess)
-        {
-            r.Connection.
-        }
 
         await this.nestedcommand.MainAsync();
     }
@@ -87,11 +78,14 @@ public class Command : ISimpleCommandAsync<CommandOptions>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NestedCommand nestedcommand;
     private readonly LpService lpService;
-    private readonly RobustConnection.Factory robustConnectionFactory;
+    private readonly RobustConnection.Terminal robustConnectionTerminal;
 }
 
 public record CommandOptions
 {
+    [SimpleOption("Node", Description = "Node information", Required = true)]
+    public string Node { get; init; } = string.Empty;
+
     [SimpleOption("Authority", Description = "Authority name")]
     public string Authority { get; init; } = string.Empty;
 
@@ -100,7 +94,4 @@ public record CommandOptions
 
     [SimpleOption("PrivateKey", Description = "Signature private key string")]
     public string PrivateKey { get; init; } = string.Empty;
-
-    [SimpleOption("Node", Description = "Node information")]
-    public string Node { get; init; } = string.Empty;
 }
