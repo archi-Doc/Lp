@@ -2,9 +2,10 @@
 
 using SimpleCommandLine;
 
-namespace Lp.Subcommands.MergerRemote;
+namespace Lp.Subcommands.MergerClient;
 
-public class NestedCommand : NestedCommand<NestedCommand>
+public class NestedCommand
+    : NestedCommand<NestedCommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
@@ -12,7 +13,8 @@ public class NestedCommand : NestedCommand<NestedCommand>
         context.TryAddSingleton(t);
 
         var group = context.GetCommandGroup(t);
-        group.AddCommand(typeof(NewCredentialSubcommand));
+        group.AddCommand(typeof(InfoCommand));
+        group.AddCommand(typeof(CreateCreditCommand));
     }
 
     public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
@@ -20,22 +22,22 @@ public class NestedCommand : NestedCommand<NestedCommand>
     {
     }
 
-    public override string Prefix => "merger-remote >> ";
+    public override string Prefix => "merger-client >> ";
 
     public NetNode Node { get; set; } = NetNode.Alternative;
 }
 
-[SimpleCommand("merger-remote")]
-public class MergerRemoteSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
+[SimpleCommand("merger-client")]
+public class Command : ISimpleCommandAsync<CommandOptions>
 {
-    public MergerRemoteSubcommand(ILogger<MergerRemoteSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
+    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.nestedcommand = nestedcommand;
     }
 
-    public async Task RunAsync(MergerSubcommandOptions options, string[] args)
+    public async Task RunAsync(CommandOptions options, string[] args)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
@@ -50,4 +52,12 @@ public class MergerRemoteSubcommand : ISimpleCommandAsync<MergerSubcommandOption
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NestedCommand nestedcommand;
+}
+
+public record CommandOptions
+{
+    [SimpleOption("Node", Description = "Node information", Required = true)]
+    public string Node { get; init; } = string.Empty;
+
+    public override string ToString() => $"{this.Node}";
 }

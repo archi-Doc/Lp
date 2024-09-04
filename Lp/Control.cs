@@ -91,8 +91,8 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.SeedphraseSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.MergerClientSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.MergerRemoteSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.MergerClient.Command));
+                context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
@@ -107,7 +107,7 @@ public class Control
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);
-                Lp.Subcommands.MergerClientNestedCommand.Configure(context);
+                Lp.Subcommands.MergerClient.NestedCommand.Configure(context);
                 Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
                 Lp.Subcommands.KeyCommand.Subcommand.Configure(context);

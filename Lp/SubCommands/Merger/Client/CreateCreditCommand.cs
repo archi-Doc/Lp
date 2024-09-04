@@ -4,12 +4,12 @@ using Lp.NetServices;
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.MergerClient;
 
 [SimpleCommand("create-credit")]
-public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>
+public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, NetTerminal terminal, MergerClientNestedCommand nestedcommand, AuthorityVault authorityVault, AuthenticatedTerminalFactory authorizedTerminalFactory)
+    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal terminal, NestedCommand nestedcommand, AuthorityVault authorityVault, AuthenticatedTerminalFactory authorizedTerminalFactory)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -48,7 +48,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
 
     private readonly ILogger logger;
     private readonly NetTerminal terminal;
-    private readonly MergerClientNestedCommand nestedcommand;
+    private readonly NestedCommand nestedcommand;
     private readonly AuthorityVault authorityVault;
     private readonly AuthenticatedTerminalFactory authenticatedTerminalFactory;
 }

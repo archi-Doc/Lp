@@ -3,12 +3,12 @@
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.MergerClient;
 
 [SimpleCommand("info")]
-public class MergerNestedcommandInfo : ISimpleCommandAsync
+public class InfoCommand : ISimpleCommandAsync
 {
-    public MergerNestedcommandInfo(ILogger<MergerNestedcommandInfo> logger, NetTerminal terminal, MergerClientNestedCommand nestedcommand)
+    public InfoCommand(ILogger<InfoCommand> logger, NetTerminal terminal, NestedCommand nestedcommand)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -62,5 +62,5 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
 
     private ILogger logger;
     private NetTerminal terminal;
-    private MergerClientNestedCommand nestedcommand;
+    private NestedCommand nestedcommand;
 }
