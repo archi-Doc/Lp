@@ -20,6 +20,12 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     {
         this.logger.TryGet()?.Log($"New vault key");
 
+        if (!string.IsNullOrEmpty(options.PrivateKey))
+        {
+            this.ParsePrivateKey(options);
+            return;
+        }
+
         var phrase = options.Seedphrase?.Trim();
         byte[]? seed;
         if (string.IsNullOrEmpty(phrase))
@@ -41,7 +47,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             }
         }
 
-        var prefix = options.KeyClass.ToString() + (string.IsNullOrEmpty(options.Name) ? " Temporary: " : $" {options.Name}: ");
+        var prefix = this.GetPrefix(options.KeyClass, options);
         if (options.KeyClass == KeyClass.Signature)
         {
             var key = seed is null ? SignaturePrivateKey.Create() : SignaturePrivateKey.Create(seed);
@@ -77,6 +83,49 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
     }
 
+    private string GetPrefix(KeyClass keyClass, NewVaultOptions options)
+        => keyClass.ToString() + (string.IsNullOrEmpty(options.Name) ? " Temporary: " : $" {options.Name}: ");
+
+    private void ParsePrivateKey(NewVaultOptions options)
+    {
+        if (SignaturePrivateKey.TryParse(options.PrivateKey, out var signaturePrivateKey))
+        {
+            this.userInterfaceService.WriteLine(signaturePrivateKey.UnsafeToString());
+            var prefix = this.GetPrefix(signaturePrivateKey.KeyClass, options);
+            this.logger.TryGet()?.Log(prefix + signaturePrivateKey.ToPublicKey().ToString());
+
+            if (!string.IsNullOrEmpty(options.Name))
+            {
+                this.vault.SerializeAndTryAdd(options.Name, signaturePrivateKey);
+            }
+        }
+        else if (EncryptionPrivateKey.TryParse(options.PrivateKey, out var encryptionPrivateKey))
+        {
+            this.userInterfaceService.WriteLine(encryptionPrivateKey.UnsafeToString());
+            var prefix = this.GetPrefix(encryptionPrivateKey.KeyClass, options);
+            this.logger.TryGet()?.Log(prefix + encryptionPrivateKey.ToPublicKey().ToString());
+
+            if (!string.IsNullOrEmpty(options.Name))
+            {
+                this.vault.SerializeAndTryAdd(options.Name, encryptionPrivateKey);
+            }
+        }
+        else if (NodePrivateKey.TryParse(options.PrivateKey, out var nodePrivateKey))
+        {
+            this.userInterfaceService.WriteLine(nodePrivateKey.UnsafeToString());
+            var prefix = this.GetPrefix(nodePrivateKey.KeyClass, options);
+            this.logger.TryGet()?.Log(prefix + nodePrivateKey.ToPublicKey().ToString());
+
+            if (!string.IsNullOrEmpty(options.Name))
+            {
+                this.vault.SerializeAndTryAdd(options.Name, nodePrivateKey);
+            }
+        }
+        else
+        {
+        }
+    }
+
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Seedphrase seedPhrase;
@@ -93,4 +142,7 @@ public record NewVaultOptions
 
     [SimpleOption("Seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
+
+    [SimpleOption("PrivateKey", Description = "PrivateKey")]
+    public string? PrivateKey { get; init; }
 }
