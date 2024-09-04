@@ -48,6 +48,7 @@ public class Control
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpStats>();
+                context.AddSingleton<LpService>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();

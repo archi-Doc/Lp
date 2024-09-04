@@ -39,13 +39,17 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     public async Task RunAsync(CommandOptions options, string[] args)
     {
-        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+        if (!string.IsNullOrEmpty(options.Node))
         {
-            return;
+            if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+            {
+                return;
+            }
+
+            this.nestedcommand.Node = node;
         }
 
-        this.nestedcommand.Node = node;
-        this.userInterfaceService.WriteLine(node.ToString());
+        this.userInterfaceService.WriteLine(this.nestedcommand.Node.ToString());
         await this.nestedcommand.MainAsync();
     }
 
@@ -56,7 +60,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
 public record CommandOptions
 {
-    [SimpleOption("Node", Description = "Node information", Required = true)]
+    [SimpleOption("Node", Description = "Node information")]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

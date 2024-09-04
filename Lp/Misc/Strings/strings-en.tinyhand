@@ -33,6 +33,7 @@ Error = {
     Authorization = "Authorization error"
     NoPingFromContainer = "Failed to receive a Ping response from the container"
     InvalidPrivateKey = "PrivateKey is invalid"
+    NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey."
 }
 
 Vault = {
