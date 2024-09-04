@@ -29,7 +29,7 @@ public sealed partial class CredentialProof : Proof
 
             if (oldItem is not null &&
                 oldItem.TryGetValueProof(out var valueProof2) &&
-                valueProof2.ProofMics >= valueProof.ProofMics)
+                valueProof2.VerificationMics >= valueProof.VerificationMics)
             {
                 return false;
             }
@@ -40,7 +40,7 @@ public sealed partial class CredentialProof : Proof
             }
 
             var publicKey = valueProof.GetPublicKey();
-            if (publicKey.Equals(LpConstants.LpKey))
+            if (publicKey.Equals(LpConstants.LpPublicKey))
             {// Lp key
             }
             else if (goshujin.OriginatorChain.FindFirst(publicKey) is null)
@@ -57,6 +57,12 @@ public sealed partial class CredentialProof : Proof
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public CredentialProof()
     {
+    }
+
+    public CredentialProof(Evidence valueProofEvidence, NetAddress netAddress)
+    {
+        this.ValueProofEvidence = valueProofEvidence;
+        this.NetAddress = netAddress;
     }
 
     #region FieldAndProperty

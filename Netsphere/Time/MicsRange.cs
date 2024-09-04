@@ -4,34 +4,39 @@ namespace Netsphere;
 
 public readonly record struct MicsRange
 {
+    public static bool IsWithin(long targetMics, long lowerBoundMics, long upperBoundMics)
+        => lowerBoundMics <= targetMics && targetMics <= upperBoundMics;
+
+    public static bool IsWithinMargin(long targetMics, long lowerBoundMics, long upperBoundMics, long margin = Mics.DefaultMarginMics)
+        => (lowerBoundMics - margin <= targetMics) && (targetMics <= upperBoundMics + margin);
+
     /// <summary>
     /// Creates a <see cref="MicsRange"/> from the present mics (<see cref="Mics.GetCorrected"/>) to the present+specified mics.
     /// </summary>
-    /// <param name="mics">Mics ahead from the present mics.</param>
-    /// <param name="error">Allowable error in mics.</param>
+    /// <param name="period">Mics ahead from the present mics.</param>
     /// <returns><see cref="MicsRange"/>.</returns>
-    public static MicsRange FromCorrectedToMics(long mics, long error)
+    public static MicsRange FromFastCorrectedToFuture(long period)
     {
-        var current = Mics.GetCorrected();
-        return new MicsRange(current - error, current + mics + error);
+        var current = Mics.FastCorrected;
+        return new MicsRange(current, current + period);
     }
 
-    public static MicsRange FromFastSystemToFuture(long duration)
+    public static MicsRange FromFastSystemToFuture(long period)
     {
         var lower = Mics.FastSystem;
-        return new(lower, lower + duration);
+        return new(lower, lower + period);
     }
 
-    public static MicsRange FromCorrectedToFuture(long duration)
-    {
-        var lower = Mics.GetCorrected();
-        return new(lower, lower + duration);
-    }
-
-    public static MicsRange FromPastToFastSystem(long duration)
+    public static MicsRange FromPastToFastSystem(long period)
     {
         var upper = Mics.FastSystem;
-        return new(upper - duration, upper);
+        return new(upper - period, upper);
+    }
+
+    public static MicsRange FromPastToFastCorrected(long period)
+    {
+        var upper = Mics.FastCorrected;
+        return new(upper - period, upper);
     }
 
     public MicsRange(long lowerBoundMics, long upperBoundMics)
@@ -65,6 +70,9 @@ public readonly record struct MicsRange
     public static MicsRange MicrosecondsFromFastSystem(double microseconds)
         => FromFastSystemToFuture((long)microseconds);
 
-    public bool IsWithin(long mics)
-        => this.LowerBound <= mics && mics <= this.UpperBound;
+    public bool IsWithin(long targetMics)
+        => this.LowerBound <= targetMics && targetMics <= this.UpperBound;
+
+    public bool IsWithinMargin(long targetMics, long margin = Mics.DefaultMarginMics)
+        => (this.LowerBound - margin) <= targetMics && targetMics <= (this.UpperBound + margin);
 }

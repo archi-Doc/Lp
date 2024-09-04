@@ -32,14 +32,38 @@ public sealed partial class Authority
     {
     }
 
+    #region FieldAndProperty
+
+    public SignaturePublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
+
+    [Key(0)]
+    private byte[] seed = Array.Empty<byte>();
+
+    [Key(1)]
+    public AuthorityLifetime Lifetime { get; private set; }
+
+    [Key(2)]
+    public long LifeMics { get; private set; }
+
+    [Key(3)]
+    // public Value[] Values { get; private set; } = Array.Empty<Value>();
+    public Value Values { get; private set; } = default!;
+
+    private int hash;
+
+    #endregion
+
+    public SignaturePrivateKey UnsafeGetPrivateKey()
+        => this.GetOrCreatePrivateKey();
+
     public override int GetHashCode()
         => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
 
-    public void SignProof<T>(T proof, long proofMics)
+    public void SignProof<T>(T proof, long validMics)
         where T : Proof, ITinyhandSerialize<T>
     {
         var privateKey = this.GetOrCreatePrivateKey();
-        proof.SignProof<T>(privateKey, proofMics);
+        proof.SignProof<T>(privateKey, validMics);
     }
 
     public void SignWithSalt<T>(T token, ulong salt)
@@ -79,23 +103,6 @@ public sealed partial class Authority
         this.CachePrivateKey(credit, privateKey);
         return result;
     }
-
-    public SignaturePublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
-
-    [Key(0)]
-    private byte[] seed = Array.Empty<byte>();
-
-    [Key(1)]
-    public AuthorityLifetime Lifetime { get; private set; }
-
-    [Key(2)]
-    public long LifeMics { get; private set; }
-
-    [Key(3)]
-    // public Value[] Values { get; private set; } = Array.Empty<Value>();
-    public Value Values { get; private set; } = default!;
-
-    private int hash;
 
     private SignaturePrivateKey GetOrCreatePrivateKey()
     {// this.GetOrCreatePrivateKey(Credit.Default);

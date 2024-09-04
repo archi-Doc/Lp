@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("change-vault-pass")]
 public class ChangeVaultPassSubcommand : ISimpleCommandAsync
@@ -10,7 +10,7 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
     public ChangeVaultPassSubcommand(ILogger<ChangeVaultPassSubcommand> logger, Control control)
     {
         this.logger = logger;
-        this.Control = control;
+        this.control = control;
     }
 
     public async Task RunAsync(string[] args)
@@ -20,12 +20,12 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
         string? currentPassword;
         while (true)
         {
-            currentPassword = await this.Control.UserInterfaceService.RequestPassword(Hashed.Dialog.Password.EnterCurrent);
+            currentPassword = await this.control.UserInterfaceService.RequestPassword(Hashed.Dialog.Password.EnterCurrent);
             if (currentPassword == null)
             {
                 return;
             }
-            else if (this.Control.Vault.CheckPassword(currentPassword))
+            else if (this.control.Vault.CheckPassword(currentPassword))
             {// Correct
                 break;
             }
@@ -33,17 +33,16 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
         }
 
-        var newPassword = await this.Control.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
+        var newPassword = await this.control.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
         if (newPassword == null)
         {
             return;
         }
 
-        this.Control.Vault.ChangePassword(currentPassword, newPassword);
+        this.control.Vault.ChangePassword(currentPassword, newPassword);
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 
-    public Control Control { get; set; }
-
+    private readonly Control control;
     private readonly ILogger logger;
 }

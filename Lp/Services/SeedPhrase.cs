@@ -9,7 +9,7 @@ public class Seedphrase
 {
     public const int SeedphraseDefaultLength = 20;
     public const int SeedphraseMinimumLength = 12;
-    private const string SeedphrasesPath = "Strings.Seedphrases";
+    private const string SeedphrasesPath = "Misc.Strings.Seedphrases";
 
     public Seedphrase()
     {

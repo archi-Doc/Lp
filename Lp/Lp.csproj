@@ -26,20 +26,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Strings\Seedphrases" />
-    <EmbeddedResource Include="Strings\strings-en.tinyhand" />
-    <EmbeddedResource Include="Strings\strings-ja.tinyhand" />
+    <EmbeddedResource Include="Misc\Strings\Seedphrases" />
+    <EmbeddedResource Include="Misc\Strings\strings-en.tinyhand" />
+    <EmbeddedResource Include="Misc\Strings\strings-ja.tinyhand" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Generated\*" />
-    <Compile Remove="Net\NetNode\**" />
-    <EmbeddedResource Remove="Net\NetNode\**" />
-    <None Remove="Net\NetNode\**" />
+    <Compile Remove="NetServices\NetNode\**" />
+    <EmbeddedResource Remove="NetServices\NetNode\**" />
+    <None Remove="NetServices\NetNode\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CrystalData" Version="0.17.7" />
+    <PackageReference Include="CrystalData" Version="0.18.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

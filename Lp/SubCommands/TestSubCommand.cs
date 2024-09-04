@@ -20,25 +20,17 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.control = control;
         this.authorityVault = authorityVault;
         this.seedPhrase = seedPhrase;
-
-        lpStats.Credentials.Add(new(new Value()));
     }
 
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
-        /*var privateKey = NodePrivateKey.Create();
-        var publicKey = privateKey.ToPublicKey();
-        Console.WriteLine($"{privateKey.UnsafeToString()}");
-        Console.WriteLine($"{publicKey.ToString()}");
-
-        var st = privateKey.UnsafeToString();
-        NodePrivateKey.TryParse(st, out var privateKey2);
-        Console.WriteLine($"{privateKey.Equals(privateKey2).ToString()}");
-        st = publicKey.ToString();
-        NodePublicKey.TryParse(st, out var publicKey2);
-        Console.WriteLine($"{publicKey.Equals(publicKey2).ToString()}");*/
+        var mics = Mics.GetCorrected();
+        this.userInterfaceService.WriteLine($"Mics: {mics}");
+        this.userInterfaceService.WriteLine($"Utc: {Mics.ToDateTime(mics).ToString()}");
+        this.userInterfaceService.WriteLine($"Hour: {Mics.ToDateTime(mics / Mics.MicsPerHour * Mics.MicsPerHour).ToString()}");
+        this.userInterfaceService.WriteLine($"Day: {Mics.ToDateTime(mics / Mics.MicsPerDay * Mics.MicsPerDay).ToString()}");
 
         await this.TestLinkageKey();
     }
@@ -90,12 +82,24 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             }
         }
 
-        if (await this.authorityVault.GetAuthority("lp") is { } authority)
+        // if (await this.authorityVault.GetAuthority("lp") is { } authority)
         {
-            var g = new Credential.GoshujinClass();
-            var c = new Credential(new());
-            authority.Sign(c);
-            Credential.Integrality.Default.IntegrateObject(g, c);
+            var g = new CredentialProof.GoshujinClass();
+
+            var owner = SignaturePrivateKey.Create();
+            if (Credit.TryCreate(LpConstants.LpPublicKey, [SignaturePrivateKey.Create().ToPublicKey()], out var credit) &&
+                Value.TryCreate(owner.ToPublicKey(), 111, credit, out var value))
+            {
+                this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
+                this.userInterfaceService.WriteLine($"Value: {value.ToString()}");
+                Value.TryParse(value.ToString(), out var value2);
+                this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
+
+                var valueProof = new ValueProof(value);
+
+                valueProof.SignProof(owner, 123);
+                var c = new CredentialProof();
+            }
         }
     }
 
@@ -122,31 +126,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Alternative(public): {publicKey.ToString()}");
         this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
-
-        var originator = SignaturePrivateKey.Create();
-        var pub = originator.ToPublicKey();
-        var value = new Value(1, pub, [pub]);
-        this.userInterfaceService.WriteLine(value.GetHashCode().ToString());
-
-        var bin = TinyhandSerializer.Serialize(value);
-        var sign = originator.SignData(bin);
-        var flag = pub.VerifyData(bin, sign);
-
-        this.userInterfaceService.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
-        this.userInterfaceService.WriteLine($"{pub.ToString()}");
-
-        // this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
-
-        /*using (var terminal = this.control.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
-        {
-            if (terminal is null)
-            {
-                return;
-            }
-
-            var service = terminal.GetService<IBenchmarkService>();
-            await service.Report(new());
-        }*/
     }
 
     private readonly ILogger logger;

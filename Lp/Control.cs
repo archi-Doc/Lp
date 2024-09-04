@@ -48,6 +48,7 @@ public class Control
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpStats>();
+                context.AddSingleton<LpService>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
@@ -59,12 +60,13 @@ public class Control
                 ConfigureRelay(context);
 
                 // RPC / Services
-                context.AddSingleton<NetServices.AuthenticatedTerminalFactory>();
+                context.AddSingleton<NetServices.AuthenticatedConnectionFactory>();
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
+                context.AddTransient<Lp.T3cs.MergerClientAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
+                context.AddTransient<MergerRemoteAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -90,20 +92,11 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.SeedphraseSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.MergerSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.MergerClient.Command));
+                context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.RevealAuthoritySubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.NewSignatureKeySubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.NewNodeKeySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
-
-                // Vault
-                context.AddSubcommand(typeof(Lp.Subcommands.NewVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.RemoveVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ListVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ShowVaultSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.ChangeVaultPassSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
@@ -112,11 +105,13 @@ public class Control
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.NodeSubcommand.Configure(context);
-                Lp.Subcommands.NodeKeySubcommand.Configure(context);
-                Lp.Subcommands.AuthoritySubcommand.Configure(context);
+                Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
+                Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);
-                Lp.Subcommands.MergerNestedcommand.Configure(context);
+                Lp.Subcommands.MergerClient.NestedCommand.Configure(context);
+                Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
+                Lp.Subcommands.KeyCommand.Subcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
@@ -255,8 +250,8 @@ public class Control
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
             try
             {
-                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly(null, asm, "Misc.Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Misc.Strings.strings-en.tinyhand");
             }
             catch
             {
@@ -339,7 +334,7 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
-                // Merger, Relay, Peer
+                // ZenMerger, RelayMerger, ContentMerger, Peer, Relay
                 await control.CreateMerger(this.Context);
                 await control.CreatePeer(this.Context);
                 await control.CreateRelay(this.Context);
@@ -500,9 +495,9 @@ public class Control
     public async Task CreateMerger(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-        if (!string.IsNullOrEmpty(this.LpBase.Options.CreditMergerPrivault))
-        {// CreditMergerPrivault is valid
-            var privault = this.LpBase.Options.CreditMergerPrivault;
+        if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
+        {// MergerPrivault is valid
+            var privault = this.LpBase.Options.MergerPrivault;
             if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
@@ -514,7 +509,8 @@ public class Control
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, privateKey);
-            this.NetControl.Services.Register<IMergerService, MergerServiceAgent>();
+            this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
+            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -532,6 +528,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
+            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
     }
 

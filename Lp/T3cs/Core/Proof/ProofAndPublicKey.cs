@@ -12,9 +12,9 @@ public abstract partial class ProofAndPublicKey : Proof
     public override SignaturePublicKey GetPublicKey()
         => this.PublicKey;
 
-    internal void SetInformationInternal(SignaturePrivateKey privateKey, long proofMics)
+    internal void PrepareSignInternal(SignaturePrivateKey privateKey, long validMics)
     {
+        this.PrepareSignInternal(validMics);
         this.PublicKey = privateKey.ToPublicKey();
-        this.ProofMics = proofMics;
     }
 }

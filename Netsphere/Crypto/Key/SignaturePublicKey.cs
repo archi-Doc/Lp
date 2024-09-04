@@ -106,6 +106,13 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
             return false;
         }
 
+        /*if (KeyAlias.TryGetAlias(this, out var alias))
+        {
+            alias.CopyTo(destination);
+            written = alias.Length;
+            return true;
+        }*/
+
         Span<byte> span = stackalloc byte[KeyHelper.EncodedLength + KeyHelper.ChecksumLength];
         this.TryWriteBytes(span, out _);
         KeyHelper.SetChecksum(span);
@@ -201,6 +208,8 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
 
     [Key(4)]
     private readonly ulong x3;
+
+    public bool IsValid => this.x0 != 0;
 
     public byte KeyValue => this.keyValue;
 

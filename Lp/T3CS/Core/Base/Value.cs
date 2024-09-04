@@ -17,12 +17,31 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const long MinPoint = 1; // -MaxPoint;
 
+    public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
+    {
+        var v = new Value();
+        v.Owner = owner;
+        v.Point = point;
+        v.Credit = credit;
+
+        if (v.Validate())
+        {
+            value = v;
+            return true;
+        }
+        else
+        {
+            value = default;
+            return false;
+        }
+    }
+
     #region IStringConvertible
 
     public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance)
-    {
+    {// Owner#Point@Originator/Mergers
         instance = default;
         var span = source.Trim();
 
@@ -57,14 +76,49 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
             return false;
         }
 
-        instance = new(owner, point, credit);
+        if (!Value.TryCreate(owner, point, credit, out var value))
+        {
+            return false;
+        }
+
+        instance = value;
         return true;
     }
 
     public int GetStringLength() => -1;
 
-    public bool TryFormat(Span<char> destination, out int written) { throw new NotImplementedException(); }
+    public bool TryFormat(Span<char> destination, out int written)
+    {
+        written = 0;
+        if (destination.Length < MaxStringLength)
+        {
+            return false;
+        }
 
+        var span = destination;
+        if (!this.Owner.TryFormat(span, out var ownerWritten))
+        {
+            return false;
+        }
+
+        span = span.Slice(ownerWritten);
+        span[0] = PointSymbol;
+        span = span.Slice(1);
+        if (!this.Point.TryFormat(span, out var pointWritten))
+        {
+            return false;
+        }
+
+        span = span.Slice(pointWritten);
+
+        if (!this.Credit.TryFormat(span, out var creditWritten))
+        {
+            return false;
+        }
+
+        written = ownerWritten + 1 + pointWritten + creditWritten;
+        return true;
+    }
 
     #endregion
 
@@ -83,29 +137,6 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public Value()
     {
-    }
-
-    public Value(Point point, SignaturePublicKey originator, /*SignaturePublicKey standard, */SignaturePublicKey[] mergers)
-    {
-        this.Point = point;
-        this.Credit = new(originator, mergers);
-
-        if (!this.Validate())
-        {
-            throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    public Value(SignaturePublicKey owner, Point point, Credit credit)
-    {//
-        this.Owner = owner;
-        this.Point = point;
-        this.Credit = credit;
-
-        if (!this.Validate())
-        {
-            throw new ArgumentOutOfRangeException();
-        }
     }
 
     public bool Validate()
@@ -157,4 +188,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
         return hash.ToHashCode();
     }
+
+    public override string ToString()
+        => this.ConvertToString();
 }

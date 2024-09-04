@@ -2,12 +2,12 @@
 
 using SimpleCommandLine;
 
-namespace Lp.Subcommands;
+namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("list-vault")]
 public class ListVaultSubcommand : ISimpleCommandAsync
 {
-    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, Vault vault)
+    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.Vault vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;
@@ -19,6 +19,6 @@ public class ListVaultSubcommand : ISimpleCommandAsync
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private Vault vault;
-    private IUserInterfaceService userInterfaceService;
+    private readonly Lp.Vault vault;
+    private readonly IUserInterfaceService userInterfaceService;
 }
