@@ -2,6 +2,7 @@
 
 using Lp.NetServices;
 using Lp.T3cs;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.MergerClient;
@@ -28,7 +29,8 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         }
 
         this.logger.TryGet()?.Log(string.Empty);
-        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(authority.UnsafeGetPrivateKey(), default)); // options.AuthorityName
+        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(x => VerificationHelper.SetAuthenticationToken(x, authority)));
+        // var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(x => RobustConnection.SetAuthenticationToken(x, authority.UnsafeGetPrivateKey())));
         if (await robustConnection.Get() is not { } connection)
         {
             return;

@@ -8,6 +8,34 @@ namespace Lp;
 
 public static class VerificationHelper
 {
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority)
+    {
+        var context = connection.GetContext();
+        var token = new AuthenticationToken(connection.Salt);
+        authority.Sign(token);
+        if (context.AuthenticationTokenEquals(token.PublicKey))
+        {
+            return true;
+        }
+
+        var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
+        return result == NetResult.Success;
+    }
+
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority, Credit credit)
+    {
+        var context = connection.GetContext();
+        var token = new AuthenticationToken(connection.Salt);
+        authority.SignToken(credit, token);
+        if (context.AuthenticationTokenEquals(token.PublicKey))
+        {
+            return true;
+        }
+
+        var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
+        return result == NetResult.Success;
+    }
+
     public static Identifier GetIdentifier<T>(this T? value, int level)
         where T : ITinyhandSerialize<T>
     {

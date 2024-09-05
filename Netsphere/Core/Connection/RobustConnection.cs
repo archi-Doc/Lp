@@ -45,7 +45,7 @@ public class RobustConnection
         }
     }
 
-    public record class Options(SignaturePrivateKey? PrivateKey, Func<ClientConnection, Task<bool>>? Authenticate);
+    public record class Options(Func<ClientConnection, Task<bool>>? Authenticate);
 
     #region FieldAndProperty
 
@@ -61,6 +61,20 @@ public class RobustConnection
     {
         this.netTerminal = netTerminal;
         this.netNode = netNode;
+    }
+
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, SignaturePrivateKey signaturePrivateKey)
+    {
+        var context = connection.GetContext();
+        var token = new AuthenticationToken(connection.Salt);
+        token.Sign(signaturePrivateKey);
+        if (context.AuthenticationTokenEquals(token.PublicKey))
+        {
+            return true;
+        }
+
+        var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
+        return result == NetResult.Success;
     }
 
     public async ValueTask<ClientConnection?> Get()
@@ -93,15 +107,16 @@ public class RobustConnection
             }
 
             if (this.options?.Authenticate is { } authenticate)
-            {
+            {// Authenticate delegate
                 if (!await authenticate(newConnection).ConfigureAwait(false))
                 {
                     this.options = default; // Authentication failed
                     return default;
                 }
             }
-            else if (this.options?.PrivateKey is { } privateKey)
-            {
+
+            /*else if (this.options?.PrivateKey is { } privateKey)
+            {// Private key
                 var context = newConnection.GetContext();
                 var token = new AuthenticationToken(newConnection.Salt);
                 token.Sign(privateKey);
@@ -114,7 +129,7 @@ public class RobustConnection
                         return default;
                     }
                 }
-            }
+            }*/
 
             this.connection = newConnection;
         }

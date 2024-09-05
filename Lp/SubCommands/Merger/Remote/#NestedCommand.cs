@@ -73,7 +73,6 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.nestedcommand.RobustConnection = this.robustConnectionTerminal.Open(
             node,
             new(
-                privateKey,
                 async connection =>
                 {
                     var token = new AuthenticationToken(connection.Salt);
