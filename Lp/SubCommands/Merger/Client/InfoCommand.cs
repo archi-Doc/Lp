@@ -24,16 +24,21 @@ public class InfoCommand : ISimpleCommandAsync
             return;
         }*/
 
-        this.logger.TryGet()?.Log(string.Empty);
-        using (var terminal = await this.terminal.Connect(this.nestedcommand.Node))
+        if (this.nestedcommand.RobustConnection is not { } robustConnection)
         {
-            if (terminal == null)
+            return;
+        }
+
+        this.logger.TryGet()?.Log(string.Empty);
+        using (var connection = await robustConnection.Get())
+        {
+            if (connection == null)
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, this.nestedcommand.Node.ToString());
+                this.logger.TryGet()?.Log(Hashed.Error.Connect, robustConnection.DestinationNode.ToString());
                 return;
             }
 
-            var service = terminal.GetService<IMergerClient>();
+            var service = connection.GetService<IMergerClient>();
 
             var response = await service.GetInformation().ResponseAsync;
             if (response.IsSuccess && response.Value is { } informationResult)

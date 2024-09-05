@@ -63,8 +63,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public RelayAgent RelayAgent { get; private set; }
 
-    public RobustConnection.Terminal RobustConnectionTerminal { get; private set; } = default!;
-
     public bool IsAlternative { get; private set; }
 
     public int Port { get; private set; }
@@ -91,7 +89,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.ConnectionTerminal.Clean();
         this.RelayAgent.Clean();
-        this.RobustConnectionTerminal.Clean();
     }
 
     public bool TryCreateEndpoint(ref NetAddress address, EndpointResolution endpointResolution, out NetEndpoint endPoint)
@@ -190,11 +187,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.netCleaner.Stop();
     }
 
-    internal void Initialize(ResponderControl responders, ServiceControl services, RobustConnection.Terminal terminal, bool isAlternative)
+    internal void Initialize(ResponderControl responders, ServiceControl services, bool isAlternative)
     {
         this.Responders = responders;
         this.Services = services;
-        this.RobustConnectionTerminal = terminal;
         this.IsAlternative = isAlternative;
 
         this.RelayControl.ProcessRegisterResponder(this.Responders);

@@ -10,27 +10,24 @@ namespace Lp.Subcommands.MergerClient;
 [SimpleCommand("create-credit")]
 public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityVault authorityVault, RobustConnection.Terminal robustConnectionTerminal)
+    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityVault authorityVault, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
         this.netTerminal = netTerminal;
         this.nestedcommand = nestedcommand;
         this.authorityVault = authorityVault;
-        this.robustConnectionTerminal = robustConnectionTerminal;
+        this.robustConnectionFactory = robustConnectionFactory;
     }
 
     public async Task RunAsync(CreateCreditOptions options, string[] args)
     {
-        var authority = await this.authorityVault.GetAuthority(options.AuthorityName);
-        if (authority is null)
+        if (this.nestedcommand.RobustConnection is not { } robustConnection ||
+            this.nestedcommand.Authority is not { } authority)
         {
-            this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
             return;
         }
 
         this.logger.TryGet()?.Log(string.Empty);
-        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(x => VerificationHelper.SetAuthenticationToken(x, authority)));
-        // var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node, new(x => RobustConnection.SetAuthenticationToken(x, authority.UnsafeGetPrivateKey())));
         if (await robustConnection.Get() is not { } connection)
         {
             return;
@@ -53,11 +50,9 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
     private readonly NetTerminal netTerminal;
     private readonly NestedCommand nestedcommand;
     private readonly AuthorityVault authorityVault;
-    private readonly RobustConnection.Terminal robustConnectionTerminal;
+    private readonly RobustConnection.Factory robustConnectionFactory;
 }
 
 public record CreateCreditOptions
 {
-    [SimpleOption("Authority", Description = "Authority name", Required = true)]
-    public string AuthorityName { get; init; } = string.Empty;
 }
