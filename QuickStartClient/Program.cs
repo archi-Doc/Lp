@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 
@@ -10,7 +11,21 @@ public class Program
 {
     public static async Task Main()
     {
-        var unit = new NetControl.Builder().Build(); // Create a NetControl unit that implements communication functionality.
+        var builder = new NetControl.Builder().Configure(context =>
+        {
+            context.AddLoggerResolver(x =>
+            {// Log source/level -> Resolver() -> Output/filter
+                if (x.LogLevel == LogLevel.Debug)
+                {
+                    x.ClearOutput();
+                    return;
+                }
+
+                x.SetOutput<ConsoleLogger>();
+            });
+        });
+
+        var unit = builder.Build(); // Create a NetControl unit that implements communication functionality.
         await unit.Run(new NetOptions(), true); // Execute the created unit with default options.
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>(); // Get a NetControl instance.
@@ -29,6 +44,11 @@ public class Program
                 var input = "Nupo";
                 var output = await service.DoubleString(input); // Arguments are sent to the server through the Tinyhand serializer, processed, and the results are received.
                 await Console.Out.WriteLineAsync($"{input} -> {output}");
+
+                var sum = await service.Sum(1, 2); // // Get the sum of 1 and 2, but it is not implemented on the server side.
+                await Console.Out.WriteLineAsync($"1 + 2 = {sum}"); // 0
+                var r = await service.Sum(1, 2).ResponseAsync; // If the function fails, it returns the default value, so if detailed information is needed, please refer to ResponseAsync.
+                await Console.Out.WriteLineAsync($"{r.ToString()}"); // NetResult.NoNetService
 
                 var service2 = connection.GetService<ITestService2>();
                 var result = await service2.Random();

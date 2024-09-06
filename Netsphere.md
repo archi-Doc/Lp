@@ -109,9 +109,14 @@ var builder = new NetControl.Builder() // Create a NetControl builder.
         options.EnableEssential = true; // Required when using functions such as UnsafeGetNetNode() or Ping.
         options.EnableServer = true;
     })
-    .ConfigureSerivice(context =>
+    .Configure(context =>
+    {
+        context.Services.AddTransient<TestServiceImpl>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
+    })
+    .ConfigureNetsphere(context =>
     {// Register the services provided by the server.
-        context.AddService<ITestService>();
+        context.AddNetService<ITestService, TestServiceImpl>();
+        context.AddNetService<ITestService2, TestServiceImpl>();
     });
 
 var unit = builder.Build(); // Create a unit that provides network functionality.
@@ -129,4 +134,9 @@ await unit.Terminate(); // Perform the termination process for the unit.
 ```
 
 
+
+## Instance management
+
+- **Service agent**: An instance is created for each connection by the DI container.
+- **Service filter**: Generated for each agent type (not for each instance).
 

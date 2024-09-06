@@ -16,7 +16,7 @@ public static class NetConstants
     public const int MaxPort = 60999;
     public const int IntegralityDefaultPoolSize = 4;
 
-    internal const bool LogLowLevelNet = true;
+    internal const bool LogLowLevelNet = false; // true;
     internal const int AckDelayMics = 10_000; // 10ms
     internal const long ConnectionClosedToDisposalMics = 10_000_000; // 10s
     internal const int TransmissionTimeoutMics = 5_000_000; // 5s

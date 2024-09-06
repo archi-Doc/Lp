@@ -15,7 +15,7 @@ public interface ITestService : INetService // An interface for NetService must 
 
 // On the server side, define a class that implements the interface and annotate it with NetServiceObject attribute.
 [NetServiceObject] // Annotate NetServiceObject attribute.
-internal class TestServiceImpl : ITestService, ITestService2
+internal class TestServiceAgent : ITestService, ITestService2
 {
     private readonly int number = RandomVault.Pseudo.NextInt31();
 
