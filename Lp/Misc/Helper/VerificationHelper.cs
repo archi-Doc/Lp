@@ -150,7 +150,7 @@ public static class VerificationHelper
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = 0;
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
             if (value is ProofAndPublicKey proofAndPublicKey)
@@ -203,7 +203,7 @@ public static class VerificationHelper
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = 0;
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
