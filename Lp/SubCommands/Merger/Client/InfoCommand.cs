@@ -30,39 +30,35 @@ public class InfoCommand : ISimpleCommandAsync
         }
 
         this.logger.TryGet()?.Log(string.Empty);
-        using (var connection = await robustConnection.Get())
+        if (await robustConnection.GetConnection(this.logger) is not { } connection)
         {
-            if (connection == null)
-            {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, robustConnection.DestinationNode.ToString());
-                return;
-            }
-
-            var service = connection.GetService<IMergerClient>();
-
-            var response = await service.GetInformation().ResponseAsync;
-            if (response.IsSuccess && response.Value is { } informationResult)
-            {
-                this.logger.TryGet()?.Log(informationResult.MergerName);
-            }
-
-            /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
-            if (token == null)
-            {
-                return;
-            }
-
-            var service = terminal.GetService<IRemoteControlService>();
-            var response = await service.RequestAuthorization(token).ResponseAsync;
-            var result = response.Result;
-            this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
-
-            if (result == NetResult.Success)
-            {
-                result = await service.Restart();
-                this.logger.TryGet()?.Log($"Restart: {result}");
-            }*/
+            return;
         }
+
+        var service = connection.GetService<IMergerClient>();
+
+        var response = await service.GetInformation().ResponseAsync;
+        if (response.IsSuccess && response.Value is { } informationResult)
+        {
+            this.logger.TryGet()?.Log(informationResult.MergerName);
+        }
+
+        /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
+        if (token == null)
+        {
+            return;
+        }
+
+        var service = terminal.GetService<IRemoteControlService>();
+        var response = await service.RequestAuthorization(token).ResponseAsync;
+        var result = response.Result;
+        this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+
+        if (result == NetResult.Success)
+        {
+            result = await service.Restart();
+            this.logger.TryGet()?.Log($"Restart: {result}");
+        }*/
     }
 
     private ILogger logger;

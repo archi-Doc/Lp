@@ -22,7 +22,7 @@ public class RobustConnection
         }
 
         public RobustConnection Create(NetNode netNode, AuthenticateDelegate? authenticate)
-        {
+        {// authenticate = x => RobustConnection.SetAuthenticationToken(x, privateKey)
             return new(this.netTerminal, netNode, authenticate);
         }
     }

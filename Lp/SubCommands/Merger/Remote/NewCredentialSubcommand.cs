@@ -18,8 +18,7 @@ public class NewCredentialSubcommand : ISimpleCommandAsync<NewCredentialOptions>
 
     public async Task RunAsync(NewCredentialOptions options, string[] args)
     {
-        if (this.nestedcommand.RobustConnection is null ||
-            await this.nestedcommand.RobustConnection.Get() is not { } connection)
+        if (await this.nestedcommand.RobustConnection.GetConnection(this.logger) is not { } connection)
         {
             return;
         }

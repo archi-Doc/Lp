@@ -28,7 +28,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         }
 
         this.logger.TryGet()?.Log(string.Empty);
-        if (await robustConnection.Get() is not { } connection)
+        if (await robustConnection.GetConnection(this.logger) is not { } connection)
         {
             return;
         }
