@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -85,6 +87,21 @@ public class AuthorityVault
         }
     }
 
+    public async Task<Authority?> GetLpAuthority(ILogger? logger)
+    {
+        var authority = await this.GetAuthority(LpConstants.LpAlias).ConfigureAwait(false);
+        if (authority == null ||
+            !authority.PublicKey.Equals(LpConstants.LpPublicKey))
+        {
+            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, LpConstants.LpAlias);
+            return default;
+        }
+
+        return authority;
+    }
+
+    #region FieldAndProperty
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string GetVaultName(string name) => VaultPrefix + name;
 
@@ -94,4 +111,6 @@ public class AuthorityVault
     private Vault vault;
     private object syncObject = new();
     private Dictionary<string, AuthorityInterface> nameToInterface = new();
+
+    #endregion
 }

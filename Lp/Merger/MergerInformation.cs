@@ -2,7 +2,6 @@
 
 using System.ComponentModel;
 using Lp.T3cs;
-using Netsphere.Crypto;
 
 namespace Lp;
 

@@ -129,6 +129,9 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
+    public SignaturePublicKey GetPublicKey()
+        => this.MergerPublicKey;
+
     #region FieldAndProperty
 
     [MemberNotNullWhen(true, nameof(Information))]
@@ -146,6 +149,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     protected ICrystal<CreditData.GoshujinClass>? creditDataCrystal;
     protected CreditData.GoshujinClass? creditData;
     protected SignaturePrivateKey? mergerPrivateKey;
+    protected MergerState mergerState = new();
 
     #endregion
 }

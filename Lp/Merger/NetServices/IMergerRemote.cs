@@ -9,7 +9,9 @@ public partial interface IMergerRemote : INetService
 {
     NetTask<NetResult> Authenticate(AuthenticationToken token);
 
-    NetTask<T3csResult> SendValueProofEvidence(Evidence? evidence);
+    NetTask<T3csResult> NewCredential(Evidence? evidence);
+
+    NetTask<SignaturePublicKey> GetPublicKey();
 }
 
 [NetServiceObject]
@@ -47,7 +49,17 @@ internal class MergerRemoteAgent : IMergerRemote
         }
     }
 
-    async NetTask<T3csResult> IMergerRemote.SendValueProofEvidence(Evidence? evidence)
+    async NetTask<SignaturePublicKey> IMergerRemote.GetPublicKey()
+    {
+        if (!this.authenticated)
+        {
+            return default;
+        }
+
+        return this.merger.GetPublicKey();
+    }
+
+    async NetTask<T3csResult> IMergerRemote.NewCredential(Evidence? evidence)
     {
         if (!this.authenticated)
         {
