@@ -2,6 +2,7 @@
 
 using Lp.T3cs;
 using Netsphere;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.MergerRemote;
@@ -24,10 +25,29 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
+        if (!SignaturePublicKey.TryParse(options.PublicKey, out var publicKey))
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidPublicKey);
+            return;
+        }
+
         if (await this.authorityVault.GetLpAuthority(this.logger) is not { } authority)
         {
             return;
         }
+
+        if (!Credit.TryCreate(LpConstants.LpPublicKey, [LpConstants.LpPublicKey], out var credit))
+        {
+            return;
+        }
+
+        if (!Value.TryCreate(publicKey, 1, credit, out var value))
+        {
+            return;
+        }
+
+        var valueProof = new ValueProof(value);
+        authority.SignProof(valueProof, Mics.FromDays(1));
 
         var service = connection.GetService<IMergerRemote>();
         var r = await service.NewCredential(default);
