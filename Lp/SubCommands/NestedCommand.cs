@@ -73,7 +73,7 @@ public class NestedCommand<TCommand>
                     return;
                 }
                 else
-                {// Nestedcommand
+                {// NestedCommand
                     try
                     {
                         this.Subcommand(command);

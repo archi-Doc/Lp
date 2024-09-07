@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Misc;
+using Tinyhand.IO;
 
 namespace Netsphere.Crypto;
 
@@ -35,7 +36,7 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
     [Key(1)]
     public SignaturePublicKey PublicKey { get; set; }
 
-    [Key(2, Level = 1)]
+    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; set; } = Array.Empty<byte>();
 
     [Key(3)]

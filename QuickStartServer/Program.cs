@@ -32,15 +32,15 @@ public class Program
                 options.EnablePing = true;
                 options.EnableServer = true;
             })
-            .Configure(context =>
-            {
-                context.Services.AddTransient<TestServiceImpl>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
-            })
-            .ConfigureNetsphere(context =>
-            {// Register the services provided by the server.
-                context.AddNetService<ITestService, TestServiceImpl>();
-                context.AddNetService<ITestService2, TestServiceImpl>();
-            });
+    .Configure(context =>
+    {
+        context.Services.AddTransient<TestServiceAgent>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
+    })
+    .ConfigureNetsphere(context =>
+    {// Register the services provided by the server.
+        context.AddNetService<ITestService, TestServiceAgent>();
+        context.AddNetService<ITestService2, TestServiceAgent>();
+    });
 
         var unit = builder.Build(); // Create a unit that provides network functionality.
         var options = unit.Context.ServiceProvider.GetRequiredService<NetOptions>();

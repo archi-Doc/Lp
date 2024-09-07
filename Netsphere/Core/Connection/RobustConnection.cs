@@ -3,64 +3,61 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
-using Tinyhand.Logging;
 
 namespace Netsphere;
 
-/// <summary>
-/// RobustConnection is designed to maintain a limited number of connections and is not intended for a large number of connections.<br/>
-/// If the number exceeds <see cref="MaxConnections"/>, it will be reinitialized.
-/// </summary>
 public class RobustConnection
 {
-    public const int MaxConnections = 100;
+    public delegate Task<bool> AuthenticateDelegate(ClientConnection connection);
 
-    public class Terminal
+    // public record class Options(Func<ClientConnection, Task<bool>>? Authenticate);
+
+    public class Factory
     {
-        public Terminal(NetTerminal netTerminal)
+        private readonly NetTerminal netTerminal;
+
+        public Factory(NetTerminal netTerminal)
         {
             this.netTerminal = netTerminal;
         }
 
-        private readonly NetTerminal netTerminal;
-        private readonly NotThreadsafeHashtable<NetNode, RobustConnection> connections = new();
-
-        public RobustConnection Open(NetNode node, Options? options = default)
-        {
-            var robustConnection = this.connections.GetOrAdd(node, x => new RobustConnection(this.netTerminal, x));
-            if (options is not null)
-            {
-                robustConnection.TrySetOptions(options);
-            }
-
-            return robustConnection;
-        }
-
-        public void Clean()
-        {
-            if (this.connections.Count > MaxConnections)
-            {
-                this.connections.Clear();
-            }
+        public RobustConnection Create(NetNode netNode, AuthenticateDelegate? authenticate)
+        {// authenticate = x => RobustConnection.SetAuthenticationToken(x, privateKey)
+            return new(this.netTerminal, netNode, authenticate);
         }
     }
 
-    public record class Options(SignaturePrivateKey? PrivateKey);
-
     #region FieldAndProperty
 
-    private readonly NetTerminal netTerminal;
-    private readonly NetNode netNode;
+    public NetTerminal NetTerminal { get; }
+
+    public NetNode DestinationNode { get; }
+
+    private readonly AuthenticateDelegate? authenticate;
     private readonly SemaphoreLock semaphore = new();
-    private Options? options;
     private ClientConnection? connection;
 
     #endregion
 
-    private RobustConnection(NetTerminal netTerminal, NetNode netNode)
+    private RobustConnection(NetTerminal netTerminal, NetNode netNode, AuthenticateDelegate? authenticate)
     {
-        this.netTerminal = netTerminal;
-        this.netNode = netNode;
+        this.NetTerminal = netTerminal;
+        this.DestinationNode = netNode;
+        this.authenticate = authenticate;
+    }
+
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, SignaturePrivateKey signaturePrivateKey)
+    {
+        var context = connection.GetContext();
+        var token = new AuthenticationToken(connection.Salt);
+        token.Sign(signaturePrivateKey);
+        if (context.AuthenticationTokenEquals(token.PublicKey))
+        {
+            return true;
+        }
+
+        var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
+        return result == NetResult.Success;
     }
 
     public async ValueTask<ClientConnection?> Get()
@@ -86,14 +83,22 @@ public class RobustConnection
                 this.connection = null;
             }
 
-            newConnection = await this.netTerminal.Connect(this.netNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false);
+            newConnection = await this.NetTerminal.Connect(this.DestinationNode, Connection.ConnectMode.NoReuse).ConfigureAwait(false);
             if (newConnection is null)
             {// Failed to connect
                 return default;
             }
 
-            if (this.options?.PrivateKey is { } privateKey)
-            {
+            if (this.authenticate is not null)
+            {// Authenticate delegate
+                if (!await this.authenticate(newConnection).ConfigureAwait(false))
+                {
+                    return default;
+                }
+            }
+
+            /*else if (this.options?.PrivateKey is { } privateKey)
+            {// Private key
                 var context = newConnection.GetContext();
                 var token = new AuthenticationToken(newConnection.Salt);
                 token.Sign(privateKey);
@@ -102,10 +107,11 @@ public class RobustConnection
                     var result = await newConnection.SetAuthenticationToken(token).ConfigureAwait(false);
                     if (result != NetResult.Success)
                     {
+                        this.options = default;
                         return default;
                     }
                 }
-            }
+            }*/
 
             this.connection = newConnection;
         }
@@ -115,12 +121,5 @@ public class RobustConnection
         }
 
         return newConnection;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void TrySetOptions(Options options)
-    {
-        // Interlocked.CompareExchange(ref this.options, options, null);
-        this.options ??= options;
     }
 }

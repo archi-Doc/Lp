@@ -267,7 +267,7 @@ public static class NetHelper
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = 0;
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
             value.PublicKey = privateKey.ToPublicKey();
@@ -319,7 +319,7 @@ public static class NetHelper
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = 0;
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);

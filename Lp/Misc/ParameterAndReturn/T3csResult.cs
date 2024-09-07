@@ -4,8 +4,8 @@ namespace Lp;
 
 public enum T3csResult
 {
-    Success,
     UnknownError,
+    Success,
     NotAuthenticated,
     InvalidProof,
     NoData,

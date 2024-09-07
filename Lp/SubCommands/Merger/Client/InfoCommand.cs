@@ -24,40 +24,41 @@ public class InfoCommand : ISimpleCommandAsync
             return;
         }*/
 
-        this.logger.TryGet()?.Log(string.Empty);
-        using (var terminal = await this.terminal.Connect(this.nestedcommand.Node))
+        if (this.nestedcommand.RobustConnection is not { } robustConnection)
         {
-            if (terminal == null)
-            {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, this.nestedcommand.Node.ToString());
-                return;
-            }
-
-            var service = terminal.GetService<IMergerClient>();
-
-            var response = await service.GetInformation().ResponseAsync;
-            if (response.IsSuccess && response.Value is { } informationResult)
-            {
-                this.logger.TryGet()?.Log(informationResult.MergerName);
-            }
-
-            /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
-            if (token == null)
-            {
-                return;
-            }
-
-            var service = terminal.GetService<IRemoteControlService>();
-            var response = await service.RequestAuthorization(token).ResponseAsync;
-            var result = response.Result;
-            this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
-
-            if (result == NetResult.Success)
-            {
-                result = await service.Restart();
-                this.logger.TryGet()?.Log($"Restart: {result}");
-            }*/
+            return;
         }
+
+        this.logger.TryGet()?.Log(string.Empty);
+        if (await robustConnection.GetConnection(this.logger) is not { } connection)
+        {
+            return;
+        }
+
+        var service = connection.GetService<IMergerClient>();
+
+        var response = await service.GetInformation().ResponseAsync;
+        if (response.IsSuccess && response.Value is { } informationResult)
+        {
+            this.logger.TryGet()?.Log(informationResult.MergerName);
+        }
+
+        /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
+        if (token == null)
+        {
+            return;
+        }
+
+        var service = terminal.GetService<IRemoteControlService>();
+        var response = await service.RequestAuthorization(token).ResponseAsync;
+        var result = response.Result;
+        this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+
+        if (result == NetResult.Success)
+        {
+            result = await service.Restart();
+            this.logger.TryGet()?.Log($"Restart: {result}");
+        }*/
     }
 
     private ILogger logger;

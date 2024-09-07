@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -24,7 +25,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 
     public override string Prefix => "merger-remote >> ";
 
-    public NetNode Node { get; set; } = NetNode.Alternative;
+    public RobustConnection? RobustConnection { get; set; }
 
     public SignaturePrivateKey RemoteKey { get; set; } = SignaturePrivateKey.Empty;
 }
@@ -32,25 +33,26 @@ public class NestedCommand : NestedCommand<NestedCommand>
 [SimpleCommand("merger-remote")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
-    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Terminal robustConnectionTerminal)
+    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.nestedcommand = nestedcommand;
         this.lpService = lpService;
-        this.robustConnectionTerminal = robustConnectionTerminal;
+        this.robustConnectionFactory = robustConnectionFactory;
     }
 
     public async Task RunAsync(CommandOptions options, string[] args)
     {
+        NetNode? node = NetNode.Alternative;
         if (!string.IsNullOrEmpty(options.Node))
         {
-            if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+            if (!NetNode.TryParseNetNode(this.logger, options.Node, out var n))
             {
                 return;
             }
 
-            this.nestedcommand.Node = node;
+            node = n;
         }
 
         var authority = options.Authority;
@@ -65,11 +67,24 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             return;
         }
 
-        this.userInterfaceService.WriteLine(this.nestedcommand.Node.ToString());
+        this.userInterfaceService.WriteLine(node.ToString());
         this.userInterfaceService.WriteLine($"Remote key: {privateKey.ToPublicKey()}");
 
-        var robustConnection = this.robustConnectionTerminal.Open(this.nestedcommand.Node);
-        var r = await robustConnection.Get();
+        this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
+            node,
+            new(
+                async connection =>
+                {
+                    var token = new AuthenticationToken(connection.Salt);
+                    token.Sign(privateKey);
+                    return await connection.GetService<IMergerRemote>().Authenticate(token) == NetResult.Success;
+                }));
+
+        if (await this.nestedcommand.RobustConnection.Get() is null)
+        {
+            this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+            return;
+        }
 
         await this.nestedcommand.MainAsync();
     }
@@ -78,7 +93,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NestedCommand nestedcommand;
     private readonly LpService lpService;
-    private readonly RobustConnection.Terminal robustConnectionTerminal;
+    private readonly RobustConnection.Factory robustConnectionFactory;
 }
 
 public record CommandOptions
