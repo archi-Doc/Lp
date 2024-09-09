@@ -140,8 +140,7 @@ public static class VerificationHelper
         }
     }*/
 
-    public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long validMics)
-        where T : Proof, ITinyhandSerialize<T>
+    public static bool SignProof(this Proof value, SignaturePrivateKey privateKey, long validMics)
     {
         if (validMics > Proof.MaxExpirationMics)
         {
@@ -172,7 +171,7 @@ public static class VerificationHelper
                 value.PrepareSignInternal(validMics);
             }
 
-            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            TinyhandSerializer.SerializeObject<Proof>(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[Sha3_256.HashLength];
             var rentMemory = writer.FlushAndGetRentMemory();
             Sha3Helper.Get256_Span(rentMemory.Span, hash);
@@ -214,6 +213,34 @@ public static class VerificationHelper
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             var rentMemory = writer.FlushAndGetRentMemory();
             var result = value.PublicKey.VerifyData(rentMemory.Span, value.Signature);
+            rentMemory.Return();
+            return result;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Validate object members and verify that the signature is appropriate.
+    /// </summary>
+    /// <param name="proof">The proof to be verified.</param>
+    /// <returns><see langword="true" />: Success.</returns>
+    public static bool ValidateAndVerify(this Proof proof)
+    {
+        if (!proof.Validate())
+        {
+            return false;
+        }
+
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
+        try
+        {
+            TinyhandSerializer.SerializeObject<Proof>(ref writer, proof, TinyhandSerializerOptions.Signature);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            var result = proof.GetPublicKey().VerifyData(rentMemory.Span, proof.Signature);
             rentMemory.Return();
             return result;
         }

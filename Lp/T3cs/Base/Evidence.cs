@@ -69,7 +69,7 @@ public sealed partial class Evidence : IValidatable
         }
 
         if (credit.MergerCount <= mergerIndex ||
-            credit.Mergers[mergerIndex].Equals(signaturePrivateKey.ToPublicKey()))
+            !credit.Mergers[mergerIndex].Equals(signaturePrivateKey.ToPublicKey()))
         {//
             return false;
         }

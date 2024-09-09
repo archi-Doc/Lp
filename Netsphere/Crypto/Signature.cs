@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.ComponentModel;
+using Tinyhand.IO;
 
 namespace Netsphere.Crypto;
 
@@ -51,7 +52,7 @@ public readonly partial record struct Signature
     [Key(3)]
     public readonly long ExpirationMics;
 
-    [Key(4, Level = 1)]
+    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     [DefaultValue(null)]
     public readonly byte[]? Sign;
 

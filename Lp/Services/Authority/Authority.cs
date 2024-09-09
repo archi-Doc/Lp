@@ -65,11 +65,10 @@ public sealed partial class Authority
         return evidence.TrySign(privateKey, mergerIndex);
     }
 
-    public void SignProof<T>(T proof, long validMics)
-        where T : Proof, ITinyhandSerialize<T>
+    public void SignProof(Proof proof, long validMics)
     {
         var privateKey = this.GetOrCreatePrivateKey();
-        proof.SignProof<T>(privateKey, validMics);
+        proof.SignProof(privateKey, validMics);
     }
 
     public void SignWithSalt<T>(T token, ulong salt)

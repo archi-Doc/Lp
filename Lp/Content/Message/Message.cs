@@ -2,6 +2,7 @@
 
 using Lp.T3cs;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.Crystal;
 
@@ -31,7 +32,7 @@ public partial class Message : IVerifiable, IUnity
     [Key(1, AddProperty = "MessageBoardIdentifier")]
     private Identifier messageBoardIdentifier;
 
-    [Key(2, AddProperty = "Signature", Level = 0)]
+    [Key(2, AddProperty = "Signature", Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     private Signature signature = default!;
 
     // [Key(3, AddProperty = "ValueToken", Level = 2)]
