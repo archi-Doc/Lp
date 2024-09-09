@@ -31,23 +31,10 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (await this.authorityVault.GetLpAuthority(this.logger) is not { } authority)
+        if (await this.authorityVault.GetLpAuthority(this.logger) is not { } lpAuthority)
         {
             return;
         }
-
-        /*if (!Credit.TryCreate(LpConstants.LpPublicKey, [LpConstants.LpPublicKey], out var credit))
-        {
-            return;
-        }
-
-        if (!Value.TryCreate(publicKey, 1, credit, out var value))
-        {
-            return;
-        }
-
-        var valueProof = ValueProof.Create(value);
-        authority.SignProof(valueProof, Mics.FromDays(1));*/
 
         var service = connection.GetService<IMergerRemote>();
         var proof = await service.NewCredential(default);
@@ -65,7 +52,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
         }
 
         // Sign
-        if (!authority.TrySignEvidence(evidence, 0))
+        if (!lpAuthority.TrySignEvidence(evidence, 0))
         {
             return;
         }

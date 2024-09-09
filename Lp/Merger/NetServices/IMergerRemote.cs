@@ -70,7 +70,7 @@ internal class MergerRemoteAgent : IMergerRemote
         }
 
         if (evidence == null)
-        {// Create Lp ValueProof
+        {// Create ValueProof
             if (!Value.TryCreate(this.merger.GetPublicKey(), 1, LpConstants.LpCredit, out var value))
             {
                 return default;
@@ -80,8 +80,8 @@ internal class MergerRemoteAgent : IMergerRemote
             this.merger.SignProof(valueProof, CredentialProof.LpExpirationMics);
             return valueProof;
         }
-        else
-        {// Create CredentialProof
+        else if (evidence.Validate())
+        {// Evidence(ValueProof) -> CredentialProof
             var netNode = this.netStats.GetOwnNetNode();
             var credentialProof = CredentialProof.Create(evidence, netNode);
             this.merger.SignProof(credentialProof, CredentialProof.LpExpirationMics);

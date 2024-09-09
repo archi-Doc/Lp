@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
+using CrossChannel.Generated;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 using Tinyhand.Tree;
@@ -54,6 +55,9 @@ public sealed partial class Evidence : IValidatable
 
     public long ProofMics
         => this.Proof.VerificationMics;
+
+    public int MergerCount
+        => this.Proof.TryGetCredit(out var credit) ? credit.MergerCount : 0;
 
     public bool TrySign(SignaturePrivateKey signaturePrivateKey, int mergerIndex)
     {
@@ -118,5 +122,64 @@ public sealed partial class Evidence : IValidatable
     public bool Validate()
     {
         return this.Proof.Validate();
+    }
+
+    public bool ValidateAndVerify(int mergerIndex = Credit.MaxMergers)
+    {
+        if (!this.Validate())
+        {
+            return false;
+        }
+
+        if (!this.Proof.TryGetCredit(out var credit) ||
+            !this.Proof.ValidateAndVerify())
+        {
+            return false;
+        }
+
+        mergerIndex = Math.Max(mergerIndex, credit.MergerCount);
+        if (mergerIndex >= 0 && !Verify(0, this.MergerSignature0))
+        {
+            return false;
+        }
+
+        if (mergerIndex >= 1 && !Verify(1, this.MergerSignature1))
+        {
+            return false;
+        }
+
+        if (mergerIndex >= 2 && !Verify(2, this.MergerSignature2))
+        {
+            return false;
+        }
+
+        return true;
+
+        bool Verify(int mergerIndex, byte[]? signature)
+        {
+            if (signature is null)
+            {
+                return false;
+            }
+
+            var writer = TinyhandWriter.CreateFromBytePool();
+            writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
+            try
+            {
+                TinyhandSerializer.SerializeObject(ref writer, this, TinyhandSerializerOptions.Signature);
+                var rentMemory = writer.FlushAndGetRentMemory();
+                var result = credit.Mergers[mergerIndex].VerifyData(rentMemory.Span, signature);
+                rentMemory.Return();
+                return result;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                writer.Dispose();
+            }
+        }
     }
 }
