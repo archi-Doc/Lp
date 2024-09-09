@@ -95,7 +95,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
                 Value.TryParse(value.ToString(), out var value2);
                 this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
 
-                var valueProof = new ValueProof(value);
+                var valueProof = ValueProof.Create(value);
 
                 valueProof.SignProof(owner, 123);
                 var c = new CredentialProof();

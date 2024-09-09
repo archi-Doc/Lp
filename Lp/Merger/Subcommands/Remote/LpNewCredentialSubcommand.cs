@@ -36,7 +36,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (!Credit.TryCreate(LpConstants.LpPublicKey, [LpConstants.LpPublicKey], out var credit))
+        /*if (!Credit.TryCreate(LpConstants.LpPublicKey, [LpConstants.LpPublicKey], out var credit))
         {
             return;
         }
@@ -46,14 +46,29 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        var valueProof = new ValueProof(value);
-        authority.SignProof(valueProof, Mics.FromDays(1));
+        var valueProof = ValueProof.Create(value);
+        authority.SignProof(valueProof, Mics.FromDays(1));*/
 
         var service = connection.GetService<IMergerRemote>();
-        var r = await service.NewCredential(default);
+        var proof = await service.NewCredential(default);
+        if (proof is not ValueProof valueProof ||
+            !valueProof.ValidateAndVerify())
+        {
+            return;
+        }
 
-        this.logger.TryGet()?.Log($"{r.ToString()}");
-        this.logger.TryGet()?.Log("New credential");
+        this.logger.TryGet()?.Log($"{valueProof.ToString()}");
+
+        Evidence.TryCreate(valueProof, out var evidence);
+
+        // Sign
+
+        proof = await service.NewCredential(evidence);
+        if (proof is not CredentialProof credentialProof ||
+            !credentialProof.ValidateAndVerify())
+        {
+            return;
+        }
     }
 
     private readonly ILogger logger;
