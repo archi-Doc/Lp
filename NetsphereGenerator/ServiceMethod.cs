@@ -213,6 +213,63 @@ public class ServiceMethod
         }
     }
 
+    public bool TryGetNullCheck(string name, out string statement)
+    {
+        statement = string.Empty;
+        var methodSymbol = this.method.TryGetMethodSymbol();
+        if (methodSymbol == null)
+        {
+            return false;
+        }
+
+        var parameters = methodSymbol.Parameters;
+        if (parameters.Length == 0)
+        {
+            return false;
+        }
+        else if (parameters.Length == 1)
+        {
+            if (parameters[0].Type.IsReferenceType && parameters[0].Type.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated)
+            {
+                statement = $"value == null";
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            StringBuilder? sb = default;
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                if (parameters[i].Type.IsReferenceType && parameters[i].Type.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated)
+                {
+                    if (sb == null)
+                    {
+                        sb = new StringBuilder();
+                        sb.Append($"value.Item{i + 1} is null");
+                    }
+                    else
+                    {
+                        sb.Append($" || value.Item{i + 1} is null");
+                    }
+                }
+            }
+
+            if (sb != null)
+            {
+                statement = sb.ToString();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
     public string GetParameterTypes(int decrement)
     {// (int, string)
         var parameters = this.method.Method_Parameters;

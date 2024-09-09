@@ -143,6 +143,11 @@ public static class VerificationHelper
     public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long validMics)
         where T : Proof, ITinyhandSerialize<T>
     {
+        if (validMics > Proof.MaxExpirationMics)
+        {
+            return false;
+        }
+
         var ecdsa = privateKey.TryGetEcdsa();
         if (ecdsa == null)
         {

@@ -251,6 +251,20 @@ public static class NetHelper
         }
     }
 
+    public static bool Deserialize<T>(BytePool.RentMemory rentMemory, out T? value)
+    {
+        try
+        {
+            value = TinyhandSerializer.Deserialize<T>(rentMemory.Memory.Span, TinyhandSerializerOptions.Standard);
+            return true;
+        }
+        catch
+        {
+            value = default;
+            return false;
+        }
+    }
+
     public static bool TryDeserialize<T>(BytePool.RentMemory rentMemory, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 

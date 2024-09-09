@@ -59,10 +59,12 @@ public sealed partial class CredentialProof : Proof
     {
     }
 
-    public CredentialProof(Evidence valueProofEvidence, NetAddress netAddress)
+    public static CredentialProof Create(Evidence valueProofEvidence, NetAddress netAddress)
     {
-        this.ValueProofEvidence = valueProofEvidence;
-        this.NetAddress = netAddress;
+        var credentialProof = new CredentialProof();
+        credentialProof.ValueProofEvidence = valueProofEvidence;
+        credentialProof.NetAddress = netAddress;
+        return credentialProof;
     }
 
     #region FieldAndProperty

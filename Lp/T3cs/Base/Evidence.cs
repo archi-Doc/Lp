@@ -37,16 +37,16 @@ public sealed partial class Evidence : IValidatable
     [Key(0)]
     public Proof Proof { get; private set; }
 
-    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
     public Evidence? Engagement { get; private set; }
 
-    [Key(2, Level = 0)]
+    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature0 { get; private set; }
 
-    [Key(3, Level = 1)]
+    [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
     public byte[]? MergerSignature1 { get; private set; }
 
-    [Key(4, Level = 2)]
+    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; private set; }
 
     public long ProofMics

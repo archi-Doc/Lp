@@ -9,7 +9,9 @@ public partial interface IMergerRemote : INetService
 {
     NetTask<NetResult> Authenticate(AuthenticationToken token);
 
-    NetTask<T3csResult> SendValueProofEvidence(int evidence);
+    NetTask<Proof?> NewCredential(Evidence? evidence);
+
+    NetTask<SignaturePublicKey> GetPublicKey();
 }
 
 [NetServiceObject]
@@ -47,11 +49,40 @@ internal class MergerRemoteAgent : IMergerRemote
         }
     }
 
-    async NetTask<T3csResult> IMergerRemote.SendValueProofEvidence(/*Evidence? evidence*/ int x)
+    async NetTask<SignaturePublicKey> IMergerRemote.GetPublicKey()
     {
         if (!this.authenticated)
         {
-            return T3csResult.NotAuthenticated;
+            return default;
+        }
+
+        return this.merger.GetPublicKey();
+    }
+
+    async NetTask<Proof?> IMergerRemote.NewCredential(Evidence? evidence)
+    {
+        if (!this.authenticated)
+        {
+            return default;
+        }
+
+        if (evidence == null)
+        {// Create Lp ValueProof
+            if (!Value.TryCreate(this.merger.GetPublicKey(), 1, LpConstants.LpCredit, out var value))
+            {
+                return default;
+            }
+
+            var valueProof = ValueProof.Create(value);
+            this.merger.SignProof(valueProof, Mics.FromDays(1));
+            // valueProof.SignProof()
+            return valueProof;
+        }
+        else
+        {// Create CredentialProof
+            var credentialProof = CredentialProof.Create(evidence, this.merger.);
+
+            return default;
         }
 
         /*if (!TransmissionContext.Current.AuthenticationTokenEquals(this.remotePublicKey))
@@ -59,6 +90,6 @@ internal class MergerRemoteAgent : IMergerRemote
             return T3csResult.NotAuthenticated;
         }*/
 
-        return T3csResult.Success;
+        return default;
     }
 }

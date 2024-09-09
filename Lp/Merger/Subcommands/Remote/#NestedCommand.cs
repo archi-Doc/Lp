@@ -15,7 +15,8 @@ public class NestedCommand : NestedCommand<NestedCommand>
         context.TryAddSingleton(t);
 
         var group = context.GetCommandGroup(t);
-        group.AddCommand(typeof(NewCredentialSubcommand));
+        group.AddCommand(typeof(LpNewCredentialSubcommand));
+        group.AddCommand(typeof(ShowPublicKeySubcommand));
     }
 
     public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)

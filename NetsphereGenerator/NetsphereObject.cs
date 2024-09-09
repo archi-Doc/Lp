@@ -812,11 +812,25 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.RentMemory, out var value))"))
+            /*using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.TryDeserialize<{method.GetParameterTypes(0)}>(context.RentMemory, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
-                // ssb.AppendLine("context.Return();"); -> try-finally
                 ssb.AppendLine("return;");
+            }*/
+
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!NetHelper.Deserialize<{method.GetParameterTypes(0)}>(context.RentMemory, out var value))"))
+            {
+                ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
+                ssb.AppendLine("return;");
+            }
+
+            if (method.TryGetNullCheck("value", out var statement))
+            {
+                using (var scopeDeserialize = ssb.ScopeBrace($"if ({statement})"))
+                {
+                    ssb.AppendLine("context.Result = NetResult.DeserializationFailed;");
+                    ssb.AppendLine("return;");
+                }
             }
         }
 
@@ -996,4 +1010,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         return false;
     }
+
+    internal IMethodSymbol? TryGetMethodSymbol()
+        => this.symbol as IMethodSymbol;
 }
