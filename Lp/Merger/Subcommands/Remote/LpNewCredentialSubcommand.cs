@@ -59,9 +59,16 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
 
         this.logger.TryGet()?.Log($"{valueProof.ToString()}");
 
-        Evidence.TryCreate(valueProof, out var evidence);
+        if (!Evidence.TryCreate(valueProof, out var evidence))
+        {
+            return;
+        }
 
         // Sign
+        if (!authority.TrySignEvidence(evidence, 0))
+        {
+            return;
+        }
 
         proof = await service.NewCredential(evidence);
         if (proof is not CredentialProof credentialProof ||

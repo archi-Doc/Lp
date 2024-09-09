@@ -2,7 +2,10 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
+using Netsphere.Crypto;
 using Tinyhand.IO;
+using Tinyhand.Tree;
 
 namespace Lp.T3cs;
 
@@ -51,6 +54,66 @@ public sealed partial class Evidence : IValidatable
 
     public long ProofMics
         => this.Proof.VerificationMics;
+
+    public bool TrySign(SignaturePrivateKey signaturePrivateKey, int mergerIndex)
+    {
+        var ecdsa = signaturePrivateKey.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        if (!this.Proof.TryGetCredit(out var credit))
+        {
+            return false;
+        }
+
+        if (credit.MergerCount <= mergerIndex ||
+            credit.Mergers[mergerIndex].Equals(signaturePrivateKey.ToPublicKey()))
+        {//
+            return false;
+        }
+
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, this, TinyhandSerializerOptions.Signature);
+            Span<byte> hash = stackalloc byte[Sha3_256.HashLength];
+            var rentMemory = writer.FlushAndGetRentMemory();
+            Sha3Helper.Get256_Span(rentMemory.Span, hash);
+            rentMemory.Return();
+
+            var sign = new byte[KeyHelper.SignatureLength];
+            if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
+            {
+                return false;
+            }
+
+            if (mergerIndex == 0)
+            {
+                this.MergerSignature0 = sign;
+            }
+            else if (mergerIndex == 1)
+            {
+                this.MergerSignature1 = sign;
+            }
+            else if (mergerIndex == 2)
+            {
+                this.MergerSignature2 = sign;
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
 
     public bool Validate()
     {

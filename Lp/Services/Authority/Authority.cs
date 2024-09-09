@@ -59,6 +59,12 @@ public sealed partial class Authority
     public override int GetHashCode()
         => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
 
+    public bool TrySignEvidence(Evidence evidence, int mergerIndex)
+    {
+        var privateKey = this.GetOrCreatePrivateKey();
+        return evidence.TrySign(privateKey, mergerIndex);
+    }
+
     public void SignProof<T>(T proof, long validMics)
         where T : Proof, ITinyhandSerialize<T>
     {
