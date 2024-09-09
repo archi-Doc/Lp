@@ -6,10 +6,10 @@ using Lp.T3cs;
 namespace Lp;
 
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
-public partial record MergerInformation : ITinyhandSerializationCallback
+public partial record MergerConfiguration : ITinyhandSerializationCallback
 {
-    public const string MergerFilename = "MergerInformation.tinyhand";
-    public const string RelayMergerFilename = "RelayMergerInformation.tinyhand";
+    public const string MergerFilename = "MergerConfiguration.tinyhand";
+    public const string RelayMergerFilename = "RelayMergerConfiguration.tinyhand";
     public const string DefaultName = "Test merger";
     public const int DefaultMaxCredit = 1_000_000;
 
@@ -19,7 +19,7 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         Single,
     }
 
-    public MergerInformation()
+    public MergerConfiguration()
     {
     }
 

@@ -20,10 +20,10 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public virtual void Initialize(Crystalizer crystalizer, SignaturePrivateKey mergerPrivateKey)
     {
-        this.Information = crystalizer.CreateCrystal<MergerInformation>(new()
+        this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 3,
-            FileConfiguration = new GlobalFileConfiguration(MergerInformation.MergerFilename),
+            FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
             RequiredForLoading = true,
         }).Data;
 
@@ -52,7 +52,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // this.logger.TryGet()?.Log(this.Information.ToString());
 
-        if (this.Information.MergerType == MergerInformation.Type.Single)
+        if (this.Information.MergerType == MergerConfiguration.Type.Single)
         {// Single credit
             this.Information.SingleCredit = Credit.Default;
         }
@@ -146,7 +146,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public SignaturePublicKey MergerPublicKey { get; protected set; }
 
-    public MergerInformation? Information { get; protected set; }
+    public MergerConfiguration? Information { get; protected set; }
 
     protected ILogger logger;
     protected LpBase lpBase;

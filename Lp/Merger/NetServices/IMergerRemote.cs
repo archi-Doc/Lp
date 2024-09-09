@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
+using Netsphere.Stats;
 
 namespace Lp.T3cs;
 
@@ -20,13 +21,15 @@ internal class MergerRemoteAgent : IMergerRemote
     private readonly LpBase lpBase;
     private readonly Merger merger;
     private readonly SignaturePublicKey remotePublicKey;
+    private readonly NetStats netStats;
     private bool authenticated;
 
-    public MergerRemoteAgent(LpBase lpBase, Merger merger)
+    public MergerRemoteAgent(LpBase lpBase, Merger merger, NetStats netStats)
     {
         this.lpBase = lpBase;
         this.merger = merger;
         this.lpBase.TryGetRemotePublicKey(out this.remotePublicKey);
+        this.netStats = netStats;
     }
 
     async NetTask<NetResult> IMergerRemote.Authenticate(AuthenticationToken token)
@@ -74,15 +77,15 @@ internal class MergerRemoteAgent : IMergerRemote
             }
 
             var valueProof = ValueProof.Create(value);
-            this.merger.SignProof(valueProof, Mics.FromDays(1));
-            // valueProof.SignProof()
+            this.merger.SignProof(valueProof, CredentialProof.LpExpirationMics);
             return valueProof;
         }
         else
         {// Create CredentialProof
-            var credentialProof = CredentialProof.Create(evidence, this.merger.);
-
-            return default;
+            var netNode = this.netStats.GetOwnNetNode();
+            var credentialProof = CredentialProof.Create(evidence, netNode);
+            this.merger.SignProof(credentialProof, CredentialProof.LpExpirationMics);
+            return credentialProof;
         }
 
         /*if (!TransmissionContext.Current.AuthenticationTokenEquals(this.remotePublicKey))

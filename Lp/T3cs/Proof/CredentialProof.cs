@@ -10,6 +10,8 @@ namespace Lp.T3cs;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public sealed partial class CredentialProof : Proof
 {// Credentials = CredentialProof.Goshujin
+    public const long LpExpirationMics = Mics.MicsPerDay * 10;
+
     #region Integrality
 
     public class Integrality : Integrality<CredentialProof.GoshujinClass, CredentialProof>
@@ -57,13 +59,18 @@ public sealed partial class CredentialProof : Proof
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public CredentialProof()
     {
+        this.NetNode = new();
     }
 
-    public static CredentialProof Create(Evidence valueProofEvidence, NetAddress netAddress)
+    private CredentialProof(NetNode netNode)
     {
-        var credentialProof = new CredentialProof();
+        this.NetNode = netNode;
+    }
+
+    public static CredentialProof Create(Evidence valueProofEvidence, NetNode netNode)
+    {
+        var credentialProof = new CredentialProof(netNode);
         credentialProof.ValueProofEvidence = valueProofEvidence;
-        credentialProof.NetAddress = netAddress;
         return credentialProof;
     }
 
@@ -73,7 +80,7 @@ public sealed partial class CredentialProof : Proof
     public Evidence ValueProofEvidence { get; private set; } = new();
 
     [Key(Proof.ReservedKeyCount + 1)]
-    public NetAddress NetAddress { get; private set; }
+    public NetNode NetNode { get; private set; }
 
     public SignaturePublicKey Originator => this.GetPublicKey();
 
