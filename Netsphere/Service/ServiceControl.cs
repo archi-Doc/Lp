@@ -38,16 +38,25 @@ public sealed class ServiceControl
 
     public ServiceControl()
     {
-        this.table = new Table(this.serviceIdToAgentInformation);
     }
 
     #region FieldAndProperty
 
     private readonly object syncObject = new();
     private readonly Dictionary<uint, AgentInformation> serviceIdToAgentInformation = new();
-    private Table table;
+    private Table? table;
 
-    public Table GetTable() => this.table;
+    public Table GetTable()
+    {
+        if (this.table is { } table)
+        {
+            return table;
+        }
+
+        var newTable = new Table(this.serviceIdToAgentInformation);
+        Interlocked.CompareExchange(ref this.table, newTable, null);
+        return newTable;
+    }
 
     #endregion
 
@@ -60,7 +69,7 @@ public sealed class ServiceControl
             var serviceId = ServiceTypeToId<TService>();
             this.Register(serviceId, typeof(TAgent));
 
-            this.RebuildTable();
+            this.ResetTable();
         }
     }
 
@@ -71,7 +80,7 @@ public sealed class ServiceControl
             var serviceId = ServiceTypeToId(serviceType);
             this.Register(serviceId, agentType);
 
-            this.RebuildTable();
+            this.ResetTable();
         }
     }
 
@@ -83,7 +92,7 @@ public sealed class ServiceControl
             var serviceId = ServiceTypeToId<TService>();
             this.serviceIdToAgentInformation.Remove(serviceId);
 
-            this.RebuildTable();
+            this.ResetTable();
         }
     }
 
@@ -94,7 +103,7 @@ public sealed class ServiceControl
             var serviceId = ServiceTypeToId(serviceType);
             this.serviceIdToAgentInformation.Remove(serviceId);
 
-            this.RebuildTable();
+            this.ResetTable();
         }
     }
 
@@ -129,9 +138,15 @@ public sealed class ServiceControl
         this.serviceIdToAgentInformation.TryAdd(serviceId, info);
     }
 
-    private void RebuildTable()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ResetTable()
+    {
+        this.table = default;
+    }
+
+    /*private void RebuildTable()
     {// lock (this.syncObject)
         var newTable = new Table(this.serviceIdToAgentInformation);
         Volatile.Write(ref this.table, newTable);
-    }
+    }*/
 }
