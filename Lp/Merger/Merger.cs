@@ -27,7 +27,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<CreditData.GoshujinClass>(new()
+        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
@@ -95,7 +95,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         var g = this.creditDataCrystal.Data;
         // var identifier = param.Proof.PublicKey.ToIdentifier();
 
-        CreditData? creditData;
+        FullCredit? creditData;
         using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.GetOrCreate))
         {
             if (w is null)
@@ -150,8 +150,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     protected ILogger logger;
     protected LpBase lpBase;
-    protected ICrystal<CreditData.GoshujinClass>? creditDataCrystal;
-    protected CreditData.GoshujinClass? creditData;
+    protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
+    protected FullCredit.GoshujinClass? creditData;
     protected SignaturePrivateKey mergerPrivateKey;
     protected MergerState mergerState = new();
 

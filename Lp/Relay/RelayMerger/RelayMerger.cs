@@ -33,7 +33,7 @@ public class RelayMerger : Merger
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<CreditData.GoshujinClass>(new()
+        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
