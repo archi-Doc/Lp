@@ -10,5 +10,8 @@ public sealed partial class ConstraintsAndCovenants
     }
 
     [Key(0)]
+    public Credit SourceCredit { get; private set; } = new();
+
+    [Key(1)]
     public bool IsUnlinkable { get; private set; } = false;
 }
