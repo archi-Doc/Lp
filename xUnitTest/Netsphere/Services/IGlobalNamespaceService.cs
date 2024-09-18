@@ -2,8 +2,6 @@
 
 using Netsphere;
 
-namespace xUnitTest.NetsphereTest;
-
 [NetServiceInterface]
 public interface IGlobalNamespaceService : INetService
 {
