@@ -11,7 +11,7 @@ using Tinyhand.Tree;
 namespace Lp.T3cs;
 
 /// <summary>
-/// Immutable evidence object.
+/// Immutable evidence object (authentication within merger).
 /// </summary>
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
@@ -38,26 +38,33 @@ public sealed partial class Evidence : IValidatable
         this.Proof = default!;
     }
 
+    #region FieldAndProperty
+
     [Key(0)]
     public Proof Proof { get; private set; }
 
-    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
-    public Evidence? Engagement { get; private set; }
-
-    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature0 { get; private set; }
 
-    [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
+    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
     public byte[]? MergerSignature1 { get; private set; }
 
-    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
+    [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; private set; }
+
+    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
+    public Proof? LinkedProof { get; private set; }
+
+    [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
+    public ulong LinkageId { get; private set; }
 
     public long ProofMics
         => this.Proof.VerificationMics;
 
     public int MergerCount
         => this.Proof.TryGetCredit(out var credit) ? credit.MergerCount : 0;
+
+    #endregion
 
     public bool TrySign(SignaturePrivateKey signaturePrivateKey, int mergerIndex)
     {

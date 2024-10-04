@@ -7,7 +7,7 @@ using Tinyhand.IO;
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents a proof object.
+/// Represents a proof object (authentication between merger and public key).<br/>
 /// </summary>
 [TinyhandUnion(0, typeof(ValueProof))]
 [TinyhandUnion(1, typeof(CreateCreditProof))]
