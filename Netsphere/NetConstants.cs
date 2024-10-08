@@ -25,7 +25,7 @@ public static class NetConstants
 
     internal const int DefaultRetransmissionTimeoutMics = 500_000; // 500ms
     internal const int SendIntervalMilliseconds = 1;
-    internal const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
+    internal const int SendIntervalMicroseconds = SendIntervalMilliseconds * 1_000;
     internal const int SendCapacityPerRound = 50;
     internal const int InitialSendStreamDelayMilliseconds = 100;
     internal const int MaxSendStreamDelayMilliseconds = 1_000;
