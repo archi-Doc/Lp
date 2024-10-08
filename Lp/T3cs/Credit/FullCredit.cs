@@ -6,9 +6,9 @@ namespace Lp.T3cs;
 
 [TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record CreditData
+public partial record FullCredit
 {
-    public CreditData()
+    public FullCredit()
     {
     }
 

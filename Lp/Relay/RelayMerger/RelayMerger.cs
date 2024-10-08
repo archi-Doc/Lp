@@ -26,14 +26,14 @@ public class RelayMerger : Merger
 
     public override void Initialize(Crystalizer crystalizer, SignaturePrivateKey mergerPrivateKey)
     {
-        this.Information = crystalizer.CreateCrystal<MergerInformation>(new()
+        this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 3,
-            FileConfiguration = new GlobalFileConfiguration(MergerInformation.RelayMergerFilename),
+            FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.RelayMergerFilename),
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<CreditData.GoshujinClass>(new()
+        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,

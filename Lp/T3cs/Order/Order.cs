@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
@@ -59,7 +60,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     [Key(5)]
     public long ExpirationMics { get; private set; }
 
-    [Key(6, AddProperty = "Signature", Level = 0)]
+    [Key(6, AddProperty = "Signature", Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     [MaxLength(KeyHelper.SignatureLength)]
     private byte[] signature = Array.Empty<byte>();
 

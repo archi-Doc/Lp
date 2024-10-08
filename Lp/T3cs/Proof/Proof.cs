@@ -2,11 +2,12 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents a proof object.
+/// Represents a proof object (authentication between merger and public key).<br/>
 /// </summary>
 [TinyhandUnion(0, typeof(ValueProof))]
 [TinyhandUnion(1, typeof(CreateCreditProof))]
@@ -17,7 +18,7 @@ namespace Lp.T3cs;
 [TinyhandUnion(6, typeof(CredentialProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 // [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public abstract partial class Proof : IVerifiable, IEquatable<Proof>
+public abstract partial class Proof : IEquatable<Proof>
 {
     /// <summary>
     /// The maximum expiration time in microseconds.
@@ -43,8 +44,8 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 
     #region FieldAndProperty
 
-    /// <inheritdoc/>
-    SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
+    // /// <inheritdoc/>
+    // SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
 
     // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
     // public SignaturePublicKey PublicKey { get; }
@@ -52,7 +53,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
     /// <summary>
     /// Gets or sets the signature.
     /// </summary>
-    [Key(1, Level = 1)]
+    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
 
     /// <summary>

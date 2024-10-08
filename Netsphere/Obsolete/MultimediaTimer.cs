@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace Netsphere.Misc;
 
+/*
 /// <summary>
 /// Good Old-Fashioned Multimedia Timer.
 /// Ok, I know it's obsolete.
@@ -101,4 +102,4 @@ public class MultimediaTimer : IDisposable
         }
     }
     #endregion
-}
+}*/

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Netsphere.Misc;
 
 namespace Netsphere.Core;
 
@@ -42,11 +41,12 @@ internal class NetSender
                 var prev = Mics.GetSystem();
                 core.sender.Process();
 
-                var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1_000);
-                if (nano > 0)
+                var mics = NetConstants.SendIntervalMicroseconds - (Mics.GetSystem() - prev);
+                if (mics > 0)
                 {
                     // core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
-                    core.TryNanoSleep(nano); // Performs better than core.Sleep() on Linux.
+                    // core.TryNanoSleep(nano);
+                    core.microSleep.Sleep((int)mics);
                 }
             }
         }
@@ -56,17 +56,18 @@ internal class NetSender
         {
             this.Thread.Priority = ThreadPriority.AboveNormal;
             this.sender = sender;
-            this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.sender.Process); // Use multimedia timer if available.
+            // this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.sender.Process); // Use multimedia timer if available.
         }
 
         protected override void Dispose(bool disposing)
         {
-            this.timer?.Dispose();
+            // this.timer?.Dispose();
             base.Dispose(disposing);
         }
 
-        private NetSender sender;
-        private MultimediaTimer? timer;
+        private readonly NetSender sender;
+        private readonly MicroSleep microSleep = new();
+        // private MultimediaTimer? timer;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,7 +220,7 @@ internal class NetSender
             Mics.UpdateFastCorrected();
         }
 
-        var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
+        var interval = Mics.FromMicroseconds((double)NetConstants.SendIntervalMicroseconds / 2); // Half for margin.
         if (currentSystemMics < (this.previousSystemMics + interval))
         {
             return;

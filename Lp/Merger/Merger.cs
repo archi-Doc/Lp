@@ -20,14 +20,14 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public virtual void Initialize(Crystalizer crystalizer, SignaturePrivateKey mergerPrivateKey)
     {
-        this.Information = crystalizer.CreateCrystal<MergerInformation>(new()
+        this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 3,
-            FileConfiguration = new GlobalFileConfiguration(MergerInformation.MergerFilename),
+            FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<CreditData.GoshujinClass>(new()
+        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
@@ -52,7 +52,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // this.logger.TryGet()?.Log(this.Information.ToString());
 
-        if (this.Information.MergerType == MergerInformation.Type.Single)
+        if (this.Information.MergerType == MergerConfiguration.Type.Single)
         {// Single credit
             this.Information.SingleCredit = Credit.Default;
         }
@@ -95,7 +95,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         var g = this.creditDataCrystal.Data;
         // var identifier = param.Proof.PublicKey.ToIdentifier();
 
-        CreditData? creditData;
+        FullCredit? creditData;
         using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.GetOrCreate))
         {
             if (w is null)
@@ -146,12 +146,12 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public SignaturePublicKey MergerPublicKey { get; protected set; }
 
-    public MergerInformation? Information { get; protected set; }
+    public MergerConfiguration? Information { get; protected set; }
 
     protected ILogger logger;
     protected LpBase lpBase;
-    protected ICrystal<CreditData.GoshujinClass>? creditDataCrystal;
-    protected CreditData.GoshujinClass? creditData;
+    protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
+    protected FullCredit.GoshujinClass? creditData;
     protected SignaturePrivateKey mergerPrivateKey;
     protected MergerState mergerState = new();
 

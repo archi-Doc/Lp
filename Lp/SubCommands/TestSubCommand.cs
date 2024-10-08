@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Arc.Threading;
 using Lp.Data;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -25,6 +27,17 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
+
+        var microSleep = new Arc.Threading.MicroSleep();
+        this.logger.TryGet()?.Log($"MicroSleep: {microSleep.CurrentMode.ToString()}");
+
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        microSleep.Sleep(1_000);
+        var microSeconds = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency * 1_000_000;
+        this.logger.TryGet()?.Log($"{microSeconds}");
+
+        microSleep.Dispose();
 
         var mics = Mics.GetCorrected();
         this.userInterfaceService.WriteLine($"Mics: {mics}");
