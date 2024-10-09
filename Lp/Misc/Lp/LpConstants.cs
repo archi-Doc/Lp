@@ -7,6 +7,7 @@ namespace Lp;
 
 public static class LpConstants
 {
+    public const int MaxNameLength = 32;
     public const string LpAlias = "Lp";
     public const string LpPublicKeyString = "(BAL-lWmqHC4qMeW1fpNhLdXMMF2MDdR-yBGG_Ly6ehoiyJSX)";
 

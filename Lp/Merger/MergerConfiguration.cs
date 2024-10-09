@@ -28,8 +28,10 @@ public partial record MergerConfiguration : ITinyhandSerializationCallback
         return new IMergerClient.InformationResult() with { MergerName = this.MergerName, };
     }
 
+    [Key("MergerName", AddProperty = "MergerName")]
     [DefaultValue(DefaultName)]
-    public string MergerName { get; set; } = default!;
+    [MaxLength(LpConstants.MaxNameLength)]
+    private string mergerName = string.Empty;
 
     public Type MergerType { get; set; }
 

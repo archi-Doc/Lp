@@ -57,6 +57,7 @@ public class Control
                 context.AddSingleton<Seedphrase>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
+                context.AddSingleton<Linker>();
                 ConfigureRelay(context);
 
                 // RPC / Services
@@ -333,10 +334,11 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
-                // ZenMerger, RelayMerger, ContentMerger, Peer, Relay
-                await control.CreateMerger(this.Context);
-                await control.CreatePeer(this.Context);
-                await control.CreateRelay(this.Context);
+                // Prepare
+                await control.PrepareMerger(this.Context);
+                await control.PrepareRelay(this.Context);
+                await control.PrepareLinker(this.Context);
+                await control.PreparePeer(this.Context);
 
                 // Vault -> NodeKey
                 await control.LoadKeyVault_NodeKey();
@@ -385,7 +387,7 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LpSettings settings, Merger merger, RelayMerger relayMerger)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -398,6 +400,7 @@ public class Control
         this.LpBase.Settings = settings;
         this.Merger = merger;
         this.RelayMerger = relayMerger;
+        this.Linker = linker;
 
         if (this.LpBase.Options.TestFeatures)
         {
@@ -438,6 +441,8 @@ public class Control
 
     public RelayMerger RelayMerger { get; }
 
+    public Linker Linker { get; }
+
     public Crystalizer Crystalizer { get; }
 
     public Vault Vault { get; }
@@ -446,7 +451,7 @@ public class Control
 
     private SimpleParser subcommandParser;
 
-    public async Task CreatePeer(UnitContext context)
+    public async Task PreparePeer(UnitContext context)
     {
         this.NetControl.Services.Register<IBasalService, BasalServiceAgent>();
 
@@ -479,7 +484,7 @@ public class Control
         }
     }
 
-    public async Task CreateRelay(UnitContext context)
+    public async Task PrepareRelay(UnitContext context)
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
         {
@@ -491,7 +496,7 @@ public class Control
         }
     }
 
-    public async Task CreateMerger(UnitContext context)
+    public async Task PrepareMerger(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
         if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
@@ -528,6 +533,28 @@ public class Control
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
             this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+        }
+    }
+
+    public async Task PrepareLinker(UnitContext context)
+    {
+        var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
+        if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerPrivault))
+        {// LinkerPrivault is valid
+            var privault = this.LpBase.Options.LinkerPrivault;
+            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
+                if (!this.Vault.TryGetAndDeserialize<SignaturePrivateKey>(privault, out privateKey))
+                {
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, privault);
+                    privateKey = SignaturePrivateKey.Create();
+                    this.Vault.SerializeAndAdd(privault, privateKey);
+                }
+            }
+
+            context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalizer, privateKey);
+            // this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
+            // this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
     }
 
