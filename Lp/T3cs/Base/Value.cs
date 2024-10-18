@@ -131,7 +131,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public Point Point { get; private set; }
 
     [Key(2)]
-    public Credit Credit { get; private set; } = Credit.Default;
+    public Credit Credit { get; private set; } = new();
 
     #endregion
 

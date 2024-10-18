@@ -14,7 +14,7 @@ public partial record RelayStatus
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     [Key(0, AddProperty = "Credit", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private Credit credit = Credit.Default;
+    private Credit credit = new();
 
     [Key(1, AddProperty = "Address", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     private NetAddress address;
