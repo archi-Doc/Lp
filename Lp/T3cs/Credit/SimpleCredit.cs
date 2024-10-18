@@ -28,5 +28,5 @@ public partial record SimpleCredit : ICredit
     protected CreditInformation creditInformation = CreditInformation.Default;
 
     [Key(3, AddProperty = "Borrowers", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    protected BorrowerData.GoshujinClass borrowers = new();
+    protected Borrower.GoshujinClass borrowers = new();
 }
