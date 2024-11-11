@@ -225,20 +225,6 @@ public partial class Vault
         }
     }
 
-    public async Task SaveAsync()
-    {
-        try
-        {
-            var items = this.GetEncrypted();
-            var bytes = TinyhandSerializer.SerializeToUtf8(items);
-            // this.vaultData.Data = bytes;
-            await File.WriteAllBytesAsync(this.path, bytes).ConfigureAwait(false);
-        }
-        catch
-        {
-        }
-    }
-
     public void Create(string password)
     {
         lock (this.syncObject)
@@ -269,6 +255,20 @@ public partial class Vault
         }
 
         return false;
+    }
+
+    public async Task SaveAsync()
+    {//
+        try
+        {
+            var items = this.GetEncrypted();
+            var bytes = TinyhandSerializer.SerializeToUtf8(items);
+            // this.vaultData.Data = bytes;
+            await File.WriteAllBytesAsync(this.path, bytes).ConfigureAwait(false);
+        }
+        catch
+        {
+        }
     }
 
     internal async Task LoadAsync()
