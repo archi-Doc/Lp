@@ -17,7 +17,7 @@ internal sealed class AuthorityInterface
 
     internal async Task<Authority?> Prepare()
     {
-        if (this.authority != null)
+        if (this.authority is not null)
         {
             if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
             {// Periof of time
@@ -27,14 +27,14 @@ internal sealed class AuthorityInterface
                 }
             }
 
-            if (this.authority != null)
+            if (this.authority is not null)
             {
                 return this.authority;
             }
         }
 
         // Try to get AuthorityData.
-        if (!PasswordEncrypt.TryDecrypt(this.encrypted, string.Empty, out var decrypted))
+        if (!PasswordEncryption.TryDecrypt(this.encrypted, string.Empty, out var decrypted))
         {
             while (true)
             {
@@ -44,7 +44,7 @@ internal sealed class AuthorityInterface
                     return null;
                 }
 
-                if (PasswordEncrypt.TryDecrypt(this.encrypted, passPhrase, out decrypted))
+                if (PasswordEncryption.TryDecrypt(this.encrypted, passPhrase, out decrypted))
                 {
                     break;
                 }
