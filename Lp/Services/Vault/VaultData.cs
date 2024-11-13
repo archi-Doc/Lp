@@ -2,84 +2,76 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Arc.Collections;
+using Lp.T3cs;
 
-namespace Lp;
+namespace Lp.Services;
 
-public partial class Vault
+/*[TinyhandObject(UseServiceProvider = true)]
+public sealed partial class VaultData
 {
-    public const string Filename = "Vault.tinyhand";
+    [TinyhandObject]
+    private readonly partial struct Item
+    {
+        public Item(byte[]? plaintext, VaultData? vaultData)
+        {
+            this.Plaintext = plaintext;
+            this.VaultData = vaultData;
+        }
 
-    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
-    {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
-        this.logger = logger;
-        this.userInterfaceService = userInterfaceService;
-        this.lpBase = lpBase;
-        // this.vaultData = vaultData;
-        if (!string.IsNullOrEmpty(this.lpBase.Options.VaultPath))
-        {
-            this.path = this.lpBase.Options.VaultPath;
-        }
-        else
-        {
-            this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
-        }
+        public Item Clone(byte[] plaintext)
+            => new(plaintext, this.VaultData);
+
+        public Item Clone(VaultData vaultData)
+            => new(this.Plaintext, vaultData);
+
+        [Key(0)]
+        public readonly byte[]? Plaintext;
+
+        [Key(1)]
+        public readonly VaultData? VaultData;
     }
 
     #region FieldAndProperty
 
-    public bool Created { get; private set; } = false;
+    [Key(1)]
+    public VaultLifecycle Lifecycle { get; private set; }
 
-    private readonly ILogger<Vault> logger;
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly LpBase lpBase;
-    // private readonly CrystalDataInterface vaultData;
-    private readonly string path;
+    [Key(2)]
+    public long DecryptedMics { get; private set; }
 
+    private readonly Vault vault;
     private readonly object syncObject = new();
-    private readonly OrderedMap<string, DecryptedItem> nameToDecrypted = new();
+    private readonly OrderedMap<string, Item> nameToItem = new();
     private string password = string.Empty;
 
     #endregion
 
-    [TinyhandObject]
-    private partial record struct DecryptedItem
+    public VaultData(Vault vault)
     {
-        public DecryptedItem(byte[] decrypted)
-        {
-            this.Decrypted = decrypted;
-        }
-
-        [KeyAsName]
-        internal byte[] Decrypted = Array.Empty<byte>();
+        this.vault = vault;
     }
 
-    [TinyhandObject]
-    private partial record struct EncryptedItem
-    {
-        public EncryptedItem(int hint, byte[] encrypted)
-        {
-            this.Hint = (byte)hint;
-            this.Encrypted = encrypted;
-        }
-
-        [KeyAsName]
-        internal byte Hint;
-
-        [KeyAsName]
-        internal byte[] Encrypted = Array.Empty<byte>();
-    }
-
-    public bool TryAdd(string name, byte[] decrypted)
+    public bool TryAdd(string name, byte[] plaintext)
     {
         lock (this.syncObject)
         {
-            if (this.nameToDecrypted.ContainsKey(name))
+            this.nameToItem.TryGetValue(name, out var item);
+            if (item.Plaintext is not null)
             {// Already exists.
                 return false;
             }
 
-            this.nameToDecrypted.Add(name, new(decrypted));
+            this.nameToItem.Add(name, item.Clone(plaintext));
             return true;
+        }
+    }
+
+    public void Add(string name, byte[] plaintext)
+    {
+        lock (this.syncObject)
+        {
+            this.nameToItem.TryGetValue(name, out var item);
+            this.nameToItem.Add(name, item.Clone(plaintext));
         }
     }
 
@@ -89,10 +81,10 @@ public partial class Vault
         return this.TryAdd(name, bytes);
     }
 
-    public bool SerializeAndAdd<T>(string name, T obj)
+    public void SerializeAndAdd<T>(string name, T obj)
     {
         var bytes = TinyhandSerializer.Serialize<T>(obj);
-        return this.Add(name, bytes);
+        this.Add(name, bytes);
     }
 
     public bool FormatAndTryAdd<T>(string name, T obj)
@@ -107,25 +99,11 @@ public partial class Vault
         return this.TryAdd(name, array);
     }
 
-    public bool Add(string name, byte[] decrypted)
-    {
-        lock (this.syncObject)
-        {
-            if (this.nameToDecrypted.TryGetValue(name, out var item))
-            {
-                this.nameToDecrypted.Remove(name);
-            }
-
-            this.nameToDecrypted.Add(name, new(decrypted));
-            return true;
-        }
-    }
-
     public bool Exists(string name)
     {
         lock (this.syncObject)
         {
-            return this.nameToDecrypted.ContainsKey(name);
+            return this.nameToItem.ContainsKey(name);
         }
     }
 
@@ -133,28 +111,28 @@ public partial class Vault
     {
         lock (this.syncObject)
         {
-            return this.nameToDecrypted.Remove(name);
+            return this.nameToItem.Remove(name);
         }
     }
 
-    public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
+    public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] plaintext)
     {
         lock (this.syncObject)
         {
-            if (!this.nameToDecrypted.TryGetValue(name, out var item))
+            if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
-                decrypted = null;
+                plaintext = null;
                 return false;
             }
 
-            decrypted = item.Decrypted;
-            return true;
+            plaintext = item.Plaintext;
+            return plaintext is not null;
         }
     }
 
     public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
     {
-        if (!this.TryGet(name, out var decrypted))
+        if (!this.TryGet(name, out var plaintext))
         {
             obj = default;
             return false;
@@ -162,7 +140,7 @@ public partial class Vault
 
         try
         {
-            obj = TinyhandSerializer.Deserialize<T>(decrypted);
+            obj = TinyhandSerializer.Deserialize<T>(plaintext);
             return obj != null;
         }
         catch
@@ -175,20 +153,20 @@ public partial class Vault
     public bool TryGetAndParse<T>(string name, [MaybeNullWhen(false)] out T obj)
         where T : IStringConvertible<T>
     {
-        if (!this.TryGet(name, out var decrypted))
+        if (!this.TryGet(name, out var plaintext))
         {
             obj = default;
             return false;
         }
 
-        return T.TryParse(System.Text.Encoding.UTF8.GetString(decrypted), out obj);
+        return T.TryParse(System.Text.Encoding.UTF8.GetString(plaintext), out obj);
     }
 
     public string[] GetNames()
     {
         lock (this.syncObject)
         {
-            return this.nameToDecrypted.Select(x => x.Key).ToArray();
+            return this.nameToItem.Select(x => x.Key).ToArray();
         }
     }
 
@@ -196,7 +174,7 @@ public partial class Vault
     {
         lock (this.syncObject)
         {
-            (var lower, var upper) = this.nameToDecrypted.GetRange(prefix, prefix + "\uffff");
+            (var lower, var upper) = this.nameToItem.GetRange(prefix, prefix + "\uffff");
             if (lower == null || upper == null)
             {
                 return Array.Empty<string>();
@@ -205,8 +183,7 @@ public partial class Vault
             var list = new List<string>();
             while (lower != null)
             {
-                // list.Add(node.Key.Substring(prefix.Length));
-                list.Add(lower.Key);
+                list.Add(lower.Key); // list.Add(node.Key.Substring(prefix.Length));
 
                 if (lower == upper)
                 {
@@ -218,8 +195,7 @@ public partial class Vault
                 }
             }
 
-            return list.ToArray();
-            // return this.nameToDecrypted.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
+            return list.ToArray(); // this.nameToItem.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
         }
     }
 
@@ -229,7 +205,7 @@ public partial class Vault
         {
             this.Created = true;
             this.password = password;
-            this.nameToDecrypted.Clear();
+            this.nameToItem.Clear();
         }
     }
 
@@ -259,10 +235,8 @@ public partial class Vault
     {//
         try
         {
-            var items = this.GetEncrypted();
-            var bytes = TinyhandSerializer.SerializeToUtf8(items);
-            // this.vaultData.Data = bytes;
-            await File.WriteAllBytesAsync(this.path, bytes).ConfigureAwait(false);
+            var b = PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(this), this.password);
+            await File.WriteAllBytesAsync(this.path, b).ConfigureAwait(false);
         }
         catch
         {
@@ -271,30 +245,30 @@ public partial class Vault
 
     internal async Task LoadAsync()
     {
-        if (this.lpBase.IsFirstRun)
+        if (this.vault.lpBase.IsFirstRun)
         {// First run
         }
         else
         {
-            var result = await this.LoadAsync(this.lpBase.Options.VaultPass).ConfigureAwait(false);
+            var result = await this.LoadAsync(this.vault.lpBase.Options.VaultPass).ConfigureAwait(false);
             if (result)
             {
                 return;
             }
 
             // Could not load Vault
-            var reply = await this.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
+            var reply = await this.vault.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
         }
 
-        this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
+        this.vault.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault
-        var password = this.lpBase.Options.VaultPass;
+        var password = this.vault.lpBase.Options.VaultPass;
         if (string.IsNullOrEmpty(password))
         {
             password = await this.userInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
@@ -365,18 +339,6 @@ RetryPassword:
                     await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
                     goto RetryPassword;
                 }
-
-                /*else
-                {// Password already entered.
-                    if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
-                    {// Success
-                    }
-                    else
-                    {// Failure
-                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.Vault.NoRestore, x.Key).ConfigureAwait(false);
-                        throw new PanicException();
-                    }
-                }*/
             }
 
             // item[i], decrypted
@@ -385,20 +347,4 @@ RetryPassword:
 
         return true;
     }
-
-    private KeyValueList<string, EncryptedItem> GetEncrypted()
-    {
-        var hint = PasswordEncrypt.GetPasswordHint(this.password);
-        lock (this.syncObject)
-        {
-            var list = new KeyValueList<string, EncryptedItem>();
-            foreach (var x in this.nameToDecrypted)
-            {
-                var encrypted = PasswordEncrypt.Encrypt(x.Value.Decrypted, this.password);
-                list.Add(new(x.Key, new(hint, encrypted)));
-            }
-
-            return list;
-        }
-    }
-}
+}*/

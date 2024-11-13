@@ -6,54 +6,37 @@ using Tinyhand;
 
 namespace Benchmark;
 
-[TinyhandObject]
-public partial class SignatureTestClass
-{
-    [Key(0)]
-    public int Id { get; set; }
-
-    [Key(1)]
-    public string Name { get; set; } = string.Empty;
-
-    [Key(2)]
-    public double Age { get; set; }
-
-    [Key(3)]
-    public int[] IntArray { get; set; } = Array.Empty<int>();
-}
-
 [Config(typeof(BenchmarkConfig))]
 public class SignatureBenchmark
 {
-    [Params(10)]
-    public int Length { get; set; }
-
-    public SignatureTestClass Class { get; set; }
+    private readonly EncryptionPrivateKey privateKeyA;
+    private readonly EncryptionPrivateKey privateKeyB;
+    private readonly EncryptionPublicKey publicKeyA;
+    private readonly EncryptionPublicKey publicKeyB;
 
     public SignatureBenchmark()
     {
-        this.Class = new();
-        this.Class.Id = 10000;
-        this.Class.Name = "HogeHoge";
-        this.Class.Age = 10000d;
-        this.Class.IntArray = new int[] { 1, 2, 3, 10, 20, 30, 100, 200, 300, 1000, };
-    }
-
-    [GlobalSetup]
-    public void Setup()
-    {
-    }
-
-    [GlobalCleanup]
-    public void Cleanup()
-    {
+        this.privateKeyA = EncryptionPrivateKey.Create();
+        this.privateKeyB = EncryptionPrivateKey.Create();
+        this.publicKeyA = this.privateKeyA.ToPublicKey();
+        this.publicKeyB = this.privateKeyB.ToPublicKey();
     }
 
     [Benchmark]
-    public Identifier GetIdentifier()
+    public EncryptionPrivateKey CreateKey()
     {
-        var bin = TinyhandSerializer.SerializeObject(this.Class, TinyhandSerializerOptions.Signature);
-        return Identifier.FromReadOnlySpan(bin);
+        return EncryptionPrivateKey.Create();
+    }
+
+    [Benchmark]
+    public byte[] DeriveKeyMaterial()
+    {
+        var x = new byte[32];
+        this.publicKeyB.WriteX(x);
+        var ecdh = KeyHelper.CreateEcdhFromX(x, this.publicKeyB.YTilde)!;
+        var ecdh2 = this.privateKeyA.TryGetEcdh()!;
+        var b = ecdh2.DeriveKeyMaterial(ecdh.PublicKey);
+        return b;
     }
 
     /*[Benchmark]

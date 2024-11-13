@@ -16,7 +16,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<ServiceIdBenchmark>();
+        DebugRun<SignatureBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]

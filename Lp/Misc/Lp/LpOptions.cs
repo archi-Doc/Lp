@@ -78,6 +78,9 @@ public partial record LpOptions
     [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", GetEnvironmentVariable = true)]
     public string RelayMergerPrivault { get; set; } = "RelayMerger";
 
+    [SimpleOption("LinkerPrivault", Description = "Private key or vault name for Linker", GetEnvironmentVariable = true)]
+    public string LinkerPrivault { get; set; } = "Linker";
+
     public NetOptions ToNetOptions()
     {
         return new NetOptions() with

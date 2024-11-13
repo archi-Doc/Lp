@@ -7,15 +7,15 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents a value (Owner#Point@Originator:Standard/Mergers).
+/// Represents a value (Owner#Point@Originator/Mergers).
 /// </summary>
 [TinyhandObject]
 public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConvertible<Value>
 {
     public const char PointSymbol = '#';
     public const int MaxPointLength = 19;
-    public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
-    public const long MinPoint = 1; // -MaxPoint;
+    public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
+    public const Point MinPoint = 1; // -MaxPoint;
 
     public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
     {
@@ -131,7 +131,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public Point Point { get; private set; }
 
     [Key(2)]
-    public Credit Credit { get; private set; } = Credit.Default;
+    public Credit Credit { get; private set; } = new();
 
     #endregion
 
