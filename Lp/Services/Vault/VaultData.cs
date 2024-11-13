@@ -6,7 +6,7 @@ using Lp.T3cs;
 
 namespace Lp.Services;
 
-[TinyhandObject(UseServiceProvider = true)]
+/*[TinyhandObject(UseServiceProvider = true)]
 public sealed partial class VaultData
 {
     [TinyhandObject]
@@ -339,18 +339,6 @@ RetryPassword:
                     await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
                     goto RetryPassword;
                 }
-
-                /*else
-                {// Password already entered.
-                    if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
-                    {// Success
-                    }
-                    else
-                    {// Failure
-                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.Vault.NoRestore, x.Key).ConfigureAwait(false);
-                        throw new PanicException();
-                    }
-                }*/
             }
 
             // item[i], decrypted
@@ -359,4 +347,4 @@ RetryPassword:
 
         return true;
     }
-}
+}*/
