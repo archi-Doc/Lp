@@ -242,7 +242,7 @@ public sealed partial class PacketTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             while (this.items.WaitingToSendListChain.First is { } item)
             {// Waiting to send
@@ -428,7 +428,7 @@ public sealed partial class PacketTerminal
         else if (packetUInt16 < 255)
         {// Packet response types (128-255), Server -> Client (Response)
             Item? item;
-            lock (this.items.SyncObject)
+            using (this.items.LockObject.EnterScope())
             {
                 if (this.items.PacketIdChain.TryGetValue(packetId, out item))
                 {
@@ -512,7 +512,7 @@ public sealed partial class PacketTerminal
         }
 
         var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             item.Goshujin = this.items;
 
@@ -589,7 +589,7 @@ public sealed partial class PacketTerminal
         }
 
         var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, default);
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             item.Goshujin = this.items;
         }
@@ -619,7 +619,7 @@ public sealed partial class PacketTerminal
         var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(6)); // PacketId
 
         var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             item.Goshujin = this.items;
         }

@@ -97,7 +97,7 @@ public class AddressBenchmark
     [Benchmark]
     public EndPoint? NetAddressToEndPoint_Cache()
     {
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             if (!this.items.NetAddressChain.TryGetValue(this.netAddress, out var item))
             {
@@ -112,7 +112,7 @@ public class AddressBenchmark
     [Benchmark]
     public EndPoint? NetAddressToEndPoint_Cache2()
     {
-        // lock (this.items.SyncObject)
+        // using (this.items.LockObject.EnterScope())
         {
             if (!this.items.NetAddressChain.TryGetValue(this.netAddress, out var item))
             {

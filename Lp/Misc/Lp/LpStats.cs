@@ -24,7 +24,7 @@ public partial record LpStats
 
     public void UpdateAlias()
     {
-        lock (this.Credentials.SyncObject)
+        using (this.Credentials.LockObject.EnterScope())
         {
         }
 
