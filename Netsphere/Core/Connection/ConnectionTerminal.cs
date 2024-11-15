@@ -44,9 +44,9 @@ public class ConnectionTerminal
 
     internal uint ReceiveTransmissionGap { get; private set; }
 
-    internal readonly object SyncSend = new();
-    internal UnorderedLinkedList<Connection> SendList = new(); // lock (this.SyncSend)
-    internal UnorderedLinkedList<Connection> CongestedList = new(); // lock (this.SyncSend)
+    internal readonly Lock LockSend = new();
+    internal UnorderedLinkedList<Connection> SendList = new(); // using (this.LockSend.EnterScope())
+    internal UnorderedLinkedList<Connection> CongestedList = new(); // using (this.LockSend.EnterScope())
 
     // lock (this.CongestionControlList)
     internal UnorderedLinkedList<ICongestionControl> CongestionControlList = new();
@@ -529,7 +529,7 @@ public class ConnectionTerminal
             }
         }
 
-        lock (this.SyncSend)
+        using (this.LockSend.EnterScope())
         {
             // CongestedList: Move to SendList when congestion is resolved.
             var currentNode = this.CongestedList.Last; // To maintain order in SendList, process from the last node.

@@ -97,7 +97,7 @@ public class CubicCongestionControl : ICongestionControl
 
     private readonly ILogger? logger;
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private readonly UnorderedLinkedList<SendGene> genesInFlight = new(); // Retransmission mics, gene
     private readonly ConcurrentQueue<SendGene> genesLossDetected = new();
 
@@ -142,7 +142,7 @@ public class CubicCongestionControl : ICongestionControl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICongestionControl.AddInFlight(SendGene sendGene, int additional)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (sendGene.Node is UnorderedLinkedList<SendGene>.Node node)
             {
@@ -158,7 +158,7 @@ public class CubicCongestionControl : ICongestionControl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICongestionControl.RemoveInFlight(SendGene sendGene, bool ack)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (ack)
             {
@@ -195,7 +195,7 @@ public class CubicCongestionControl : ICongestionControl
             return false;
         }
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
             /*var nif = (double)this.NumberInFlight;
             if (nif > 0d)
@@ -333,7 +333,7 @@ public class CubicCongestionControl : ICongestionControl
     }
 
     private void ProcessResend(NetSender netSender)
-    {// lock (this.syncObject)
+    {// using (this.lockObject.EnterScope())
         int resendCapacity = 1 + (int)this.boost; // betacode
         SendGene? gene;
 

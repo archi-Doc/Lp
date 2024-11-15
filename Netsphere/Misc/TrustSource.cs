@@ -96,15 +96,15 @@ public sealed partial class TrustSource<T>
 
     public T? FixedOrDefault => this.fixedValue;
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     // private readonly ObjectPool<Item> itemPool;
     private readonly ObjectPool<Counter> counterPool;
 
     [Key(0)]
-    private Item.GoshujinClass items = new(); // lock (this.syncObject)
+    private Item.GoshujinClass items = new(); // using (this.lockObject.EnterScope())
 
     [Key(1)]
-    private Counter.GoshujinClass counters = new(); // lock (this.syncObject)
+    private Counter.GoshujinClass counters = new(); // using (this.lockObject.EnterScope())
 
     [Key(2)]
     private bool isFixed;
@@ -116,7 +116,7 @@ public sealed partial class TrustSource<T>
 
     public void Add(T value)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             Counter? counter;
             if (this.counters.ValueChain.TryGetValue(value, out counter))
@@ -203,7 +203,7 @@ public sealed partial class TrustSource<T>
 
     public void Clear()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.ClearInternal();
         }

@@ -60,7 +60,7 @@ internal partial class RelayExchange
     internal byte[] Iv { get; private set; }
 
     public bool DecrementAndCheck()
-    {// lock (items)
+    {// using (items.LockObject.EnterScope())
         if (this.RelayPoint-- <= 0)
         {// All RelayPoints have been exhausted.
             this.Clean();

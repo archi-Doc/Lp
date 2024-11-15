@@ -8,7 +8,7 @@ namespace Netsphere.Core;
 
 [ValueLinkObject(Restricted = true)]
 internal partial class SendGene
-{// lock (transmission.syncObject)
+{// using (transmission.lockObject.EnterScope())
     internal enum State
     {
         Initial, // Waiting to be sent.
@@ -39,7 +39,7 @@ internal partial class SendGene
     public int GeneSerial
         => this.GeneSerialListLink.Position;
 
-    internal object? Node; // lock (this.CongestionControl.syncObject)
+    internal object? Node; // using (this.CongestionControl.lockObject.EnterScope())
 
     public bool CanSend
         => this.SendTransmission.Mode != NetTransmissionMode.Disposed &&
@@ -144,7 +144,7 @@ internal partial class SendGene
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose(bool ack)
-    {// lock (SendTransmissions.syncObject)
+    {// using (SendTransmissions.lockObject.EnterScope())
         this.CongestionControl.RemoveInFlight(this, ack);
         this.Goshujin = null;
         this.Packet.Return();
@@ -152,7 +152,7 @@ internal partial class SendGene
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void DisposeMemory()
-    {// lock (SendTransmissions.syncObject)
+    {// using (SendTransmissions.lockObject.EnterScope())
         this.CongestionControl.RemoveInFlight(this, false);
         this.Packet.Return();
     }

@@ -25,7 +25,7 @@ internal class RelayKey
     }
 
     public RelayKey(RelayNode.GoshujinClass relayNodes)
-    {// lock (relayNodes.SyncObject)
+    {// using (relayNodes.LockObject.EnterScope())
         this.NumberOfRelays = relayNodes.Count;
         var node = relayNodes.LinkedListChain.First;
         if (node is not null)

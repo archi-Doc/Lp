@@ -25,7 +25,7 @@ public class AuthorityVault
     public async Task<Authority?> GetAuthority(string name)
     {
         AuthorityInterface? authorityInterface;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
             {// New interface
@@ -47,7 +47,7 @@ public class AuthorityVault
     {
         var vaultName = GetVaultName(name);
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.vault.Exists(vaultName))
             {
@@ -71,7 +71,7 @@ public class AuthorityVault
 
     public AuthorityResult RemoveAuthority(string name)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var authorityRemoved = this.nameToInterface.Remove(name);
             var vaultRemoved = this.vault.Remove(GetVaultName(name));
@@ -109,7 +109,7 @@ public class AuthorityVault
     internal IUserInterfaceService UserInterfaceService;
 #pragma warning restore SA1401
     private Vault vault;
-    private object syncObject = new();
+    private Lock lockObject = new();
     private Dictionary<string, AuthorityInterface> nameToInterface = new();
 
     #endregion

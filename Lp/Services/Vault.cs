@@ -29,13 +29,13 @@ public partial class Vault
 
     public bool Created { get; private set; } = false;
 
-    private readonly ILogger<Vault> logger;
+    private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpBase lpBase;
     // private readonly CrystalDataInterface vaultData;
     private readonly string path;
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private readonly OrderedMap<string, DecryptedItem> nameToDecrypted = new();
     private string password = string.Empty;
 
@@ -71,7 +71,7 @@ public partial class Vault
 
     public bool TryAdd(string name, byte[] decrypted)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.nameToDecrypted.ContainsKey(name))
             {// Already exists.
@@ -109,7 +109,7 @@ public partial class Vault
 
     public bool Add(string name, byte[] decrypted)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.nameToDecrypted.TryGetValue(name, out var item))
             {
@@ -123,7 +123,7 @@ public partial class Vault
 
     public bool Exists(string name)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.nameToDecrypted.ContainsKey(name);
         }
@@ -131,7 +131,7 @@ public partial class Vault
 
     public bool Remove(string name)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.nameToDecrypted.Remove(name);
         }
@@ -139,7 +139,7 @@ public partial class Vault
 
     public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (!this.nameToDecrypted.TryGetValue(name, out var item))
             {// Not found
@@ -186,7 +186,7 @@ public partial class Vault
 
     public string[] GetNames()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.nameToDecrypted.Select(x => x.Key).ToArray();
         }
@@ -194,7 +194,7 @@ public partial class Vault
 
     public string[] GetNames(string prefix)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             (var lower, var upper) = this.nameToDecrypted.GetRange(prefix, prefix + "\uffff");
             if (lower == null || upper == null)
@@ -225,7 +225,7 @@ public partial class Vault
 
     public void Create(string password)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.Created = true;
             this.password = password;
@@ -235,7 +235,7 @@ public partial class Vault
 
     public bool CheckPassword(string password)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.password == password;
         }
@@ -243,7 +243,7 @@ public partial class Vault
 
     public bool ChangePassword(string currentPassword, string newPassword)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.password == currentPassword)
             {
@@ -389,7 +389,7 @@ RetryPassword:
     private KeyValueList<string, EncryptedItem> GetEncrypted()
     {
         var hint = PasswordEncrypt.GetPasswordHint(this.password);
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var list = new KeyValueList<string, EncryptedItem>();
             foreach (var x in this.nameToDecrypted)
