@@ -6,7 +6,7 @@ using Lp.T3cs;
 
 namespace Lp.Services;
 
-/*[TinyhandObject(UseServiceProvider = true)]
+[TinyhandObject(UseServiceProvider = true)]
 public sealed partial class VaultData
 {
     [TinyhandObject]
@@ -203,7 +203,7 @@ public sealed partial class VaultData
     {
         lock (this.syncObject)
         {
-            this.Created = true;
+            //this.Created = true;
             this.password = password;
             this.nameToItem.Clear();
         }
@@ -231,8 +231,8 @@ public sealed partial class VaultData
         return false;
     }
 
-    public async Task SaveAsync()
-    {//
+    /*public async Task SaveAsync()
+    {
         try
         {
             var b = PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(this), this.password);
@@ -241,110 +241,5 @@ public sealed partial class VaultData
         catch
         {
         }
-    }
-
-    internal async Task LoadAsync()
-    {
-        if (this.vault.lpBase.IsFirstRun)
-        {// First run
-        }
-        else
-        {
-            var result = await this.LoadAsync(this.vault.lpBase.Options.VaultPass).ConfigureAwait(false);
-            if (result)
-            {
-                return;
-            }
-
-            // Could not load Vault
-            var reply = await this.vault.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
-            if (reply != true)
-            {// No
-                throw new PanicException();
-            }
-        }
-
-        this.vault.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
-        // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
-
-        // New Vault
-        var password = this.vault.lpBase.Options.VaultPass;
-        if (string.IsNullOrEmpty(password))
-        {
-            password = await this.userInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
-        }
-
-        if (password == null)
-        {
-            throw new PanicException();
-        }
-
-        this.Create(password);
-    }
-
-    private async Task<bool> LoadAsync(string? lppass)
-    {
-        byte[] data;
-        try
-        {
-            // data = this.vaultData.Data;
-            data = await File.ReadAllBytesAsync(this.path).ConfigureAwait(false);
-        }
-        catch
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, this.path);
-            return false;
-        }
-
-        KeyValueList<string, EncryptedItem>? items = null;
-        try
-        {
-            items = TinyhandSerializer.DeserializeFromUtf8<KeyValueList<string, EncryptedItem>>(data);
-        }
-        catch
-        {
-        }
-
-        if (items == null)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, this.path);
-            return false;
-        }
-
-        string? password = lppass;
-        foreach (var x in items)
-        {
-            if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, string.Empty, out var decrypted))
-            {// No password
-            }
-            else
-            {// Password required.
-RetryPassword:
-                if (password == null)
-                {// Enter password
-                    password = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
-                    if (password == null)
-                    {
-                        throw new PanicException();
-                    }
-                }
-
-                if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
-                {// Success
-                    this.password = password;
-                }
-                else
-                {// Failure
-                    password = null;
-                    await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
-                    goto RetryPassword;
-                }
-            }
-
-            // item[i], decrypted
-            this.TryAdd(x.Key, decrypted.ToArray());
-        }
-
-        return true;
-    }
-}*/
+    }*/
+}

@@ -23,11 +23,15 @@ public partial class Vault
         {
             this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
         }
+
+        this.Root = new(this);
     }
 
     #region FieldAndProperty
 
     public bool Created { get; private set; } = false;
+
+    public Data Root { get; }
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
