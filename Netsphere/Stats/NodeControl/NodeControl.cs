@@ -52,9 +52,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void FromLifelineNodeToActiveNode()
     {
-        lock (this.lifelineNodes.SyncObject)
+        using (this.lifelineNodes.LockObject.EnterScope())
         {
-            lock (this.activeNodes.SyncObject)
+            using (this.activeNodes.LockObject.EnterScope())
             {
                 foreach (var x in this.lifelineNodes.OnlineLinkChain)
                 {
@@ -85,9 +85,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             return;
         }
 
-        lock (this.lifelineNodes.SyncObject)
+        using (this.lifelineNodes.LockObject.EnterScope())
         {
-            lock (this.activeNodes.SyncObject)
+            using (this.activeNodes.LockObject.EnterScope())
             {
                 // Online -> Lifeline
                 foreach (var x in this.activeNodes)
@@ -140,7 +140,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             return false;
         }
 
-        lock (this.activeNodes.SyncObject)
+        using (this.activeNodes.LockObject.EnterScope())
         {
             if (this.activeNodes.AddressChain.ContainsKey(node.Address))
             {
@@ -148,7 +148,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
             }
         }
 
-        lock (this.unknownNodes.SyncObject)
+        using (this.unknownNodes.LockObject.EnterScope())
         {
             var item = new ActiveNode(node);
             item.Goshujin = this.unknownNodes;
@@ -160,7 +160,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool TryGetUncheckedLifelineNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        lock (this.lifelineNodes.SyncObject)
+        using (this.lifelineNodes.LockObject.EnterScope())
         {
             var obj = this.lifelineNodes.UncheckedListChain.First;
             if (obj is null)
@@ -178,7 +178,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool TryGetActiveNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        lock (this.activeNodes.SyncObject)
+        using (this.activeNodes.LockObject.EnterScope())
         {
             if (!this.activeNodes.GetChain.TryDequeue(out var obj))
             {
@@ -195,7 +195,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
     public bool TryGetUnknownNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
-        lock (this.unknownNodes.SyncObject)
+        using (this.unknownNodes.LockObject.EnterScope())
         {
             if (!this.unknownNodes.GetChain.TryPeek(out var obj))
             {
@@ -221,9 +221,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)
     {
-        lock (this.lifelineNodes.SyncObject)
+        using (this.lifelineNodes.LockObject.EnterScope())
         {
-            lock (this.activeNodes.SyncObject)
+            using (this.activeNodes.LockObject.EnterScope())
             {
                 var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
                 if (item is not null)
@@ -268,7 +268,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void ReportActiveNodeConnection(NetNode node, ConnectionResult result)
     {
-        lock (this.activeNodes.SyncObject)
+        using (this.activeNodes.LockObject.EnterScope())
         {
             var item = this.activeNodes.AddressChain.FindFirst(node.Address);
             if (item is not null)
@@ -304,9 +304,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void Validate()
     {
-        lock (this.lifelineNodes.SyncObject)
+        using (this.lifelineNodes.LockObject.EnterScope())
         {
-            lock (this.activeNodes.SyncObject)
+            using (this.activeNodes.LockObject.EnterScope())
             {
                 this.ValidateInternal();
             }
@@ -315,9 +315,9 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
 
     public void Trim()
     {
-        lock (this.lifelineNodes.SyncObject)
+        using (this.lifelineNodes.LockObject.EnterScope())
         {
-            lock (this.activeNodes.SyncObject)
+            using (this.activeNodes.LockObject.EnterScope())
             {
                 this.TrimInternal();
             }

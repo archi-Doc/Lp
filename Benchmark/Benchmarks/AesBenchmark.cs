@@ -75,7 +75,7 @@ public class AesBenchmark
     [Benchmark]
     public byte[] PoolEncrypt()
     {
-        var aes = this.AesPool.Get();
+        var aes = this.AesPool.Rent();
         var result = aes.EncryptCbc(this.Source, this.Iv);
         this.AesPool.Return(aes);
         return result;
@@ -84,7 +84,7 @@ public class AesBenchmark
     [Benchmark]
     public byte[] PoolEncrypt2()
     {
-        var aes = this.AesPool.Get();
+        var aes = this.AesPool.Rent();
         aes.Key = this.Key;
         var result = aes.EncryptCbc(this.Source, this.Iv);
         this.AesPool.Return(aes);

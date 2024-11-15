@@ -179,10 +179,10 @@ public abstract class Connection : IDisposable
     private Aes? aes0;
     private Aes? aes1;
 
-    private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
+    private SendTransmission.GoshujinClass sendTransmissions = new(); // using (this.sendTransmissions.LockObject.EnterScope())
     private UnorderedLinkedList<SendTransmission> sendAckedList = new();
 
-    // ReceiveTransmissionCode, lock (this.receiveTransmissions.SyncObject)
+    // ReceiveTransmissionCode, using (this.receiveTransmissions.LockObject.EnterScope())
     private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
     private UnorderedLinkedList<ReceiveTransmission> receiveReceivedList = new();
     private UnorderedLinkedList<ReceiveTransmission> receiveDisposedList = new();
@@ -337,7 +337,7 @@ public abstract class Connection : IDisposable
             return default;
         }
 
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             if (this.IsClosedOrDisposed ||
                 this.SendTransmissionsCount >= this.Agreement.MaxTransmissions)
@@ -360,7 +360,7 @@ public abstract class Connection : IDisposable
 
     internal SendTransmission? TryCreateSendTransmission(uint transmissionId)
     {
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             if (this.IsClosedOrDisposed)
             {
@@ -392,7 +392,7 @@ Retry:
             return default;
         }
 
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             if (this.IsClosedOrDisposed)
             {
@@ -427,7 +427,7 @@ Wait:
     {
         if (this.sendTransmissions.Count > 0)
         {
-            lock (this.sendTransmissions.SyncObject)
+            using (this.sendTransmissions.LockObject.EnterScope())
             {
                 this.CleanSendTransmission();
             }
@@ -435,7 +435,7 @@ Wait:
     }
 
     internal void CleanSendTransmission()
-    {// lock (this.sendTransmissions.SyncObject)
+    {// using (this.sendTransmissions.LockObject.EnterScope())
         // Release send transmissions that have elapsed a certain time since the last ack.
         var currentMics = Mics.FastSystem;
         while (this.sendAckedList.First is { } node)
@@ -454,7 +454,7 @@ Wait:
     }
 
     internal void CleanReceiveTransmission()
-    {// lock (this.receiveTransmissions.SyncObject)
+    {// using (this.receiveTransmissions.LockObject.EnterScope())
         Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
 
         // Release receive transmissions that have elapsed a certain time after being disposed.
@@ -492,7 +492,7 @@ Wait:
     {
         transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
 
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             this.CleanReceiveTransmission();
 
@@ -518,7 +518,7 @@ Wait:
     {
         transmissionId += this.ConnectionTerminal.ReceiveTransmissionGap;
 
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             // this.CleanReceiveTransmission();
 
@@ -563,7 +563,7 @@ Wait:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool RemoveTransmission(SendTransmission transmission)
     {
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             if (transmission.Goshujin == this.sendTransmissions)
             {
@@ -580,7 +580,7 @@ Wait:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool RemoveTransmission(ReceiveTransmission transmission)
     {
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             if (transmission.Goshujin == this.receiveTransmissions)
             {
@@ -797,7 +797,7 @@ Wait:
     internal void ProcessReceive_Ack(NetEndpoint endPoint, BytePool.RentMemory toBeShared)
     {// uint TransmissionId, ushort NumberOfPairs, { int StartGene, int EndGene } x pairs
         var span = toBeShared.Span;
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             while (span.Length >= 8)
             {
@@ -881,7 +881,7 @@ Wait:
         ReceiveTransmission? transmission;
         long maxStreamLength = 0;
         ulong dataId = 0;
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             if (this.IsClient)
             {// Client side
@@ -1002,7 +1002,7 @@ Wait:
         }
 
         ReceiveTransmission? transmission;
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
             {// No transmission
@@ -1031,7 +1031,7 @@ Wait:
 
         ReceiveTransmission? transmission;
         var transmissionId = BitConverter.ToUInt32(toBeShared.Span);
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
             {
@@ -1061,7 +1061,7 @@ Wait:
 
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             if (this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out var transmission))
             {
@@ -1301,7 +1301,7 @@ Wait:
 
     internal void CloseAllTransmission()
     {
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             foreach (var x in this.sendTransmissions)
             {
@@ -1318,7 +1318,7 @@ Wait:
             this.sendTransmissions.TransmissionIdChain.Clear();
         }
 
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             foreach (var x in this.receiveTransmissions)
             {
@@ -1343,7 +1343,7 @@ Wait:
 
     internal void CloseSendTransmission()
     {
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             foreach (var x in this.sendTransmissions)
             {
@@ -1372,7 +1372,7 @@ Wait:
     internal void TerminateInternal()
     {
         Queue<SendTransmission>? sendQueue = default;
-        lock (this.sendTransmissions.SyncObject)
+        using (this.sendTransmissions.LockObject.EnterScope())
         {
             foreach (var x in this.sendTransmissions)
             {
@@ -1399,7 +1399,7 @@ Wait:
         }
 
         Queue<ReceiveTransmission>? receiveQueue = default;
-        lock (this.receiveTransmissions.SyncObject)
+        using (this.receiveTransmissions.LockObject.EnterScope())
         {
             foreach (var x in this.receiveTransmissions)
             {

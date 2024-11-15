@@ -45,7 +45,7 @@ public class RelayCircuit
             return RelayResult.InvalidEndpoint;
         }
 
-        lock (this.relayNodes.SyncObject)
+        using (this.relayNodes.LockObject.EnterScope())
         {
             var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationEndpoint);
             if (result != RelayResult.Success)
@@ -74,7 +74,7 @@ public class RelayCircuit
             _ = this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, i);
         }
 
-        lock (this.relayNodes.SyncObject)
+        using (this.relayNodes.LockObject.EnterScope())
         {
             this.relayNodes.Clear();
             this.NewRelayKeyInternal();
@@ -88,7 +88,7 @@ public class RelayCircuit
 
     public RelayResult CanAddRelay(ushort relayId, NetEndpoint endpoint)
     {
-        lock (this.relayNodes.SyncObject)
+        using (this.relayNodes.LockObject.EnterScope())
         {
             return this.CanAddRelayInternal(relayId, endpoint);
         }
@@ -97,7 +97,7 @@ public class RelayCircuit
     public string UnsafeToString()
     {
         var sb = new StringBuilder();
-        lock (this.relayNodes.SyncObject)
+        using (this.relayNodes.LockObject.EnterScope())
         {
             var i = 0;
             foreach (var x in this.relayNodes)
@@ -112,7 +112,7 @@ public class RelayCircuit
     public async Task<string> UnsafeDetailedToString()
     {
         NetEndpoint[] endpointArray;
-        lock (this.relayNodes.SyncObject)
+        using (this.relayNodes.LockObject.EnterScope())
         {
             endpointArray = this.relayNodes.Select(x => x.Endpoint).ToArray();
         }
@@ -162,12 +162,12 @@ public class RelayCircuit
     }
 
     private void NewRelayKeyInternal()
-    {// lock (this.relayNodes.SyncObject)
+    {// using (this.relayNodes.LockObject.EnterScope())
         this.relayKey = new(this.relayNodes);
     }
 
     private RelayResult CanAddRelayInternal(ushort relayId, NetEndpoint endpoint)
-    {// lock (this.relayNodes.SyncObject)
+    {// using (this.relayNodes.LockObject.EnterScope())
         if (endpoint.RelayId != 0)
         {
             return RelayResult.InvalidEndpoint;

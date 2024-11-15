@@ -67,7 +67,7 @@ public class ConnectionTerminal
 
         (UnorderedMap<NetEndpoint, ClientConnection>.Node[] Nodes, int Max) client;
         Queue<ClientConnection> clientToChange = new();
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {
             client = this.clientConnections.DestinationEndpointChain.UnsafeGetNodes();
         }
@@ -102,7 +102,7 @@ public class ConnectionTerminal
             }
         }
 
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {
             while (clientToChange.TryDequeue(out var clientConnection))
             {
@@ -120,7 +120,7 @@ public class ConnectionTerminal
 
         (UnorderedMap<NetEndpoint, ServerConnection>.Node[] Nodes, int Max) server;
         Queue<ServerConnection> serverToChange = new();
-        lock (this.serverConnections.SyncObject)
+        using (this.serverConnections.LockObject.EnterScope())
         {
             server = this.serverConnections.DestinationEndpointChain.UnsafeGetNodes();
         }
@@ -155,7 +155,7 @@ public class ConnectionTerminal
             }
         }
 
-        lock (this.serverConnections.SyncObject)
+        using (this.serverConnections.LockObject.EnterScope())
         {
             while (serverToChange.TryDequeue(out var serverConnection))
             {
@@ -211,7 +211,7 @@ public class ConnectionTerminal
 
         newConnection.MinimumNumberOfRelays = targetNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             newConnection.IncrementOpenCount();
             newConnection.Goshujin = this.clientConnections;
@@ -246,7 +246,7 @@ public class ConnectionTerminal
             publicKey = privateKey.ToPublicKey();
         }
 
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {
             if (mode == Connection.ConnectMode.ReuseIfAvailable ||
                 mode == Connection.ConnectMode.ReuseOnly)
@@ -285,7 +285,7 @@ public class ConnectionTerminal
 
         newConnection.MinimumNumberOfRelays = minimumNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             newConnection.IncrementOpenCount();
             newConnection.Goshujin = this.clientConnections;
@@ -297,7 +297,7 @@ public class ConnectionTerminal
     internal void CloseRelayedConnections()
     {
         ClientConnection[] clients;
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {
             clients = this.clientConnections.Where(x => x.MinimumNumberOfRelays > 0).ToArray();
         }
@@ -307,7 +307,7 @@ public class ConnectionTerminal
             x.TerminateInternal();
         }
 
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {
             foreach (var x in clients)
             {
@@ -328,7 +328,7 @@ public class ConnectionTerminal
 
     internal ClientConnection PrepareBidirectionalConnection(ServerConnection serverConnection)
     {
-        lock (this.clientConnections.SyncObject)
+        using (this.clientConnections.LockObject.EnterScope())
         {
             if (this.clientConnections.ConnectionIdChain.TryGetValue(serverConnection.ConnectionId, out var connection))
             {
@@ -348,7 +348,7 @@ public class ConnectionTerminal
 
     internal ServerConnection PrepareBidirectionalConnection(ClientConnection clientConnection)
     {
-        lock (this.serverConnections.SyncObject)
+        using (this.serverConnections.LockObject.EnterScope())
         {
             if (this.serverConnections.ConnectionIdChain.TryGetValue(clientConnection.ConnectionId, out var connection))
             {
@@ -398,7 +398,7 @@ public class ConnectionTerminal
         this.netStats.NodeControl.TryAddUnknownNode(node);
         connection.Initialize(p2.Agreement, embryo);
 
-        lock (this.serverConnections.SyncObject)
+        using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
         }
@@ -446,7 +446,7 @@ public class ConnectionTerminal
             clientConnection.Goshujin is { } g)
         {
             ServerConnection? bidirectionalConnection;
-            lock (g.SyncObject)
+            using (g.LockObject.EnterScope())
             {
                 clientConnection.ResetOpenCount();
                 if (connection.CurrentState == Connection.State.Open)
@@ -478,7 +478,7 @@ public class ConnectionTerminal
             serverConnection.Goshujin is { } g2)
         {
             ClientConnection? bidirectionalConnection;
-            lock (g2.SyncObject)
+            using (g2.LockObject.EnterScope())
             {
                 if (connection.CurrentState == Connection.State.Open)
                 {// Open -> Close
@@ -588,7 +588,7 @@ public class ConnectionTerminal
         if (packetUInt16 < 384)
         {// Client -> Server
             ServerConnection? connection = default;
-            lock (this.serverConnections.SyncObject)
+            using (this.serverConnections.LockObject.EnterScope())
             {
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
 
@@ -607,7 +607,7 @@ public class ConnectionTerminal
         else
         {// Server -> Client (Response)
             ClientConnection? connection = default;
-            lock (this.clientConnections.SyncObject)
+            using (this.clientConnections.LockObject.EnterScope())
             {
                 this.clientConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
             }
@@ -632,7 +632,7 @@ public class ConnectionTerminal
             cancellationToken.ThrowIfCancellationRequested();
 
             ClientConnection[] clients;
-            lock (this.clientConnections.SyncObject)
+            using (this.clientConnections.LockObject.EnterScope())
             {
                 clients = this.clientConnections.ToArray();
             }
@@ -642,7 +642,7 @@ public class ConnectionTerminal
                 x.TerminateInternal();
             }
 
-            lock (this.clientConnections.SyncObject)
+            using (this.clientConnections.LockObject.EnterScope())
             {
                 foreach (var x in clients)
                 {
@@ -664,7 +664,7 @@ public class ConnectionTerminal
             }
 
             ServerConnection[] servers;
-            lock (this.serverConnections.SyncObject)
+            using (this.serverConnections.LockObject.EnterScope())
             {
                 servers = this.serverConnections.ToArray();
             }
@@ -674,7 +674,7 @@ public class ConnectionTerminal
                 x.TerminateInternal();
             }
 
-            lock (this.serverConnections.SyncObject)
+            using (this.serverConnections.LockObject.EnterScope())
             {
                 foreach (var x in servers)
                 {

@@ -72,7 +72,7 @@ internal class RelayKey
             goto Exit;
         }
 
-        var aes = AesPool.Get();
+        var aes = AesPool.Rent();
 
         try
         {
@@ -155,7 +155,7 @@ Exit:
             goto Error;
         }
 
-        var aes = AesPool.Get();
+        var aes = AesPool.Rent();
         encrypted = PacketPool.Rent().AsMemory();
 
         // RelayId

@@ -125,7 +125,7 @@ public sealed partial class TrustSource<T>
             }
             else
             {// New counter
-                counter = this.counterPool.Get();
+                counter = this.counterPool.Rent();
                 counter.Value = value;
                 counter.Count = 1;
                 counter.Goshujin = this.counters;

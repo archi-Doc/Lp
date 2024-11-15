@@ -94,7 +94,7 @@ public partial class RelayAgent
     public override string ToString()
     {
         var sb = new StringBuilder();
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             foreach (var x in this.items)
             {
@@ -109,7 +109,7 @@ public partial class RelayAgent
     {
         relayId = 0;
         outerRelayId = 0;
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)
             {
@@ -142,7 +142,7 @@ public partial class RelayAgent
 
     public long AddRelayPoint(ushort relayId, long relayPoint)
     {
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             var exchange = this.items.RelayIdChain.FindFirst(relayId);
             if (exchange is null)
@@ -170,7 +170,7 @@ public partial class RelayAgent
 
         this.lastCleanMics = Mics.FastSystem;
 
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             Queue<RelayExchange>? toDelete = default;
             foreach (var x in this.items)
@@ -201,7 +201,7 @@ public partial class RelayAgent
         }
 
         RelayExchange? exchange;
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null || !exchange.DecrementAndCheck())
@@ -446,7 +446,7 @@ Exit:
 
         RelayExchange? exchange;
         PingRelayResponse? packet;
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
@@ -469,7 +469,7 @@ Exit:
 
         RelayExchange? exchange;
         RelayOperatioResponse? response = default;
-        lock (this.items.SyncObject)
+        using (this.items.LockObject.EnterScope())
         {
             exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
