@@ -55,7 +55,7 @@ public sealed partial class Vault
             }
 
             this.nameToItem.Add(name, item.Clone(plaintext));
-            return true;
+            return VaultResult.Success;
         }
     }
 
@@ -80,13 +80,13 @@ public sealed partial class Vault
         this.Add(name, bytes);
     }
 
-    public bool FormatAndTryAdd<T>(string name, T obj)
+    public VaultResult ConvertAndTryAdd<T>(string name, T obj)
         where T : IStringConvertible<T>
     {
         var array = Arc.Crypto.CryptoHelper.ConvertToUtf8(obj);
         if (array.Length == 0)
         {
-            return false;
+            return VaultResult.ConvertFailure;
         }
 
         return this.TryAdd(name, array);

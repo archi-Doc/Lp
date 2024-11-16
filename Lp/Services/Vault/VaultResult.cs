@@ -9,4 +9,6 @@ public enum VaultResult
     NotFound,
     Encrypted,
     Canceled,
+    ConvertFailure,
+    DecryptionFailure,
 }
