@@ -4,7 +4,7 @@ namespace Lp.T3cs;
 
 internal sealed class AuthorityInterface
 {
-    public AuthorityInterface(AuthorityVault authorityVault, string name, byte[] encrypted)
+    public AuthorityInterface(AuthorityControl authorityVault, string name, byte[] encrypted)
     {
         this.authorityVault = authorityVault;
         this.Name = name;
@@ -75,7 +75,7 @@ internal sealed class AuthorityInterface
         }
     }
 
-    private AuthorityVault authorityVault;
+    private AuthorityControl authorityVault;
     private byte[] encrypted;
     private Authority? authority;
 }

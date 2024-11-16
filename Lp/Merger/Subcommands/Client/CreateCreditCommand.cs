@@ -10,7 +10,7 @@ namespace Lp.Subcommands.MergerClient;
 [SimpleCommand("create-credit")]
 public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityVault authorityVault, RobustConnection.Factory robustConnectionFactory)
+    public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityControl authorityVault, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
         this.netTerminal = netTerminal;
@@ -49,7 +49,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
     private readonly NestedCommand nestedcommand;
-    private readonly AuthorityVault authorityVault;
+    private readonly AuthorityControl authorityVault;
     private readonly RobustConnection.Factory robustConnectionFactory;
 }
 

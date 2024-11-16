@@ -7,7 +7,7 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("remove-vault")]
 public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.Vault vault)
+    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.VaultControl vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;
@@ -25,6 +25,6 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
         }
     }
 
-    private readonly Lp.Vault vault;
+    private readonly Lp.VaultControl vault;
     private readonly IUserInterfaceService userInterfaceService;
 }

@@ -10,7 +10,7 @@ namespace Lp.Subcommands.Relay;
 [SimpleCommand("add-incomimg-relay", Description = "")]
 public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>
 {
-    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityVault authorityVault)
+    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityVault)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -72,7 +72,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NetTerminal netTerminal;
-    private readonly AuthorityVault authorityVault;
+    private readonly AuthorityControl authorityVault;
 }
 
 public record NewCertificateRelayOptions

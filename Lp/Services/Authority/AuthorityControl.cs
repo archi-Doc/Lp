@@ -9,11 +9,11 @@ namespace Lp.T3cs;
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.
 /// </summary>
-public class AuthorityVault
+public class AuthorityControl
 {
     public const string VaultPrefix = "Authority\\";
 
-    public AuthorityVault(IUserInterfaceService userInterfaceService, Vault vault)
+    public AuthorityControl(IUserInterfaceService userInterfaceService, VaultControl vault)
     {
         this.UserInterfaceService = userInterfaceService;
         this.vault = vault;
@@ -108,7 +108,7 @@ public class AuthorityVault
 #pragma warning disable SA1401
     internal IUserInterfaceService UserInterfaceService;
 #pragma warning restore SA1401
-    private Vault vault;
+    private VaultControl vault;
     private Lock lockObject = new();
     private Dictionary<string, AuthorityInterface> nameToInterface = new();
 

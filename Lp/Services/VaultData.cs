@@ -4,18 +4,18 @@ using Arc.Collections;
 
 namespace Lp;
 
-public partial class Vault
+public partial class VaultControl
 {
     public partial class Data
     {
-        internal Data(Vault vault)
+        internal Data(VaultControl vault)
         {
             this.vault = vault;
         }
 
         #region FieldAndProperty
 
-        private readonly Vault vault;
+        private readonly VaultControl vault;
         private readonly OrderedMap<string, byte[]> nameToDecrypted = new();
         private string password = string.Empty;
 

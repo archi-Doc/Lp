@@ -7,7 +7,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("rm")]
 public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandRemove(ILogger<CustomSubcommandRemove> logger, Vault vault)
+    public CustomSubcommandRemove(ILogger<CustomSubcommandRemove> logger, VaultControl vault)
     {
         this.vault = vault;
         this.logger = logger;
@@ -27,7 +27,7 @@ public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOp
         }
     }
 
-    private Vault vault;
+    private VaultControl vault;
     private ILogger<CustomSubcommandRemove> logger;
 }
 

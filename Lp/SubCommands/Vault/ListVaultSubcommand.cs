@@ -7,7 +7,7 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("list-vault")]
 public class ListVaultSubcommand : ISimpleCommandAsync
 {
-    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.Vault vault)
+    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.VaultControl vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;
@@ -19,6 +19,6 @@ public class ListVaultSubcommand : ISimpleCommandAsync
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private readonly Lp.Vault vault;
+    private readonly Lp.VaultControl vault;
     private readonly IUserInterfaceService userInterfaceService;
 }

@@ -39,14 +39,14 @@ public sealed partial class VaultData
     [Key(2)]
     public long DecryptedMics { get; private set; }
 
-    private readonly Vault vault;
+    private readonly VaultControl vault;
     private readonly object syncObject = new();
     private readonly OrderedMap<string, Item> nameToItem = new();
     private string password = string.Empty;
 
     #endregion
 
-    public VaultData(Vault vault)
+    public VaultData(VaultControl vault)
     {
         this.vault = vault;
     }

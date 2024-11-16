@@ -8,7 +8,7 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("new-vault")]
 public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 {
-    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, Lp.Vault vault)
+    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, Lp.VaultControl vault)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -117,7 +117,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Seedphrase seedPhrase;
-    private readonly Lp.Vault vault;
+    private readonly Lp.VaultControl vault;
 }
 
 public record NewVaultOptions

@@ -9,7 +9,7 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityVault authorityVault, Seedphrase seedphrase)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityVault, Seedphrase seedphrase)
     {
         this.logger = logger;
         this.authorityVault = authorityVault;
@@ -44,7 +44,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
     }
 
     private readonly ILogger logger;
-    private readonly AuthorityVault authorityVault;
+    private readonly AuthorityControl authorityVault;
     private readonly Seedphrase seedphrase;
 }
 

@@ -7,7 +7,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("info")]
 public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandInfo(ILogger<CustomSubcommandInfo> logger, IUserInterfaceService userInterfaceService, Vault vault)
+    public CustomSubcommandInfo(ILogger<CustomSubcommandInfo> logger, IUserInterfaceService userInterfaceService, VaultControl vault)
     {
         this.vault = vault;
         this.userInterfaceService = userInterfaceService;
@@ -37,7 +37,7 @@ public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOpti
         }
     }
 
-    private Vault vault;
+    private VaultControl vault;
     private ILogger<CustomSubcommandInfo> logger;
     private IUserInterfaceService userInterfaceService;
 }

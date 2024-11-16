@@ -33,7 +33,7 @@ public class NestedCommand
 [SimpleCommand("merger-client")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
-    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityVault authorityVault, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
+    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityVault, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -70,7 +70,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityVault authorityVault;
+    private readonly AuthorityControl authorityVault;
     private readonly NestedCommand nestedcommand;
     private readonly RobustConnection.Factory robustConnectionFactory;
 }

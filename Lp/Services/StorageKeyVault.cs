@@ -14,7 +14,7 @@ internal class StorageKeyVault : IStorageKey
 
     bool IStorageKey.AddKey(string bucket, AccessKeyPair accessKeyPair)
     {
-        if (this.Vault is not { } vault)
+        if (this.VaultControl is not { } vault)
         {
             return false;
         }
@@ -27,7 +27,7 @@ internal class StorageKeyVault : IStorageKey
     {
         accessKeyPair = default;
 
-        if (this.Vault is not { } vault)
+        if (this.VaultControl is not { } vault)
         {
             return false;
         }
@@ -52,7 +52,7 @@ internal class StorageKeyVault : IStorageKey
         return false;
     }
 
-    public Vault? Vault { get; set; }
+    public VaultControl? VaultControl { get; set; }
 
     private Encoding utf8 = new UTF8Encoding(true, false);
 }

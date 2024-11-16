@@ -7,7 +7,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("run")]
 public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandRun(ILogger<CustomSubcommandRun> logger, IUserInterfaceService userInterfaceService, Control control, Vault vault)
+    public CustomSubcommandRun(ILogger<CustomSubcommandRun> logger, IUserInterfaceService userInterfaceService, Control control, VaultControl vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.control = control;
@@ -42,6 +42,6 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
 
     private IUserInterfaceService userInterfaceService;
     private Control control;
-    private Vault vault;
+    private VaultControl vault;
     private ILogger<CustomSubcommandRun> logger;
 }

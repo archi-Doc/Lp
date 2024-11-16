@@ -7,7 +7,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("ls")]
 public class CustomSubcommandLs : ISimpleCommandAsync
 {
-    public CustomSubcommandLs(Vault vault, IUserInterfaceService userInterfaceService)
+    public CustomSubcommandLs(VaultControl vault, IUserInterfaceService userInterfaceService)
     {
         this.vault = vault;
         this.userInterfaceService = userInterfaceService;
@@ -19,6 +19,6 @@ public class CustomSubcommandLs : ISimpleCommandAsync
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private Vault vault;
+    private VaultControl vault;
     private IUserInterfaceService userInterfaceService;
 }

@@ -7,7 +7,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("set")]
 public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOptions>
 {
-    public CustomSubcommandSet(ILogger<CustomSubcommandSet> logger, Vault vault)
+    public CustomSubcommandSet(ILogger<CustomSubcommandSet> logger, VaultControl vault)
     {
         this.logger = logger;
         this.vault = vault;
@@ -28,7 +28,7 @@ public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOption
     }
 
     private ILogger<CustomSubcommandSet> logger;
-    private Vault vault;
+    private VaultControl vault;
 }
 
 public record CustomSubcommandSetOptions

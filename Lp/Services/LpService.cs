@@ -7,7 +7,7 @@ namespace Lp;
 
 public class LpService
 {
-    public LpService(IUserInterfaceService userInterfaceService, AuthorityVault authorityVault, Vault vault)
+    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityVault, VaultControl vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.authorityVault = authorityVault;
@@ -59,6 +59,6 @@ public class LpService
     }
 
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityVault authorityVault;
-    private readonly Vault vault;
+    private readonly AuthorityControl authorityVault;
+    private readonly VaultControl vault;
 }

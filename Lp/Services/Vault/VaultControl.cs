@@ -5,11 +5,11 @@ using Arc.Collections;
 
 namespace Lp;
 
-public partial class Vault
+public partial class VaultControl
 {
     public const string Filename = "Vault.tinyhand";
 
-    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
+    public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
     {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
