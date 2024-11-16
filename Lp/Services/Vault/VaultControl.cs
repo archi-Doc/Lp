@@ -3,7 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Arc.Collections;
 
-namespace Lp;
+namespace Lp.Services;
 
 public partial class VaultControl
 {

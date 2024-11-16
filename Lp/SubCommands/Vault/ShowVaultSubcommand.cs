@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -8,7 +9,7 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("show-vault")]
 public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, Lp.VaultControl vault)
+    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, VaultControl vault)
     {
         this.consoleService = consoleService;
         this.logger = logger;
@@ -40,5 +41,5 @@ public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly Lp.VaultControl vaultControl;
+    private readonly VaultControl vaultControl;
 }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.VaultCommand;
@@ -7,7 +8,7 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("remove-vault")]
 public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.VaultControl vault)
+    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, VaultControl vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;
@@ -25,6 +26,6 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
         }
     }
 
-    private readonly Lp.VaultControl vault;
+    private readonly VaultControl vault;
     private readonly IUserInterfaceService userInterfaceService;
 }
