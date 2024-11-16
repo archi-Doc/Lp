@@ -52,6 +52,7 @@ public class Control
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<VaultControl>();
+                context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<Seedphrase>();

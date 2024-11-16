@@ -11,47 +11,47 @@ public sealed partial class Vault
     [TinyhandObject]
     private readonly partial struct Item
     {
-        public Item(byte[]? plaintext, Vault? vaultData)
+        public Item(byte[]? data, Vault? vault)
         {
-            this.Plaintext = plaintext;
-            this.VaultData = vaultData;
+            this.Data = data;
+            this.Vault = vault;
         }
 
         public Item Clone(byte[] plaintext)
-            => new(plaintext, this.VaultData);
+            => new(plaintext, this.Vault);
 
         public Item Clone(Vault vaultData)
-            => new(this.Plaintext, vaultData);
+            => new(this.Data, vaultData);
 
         [Key(0)]
-        public readonly byte[]? Plaintext;
+        public readonly byte[]? Data;
 
         [Key(1)]
-        public readonly Vault? VaultData;
+        public readonly Vault? Vault;
     }
 
     #region FieldAndProperty
 
-    private readonly VaultControl vault;
-    private readonly object syncObject = new();
+    private readonly VaultControl vaultControl;
+    private readonly Lock lockObject = new();
     private readonly OrderedMap<string, Item> nameToItem = new();
     private string password = string.Empty;
 
     #endregion
 
-    public Vault(VaultControl vault)
+    public Vault(VaultControl vaultControl)
     {
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
-    public bool TryAdd(string name, byte[] plaintext)
+    public VaultResult TryAdd(string name, byte[] plaintext)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.nameToItem.TryGetValue(name, out var item);
-            if (item.Plaintext is not null)
+            if (item.Data is not null)
             {// Already exists.
-                return false;
+                return VaultResult.AlreadyExists;
             }
 
             this.nameToItem.Add(name, item.Clone(plaintext));
@@ -61,14 +61,14 @@ public sealed partial class Vault
 
     public void Add(string name, byte[] plaintext)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.nameToItem.TryGetValue(name, out var item);
             this.nameToItem.Add(name, item.Clone(plaintext));
         }
     }
 
-    public bool SerializeAndTryAdd<T>(string name, T obj)
+    public VaultResult SerializeAndTryAdd<T>(string name, T obj)
     {
         var bytes = TinyhandSerializer.Serialize<T>(obj);
         return this.TryAdd(name, bytes);
@@ -94,7 +94,7 @@ public sealed partial class Vault
 
     public bool Exists(string name)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.nameToItem.ContainsKey(name);
         }
@@ -102,7 +102,7 @@ public sealed partial class Vault
 
     public bool Remove(string name)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.nameToItem.Remove(name);
         }
@@ -110,7 +110,7 @@ public sealed partial class Vault
 
     public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] plaintext)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
@@ -118,7 +118,7 @@ public sealed partial class Vault
                 return false;
             }
 
-            plaintext = item.Plaintext;
+            plaintext = item.Data;
             return plaintext is not null;
         }
     }
@@ -157,7 +157,7 @@ public sealed partial class Vault
 
     public string[] GetNames()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.nameToItem.Select(x => x.Key).ToArray();
         }
@@ -165,7 +165,7 @@ public sealed partial class Vault
 
     public string[] GetNames(string prefix)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             (var lower, var upper) = this.nameToItem.GetRange(prefix, prefix + "\uffff");
             if (lower == null || upper == null)
@@ -194,7 +194,7 @@ public sealed partial class Vault
 
     public void Create(string password)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             //this.Created = true;
             this.password = password;
@@ -204,7 +204,7 @@ public sealed partial class Vault
 
     public bool CheckPassword(string password)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             return this.password == password;
         }
@@ -212,7 +212,7 @@ public sealed partial class Vault
 
     public bool ChangePassword(string currentPassword, string newPassword)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.password == currentPassword)
             {
