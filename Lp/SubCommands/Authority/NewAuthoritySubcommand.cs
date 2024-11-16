@@ -60,7 +60,7 @@ public record AuthoritySubcommandNewOptions
     public string? Seedphrase { get; init; }
 
     [SimpleOption("Lifetime", Description = "Lifetime")]
-    public AuthorityLifetime Lifetime { get; init; }
+    public AuthorityLifecycle Lifetime { get; init; }
 
     [SimpleOption("Seconds", Description = "Lifetime in seconds")]
     public int LifetimeInSeconds { get; init; }

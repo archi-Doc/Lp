@@ -2,9 +2,9 @@
 
 namespace Lp.T3cs;
 
-public enum AuthorityLifetime
+public enum AuthorityLifecycle
 {
     Application,
-    PeriodOfTime,
-    Session,
+    Duration,
+    Counter,
 }

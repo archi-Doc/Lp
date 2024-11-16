@@ -12,7 +12,7 @@ public sealed partial class Authority
 {
     private const int MinimumSeedLength = 32;
 
-    public Authority(byte[]? seed, AuthorityLifetime lifetime, long lifeMics)
+    public Authority(byte[]? seed, AuthorityLifecycle lifetime, long lifeMics)
     {
         if (seed == null || seed.Length < MinimumSeedLength)
         {
@@ -40,7 +40,7 @@ public sealed partial class Authority
     private byte[] seed = Array.Empty<byte>();
 
     [Key(1)]
-    public AuthorityLifetime Lifetime { get; private set; }
+    public AuthorityLifecycle Lifetime { get; private set; }
 
     [Key(2)]
     public long LifeMics { get; private set; }

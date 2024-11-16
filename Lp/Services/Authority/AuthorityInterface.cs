@@ -19,7 +19,7 @@ internal sealed class AuthorityInterface
     {
         if (this.authority is not null)
         {
-            if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authority.Lifetime == AuthorityLifecycle.Duration)
             {// Periof of time
                 if (Mics.GetUtcNow() > this.ExpirationMics)
                 {// Expired
@@ -62,7 +62,7 @@ internal sealed class AuthorityInterface
 
         if (this.authority != null)
         {
-            if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authority.Lifetime == AuthorityLifecycle.Duration)
             {
                 this.ExpirationMics = Mics.GetUtcNow() + this.authority.LifeMics;
             }
