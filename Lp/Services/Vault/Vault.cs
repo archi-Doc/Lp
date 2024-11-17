@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Security;
 using Arc.Collections;
 
 namespace Lp.Services;
 
 [TinyhandObject(UseServiceProvider = true)]
-public sealed partial class Vault
+public sealed partial class Vault : ITinyhandSerializationCallback
 {
     [TinyhandObject]
     private readonly partial struct Item
@@ -30,11 +31,38 @@ public sealed partial class Vault
         public readonly Vault? Vault;
     }
 
+    [TinyhandObject]
+    private partial class Item2
+    {
+        public Item2()
+        {
+        }
+
+        [Key(0)]
+        public byte[]? Plaintext { get; set; }
+
+        [Key(1)]
+        public byte[]? Ciphertext { get; set; }
+
+        [IgnoreMember]
+        public ITinyhandSerialize? Object { get; set; }
+    }
+
     #region FieldAndProperty
 
     private readonly VaultControl vaultControl;
     private readonly Lock lockObject = new();
-    private readonly OrderedMap<string, Item> nameToItem = new();
+
+    [IgnoreMember]
+    public bool ModifiedFlag { get; private set; }
+
+    [Key(0)]
+    private OrderedMap<string, byte[]>? nameToByteArray;
+
+    [Key(1)]
+    private OrderedMap<string, Vault>? nameToVault;
+
+    [IgnoreMember]
     private string password = string.Empty;
 
     #endregion
@@ -235,4 +263,23 @@ public sealed partial class Vault
         {
         }
     }*/
+
+    void ITinyhandSerializationCallback.OnAfterReconstruct()
+    {
+        throw new NotImplementedException();
+    }
+
+    void ITinyhandSerializationCallback.OnAfterDeserialize()
+    {
+        throw new NotImplementedException();
+    }
+
+    void ITinyhandSerializationCallback.OnBeforeSerialize()
+    {
+        throw new NotImplementedException();
+    }
+
+    private void SetModifiedFlag() => this.ModifiedFlag = true;
+
+    private void ClearModifiedFlag() => this.ModifiedFlag = false;
 }
