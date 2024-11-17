@@ -9,7 +9,7 @@ namespace Lp.Services;
 [TinyhandObject(UseServiceProvider = true, LockObject = nameof(lockObject))]
 public sealed partial class Vault : ITinyhandSerializationCallback
 {
-    [TinyhandObject]
+    /*[TinyhandObject]
     private readonly partial struct Item
     {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
         public Item(byte[]? byteArray, ITinyhandSerialize? @object)
@@ -41,6 +41,32 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
         [IgnoreMember]
         public readonly ITinyhandSerialize? Object;
+    }*/
+
+    [TinyhandObject]
+    private partial class Item
+    {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
+        public Item()
+        {
+        }
+
+        public Item(byte[] data)
+        {
+            this.ByteArray = data;
+            this.Object = default;
+        }
+
+        public Item(ITinyhandSerialize? @object)
+        {
+            this.ByteArray = default;
+            this.Object = @object;
+        }
+
+        [Key(0)]
+        public byte[]? ByteArray { get; set; }
+
+        [IgnoreMember]
+        public ITinyhandSerialize? Object { get; set; }
     }
 
     #region FieldAndProperty
@@ -160,12 +186,47 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         {
             if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
-                byteArray = null;
+                byteArray = default;
                 return false;
             }
 
             byteArray = item.ByteArray;
             return byteArray is not null;
+        }
+    }
+
+    public bool TryGetObject<TObject>(string name, [MaybeNullWhen(false)] out TObject @object)
+        where TObject : class, ITinyhandSerialize<TObject>
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (!this.nameToItem.TryGetValue(name, out var item))
+            {// Not found
+                @object = default;
+                return false;
+            }
+
+            // Object instance
+            @object = item.Object as TObject;
+            if (@object is not null)
+            {
+                return true;
+            }
+
+            // Deserialize
+            if (item.ByteArray is not null)
+            {
+                try
+                {
+                    @object = TinyhandSerializer.DeserializeObject<TObject>(item.ByteArray);
+                    item.Object = @object as ITinyhandSerialize;
+                }
+                catch
+                {
+                }
+            }
+
+            return item.Object is not null;
         }
     }
 
