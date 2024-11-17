@@ -6,46 +6,41 @@ using Arc.Collections;
 
 namespace Lp.Services;
 
-[TinyhandObject(UseServiceProvider = true)]
+[TinyhandObject(UseServiceProvider = true, LockObject = nameof(lockObject))]
 public sealed partial class Vault : ITinyhandSerializationCallback
 {
     [TinyhandObject]
     private readonly partial struct Item
-    {
-        public Item(byte[]? data, Vault? vault)
+    {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
+        public Item(byte[]? byteArray, ITinyhandSerialize? @object)
         {
-            this.Data = data;
-            this.Vault = vault;
+            this.ByteArray = byteArray;
+            this.Object = @object;
         }
 
-        public Item Clone(byte[] plaintext)
-            => new(plaintext, this.Vault);
-
-        public Item Clone(Vault vaultData)
-            => new(this.Data, vaultData);
-
-        [Key(0)]
-        public readonly byte[]? Data;
-
-        [Key(1)]
-        public readonly Vault? Vault;
-    }
-
-    [TinyhandObject]
-    private partial class Item2
-    {
-        public Item2()
+        public Item(byte[] data)
         {
+            this.ByteArray = data;
+            this.Object = default;
         }
 
-        [Key(0)]
-        public byte[]? Plaintext { get; set; }
+        public Item(ITinyhandSerialize? @object)
+        {
+            this.ByteArray = default;
+            this.Object = @object;
+        }
 
-        [Key(1)]
-        public byte[]? Ciphertext { get; set; }
+        public Item Clone(byte[] data)
+            => new(data, this.Object);
+
+        public Item Clone(ITinyhandSerialize @object)
+            => new(this.ByteArray, @object);
+
+        [Key(0)]
+        public readonly byte[]? ByteArray;
 
         [IgnoreMember]
-        public ITinyhandSerialize? Object { get; set; }
+        public readonly ITinyhandSerialize? Object;
     }
 
     #region FieldAndProperty
@@ -57,10 +52,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     public bool ModifiedFlag { get; private set; }
 
     [Key(0)]
-    private OrderedMap<string, byte[]>? nameToByteArray;
-
-    [Key(1)]
-    private OrderedMap<string, Vault>? nameToVault;
+    private OrderedMap<string, Item> nameToItem = new();
 
     [IgnoreMember]
     private string password = string.Empty;
@@ -72,40 +64,66 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         this.vaultControl = vaultControl;
     }
 
-    public VaultResult TryAdd(string name, byte[] plaintext)
+    public VaultResult TryAddByteArray(string name, byte[] byteArray)
     {
         using (this.lockObject.EnterScope())
         {
-            this.nameToItem.TryGetValue(name, out var item);
-            if (item.Data is not null)
+            if (this.nameToItem.TryGetValue(name, out var item))
             {// Already exists.
                 return VaultResult.AlreadyExists;
             }
 
-            this.nameToItem.Add(name, item.Clone(plaintext));
+            this.nameToItem.Add(name, new(byteArray));
+            this.SetModifiedFlag();
             return VaultResult.Success;
         }
     }
 
-    public void Add(string name, byte[] plaintext)
+    public void AddByteArray(string name, byte[] plaintext)
     {
         using (this.lockObject.EnterScope())
         {
             this.nameToItem.TryGetValue(name, out var item);
-            this.nameToItem.Add(name, item.Clone(plaintext));
+            this.nameToItem.Add(name, new(plaintext));
+            this.SetModifiedFlag();
         }
     }
 
-    public VaultResult SerializeAndTryAdd<T>(string name, T obj)
+    public VaultResult TryAddObject(string name, ITinyhandSerialize @object)
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (this.nameToItem.TryGetValue(name, out var item))
+            {// Already exists.
+                return VaultResult.AlreadyExists;
+            }
+
+            this.nameToItem.Add(name, new(@object));
+            this.SetModifiedFlag();
+            return VaultResult.Success;
+        }
+    }
+
+    public void AddObject(string name, ITinyhandSerialize @object)
+    {
+        using (this.lockObject.EnterScope())
+        {
+            this.nameToItem.TryGetValue(name, out var item);
+            this.nameToItem.Add(name, new(@object));
+            this.SetModifiedFlag();
+        }
+    }
+
+    /*public VaultResult SerializeAndTryAdd<T>(string name, T obj)
     {
         var bytes = TinyhandSerializer.Serialize<T>(obj);
-        return this.TryAdd(name, bytes);
+        return this.TryAddByteArray(name, bytes);
     }
 
     public void SerializeAndAdd<T>(string name, T obj)
     {
         var bytes = TinyhandSerializer.Serialize<T>(obj);
-        this.Add(name, bytes);
+        this.AddByteArray(name, bytes);
     }
 
     public VaultResult ConvertAndTryAdd<T>(string name, T obj)
@@ -117,8 +135,8 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             return VaultResult.ConvertFailure;
         }
 
-        return this.TryAdd(name, array);
-    }
+        return this.TryAddByteArray(name, array);
+    }*/
 
     public bool Exists(string name)
     {
@@ -136,22 +154,22 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] plaintext)
+    public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray)
     {
         using (this.lockObject.EnterScope())
         {
             if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
-                plaintext = null;
+                byteArray = null;
                 return false;
             }
 
-            plaintext = item.Data;
-            return plaintext is not null;
+            byteArray = item.ByteArray;
+            return byteArray is not null;
         }
     }
 
-    public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
+    /*public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
     {
         if (!this.TryGet(name, out var plaintext))
         {
@@ -189,7 +207,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         {
             return this.nameToItem.Select(x => x.Key).ToArray();
         }
-    }
+    }*/
 
     public string[] GetNames(string prefix)
     {
@@ -230,7 +248,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool CheckPassword(string password)
+    public bool IsPasswordEqual(string password)
     {
         using (this.lockObject.EnterScope())
         {
@@ -266,17 +284,17 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
     void ITinyhandSerializationCallback.OnAfterReconstruct()
     {
-        throw new NotImplementedException();
     }
 
     void ITinyhandSerializationCallback.OnAfterDeserialize()
     {
-        throw new NotImplementedException();
     }
 
     void ITinyhandSerializationCallback.OnBeforeSerialize()
     {
-        throw new NotImplementedException();
+        foreach (var x in this.nameToItem)
+        {
+        }
     }
 
     private void SetModifiedFlag() => this.ModifiedFlag = true;
