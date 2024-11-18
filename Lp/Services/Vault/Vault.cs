@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security;
 using Arc.Collections;
+using static Lp.Hashed;
 
 namespace Lp.Services;
 
@@ -46,23 +47,42 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     [TinyhandObject]
     private partial class Item
     {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
+        public enum Kind
+        {
+            ByteArray,
+            Object,
+            Vault,
+        }
+
         public Item()
         {
         }
 
         public Item(byte[] data)
         {
+            this.ItemKind = Kind.ByteArray;
             this.ByteArray = data;
             this.Object = default;
         }
 
         public Item(ITinyhandSerialize? @object)
         {
+            this.ItemKind = Kind.Object;
             this.ByteArray = default;
             this.Object = @object;
         }
 
+        public Item(Vault vault)
+        {
+            this.ItemKind = Kind.Vault;
+            this.ByteArray = default;
+            this.Object = vault;
+        }
+
         [Key(0)]
+        public Kind ItemKind { get; set; }
+
+        [Key(1)]
         public byte[]? ByteArray { get; set; }
 
         [IgnoreMember]
@@ -75,7 +95,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     private readonly Lock lockObject = new();
 
     [IgnoreMember]
-    public bool ModifiedFlag { get; private set; }
+    public bool ModifiedFlag { get; private set; } // Since encryption in Vault (Argon2id) is a resource-intensive process, a modification flag is used to ensure encryption and serialization occur only when changes are made.
 
     [Key(0)]
     private OrderedMap<string, Item> nameToItem = new();
@@ -115,6 +135,26 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
+    public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray)
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (!this.nameToItem.TryGetValue(name, out var item))
+            {// Not found
+                byteArray = default;
+                return false;
+            }
+            else if (item.ItemKind != Item.Kind.ByteArray)
+            {// Kind mismatch
+                byteArray = default;
+                return false;
+            }
+
+            byteArray = item.ByteArray;
+            return byteArray is not null;
+        }
+    }
+
     public VaultResult TryAddObject(string name, ITinyhandSerialize @object)
     {
         using (this.lockObject.EnterScope())
@@ -137,6 +177,41 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             this.nameToItem.TryGetValue(name, out var item);
             this.nameToItem.Add(name, new(@object));
             this.SetModifiedFlag();
+        }
+    }
+
+    public bool TryGetObject<TObject>(string name, [MaybeNullWhen(false)] out TObject @object)
+        where TObject : class, ITinyhandSerialize<TObject>
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (!this.nameToItem.TryGetValue(name, out var item))
+            {// Not found
+                @object = default;
+                return false;
+            }
+
+            // Object instance
+            @object = item.Object as TObject;
+            if (@object is not null)
+            {
+                return true;
+            }
+
+            // Deserialize
+            if (item.ByteArray is not null)
+            {
+                try
+                {
+                    @object = TinyhandSerializer.DeserializeObject<TObject>(item.ByteArray);
+                    item.Object = @object as ITinyhandSerialize;
+                }
+                catch
+                {
+                }
+            }
+
+            return item.Object is not null;
         }
     }
 
@@ -177,56 +252,6 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         using (this.lockObject.EnterScope())
         {
             return this.nameToItem.Remove(name);
-        }
-    }
-
-    public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            if (!this.nameToItem.TryGetValue(name, out var item))
-            {// Not found
-                byteArray = default;
-                return false;
-            }
-
-            byteArray = item.ByteArray;
-            return byteArray is not null;
-        }
-    }
-
-    public bool TryGetObject<TObject>(string name, [MaybeNullWhen(false)] out TObject @object)
-        where TObject : class, ITinyhandSerialize<TObject>
-    {
-        using (this.lockObject.EnterScope())
-        {
-            if (!this.nameToItem.TryGetValue(name, out var item))
-            {// Not found
-                @object = default;
-                return false;
-            }
-
-            // Object instance
-            @object = item.Object as TObject;
-            if (@object is not null)
-            {
-                return true;
-            }
-
-            // Deserialize
-            if (item.ByteArray is not null)
-            {
-                try
-                {
-                    @object = TinyhandSerializer.DeserializeObject<TObject>(item.ByteArray);
-                    item.Object = @object as ITinyhandSerialize;
-                }
-                catch
-                {
-                }
-            }
-
-            return item.Object is not null;
         }
     }
 
@@ -309,7 +334,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool IsPasswordEqual(string password)
+    public bool PasswordEquals(string password)
     {
         using (this.lockObject.EnterScope())
         {
@@ -353,12 +378,76 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
     void ITinyhandSerializationCallback.OnBeforeSerialize()
     {
-        foreach (var x in this.nameToItem)
+        List<string>? toDelete = default;
+        foreach ((var key, var x) in this.nameToItem)
         {
+            try
+            {
+                if (x.ItemKind == Item.Kind.Object)
+                {// Object
+                    var newByteArray = TinyhandSerializer.Serialize(x.Object);
+                    if (x.ByteArray is null ||
+                        !newByteArray.SequenceEqual(x.ByteArray))
+                    {// Not identical
+                        x.ByteArray = newByteArray;
+                        this.SetModifiedFlag();
+                    }
+                }
+                else if (x.ItemKind == Item.Kind.Vault)
+                {// Vault
+                    if (x.Object is Vault vault)
+                    {
+                        if (vault.TrySerialize() is { } byteArray)
+                        {
+                            x.ByteArray = byteArray;
+                            vault.ResetModifiedFlag();
+                        }
+                    }
+                    else
+                    {// Invlaid
+                        toDelete ??= new();
+                        toDelete.Add(key);
+                    }
+                }
+            }
+            catch
+            {
+                toDelete ??= new();
+                toDelete.Add(key);
+            }
+        }
+
+        if (toDelete is not null)
+        {// Delete invalid items.
+            foreach (var x in toDelete)
+            {
+                this.nameToItem.Remove(x);
+            }
+
+            this.SetModifiedFlag();
         }
     }
 
     private void SetModifiedFlag() => this.ModifiedFlag = true;
 
-    private void ClearModifiedFlag() => this.ModifiedFlag = false;
+    private void ResetModifiedFlag() => this.ModifiedFlag = false;
+
+    private byte[]? TrySerialize()
+    {
+        if (this.ModifiedFlag)
+        {// Not modified
+            return default;
+        }
+
+        try
+        {
+            var plaintext = TinyhandSerializer.SerializeObject(this);
+            var ciphertext = PasswordEncryption.Encrypt(plaintext, this.password);
+            return ciphertext;
+        }
+        catch
+        {
+            return default;
+        }
+    }
 }
