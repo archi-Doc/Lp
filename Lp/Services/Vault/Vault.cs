@@ -10,40 +10,6 @@ namespace Lp.Services;
 [TinyhandObject(UseServiceProvider = true, LockObject = nameof(lockObject))]
 public sealed partial class Vault : ITinyhandSerializationCallback
 {
-    /*[TinyhandObject]
-    private readonly partial struct Item
-    {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
-        public Item(byte[]? byteArray, ITinyhandSerialize? @object)
-        {
-            this.ByteArray = byteArray;
-            this.Object = @object;
-        }
-
-        public Item(byte[] data)
-        {
-            this.ByteArray = data;
-            this.Object = default;
-        }
-
-        public Item(ITinyhandSerialize? @object)
-        {
-            this.ByteArray = default;
-            this.Object = @object;
-        }
-
-        public Item Clone(byte[] data)
-            => new(data, this.Object);
-
-        public Item Clone(ITinyhandSerialize @object)
-            => new(this.ByteArray, @object);
-
-        [Key(0)]
-        public readonly byte[]? ByteArray;
-
-        [IgnoreMember]
-        public readonly ITinyhandSerialize? Object;
-    }*/
-
     [TinyhandObject]
     private partial class Item
     {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
@@ -104,6 +70,11 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     private string password = string.Empty;
 
     #endregion
+
+    public static Vault New(string password)
+    {
+
+    }
 
     public Vault(VaultControl vaultControl)
     {
@@ -205,6 +176,71 @@ public sealed partial class Vault : ITinyhandSerializationCallback
                 {
                     @object = TinyhandSerializer.DeserializeObject<TObject>(item.ByteArray);
                     item.Object = @object as ITinyhandSerialize;
+                }
+                catch
+                {
+                }
+            }
+
+            return item.Object is not null;
+        }
+    }
+
+    public VaultResult TryAddVault(string name, Vault vault)
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (this.nameToItem.TryGetValue(name, out var item))
+            {// Already exists.
+                return VaultResult.AlreadyExists;
+            }
+
+            this.nameToItem.Add(name, new(vault));
+            this.SetModifiedFlag();
+            return VaultResult.Success;
+        }
+    }
+
+    public void AddVault(string name, Vault vault)
+    {
+        using (this.lockObject.EnterScope())
+        {
+            this.nameToItem.TryGetValue(name, out var item);
+            this.nameToItem.Add(name, new(vault));
+            this.SetModifiedFlag();
+        }
+    }
+
+    public bool TryGetVault<TObject>(string name, string password, [MaybeNullWhen(false)] out Vault vault)
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (!this.nameToItem.TryGetValue(name, out var item))
+            {// Not found
+                vault = default;
+                return false;
+            }
+
+            // Object instance
+            vault = item.Object as Vault;
+            if (vault is not null)
+            {
+                return true;
+            }
+
+            // Deserialize
+            if (item.ByteArray is not null)
+            {
+                try
+                {
+                    if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
+                    {
+                        vault = default;
+                        return false;
+                    }
+
+                    var b = plaintext.ToArray();
+                    item.Object = TinyhandSerializer.DeserializeObject<Vault>(b);
                 }
                 catch
                 {
@@ -324,16 +360,6 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public void Create(string password)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            //this.Created = true;
-            this.password = password;
-            this.nameToItem.Clear();
-        }
-    }
-
     public bool PasswordEquals(string password)
     {
         using (this.lockObject.EnterScope())
@@ -342,15 +368,14 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool ChangePassword(string currentPassword, string newPassword)
+    public bool SetPassword(string newPassword)
     {
         using (this.lockObject.EnterScope())
         {
-            if (this.password == currentPassword)
-            {
-                this.password = newPassword;
-                return true;
-            }
+            // if (this.password == currentPassword)
+            this.password = newPassword;
+            this.SetModifiedFlag();
+            return true;
         }
 
         return false;
