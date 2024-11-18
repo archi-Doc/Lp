@@ -66,7 +66,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         {
             this.ItemKind = Kind.Vault;
             this.ByteArray = default;
-            this.Object = vault;
+            this.Object = (ITinyhandSerialize)vault;
         }
     }
 
@@ -95,11 +95,14 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            var r = this.nameToItem.Add(name, x => new Item(byteArray));
-            if (!r.NewlyAdded)
+            if (this.nameToItem.FindNode(name) is { } node)
             {// Already exists.
                 result = VaultResult.AlreadyExists;
                 return false;
+            }
+            else
+            {
+                this.nameToItem.Add(name, new Item(byteArray));
             }
 
             this.SetModifiedFlag();
@@ -112,10 +115,13 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            var r = this.nameToItem.Add(name, x => new Item(byteArray));
-            if (!r.NewlyAdded)
-            {
-                r.Node.Value.Set(byteArray);
+            if (this.nameToItem.FindNode(name) is { } node)
+            {// Already exists.
+                node.Value.Set(byteArray);
+            }
+            else
+            {// New
+                this.nameToItem.Add(name, new Item(byteArray));
             }
 
             this.SetModifiedFlag();
@@ -150,11 +156,14 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            var r = this.nameToItem.Add(name, x => new Item(@object));
-            if (!r.NewlyAdded)
+            if (this.nameToItem.FindNode(name) is { } node)
             {// Already exists.
                 result = VaultResult.AlreadyExists;
                 return false;
+            }
+            else
+            {
+                this.nameToItem.Add(name, new Item(@object));
             }
 
             this.SetModifiedFlag();
@@ -167,10 +176,13 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            var r = this.nameToItem.Add(name, x => new Item(@object));
-            if (!r.NewlyAdded)
-            {
-                r.Node.Value.Set(@object);
+            if (this.nameToItem.FindNode(name) is { } node)
+            {// Already exists.
+                node.Value.Set(@object);
+            }
+            else
+            {// New
+                this.nameToItem.Add(name, new Item(@object));
             }
 
             this.SetModifiedFlag();
@@ -229,27 +241,42 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public VaultResult TryAddVault(string name, out Vault vault)
+    public bool TryAddVault(string name, [MaybeNullWhen(false)] out Vault vault, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
         {
-            if (this.nameToItem.TryGetValue(name, out var item))
+            if (this.nameToItem.FindNode(name) is { } node)
             {// Already exists.
-                return VaultResult.AlreadyExists;
+                vault = default;
+                result = VaultResult.AlreadyExists;
+                return false;
+            }
+            else
+            {
+                vault = new(this.vaultControl);
+                this.nameToItem.Add(name, new Item(vault));
             }
 
-            this.nameToItem.Add(name, new(vault));
             this.SetModifiedFlag();
-            return VaultResult.Success;
+            result = VaultResult.Success;
+            return true;
         }
     }
 
-    public void AddVault(string name, Vault vault)
+    public void AddVault(string name, out Vault vault)
     {
         using (this.lockObject.EnterScope())
         {
-            this.nameToItem.TryGetValue(name, out var item);
-            this.nameToItem.Add(name, new(vault));
+            vault = new(this.vaultControl);
+            if (this.nameToItem.FindNode(name) is { } node)
+            {// Already exists.
+                node.Value.Set(vault);
+            }
+            else
+            {// New
+                this.nameToItem.Add(name, new Item(vault));
+            }
+
             this.SetModifiedFlag();
         }
     }
