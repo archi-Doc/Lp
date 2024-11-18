@@ -537,7 +537,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         try
         {
             var plaintext = TinyhandSerializer.SerializeObject(this);
-            var ciphertext = PasswordEncryption.Encrypt(plaintext, this.password);
+            PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
             return ciphertext;
         }
         catch

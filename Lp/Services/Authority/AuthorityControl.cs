@@ -55,7 +55,7 @@ public class AuthorityControl
                 return AuthorityResult.AlreadyExists;
             }
 
-            var encrypted = PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase);
+            PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);
             if (this.vault.TryAdd(vaultName, encrypted))
             {
                 return AuthorityResult.Success;
