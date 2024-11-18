@@ -8,7 +8,6 @@ using Netsphere.Core;
 using Netsphere.Relay;
 using Netsphere.Stats;
 using Tinyhand.IO;
-using static Arc.Collections.BytePool;
 
 namespace Netsphere.Packet;
 
