@@ -1,9 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Security;
 using Arc.Collections;
 using static Lp.Hashed;
+using static Lp.Services.VaultControl;
 
 namespace Lp.Services;
 
@@ -25,25 +27,15 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
 
         public Item(byte[] data)
-        {
-            this.ItemKind = Kind.ByteArray;
-            this.ByteArray = data;
-            this.Object = default;
-        }
+            => this.Set(data);
 
         public Item(ITinyhandSerialize? @object)
-        {
-            this.ItemKind = Kind.Object;
-            this.ByteArray = default;
-            this.Object = @object;
-        }
+            => this.Set(@object);
 
         public Item(Vault vault)
-        {
-            this.ItemKind = Kind.Vault;
-            this.ByteArray = default;
-            this.Object = vault;
-        }
+            => this.Set(vault);
+
+        #region FieldAndProperty
 
         [Key(0)]
         public Kind ItemKind { get; set; }
@@ -53,6 +45,29 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
         [IgnoreMember]
         public ITinyhandSerialize? Object { get; set; }
+
+        #endregion
+
+        internal void Set(byte[] data)
+        {
+            this.ItemKind = Kind.ByteArray;
+            this.ByteArray = data;
+            this.Object = default;
+        }
+
+        internal void Set(ITinyhandSerialize? @object)
+        {
+            this.ItemKind = Kind.Object;
+            this.ByteArray = default;
+            this.Object = @object;
+        }
+
+        internal void Set(Vault vault)
+        {
+            this.ItemKind = Kind.Vault;
+            this.ByteArray = default;
+            this.Object = vault;
+        }
     }
 
     #region FieldAndProperty
@@ -71,73 +86,80 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
     #endregion
 
-    public static Vault New(string password)
-    {
-
-    }
-
     public Vault(VaultControl vaultControl)
     {
         this.vaultControl = vaultControl;
     }
 
-    public VaultResult TryAddByteArray(string name, byte[] byteArray)
+    public bool TryAddByteArray(string name, byte[] byteArray, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
         {
-            if (this.nameToItem.TryGetValue(name, out var item))
+            var r = this.nameToItem.Add(name, x => new Item(byteArray));
+            if (!r.NewlyAdded)
             {// Already exists.
-                return VaultResult.AlreadyExists;
+                result = VaultResult.AlreadyExists;
+                return false;
             }
 
-            this.nameToItem.Add(name, new(byteArray));
             this.SetModifiedFlag();
-            return VaultResult.Success;
+            result = VaultResult.Success;
+            return true;
         }
     }
 
-    public void AddByteArray(string name, byte[] plaintext)
+    public void AddByteArray(string name, byte[] byteArray)
     {
         using (this.lockObject.EnterScope())
         {
-            this.nameToItem.TryGetValue(name, out var item);
-            this.nameToItem.Add(name, new(plaintext));
+            var r = this.nameToItem.Add(name, x => new Item(byteArray));
+            if (!r.NewlyAdded)
+            {
+                r.Node.Value.Set(byteArray);
+            }
+
             this.SetModifiedFlag();
         }
     }
 
-    public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray)
+    public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
         {
             if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
                 byteArray = default;
+                result = VaultResult.NotFound;
                 return false;
             }
-            else if (item.ItemKind != Item.Kind.ByteArray)
+            else if (item.ItemKind != Item.Kind.ByteArray ||
+                item.ByteArray is null)
             {// Kind mismatch
                 byteArray = default;
+                result = VaultResult.KindMismatch;
                 return false;
             }
 
             byteArray = item.ByteArray;
-            return byteArray is not null;
+            result = VaultResult.Success;
+            return true;
         }
     }
 
-    public VaultResult TryAddObject(string name, ITinyhandSerialize @object)
+    public bool TryAddObject(string name, ITinyhandSerialize @object, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
         {
-            if (this.nameToItem.TryGetValue(name, out var item))
+            var r = this.nameToItem.Add(name, x => new Item(@object));
+            if (!r.NewlyAdded)
             {// Already exists.
-                return VaultResult.AlreadyExists;
+                result = VaultResult.AlreadyExists;
+                return false;
             }
 
-            this.nameToItem.Add(name, new(@object));
             this.SetModifiedFlag();
-            return VaultResult.Success;
+            result = VaultResult.Success;
+            return true;
         }
     }
 
@@ -145,13 +167,17 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            this.nameToItem.TryGetValue(name, out var item);
-            this.nameToItem.Add(name, new(@object));
+            var r = this.nameToItem.Add(name, x => new Item(@object));
+            if (!r.NewlyAdded)
+            {
+                r.Node.Value.Set(@object);
+            }
+
             this.SetModifiedFlag();
         }
     }
 
-    public bool TryGetObject<TObject>(string name, [MaybeNullWhen(false)] out TObject @object)
+    public bool TryGetObject<TObject>(string name, [MaybeNullWhen(false)] out TObject @object, out VaultResult result)
         where TObject : class, ITinyhandSerialize<TObject>
     {
         using (this.lockObject.EnterScope())
@@ -159,6 +185,13 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
                 @object = default;
+                result = VaultResult.NotFound;
+                return false;
+            }
+            else if (item.ItemKind != Item.Kind.Object)
+            {// Kind mismatch
+                @object = default;
+                result = VaultResult.KindMismatch;
                 return false;
             }
 
@@ -166,11 +199,12 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             @object = item.Object as TObject;
             if (@object is not null)
             {
+                result = VaultResult.Success;
                 return true;
             }
 
             // Deserialize
-            if (item.ByteArray is not null)
+            if (item.ByteArray is null)
             {
                 try
                 {
@@ -182,11 +216,20 @@ public sealed partial class Vault : ITinyhandSerializationCallback
                 }
             }
 
-            return item.Object is not null;
+            if (@object is not null)
+            {
+                result = VaultResult.Success;
+                return true;
+            }
+            else
+            {
+                result = VaultResult.InvalidData;
+                return false;
+            }
         }
     }
 
-    public VaultResult TryAddVault(string name, Vault vault)
+    public VaultResult TryAddVault(string name, out Vault vault)
     {
         using (this.lockObject.EnterScope())
         {

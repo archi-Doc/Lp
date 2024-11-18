@@ -7,9 +7,10 @@ public enum VaultResult
     Success,
     AlreadyExists,
     NotFound,
-    // KindMismatch,
+    KindMismatch,
     Encrypted,
     Canceled,
+    InvalidData,
     ConvertFailure,
     DecryptionFailure,
 }
