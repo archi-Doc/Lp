@@ -31,7 +31,7 @@ public partial class VaultControl
 
     public bool Created { get; private set; } = false;
 
-    public Data Root { get; }
+    public Vault Root { get; }
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;

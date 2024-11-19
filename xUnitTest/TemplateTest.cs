@@ -4,10 +4,10 @@ using Xunit;
 
 namespace xUnitTest;
 
-public class Template
+public class TemplateTest
 {
     [Fact]
-    public void IsValidIPv4()
+    public void Test1()
     {
     }
 }

@@ -279,7 +279,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool TryGetVault<TObject>(string name, string password, [MaybeNullWhen(false)] out Vault vault)
+    public bool TryGetVault(string name, string password, [MaybeNullWhen(false)] out Vault vault)
     {
         using (this.lockObject.EnterScope())
         {
@@ -478,6 +478,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             {
                 if (x.ItemKind == Item.Kind.Object)
                 {// Object
+                    x.Object.Serialize()
                     var newByteArray = TinyhandSerializer.Serialize(x.Object);
                     if (x.ByteArray is null ||
                         !newByteArray.SequenceEqual(x.ByteArray))
