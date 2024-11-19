@@ -28,12 +28,12 @@ internal class StorageKeyVault : IStorageKey
     {
         accessKeyPair = default;
 
-        if (this.VaultControl is not { } vault)
+        if (this.VaultControl is not { } vaultControl)
         {
             return false;
         }
 
-        if (!vault.TryGet(Prefix + bucket, out var decrypted))
+        if (!vaultControl.Root.TryGetByteArray(Prefix + bucket, out var decrypted, out _))
         {
             return false;
         }

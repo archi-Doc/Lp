@@ -33,7 +33,7 @@ public class LpService
 
         if (!string.IsNullOrEmpty(vault))
         {// Vault
-            if (this.vaultControl.TryGetAndDeserialize<SignaturePrivateKey>(vault, out privateKey))
+            if (this.vaultControl.Root.TryGetObject<SignaturePrivateKey>(vault, out privateKey, out _))
             {
                 return privateKey;
             }

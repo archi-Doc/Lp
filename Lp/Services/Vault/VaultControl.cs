@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Arc.Collections;
-
 namespace Lp.Services;
 
 public partial class VaultControl
@@ -37,74 +34,7 @@ public partial class VaultControl
     private readonly LpBase lpBase;
     private readonly string path;
 
-    private readonly Lock lockObject = new();
-    private readonly OrderedMap<string, DecryptedItem> nameToDecrypted = new();
-    private string password = string.Empty;
-
     #endregion
-
-    [TinyhandObject]
-    private partial record struct DecryptedItem
-    {
-        public DecryptedItem(byte[] decrypted)
-        {
-            this.Decrypted = decrypted;
-        }
-
-        [KeyAsName]
-        internal byte[] Decrypted = Array.Empty<byte>();
-    }
-
-    [TinyhandObject]
-    private partial record struct EncryptedItem
-    {
-        public EncryptedItem(int hint, byte[] encrypted)
-        {
-            this.Hint = (byte)hint;
-            this.Encrypted = encrypted;
-        }
-
-        [KeyAsName]
-        internal byte Hint;
-
-        [KeyAsName]
-        internal byte[] Encrypted = Array.Empty<byte>();
-    }
-
-    public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            if (!this.nameToDecrypted.TryGetValue(name, out var item))
-            {// Not found
-                decrypted = null;
-                return false;
-            }
-
-            decrypted = item.Decrypted;
-            return true;
-        }
-    }
-
-    public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
-    {
-        if (!this.TryGet(name, out var decrypted))
-        {
-            obj = default;
-            return false;
-        }
-
-        try
-        {
-            obj = TinyhandSerializer.Deserialize<T>(decrypted);
-            return obj != null;
-        }
-        catch
-        {
-            obj = default;
-            return false;
-        }
-    }
 
     public async Task SaveAsync()
     {

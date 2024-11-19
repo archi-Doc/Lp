@@ -20,7 +20,7 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
     {
         var name = CustomizedCommand.GetName(option.Name);
 
-        if (!this.vaultControl.TryGetAndDeserialize<CustomizedCommand>(name, out var command))
+        if (!this.vaultControl.Root.TryGetObject<CustomizedCommand>(name, out var command, out _))
         {
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Custom.NotFound, option.Name);
             return;

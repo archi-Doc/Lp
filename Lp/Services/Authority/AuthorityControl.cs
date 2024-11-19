@@ -29,7 +29,7 @@ public class AuthorityControl
             if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
             {// New interface
                 var vaultName = GetVaultName(name);
-                if (!this.vaultControl.TryGet(vaultName, out var decrypted))
+                if (!this.vaultControl.Root.TryGetByteArray(vaultName, out var decrypted, out _))
                 {// Not found
                     return null;
                 }
