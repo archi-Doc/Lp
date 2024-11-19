@@ -214,7 +214,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             }
 
             // Deserialize
-            if (item.ByteArray is null)
+            if (item.ByteArray is not null)
             {
                 try
                 {
@@ -299,23 +299,24 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             // Deserialize
             if (item.ByteArray is not null)
             {
-                try
+                if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
                 {
-                    if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
-                    {
-                        vault = default;
-                        return false;
-                    }
+                    vault = default;
+                    return false;
+                }
 
-                    var b = plaintext.ToArray();
-                    item.Object = TinyhandSerializer.DeserializeObject<Vault>(b);
-                }
-                catch
+                var b = plaintext.ToArray();
+                if (!TinyhandSerializer.TryDeserializeObject<Vault>(b, out vault))
                 {
+                    vault = default;
+                    return false;
                 }
+
+                vault.SetPassword(password);
+                item.Object = vault;
             }
 
-            return item.Object is not null;
+            return vault is not null;
         }
     }
 
@@ -478,23 +479,32 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             {
                 if (x.ItemKind == Item.Kind.Object)
                 {// Object
-                    x.Object.Serialize()
-                    var newByteArray = TinyhandSerializer.Serialize(x.Object);
-                    if (x.ByteArray is null ||
-                        !newByteArray.SequenceEqual(x.ByteArray))
-                    {// Not identical
-                        x.ByteArray = newByteArray;
-                        this.SetModifiedFlag();
+                    if (x.Object is ITinyhandSerialize value)
+                    {
+                        var newByteArray = x.Object.Serialize();
+                        if (x.ByteArray is null ||
+                            !newByteArray.SequenceEqual(x.ByteArray))
+                        {// Not identical
+                            x.ByteArray = newByteArray;
+                            this.SetModifiedFlag();
+                        }
+                    }
+                    else
+                    {// Invlaid
+                        toDelete ??= new();
+                        toDelete.Add(key);
                     }
                 }
                 else if (x.ItemKind == Item.Kind.Vault)
                 {// Vault
                     if (x.Object is Vault vault)
                     {
-                        if (vault.TrySerialize() is { } byteArray)
-                        {
-                            x.ByteArray = byteArray;
+                        if (x.ByteArray is null ||
+                            vault.ModifiedFlag)
+                        {// Modified
+                            x.ByteArray = vault.Serialize();
                             vault.ResetModifiedFlag();
+                            this.SetModifiedFlag();
                         }
                     }
                     else
@@ -526,22 +536,10 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
     private void ResetModifiedFlag() => this.ModifiedFlag = false;
 
-    private byte[]? TrySerialize()
+    private byte[] Serialize()
     {
-        if (this.ModifiedFlag)
-        {// Not modified
-            return default;
-        }
-
-        try
-        {
-            var plaintext = TinyhandSerializer.SerializeObject(this);
-            PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
-            return ciphertext;
-        }
-        catch
-        {
-            return default;
-        }
+        var plaintext = TinyhandSerializer.SerializeObject(this);
+        PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
+        return ciphertext;
     }
 }

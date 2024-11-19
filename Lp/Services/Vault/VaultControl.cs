@@ -73,11 +73,6 @@ public partial class VaultControl
         internal byte[] Encrypted = Array.Empty<byte>();
     }
 
-    public Vault NewVault()
-    {//
-        return new(this);
-    }
-
     public bool TryAdd(string name, byte[] decrypted)
     {
         using (this.lockObject.EnterScope())

@@ -89,10 +89,11 @@ public class VaultTest
 
         // Child vault
         root.TryGetVault(this.vaultKey, "2", out var child2).IsFalse();
-        child.TryGetByteArray(this.byteArrayKey, out byteArrayValue2, out result).IsTrue();
+        root.TryGetVault(this.vaultKey, "1", out child2!).IsTrue();
+        child2.TryGetByteArray(this.byteArrayKey, out byteArrayValue2, out result).IsTrue();
         result.Is(VaultResult.Success);
         byteArrayValue2!.SequenceEqual(this.byteArrayValue).IsTrue();
-        child.TryGetObject<VaultTestRecord>(this.objectKey, out record2, out result).IsTrue();
+        child2.TryGetObject<VaultTestRecord>(this.objectKey, out record2, out result).IsTrue();
         result.Is(VaultResult.Success);
         record2!.Equals(record).IsTrue();
     }
