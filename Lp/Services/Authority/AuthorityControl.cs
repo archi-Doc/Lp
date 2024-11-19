@@ -19,7 +19,7 @@ public class AuthorityControl
     }
 
     public string[] GetNames()
-        => this.vaultControl.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
+        => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
     public async Task<Authority?> GetAuthority(string name)
     {
@@ -48,13 +48,13 @@ public class AuthorityControl
 
         using (this.lockObject.EnterScope())
         {
-            if (this.vaultControl.Exists(vaultName))
+            if (this.vaultControl.Root.Exists(vaultName))
             {
                 return AuthorityResult.AlreadyExists;
             }
 
-            PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);
-            if (this.vaultControl.TryAdd(vaultName, encrypted))
+            PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);//
+            if (this.vaultControl.Root.TryAddByteArray(vaultName, encrypted, out _))
             {
                 return AuthorityResult.Success;
             }
@@ -66,14 +66,14 @@ public class AuthorityControl
     }
 
     public bool Exists(string name)
-        => this.vaultControl.Exists(GetVaultName(name));
+        => this.vaultControl.Root.Exists(GetVaultName(name));
 
     public AuthorityResult RemoveAuthority(string name)
     {
         using (this.lockObject.EnterScope())
         {
             var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vaultControl.Remove(GetVaultName(name));
+            var vaultRemoved = this.vaultControl.Root.Remove(GetVaultName(name));
 
             if (vaultRemoved)
             {

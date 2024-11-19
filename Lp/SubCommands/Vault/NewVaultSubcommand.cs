@@ -104,11 +104,11 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
     }
 
-    private void AddVault<T>(string name, T data)
+    private void AddVault(string name, ITinyhandSerialize data)
     {
         if (!string.IsNullOrEmpty(name))
         {
-            if (!this.vaultControl.SerializeAndTryAdd(name, data))
+            if (!this.vaultControl.Root.TryAddObject(name, data, out _))
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
             }

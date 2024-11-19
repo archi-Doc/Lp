@@ -25,7 +25,7 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
             {
                 return;
             }
-            else if (this.control.VaultControl.CheckPassword(currentPassword))
+            else if (this.control.VaultControl.Root.PasswordEquals(currentPassword))
             {// Correct
                 break;
             }
@@ -39,7 +39,7 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
             return;
         }
 
-        this.control.VaultControl.ChangePassword(currentPassword, newPassword);
+        this.control.VaultControl.Root.SetPassword(newPassword);
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 

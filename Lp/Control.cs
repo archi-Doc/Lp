@@ -465,7 +465,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.SerializeAndTryAdd(privault, privateKey);
+                    this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
         }
@@ -479,7 +479,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.SerializeAndTryAdd(privault, privateKey);
+                    this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
         }
@@ -509,7 +509,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.SerializeAndAdd(privault, privateKey);
+                    this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
 
@@ -527,7 +527,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.SerializeAndAdd(privault, privateKey);
+                    this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
 
@@ -549,7 +549,7 @@ public class Control
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, privault);
                     privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.SerializeAndAdd(privault, privateKey);
+                    this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
 
@@ -574,7 +574,7 @@ public class Control
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        this.VaultControl.Add(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.SerializeNodePrivateKey());
+        this.VaultControl.Root.AddByteArray(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.SerializeNodePrivateKey());//
         await this.VaultControl.SaveAsync();
 
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));

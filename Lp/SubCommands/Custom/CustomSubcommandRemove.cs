@@ -18,7 +18,7 @@ public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOp
     {
         var name = CustomizedCommand.GetName(option.Name);
 
-        if (this.vaultControl.Remove(name))
+        if (this.vaultControl.Root.Remove(name))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.Removed, option.Name);
         }

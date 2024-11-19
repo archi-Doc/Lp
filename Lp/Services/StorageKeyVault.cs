@@ -21,7 +21,7 @@ internal class StorageKeyVault : IStorageKey
         }
 
         var decrypted = this.utf8.GetBytes(accessKeyPair.ToString());
-        return vaultControl.TryAdd(Prefix + bucket, decrypted);
+        return vaultControl.Root.TryAddByteArray(Prefix + bucket, decrypted, out _);
     }
 
     bool IStorageKey.TryGetKey(string bucket, out AccessKeyPair accessKeyPair)

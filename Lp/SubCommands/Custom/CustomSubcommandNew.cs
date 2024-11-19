@@ -17,14 +17,14 @@ public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOption
     public async Task RunAsync(CustomSubcommandNewOptions option, string[] args)
     {
         var name = CustomizedCommand.GetName(option.Name);
-        if (this.vaultControl.Exists(name))
+        if (this.vaultControl.Root.Exists(name))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, option.Name);
             return;
         }
 
         var custom = new CustomizedCommand(option.Command, args);
-        if (this.vaultControl.SerializeAndTryAdd(name, custom))
+        if (this.vaultControl.Root.TryAddObject(name, custom, out _))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.Created, option.Name);
             this.logger.TryGet()?.Log(custom.Command);

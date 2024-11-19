@@ -16,7 +16,7 @@ public class ListVaultSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.vaultControl.GetNames();
+        var names = this.vaultControl.Root.GetNames();
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 

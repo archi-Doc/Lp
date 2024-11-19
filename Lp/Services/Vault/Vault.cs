@@ -429,6 +429,14 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
+    public string[] GetNames()
+    {
+        using (this.lockObject.EnterScope())
+        {
+            return this.nameToItem.Select(x => x.Key).ToArray();
+        }
+    }
+
     public bool PasswordEquals(string password)
     {
         using (this.lockObject.EnterScope())

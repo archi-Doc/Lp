@@ -16,7 +16,7 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 
     public async Task RunAsync(SimpleVaultOptions options, string[] args)
     {
-        if (this.vaultControl.Remove(options.Name))
+        if (this.vaultControl.Root.Remove(options.Name))
         {
             this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.DeleteSuccess, options.Name));
         }

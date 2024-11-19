@@ -16,7 +16,7 @@ public class CustomSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.vaultControl.GetNames(CustomizedCommand.Prefix).Select(x => x.Substring(CustomizedCommand.Prefix.Length)).ToArray();
+        var names = this.vaultControl.Root.GetNames(CustomizedCommand.Prefix).Select(x => x.Substring(CustomizedCommand.Prefix.Length)).ToArray();
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
