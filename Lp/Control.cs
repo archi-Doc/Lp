@@ -758,7 +758,7 @@ public class Control
 
         if (!this.VaultControl.TryGetAndDeserialize<NodePrivateKey>(NetConstants.NodePrivateKeyName, out var key))
         {// Failure
-            if (!this.VaultControl.Created)
+            if (!this.VaultControl.NewlyCreated)
             {
                 await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodePrivateKeyName);
             }

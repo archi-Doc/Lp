@@ -9,12 +9,11 @@ public partial class VaultControl
 {
     public const string Filename = "Vault.tinyhand";
 
-    public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
+    public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options)
     {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpBase = lpBase;
-        // this.vaultData = vaultData;
         if (!string.IsNullOrEmpty(this.lpBase.Options.VaultPath))
         {
             this.path = this.lpBase.Options.VaultPath;
@@ -29,14 +28,13 @@ public partial class VaultControl
 
     #region FieldAndProperty
 
-    public bool Created { get; private set; } = false;
+    public bool NewlyCreated { get; private set; } = false;
 
-    public Vault Root { get; }
+    public Vault Root { get; private set; }
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpBase lpBase;
-    // private readonly CrystalDataInterface vaultData;
     private readonly string path;
 
     private readonly Lock lockObject = new();
@@ -97,18 +95,6 @@ public partial class VaultControl
     {
         var bytes = TinyhandSerializer.Serialize<T>(obj);
         return this.Add(name, bytes);
-    }
-
-    public bool FormatAndTryAdd<T>(string name, T obj)
-        where T : IStringConvertible<T>
-    {
-        var array = Arc.Crypto.CryptoHelper.ConvertToUtf8(obj);
-        if (array.Length == 0)
-        {
-            return false;
-        }
-
-        return this.TryAdd(name, array);
     }
 
     public bool Add(string name, byte[] decrypted)
@@ -227,16 +213,6 @@ public partial class VaultControl
         }
     }
 
-    public void Create(string password)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            this.Created = true;
-            this.password = password;
-            this.nameToDecrypted.Clear();
-        }
-    }
-
     public bool CheckPassword(string password)
     {
         using (this.lockObject.EnterScope())
@@ -260,13 +236,10 @@ public partial class VaultControl
     }
 
     public async Task SaveAsync()
-    {//
+    {
         try
         {
-            var items = this.GetEncrypted();
-            var bytes = TinyhandSerializer.SerializeToUtf8(items);
-            // this.vaultData.Data = bytes;
-            await File.WriteAllBytesAsync(this.path, bytes).ConfigureAwait(false);
+            await File.WriteAllBytesAsync(this.path, this.Root.SerializeVault()).ConfigureAwait(false);
         }
         catch
         {
@@ -309,7 +282,8 @@ public partial class VaultControl
             throw new PanicException();
         }
 
-        this.Create(password);
+        this.NewlyCreated = true;
+        this.Root.SetPassword(password);
     }
 
     private async Task<bool> LoadAsync(string? lppass)
@@ -317,7 +291,6 @@ public partial class VaultControl
         byte[] data;
         try
         {
-            // data = this.vaultData.Data;
             data = await File.ReadAllBytesAsync(this.path).ConfigureAwait(false);
         }
         catch
@@ -326,83 +299,52 @@ public partial class VaultControl
             return false;
         }
 
-        KeyValueList<string, EncryptedItem>? items = null;
-        try
-        {
-            items = TinyhandSerializer.DeserializeFromUtf8<KeyValueList<string, EncryptedItem>>(data);
-        }
-        catch
-        {
-        }
-
-        if (items == null)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, this.path);
-            return false;
+        if (PasswordEncryption.TryDecrypt(data, string.Empty, out var plaintext))
+        {// No password
+            if (TinyhandSerializer.TryDeserializeObject<Vault>(plaintext, out var vault))
+            {// Success
+                this.Root = vault;
+                this.Root.SetPassword(string.Empty);
+                return true;
+            }
+            else
+            {// Deserialize failed
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, this.path);
+                return false;
+            }
         }
 
         string? password = lppass;
-        foreach (var x in items)
+        while (true)
         {
-            if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, string.Empty, out var decrypted))
-            {// No password
-            }
-            else
-            {// Password required.
-RetryPassword:
+            if (password == null)
+            {// Enter password
+                password = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
                 if (password == null)
-                {// Enter password
-                    password = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
-                    if (password == null)
-                    {
-                        throw new PanicException();
-                    }
+                {
+                    throw new PanicException();
                 }
+            }
 
-                if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
+            if (PasswordEncryption.TryDecrypt(data, password, out plaintext))
+            {// Success
+                if (TinyhandSerializer.TryDeserializeObject<Vault>(plaintext, out var vault))
                 {// Success
-                    this.password = password;
+                    this.Root = vault;
+                    this.Root.SetPassword(password);
+                    return true;
                 }
                 else
-                {// Failure
-                    password = null;
-                    await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
-                    goto RetryPassword;
+                {// Deserialize failed
+                    this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, this.path);
+                    return false;
                 }
-
-                /*else
-                {// Password already entered.
-                    if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
-                    {// Success
-                    }
-                    else
-                    {// Failure
-                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.Vault.NoRestore, x.Key).ConfigureAwait(false);
-                        throw new PanicException();
-                    }
-                }*/
             }
-
-            // item[i], decrypted
-            this.TryAdd(x.Key, decrypted.ToArray());
-        }
-
-        return true;
-    }
-
-    private KeyValueList<string, EncryptedItem> GetEncrypted()
-    {
-        var hint = PasswordEncrypt.GetPasswordHint(this.password);
-        using (this.lockObject.EnterScope())
-        {
-            var list = new KeyValueList<string, EncryptedItem>();
-            foreach (var x in this.nameToDecrypted)
-            {
-                var encrypted = PasswordEncrypt.Encrypt(x.Value.Decrypted, this.password);
-                list.Add(new(x.Key, new(hint, encrypted)));
+            else
+            {// Failure
+                password = null;
+                await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
             }
-
-            return list;
         }
     }
 }

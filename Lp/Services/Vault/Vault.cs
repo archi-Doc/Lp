@@ -437,17 +437,14 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool SetPassword(string newPassword)
+    public void SetPassword(string newPassword)
     {
         using (this.lockObject.EnterScope())
         {
             // if (this.password == currentPassword)
             this.password = newPassword;
             this.SetModifiedFlag();
-            return true;
         }
-
-        return false;
     }
 
     /*public async Task SaveAsync()
@@ -502,7 +499,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
                         if (x.ByteArray is null ||
                             vault.ModifiedFlag)
                         {// Modified
-                            x.ByteArray = vault.Serialize();
+                            x.ByteArray = vault.SerializeVault();
                             vault.ResetModifiedFlag();
                             this.SetModifiedFlag();
                         }
@@ -532,14 +529,14 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    private void SetModifiedFlag() => this.ModifiedFlag = true;
-
-    private void ResetModifiedFlag() => this.ModifiedFlag = false;
-
-    private byte[] Serialize()
+    internal byte[] SerializeVault()
     {
         var plaintext = TinyhandSerializer.SerializeObject(this);
         PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
         return ciphertext;
     }
+
+    private void SetModifiedFlag() => this.ModifiedFlag = true;
+
+    private void ResetModifiedFlag() => this.ModifiedFlag = false;
 }
