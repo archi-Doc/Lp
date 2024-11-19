@@ -8,11 +8,11 @@ namespace Lp.Subcommands;
 [SimpleCommand("run")]
 public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandRun(ILogger<CustomSubcommandRun> logger, IUserInterfaceService userInterfaceService, Control control, VaultControl vault)
+    public CustomSubcommandRun(ILogger<CustomSubcommandRun> logger, IUserInterfaceService userInterfaceService, Control control, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
         this.control = control;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
         this.logger = logger;
     }
 
@@ -20,7 +20,7 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
     {
         var name = CustomizedCommand.GetName(option.Name);
 
-        if (!this.vault.TryGetAndDeserialize<CustomizedCommand>(name, out var command))
+        if (!this.vaultControl.TryGetAndDeserialize<CustomizedCommand>(name, out var command))
         {
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Custom.NotFound, option.Name);
             return;
@@ -43,6 +43,6 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
 
     private IUserInterfaceService userInterfaceService;
     private Control control;
-    private VaultControl vault;
+    private VaultControl vaultControl;
     private ILogger<CustomSubcommandRun> logger;
 }

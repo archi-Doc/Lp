@@ -9,12 +9,12 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("new-vault")]
 public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 {
-    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, VaultControl vault)
+    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, VaultControl vaultControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.seedPhrase = seedPhrase;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public void Run(NewVaultOptions options, string[] args)
@@ -108,7 +108,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     {
         if (!string.IsNullOrEmpty(name))
         {
-            if (!this.vault.SerializeAndTryAdd(name, data))
+            if (!this.vaultControl.SerializeAndTryAdd(name, data))
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
             }
@@ -118,7 +118,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Seedphrase seedPhrase;
-    private readonly VaultControl vault;
+    private readonly VaultControl vaultControl;
 }
 
 public record NewVaultOptions

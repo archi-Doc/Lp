@@ -8,28 +8,28 @@ namespace Lp.Subcommands;
 [SimpleCommand("set")]
 public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOptions>
 {
-    public CustomSubcommandSet(ILogger<CustomSubcommandSet> logger, VaultControl vault)
+    public CustomSubcommandSet(ILogger<CustomSubcommandSet> logger, VaultControl vaultControl)
     {
         this.logger = logger;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task RunAsync(CustomSubcommandSetOptions option, string[] args)
     {
         var name = CustomizedCommand.GetName(option.Name);
-        if (!this.vault.Exists(name))
+        if (!this.vaultControl.Exists(name))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.NotFound, option.Name);
             return;
         }
 
         var custom = new CustomizedCommand(option.Command, args);
-        this.vault.SerializeAndAdd(name, custom);
+        this.vaultControl.SerializeAndAdd(name, custom);
         this.logger.TryGet()?.Log(Hashed.Custom.Set, option.Name);
     }
 
     private ILogger<CustomSubcommandSet> logger;
-    private VaultControl vault;
+    private VaultControl vaultControl;
 }
 
 public record CustomSubcommandSetOptions

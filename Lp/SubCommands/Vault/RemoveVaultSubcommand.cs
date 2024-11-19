@@ -8,15 +8,15 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("remove-vault")]
 public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, VaultControl vault)
+    public RemoveVaultSubcommand(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task RunAsync(SimpleVaultOptions options, string[] args)
     {
-        if (this.vault.Remove(options.Name))
+        if (this.vaultControl.Remove(options.Name))
         {
             this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.DeleteSuccess, options.Name));
         }
@@ -26,6 +26,6 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
         }
     }
 
-    private readonly VaultControl vault;
+    private readonly VaultControl vaultControl;
     private readonly IUserInterfaceService userInterfaceService;
 }

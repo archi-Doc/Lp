@@ -9,11 +9,11 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("show-vault")]
 public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, VaultControl vault)
+    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, VaultControl vaultControl)
     {
         this.consoleService = consoleService;
         this.logger = logger;
-        this.vaultControl = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task RunAsync(SimpleVaultOptions option, string[] args)

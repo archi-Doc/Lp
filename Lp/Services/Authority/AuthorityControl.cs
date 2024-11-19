@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Lp.Services;
-using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -14,14 +12,14 @@ public class AuthorityControl
 {
     public const string VaultPrefix = "Authority\\";
 
-    public AuthorityControl(IUserInterfaceService userInterfaceService, VaultControl vault)
+    public AuthorityControl(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
         this.UserInterfaceService = userInterfaceService;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public string[] GetNames()
-        => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
+        => this.vaultControl.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
     public async Task<Authority?> GetAuthority(string name)
     {
@@ -31,7 +29,7 @@ public class AuthorityControl
             if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
             {// New interface
                 var vaultName = GetVaultName(name);
-                if (!this.vault.TryGet(vaultName, out var decrypted))
+                if (!this.vaultControl.TryGet(vaultName, out var decrypted))
                 {// Not found
                     return null;
                 }
@@ -50,13 +48,13 @@ public class AuthorityControl
 
         using (this.lockObject.EnterScope())
         {
-            if (this.vault.Exists(vaultName))
+            if (this.vaultControl.Exists(vaultName))
             {
                 return AuthorityResult.AlreadyExists;
             }
 
             PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);
-            if (this.vault.TryAdd(vaultName, encrypted))
+            if (this.vaultControl.TryAdd(vaultName, encrypted))
             {
                 return AuthorityResult.Success;
             }
@@ -68,14 +66,14 @@ public class AuthorityControl
     }
 
     public bool Exists(string name)
-        => this.vault.Exists(GetVaultName(name));
+        => this.vaultControl.Exists(GetVaultName(name));
 
     public AuthorityResult RemoveAuthority(string name)
     {
         using (this.lockObject.EnterScope())
         {
             var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vault.Remove(GetVaultName(name));
+            var vaultRemoved = this.vaultControl.Remove(GetVaultName(name));
 
             if (vaultRemoved)
             {
@@ -109,9 +107,9 @@ public class AuthorityControl
 #pragma warning disable SA1401
     internal IUserInterfaceService UserInterfaceService;
 #pragma warning restore SA1401
-    private VaultControl vault;
-    private Lock lockObject = new();
-    private Dictionary<string, AuthorityInterface> nameToInterface = new();
+    private readonly VaultControl vaultControl;
+    private readonly Lock lockObject = new();
+    private readonly Dictionary<string, AuthorityInterface> nameToInterface = new();
 
     #endregion
 }

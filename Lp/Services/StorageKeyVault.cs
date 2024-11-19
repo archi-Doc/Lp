@@ -15,13 +15,13 @@ internal class StorageKeyVault : IStorageKey
 
     bool IStorageKey.AddKey(string bucket, AccessKeyPair accessKeyPair)
     {
-        if (this.VaultControl is not { } vault)
+        if (this.VaultControl is not { } vaultControl)
         {
             return false;
         }
 
         var decrypted = this.utf8.GetBytes(accessKeyPair.ToString());
-        return vault.TryAdd(Prefix + bucket, decrypted);
+        return vaultControl.TryAdd(Prefix + bucket, decrypted);
     }
 
     bool IStorageKey.TryGetKey(string bucket, out AccessKeyPair accessKeyPair)

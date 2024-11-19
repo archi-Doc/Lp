@@ -8,23 +8,23 @@ namespace Lp.Subcommands;
 [SimpleCommand("new")]
 public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOptions>
 {
-    public CustomSubcommandNew(ILogger<CustomSubcommandNew> logger, VaultControl vault)
+    public CustomSubcommandNew(ILogger<CustomSubcommandNew> logger, VaultControl vaultControl)
     {
         this.logger = logger;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task RunAsync(CustomSubcommandNewOptions option, string[] args)
     {
         var name = CustomizedCommand.GetName(option.Name);
-        if (this.vault.Exists(name))
+        if (this.vaultControl.Exists(name))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, option.Name);
             return;
         }
 
         var custom = new CustomizedCommand(option.Command, args);
-        if (this.vault.SerializeAndTryAdd(name, custom))
+        if (this.vaultControl.SerializeAndTryAdd(name, custom))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.Created, option.Name);
             this.logger.TryGet()?.Log(custom.Command);
@@ -35,8 +35,8 @@ public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOption
         }
     }
 
-    private ILogger<CustomSubcommandNew> logger;
-    private VaultControl vault;
+    private readonly ILogger logger;
+    private readonly VaultControl vaultControl;
 }
 
 public record CustomSubcommandNewOptions

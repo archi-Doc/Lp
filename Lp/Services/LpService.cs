@@ -8,11 +8,11 @@ namespace Lp;
 
 public class LpService
 {
-    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityVault, VaultControl vault)
+    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityVault, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
         this.authorityVault = authorityVault;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task<SignaturePrivateKey?> GetSignaturePrivateKey(ILogger? logger, string authority, string vault, string privateKeyString)
@@ -33,7 +33,7 @@ public class LpService
 
         if (!string.IsNullOrEmpty(vault))
         {// Vault
-            if (this.vault.TryGetAndDeserialize<SignaturePrivateKey>(vault, out privateKey))
+            if (this.vaultControl.TryGetAndDeserialize<SignaturePrivateKey>(vault, out privateKey))
             {
                 return privateKey;
             }
@@ -61,5 +61,5 @@ public class LpService
 
     private readonly IUserInterfaceService userInterfaceService;
     private readonly AuthorityControl authorityVault;
-    private readonly VaultControl vault;
+    private readonly VaultControl vaultControl;
 }
