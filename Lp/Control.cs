@@ -574,7 +574,7 @@ public class Control
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        this.VaultControl.Root.AddByteArray(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.SerializeNodePrivateKey());//
+        this.VaultControl.Root.AddObject(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.NodePrivateKey);
         await this.VaultControl.SaveAsync();
 
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));

@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Security;
 using Arc.Collections;
@@ -12,7 +11,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 {
     [TinyhandObject]
     private partial class Item
-    {// Plaintext, Plaintext+Object, Ciphertext, Ciphertext+Vault
+    {
         public enum Kind
         {
             ByteArray,
@@ -80,7 +79,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     private OrderedMap<string, Item> nameToItem = new();
 
     [IgnoreMember]
-    private string password = string.Empty;
+    private string password = string.Empty; // Consider SecureString
 
     #endregion
 
@@ -320,30 +319,6 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    /*public VaultResult SerializeAndTryAdd<T>(string name, T obj)
-    {
-        var bytes = TinyhandSerializer.Serialize<T>(obj);
-        return this.TryAddByteArray(name, bytes);
-    }
-
-    public void SerializeAndAdd<T>(string name, T obj)
-    {
-        var bytes = TinyhandSerializer.Serialize<T>(obj);
-        this.AddByteArray(name, bytes);
-    }
-
-    public VaultResult ConvertAndTryAdd<T>(string name, T obj)
-        where T : IStringConvertible<T>
-    {
-        var array = Arc.Crypto.CryptoHelper.ConvertToUtf8(obj);
-        if (array.Length == 0)
-        {
-            return VaultResult.ConvertFailure;
-        }
-
-        return this.TryAddByteArray(name, array);
-    }*/
-
     public bool Exists(string name)
     {
         using (this.lockObject.EnterScope())
@@ -359,46 +334,6 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             return this.nameToItem.Remove(name);
         }
     }
-
-    /*public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
-    {
-        if (!this.TryGet(name, out var plaintext))
-        {
-            obj = default;
-            return false;
-        }
-
-        try
-        {
-            obj = TinyhandSerializer.Deserialize<T>(plaintext);
-            return obj != null;
-        }
-        catch
-        {
-            obj = default;
-            return false;
-        }
-    }
-
-    public bool TryGetAndParse<T>(string name, [MaybeNullWhen(false)] out T obj)
-        where T : IStringConvertible<T>
-    {
-        if (!this.TryGet(name, out var plaintext))
-        {
-            obj = default;
-            return false;
-        }
-
-        return T.TryParse(System.Text.Encoding.UTF8.GetString(plaintext), out obj);
-    }
-
-    public string[] GetNames()
-    {
-        using (this.lockObject.EnterScope())
-        {
-            return this.nameToItem.Select(x => x.Key).ToArray();
-        }
-    }*/
 
     public string[] GetNames(string prefix)
     {
