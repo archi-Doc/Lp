@@ -9,10 +9,10 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityVault, Seedphrase seedphrase)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl, Seedphrase seedphrase)
     {
         this.logger = logger;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
         this.seedphrase = seedphrase;
     }
 
@@ -31,7 +31,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
 
         var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
         var authorityInfo = new Lp.T3cs.Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
-        var result = this.authorityVault.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
+        var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
 
         if (result == AuthorityResult.Success)
         {
@@ -44,7 +44,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
     }
 
     private readonly ILogger logger;
-    private readonly AuthorityControl authorityVault;
+    private readonly AuthorityControl authorityControl;
     private readonly Seedphrase seedphrase;
 }
 

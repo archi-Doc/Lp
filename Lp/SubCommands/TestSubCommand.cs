@@ -15,12 +15,12 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl authorityVault, Seedphrase seedPhrase, LpStats lpStats)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl authorityControl, Seedphrase seedPhrase, LpStats lpStats)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.control = control;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
         this.seedPhrase = seedPhrase;
     }
 
@@ -95,7 +95,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             }
         }
 
-        // if (await this.authorityVault.GetAuthority("lp") is { } authority)
+        // if (await this.authorityControl.GetAuthority("lp") is { } authority)
         {
             var g = new CredentialProof.GoshujinClass();
 
@@ -144,7 +144,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private readonly ILogger logger;
     private readonly Control control;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityControl authorityVault;
+    private readonly AuthorityControl authorityControl;
     private readonly Seedphrase seedPhrase;
 }
 

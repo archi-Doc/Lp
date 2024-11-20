@@ -388,7 +388,7 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityVault, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -397,7 +397,7 @@ public class Control
         this.NetControl = netsphere;
         this.Crystalizer = crystalizer;
         this.VaultControl = vault;
-        this.AuthorityControl = authorityVault;
+        this.AuthorityControl = authorityControl;
         this.LpBase.Settings = settings;
         this.Merger = merger;
         this.RelayMerger = relayMerger;

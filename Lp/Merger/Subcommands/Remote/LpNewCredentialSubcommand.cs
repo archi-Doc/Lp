@@ -10,12 +10,12 @@ namespace Lp.Subcommands.MergerRemote;
 [SimpleCommand("lp-new-credential")]
 public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOptions>
 {
-    public LpNewCredentialSubcommand(ILogger<LpNewCredentialSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, AuthorityControl authorityVault)
+    public LpNewCredentialSubcommand(ILogger<LpNewCredentialSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, AuthorityControl authorityControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.nestedcommand = nestedcommand;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
     }
 
     public async Task RunAsync(LpNewCredentialOptions options, string[] args)
@@ -31,7 +31,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (await this.authorityVault.GetLpAuthority(this.logger) is not { } lpAuthority)
+        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
         {
             return;
         }
@@ -68,7 +68,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NestedCommand nestedcommand;
-    private readonly AuthorityControl authorityVault;
+    private readonly AuthorityControl authorityControl;
 }
 
 public record LpNewCredentialOptions

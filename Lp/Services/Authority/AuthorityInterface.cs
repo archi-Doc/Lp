@@ -4,9 +4,9 @@ namespace Lp.T3cs;
 
 internal sealed class AuthorityInterface
 {
-    public AuthorityInterface(AuthorityControl authorityVault, string name, byte[] encrypted)
+    public AuthorityInterface(AuthorityControl authorityControl, string name, byte[] encrypted)
     {
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
         this.Name = name;
         this.encrypted = encrypted;
     }
@@ -38,7 +38,7 @@ internal sealed class AuthorityInterface
         {
             while (true)
             {
-                var passPhrase = await this.authorityVault.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
+                var passPhrase = await this.authorityControl.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
                 if (passPhrase == null)
                 {// Canceled
                     return null;
@@ -75,7 +75,7 @@ internal sealed class AuthorityInterface
         }
     }
 
-    private AuthorityControl authorityVault;
+    private AuthorityControl authorityControl;
     private byte[] encrypted;
     private Authority? authority;
 }

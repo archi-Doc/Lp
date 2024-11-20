@@ -39,7 +39,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPingFromContainer);
         }
 
-        /*var authority = await this.authorityVault.GetAuthority(options.Authority);
+        /*var authority = await this.authorityControl.GetAuthority(options.Authority);
         if (authority == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);

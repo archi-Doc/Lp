@@ -8,16 +8,16 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("show-authority")]
 public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public ShowAuthoritySubcommand(IConsoleService consoleService, ILogger<ShowAuthoritySubcommand> logger, AuthorityControl authorityVault)
+    public ShowAuthoritySubcommand(IConsoleService consoleService, ILogger<ShowAuthoritySubcommand> logger, AuthorityControl authorityControl)
     {
         this.consoleService = consoleService;
         this.logger = logger;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
     }
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var authority = await this.authorityVault.GetAuthority(option.AuthorityName);
+        var authority = await this.authorityControl.GetAuthority(option.AuthorityName);
         if (authority != null)
         {
             this.consoleService.WriteLine($"{option.AuthorityName}: {authority.UnsafeToString()}");
@@ -30,5 +30,5 @@ public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNa
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly AuthorityControl authorityVault;
+    private readonly AuthorityControl authorityControl;
 }

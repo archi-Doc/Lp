@@ -8,10 +8,10 @@ namespace Lp;
 
 public class LpService
 {
-    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityVault, VaultControl vaultControl)
+    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
         this.vaultControl = vaultControl;
     }
 
@@ -21,7 +21,7 @@ public class LpService
 
         if (!string.IsNullOrEmpty(authority))
         {// Authority
-            if (await this.authorityVault.GetAuthority(authority).ConfigureAwait(false) is { } auth)
+            if (await this.authorityControl.GetAuthority(authority).ConfigureAwait(false) is { } auth)
             {
                 return auth.UnsafeGetPrivateKey();
             }
@@ -60,6 +60,6 @@ public class LpService
     }
 
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityControl authorityVault;
+    private readonly AuthorityControl authorityControl;
     private readonly VaultControl vaultControl;
 }
