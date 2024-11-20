@@ -7,7 +7,6 @@ public enum AuthorityResult
     Success,
     NotFound,
     AlreadyExists,
-    InvalidData,
     Canceled,
     InvalidSignature,
 }

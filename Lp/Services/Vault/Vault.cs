@@ -73,6 +73,9 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     private readonly Lock lockObject = new();
 
     [IgnoreMember]
+    public Vault? ParentVault { get; private set; }
+
+    [IgnoreMember]
     public bool ModifiedFlag { get; private set; } // Since encryption in Vault (Argon2id) is a resource-intensive process, a modification flag is used to ensure encryption and serialization occur only when changes are made.
 
     [Key(0)]
@@ -251,6 +254,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             else
             {
                 vault = new(this.vaultControl);
+                vault.Initialize(this, string.Empty);
                 this.nameToItem.Add(name, new Item(vault));
             }
 
@@ -265,6 +269,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         using (this.lockObject.EnterScope())
         {
             vault = new(this.vaultControl);
+            vault.Initialize(this, string.Empty);
             if (this.nameToItem.FindNode(name) is { } node)
             {// Already exists.
                 node.Value.Set(vault);
@@ -278,7 +283,16 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool TryGetVault(string name, string password, [MaybeNullWhen(false)] out Vault vault)
+    /// <summary>
+    /// Tries to get a vault by name and password.
+    /// </summary>
+    /// <param name="name">The name of the vault.</param>
+    /// <param name="password">The password for the vault.
+    /// <br/>null; it returns true if decryption has been performed and false if not (it does not check the password).<br/>
+    /// not null; it returns true only if decryption with the provided password succeeds or the password matches.</param>
+    /// <param name="vault">The retrieved vault if successful.</param>
+    /// <returns>True if the vault is found and the password matches; otherwise, false.</returns>
+    public bool TryGetVault(string name, string? password, [MaybeNullWhen(false)] out Vault vault)
     {
         using (this.lockObject.EnterScope())
         {
@@ -290,28 +304,41 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
             // Object instance
             vault = item.Object as Vault;
+            if (password is null)
+            {
+                return vault is not null;
+            }
+
             if (vault is not null)
             {
-                return true;
+                if (vault.PasswordEquals(password))
+                {
+                    return true;
+                }
+                else
+                {
+                    vault = default;
+                    return false;
+                }
             }
 
             // Deserialize
             if (item.ByteArray is not null)
             {
                 if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
-                {
+                {// Decryption failed
                     vault = default;
                     return false;
                 }
 
                 var b = plaintext.ToArray();
                 if (!TinyhandSerializer.TryDeserializeObject<Vault>(b, out vault))
-                {
+                {// Deserialize failed
                     vault = default;
                     return false;
                 }
 
-                vault.SetPassword(password);
+                vault.Initialize(this, password);
                 item.Object = vault;
             }
 
@@ -331,7 +358,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            return this.nameToItem.Remove(name);
+            return this.RemoveInternal(name);
         }
     }
 
@@ -384,23 +411,10 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     {
         using (this.lockObject.EnterScope())
         {
-            // if (this.password == currentPassword)
             this.password = newPassword;
             this.SetModifiedFlag();
         }
     }
-
-    /*public async Task SaveAsync()
-    {
-        try
-        {
-            var b = PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(this), this.password);
-            await File.WriteAllBytesAsync(this.path, b).ConfigureAwait(false);
-        }
-        catch
-        {
-        }
-    }*/
 
     void ITinyhandSerializationCallback.OnAfterReconstruct()
     {
@@ -465,7 +479,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         {// Delete invalid items.
             foreach (var x in toDelete)
             {
-                this.nameToItem.Remove(x);
+                this.Remove(x);
             }
 
             this.SetModifiedFlag();
@@ -477,6 +491,32 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         var plaintext = TinyhandSerializer.SerializeObject(this);
         PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
         return ciphertext;
+    }
+
+    private void Initialize(Vault? parentVault, string password)
+    {
+        this.ParentVault = parentVault;
+        this.password = password;
+    }
+
+    private bool RemoveInternal(string name)
+    {
+        if (this.nameToItem.FindNode(name) is { } node)
+        {
+            if (node.Value.ItemKind == Item.Kind.Vault &&
+                node.Value.Object is Vault vault)
+            {
+                vault.ParentVault = default;
+            }
+
+            this.nameToItem.RemoveNode(node);
+            this.SetModifiedFlag();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private void SetModifiedFlag() => this.ModifiedFlag = true;
