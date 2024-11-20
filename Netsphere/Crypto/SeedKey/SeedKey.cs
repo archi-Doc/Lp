@@ -8,6 +8,7 @@ namespace Netsphere.Crypto2;
 #pragma warning disable SA1204
 #pragma warning disable SA1401
 
+[TinyhandObject]
 public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<SeedKey>
 {// !!!Base64Url(Seed+Checksum)!!!(s:Base64Url(PublicKey+Checksum))
     public static int MaxStringLength => SeedKeyHelper.MaxPrivateKeyLengthInBase64;
@@ -162,11 +163,11 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
 
     #region FieldAndProperty
 
-    // [Key(0)]
+    [Key(0)]
     private readonly byte[] seed = Array.Empty<byte>();
 
-    // [Key(1)]
-    public KeyOrientation KeyOrientation { get; } = KeyOrientation.NotSpecified;
+    [Key(1)]
+    public KeyOrientation KeyOrientation { get; private set; } = KeyOrientation.NotSpecified;
 
     private byte[]? encryptionSecretKey; // X25519 32bytes
     private byte[]? encryptionPublicKey; // X25519 32bytes

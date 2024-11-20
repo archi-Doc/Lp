@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -8,12 +9,12 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("new-vault")]
 public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 {
-    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, Lp.Vault vault)
+    public NewVaultSubcommand(ILogger<NewVaultSubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase, VaultControl vaultControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.seedPhrase = seedPhrase;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public void Run(NewVaultOptions options, string[] args)
@@ -103,11 +104,11 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
     }
 
-    private void AddVault<T>(string name, T data)
+    private void AddVault(string name, ITinyhandSerialize data)
     {
         if (!string.IsNullOrEmpty(name))
         {
-            if (!this.vault.SerializeAndTryAdd(name, data))
+            if (!this.vaultControl.Root.TryAddObject(name, data, out _))
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
             }
@@ -117,7 +118,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Seedphrase seedPhrase;
-    private readonly Lp.Vault vault;
+    private readonly VaultControl vaultControl;
 }
 
 public record NewVaultOptions

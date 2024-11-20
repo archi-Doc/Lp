@@ -19,7 +19,7 @@ internal class NoCongestionControl : ICongestionControl
     public bool IsCongested
         => false;
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private readonly OrderedMultiMap<long, SendGene> genesInFlight = new(); // Retransmission mics, gene
 
     #endregion
@@ -27,7 +27,7 @@ internal class NoCongestionControl : ICongestionControl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICongestionControl.AddInFlight(SendGene sendGene, int additional)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var rto = Mics.FastSystem + sendGene.SendTransmission.Connection.TaichiTimeout + additional;
             if (NetConstants.LogLowLevelNet)
@@ -49,7 +49,7 @@ internal class NoCongestionControl : ICongestionControl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICongestionControl.RemoveInFlight(SendGene sendGene, bool ack)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             sendGene.SendTransmission.Connection.ResetTaichi();
             if (sendGene.Node is OrderedMultiMap<long, SendGene>.Node node)
@@ -68,7 +68,7 @@ internal class NoCongestionControl : ICongestionControl
     {// lock (ConnectionTerminal.CongestionControlList)
         // Resend
         SendGene? gene;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {// To prevent deadlocks, the lock order for CongestionControl must be the lowest, and it must not acquire locks by calling functions of other classes.
             int addition = 0; // Increment rto (retransmission timeout) to create a small difference.
             while (netSender.CanSend)

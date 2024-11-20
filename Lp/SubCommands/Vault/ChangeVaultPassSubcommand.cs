@@ -4,7 +4,7 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.VaultCommand;
 
-[SimpleCommand("change-vault-pass")]
+[SimpleCommand("change-vault-password")]
 public class ChangeVaultPassSubcommand : ISimpleCommandAsync
 {
     public ChangeVaultPassSubcommand(ILogger<ChangeVaultPassSubcommand> logger, Control control)
@@ -25,7 +25,7 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
             {
                 return;
             }
-            else if (this.control.Vault.CheckPassword(currentPassword))
+            else if (this.control.VaultControl.Root.PasswordEquals(currentPassword))
             {// Correct
                 break;
             }
@@ -39,7 +39,7 @@ public class ChangeVaultPassSubcommand : ISimpleCommandAsync
             return;
         }
 
-        this.control.Vault.ChangePassword(currentPassword, newPassword);
+        this.control.VaultControl.Root.SetPassword(newPassword);
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 

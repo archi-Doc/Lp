@@ -8,18 +8,18 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("list-authority")]
 public class ListAuthoritySubcommand : ISimpleCommandAsync
 {
-    public ListAuthoritySubcommand(IUserInterfaceService userInterfaceService, AuthorityVault authorityVault)
+    public ListAuthoritySubcommand(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl)
     {
         this.userInterfaceService = userInterfaceService;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.authorityVault.GetNames();
+        var names = this.authorityControl.GetNames();
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private readonly AuthorityVault authorityVault;
+    private readonly AuthorityControl authorityControl;
     private readonly IUserInterfaceService userInterfaceService;
 }

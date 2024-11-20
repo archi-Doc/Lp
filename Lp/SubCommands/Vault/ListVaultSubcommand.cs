@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.VaultCommand;
@@ -7,18 +8,18 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("list-vault")]
 public class ListVaultSubcommand : ISimpleCommandAsync
 {
-    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, Lp.Vault vault)
+    public ListVaultSubcommand(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.vault.GetNames();
+        var names = this.vaultControl.Root.GetNames();
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private readonly Lp.Vault vault;
+    private readonly VaultControl vaultControl;
     private readonly IUserInterfaceService userInterfaceService;
 }

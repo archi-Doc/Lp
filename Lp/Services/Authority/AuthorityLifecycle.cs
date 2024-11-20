@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Lp.Services;
+namespace Lp.T3cs;
 
-public enum VaultLifecycle
+public enum AuthorityLifecycle
 {
     Application,
-    PeriodOfTime,
+    Duration,
     Counter,
 }

@@ -4,9 +4,9 @@ namespace Lp.T3cs;
 
 internal sealed class AuthorityInterface
 {
-    public AuthorityInterface(AuthorityVault authorityVault, string name, byte[] encrypted)
+    public AuthorityInterface(AuthorityControl authorityControl, string name, byte[] encrypted)
     {
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
         this.Name = name;
         this.encrypted = encrypted;
     }
@@ -19,7 +19,7 @@ internal sealed class AuthorityInterface
     {
         if (this.authority is not null)
         {
-            if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authority.Lifetime == AuthorityLifecycle.Duration)
             {// Periof of time
                 if (Mics.GetUtcNow() > this.ExpirationMics)
                 {// Expired
@@ -38,7 +38,7 @@ internal sealed class AuthorityInterface
         {
             while (true)
             {
-                var passPhrase = await this.authorityVault.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
+                var passPhrase = await this.authorityControl.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
                 if (passPhrase == null)
                 {// Canceled
                     return null;
@@ -62,7 +62,7 @@ internal sealed class AuthorityInterface
 
         if (this.authority != null)
         {
-            if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authority.Lifetime == AuthorityLifecycle.Duration)
             {
                 this.ExpirationMics = Mics.GetUtcNow() + this.authority.LifeMics;
             }
@@ -75,7 +75,7 @@ internal sealed class AuthorityInterface
         }
     }
 
-    private AuthorityVault authorityVault;
+    private AuthorityControl authorityControl;
     private byte[] encrypted;
     private Authority? authority;
 }

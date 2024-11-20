@@ -42,7 +42,7 @@ public sealed class ServiceControl
 
     #region FieldAndProperty
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private readonly Dictionary<uint, AgentInformation> serviceIdToAgentInformation = new();
     private Table? table;
 
@@ -64,7 +64,7 @@ public sealed class ServiceControl
         where TService : INetService
         where TAgent : class, TService
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var serviceId = ServiceTypeToId<TService>();
             this.Register(serviceId, typeof(TAgent));
@@ -75,7 +75,7 @@ public sealed class ServiceControl
 
     public void Register(Type serviceType, Type agentType)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var serviceId = ServiceTypeToId(serviceType);
             this.Register(serviceId, agentType);
@@ -87,7 +87,7 @@ public sealed class ServiceControl
     public void Unregister<TService>()
         where TService : INetService
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var serviceId = ServiceTypeToId<TService>();
             this.serviceIdToAgentInformation.Remove(serviceId);
@@ -98,7 +98,7 @@ public sealed class ServiceControl
 
     public void Unregister(Type serviceType)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var serviceId = ServiceTypeToId(serviceType);
             this.serviceIdToAgentInformation.Remove(serviceId);
@@ -145,7 +145,7 @@ public sealed class ServiceControl
     }
 
     /*private void RebuildTable()
-    {// lock (this.syncObject)
+    {// using (this.lockObject.EnterScope())
         var newTable = new Table(this.serviceIdToAgentInformation);
         Volatile.Write(ref this.table, newTable);
     }*/

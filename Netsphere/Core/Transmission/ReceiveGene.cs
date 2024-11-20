@@ -7,7 +7,7 @@ namespace Netsphere.Core;
 
 [ValueLinkObject(Restricted = true)]
 internal partial class ReceiveGene
-{// lock (transmission.syncObject)
+{// using (transmission.lockObject.EnterScope())
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "DataPositionList")]
     public ReceiveGene(ReceiveTransmission receiveTransmission)
     {

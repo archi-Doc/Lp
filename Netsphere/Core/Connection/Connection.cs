@@ -174,8 +174,8 @@ public abstract class Connection : IDisposable
 
     private Embryo embryo;
 
-    // lock (this.syncAes)
-    private readonly object syncAes = new();
+    // using (this.lockAes.EnterScope())
+    private readonly Lock lockAes = new();
     private Aes? aes0;
     private Aes? aes1;
 
@@ -196,8 +196,8 @@ public abstract class Connection : IDisposable
     private int resendCount;
 
     // Ack
-    internal long AckMics; // lock(AckBuffer.syncObject)
-    internal Queue<AckBuffer.ReceiveTransmissionAndAckGene>? AckQueue; // lock(AckBuffer.syncObject)
+    internal long AckMics; // using (AckBuffer.lockObject.EnterScope())
+    internal Queue<AckBuffer.ReceiveTransmissionAndAckGene>? AckQueue; // using (AckBuffer.lockObject.EnterScope())
 
     // Connection lost
     internal int Taichi = 1;
@@ -316,7 +316,7 @@ public abstract class Connection : IDisposable
     internal void AddSend(SendTransmission transmission)
     {
         var list = this.ConnectionTerminal.SendList;
-        lock (this.ConnectionTerminal.SyncSend)
+        using (this.ConnectionTerminal.LockSend.EnterScope())
         {
             if (this.SendNode is null)
             {
@@ -1208,7 +1208,7 @@ Wait:
 
     protected void ReleaseResource()
     {
-        lock (this.syncAes)
+        using (this.lockAes.EnterScope())
         {
             if (this.aes0 is not null)
             {
@@ -1429,7 +1429,7 @@ Wait:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Aes RentAes()
     {
-        lock (this.syncAes)
+        using (this.lockAes.EnterScope())
         {
             Aes aes;
             if (this.aes0 is not null)
@@ -1452,7 +1452,7 @@ Wait:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ReturnAes(Aes aes)
     {
-        lock (this.syncAes)
+        using (this.lockAes.EnterScope())
         {
             if (this.aes0 is null)
             {

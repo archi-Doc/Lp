@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
@@ -7,9 +8,9 @@ namespace Lp.Subcommands;
 [SimpleCommand("rm")]
 public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandRemove(ILogger<CustomSubcommandRemove> logger, Vault vault)
+    public CustomSubcommandRemove(ILogger<CustomSubcommandRemove> logger, VaultControl vaultControl)
     {
-        this.vault = vault;
+        this.vaultControl = vaultControl;
         this.logger = logger;
     }
 
@@ -17,7 +18,7 @@ public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOp
     {
         var name = CustomizedCommand.GetName(option.Name);
 
-        if (this.vault.Remove(name))
+        if (this.vaultControl.Root.Remove(name))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.Removed, option.Name);
         }
@@ -27,7 +28,7 @@ public class CustomSubcommandRemove : ISimpleCommandAsync<CustomSubcommandNameOp
         }
     }
 
-    private Vault vault;
+    private VaultControl vaultControl;
     private ILogger<CustomSubcommandRemove> logger;
 }
 

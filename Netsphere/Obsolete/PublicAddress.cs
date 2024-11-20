@@ -76,7 +76,7 @@ public partial class PublicAddress
     #region FieldAndProperty
 
     [IgnoreMember]
-    private object syncObject = new();
+    private Lock lockObject = new();
 
     [Key(0)]
     public State AddressState { get; private set; }
@@ -95,7 +95,7 @@ public partial class PublicAddress
     public void ReportAddress(bool priority, IPAddress? address)
     {
         var weight = priority ? PriorityWeight : 1;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             Item? item;
             Counter? counter;
@@ -128,7 +128,7 @@ public partial class PublicAddress
 
     public void Reset()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.AddressState = State.Unknown;
             this.Address = null;
@@ -140,7 +140,7 @@ public partial class PublicAddress
     public string Dump()
     {
         string st;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.AddressState == State.Unknown ||
                 this.AddressState == State.Unavailable)
@@ -158,7 +158,7 @@ public partial class PublicAddress
 
     private void InternalUpdate()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.AddressState == State.Unknown)
             {// Unknown -> Unavailable, Fixed

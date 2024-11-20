@@ -179,7 +179,7 @@ internal class NetSender
     private readonly NetSocket netSocketIpv6;
     private SendCore? sendCore;
 
-    private object syncObject = new();
+    private Lock lockObject = new();
     private long previousSystemMics;
     private long previousUpdateMics;
     private Queue<Item> itemsIpv4 = new();
@@ -226,7 +226,7 @@ internal class NetSender
             return;
         }
 
-        if (!Monitor.TryEnter(this.syncObject))
+        if (!this.lockObject.TryEnter())
         {
             return;
         }
@@ -244,7 +244,7 @@ internal class NetSender
         }
         finally
         {
-            Monitor.Exit(this.syncObject);
+            this.lockObject.Exit();
         }
     }
 

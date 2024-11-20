@@ -25,7 +25,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     [Link(Primary = true, Type = ChainType.Unordered)]
     public uint TransmissionId { get; }
 
-    public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
+    public NetTransmissionMode Mode { get; private set; } // using (this.lockObject.EnterScope())
 
     public int MaxReceivePosition
     {
@@ -52,10 +52,10 @@ internal sealed partial class ReceiveTransmission : IDisposable
     // Received/Disposed list, lock (Connection.receiveTransmissions.SyncObject)
     internal UnorderedLinkedList<ReceiveTransmission>.Node? ReceivedOrDisposedNode;
     internal long ReceivedOrDisposedMics;
-    internal Queue<int>? AckGene; // lock(AckBuffer.syncObject)
+    internal Queue<int>? AckGene; // using (AckBuffer.lockObject.EnterScope())
 #pragma warning restore SA1401 // Fields should be private
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private int totalGene;
     private TaskCompletionSource<NetResponse>? receivedTcs;
     private int successiveReceivedPosition;
@@ -79,7 +79,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
             return;
         }
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.DisposeInternal();
         }
@@ -162,7 +162,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void SetState_Receiving(int totalGene)
-    {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
+    {// Since it's called immediately after the object's creation, 'using (this.lockObject.EnterScope())' is probably not necessary.
         if (totalGene <= NetHelper.BurstGenes)
         {
             this.Mode = NetTransmissionMode.Burst;
@@ -185,7 +185,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void SetState_ReceivingStream(long maxLength)
-    {// Since it's called immediately after the object's creation, 'lock(this.syncObject)' is probably not necessary.
+    {// Since it's called immediately after the object's creation, 'using (this.lockObject.EnterScope())' is probably not necessary.
         this.Mode = NetTransmissionMode.Stream;
         this.totalGene = -1;
 
@@ -208,7 +208,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         uint dataKind = 0;
         ulong dataId = 0;
         BytePool.RentMemory rentMemory = default;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.Mode == NetTransmissionMode.Disposed)
             {// The case that the ACK has not arrived after the receive transmission was disposed.
@@ -365,7 +365,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
         {// Receive complete
             TaskCompletionSource<NetResponse>? receivedTcs;
 
-            lock (this.syncObject)
+            using (this.lockObject.EnterScope())
             {
                 receivedTcs = this.receivedTcs;
                 this.receivedTcs = default;
@@ -393,7 +393,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     internal void StartStream(ulong dataId, long maxStreamLength)
     {
         TaskCompletionSource<NetResponse>? receivedTcs;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             receivedTcs = this.receivedTcs;
             this.receivedTcs = default;
@@ -406,7 +406,7 @@ internal sealed partial class ReceiveTransmission : IDisposable
     }
 
     internal void ProcessReceive_GeneComplete(out uint dataKind, out ulong dataId, out BytePool.RentMemory toBeMoved)
-    {// lock (this.syncObject)
+    {// using (this.lockObject.EnterScope())
         if (this.genes is null)
         {// Single send/recv
             if (this.totalGene == 0)
@@ -533,7 +533,7 @@ Abort:
         int lastMaxReceivedPosition;
         while (true)
         {
-            lock (this.syncObject)
+            using (this.lockObject.EnterScope())
             {
                 if (!this.Connection.IsActive)
                 {

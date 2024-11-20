@@ -7,13 +7,13 @@ namespace Netsphere.Crypto;
 
 public static class KeyAlias
 {// PublicKey <-> Alias
-    private static readonly object SyncSignaturePublicKey = new();
+    private static readonly Lock LockSignaturePublicKey = new();
     private static readonly NotThreadsafeHashtable<SignaturePublicKey, string> SignaturePublicKeyToAlias = new();
     private static readonly NotThreadsafeHashtable<string, SignaturePublicKey> AliasToSignaturePublicKey = new();
 
     public static void AddAlias(SignaturePublicKey publicKey, string alias)
     {
-        lock (SyncSignaturePublicKey)
+        using (LockSignaturePublicKey.EnterScope())
         {
             SignaturePublicKeyToAlias.Add(publicKey, alias);
             AliasToSignaturePublicKey.Add(alias, publicKey);

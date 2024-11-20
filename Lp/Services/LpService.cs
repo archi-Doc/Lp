@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -7,11 +8,11 @@ namespace Lp;
 
 public class LpService
 {
-    public LpService(IUserInterfaceService userInterfaceService, AuthorityVault authorityVault, Vault vault)
+    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
-        this.authorityVault = authorityVault;
-        this.vault = vault;
+        this.authorityControl = authorityControl;
+        this.vaultControl = vaultControl;
     }
 
     public async Task<SignaturePrivateKey?> GetSignaturePrivateKey(ILogger? logger, string authority, string vault, string privateKeyString)
@@ -20,7 +21,7 @@ public class LpService
 
         if (!string.IsNullOrEmpty(authority))
         {// Authority
-            if (await this.authorityVault.GetAuthority(authority).ConfigureAwait(false) is { } auth)
+            if (await this.authorityControl.GetAuthority(authority).ConfigureAwait(false) is { } auth)
             {
                 return auth.UnsafeGetPrivateKey();
             }
@@ -32,7 +33,7 @@ public class LpService
 
         if (!string.IsNullOrEmpty(vault))
         {// Vault
-            if (this.vault.TryGetAndDeserialize<SignaturePrivateKey>(vault, out privateKey))
+            if (this.vaultControl.Root.TryGetObject<SignaturePrivateKey>(vault, out privateKey, out _))
             {
                 return privateKey;
             }
@@ -59,6 +60,6 @@ public class LpService
     }
 
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityVault authorityVault;
-    private readonly Vault vault;
+    private readonly AuthorityControl authorityControl;
+    private readonly VaultControl vaultControl;
 }

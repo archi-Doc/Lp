@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
@@ -7,9 +8,9 @@ namespace Lp.Subcommands;
 [SimpleCommand("info")]
 public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandInfo(ILogger<CustomSubcommandInfo> logger, IUserInterfaceService userInterfaceService, Vault vault)
+    public CustomSubcommandInfo(ILogger<CustomSubcommandInfo> logger, IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
-        this.vault = vault;
+        this.vaultControl = vaultControl;
         this.userInterfaceService = userInterfaceService;
         this.logger = logger;
     }
@@ -18,7 +19,7 @@ public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOpti
     {
         var name = CustomizedCommand.GetName(option.Name);
 
-        if (!this.vault.TryGetAndDeserialize<CustomizedCommand>(name, out var command))
+        if (!this.vaultControl.Root.TryGetObject<CustomizedCommand>(name, out var command, out _))
         {
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Custom.NotFound, option.Name);
             return;
@@ -37,7 +38,7 @@ public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOpti
         }
     }
 
-    private Vault vault;
-    private ILogger<CustomSubcommandInfo> logger;
-    private IUserInterfaceService userInterfaceService;
+    private readonly VaultControl vaultControl;
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
 }

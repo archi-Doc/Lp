@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Netsphere.Misc;
 
-[TinyhandObject(LockObject = "syncObject", ExplicitKeyOnly = true, UseServiceProvider = true)]
+[TinyhandObject(LockObject = "lockObject", ExplicitKeyOnly = true, UseServiceProvider = true)]
 public sealed partial class NtpCorrection : UnitBase, IUnitPreparable
 {
     public const string Filename = "NtpCorrection.tinyhand";
@@ -70,7 +70,7 @@ public sealed partial class NtpCorrection : UnitBase, IUnitPreparable
     {
 Retry:
         string[] hostnames;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var current = Mics.GetFixedUtcNow();
             var range = new MicsRange(current - Mics.FromHours(1), current);
@@ -93,7 +93,7 @@ Retry:
     public async Task<TimeSpan> SendAndReceiveOffset(CancellationToken cancellationToken = default)
     {
         string? hostname;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             hostname = this.goshujin.RoundtripMillisecondsChain.First?.HostnameValue;
         }
@@ -185,7 +185,7 @@ Retry:
 
     public void ResetHostnames()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             foreach (var x in this.hostNames)
             {
@@ -238,7 +238,7 @@ Retry:
 
                 this.logger?.TryGet(LogLevel.Debug)?.Log($"{hostname}, RoundtripTime: {(int)packet.RoundtripTime.TotalMilliseconds} ms, TimeOffset: {(int)packet.TimeOffset.TotalMilliseconds} ms");
 
-                lock (this.syncObject)
+                using (this.lockObject.EnterScope())
                 {
                     var item = this.goshujin.HostnameChain.FindFirst(hostname);
                     if (item != null)
@@ -254,7 +254,7 @@ Retry:
             {
                 this.logger?.TryGet(LogLevel.Error)?.Log($"{hostname}");
 
-                lock (this.syncObject)
+                using (this.lockObject.EnterScope())
                 {
                     var item = this.goshujin.HostnameChain.FindFirst(hostname);
                     if (item != null)
@@ -267,7 +267,7 @@ Retry:
     }
 
     private void UpdateTimeoffset()
-    {// lock (this.syncObject)
+    {// using (this.lockObject.EnterScope())
         int count = 0;
         long timeoffset = 0;
 
@@ -290,7 +290,7 @@ Retry:
 
     private ILogger<NtpCorrection>? logger;
 
-    private object syncObject = new();
+    private Lock lockObject = new();
 
     [Key(0)]
     public long LastCorrectedMics { get; set; }

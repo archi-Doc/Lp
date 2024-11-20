@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -8,28 +9,28 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("show-vault")]
 public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 {
-    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, Lp.Vault vault)
+    public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, VaultControl vaultControl)
     {
         this.consoleService = consoleService;
         this.logger = logger;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public async Task RunAsync(SimpleVaultOptions option, string[] args)
     {
-        if (this.vault.TryGetAndDeserialize<SignaturePrivateKey>(option.Name, out var key))
+        if (this.vaultControl.Root.TryGetObject<SignaturePrivateKey>(option.Name, out var key, out _))
         {
             this.consoleService.WriteLine($"{key.KeyClass.ToString()} {option.Name}: {key.UnsafeToString()}");
             return;
         }
 
-        if (this.vault.TryGetAndDeserialize<EncryptionPrivateKey>(option.Name, out var key2))
+        if (this.vaultControl.Root.TryGetObject<EncryptionPrivateKey>(option.Name, out var key2, out _))
         {
             this.consoleService.WriteLine($"{key2.KeyClass.ToString()} {option.Name}: {key2.UnsafeToString()}");
             return;
         }
 
-        if (this.vault.TryGetAndDeserialize<NodePrivateKey>(option.Name, out var key3))
+        if (this.vaultControl.Root.TryGetObject<NodePrivateKey>(option.Name, out var key3, out _))
         {
             this.consoleService.WriteLine($"{key3.KeyClass.ToString()} {option.Name}: {key3.UnsafeToString()}");
             return;
@@ -40,5 +41,5 @@ public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly Lp.Vault vault;
+    private readonly VaultControl vaultControl;
 }

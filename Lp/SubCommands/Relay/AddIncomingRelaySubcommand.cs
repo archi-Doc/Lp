@@ -10,19 +10,19 @@ namespace Lp.Subcommands.Relay;
 [SimpleCommand("add-incomimg-relay", Description = "")]
 public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>
 {
-    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityVault authorityVault)
+    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.netTerminal = netTerminal;
-        this.authorityVault = authorityVault;
+        this.authorityControl = authorityControl;
     }
 
     public async Task RunAsync(NewCertificateRelayOptions options, string[] args)
     {
         this.logger.TryGet()?.Log("Add incoming relay");
 
-        if (await this.authorityVault.GetAuthority(options.Authority) is not { } authority)
+        if (await this.authorityControl.GetAuthority(options.Authority) is not { } authority)
         {
             return;
         }
@@ -72,7 +72,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NetTerminal netTerminal;
-    private readonly AuthorityVault authorityVault;
+    private readonly AuthorityControl authorityControl;
 }
 
 public record NewCertificateRelayOptions

@@ -46,7 +46,7 @@ internal sealed partial class SendTransmission : IDisposable
     public string TransmissionIdText
         => ((ushort)this.TransmissionId).ToString("x4");
 
-    public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
+    public NetTransmissionMode Mode { get; private set; } // using (this.lockObject.EnterScope())
 
     public int GeneSerialMax { get; private set; }
 
@@ -66,7 +66,7 @@ internal sealed partial class SendTransmission : IDisposable
 
 #pragma warning restore SA1401 // Fields should be private
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private TaskCompletionSource<NetResult>? sentTcs;
     private SendGene? gene0; // Gene 0
     private SendGene? gene1; // Gene 1
@@ -93,14 +93,14 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal void DisposeTransmission()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             this.DisposeInternal();
         }
     }
 
     internal void DisposeInternal()
-    {// lock (this.syncObject)
+    {// using (this.lockObject.EnterScope())
         // Console.WriteLine($"Dispose send transmission: {this.Connection.ToString()} {this.TransmissionIdText} {this.Mode.ToString()} {this.GeneSerialMax}");
         if (this.IsDisposed)
         {
@@ -172,7 +172,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal ProcessSendResult ProcessSingleSend(NetSender netSender)
     {// lock (this.ConnectionTerminal.SyncSend)
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.Mode == NetTransmissionMode.Burst)
             {
@@ -240,7 +240,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal NetResult SendBlock(uint dataKind, ulong dataId, BytePool.RentMemory block, TaskCompletionSource<NetResult>? sentTcs)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.Connection.IsClosedOrDisposed ||
                 this.Mode != NetTransmissionMode.Initial)
@@ -351,7 +351,7 @@ internal sealed partial class SendTransmission : IDisposable
 
     internal NetResult SendStream(long maxLength)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.Connection.IsClosedOrDisposed ||
                 this.Mode != NetTransmissionMode.Initial)
@@ -383,7 +383,7 @@ internal sealed partial class SendTransmission : IDisposable
             return false;
         }
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.Mode != NetTransmissionMode.Stream)
             {
@@ -471,7 +471,7 @@ Loop:
                 goto Loop;
             }
 
-            lock (this.syncObject)
+            using (this.lockObject.EnterScope())
             {
                 if (this.Mode != NetTransmissionMode.Stream)
                 {
@@ -573,7 +573,7 @@ Exit:
 
     internal void ProcessReceive_AckBurst()
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (this.Mode != NetTransmissionMode.Burst)
             {
@@ -585,7 +585,7 @@ Exit:
     }
 
     internal void ProcessReceive_AckBurstInternal()
-    {// lock (this.syncObject)
+    {// using (this.lockObject.EnterScope())
         this.Connection.Logger.TryGet(LogLevel.Debug)?.Log($"{this.Connection.ConnectionIdText} ReceiveAck Burst {this.GeneSerialMax}");
 
         if (this.gene0 is not null)
@@ -654,11 +654,11 @@ Exit:
     }
 
     internal void ProcessReceive_AckBlock(int maxReceivePosition, int successiveReceivedPosition, scoped Span<byte> span, ushort numberOfPairs)
-    {// lock (SendTransmissions.syncObject)
+    {// using (SendTransmissions.lockObject.EnterScope())
         var completeFlag = false;
         int lossPosition = -1;
         var congestionControl = this.Connection.GetCongestionControl();
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             // if (this.Mode == NetTransmissionMode.Burst)
             if (this.genes is null)

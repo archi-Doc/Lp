@@ -1,36 +1,35 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Netsphere.Crypto;
+using Lp.Services;
 
 namespace Lp.T3cs;
 
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.
 /// </summary>
-public class AuthorityVault
+public class AuthorityControl
 {
     public const string VaultPrefix = "Authority\\";
 
-    public AuthorityVault(IUserInterfaceService userInterfaceService, Vault vault)
+    public AuthorityControl(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
         this.UserInterfaceService = userInterfaceService;
-        this.vault = vault;
+        this.vaultControl = vaultControl;
     }
 
     public string[] GetNames()
-        => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
+        => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
     public async Task<Authority?> GetAuthority(string name)
     {
         AuthorityInterface? authorityInterface;
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
             {// New interface
                 var vaultName = GetVaultName(name);
-                if (!this.vault.TryGet(vaultName, out var decrypted))
+                if (!this.vaultControl.Root.TryGetByteArray(vaultName, out var decrypted, out _))
                 {// Not found
                     return null;
                 }
@@ -47,15 +46,15 @@ public class AuthorityVault
     {
         var vaultName = GetVaultName(name);
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
-            if (this.vault.Exists(vaultName))
+            if (this.vaultControl.Root.Exists(vaultName))
             {
                 return AuthorityResult.AlreadyExists;
             }
 
-            var encrypted = PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase);
-            if (this.vault.TryAdd(vaultName, encrypted))
+            PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);//
+            if (this.vaultControl.Root.TryAddByteArray(vaultName, encrypted, out _))
             {
                 return AuthorityResult.Success;
             }
@@ -67,14 +66,14 @@ public class AuthorityVault
     }
 
     public bool Exists(string name)
-        => this.vault.Exists(GetVaultName(name));
+        => this.vaultControl.Root.Exists(GetVaultName(name));
 
     public AuthorityResult RemoveAuthority(string name)
     {
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vault.Remove(GetVaultName(name));
+            var vaultRemoved = this.vaultControl.Root.Remove(GetVaultName(name));
 
             if (vaultRemoved)
             {
@@ -108,9 +107,9 @@ public class AuthorityVault
 #pragma warning disable SA1401
     internal IUserInterfaceService UserInterfaceService;
 #pragma warning restore SA1401
-    private Vault vault;
-    private object syncObject = new();
-    private Dictionary<string, AuthorityInterface> nameToInterface = new();
+    private readonly VaultControl vaultControl;
+    private readonly Lock lockObject = new();
+    private readonly Dictionary<string, AuthorityInterface> nameToInterface = new();
 
     #endregion
 }

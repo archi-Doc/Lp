@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Netsphere.Stats;
 
-[TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
+[TinyhandObject(UseServiceProvider = true, LockObject = "lockObject")]
 public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     public const string Filename = "NetStat.tinyhand";
@@ -61,7 +61,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     [Key(4)]
     public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private readonly ILogger logger;
     private readonly NetBase netBase;
 

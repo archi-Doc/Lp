@@ -35,7 +35,7 @@ internal partial class AckBuffer
     private readonly ILogger logger;
     private readonly Queue<int> burst = new();
 
-    private readonly object syncObject = new();
+    private readonly Lock lockObject = new();
     private readonly Queue<Connection> connectionQueue = new();
     private readonly Queue<Queue<ReceiveTransmissionAndAckGene>> freeAckQueue = new();
     private readonly ConcurrentQueue<Queue<int>> freeAckGene = new();
@@ -50,7 +50,7 @@ internal partial class AckBuffer
             this.logger.TryGet(LogLevel.Debug)?.Log($"AckBurst {this.connectionTerminal.NetTerminal.NetTerminalString} to {connection.DestinationEndpoint.ToString()} {receiveTransmission.TransmissionId}");
         }
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var ackQueue = connection.AckQueue;
             if (ackQueue is null)
@@ -80,7 +80,7 @@ internal partial class AckBuffer
             this.logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} AckBlock to {connection.DestinationEndpoint.ToString()} {receiveTransmission.TransmissionId}-{geneSerial}");
         }
 
-        lock (this.syncObject)
+        using (this.lockObject.EnterScope())
         {
             var ackQueue = connection.AckQueue;
             if (ackQueue is null)
@@ -114,7 +114,7 @@ internal partial class AckBuffer
 
         while (true)
         {
-            lock (this.syncObject)
+            using (this.lockObject.EnterScope())
             {
                 if (ackQueue is not null)
                 {

@@ -32,9 +32,9 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public NodePublicKey NodePublicKey { get; private set; }
 
-    public bool IsValidNodeKey => this.NodePrivateKey is not null;
+    public NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
-    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
+    public bool IsValidNodeKey => this.NodePrivateKey is not null;
 
     internal Func<ServerConnection, ServerConnectionContext> NewServerConnectionContext { get; set; }
 
