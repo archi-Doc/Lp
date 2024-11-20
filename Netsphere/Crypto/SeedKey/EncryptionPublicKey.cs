@@ -10,6 +10,7 @@ using Netsphere;
 
 namespace Netsphere.Crypto2;
 
+[TinyhandObject]
 [StructLayout(LayoutKind.Explicit)]
 public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<EncryptionPublicKey>, IStringConvertible<EncryptionPublicKey>
 {// (s:key)
@@ -17,19 +18,19 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     #region FieldAndProperty
 
-    // [Key(0)]
+    [Key(0)]
     [FieldOffset(0)]
     private readonly ulong x0;
 
-    // [Key(1)]
+    [Key(1)]
     [FieldOffset(8)]
     private readonly ulong x1;
 
-    // [Key(2)]
+    [Key(2)]
     [FieldOffset(16)]
     private readonly ulong x2;
 
-    // [Key(3)]
+    [Key(3)]
     [FieldOffset(24)]
     private readonly ulong x3;
 
