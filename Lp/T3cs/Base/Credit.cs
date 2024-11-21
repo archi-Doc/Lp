@@ -15,7 +15,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     // public const char StandardSymbol = ':';
     public const char MergerSymbol = '/';
     public const char MergerSeparatorSymbol = '+';
-    public const int MaxMergers = 3;
+    public const int MaxMergers = 3; // MaxMergersCode
     public static readonly Credit Default = new();
 
     public static bool TryCreate(SignaturePublicKey originator, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
@@ -302,16 +302,23 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public override int GetHashCode()
     {
-        var hash = default(HashCode);
-        hash.Add(this.Originator);
-        // hash.Add(this.Standard);
-
-        foreach (var x in this.mergers)
+        // MaxMergersCode
+        if (this.MergerCount == 1)
         {
-            hash.Add(x);
+            return HashCode.Combine(this.Originator, this.mergers[0]);
         }
-
-        return hash.ToHashCode();
+        else if (this.MergerCount == 2)
+        {
+            return HashCode.Combine(this.Originator, this.mergers[0], this.mergers[1]);
+        }
+        else if (this.MergerCount == 3)
+        {
+            return HashCode.Combine(this.Originator, this.mergers[0], this.mergers[1], this.mergers[2]);
+        }
+        else
+        {
+            return HashCode.Combine(this.Originator);
+        }
     }
 
     public override string ToString()

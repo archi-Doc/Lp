@@ -45,7 +45,8 @@ public class AuthorityControl2
             if (this.vaultControl.Root.TryGetVault(vaultName, null, out vault))
             {
                 authority = Authority2.GetFromVault(vault);
-                if (authority.IsExpired())
+                if (authority is null ||
+                    authority.IsExpired())
                 {
                     vault = null;
                 }
@@ -66,7 +67,7 @@ public class AuthorityControl2
         authority ??= Authority2.GetFromVault(vault);
         if (password is not null)
         {
-            authority.ResetExpirationMics();
+            authority?.ResetExpirationMics();
         }
 
         return authority;

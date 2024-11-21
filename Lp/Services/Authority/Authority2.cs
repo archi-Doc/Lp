@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using Lp.Services;
 using Netsphere.Crypto;
 using Netsphere.Crypto2;
@@ -21,12 +22,53 @@ public sealed partial class Authority2
         }
         else
         {
-            vault.ParentVault?.Remove(name);//
+            // vault.ParentVault?.Remove(name);
             return default;
         }
     }
 
-    public Authority2(byte[]? seed, AuthorityLifecycle lifecycle, long lifeMics)
+    private static SeedKey CreateSeedKey(byte[] seed, Credit credit)
+    {
+        SeedKey seedKey;
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        try
+        {
+            writer.WriteSpan(seed);
+            TinyhandSerializer.SerializeObject(ref writer, credit);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            Span<byte> s = stackalloc byte[Blake3.Size];
+            Blake3.Get256_Span(span, s);
+            seedKey = SeedKey.New(s, KeyOrientation.NotSpecified);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+
+        return seedKey;
+    }
+
+    #region FieldAndProperty
+
+    [Key(0)]
+    private byte[] seed = Array.Empty<byte>();
+
+    [Key(1)]
+    public AuthorityLifecycle Lifecycle { get; private set; }
+
+    [Key(2)]
+    public long DurationMics { get; private set; }
+
+    [IgnoreMember]
+    public long ExpirationMics { get; private set; }
+
+    [IgnoreMember]
+    private ConcurrentDictionary<Credit, SeedKey> creditToSeedKey = new();
+
+    #endregion
+
+    public Authority2(byte[]? seed, AuthorityLifecycle lifecycle, long durationMics)
     {
         if (seed == null || seed.Length < MinimumSeedLength)
         {
@@ -39,28 +81,20 @@ public sealed partial class Authority2
         }
 
         this.Lifecycle = lifecycle;
-        this.LifeMics = lifeMics;
+        this.DurationMics = durationMics;
     }
 
     internal Authority2()
     {
     }
 
-    #region FieldAndProperty
-
-    [Key(0)]
-    private byte[] seed = Array.Empty<byte>();
-
-    [Key(1)]
-    public AuthorityLifecycle Lifecycle { get; private set; }
-
-    [IgnoreMember]
-    public long ExpirationMics { get; private set; }
-
-    #endregion
-
     public void ResetExpirationMics()
-        => this.ExpirationMics = Mics.FastUtcNow;
+    {
+        if (this.Lifecycle == AuthorityLifecycle.Duration)
+        {
+            this.ExpirationMics = Mics.FastUtcNow + this.DurationMics;
+        }
+    }
 
     public bool IsExpired()
     {
@@ -74,35 +108,16 @@ public sealed partial class Authority2
         }
     }
 
-    public SeedKey CreateSeedKey(Credit credit)
-    {
-        SeedKey seedKey;
-        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
-        try
-        {
-            writer.WriteSpan(this.seed);
-            TinyhandSerializer.SerializeObject(ref writer, credit);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
+    public SeedKey GetSeedKey()
+        => this.GetSeedKey(Credit.Default);
 
-            Span<byte> seed = stackalloc byte[Blake3.Size];
-            Blake3.Get256_Span(span, seed);
-            seedKey = SeedKey.New(seed, KeyOrientation.NotSpecified);
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-
-        return seedKey;
-    }
-
-    public SignaturePrivateKey UnsafeGetPrivateKey()
-        => this.GetOrCreatePrivateKey();
+    public SeedKey GetSeedKey(Credit credit)
+        => this.creditToSeedKey.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
 
     public override int GetHashCode()
         => BitConverter.ToInt32(this.seed.AsSpan());
 
-    public bool TrySignEvidence(Evidence evidence, int mergerIndex)
+    /*public bool TrySignEvidence(Evidence evidence, int mergerIndex)
     {
         var privateKey = this.GetOrCreatePrivateKey();
         return evidence.TrySign(privateKey, mergerIndex);
@@ -134,65 +149,8 @@ public sealed partial class Authority2
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
         NetHelper.Sign(token, privateKey);
-    }
-
-    public byte[]? SignData(Credit credit, byte[] data)
-    {
-        var privateKey = this.GetOrCreatePrivateKey(credit);
-        var signature = privateKey.SignData(data);
-        this.CachePrivateKey(credit, privateKey);
-        return signature;
-    }
-
-    public bool VerifyData(Credit credit, byte[] data, byte[] signature)
-    {
-        var privateKey = this.GetOrCreatePrivateKey(credit);
-        var result = privateKey.VerifyData(data, signature);
-        this.CachePrivateKey(credit, privateKey);
-        return result;
-    }
-
-    private SignaturePrivateKey GetOrCreatePrivateKey()
-    {// this.GetOrCreatePrivateKey(Credit.Default);
-        var privateKey = this.privateKeyCache.TryGet(Credit.Default);
-        if (privateKey == null)
-        {// Create private key.
-            privateKey = SignaturePrivateKey.Create(this.seed);
-            this.CachePrivateKey(Credit.Default, privateKey);
-        }
-
-        return privateKey;
-    }
-
-    private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)
-    {
-        var privateKey = this.privateKeyCache.TryGet(credit);
-        if (privateKey == null)
-        {// Create private key.
-            var writer = TinyhandWriter.CreateFromBytePool();
-            try
-            {
-                writer.WriteSpan(this.seed);
-                TinyhandSerializer.SerializeObject(ref writer, credit);
-
-                Span<byte> span = stackalloc byte[32];
-                var rentMemory = writer.FlushAndGetRentMemory();
-                Sha3Helper.Get256_Span(rentMemory.Span, span);
-                rentMemory.Return();
-                privateKey = SignaturePrivateKey.Create(span);
-            }
-            finally
-            {
-                writer.Dispose();
-            }
-        }
-
-        return privateKey;
-    }
-
-    public string UnsafeToString()
-        => this.GetOrCreatePrivateKey().UnsafeToString() ?? string.Empty;
+    }*/
 
     public override string ToString()
-        => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifecycle}, LifeMics: {this.LifeMics}";
+        => $"PublicKey: {this.GetSeedKey().ToString()}, Lifetime: {this.Lifecycle}, DurationMics: {this.DurationMics}";
 }
