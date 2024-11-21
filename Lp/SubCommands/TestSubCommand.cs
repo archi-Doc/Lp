@@ -15,7 +15,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl authorityControl, Seedphrase seedPhrase, LpStats lpStats)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl2 authorityControl, Seedphrase seedPhrase, LpStats lpStats)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -116,35 +116,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         }
     }
 
-    private async Task Test0()
-    {
-        ECParameters key = default;
-        key.Curve = ECCurve.CreateFromFriendlyName(KeyHelper.CurveInstance.CurveName);
-
-        var st = this.seedPhrase.Create();
-        var seed = this.seedPhrase.TryGetSeed(st);
-        if (seed != null)
-        {
-            var pk = SignaturePrivateKey.Create(seed);
-        }
-
-        var privateKey = NodePrivateKey.AlternativePrivateKey;
-        var publicKey = privateKey.ToPublicKey();
-
-        this.userInterfaceService.WriteLine($"Alternative(private): {privateKey.UnsafeToString()}");
-        this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
-        this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(privateKey));
-        this.userInterfaceService.WriteLine();
-
-        this.userInterfaceService.WriteLine($"Alternative(public): {publicKey.ToString()}");
-        this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
-        this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
-    }
-
     private readonly ILogger logger;
     private readonly Control control;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityControl authorityControl;
+    private readonly AuthorityControl2 authorityControl;
     private readonly Seedphrase seedPhrase;
 }
 

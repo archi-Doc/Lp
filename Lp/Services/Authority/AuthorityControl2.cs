@@ -79,7 +79,7 @@ public class AuthorityControl2
     public bool Exists(string name)
         => this.vaultControl.Root.Exists(GetVaultName(name));
 
-    public AuthorityResult NewAuthority(string name, string password, Authority authority)
+    public AuthorityResult NewAuthority(string name, string password, Authority2 authority)
     {
         var vaultName = GetVaultName(name);
         if (!this.vaultControl.Root.TryAddVault(vaultName, out var vault, out _))

@@ -29,8 +29,8 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         }
 
         var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
-        var authorityInfo = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
-        var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
+        var authority = new Authority2(seed, option.Lifetime, Mics.FromSeconds(seconds));
+        var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authority);
 
         if (result == AuthorityResult.Success)
         {
