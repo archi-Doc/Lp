@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
-using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.AuthorityCommand;
@@ -9,7 +8,7 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl, Seedphrase seedphrase)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl2 authorityControl, Seedphrase seedphrase)
     {
         this.logger = logger;
         this.authorityControl = authorityControl;
@@ -30,7 +29,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         }
 
         var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
-        var authorityInfo = new Lp.T3cs.Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
+        var authorityInfo = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
         var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
 
         if (result == AuthorityResult.Success)
@@ -44,7 +43,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
     }
 
     private readonly ILogger logger;
-    private readonly AuthorityControl authorityControl;
+    private readonly AuthorityControl2 authorityControl;
     private readonly Seedphrase seedphrase;
 }
 

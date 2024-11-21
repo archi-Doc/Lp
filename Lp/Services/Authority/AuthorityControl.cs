@@ -18,9 +18,6 @@ public class AuthorityControl
         this.vaultControl = vaultControl;
     }
 
-    public string[] GetNames()
-        => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
-
     public async Task<Authority?> GetAuthority(string name)
     {
         AuthorityInterface? authorityInterface;
@@ -40,63 +37,6 @@ public class AuthorityControl
         }
 
         return await authorityInterface.Prepare().ConfigureAwait(false);
-    }
-
-    public AuthorityResult NewAuthority(string name, string passPhrase, Authority authority)
-    {
-        var vaultName = GetVaultName(name);
-
-        using (this.lockObject.EnterScope())
-        {
-            if (this.vaultControl.Root.Exists(vaultName))
-            {
-                return AuthorityResult.AlreadyExists;
-            }
-
-            PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);
-            if (this.vaultControl.Root.TryAddByteArray(vaultName, encrypted, out _))
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.AlreadyExists;
-            }
-        }
-    }
-
-    public bool Exists(string name)
-        => this.vaultControl.Root.Exists(GetVaultName(name));
-
-    public AuthorityResult RemoveAuthority(string name)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vaultControl.Root.Remove(GetVaultName(name));
-
-            if (vaultRemoved)
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.NotFound;
-            }
-        }
-    }
-
-    public async Task<Authority?> GetLpAuthority(ILogger? logger)
-    {
-        var authority = await this.GetAuthority(LpConstants.LpAlias).ConfigureAwait(false);
-        if (authority == null ||
-            !authority.PublicKey.Equals(LpConstants.LpPublicKey))
-        {
-            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, LpConstants.LpAlias);
-            return default;
-        }
-
-        return authority;
     }
 
     #region FieldAndProperty

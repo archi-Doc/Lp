@@ -8,15 +8,15 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("remove-authority")]
 public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, Control control)
+    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, AuthorityControl2 authorityControl)
     {
-        this.control = control;
+        this.authorityControl = authorityControl;
         this.logger = logger;
     }
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var result = this.control.AuthorityControl.RemoveAuthority(option.AuthorityName);
+        var result = this.authorityControl.RemoveAuthority(option.AuthorityName);
 
         if (result == AuthorityResult.Success)
         {
@@ -28,7 +28,7 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
         }
     }
 
-    private readonly Control control;
+    private readonly AuthorityControl2 authorityControl;
     private readonly ILogger logger;
 }
 
