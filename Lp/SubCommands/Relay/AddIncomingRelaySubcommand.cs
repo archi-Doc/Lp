@@ -10,7 +10,7 @@ namespace Lp.Subcommands.Relay;
 [SimpleCommand("add-incomimg-relay", Description = "")]
 public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>
 {
-    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl)
+    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl2 authorityControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -41,7 +41,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
 
             var block = new CreateRelayBlock(true);
             var token = new CertificateToken<CreateRelayBlock>(block);
-            authority.SignWithSalt(token, clientConnection.Salt);
+            authority.GetSeedKey().SignWithSalt(token, clientConnection.Salt);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
@@ -72,7 +72,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NetTerminal netTerminal;
-    private readonly AuthorityControl authorityControl;
+    private readonly AuthorityControl2 authorityControl;
 }
 
 public record NewCertificateRelayOptions

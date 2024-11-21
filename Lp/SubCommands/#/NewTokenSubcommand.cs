@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -9,7 +10,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("new-token")]
 public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
 {
-    public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityControl authorityControl)
+    public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityControl2 authorityControl)
     {
         this.consoleService = consoleService;
         this.logger = logger;
@@ -27,7 +28,8 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
         }
 
         var token = new CertificateToken<ConnectionAgreement>(new ConnectionAgreement());
-        authority.Sign(token);
+        var seedKey = authority.GetSeedKey();
+        seedKey.Sign(token);
         var st = token.ToString();
         this.consoleService.WriteLine(st);
 
@@ -39,7 +41,7 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly AuthorityControl authorityControl;
+    private readonly AuthorityControl2 authorityControl;
 }
 
 public record NewTokenOptions

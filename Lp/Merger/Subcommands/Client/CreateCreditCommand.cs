@@ -36,7 +36,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         var service = connection.GetService<IMergerClient>();
 
         var proof = new CreateCreditProof();
-        authority.SignProof(proof, Mics.FromDays(1));
+        authority.GetSeedKey().TrySignProof(proof, Mics.FromDays(1));
         var param = new Merger.CreateCreditParams(proof);
 
         var response2 = await service.CreateCredit(param).ResponseAsync;

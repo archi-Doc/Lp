@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using Lp.Services;
-using Netsphere.Crypto;
 using Netsphere.Crypto2;
 using Tinyhand.IO;
 
@@ -114,42 +113,20 @@ public sealed partial class Authority2
     public SeedKey GetSeedKey(Credit credit)
         => this.creditToSeedKey.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
 
+    public EncryptionPublicKey GetEncryptionPublicKey()
+        => this.GetSeedKey(Credit.Default).GetEncryptionPublicKey();
+
+    public EncryptionPublicKey GetEncryptionPublicKey(Credit credit)
+        => this.GetSeedKey(credit).GetEncryptionPublicKey();
+
+    public SignaturePublicKey GetSignaturePublicKey()
+        => this.GetSeedKey(Credit.Default).GetSignaturePublicKey();
+
+    public SignaturePublicKey GetSignaturePublicKey(Credit credit)
+        => this.GetSeedKey(credit).GetSignaturePublicKey();
+
     public override int GetHashCode()
         => BitConverter.ToInt32(this.seed.AsSpan());
-
-    /*public bool TrySignEvidence(Evidence evidence, int mergerIndex)
-    {
-        var privateKey = this.GetOrCreatePrivateKey();
-        return evidence.TrySign(privateKey, mergerIndex);
-    }
-
-    public void SignProof(Proof proof, long validMics)
-    {
-        var privateKey = this.GetOrCreatePrivateKey();
-        proof.SignProof(privateKey, validMics);
-    }
-
-    public void SignWithSalt<T>(T token, ulong salt)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        token.Salt = salt;
-        var privateKey = this.GetOrCreatePrivateKey();
-        NetHelper.Sign(token, privateKey);
-    }
-
-    public void Sign<T>(T token)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        var privateKey = this.GetOrCreatePrivateKey();
-        NetHelper.Sign(token, privateKey);
-    }
-
-    public void SignToken<T>(Credit credit, T token)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        var privateKey = this.GetOrCreatePrivateKey(credit);
-        NetHelper.Sign(token, privateKey);
-    }*/
 
     public override string ToString()
         => $"PublicKey: {this.GetSeedKey().ToString()}, Lifetime: {this.Lifecycle}, DurationMics: {this.DurationMics}";

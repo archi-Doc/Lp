@@ -53,12 +53,6 @@ public sealed partial class Authority
 
     #endregion
 
-    public SignaturePrivateKey UnsafeGetPrivateKey()
-        => this.GetOrCreatePrivateKey();
-
-    public override int GetHashCode()
-        => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
-
     public bool TrySignEvidence(Evidence evidence, int mergerIndex)
     {
         var privateKey = this.GetOrCreatePrivateKey();
@@ -79,36 +73,6 @@ public sealed partial class Authority
         NetHelper.Sign(token, privateKey);
     }
 
-    public void Sign<T>(T token)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        var privateKey = this.GetOrCreatePrivateKey();
-        NetHelper.Sign(token, privateKey);
-    }
-
-    public void SignToken<T>(Credit credit, T token)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
-    {
-        var privateKey = this.GetOrCreatePrivateKey(credit);
-        NetHelper.Sign(token, privateKey);
-    }
-
-    public byte[]? SignData(Credit credit, byte[] data)
-    {
-        var privateKey = this.GetOrCreatePrivateKey(credit);
-        var signature = privateKey.SignData(data);
-        this.CachePrivateKey(credit, privateKey);
-        return signature;
-    }
-
-    public bool VerifyData(Credit credit, byte[] data, byte[] signature)
-    {
-        var privateKey = this.GetOrCreatePrivateKey(credit);
-        var result = privateKey.VerifyData(data, signature);
-        this.CachePrivateKey(credit, privateKey);
-        return result;
-    }
-
     private SignaturePrivateKey GetOrCreatePrivateKey()
     {// this.GetOrCreatePrivateKey(Credit.Default);
         var privateKey = this.privateKeyCache.TryGet(Credit.Default);
@@ -116,32 +80,6 @@ public sealed partial class Authority
         {// Create private key.
             privateKey = SignaturePrivateKey.Create(this.seed);
             this.CachePrivateKey(Credit.Default, privateKey);
-        }
-
-        return privateKey;
-    }
-
-    private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)
-    {
-        var privateKey = this.privateKeyCache.TryGet(credit);
-        if (privateKey == null)
-        {// Create private key.
-            var writer = TinyhandWriter.CreateFromBytePool();
-            try
-            {
-                writer.WriteSpan(this.seed);
-                TinyhandSerializer.SerializeObject(ref writer, credit);
-
-                Span<byte> span = stackalloc byte[32];
-                var rentMemory = writer.FlushAndGetRentMemory();
-                Sha3Helper.Get256_Span(rentMemory.Span, span);
-                rentMemory.Return();
-                privateKey = SignaturePrivateKey.Create(span);
-            }
-            finally
-            {
-                writer.Dispose();
-            }
         }
 
         return privateKey;

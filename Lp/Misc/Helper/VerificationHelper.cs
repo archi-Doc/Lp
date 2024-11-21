@@ -8,11 +8,11 @@ namespace Lp;
 
 public static class VerificationHelper
 {
-    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority)
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority2 authority)
     {
         var context = connection.GetContext();
         var token = new AuthenticationToken(connection.Salt);
-        authority.Sign(token);
+        authority.GetSeedKey().Sign(token);
         if (context.AuthenticationTokenEquals(token.PublicKey))
         {
             return true;
@@ -22,11 +22,11 @@ public static class VerificationHelper
         return result == NetResult.Success;
     }
 
-    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority, Credit credit)
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority2 authority, Credit credit)
     {
         var context = connection.GetContext();
         var token = new AuthenticationToken(connection.Salt);
-        authority.SignToken(credit, token);
+        authority.GetSeedKey(credit).Sign(token);
         if (context.AuthenticationTokenEquals(token.PublicKey))
         {
             return true;
@@ -39,14 +39,13 @@ public static class VerificationHelper
     public static Identifier GetIdentifier<T>(this T? value, int level)
         where T : ITinyhandSerialize<T>
     {
-        var writer = TinyhandWriter.CreateFromBytePool();
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         writer.Level = level;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            var rentMemory = writer.FlushAndGetRentMemory();
-            var identifier = new Identifier(Sha3Helper.Get256_UInt64(rentMemory.Span));
-            rentMemory.Return();
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            var identifier = new Identifier(Blake3.Get256_UInt64(span));
             return identifier;
         }
         finally
@@ -54,52 +53,6 @@ public static class VerificationHelper
             writer.Dispose();
         }
     }
-
-    /*public static ulong GetFarmHash<T>(this T? value)
-        where T : ITinyhandSerialize<T>
-    {
-        var writer = TinyhandWriter.CreateFromBytePool();
-        try
-        {
-            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Selection);
-            var rentMemory = writer.FlushAndGetRentMemory();
-            var hash = FarmHash.Hash64(rentMemory.Span);
-            rentMemory.Return();
-            return hash;
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
-    public static bool VerifySignature<T>(this T value, int level, Signature signature)
-        where T : ITinyhandSerialize<T>
-    {
-        try
-        {
-            var identifier2 = value.GetIdentifier(level);
-            return signature.PublicKey.VerifyIdentifier(identifier2, signature.Sign);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public static bool VerifySign<T>(this T value, int level, SignaturePublicKey publicKey, byte[] sign)
-        where T : ITinyhandSerialize<T>
-    {
-        try
-        {
-            var identifier2 = value.GetIdentifier(level);
-            return publicKey.VerifyIdentifier(identifier2, sign);
-        }
-        catch
-        {
-            return false;
-        }
-    }*/
 
     public static bool VerifyIdentifierAndSignature<T>(this T value, int level, Identifier identifier, Signature signature)
         where T : ITinyhandSerialize<T>
@@ -119,26 +72,6 @@ public static class VerificationHelper
             return false;
         }
     }
-
-    /*public static bool VerifyValueToken<T>(this T value, int level, ValueToken valueToken)
-        where T : ITinyhandSerialize<T>
-    {
-        try
-        {
-            if (!valueToken.Validate())
-            {
-                return false;
-            }
-
-            var identifier2 = value.GetIdentifier(level);
-
-            return valueToken.Signature.PublicKey.VerifyIdentifier(identifier2, valueToken.Signature.Sign);
-        }
-        catch
-        {
-            return false;
-        }
-    }*/
 
     public static bool SignProof(this Proof value, SignaturePrivateKey privateKey, long validMics)
     {
