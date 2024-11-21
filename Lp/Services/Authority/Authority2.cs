@@ -1,11 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrossChannel.Generated;
 using Lp.Services;
 using Netsphere.Crypto;
 using Netsphere.Crypto2;
 using Tinyhand.IO;
-using static Lp.Hashed;
 
 namespace Lp.T3cs;
 
@@ -79,16 +77,15 @@ public sealed partial class Authority2
     public SeedKey CreateSeedKey(Credit credit)
     {
         SeedKey seedKey;
-        var writer = TinyhandWriter.CreateFromBytePool();
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         try
         {
             writer.WriteSpan(this.seed);
             TinyhandSerializer.SerializeObject(ref writer, credit);
-            var rentMemory = writer.FlushAndGetRentMemory();
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             Span<byte> seed = stackalloc byte[Blake3.Size];
-            Blake3.Get256_Span(rentMemory.Span, seed);
-            rentMemory.Return();
+            Blake3.Get256_Span(span, seed);
             seedKey = SeedKey.New(seed, KeyOrientation.NotSpecified);
         }
         finally
@@ -103,7 +100,7 @@ public sealed partial class Authority2
         => this.GetOrCreatePrivateKey();
 
     public override int GetHashCode()
-        => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
+        => BitConverter.ToInt32(this.seed.AsSpan());
 
     public bool TrySignEvidence(Evidence evidence, int mergerIndex)
     {
