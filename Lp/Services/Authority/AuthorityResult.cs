@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 public enum AuthorityResult
-{
+{//remove
     Success,
     NotFound,
     AlreadyExists,

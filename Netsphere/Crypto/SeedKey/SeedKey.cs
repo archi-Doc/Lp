@@ -9,7 +9,7 @@ namespace Netsphere.Crypto2;
 #pragma warning disable SA1401
 
 [TinyhandObject]
-public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<SeedKey>
+public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<SeedKey>, IDisposable
 {// !!!Base64Url(Seed+Checksum)!!!(s:Base64Url(PublicKey+Checksum))
     public static int MaxStringLength => SeedKeyHelper.MaxPrivateKeyLengthInBase64;
 
@@ -334,5 +334,36 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         }
 
         return true;
+    }
+
+    public void Clear()
+    {
+        this.seed.AsSpan().Clear();
+        this.KeyOrientation = KeyOrientation.NotSpecified;
+
+        if (this.encryptionSecretKey is not null)
+        {
+            this.encryptionSecretKey.AsSpan().Clear();
+        }
+
+        if (this.encryptionPublicKey is not null)
+        {
+            this.encryptionPublicKey.AsSpan().Clear();
+        }
+
+        if (this.signatureSecretKey is not null)
+        {
+            this.signatureSecretKey.AsSpan().Clear();
+        }
+
+        if (this.signaturePublicKey is not null)
+        {
+            this.signaturePublicKey.AsSpan().Clear();
+        }
+    }
+
+    public void Dispose()
+    {
+        this.Clear();
     }
 }

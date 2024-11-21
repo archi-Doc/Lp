@@ -1,8 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrossChannel.Generated;
 using Lp.Services;
 using Netsphere.Crypto;
+using Netsphere.Crypto2;
 using Tinyhand.IO;
+using static Lp.Hashed;
 
 namespace Lp.T3cs;
 
@@ -12,7 +15,7 @@ public sealed partial class Authority2
     public const string Name = "Authority";
     private const int MinimumSeedLength = 32;
 
-    public static Authority2? FromVault(Vault vault)
+    public static Authority2? GetFromVault(Vault vault)
     {
         if (vault.TryGetObject<Authority2>(Name, out var authority, out _))
         {
@@ -20,7 +23,7 @@ public sealed partial class Authority2
         }
         else
         {
-            vault.ParentVault.Remove(name);//
+            vault.ParentVault?.Remove(name);//
             return default;
         }
     }
@@ -71,6 +74,29 @@ public sealed partial class Authority2
         {
             return false;
         }
+    }
+
+    public SeedKey CreateSeedKey(Credit credit)
+    {
+        SeedKey seedKey;
+        var writer = TinyhandWriter.CreateFromBytePool();
+        try
+        {
+            writer.WriteSpan(this.seed);
+            TinyhandSerializer.SerializeObject(ref writer, credit);
+            var rentMemory = writer.FlushAndGetRentMemory();
+
+            Span<byte> seed = stackalloc byte[Blake3.Size];
+            Blake3.Get256_Span(rentMemory.Span, seed);
+            rentMemory.Return();
+            seedKey = SeedKey.New(seed, KeyOrientation.NotSpecified);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+
+        return seedKey;
     }
 
     public SignaturePrivateKey UnsafeGetPrivateKey()
