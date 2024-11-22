@@ -7,8 +7,9 @@ namespace Lp;
 
 public class Seedphrase
 {
-    public const int SeedphraseDefaultLength = 20;
-    public const int SeedphraseMinimumLength = 12;
+    public const int SeedphraseDefaultLength = 24; // 11bits x (24-1) = 253 bits
+    public const int SeedphraseMinimumLength = 16;
+    public const int NumberOfWords = 2048; // 11bits
     private const string SeedphrasesPath = "Misc.Strings.Seedphrases";
 
     public Seedphrase()
@@ -52,7 +53,7 @@ public class Seedphrase
         }
 
         var span = MemoryMarshal.AsBytes<uint>(index);
-        var checksum = (uint)FarmHash.Hash64(span) % (uint)this.words.Length;
+        var checksum = (uint)XxHash3.Hash64(span) % (uint)this.words.Length;
 
         var sb = new StringBuilder();
         for (var i = 0; i < index.Length; i++)
@@ -92,7 +93,7 @@ public class Seedphrase
         }
 
         var span = MemoryMarshal.AsBytes<uint>(index.AsSpan().Slice(0, index.Length - 1));
-        var checksum = (uint)FarmHash.Hash64(span) % (uint)this.words.Length;
+        var checksum = (uint)XxHash3.Hash64(span) % (uint)this.words.Length;
         if (checksum != index[index.Length - 1])
         {
             return null;
