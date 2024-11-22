@@ -455,7 +455,7 @@ Wait:
 
     internal void CleanReceiveTransmission()
     {// using (this.receiveTransmissions.LockObject.EnterScope())
-        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
+        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));//
 
         // Release receive transmissions that have elapsed a certain time after being disposed.
         var currentMics = Mics.FastSystem;

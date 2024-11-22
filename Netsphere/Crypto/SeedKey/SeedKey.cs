@@ -264,24 +264,14 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         CryptoSign.Sign(message, this.signatureSecretKey, signature);
     }
 
-    /*public bool Validate()
-    {
-        if (this.seed.Length != CryptoSign.SecretKeySize)
-        {
-            return false;
-        }
-
-        return true;
-    }*/
-
-    /*public override string ToString()
-        => this.ToPublicKey().ToString();*/
-
     public bool Equals(SeedKey? other)
         => other is not null && this.seed.AsSpan().SequenceEqual(other.seed.AsSpan());
 
     public override int GetHashCode()
-        => (int)XxHash3.Hash64(this.seed);
+        => BitConverter.ToInt32(this.seed.AsSpan()); // (int)XxHash3.Hash64(this.seed);
+
+    public override string ToString()
+        => $"SeedKey";
 
     public string UnsafeToString()
     {
