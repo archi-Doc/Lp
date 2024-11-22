@@ -443,7 +443,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
                             this.SetModifiedFlag();
                         }
                     }
-                    else
+                    else if (x.ByteArray is null)
                     {// Invlaid
                         toDelete ??= new();
                         toDelete.Add(key);
@@ -461,7 +461,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
                             this.SetModifiedFlag();
                         }
                     }
-                    else
+                    else if (x.ByteArray is null)
                     {// Invlaid
                         toDelete ??= new();
                         toDelete.Add(key);

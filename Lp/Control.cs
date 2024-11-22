@@ -675,7 +675,7 @@ public class Control
                 {
                     if (string.Compare(command, "exit", true) == 0)
                     {// Exit
-                        if (this.TryTerminate().Result == true)
+                        if (this.TryTerminate(true).Result == true)
                         { // To view mode
                             this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
                             return;

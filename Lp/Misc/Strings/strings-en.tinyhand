@@ -58,7 +58,7 @@ Authority = {
     NotFound = "Authority '{0}' is not found"
     NotAvailable = "Could not get Authority '{0}'"
     EnterPassword = "Enter Authority '{0}' password"
-    DeleteConfirm = "Are you sure you want to delete authority'{0}'"
+    DeleteConfirm = "Are you sure you want to delete authority '{0}' ?"
 }
 
 Seedphrase = {
