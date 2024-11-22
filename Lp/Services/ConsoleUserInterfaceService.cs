@@ -227,7 +227,6 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
             var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
-                this.WriteLine("Ctrl+C");
                 this.WriteLine();
                 return null; // throw new PanicException();
             }

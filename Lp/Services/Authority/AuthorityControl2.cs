@@ -42,7 +42,7 @@ public class AuthorityControl2
         }
         else
         {// Not specified.
-            if (this.vaultControl.Root.TryGetVault(vaultName, null, out vault))
+            if (this.vaultControl.Root.TryGetVault(vaultName, string.Empty, out vault))
             {
                 authority = Authority2.GetFromVault(vault);
                 if (authority is null ||
