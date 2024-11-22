@@ -8,7 +8,7 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("list-authority")]
 public class ListAuthoritySubcommand : ISimpleCommandAsync
 {
-    public ListAuthoritySubcommand(IUserInterfaceService userInterfaceService, AuthorityControl2 authorityControl)
+    public ListAuthoritySubcommand(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl)
     {
         this.userInterfaceService = userInterfaceService;
         this.authorityControl = authorityControl;
@@ -20,6 +20,6 @@ public class ListAuthoritySubcommand : ISimpleCommandAsync
         this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    private readonly AuthorityControl2 authorityControl;
+    private readonly AuthorityControl authorityControl;
     private readonly IUserInterfaceService userInterfaceService;
 }

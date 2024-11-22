@@ -8,7 +8,7 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("show-authority")]
 public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public ShowAuthoritySubcommand(IConsoleService consoleService, ILogger<ShowAuthoritySubcommand> logger, AuthorityControl2 authorityControl)
+    public ShowAuthoritySubcommand(IConsoleService consoleService, ILogger<ShowAuthoritySubcommand> logger, AuthorityControl authorityControl)
     {
         this.consoleService = consoleService;
         this.logger = logger;
@@ -36,5 +36,5 @@ public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNa
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly AuthorityControl2 authorityControl;
+    private readonly AuthorityControl authorityControl;
 }

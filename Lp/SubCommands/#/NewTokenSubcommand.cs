@@ -10,7 +10,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("new-token")]
 public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
 {
-    public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityControl2 authorityControl)
+    public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityControl authorityControl)
     {
         this.consoleService = consoleService;
         this.logger = logger;
@@ -41,7 +41,7 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
 
     private readonly IConsoleService consoleService;
     private readonly ILogger logger;
-    private readonly AuthorityControl2 authorityControl;
+    private readonly AuthorityControl authorityControl;
 }
 
 public record NewTokenOptions

@@ -8,14 +8,14 @@ using Tinyhand.IO;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class Authority2
+public sealed partial class Authority
 {
     public const string Name = "Authority";
     private const int MinimumSeedLength = 32;
 
-    public static Authority2? GetFromVault(Vault vault)
+    public static Authority? GetFromVault(Vault vault)
     {
-        if (vault.TryGetObject<Authority2>(Name, out var authority, out _))
+        if (vault.TryGetObject<Authority>(Name, out var authority, out _))
         {
             return authority;
         }
@@ -67,7 +67,7 @@ public sealed partial class Authority2
 
     #endregion
 
-    public Authority2(byte[]? seed, AuthorityLifecycle lifecycle, long durationMics)
+    public Authority(byte[]? seed, AuthorityLifecycle lifecycle, long durationMics)
     {
         if (seed == null || seed.Length < MinimumSeedLength)
         {
@@ -83,7 +83,7 @@ public sealed partial class Authority2
         this.DurationMics = durationMics;
     }
 
-    internal Authority2()
+    internal Authority()
     {
     }
 

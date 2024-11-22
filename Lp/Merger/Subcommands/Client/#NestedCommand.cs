@@ -27,13 +27,13 @@ public class NestedCommand
 
     public RobustConnection? RobustConnection { get; set; }
 
-    public Authority2? Authority { get; set; }
+    public Authority? Authority { get; set; }
 }
 
 [SimpleCommand("merger-client")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
-    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityControl2 authorityControl, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
+    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -70,7 +70,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityControl2 authorityControl;
+    private readonly AuthorityControl authorityControl;
     private readonly NestedCommand nestedcommand;
     private readonly RobustConnection.Factory robustConnectionFactory;
 }

@@ -8,7 +8,7 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("remove-authority")]
 public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, AuthorityControl2 authorityControl, IUserInterfaceService userInterfaceService)
+    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, AuthorityControl authorityControl, IUserInterfaceService userInterfaceService)
     {
         this.authorityControl = authorityControl;
         this.logger = logger;
@@ -42,7 +42,7 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
         }
     }
 
-    private readonly AuthorityControl2 authorityControl;
+    private readonly AuthorityControl authorityControl;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
 }

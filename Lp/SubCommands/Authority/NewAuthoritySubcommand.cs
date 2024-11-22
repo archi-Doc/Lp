@@ -8,7 +8,7 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl2 authorityControl, Seedphrase seedphrase)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl, Seedphrase seedphrase)
     {
         this.logger = logger;
         this.authorityControl = authorityControl;
@@ -29,7 +29,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         }
 
         var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
-        var authority = new Authority2(seed, option.Lifetime, Mics.FromSeconds(seconds));
+        var authority = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
         var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authority);
 
         if (result == AuthorityResult.Success)
@@ -43,7 +43,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
     }
 
     private readonly ILogger logger;
-    private readonly AuthorityControl2 authorityControl;
+    private readonly AuthorityControl authorityControl;
     private readonly Seedphrase seedphrase;
 }
 

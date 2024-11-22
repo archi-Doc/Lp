@@ -8,7 +8,7 @@ namespace Lp;
 
 public static class VerificationHelper
 {
-    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority2 authority)
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority)
     {
         var context = connection.GetContext();
         var token = new AuthenticationToken(connection.Salt);
@@ -22,7 +22,7 @@ public static class VerificationHelper
         return result == NetResult.Success;
     }
 
-    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority2 authority, Credit credit)
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority, Credit credit)
     {
         var context = connection.GetContext();
         var token = new AuthenticationToken(connection.Salt);

@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.
 /// </summary>
-public class AuthorityControl2
+public class AuthorityControl
 {
     public const string VaultPrefix = "Authority\\";
 
@@ -22,17 +22,17 @@ public class AuthorityControl2
 
     #endregion
 
-    public AuthorityControl2(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
+    public AuthorityControl(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
         this.userInterfaceService = userInterfaceService;
         this.vaultControl = vaultControl;
     }
 
-    public async Task<Authority2?> GetAuthority(string name, string? password = null)
+    public async Task<Authority?> GetAuthority(string name, string? password = null)
     {
         var vaultName = GetVaultName(name);
         Vault? vault;
-        Authority2? authority = default;
+        Authority? authority = default;
         if (password is not null)
         {// Password is specified.
             if (!this.vaultControl.Root.TryGetVault(vaultName, password, out vault))
@@ -44,7 +44,7 @@ public class AuthorityControl2
         {// Not specified.
             if (this.vaultControl.Root.TryGetVault(vaultName, string.Empty, out vault))
             {
-                authority = Authority2.GetFromVault(vault);
+                authority = Authority.GetFromVault(vault);
                 if (authority is null ||
                     authority.IsExpired())
                 {
@@ -64,7 +64,7 @@ public class AuthorityControl2
             }
         }
 
-        authority ??= Authority2.GetFromVault(vault);
+        authority ??= Authority.GetFromVault(vault);
         if (password is not null)
         {
             authority?.ResetExpirationMics();
@@ -79,7 +79,7 @@ public class AuthorityControl2
     public bool Exists(string name)
         => this.vaultControl.Root.Exists(GetVaultName(name));
 
-    public AuthorityResult NewAuthority(string name, string password, Authority2 authority)
+    public AuthorityResult NewAuthority(string name, string password, Authority authority)
     {
         var vaultName = GetVaultName(name);
         if (!this.vaultControl.Root.TryAddVault(vaultName, out var vault, out _))
@@ -88,7 +88,7 @@ public class AuthorityControl2
         }
 
         vault.SetPassword(password);
-        vault.AddObject(Authority2.Name, authority);
+        vault.AddObject(Authority.Name, authority);
         return AuthorityResult.Success;
     }
 
