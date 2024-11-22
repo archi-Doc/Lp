@@ -79,29 +79,29 @@ public class AuthorityControl
     public bool Exists(string name)
         => this.vaultControl.Root.Exists(GetVaultName(name));
 
-    public AuthorityResult NewAuthority(string name, string password, Authority authority)
+    public bool NewAuthority(string name, string password, Authority authority)
     {
         var vaultName = GetVaultName(name);
         if (!this.vaultControl.Root.TryAddVault(vaultName, out var vault, out _))
         {
-            return AuthorityResult.AlreadyExists;
+            return false;
         }
 
         vault.SetPassword(password);
         vault.AddObject(Authority.Name, authority);
-        return AuthorityResult.Success;
+        return true;
     }
 
-    public AuthorityResult RemoveAuthority(string name)
+    public bool RemoveAuthority(string name)
     {
         var vaultName = GetVaultName(name);
         if (this.vaultControl.Root.Remove(vaultName))
         {
-            return AuthorityResult.Success;
+            return true;
         }
         else
         {
-            return AuthorityResult.NotFound;
+            return false;
         }
     }
 }

@@ -32,12 +32,12 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         var authority = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
         var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authority);
 
-        if (result == AuthorityResult.Success)
-        {
+        if (result)
+        {// Success
             this.logger.TryGet()?.Log(Hashed.Authority.Created, option.Name);
         }
-        else if (result == AuthorityResult.AlreadyExists)
-        {
+        else
+        {// Failed
             this.logger.TryGet()?.Log(Hashed.Authority.AlreadyExists, option.Name);
         }
     }

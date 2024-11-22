@@ -32,12 +32,12 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
 
         var result = this.authorityControl.RemoveAuthority(option.AuthorityName);
 
-        if (result == AuthorityResult.Success)
-        {
+        if (result)
+        {// Success
             this.logger.TryGet()?.Log(Hashed.Authority.Removed, option.AuthorityName);
         }
-        else if (result == AuthorityResult.NotFound)
-        {
+        else
+        {// Failed
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, option.AuthorityName);
         }
     }
