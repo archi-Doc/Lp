@@ -24,7 +24,7 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
         }
         else
         {
-            if (await this.userInterfaceService.RequestYesOrNo(Hashed.Authority.DeleteConfirm, option.AuthorityName) != true)
+            if (await this.userInterfaceService.RequestYesOrNo(Hashed.Authority.RemoveConfirm, option.AuthorityName) != true)
             {
                 return;
             }
