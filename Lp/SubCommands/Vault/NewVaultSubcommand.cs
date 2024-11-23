@@ -65,10 +65,10 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
         else
         {
-            var key = seed is null ? EncryptionPrivateKey.Create() : EncryptionPrivateKey.Create(seed);
+            /*var key = seed is null ? EncryptionPrivateKey.Create() : EncryptionPrivateKey.Create(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
             this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-            this.AddVault(options.Name, key);
+            this.AddVault(options.Name, key);*/
         }
     }
 
@@ -84,13 +84,13 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             this.logger.TryGet()?.Log(prefix + signaturePrivateKey.ToPublicKey().ToString());
             this.AddVault(options.Name, signaturePrivateKey);
         }
-        else if (EncryptionPrivateKey.TryParse(options.PrivateKey, out var encryptionPrivateKey))
+        /*else if (EncryptionPrivateKey.TryParse(options.PrivateKey, out var encryptionPrivateKey))
         {
             this.userInterfaceService.WriteLine(encryptionPrivateKey.UnsafeToString());
             var prefix = GetPrefix(encryptionPrivateKey.KeyClass, options);
             this.logger.TryGet()?.Log(prefix + encryptionPrivateKey.ToPublicKey().ToString());
             this.AddVault(options.Name, encryptionPrivateKey);
-        }
+        }*/
         else if (NodePrivateKey.TryParse(options.PrivateKey, out var nodePrivateKey))
         {
             this.userInterfaceService.WriteLine(nodePrivateKey.UnsafeToString());

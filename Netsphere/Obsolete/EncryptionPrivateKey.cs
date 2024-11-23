@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 
 namespace Netsphere.Crypto;
 
-/// <summary>
+/*/// <summary>
 /// Represents a private key data.<br/>
 /// Encryption: ECDiffieHellman, secp256r1.
 /// </summary>
@@ -95,4 +95,4 @@ public sealed partial class EncryptionPrivateKey : PrivateKeyBase, IEquatable<En
         => this.ToPublicKey().ToString();
 
     #endregion
-}
+}*/

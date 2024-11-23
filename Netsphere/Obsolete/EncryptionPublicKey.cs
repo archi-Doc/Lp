@@ -9,7 +9,7 @@ using Arc.Collections;
 
 namespace Netsphere.Crypto;
 
-/// <summary>
+/*/// <summary>
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).<br/>
 /// Encryption: ECDiffieHellman, secp256r1.
 /// </summary>
@@ -227,4 +227,4 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         => (int)this.x0;
 
     #endregion
-}
+}*/

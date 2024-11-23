@@ -7,6 +7,7 @@ using Arc.Threading;
 using Lp.Data;
 using Lp.T3cs;
 using Netsphere.Crypto;
+using Netsphere.Crypto2;
 using Netsphere.Misc;
 using SimpleCommandLine;
 
@@ -50,22 +51,15 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     private async Task TestLinkageKey()
     {
-        var bt = new BenchTimer();
-        var privateKey = SignaturePrivateKey.Create();
-        var publicKey = privateKey.ToPublicKey();
-        this.userInterfaceService.WriteLine($"Private(verification): {privateKey.UnsafeToString()}");
-        this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
-
-        bt.Start();
-        var privateEncryptionKey = EncryptionPrivateKey.Create();
-        this.userInterfaceService.WriteLine($"Create encryption key: {bt.StopAndGetText()}");
-
-        var publicEncryptionKey = privateEncryptionKey.ToPublicKey();
-        this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.UnsafeToString()}");
-        this.userInterfaceService.WriteLine($"Public(encryption): {publicEncryptionKey.ToString()}");
+        var seedKey = SeedKey.New(KeyOrientation.Signature);
+        var signaturePublicKey = seedKey.GetSignaturePublicKey();
+        var encryptionPublicKey = seedKey.GetEncryptionPublicKey();
+        this.userInterfaceService.WriteLine($"SeedKey: {seedKey.UnsafeToString()}");
+        this.userInterfaceService.WriteLine($"Public(signature): {signaturePublicKey.ToString()}");
+        this.userInterfaceService.WriteLine($"Public(encryption): {encryptionPublicKey.ToString()}");
 
         // CryptoKey (Raw)
-        var cryptoKey = CryptoKey.CreateRaw(publicKey);
+        /*var cryptoKey = CryptoKey.CreateRaw(publicKey);
         this.userInterfaceService.WriteLine($"CryptoKey (Raw) : {cryptoKey.ToString()}");
         this.userInterfaceService.WriteLine($"IsOriginalKey: {cryptoKey.IsOriginalKey(privateKey)}");
         if (cryptoKey.TryGetRawKey(out var originalKey))
@@ -93,7 +87,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             {
                 this.userInterfaceService.WriteLine($"CryptoKey.TryGetEncryptedKey() success.");
             }
-        }
+        }*/
 
         // if (await this.authorityControl.GetAuthority("lp") is { } authority)
         {

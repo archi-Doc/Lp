@@ -7,7 +7,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-/// <summary>
+/*/// <summary>
 /// Represents a crypto key (Raw or Encrypted SignaturePublicKey).
 /// </summary>
 [TinyhandObject]
@@ -463,4 +463,4 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
             return true;
         }
     }
-}
+}*/
