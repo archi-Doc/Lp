@@ -15,40 +15,34 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
         this.userInterfaceService = userInterfaceService;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
+    public async Task RunAsync(AuthoritySubcommandNameOptions options, string[] args)
     {
-        if (!this.authorityControl.Exists(option.AuthorityName))
+        if (!this.authorityControl.Exists(options.AuthorityName))
         {// Not found
-            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, option.AuthorityName);
+            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, options.AuthorityName);
             return;
         }
         else
         {
-            if (await this.userInterfaceService.RequestYesOrNo(Hashed.Authority.RemoveConfirm, option.AuthorityName) != true)
+            if (await this.userInterfaceService.RequestYesOrNo(Hashed.Authority.RemoveConfirm, options.AuthorityName) != true)
             {
                 return;
             }
         }
 
-        var result = this.authorityControl.RemoveAuthority(option.AuthorityName);
+        var result = this.authorityControl.RemoveAuthority(options.AuthorityName);
 
         if (result)
         {// Success
-            this.logger.TryGet()?.Log(Hashed.Authority.Removed, option.AuthorityName);
+            this.logger.TryGet()?.Log(Hashed.Authority.Removed, options.AuthorityName);
         }
         else
         {// Failed
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, option.AuthorityName);
+            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
         }
     }
 
     private readonly AuthorityControl authorityControl;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-}
-
-public record AuthoritySubcommandNameOptions
-{
-    [SimpleOption("Name", Description = "Authority name", Required = true)]
-    public string AuthorityName { get; init; } = string.Empty;
 }

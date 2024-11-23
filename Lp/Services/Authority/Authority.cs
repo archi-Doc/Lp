@@ -17,6 +17,7 @@ public sealed partial class Authority
     {
         if (vault.TryGetObject<Authority>(Name, out var authority, out _))
         {
+            authority.Vault = vault;
             return authority;
         }
         else
@@ -60,10 +61,13 @@ public sealed partial class Authority
     public long DurationMics { get; private set; }
 
     [IgnoreMember]
+    public Vault? Vault { get; internal set; }
+
+    [IgnoreMember]
     public long ExpirationMics { get; private set; }
 
     [IgnoreMember]
-    private ConcurrentDictionary<Credit, SeedKey> creditToSeedKey = new();
+    private ConcurrentDictionary<Credit, SeedKey> seedKeyCache = new();
 
     #endregion
 
@@ -111,7 +115,7 @@ public sealed partial class Authority
         => this.GetSeedKey(Credit.Default);
 
     public SeedKey GetSeedKey(Credit credit)
-        => this.creditToSeedKey.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
+        => this.seedKeyCache.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
 
     public EncryptionPublicKey GetEncryptionPublicKey()
         => this.GetSeedKey(Credit.Default).GetEncryptionPublicKey();

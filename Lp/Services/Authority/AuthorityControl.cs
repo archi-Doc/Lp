@@ -87,6 +87,7 @@ public class AuthorityControl
             return false;
         }
 
+        authority.Vault = vault;
         vault.SetPassword(password);
         vault.AddObject(Authority.Name, authority);
         return true;

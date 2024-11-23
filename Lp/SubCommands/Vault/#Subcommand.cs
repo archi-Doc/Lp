@@ -12,6 +12,6 @@ public static class Subcommand
         context.AddSubcommand(typeof(RemoveVaultSubcommand));
         context.AddSubcommand(typeof(ListVaultSubcommand));
         context.AddSubcommand(typeof(ShowVaultSubcommand));
-        context.AddSubcommand(typeof(ChangeVaultPassSubcommand));
+        context.AddSubcommand(typeof(ChangeVaultPasswordSubcommand));
     }
 }
