@@ -198,7 +198,7 @@ public class Control
         {
             if (context.TryGetOptions<LpOptions>(out var options))
             {
-                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
+                if (SignaturePublicKey2.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
                 {// CertificateRelayControl
                     context.AddSingleton<IRelayControl, CertificateRelayControl>();
                 }

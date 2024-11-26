@@ -52,7 +52,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     public Credit Credit { get; private set; } = default!;
 
     [Key(3)]
-    public SignaturePublicKey Authority { get; private set; }
+    public SignaturePublicKey2 Authority { get; private set; }
 
     [Key(4)]
     public Condition OrderCondition { get; private set; }
@@ -88,7 +88,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
         try
         {
             var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
-            return this.Authority.VerifyData(bytes, this.signature);
+            return this.Authority.Verify(bytes, this.signature);
         }
         catch
         {

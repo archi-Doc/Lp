@@ -37,7 +37,7 @@ public partial record RunnerOptions
     public bool Check(ILogger logger)
     {
         var result = true;
-        if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
+        if (!this.RemotePublicKey.IsValid)
         {
             logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{NetConstants.RemotePublicKeyName}) for authentication of remote operations.");
             result = false;
@@ -106,7 +106,7 @@ public partial record RunnerOptions
             this.RemotePublicKey = publicKey;
         }
 
-        if (this.RemotePublicKey.Equals(SignaturePublicKey.Default))
+        if (!this.RemotePublicKey.IsValid)
         {
             if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey2>(NetConstants.RemotePublicKeyName, out publicKey))
             {

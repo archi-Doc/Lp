@@ -70,12 +70,10 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 
     private void ParsePrivateKey(NewVaultOptions options)
     {
-        if (SignaturePrivateKey.TryParse(options.PrivateKey, out var signaturePrivateKey))
+        if (SeedKey.TryParse(options.PrivateKey, out var seedKey))
         {
-            this.userInterfaceService.WriteLine(signaturePrivateKey.UnsafeToString());
-            var prefix = GetPrefix(signaturePrivateKey.KeyClass, options);
-            this.logger.TryGet()?.Log(prefix + signaturePrivateKey.ToPublicKey().ToString());
-            this.AddVault(options.Name, signaturePrivateKey);
+            this.userInterfaceService.WriteLine(seedKey.UnsafeToString());
+            this.AddVault(options.Name, seedKey);
         }
         /*else if (EncryptionPrivateKey.TryParse(options.PrivateKey, out var encryptionPrivateKey))
         {

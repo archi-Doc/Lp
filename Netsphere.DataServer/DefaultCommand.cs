@@ -48,11 +48,11 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
             this.netControl.NetTerminal.SetNodeKey(privateKey);
         }
 
-        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        if (SignaturePublicKey2.TryParse(options.RemotePublicKey, out var publicKey))
         {
             this.remoteData.RemotePublicKey = publicKey;
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey2>(NetConstants.RemotePublicKeyName, out publicKey))
         {
             this.remoteData.RemotePublicKey = publicKey;
         }

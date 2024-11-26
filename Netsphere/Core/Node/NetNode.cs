@@ -121,7 +121,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
     }
 
     public static int MaxStringLength
-        => NetAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
+        => NetAddress.MaxStringLength + SeedKey.MaxStringLength + 2;
 
     public int GetStringLength()
         => -1;

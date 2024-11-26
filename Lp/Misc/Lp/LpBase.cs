@@ -38,7 +38,7 @@ public class LpBase
 
     public LpSettings Settings { get; set; }
 
-    private SignaturePublicKey remotePublicKey;
+    private SignaturePublicKey2 remotePublicKey;
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
@@ -126,21 +126,17 @@ public class LpBase
             this.NodeName = System.Environment.OSVersion.ToString();
         }
 
-        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        if (SignaturePublicKey2.TryParse(options.RemotePublicKey, out var publicKey))
         {
             this.remotePublicKey = publicKey;
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey2>(NetConstants.RemotePublicKeyName, out publicKey))
         {
             this.remotePublicKey = publicKey;
         }
-
-        // Remote public key
-        // SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
-        // this.RemotePublicKey = remoteKey;
     }
 
-    public bool TryGetRemotePublicKey(out SignaturePublicKey publicKey)
+    public bool TryGetRemotePublicKey(out SignaturePublicKey2 publicKey)
     {
         if (this.remotePublicKey.IsValid)
         {
