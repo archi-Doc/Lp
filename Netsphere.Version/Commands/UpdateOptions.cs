@@ -20,13 +20,13 @@ public partial record UpdateOptions
 
     public void Prepare()
     {
-        if (SignaturePrivateKey.TryParse(this.RemotePrivateKeyString, out var privateKey))
+        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey))
         {
-            this.RemotePrivateKey = privateKey;
+            this.RemoteSeedKey = seedKey;
         }
 
         this.RemotePrivateKeyString = string.Empty;
     }
 
-    public SignaturePrivateKey? RemotePrivateKey { get; private set; }
+    public SeedKey? RemoteSeedKey { get; private set; }
 }

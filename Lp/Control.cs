@@ -489,7 +489,7 @@ public class Control
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
         {
-            if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
+            if (SignaturePublicKey2.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
                 this.Logger.Get<CertificateRelayControl>().Log($"{relayPublicKey.ToString()}");

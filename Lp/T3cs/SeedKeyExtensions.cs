@@ -20,7 +20,7 @@ public static class SeedKeyExtensions
         writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
-            value.PublicKey = default;// seedKey.GetSignaturePublicKey();
+            value.PublicKey = seedKey.GetSignaturePublicKey();
             value.SignedMics = Mics.FastCorrected;
             value.Salt = salt;
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);

@@ -34,7 +34,7 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
     public char TokenIdentifier { get; private set; } = Identifier;
 
     [Key(1)]
-    public SignaturePublicKey PublicKey { get; set; }
+    public SignaturePublicKey2 PublicKey { get; set; }
 
     [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; set; } = Array.Empty<byte>();

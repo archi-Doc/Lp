@@ -54,10 +54,10 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        var privateKey = SignaturePrivateKey.Create();
+        var seedKey = SeedKey.NewSignature();
         var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionMics = Mics.FromMinutes(5), };
         var token = new CertificateToken<ConnectionAgreement>(agreement);
-        connection.SignWithSalt(token, privateKey);
+        connection.SignWithSalt(token, seedKey);
         connection.ValidateAndVerifyWithSalt(token);
 
         // var r = await connection.UpdateAgreement(token);

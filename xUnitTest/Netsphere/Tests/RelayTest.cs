@@ -35,10 +35,10 @@ public class RelayTest
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
 
         var netTerminal = this.NetControl.NetTerminal;
-        var privateKey = SignaturePrivateKey.Create();
+        var seedKey = SeedKey.NewSignature();
         if (netTerminal.RelayControl is CertificateRelayControl rc)
         {
-            rc.SetCertificatePublicKey(privateKey.ToPublicKey());
+            rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
         }
 
         var netNode = (await netTerminal.UnsafeGetNetNode(NetAddress.Alternative))!;
@@ -50,7 +50,7 @@ public class RelayTest
 
             var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
-            clientConnection.SignWithSalt(token, privateKey);
+            clientConnection.SignWithSalt(token, seedKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
@@ -64,7 +64,7 @@ public class RelayTest
 
             var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
-            clientConnection.SignWithSalt(token, privateKey);
+            clientConnection.SignWithSalt(token, seedKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();

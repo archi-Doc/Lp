@@ -27,7 +27,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
             return;
         }
 
-        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SignaturePrivateKey>(options.RemotePrivault, NetConstants.RemotePrivateKeyName, out var privateKey))
+        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SeedKey>(options.RemotePrivault, NetConstants.RemotePrivateKeyName, out var seedKey))
         {
             return;
         }
@@ -56,7 +56,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
             }
 
             var token = new AuthenticationToken(connection.Salt);
-            NetHelper.Sign(token, privateKey);
+            NetHelper.Sign(token, seedKey);
             var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {

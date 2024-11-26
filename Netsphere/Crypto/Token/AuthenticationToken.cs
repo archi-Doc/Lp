@@ -33,7 +33,7 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
     #region FieldAndProperty
 
     [Key(0)]
-    public SignaturePublicKey PublicKey { get; set; }
+    public SignaturePublicKey2 PublicKey { get; set; }
 
     [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; set; } = Array.Empty<byte>();
