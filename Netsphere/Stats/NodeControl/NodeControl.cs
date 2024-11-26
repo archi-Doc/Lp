@@ -7,7 +7,7 @@ using ValueLink.Integrality;
 namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true)]
-public sealed partial class NodeControl : ITinyhandSerializationCallback
+public sealed partial class NodeControl
 {
     public static readonly int MaxLifelineNodes = 32;
     public static readonly int SufficientLifelineNodes = 24;
@@ -324,17 +324,15 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
     }
 
-    void ITinyhandSerializationCallback.OnBeforeSerialize()
-    {
-    }
-
-    void ITinyhandSerializationCallback.OnAfterDeserialize()
+    [TinyhandOnDeserialized]
+    private void OnAfterDeserialize()
     {
         this.LoadNodeList();
         this.Prepare();
     }
 
-    void ITinyhandSerializationCallback.OnAfterReconstruct()
+    [TinyhandOnReconstructed]
+    private void OnAfterReconstruct()
     {
         this.LoadNodeList();
     }

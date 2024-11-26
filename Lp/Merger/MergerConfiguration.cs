@@ -6,7 +6,7 @@ using Lp.T3cs;
 namespace Lp;
 
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
-public partial record MergerConfiguration : ITinyhandSerializationCallback
+public partial record MergerConfiguration
 {
     public const string MergerFilename = "MergerConfiguration.tinyhand";
     public const string RelayMergerFilename = "RelayMergerConfiguration.tinyhand";
@@ -41,15 +41,8 @@ public partial record MergerConfiguration : ITinyhandSerializationCallback
     [DefaultValue(DefaultMaxCredit)]
     public int MaxCredits { get; set; }
 
-    public void OnAfterReconstruct()
-    {
-    }
-
-    public void OnBeforeSerialize()
-    {
-    }
-
-    public void OnAfterDeserialize()
+    [TinyhandOnDeserialized]
+    public void OnDeserialized()
     {
         if (this.MergerType == Type.Single)
         {

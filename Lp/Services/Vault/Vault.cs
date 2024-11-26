@@ -7,7 +7,7 @@ using Arc.Collections;
 namespace Lp.Services;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = nameof(lockObject))]
-public sealed partial class Vault : ITinyhandSerializationCallback
+public sealed partial class Vault
 {
     [TinyhandObject]
     private partial class Item
@@ -26,7 +26,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         public Item(byte[] data)
             => this.Set(data);
 
-        public Item(ITinyhandSerialize? @object)
+        public Item(ITinyhandSerializable? @object)
             => this.Set(@object);
 
         public Item(Vault vault)
@@ -41,7 +41,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         public byte[]? ByteArray { get; set; }
 
         [IgnoreMember]
-        public ITinyhandSerialize? Object { get; set; }
+        public ITinyhandSerializable? Object { get; set; }
 
         #endregion
 
@@ -52,7 +52,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             this.Object = default;
         }
 
-        internal void Set(ITinyhandSerialize? @object)
+        internal void Set(ITinyhandSerializable? @object)
         {
             this.ItemKind = Kind.Object;
             this.ByteArray = default;
@@ -63,7 +63,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         {
             this.ItemKind = Kind.Vault;
             this.ByteArray = default;
-            this.Object = (ITinyhandSerialize)vault;
+            this.Object = (ITinyhandSerializable)vault;
         }
     }
 
@@ -152,7 +152,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public bool TryAddObject(string name, ITinyhandSerialize @object, out VaultResult result)
+    public bool TryAddObject(string name, ITinyhandSerializable @object, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
         {
@@ -172,7 +172,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    public void AddObject(string name, ITinyhandSerialize @object)
+    public void AddObject(string name, ITinyhandSerializable @object)
     {
         using (this.lockObject.EnterScope())
         {
@@ -190,7 +190,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
     }
 
     public bool TryGetObject<TObject>(string name, [MaybeNullWhen(false)] out TObject @object, out VaultResult result)
-        where TObject : class, ITinyhandSerialize<TObject>
+        where TObject : class, ITinyhandSerializable<TObject>
     {
         using (this.lockObject.EnterScope())
         {
@@ -221,7 +221,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
                 try
                 {
                     @object = TinyhandSerializer.DeserializeObject<TObject>(item.ByteArray);
-                    item.Object = @object as ITinyhandSerialize;
+                    item.Object = @object as ITinyhandSerializable;
                 }
                 catch
                 {
@@ -416,15 +416,15 @@ public sealed partial class Vault : ITinyhandSerializationCallback
         }
     }
 
-    void ITinyhandSerializationCallback.OnAfterReconstruct()
+    internal byte[] SerializeVault()
     {
+        var plaintext = TinyhandSerializer.SerializeObject(this);
+        PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
+        return ciphertext;
     }
 
-    void ITinyhandSerializationCallback.OnAfterDeserialize()
-    {
-    }
-
-    void ITinyhandSerializationCallback.OnBeforeSerialize()
+    [TinyhandOnSerializing]
+    private void OnBeforeSerialize()
     {
         List<string>? toDelete = default;
         foreach ((var key, var x) in this.nameToItem)
@@ -433,7 +433,7 @@ public sealed partial class Vault : ITinyhandSerializationCallback
             {
                 if (x.ItemKind == Item.Kind.Object)
                 {// Object
-                    if (x.Object is ITinyhandSerialize value)
+                    if (x.Object is ITinyhandSerializable value)
                     {
                         var newByteArray = x.Object.Serialize();
                         if (x.ByteArray is null ||
@@ -484,13 +484,6 @@ public sealed partial class Vault : ITinyhandSerializationCallback
 
             this.SetModifiedFlag();
         }
-    }
-
-    internal byte[] SerializeVault()
-    {
-        var plaintext = TinyhandSerializer.SerializeObject(this);
-        PasswordEncryption.Encrypt(plaintext, this.password, out var ciphertext);
-        return ciphertext;
     }
 
     private void Initialize(Vault? parentVault, string password)

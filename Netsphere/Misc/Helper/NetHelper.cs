@@ -272,7 +272,7 @@ public static class NetHelper
         => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
     public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         var ecdsa = privateKey.TryGetEcdsa();
         if (ecdsa == null)
@@ -315,7 +315,7 @@ public static class NetHelper
     /// <param name="salt">The salt value to compare with the object's salt.</param>
     /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
     public static bool ValidateAndVerifyWithSalt<T>(this T value, ulong salt)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
         => value.Salt == salt && value.ValidateAndVerify();
 
     /// <summary>
@@ -325,7 +325,7 @@ public static class NetHelper
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <returns><see langword="true" />: Success.</returns>
     public static bool ValidateAndVerify<T>(this T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         if (!value.Validate())
         {
@@ -352,7 +352,7 @@ public static class NetHelper
         => (ulong)Tinyhand.TinyhandHelper.GetFullNameId<TSend>() | ((ulong)Tinyhand.TinyhandHelper.GetFullNameId<TReceive>() << 32);
 
     public static string ToBase64<T>(this T value)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         return Base64.Url.FromByteArrayToString(TinyhandSerializer.SerializeObject(value));
     }

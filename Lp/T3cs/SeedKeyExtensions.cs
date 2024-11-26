@@ -11,11 +11,11 @@ namespace Netsphere;
 public static class SeedKeyExtensions
 {
     public static bool Sign<T>(this SeedKey seedKey, T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
         => seedKey.SignWithSalt(value, 0);
 
     public static bool SignWithSalt<T>(this SeedKey seedKey, T value, ulong salt)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         writer.Level = TinyhandWriter.DefaultSignatureLevel;

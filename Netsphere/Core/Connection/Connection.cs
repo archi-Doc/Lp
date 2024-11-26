@@ -248,14 +248,14 @@ public abstract class Connection : IDisposable
     }
 
     public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         value.Salt = this.Salt;
         return value.Sign(privateKey);
     }
 
     public bool ValidateAndVerifyWithSalt<T>(T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         if (value.Salt != this.Salt)
         {

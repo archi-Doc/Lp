@@ -8,7 +8,7 @@ namespace Netsphere.Misc;
 internal static class TokenHelper
 {
     public static bool TryParse<T>(char identifier, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out T instance)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         instance = default;
         source = source.Trim();
@@ -52,7 +52,7 @@ internal static class TokenHelper
     }
 
     public static bool TryFormat<T>(T value, char identifier, Span<char> destination, out int written)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         written = 0;
         var b = TinyhandSerializer.SerializeObject(value);
@@ -79,7 +79,7 @@ internal static class TokenHelper
     }
 
     public static string ToBase64<T>(T value, char identifier)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         return "{" + identifier + Base64.Url.FromByteArrayToString(TinyhandSerializer.SerializeObject(value)) + "}";
     }

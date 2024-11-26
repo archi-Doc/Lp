@@ -37,7 +37,7 @@ public static class VerificationHelper
     }
 
     public static Identifier GetIdentifier<T>(this T? value, int level)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         writer.Level = level;
@@ -55,7 +55,7 @@ public static class VerificationHelper
     }
 
     public static bool VerifyIdentifierAndSignature<T>(this T value, int level, Identifier identifier, Signature signature)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         try
         {
@@ -132,7 +132,7 @@ public static class VerificationHelper
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <returns><see langword="true" />: Success.</returns>
     public static bool ValidateAndVerify<T>(this T value)
-        where T : ITinyhandSerialize<T>, IVerifiable
+        where T : ITinyhandSerializable<T>, IVerifiable
     {
         if (!value.Validate())
         {

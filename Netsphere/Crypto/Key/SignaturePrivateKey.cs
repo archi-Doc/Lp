@@ -65,7 +65,7 @@ public sealed partial class SignaturePrivateKey : PrivateKeyBase, IEquatable<Sig
     }
 
     /*public bool CreateSignature<T>(T data, out Signature signature)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         var ecdsa = this.TryGetEcdsa();
         if (ecdsa == null)

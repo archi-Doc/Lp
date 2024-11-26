@@ -104,7 +104,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
     }
 
-    private void AddVault(string name, ITinyhandSerialize data)
+    private void AddVault(string name, ITinyhandSerializable data)
     {
         if (!string.IsNullOrEmpty(name))
         {
