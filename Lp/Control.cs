@@ -459,13 +459,13 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
             var privault = this.LpBase.Options.RelayPeerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    seedKey = SeedKey.NewSignature();
+                    this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
         }
@@ -473,13 +473,13 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.ContentPeerPrivault))
         {// ContentPeerPrivault is valid
             var privault = this.LpBase.Options.ContentPeerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    seedKey = SeedKey.NewSignature();
+                    this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
         }

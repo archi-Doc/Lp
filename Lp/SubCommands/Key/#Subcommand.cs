@@ -9,7 +9,7 @@ public static class Subcommand
     public static void Configure(IUnitConfigurationContext context)
     {
         context.AddSubcommand(typeof(NewSignatureKeySubcommand));
-        context.AddSubcommand(typeof(NewNodeKeySubcommand));
+        context.AddSubcommand(typeof(NewEncryptionKeySubcommand));
     }
 
     public record NewKeyOptions

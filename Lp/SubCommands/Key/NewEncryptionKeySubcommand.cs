@@ -6,10 +6,10 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.KeyCommand;
 
-[SimpleCommand("new-node-key")]
-public class NewNodeKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
+[SimpleCommand("new-encryption-key")]
+public class NewEncryptionKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 {
-    public NewNodeKeySubcommand(ILogger<NewNodeKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
+    public NewEncryptionKeySubcommand(ILogger<NewEncryptionKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -18,7 +18,7 @@ public class NewNodeKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 
     public void Run(Subcommand.NewKeyOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New node key");
+        this.logger.TryGet()?.Log("New encryption key");
 
         NodePrivateKey key;
         var phrase = options.Seedphrase?.Trim();
