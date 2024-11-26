@@ -15,10 +15,9 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger = unitLogger.GetLogger<Linker>();
         this.lpBase = lpBase;
-        this.linkerPrivateKey = SignaturePrivateKey.Empty;
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SignaturePrivateKey privateKey)
+    public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
     {
         this.Configuration = crystalizer.CreateCrystal<LinkerConfiguration>(new()
         {
@@ -37,8 +36,8 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
         });
 
         this.data = this.dataCrystal.Data;
-        this.linkerPrivateKey = privateKey;
-        this.LinkerPublicKey = this.linkerPrivateKey.ToPublicKey();
+        this.linkerSeedKey = seedKey;
+        this.LinkerPublicKey = this.linkerSeedKey.GetSignaturePublicKey();
 
         this.Initialized = true;
     }
@@ -72,7 +71,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(data))]
     public virtual bool Initialized { get; protected set; }
 
-    public SignaturePublicKey LinkerPublicKey { get; protected set; }
+    public SignaturePublicKey2 LinkerPublicKey { get; protected set; }
 
     public LinkerConfiguration? Configuration { get; protected set; }
 
@@ -80,7 +79,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     private readonly LpBase lpBase;
     private ICrystal<FullCredit.GoshujinClass>? dataCrystal;
     private FullCredit.GoshujinClass? data;
-    private SignaturePrivateKey linkerPrivateKey;
+    private SeedKey? linkerSeedKey;
 
     #endregion
 }

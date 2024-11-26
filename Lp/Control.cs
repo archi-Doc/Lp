@@ -543,12 +543,12 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerPrivault))
         {// LinkerPrivault is valid
             var privault = this.LpBase.Options.LinkerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
+                    privateKey = SeedKey.New(KeyOrientation.Signature);
                     this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
