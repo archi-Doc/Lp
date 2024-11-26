@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.Subcommands;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -20,7 +19,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
     {
         this.logger.TryGet()?.Log("New signature key");
 
-        SignaturePrivateKey key;
+        SeedKey key;
         var phrase = options.Seedphrase?.Trim();
         if (string.IsNullOrEmpty(phrase))
         {
@@ -29,11 +28,11 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
             if (seed is not null)
             {
                 this.userInterfaceService.WriteLine($"Seedphrase: {phrase}");
-                key = SignaturePrivateKey.Create(seed);
+                key = SeedKey.New(seed, KeyOrientation.Signature);
             }
             else
             {
-                key = SignaturePrivateKey.Create();
+                key = SeedKey.NewSignature();
             }
         }
         else
@@ -45,11 +44,11 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
                 return;
             }
 
-            key = SignaturePrivateKey.Create(seed);
+            key = SeedKey.New(seed, KeyOrientation.Signature);
         }
 
         this.userInterfaceService.WriteLine(key.UnsafeToString());
-        this.logger.TryGet()?.Log(key.ToPublicKey().ToString());
+        this.logger.TryGet()?.Log(key.GetSignaturePublicKey().ToString());
     }
 
     private readonly ILogger logger;

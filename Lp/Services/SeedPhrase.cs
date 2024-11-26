@@ -5,13 +5,31 @@ using System.Text;
 
 namespace Lp;
 
+/// <summary>
+/// Represents a seed phrase generator and validator.
+/// </summary>
 public class Seedphrase
 {
-    public const int SeedphraseDefaultLength = 24; // 11bits x (24-1) = 253 bits
-    public const int SeedphraseMinimumLength = 16;
+    /// <summary>
+    /// The default number of the seed phrase.
+    /// </summary>
+    public const int SeedphraseDefaultNumber = 24; // 11bits x (24-1) = 253 bits
+
+    /// <summary>
+    /// The minimum number of the seed phrase.
+    /// </summary>
+    public const int SeedphraseMinimumNumber = 16;
+
+    /// <summary>
+    /// The number of words in the seed phrase dictionary.
+    /// </summary>
     public const int NumberOfWords = 2048; // 11bits
+
     private const string SeedphrasesPath = "Misc.Strings.Seedphrases";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Seedphrase"/> class.
+    /// </summary>
     public Seedphrase()
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
@@ -38,6 +56,11 @@ public class Seedphrase
         }
     }
 
+    /// <summary>
+    /// Creates a new seed phrase.
+    /// </summary>
+    /// <returns>A new seed phrase as a string.</returns>
+    /// <exception cref="PanicException">Thrown when the words array or dictionary is not initialized.</exception>
     public string Create()
     {
         if (this.words.Length == 0 || this.dictionary == null)
@@ -45,7 +68,7 @@ public class Seedphrase
             throw new PanicException();
         }
 
-        var length = SeedphraseDefaultLength;
+        var length = SeedphraseDefaultNumber;
         var index = new uint[length - 1];
         for (var i = 0; i < index.Length; i++)
         {
@@ -68,6 +91,12 @@ public class Seedphrase
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Tries to get a 32 bytes seed (SHA3-256) from the given seed phrase.
+    /// </summary>
+    /// <param name="phrase">The seed phrase.</param>
+    /// <returns>A 32 bytes seed (SHA3-256) if the phrase is valid; otherwise, null.</returns>
+    /// <exception cref="PanicException">Thrown when the words array or dictionary is not initialized.</exception>
     public byte[]? TryGetSeed(string phrase)
     {
         if (this.words.Length == 0 || this.dictionary == null)
@@ -76,7 +105,7 @@ public class Seedphrase
         }
 
         var words = phrase.Split(' ');
-        if (words.Length < SeedphraseMinimumLength)
+        if (words.Length < SeedphraseMinimumNumber)
         {// Minimum length
             return null;
         }
