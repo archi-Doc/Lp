@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.ComponentModel;
 using Tinyhand.IO;
 
 namespace Netsphere.Crypto;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public readonly partial record struct Signature
 {
     public enum Type
@@ -14,7 +13,7 @@ public readonly partial record struct Signature
         Attest,
     }
 
-    public Signature(SignaturePublicKey publicKey, Type signatureType, long signedMics)
+    public Signature(SignaturePublicKey2 publicKey, Type signatureType, long signedMics)
     {
         this.PublicKey = publicKey;
         this.SignatureType = signatureType;
@@ -22,7 +21,7 @@ public readonly partial record struct Signature
         this.Sign = null;
     }
 
-    public Signature(SignaturePublicKey publicKey, Type signatureType, long signedMics, byte[] sign)
+    public Signature(SignaturePublicKey2 publicKey, Type signatureType, long signedMics, byte[] sign)
     {
         this.PublicKey = publicKey;
         this.SignatureType = signatureType;
@@ -41,7 +40,7 @@ public readonly partial record struct Signature
     #region FieldAndProperty
 
     [Key(0)]
-    public readonly SignaturePublicKey PublicKey;
+    public readonly SignaturePublicKey2 PublicKey;
 
     [Key(1)]
     public readonly Type SignatureType;
@@ -57,4 +56,4 @@ public readonly partial record struct Signature
     public readonly byte[]? Sign;
 
     #endregion
-}
+}*/

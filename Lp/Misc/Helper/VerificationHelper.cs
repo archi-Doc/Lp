@@ -54,55 +54,6 @@ public static class VerificationHelper
         }
     }
 
-    public static bool VerifyIdentifierAndSignature<T>(this T value, int level, Identifier identifier, Signature signature)
-        where T : ITinyhandSerializable<T>
-    {
-        try
-        {
-            var identifier2 = value.GetIdentifier(level);
-            if (!identifier2.Equals(identifier))
-            {
-                return false;
-            }
-
-            return signature.PublicKey.VerifyIdentifier(identifier2, signature.Sign);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Validate object members and verify that the signature is appropriate.
-    /// </summary>
-    /// <param name="value">The object to be verified.</param>
-    /// <typeparam name="T">The type of the object.</typeparam>
-    /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify<T>(this T value)
-        where T : ITinyhandSerializable<T>, IVerifiable
-    {
-        if (!value.Validate())
-        {
-            return false;
-        }
-
-        var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = TinyhandWriter.DefaultSignatureLevel;
-        try
-        {
-            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            var rentMemory = writer.FlushAndGetRentMemory();
-            var result = value.PublicKey.VerifyData(rentMemory.Span, value.Signature);
-            rentMemory.Return();
-            return result;
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
     /// <summary>
     /// Validate object members and verify that the signature is appropriate.
     /// </summary>
