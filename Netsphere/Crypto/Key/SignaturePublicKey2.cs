@@ -4,15 +4,14 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Netsphere;
 
 #pragma warning disable SA1202
 
-namespace Netsphere.Crypto2;
+namespace Netsphere.Crypto;
 
 [TinyhandObject]
 [StructLayout(LayoutKind.Explicit)]
-public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<SignaturePublicKey>, IStringConvertible<SignaturePublicKey>
+public readonly partial struct SignaturePublicKey2 : IValidatable, IEquatable<SignaturePublicKey2>, IStringConvertible<SignaturePublicKey2>
 {// (s:key)
     public const char Identifier = 's';
 
@@ -38,7 +37,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey2 publicKey)
     {
         Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
         if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Signature, source, keyAndChecksum))
@@ -62,7 +61,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     public bool TryFormatWithBracket(Span<char> destination, out int written)
         => SeedKeyHelper.TryFormatPublicKeyWithBracket(Identifier, this.AsSpan(), destination, out written);
 
-    public SignaturePublicKey(ReadOnlySpan<byte> b)
+    public SignaturePublicKey2(ReadOnlySpan<byte> b)
     {
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
@@ -73,7 +72,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public SignaturePublicKey(ulong x0, ulong x1, ulong x2, ulong x3)
+    public SignaturePublicKey2(ulong x0, ulong x1, ulong x2, ulong x3)
     {
         this.x0 = x0;
         this.x1 = x1;
@@ -81,7 +80,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         this.x3 = x3;
     }
 
-    public bool Equals(SignaturePublicKey other)
+    public bool Equals(SignaturePublicKey2 other)
         => this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 
     public bool Verify(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)

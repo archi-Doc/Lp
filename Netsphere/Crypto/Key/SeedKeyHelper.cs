@@ -3,7 +3,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Netsphere.Crypto2;
+namespace Netsphere.Crypto;
 
 #pragma warning disable SA1204
 #pragma warning disable SA1401
@@ -95,16 +95,16 @@ public static class SeedKeyHelper
     public static KeyOrientation IdentifierToOrientation(char identifier)
         => identifier switch
         {
-            EncryptionPublicKey.Identifier => KeyOrientation.Encryption,
-            SignaturePublicKey.Identifier => KeyOrientation.Signature,
+            EncryptionPublicKey2.Identifier => KeyOrientation.Encryption,
+            SignaturePublicKey2.Identifier => KeyOrientation.Signature,
             _ => KeyOrientation.NotSpecified,
         };
 
     public static char OrientationToIdentifier(KeyOrientation keyOrientation)
         => keyOrientation switch
         {
-            KeyOrientation.Encryption => EncryptionPublicKey.Identifier,
-            KeyOrientation.Signature => SignaturePublicKey.Identifier,
+            KeyOrientation.Encryption => EncryptionPublicKey2.Identifier,
+            KeyOrientation.Signature => SignaturePublicKey2.Identifier,
             _ => (char)0,
         };
 

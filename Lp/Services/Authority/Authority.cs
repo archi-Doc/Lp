@@ -2,7 +2,7 @@
 
 using System.Collections.Concurrent;
 using Lp.Services;
-using Netsphere.Crypto2;
+using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
@@ -117,16 +117,16 @@ public sealed partial class Authority
     public SeedKey GetSeedKey(Credit credit)
         => this.seedKeyCache.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
 
-    public EncryptionPublicKey GetEncryptionPublicKey()
+    public EncryptionPublicKey2 GetEncryptionPublicKey()
         => this.GetSeedKey(Credit.Default).GetEncryptionPublicKey();
 
-    public EncryptionPublicKey GetEncryptionPublicKey(Credit credit)
+    public EncryptionPublicKey2 GetEncryptionPublicKey(Credit credit)
         => this.GetSeedKey(credit).GetEncryptionPublicKey();
 
-    public SignaturePublicKey GetSignaturePublicKey()
+    public SignaturePublicKey2 GetSignaturePublicKey()
         => this.GetSeedKey(Credit.Default).GetSignaturePublicKey();
 
-    public SignaturePublicKey GetSignaturePublicKey(Credit credit)
+    public SignaturePublicKey2 GetSignaturePublicKey(Credit credit)
         => this.GetSeedKey(credit).GetSignaturePublicKey();
 
     public override int GetHashCode()

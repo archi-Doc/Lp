@@ -4,15 +4,14 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Netsphere;
 
 #pragma warning disable SA1202
 
-namespace Netsphere.Crypto2;
+namespace Netsphere.Crypto;
 
 [TinyhandObject]
 [StructLayout(LayoutKind.Explicit)]
-public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<EncryptionPublicKey>, IStringConvertible<EncryptionPublicKey>
+public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<EncryptionPublicKey2>, IStringConvertible<EncryptionPublicKey2>
 {// (s:key)
     public const char Identifier = 'e';
 
@@ -38,7 +37,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey2 publicKey)
     {
         Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
         if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Encryption, source, keyAndChecksum))
@@ -62,7 +61,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
     public bool TryFormatWithBracket(Span<char> destination, out int written)
         => SeedKeyHelper.TryFormatPublicKeyWithBracket(Identifier, this.AsSpan(), destination, out written);
 
-    public EncryptionPublicKey(ReadOnlySpan<byte> b)
+    public EncryptionPublicKey2(ReadOnlySpan<byte> b)
     {
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
@@ -73,7 +72,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public EncryptionPublicKey(ulong x0, ulong x1, ulong x2, ulong x3)
+    public EncryptionPublicKey2(ulong x0, ulong x1, ulong x2, ulong x3)
     {
         this.x0 = x0;
         this.x1 = x1;
@@ -81,7 +80,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         this.x3 = x3;
     }
 
-    public bool Equals(EncryptionPublicKey other)
+    public bool Equals(EncryptionPublicKey2 other)
         => this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 
     public bool TryEncrypt(ReadOnlySpan<byte> data, ReadOnlySpan<byte> nonce24, ReadOnlySpan<byte> secretKey32, Span<byte> cipher)

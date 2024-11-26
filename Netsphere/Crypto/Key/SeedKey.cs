@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Netsphere.Crypto2;
+namespace Netsphere.Crypto;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1204
@@ -199,13 +199,13 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
 
     #endregion
 
-    public EncryptionPublicKey GetEncryptionPublicKey()
+    public EncryptionPublicKey2 GetEncryptionPublicKey()
     {
         this.PrepareEncryptionKey();
         return new(this.encryptionPublicKey);
     }
 
-    public SignaturePublicKey GetSignaturePublicKey()
+    public SignaturePublicKey2 GetSignaturePublicKey()
     {
         this.PrepareSignatureKey();
         return new(this.signaturePublicKey);
