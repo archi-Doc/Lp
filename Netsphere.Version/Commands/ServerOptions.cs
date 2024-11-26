@@ -22,7 +22,7 @@ public partial record ServerOptions
     {
         var result = true;
 
-        if (!SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var remotePublicKey))
+        if (!SignaturePublicKey2.TryParse(this.RemotePublicKeyString, out var remotePublicKey))
         {
             logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{NetConstants.RemotePublicKeyName}) for authentication of remote operations.");
             result = false;
@@ -33,5 +33,5 @@ public partial record ServerOptions
         return result;
     }
 
-    internal SignaturePublicKey RemotePublicKey { get; private set; }
+    internal SignaturePublicKey2 RemotePublicKey { get; private set; }
 }
