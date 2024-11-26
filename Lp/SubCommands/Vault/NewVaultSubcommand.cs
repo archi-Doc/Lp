@@ -48,7 +48,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             }
         }
 
-        var prefix = GetPrefix(options.KeyClass, options);
+        /*var prefix = GetPrefix(options.KeyClass, options);
         if (options.KeyClass == KeyClass.Signature)
         {
             var key = seed is null ? SignaturePrivateKey.Create() : SignaturePrivateKey.Create(seed);
@@ -62,14 +62,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             this.userInterfaceService.WriteLine(key.UnsafeToString());
             this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
             this.AddVault(options.Name, key);
-        }
-        else
-        {
-            /*var key = seed is null ? EncryptionPrivateKey.Create() : EncryptionPrivateKey.Create(seed);
-            this.userInterfaceService.WriteLine(key.UnsafeToString());
-            this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-            this.AddVault(options.Name, key);*/
-        }
+        }*/
     }
 
     private static string GetPrefix(KeyClass keyClass, NewVaultOptions options)

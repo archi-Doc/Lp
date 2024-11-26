@@ -28,7 +28,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 
     public RobustConnection? RobustConnection { get; set; }
 
-    public SignaturePrivateKey RemoteKey { get; set; } = SignaturePrivateKey.Empty;
+    public SeedKey? RemoteKey { get; set; }
 }
 
 [SimpleCommand("merger-remote")]
