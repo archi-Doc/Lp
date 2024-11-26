@@ -337,7 +337,7 @@ public sealed partial class NodeControl
         this.LoadNodeList();
     }
 
-    internal void Prepare()
+    private void Prepare()
     {
         List<LifelineNode>? offlineToUnchecked = default;
         foreach (var x in this.lifelineNodes.OfflineLinkChain)
