@@ -82,7 +82,7 @@ public sealed partial class CredentialProof : Proof
     [Key(Proof.ReservedKeyCount + 1)]
     public NetNode NetNode { get; private set; }
 
-    public SignaturePublicKey Originator => this.GetPublicKey();
+    public SignaturePublicKey2 Originator => this.GetPublicKey();
 
     #endregion
 
@@ -92,7 +92,7 @@ public sealed partial class CredentialProof : Proof
         return valueProof != null;
     }
 
-    public override SignaturePublicKey GetPublicKey()
+    public override SignaturePublicKey2 GetPublicKey()
         => this.TryGetValueProof(out var valueProof) ? valueProof.GetPublicKey() : default;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)

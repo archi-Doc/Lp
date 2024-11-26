@@ -10,7 +10,7 @@ public abstract partial class ProofAndValue : Proof
     [Key(0)]
     public Value Value { get; protected set; } = new();
 
-    public override SignaturePublicKey GetPublicKey()
+    public override SignaturePublicKey2 GetPublicKey()
         => this.Value.Owner;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)

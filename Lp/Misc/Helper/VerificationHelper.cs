@@ -173,7 +173,7 @@ public static class VerificationHelper
         {
             TinyhandSerializer.SerializeObject<Proof>(ref writer, proof, TinyhandSerializerOptions.Signature);
             var rentMemory = writer.FlushAndGetRentMemory();
-            var result = proof.GetPublicKey().VerifyData(rentMemory.Span, proof.Signature);
+            var result = proof.GetPublicKey().Verify(rentMemory.Span, proof.Signature);
             rentMemory.Return();
             return result;
         }

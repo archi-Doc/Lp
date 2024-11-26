@@ -17,7 +17,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const Point MinPoint = 1; // -MaxPoint;
 
-    public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
+    public static bool TryCreate(SignaturePublicKey2 owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
     {
         var v = new Value();
         v.Owner = owner;
@@ -38,7 +38,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     #region IStringConvertible
 
-    public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
+    public static int MaxStringLength => 1 + SignaturePublicKey2.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance)
     {// Owner#Point@Originator/Mergers
@@ -52,8 +52,8 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         var ownerSpan = span.Slice(0, pointIndex);
-        if (ownerSpan.Length < SignaturePublicKey.MaxStringLength ||
-            !SignaturePublicKey.TryParse(ownerSpan, out var owner))
+        if (ownerSpan.Length < SignaturePublicKey2.MaxStringLength ||
+            !SignaturePublicKey2.TryParse(ownerSpan, out var owner))
         {
             return false;
         }
@@ -125,7 +125,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     #region FieldAndProperty
 
     [Key(0)]
-    public SignaturePublicKey Owner { get; private set; }
+    public SignaturePublicKey2 Owner { get; private set; }
 
     [Key(1)]
     public Point Point { get; private set; }

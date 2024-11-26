@@ -24,7 +24,7 @@ public class RelayMerger : Merger
 
     #endregion
 
-    public override void Initialize(Crystalizer crystalizer, SignaturePrivateKey mergerPrivateKey)
+    public override void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
     {
         this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
@@ -53,8 +53,8 @@ public class RelayMerger : Merger
 
         this.relayStatusData = this.relayStatusCrystal.Data;
 
-        this.mergerPrivateKey = mergerPrivateKey;
-        this.MergerPublicKey = this.mergerPrivateKey.ToPublicKey();
+        this.mergerSeedKey = mergerSeedKey;
+        this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
 
         this.Initialized = true;
     }

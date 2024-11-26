@@ -15,10 +15,9 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger = unitLogger.GetLogger<Merger>();
         this.lpBase = lpBase;
-        this.mergerPrivateKey = SignaturePrivateKey.Empty;
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SignaturePrivateKey mergerPrivateKey)
+    public virtual void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
     {
         this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
@@ -37,8 +36,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         });
 
         this.creditData = this.creditDataCrystal.Data;
-        this.mergerPrivateKey = mergerPrivateKey;
-        this.MergerPublicKey = this.mergerPrivateKey.ToPublicKey();
+        this.mergerSeedKey = mergerSeedKey;
+        this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
 
         this.Initialized = true;
     }
@@ -111,7 +110,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return new(T3csResult.NoData);
         }
 
-        var mergerPublicKey = SignaturePrivateKey.Create().ToPublicKey();
+        var mergerPublicKey = SeedKey.New(KeyOrientation.Signature).GetSignaturePublicKey();
         if (!Credit.TryCreate(param.Proof.PublicKey, [mergerPublicKey,], out var credit))
         {
             return new(T3csResult.UnknownError);
@@ -130,11 +129,18 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SignaturePublicKey GetPublicKey()
+    public SignaturePublicKey2 GetPublicKey()
         => this.MergerPublicKey;
 
-    public void SignProof(Proof proof, long validMics)
-        => proof.SignProof(this.mergerPrivateKey, validMics);
+    public bool TrySignProof(Proof proof, long validMics)
+    {
+        if (this.mergerSeedKey is null)
+        {
+            return false;
+        }
+
+        return this.mergerSeedKey.TrySignProof(proof, validMics);
+    }
 
     #region FieldAndProperty
 
@@ -144,7 +150,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
     public virtual bool Initialized { get; protected set; }
 
-    public SignaturePublicKey MergerPublicKey { get; protected set; }
+    public SignaturePublicKey2 MergerPublicKey { get; protected set; }
 
     public MergerConfiguration? Information { get; protected set; }
 
@@ -152,7 +158,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     protected LpBase lpBase;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
-    protected SignaturePrivateKey mergerPrivateKey;
+    protected SeedKey? mergerSeedKey;
     protected MergerState mergerState = new();
 
     #endregion
