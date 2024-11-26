@@ -39,6 +39,12 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         }
     }
 
+    public static SeedKey NewEncryption()
+        => New(KeyOrientation.Encryption);
+
+    public static SeedKey NewSignature()
+        => New(KeyOrientation.Signature);
+
     public static SeedKey New(KeyOrientation keyOrientation)
     {
         Span<byte> seed = stackalloc byte[SeedKeyHelper.SeedSize];

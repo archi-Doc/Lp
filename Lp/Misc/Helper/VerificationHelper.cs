@@ -73,58 +73,6 @@ public static class VerificationHelper
         }
     }
 
-    public static bool SignProof(this Proof value, SignaturePrivateKey privateKey, long validMics)
-    {
-        if (validMics > Proof.MaxExpirationMics)
-        {
-            return false;
-        }
-
-        var ecdsa = privateKey.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
-        var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = TinyhandWriter.DefaultSignatureLevel;
-        try
-        {
-            if (value is ProofAndPublicKey proofAndPublicKey)
-            {
-                proofAndPublicKey.PrepareSignInternal(privateKey, validMics);
-            }
-            else
-            {
-                if (!value.GetPublicKey().Equals(privateKey.ToPublicKey()))
-                {
-                    return false;
-                }
-
-                value.PrepareSignInternal(validMics);
-            }
-
-            TinyhandSerializer.SerializeObject<Proof>(ref writer, value, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[Sha3_256.HashLength];
-            var rentMemory = writer.FlushAndGetRentMemory();
-            Sha3Helper.Get256_Span(rentMemory.Span, hash);
-            rentMemory.Return();
-
-            var sign = new byte[KeyHelper.SignatureLength];
-            if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
-            {
-                return false;
-            }
-
-            value.SetSignInternal(sign);
-            return true;
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
     /// <summary>
     /// Validate object members and verify that the signature is appropriate.
     /// </summary>

@@ -11,12 +11,12 @@ public static class LpConstants
     public const string LpAlias = "Lp";
     public const string LpPublicKeyString = "(BAL-lWmqHC4qMeW1fpNhLdXMMF2MDdR-yBGG_Ly6ehoiyJSX)";
 
-    public static readonly SignaturePublicKey LpPublicKey;
+    public static readonly SignaturePublicKey2 LpPublicKey;
     public static readonly Credit LpCredit;
 
     static LpConstants()
     {
-        SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey);
+        SignaturePublicKey2.TryParse(LpPublicKeyString, out LpPublicKey);
         KeyAlias.AddAlias(LpPublicKey, LpAlias);
         Credit.TryCreate(LpPublicKey, [LpPublicKey], out LpCredit!);
     }

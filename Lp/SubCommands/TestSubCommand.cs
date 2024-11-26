@@ -92,9 +92,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         {
             var g = new CredentialProof.GoshujinClass();
 
-            var owner = SignaturePrivateKey.Create();
-            if (Credit.TryCreate(LpConstants.LpPublicKey, [SignaturePrivateKey.Create().ToPublicKey()], out var credit) &&
-                Value.TryCreate(owner.ToPublicKey(), 111, credit, out var value))
+            var owner = SeedKey.NewSignature();
+            if (Credit.TryCreate(LpConstants.LpPublicKey, [SeedKey.NewSignature().GetSignaturePublicKey()], out var credit) &&
+                Value.TryCreate(owner.GetSignaturePublicKey(), 111, credit, out var value))
             {
                 this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
                 this.userInterfaceService.WriteLine($"Value: {value.ToString()}");
@@ -103,7 +103,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
                 var valueProof = ValueProof.Create(value);
 
-                valueProof.SignProof(owner, 123);
+                owner.TrySignProof(valueProof, 123);
                 var c = new CredentialProof();
             }
         }

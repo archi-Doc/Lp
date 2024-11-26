@@ -173,7 +173,7 @@ public sealed partial class Evidence : IValidatable
             {
                 TinyhandSerializer.SerializeObject(ref writer, this, TinyhandSerializerOptions.Signature);
                 var rentMemory = writer.FlushAndGetRentMemory();
-                var result = credit.Mergers[mergerIndex].VerifyData(rentMemory.Span, signature);
+                var result = credit.Mergers[mergerIndex].Verify(rentMemory.Span, signature);
                 rentMemory.Return();
                 return result;
             }

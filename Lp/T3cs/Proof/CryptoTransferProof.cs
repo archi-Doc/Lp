@@ -16,7 +16,7 @@ public sealed partial class CryptoTransferProof : ProofAndPublicKey
     [Key(Proof.ReservedKeyCount)]
     public Point Point { get; private set; }
 
-    public SignaturePublicKey SenderKey => this.PublicKey;
+    public SignaturePublicKey2 SenderKey => this.PublicKey;
 
     // Encryption, (PublicKey), Encrypted
 
@@ -27,21 +27,21 @@ public sealed partial class CryptoTransferProof : ProofAndPublicKey
     public byte[]? SenderEncrypted { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 3, Level = OriginalKeyLevel)]
-    public SignaturePublicKey SenderOriginalKey { get; private set; }
+    public SignaturePublicKey2 SenderOriginalKey { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 4)]
     public uint RecipientEncryption { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 5)]
-    public SignaturePublicKey RecipientKey { get; private set; }
+    public SignaturePublicKey2 RecipientKey { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 6)]
     public byte[]? RecipientEncrypted { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 7, Level = OriginalKeyLevel)]
-    public SignaturePublicKey RecipientOriginalKey { get; private set; }
+    public SignaturePublicKey2 RecipientOriginalKey { get; private set; }
 
-    public bool TryGetSenderKey(out SignaturePublicKey senderKey)
+    public bool TryGetSenderKey(out SignaturePublicKey2 senderKey)
     {
         senderKey = default;
         return false;
