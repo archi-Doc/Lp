@@ -367,14 +367,7 @@ public class ConnectionTerminal
 
     internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey2 serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
-        // KeyMaterial
-        var pair = new NodeKeyPair(clientSeedKey, serverPublicKey);
-        var material = pair.DeriveKeyMaterial();
-        if (material is null)
-        {
-            return default;
-        }
-
+        // clientSeedKey, serverPublicKey
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
@@ -384,14 +377,7 @@ public class ConnectionTerminal
 
     internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
-        // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NodeSeedKey, p.ClientPublicKey);
-        var material = pair.DeriveKeyMaterial();
-        if (material is null)
-        {
-            return false;
-        }
-
+        // this.NetTerminal.NodeSeedKey, p.ClientPublicKey
         var node = new NetNode(in endPoint, p.ClientPublicKey);
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
