@@ -42,10 +42,12 @@ public class BasicCommand : ISimpleCommandAsync
             }
 
             var service = clientConnection.GetService<ITestService>();
-            /*var token = new CertificateToken<ConnectionAgreement>(clientConnection.Agreement with { MinimumConnectionRetentionMics = Mics.FromMinutes(10), });
+            var token = new CertificateToken<ConnectionAgreement>(clientConnection.Agreement with { MinimumConnectionRetentionMics = Mics.FromMinutes(1), });
+            var seedKey = SeedKey.NewSignature();
+            clientConnection.SignWithSalt(token, seedKey);
             var rr = await service.UpdateAgreement(token);
-            var result = await service.DoubleString("Test1");
-            Console.WriteLine(result);*/
+            var result3 = await service.DoubleString("Test1");
+            Console.WriteLine(result3);
 
             this.logger.TryGet()?.Log("Pingpong");
             var bin = new byte[1000];

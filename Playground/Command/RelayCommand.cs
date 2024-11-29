@@ -12,7 +12,7 @@ using Netsphere.Relay;
 
 namespace Playground;
 
-[SimpleCommand("relay", Default = true)]
+[SimpleCommand("relay")]
 public class RelayCommand : ISimpleCommandAsync
 {
     public RelayCommand(ILogger<RelayCommand> logger, NetControl netControl, IRelayControl relayControl)
