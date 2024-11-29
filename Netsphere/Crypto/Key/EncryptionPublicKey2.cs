@@ -80,6 +80,13 @@ public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<E
         this.x3 = x3;
     }
 
+    public SignaturePublicKey2 ToSignaturePublicKey()
+    {
+        var key = default(SignaturePublicKey2);
+        CryptoDual.PublicKey_BoxToSign(this.AsSpan(), key.UnsafeAsSpan());
+        return key;
+    }
+
     public bool Equals(EncryptionPublicKey2 other)
         => this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 
@@ -136,6 +143,9 @@ public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<E
 
     [UnscopedRef]
     public ReadOnlySpan<byte> AsSpan()
+        => MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref Unsafe.AsRef(in this), 1));
+
+    internal Span<byte> UnsafeAsSpan()
         => MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref Unsafe.AsRef(in this), 1));
 
     public override int GetHashCode()

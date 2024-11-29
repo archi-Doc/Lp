@@ -147,7 +147,8 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             Span<byte> encryptionSecretKey = stackalloc byte[CryptoBox.SecretKeySize];
             Span<byte> encryptionPublicKey = stackalloc byte[CryptoBox.PublicKeySize];
             CryptoBox.CreateKey(seed, encryptionSecretKey, encryptionPublicKey);
-            if (key.SequenceEqual(encryptionPublicKey))
+            var key2 = new EncryptionPublicKey2(key);
+            if (CryptoDual.BoxPublicKey_Equals(key, encryptionPublicKey))
             {
                 return true;
             }
@@ -175,31 +176,43 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     [Key(1)]
     public KeyOrientation KeyOrientation { get; private set; } = KeyOrientation.NotSpecified;
 
+    private Lock lockObject = new();
     private byte[]? encryptionSecretKey; // X25519 32bytes
     private byte[]? encryptionPublicKey; // X25519 32bytes
-
     private byte[]? signatureSecretKey; // Ed235519 64bytes
     private byte[]? signaturePublicKey; // Ed235519 32bytes
 
-    [MemberNotNull(nameof(encryptionSecretKey), nameof(encryptionPublicKey))]
-    private void PrepareEncryptionKey()
+    [MemberNotNull(nameof(encryptionSecretKey), nameof(encryptionPublicKey), nameof(signatureSecretKey), nameof(signaturePublicKey))]
+    private void PrepareKey()
     {
-        if (this.encryptionSecretKey is null || this.encryptionPublicKey is null)
+        if (this.encryptionSecretKey is not null &&
+            this.encryptionPublicKey is not null &&
+            this.signatureSecretKey is not null &&
+            this.signaturePublicKey is not null)
         {
-            this.encryptionSecretKey = new byte[CryptoBox.SecretKeySize];
-            this.encryptionPublicKey = new byte[CryptoBox.PublicKeySize];
-            CryptoBox.CreateKey(this.seed, this.encryptionSecretKey, this.encryptionPublicKey);
+            return;
         }
-    }
 
-    [MemberNotNull(nameof(signatureSecretKey), nameof(signaturePublicKey))]
-    private void PrepareSignatureKey()
-    {
-        if (this.signatureSecretKey is null || this.signaturePublicKey is null)
+        using (this.lockObject.EnterScope())
         {
-            this.signatureSecretKey = new byte[CryptoSign.SecretKeySize];
-            this.signaturePublicKey = new byte[CryptoSign.PublicKeySize];
-            CryptoSign.CreateKey(this.seed, this.signatureSecretKey, this.signaturePublicKey);
+            if (this.encryptionSecretKey is not null &&
+            this.encryptionPublicKey is not null &&
+            this.signatureSecretKey is not null &&
+            this.signaturePublicKey is not null)
+            {
+                return;
+            }
+
+            var signSecret = new byte[CryptoSign.SecretKeySize];
+            var signPublic = new byte[CryptoSign.PublicKeySize];
+            var boxSecret = new byte[CryptoBox.SecretKeySize];
+            var boxPublic = new byte[CryptoBox.PublicKeySize];
+            CryptoDual.CreateKey(this.seed, signSecret, signPublic, boxSecret, boxPublic);
+
+            this.signatureSecretKey = signSecret;
+            this.signaturePublicKey = signPublic;
+            this.encryptionSecretKey = boxSecret;
+            this.encryptionPublicKey = boxPublic;
         }
     }
 
@@ -207,13 +220,13 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
 
     public EncryptionPublicKey2 GetEncryptionPublicKey()
     {
-        this.PrepareEncryptionKey();
+        this.PrepareKey();
         return new(this.encryptionPublicKey);
     }
 
     public SignaturePublicKey2 GetSignaturePublicKey()
     {
-        this.PrepareSignatureKey();
+        this.PrepareKey();
         return new(this.signaturePublicKey);
     }
 
@@ -234,7 +247,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             return false;
         }
 
-        this.PrepareEncryptionKey();
+        this.PrepareKey();
         CryptoBox.Encrypt(message, nonce24, this.encryptionSecretKey, publicKey32, cipher);
         return true;
     }
@@ -266,7 +279,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             CryptoHelper.ThrowSizeMismatchException(nameof(signature), CryptoSign.SignatureSize);
         }
 
-        this.PrepareSignatureKey();
+        this.PrepareKey();
         CryptoSign.Sign(message, this.signatureSecretKey, signature);
     }
 
