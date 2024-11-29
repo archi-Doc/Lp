@@ -574,7 +574,7 @@ public class Control
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        this.VaultControl.Root.AddObject(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.NodePrivateKey);
+        this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetControl.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));
@@ -766,19 +766,19 @@ public class Control
             return;
         }
 
-        if (!this.VaultControl.Root.TryGetObject<NodePrivateKey>(NetConstants.NodePrivateKeyName, out var key, out _))
+        if (!this.VaultControl.Root.TryGetObject<SeedKey>(NetConstants.NodeSecretKeyName, out var key, out _))
         {// Failure
             if (!this.VaultControl.NewlyCreated)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodePrivateKeyName);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
             }
 
             return;
         }
 
-        if (!this.NetControl.NetBase.SetNodePrivateKey(key))
+        if (!this.NetControl.NetBase.SetNodeSeedKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodePrivateKeyName);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
             return;
         }
     }

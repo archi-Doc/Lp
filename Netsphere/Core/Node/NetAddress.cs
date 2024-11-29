@@ -12,9 +12,6 @@ namespace Netsphere;
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable // , IEquatable<NetAddress>
 {// 24 bytes. IEquatable<NetAddress> -> record struct
     public const char RelayIdSeparator = '&';
-    public const string AlternativeName = "alternative";
-    public const ushort AlternativePort = 49151;
-    public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
     public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
     public static bool SkipValidation { get; set; }
@@ -172,9 +169,9 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
         address = default;
-        if (string.Compare(source, AlternativeName, true) == 0)
+        if (string.Compare(source, Alternative.Name, true) == 0)
         {
-            address = NetAddress.Alternative;
+            address = Alternative.NetAddress;
             return true;
         }
         else

@@ -27,7 +27,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
             return;
         }
 
-        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SeedKey>(options.RemotePrivault, NetConstants.RemotePrivateKeyName, out var seedKey))
+        if (!CryptoHelper.TryParseFromSourceOrEnvironmentVariable<SeedKey>(options.RemotePrivault, NetConstants.RemoteSecretKeyName, out var seedKey))
         {
             return;
         }

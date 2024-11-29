@@ -22,7 +22,7 @@ public sealed partial class LifelineNode : NetNode
         this.PublicKey = netNode.PublicKey;
     }
 
-    public LifelineNode(NetAddress netAddress, NodePublicKey publicKey)
+    public LifelineNode(NetAddress netAddress, EncryptionPublicKey2 publicKey)
     {
         this.Address = netAddress;
         this.PublicKey = publicKey;

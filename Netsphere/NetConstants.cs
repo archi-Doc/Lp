@@ -5,9 +5,9 @@ namespace Netsphere;
 public static class NetConstants
 {
     public const string NodeName = "NodeName";
-    public const string NodePrivateKeyName = "NodePrivatekey";
+    public const string NodeSecretKeyName = "NodeSecretkey";
     public const string NodePublicKeyName = "NodePublickey";
-    public const string RemotePrivateKeyName = "RemotePrivatekey";
+    public const string RemoteSecretKeyName = "RemoteSecretkey";
     public const string RemotePublicKeyName = "RemotePublickey";
 
     public const int MaxPacketLength = 1350; // 1500 - 60 - 8 = 1432 bytes

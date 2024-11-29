@@ -370,10 +370,10 @@ public static class NetHelper
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
             {
-                if (node == NetAddress.AlternativeName ||
-                    Environment.GetEnvironmentVariable(NetConstants.NodeName) == NetAddress.AlternativeName)
+                if (node == Alternative.Name ||
+                    Environment.GetEnvironmentVariable(NetConstants.NodeName) == Alternative.Name)
                 {
-                    netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative).ConfigureAwait(false);
+                    netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress).ConfigureAwait(false);
                 }
 
                 if (netNode is null)
@@ -386,7 +386,7 @@ public static class NetHelper
         // 1st: remotePrivateKey, 2nd: EnvironmentVariable 'remoteprivatekey'
         if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
         {
-            if (!CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemotePrivateKeyName, out signaturePrivateKey))
+            if (!CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemoteSecretKeyName, out signaturePrivateKey))
             {
                 return default;
             }

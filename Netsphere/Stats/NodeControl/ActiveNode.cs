@@ -31,7 +31,7 @@ public sealed partial class ActiveNode : NetNode
         this.PublicKey = netNode.PublicKey;
     }
 
-    public ActiveNode(NetAddress netAddress, NodePublicKey publicKey)
+    public ActiveNode(NetAddress netAddress, EncryptionPublicKey2 publicKey)
     {
         this.Address = netAddress;
         this.PublicKey = publicKey;

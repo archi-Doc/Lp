@@ -16,8 +16,8 @@ public partial record RunnerOptions
     [SimpleOption("Port", Description = "Port number associated with the runner")]
     public ushort Port { get; set; } = 49999;
 
-    [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key for connection", GetEnvironmentVariable = true)]
-    public string NodePrivateKeyString { get; set; } = string.Empty;
+    [SimpleOption(NetConstants.NodeSecretKeyName, Description = "Node secret key for connection", GetEnvironmentVariable = true)]
+    public string NodeSecretKeyString { get; set; } = string.Empty;
 
     [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Public key for remote operation", GetEnvironmentVariable = true)]
     public string RemotePublicKeyString { get; set; } = string.Empty;

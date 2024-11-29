@@ -37,7 +37,7 @@ public class RelayCommand : ISimpleCommandAsync
             rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
         }
 
-        var netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative);
+        var netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress);
         if (netNode is null)
         {
             return;

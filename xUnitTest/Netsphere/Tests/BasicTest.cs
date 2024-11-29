@@ -22,10 +22,10 @@ public class BasicTest
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
 
         var p = new PingPacket("test56789");
-        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(NetAddress.Alternative, p);
+        var result = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(Alternative.NetAddress, p);
         result.Result.Is(NetResult.Success);
 
-        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative))!)
+        using (var connection = (await this.NetControl.NetTerminal.Connect(Alternative.NetNode))!)
         {
             connection.IsNotNull();
             var basicService = connection.GetService<IBasicService>();

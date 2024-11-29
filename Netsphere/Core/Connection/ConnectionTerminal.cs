@@ -192,8 +192,8 @@ public class ConnectionTerminal
         }
 
         // Create a new encryption key
-        var privateKey = NodePrivateKey.Create();
-        var publicKey = privateKey.ToPublicKey();
+        var seedKey = SeedKey.NewEncryption();
+        var publicKey = seedKey.GetEncryptionPublicKey();
 
         // Create a new connection
         var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
@@ -203,7 +203,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -237,13 +237,13 @@ public class ConnectionTerminal
             minimumNumberOfRelays = this.NetTerminal.MinimumNumberOfRelays;
         }
 
-        var privateKey = this.NetTerminal.NodePrivateKey;
+        var seedKey = this.NetTerminal.NodeSeedKey;
         var publicKey = this.NetTerminal.NodePublicKey;
         if (minimumNumberOfRelays > 0)
         {
             // mode = Connection.ConnectMode.NoReuse; // Do not reuse connections.
-            privateKey = NodePrivateKey.Create(); // Do not reuse node encryption keys.
-            publicKey = privateKey.ToPublicKey();
+            seedKey = SeedKey.NewEncryption(); // Do not reuse node encryption keys.
+            publicKey = seedKey.GetEncryptionPublicKey();
         }
 
         using (this.clientConnections.LockObject.EnterScope())
@@ -277,7 +277,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -365,10 +365,10 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, NodePrivateKey clientPrivateKey, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey2 serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(clientPrivateKey, serverPublicKey);
+        var pair = new NodeKeyPair(clientSeedKey, serverPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {
@@ -385,7 +385,7 @@ public class ConnectionTerminal
     internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
         // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, p.ClientPublicKey);
+        var pair = new NodeKeyPair(this.NetTerminal.NodeSeedKey, p.ClientPublicKey);
         var material = pair.DeriveKeyMaterial();
         if (material is null)
         {

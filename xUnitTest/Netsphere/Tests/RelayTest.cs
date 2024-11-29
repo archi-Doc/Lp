@@ -41,7 +41,7 @@ public class RelayTest
             rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
         }
 
-        var netNode = (await netTerminal.UnsafeGetNetNode(NetAddress.Alternative))!;
+        var netNode = (await netTerminal.UnsafeGetNetNode(Alternative.NetAddress))!;
         netNode.IsNotNull();
 
         using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 0))!)

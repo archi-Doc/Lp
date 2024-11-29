@@ -28,7 +28,7 @@ public class BasicCommand : ISimpleCommandAsync
         var netTerminal = this.netControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        var netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative);
+        var netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress);
         if (netNode is null)
         {
             return;

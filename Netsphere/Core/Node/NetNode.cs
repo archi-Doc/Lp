@@ -7,38 +7,22 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents ipv4/ipv6 node information.<br/>
-/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="NodePublicKey"/>.
+/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="EncryptionPublicKey2"/>.
 /// </summary>
 [TinyhandObject]
 public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
-    // public static readonly NetNode Default = new(); // Do not use default values as instances are reused during deserialization, leading to inconsistency.
-    private static NetNode? alternative;
-
-    public static NetNode Alternative
-    {
-        get
-        {
-            if (alternative is null)
-            {
-                alternative = new NetNode(NetAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
-            }
-
-            return alternative;
-        }
-    }
-
     public NetNode()
     {
     }
 
-    public NetNode(NetAddress address, NodePublicKey publicKey)
+    public NetNode(NetAddress address, EncryptionPublicKey2 publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
     }
 
-    public NetNode(in NetEndpoint endPoint, NodePublicKey publicKey)
+    public NetNode(in NetEndpoint endPoint, EncryptionPublicKey2 publicKey)
     {
         this.Address = new(endPoint);
         this.PublicKey = publicKey;
@@ -54,14 +38,14 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
     public NetAddress Address { get; protected set; }
 
     [Key(1)]
-    public NodePublicKey PublicKey { get; protected set; }
+    public EncryptionPublicKey2 PublicKey { get; protected set; }
 
     public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         if (string.Compare(source, "alt", true) == 0)
         {
-            node = NetNode.Alternative;
+            node = Alternative.NetNode;
             return true;
         }
         else
@@ -110,7 +94,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
             return false;
         }
 
-        if (!NodePublicKey.TryParse(sourcePublicKey, out var publicKey))
+        if (!EncryptionPublicKey2.TryParse(sourcePublicKey, out var publicKey))
         {
             instance = default;
             return false;
