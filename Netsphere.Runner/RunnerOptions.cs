@@ -101,14 +101,14 @@ public partial record RunnerOptions
         this.NodePrivateKeyString = string.Empty;*/
 
         if (!string.IsNullOrEmpty(this.RemotePublicKeyString) &&
-            SignaturePublicKey2.TryParse(this.RemotePublicKeyString, out var publicKey))
+            SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var publicKey))
         {
             this.RemotePublicKey = publicKey;
         }
 
         if (!this.RemotePublicKey.IsValid)
         {
-            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey2>(NetConstants.RemotePublicKeyName, out publicKey))
+            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
             {
                 this.RemotePublicKey = publicKey;
             }
@@ -119,5 +119,5 @@ public partial record RunnerOptions
 
     // internal NodePrivateKey? NodePrivateKey { get; set; }
 
-    internal SignaturePublicKey2 RemotePublicKey { get; set; }
+    internal SignaturePublicKey RemotePublicKey { get; set; }
 }

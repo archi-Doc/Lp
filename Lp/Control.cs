@@ -198,7 +198,7 @@ public class Control
         {
             if (context.TryGetOptions<LpOptions>(out var options))
             {
-                if (SignaturePublicKey2.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
+                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
                 {// CertificateRelayControl
                     context.AddSingleton<IRelayControl, CertificateRelayControl>();
                 }
@@ -489,7 +489,7 @@ public class Control
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
         {
-            if (SignaturePublicKey2.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
+            if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
                 this.Logger.Get<CertificateRelayControl>().Log($"{relayPublicKey.ToString()}");

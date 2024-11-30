@@ -17,8 +17,8 @@ public partial record LpStats
     [KeyAsName]
     public CredentialProof.GoshujinClass Credentials { get; private set; } = new();
 
-    private ConcurrentDictionary<string, SignaturePublicKey2> aliasToPublicKey = new();
-    private ConcurrentDictionary<SignaturePublicKey2, string> publicKeyToAlias = new();
+    private ConcurrentDictionary<string, SignaturePublicKey> aliasToPublicKey = new();
+    private ConcurrentDictionary<SignaturePublicKey, string> publicKeyToAlias = new();
 
     #endregion
 
@@ -31,9 +31,9 @@ public partial record LpStats
         this.aliasToPublicKey.TryAdd(LpConstants.LpAlias, LpConstants.LpPublicKey);
     }
 
-    public bool TryGetAlias(SignaturePublicKey2 publicKey, [MaybeNullWhen(false)] out string alias)
+    public bool TryGetAlias(SignaturePublicKey publicKey, [MaybeNullWhen(false)] out string alias)
         => this.publicKeyToAlias.TryGetValue(publicKey, out alias);
 
-    public bool TryGetPublicKey(string alias, out SignaturePublicKey2 publicKey)
+    public bool TryGetPublicKey(string alias, out SignaturePublicKey publicKey)
         => this.aliasToPublicKey.TryGetValue(alias, out publicKey);
 }

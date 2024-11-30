@@ -365,7 +365,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey2 serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);

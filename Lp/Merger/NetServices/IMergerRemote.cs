@@ -12,7 +12,7 @@ public partial interface IMergerRemote : INetService
 
     NetTask<Proof?> NewCredential(Evidence? evidence);
 
-    NetTask<SignaturePublicKey2> GetPublicKey();
+    NetTask<SignaturePublicKey> GetPublicKey();
 }
 
 [NetServiceObject]
@@ -20,7 +20,7 @@ internal class MergerRemoteAgent : IMergerRemote
 {
     private readonly LpBase lpBase;
     private readonly Merger merger;
-    private readonly SignaturePublicKey2 remotePublicKey;
+    private readonly SignaturePublicKey remotePublicKey;
     private readonly NetStats netStats;
     private bool authenticated;
 
@@ -52,7 +52,7 @@ internal class MergerRemoteAgent : IMergerRemote
         }
     }
 
-    async NetTask<SignaturePublicKey2> IMergerRemote.GetPublicKey()
+    async NetTask<SignaturePublicKey> IMergerRemote.GetPublicKey()
     {
         if (!this.authenticated)
         {

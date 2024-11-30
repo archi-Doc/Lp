@@ -95,16 +95,16 @@ public static class SeedKeyHelper
     public static KeyOrientation IdentifierToOrientation(char identifier)
         => identifier switch
         {
-            EncryptionPublicKey2.Identifier => KeyOrientation.Encryption,
-            SignaturePublicKey2.Identifier => KeyOrientation.Signature,
+            EncryptionPublicKey.Identifier => KeyOrientation.Encryption,
+            SignaturePublicKey.Identifier => KeyOrientation.Signature,
             _ => KeyOrientation.NotSpecified,
         };
 
     public static char OrientationToIdentifier(KeyOrientation keyOrientation)
         => keyOrientation switch
         {
-            KeyOrientation.Encryption => EncryptionPublicKey2.Identifier,
-            KeyOrientation.Signature => SignaturePublicKey2.Identifier,
+            KeyOrientation.Encryption => EncryptionPublicKey.Identifier,
+            KeyOrientation.Signature => SignaturePublicKey.Identifier,
             _ => (char)0,
         };
 

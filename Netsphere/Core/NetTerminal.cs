@@ -47,7 +47,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
 
-    public EncryptionPublicKey2 NodePublicKey { get; private set; }
+    public EncryptionPublicKey NodePublicKey { get; private set; }
 
     public NetStats NetStats { get; }
 

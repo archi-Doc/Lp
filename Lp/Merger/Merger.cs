@@ -129,7 +129,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SignaturePublicKey2 GetPublicKey()
+    public SignaturePublicKey GetPublicKey()
         => this.MergerPublicKey;
 
     public bool TrySignProof(Proof proof, long validMics)
@@ -150,7 +150,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
     public virtual bool Initialized { get; protected set; }
 
-    public SignaturePublicKey2 MergerPublicKey { get; protected set; }
+    public SignaturePublicKey MergerPublicKey { get; protected set; }
 
     public MergerConfiguration? Information { get; protected set; }
 

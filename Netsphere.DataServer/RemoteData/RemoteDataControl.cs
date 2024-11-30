@@ -25,7 +25,7 @@ public class RemoteDataControl
 
     public string DataDirectory { get; private set; } = string.Empty;
 
-    public SignaturePublicKey2 RemotePublicKey { get; set; }
+    public SignaturePublicKey RemotePublicKey { get; set; }
 
     private readonly ILogger logger;
     private readonly ConnectionAgreement limitAreement;

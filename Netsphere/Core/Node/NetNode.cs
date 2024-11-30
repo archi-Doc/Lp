@@ -7,7 +7,7 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents ipv4/ipv6 node information.<br/>
-/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="EncryptionPublicKey2"/>.
+/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="EncryptionPublicKey"/>.
 /// </summary>
 [TinyhandObject]
 public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
@@ -16,13 +16,13 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
     {
     }
 
-    public NetNode(NetAddress address, EncryptionPublicKey2 publicKey)
+    public NetNode(NetAddress address, EncryptionPublicKey publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
     }
 
-    public NetNode(in NetEndpoint endPoint, EncryptionPublicKey2 publicKey)
+    public NetNode(in NetEndpoint endPoint, EncryptionPublicKey publicKey)
     {
         this.Address = new(endPoint);
         this.PublicKey = publicKey;
@@ -38,7 +38,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
     public NetAddress Address { get; protected set; }
 
     [Key(1)]
-    public EncryptionPublicKey2 PublicKey { get; protected set; }
+    public EncryptionPublicKey PublicKey { get; protected set; }
 
     public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
     {
@@ -94,7 +94,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
             return false;
         }
 
-        if (!EncryptionPublicKey2.TryParse(sourcePublicKey, out var publicKey))
+        if (!EncryptionPublicKey.TryParse(sourcePublicKey, out var publicKey))
         {
             instance = default;
             return false;

@@ -153,7 +153,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             Span<byte> encryptionSecretKey = stackalloc byte[CryptoBox.SecretKeySize];
             Span<byte> encryptionPublicKey = stackalloc byte[CryptoBox.PublicKeySize];
             CryptoBox.CreateKey(seed, encryptionSecretKey, encryptionPublicKey);
-            var key2 = new EncryptionPublicKey2(key);
+            var key2 = new EncryptionPublicKey(key);
             if (CryptoDual.BoxPublicKey_Equals(key, encryptionPublicKey))
             {
                 return true;
@@ -224,13 +224,13 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
 
     #endregion
 
-    public EncryptionPublicKey2 GetEncryptionPublicKey()
+    public EncryptionPublicKey GetEncryptionPublicKey()
     {
         this.PrepareKey();
         return new(this.encryptionPublicKey);
     }
 
-    public SignaturePublicKey2 GetSignaturePublicKey()
+    public SignaturePublicKey GetSignaturePublicKey()
     {
         this.PrepareKey();
         return new(this.signaturePublicKey);
@@ -289,7 +289,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         CryptoSign.Sign(message, this.signatureSecretKey, signature);
     }
 
-    public void DeriveKeyMaterial(EncryptionPublicKey2 publicKey, Span<byte> keyMaterial)
+    public void DeriveKeyMaterial(EncryptionPublicKey publicKey, Span<byte> keyMaterial)
     {
         if (keyMaterial.Length != CryptoBox.KeyMaterialSize)
         {

@@ -7,9 +7,9 @@ namespace Lp.T3cs;
 public abstract partial class ProofAndPublicKey : Proof
 {
     [Key(0)] // Key(0) is not used in the Proof class (reserved).
-    public SignaturePublicKey2 PublicKey { get; protected set; }
+    public SignaturePublicKey PublicKey { get; protected set; }
 
-    public override SignaturePublicKey2 GetPublicKey()
+    public override SignaturePublicKey GetPublicKey()
         => this.PublicKey;
 
     internal void PrepareSignInternal(SeedKey seedKey, long validMics)

@@ -71,7 +71,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(data))]
     public virtual bool Initialized { get; protected set; }
 
-    public SignaturePublicKey2 LinkerPublicKey { get; protected set; }
+    public SignaturePublicKey LinkerPublicKey { get; protected set; }
 
     public LinkerConfiguration? Configuration { get; protected set; }
 

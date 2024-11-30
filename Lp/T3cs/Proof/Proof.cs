@@ -75,7 +75,7 @@ public abstract partial class Proof : IEquatable<Proof>
     /// Gets the public key associated with the proof.
     /// </summary>
     /// <returns>The public key.</returns>
-    public abstract SignaturePublicKey2 GetPublicKey();
+    public abstract SignaturePublicKey GetPublicKey();
 
     /// <summary>
     /// Tries to get the credit associated with the proof.

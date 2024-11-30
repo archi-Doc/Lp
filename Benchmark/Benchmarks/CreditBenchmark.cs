@@ -15,10 +15,10 @@ public sealed partial class Credit
     {
     }
 
-    public Credit(SignaturePublicKey2 key, int mergers)
+    public Credit(SignaturePublicKey key, int mergers)
     {
         this.Originator = key;
-        this.mergers = new SignaturePublicKey2[mergers];
+        this.mergers = new SignaturePublicKey[mergers];
         for (var i = 0; i < mergers; i++)
         {
             this.mergers[i] = key;
@@ -28,14 +28,14 @@ public sealed partial class Credit
     }
 
     [Key(0)]
-    public SignaturePublicKey2 Originator { get; private set; } = default!;
+    public SignaturePublicKey Originator { get; private set; } = default!;
 
     [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private SignaturePublicKey2[] mergers = Array.Empty<SignaturePublicKey2>();
+    private SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
 
     [Key(2)]
-    public SignaturePublicKey2 Standard { get; private set; } = default!;
+    public SignaturePublicKey Standard { get; private set; } = default!;
 }
 
 [TinyhandObject]
@@ -47,7 +47,7 @@ public sealed partial class CreditB
     {
     }
 
-    public CreditB(SignaturePublicKey2 key, int mergers)
+    public CreditB(SignaturePublicKey key, int mergers)
     {
         this.Originator = key;
         this.Standard = key;
@@ -65,13 +65,13 @@ public sealed partial class CreditB
     }
 
     [Key(0)]
-    public SignaturePublicKey2 Originator { get; private set; } = default!;
+    public SignaturePublicKey Originator { get; private set; } = default!;
 
     [Key(1)]
-    public SignaturePublicKey2 Standard { get; private set; } = default!;
+    public SignaturePublicKey Standard { get; private set; } = default!;
 
     [Key(2)]
-    public SignaturePublicKey2 Merger1 { get; private set; } = default!;
+    public SignaturePublicKey Merger1 { get; private set; } = default!;
 
     /*[Key(3)]
     public Lp.T3cs.PublicKey? Merger2 { get; private set; } = default!;
@@ -85,7 +85,7 @@ public class CreditBenchmark
 {
     public SeedKey SeedKey { get; private set; }
 
-    public SignaturePublicKey2 PublicKey { get; private set; }
+    public SignaturePublicKey PublicKey { get; private set; }
 
     public Benchmark.Credit Credit1 { get; private set; }
 

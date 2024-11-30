@@ -13,7 +13,7 @@ internal partial class ConnectPacket : IPacket
     {
     }
 
-    public ConnectPacket(EncryptionPublicKey2 clientPublicKey, int serverPublicKeyChecksum)
+    public ConnectPacket(EncryptionPublicKey clientPublicKey, int serverPublicKeyChecksum)
     {
         this.ClientPublicKey = clientPublicKey;
         this.ServerPublicKeyChecksum = serverPublicKeyChecksum;
@@ -28,7 +28,7 @@ internal partial class ConnectPacket : IPacket
     // public ushort RelayId { get; set; }
 
     [Key(2)]
-    public EncryptionPublicKey2 ClientPublicKey { get; set; }
+    public EncryptionPublicKey ClientPublicKey { get; set; }
 
     [Key(3)]
     public int ServerPublicKeyChecksum { get; set; }

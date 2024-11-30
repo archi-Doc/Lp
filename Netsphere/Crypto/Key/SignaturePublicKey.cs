@@ -11,9 +11,9 @@ namespace Netsphere.Crypto;
 
 [TinyhandObject]
 [StructLayout(LayoutKind.Explicit)]
-public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<EncryptionPublicKey2>, IStringConvertible<EncryptionPublicKey2>
+public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<SignaturePublicKey>, IStringConvertible<SignaturePublicKey>
 {// (s:key)
-    public const char Identifier = 'e';
+    public const char Identifier = 's';
 
     #region FieldAndProperty
 
@@ -37,10 +37,10 @@ public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<E
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey2 publicKey)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
     {
         Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
-        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Encryption, source, keyAndChecksum))
+        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Signature, source, keyAndChecksum))
         {
             publicKey = new(keyAndChecksum);
             return true;
@@ -61,7 +61,7 @@ public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<E
     public bool TryFormatWithBracket(Span<char> destination, out int written)
         => SeedKeyHelper.TryFormatPublicKeyWithBracket(Identifier, this.AsSpan(), destination, out written);
 
-    public EncryptionPublicKey2(ReadOnlySpan<byte> b)
+    public SignaturePublicKey(ReadOnlySpan<byte> b)
     {
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
@@ -72,7 +72,7 @@ public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<E
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public EncryptionPublicKey2(ulong x0, ulong x1, ulong x2, ulong x3)
+    public SignaturePublicKey(ulong x0, ulong x1, ulong x2, ulong x3)
     {
         this.x0 = x0;
         this.x1 = x1;
@@ -80,55 +80,24 @@ public readonly partial struct EncryptionPublicKey2 : IValidatable, IEquatable<E
         this.x3 = x3;
     }
 
-    public SignaturePublicKey2 ConvertToSignaturePublicKey()
+    public EncryptionPublicKey ConvertToEncryptionPublicKey()
     {
-        var key = default(SignaturePublicKey2);
-        CryptoDual.PublicKey_BoxToSign(this.AsSpan(), key.UnsafeAsSpan());
+        var key = default(EncryptionPublicKey);
+        CryptoDual.PublicKey_SignToBox(this.AsSpan(), key.UnsafeAsSpan());
         return key;
     }
 
-    public bool Equals(EncryptionPublicKey2 other)
+    public bool Equals(SignaturePublicKey other)
         => this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 
-    public bool TryEncrypt(ReadOnlySpan<byte> data, ReadOnlySpan<byte> nonce24, ReadOnlySpan<byte> secretKey32, Span<byte> cipher)
+    public bool Verify(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
     {
-        if (nonce24.Length != CryptoBox.NonceSize)
+        if (signature.Length != SeedKeyHelper.SignatureSize)
         {
             return false;
         }
 
-        if (secretKey32.Length != CryptoBox.SecretKeySize)
-        {
-            return false;
-        }
-
-        if (cipher.Length != data.Length + CryptoBox.MacSize)
-        {
-            return false;
-        }
-
-        CryptoBox.Encrypt(data, nonce24, secretKey32, this.AsSpan(), cipher);
-        return true;
-    }
-
-    public bool TryDecrypt(ReadOnlySpan<byte> cipher, ReadOnlySpan<byte> nonce24, ReadOnlySpan<byte> secretKey32, Span<byte> data)
-    {
-        if (nonce24.Length != CryptoBox.NonceSize)
-        {
-            return false;
-        }
-
-        if (secretKey32.Length != CryptoBox.SecretKeySize)
-        {
-            return false;
-        }
-
-        if (data.Length != cipher.Length - CryptoBox.MacSize)
-        {
-            return false;
-        }
-
-        return CryptoBox.TryDecrypt(cipher, nonce24, secretKey32, this.AsSpan(), data);
+        return CryptoSign.Verify(data, this.AsSpan(), signature);
     }
 
     #endregion

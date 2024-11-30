@@ -18,7 +18,7 @@ public static class Alternative
     }
 
     public static readonly SeedKey SeedKey;
-    public static readonly EncryptionPublicKey2 PublicKey;
+    public static readonly EncryptionPublicKey PublicKey;
     public static readonly NetAddress NetAddress;
     public static readonly NetNode NetNode;
 }

@@ -117,16 +117,16 @@ public sealed partial class Authority
     public SeedKey GetSeedKey(Credit credit)
         => this.seedKeyCache.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
 
-    public EncryptionPublicKey2 GetEncryptionPublicKey()
+    public EncryptionPublicKey GetEncryptionPublicKey()
         => this.GetSeedKey(Credit.Default).GetEncryptionPublicKey();
 
-    public EncryptionPublicKey2 GetEncryptionPublicKey(Credit credit)
+    public EncryptionPublicKey GetEncryptionPublicKey(Credit credit)
         => this.GetSeedKey(credit).GetEncryptionPublicKey();
 
-    public SignaturePublicKey2 GetSignaturePublicKey()
+    public SignaturePublicKey GetSignaturePublicKey()
         => this.GetSeedKey(Credit.Default).GetSignaturePublicKey();
 
-    public SignaturePublicKey2 GetSignaturePublicKey(Credit credit)
+    public SignaturePublicKey GetSignaturePublicKey(Credit credit)
         => this.GetSeedKey(credit).GetSignaturePublicKey();
 
     public override int GetHashCode()

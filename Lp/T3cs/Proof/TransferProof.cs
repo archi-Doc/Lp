@@ -15,5 +15,5 @@ public partial class TransferProof : ProofAndPublicKey
     public Point Point { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 1)]
-    public SignaturePublicKey2 RecipientKey { get; protected set; }
+    public SignaturePublicKey RecipientKey { get; protected set; }
 }

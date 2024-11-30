@@ -53,14 +53,14 @@ public class CertificateRelayControl : IRelayControl
     public long DefaultRestrictedIntervalMics
         => 20_000;
 
-    public SignaturePublicKey2 CertificatePublicKey { get; private set; }
+    public SignaturePublicKey CertificatePublicKey { get; private set; }
 
     public void ProcessRegisterResponder(ResponderControl responders)
     {
         responders.Register(new CreateRelayResponder(this));
     }
 
-    public void SetCertificatePublicKey(SignaturePublicKey2 publicKey)
+    public void SetCertificatePublicKey(SignaturePublicKey publicKey)
     {
         this.CertificatePublicKey = publicKey;
     }

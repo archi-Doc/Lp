@@ -9,7 +9,7 @@ namespace Netsphere;
 /// </summary>
 public interface IVerifiable : IValidatable
 {
-    SignaturePublicKey2 PublicKey { get; }
+    SignaturePublicKey PublicKey { get; }
 
     byte[] Signature { get; }
 }

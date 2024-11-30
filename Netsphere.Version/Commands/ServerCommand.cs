@@ -159,5 +159,5 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
     private readonly VersionData versionData;
     private readonly NtpCorrection ntpCorrection;
     private int versionIdentifier;
-    private SignaturePublicKey2 publicKey;
+    private SignaturePublicKey publicKey;
 }

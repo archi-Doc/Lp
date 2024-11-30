@@ -30,7 +30,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public TimeSpan DefaultTransmissionTimeout { get; set; } = NetConstants.DefaultTransmissionTimeout;
 
-    public EncryptionPublicKey2 NodePublicKey { get; private set; }
+    public EncryptionPublicKey NodePublicKey { get; private set; }
 
     public SeedKey NodeSeedKey { get; private set; } = default!;
 
