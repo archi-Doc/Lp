@@ -367,7 +367,9 @@ public class ConnectionTerminal
 
     internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey2 serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
-        // clientSeedKey, serverPublicKey
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
+
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
@@ -377,8 +379,10 @@ public class ConnectionTerminal
 
     internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
-        // this.NetTerminal.NodeSeedKey, p.ClientPublicKey
         var node = new NetNode(in endPoint, p.ClientPublicKey);
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        this.NetTerminal.NodeSeedKey.DeriveKeyMaterial(p.ClientPublicKey, material);
+
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         this.netStats.NodeControl.TryAddUnknownNode(node);
@@ -392,16 +396,17 @@ public class ConnectionTerminal
         return true;
     }
 
-    internal void CreateEmbryo(byte[] material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
+    //Imp
+    internal void CreateEmbryo(ReadOnlySpan<byte> material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
     {// ClientSalt, ServerSalt, Material, ClientSalt2, ServerSalt2
-        Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + KeyHelper.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
+        Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + CryptoBox.KeyMaterialSize + sizeof(ulong) + sizeof(ulong)];
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
         span = span.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(span, p2.ServerSalt);
         span = span.Slice(sizeof(ulong));
-        material.AsSpan().CopyTo(span);
-        span = span.Slice(KeyHelper.PrivateKeyLength);
+        material.CopyTo(span);
+        span = span.Slice(CryptoBox.KeyMaterialSize);
         BitConverter.TryWriteBytes(span, p.ClientSalt2);
         span = span.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(span, p2.ServerSalt2);

@@ -289,6 +289,17 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         CryptoSign.Sign(message, this.signatureSecretKey, signature);
     }
 
+    public void DeriveKeyMaterial(EncryptionPublicKey2 publicKey, Span<byte> keyMaterial)
+    {
+        if (keyMaterial.Length != CryptoBox.KeyMaterialSize)
+        {
+            CryptoHelper.ThrowSizeMismatchException(nameof(keyMaterial), CryptoBox.KeyMaterialSize);
+        }
+
+        this.PrepareKey();
+        CryptoBox.DeriveKeyMaterial(this.encryptionSecretKey, publicKey.AsSpan(), keyMaterial);
+    }
+
     public bool Equals(SeedKey? other)
         => other is not null && this.seed.AsSpan().SequenceEqual(other.seed.AsSpan());
 

@@ -48,13 +48,13 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             return false;
         }
 
-        span = span.Slice(1);
-        if (span.Length < KeyHelper.PublicKeyLengthInBase64 || !SignaturePublicKey2.TryParse(span, out var originator))
+        span = span.Slice(1);//min
+        if (span.Length < SeedKeyHelper.PublicKeyLengthInBase64 || !SignaturePublicKey2.TryParse(span, out var originator))
         {// Originator
             return false;
         }
 
-        span = span.Slice(KeyHelper.PublicKeyLengthInBase64);
+        span = span.Slice(SeedKeyHelper.PublicKeyLengthInBase64);
 
         if (span.Length == (1 + SignaturePublicKey2.MaxStringLength))
         {

@@ -76,7 +76,7 @@ public class RelayTest
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
-        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.ReuseIfAvailable, 2))!)
+        using (var connection = (await this.NetControl.NetTerminal.Connect(Alternative.NetNode, Connection.ConnectMode.ReuseIfAvailable, 2))!)
         {
             connection.IsNotNull();
             var basicService = connection.GetService<IBasicService>();
@@ -109,7 +109,7 @@ public class RelayTest
 
         var st = await netTerminal.OutgoingCircuit.UnsafeDetailedToString();
 
-        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse, 2))!)
+        using (var connection = (await this.NetControl.NetTerminal.Connect(Alternative.NetNode, Connection.ConnectMode.NoReuse, 2))!)
         {
             var service = connection.GetService<IStreamService>();
             service.IsNotNull();

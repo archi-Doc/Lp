@@ -27,7 +27,6 @@ public class Program
             typeof(NetSenderBenchmark),
             typeof(PacketBenchmark),
             typeof(AddressBenchmark),
-            typeof(PublicKeyBenchmark),
             typeof(ChecksumBenchmark),
             typeof(CreditBenchmark),
             typeof(DoubleDecimalBenchmark),

@@ -45,7 +45,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     public async Task RunAsync(CommandOptions options, string[] args)
     {
-        NetNode? node = NetNode.Alternative;
+        NetNode? node = Alternative.NetNode;
         if (!string.IsNullOrEmpty(options.Node))
         {
             if (!NetNode.TryParseNetNode(this.logger, options.Node, out var n))

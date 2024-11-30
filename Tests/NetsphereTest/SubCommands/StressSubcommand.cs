@@ -18,7 +18,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
     public async Task RunAsync(StressOptions options, string[] args)
     {
-        NetNode? node = NetNode.Alternative;
+        NetNode? node = Alternative.NetNode;
         if (!string.IsNullOrEmpty(options.Node))
         {
             if (!NetNode.TryParseNetNode(this.logger, options.Node, out node))

@@ -190,26 +190,26 @@ public class NodeTest
 
     private static void GenerateDualNode(RandomVault r, int type, out NetNode addressAndKey)
     {
-        var key = NodePrivateKey.Create();
+        var key = SeedKey.NewEncryption();
 
         var port = (ushort)r.NextInt32(NetConstants.MinPort, NetConstants.MaxPort);
         if (type == 0)
         {// IPv4
             var address4 = r.NextUInt32();
-            addressAndKey = new(new(address4, 0, 0, port), key.ToPublicKey());
+            addressAndKey = new(new(address4, 0, 0, port), key.GetEncryptionPublicKey());
         }
         else if (type == 1)
         {// IPv6
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(0, address6a, address6b, port), key.ToPublicKey());
+            addressAndKey = new(new(0, address6a, address6b, port), key.GetEncryptionPublicKey());
         }
         else
         {
             var address4 = r.NextUInt32();
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(address4, address6a, address6b, port), key.ToPublicKey());
+            addressAndKey = new(new(address4, address6a, address6b, port), key.GetEncryptionPublicKey());
         }
     }
 

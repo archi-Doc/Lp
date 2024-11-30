@@ -61,7 +61,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     public long ExpirationMics { get; private set; }
 
     [Key(6, AddProperty = "Signature", Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    [MaxLength(KeyHelper.SignatureLength)]
+    [MaxLength(CryptoSign.SignatureSize)]
     private byte[] signature = Array.Empty<byte>();
 
     public bool Validate()
