@@ -64,7 +64,7 @@ public class NodeTest
     [Fact]
     public void DualAddressAndPublicKey1()
     {
-        TestDualNode("127.0.0.1:49999(CDglzWlh9k899xGikhmm6_8gcxEXh1mAl5DwMjeIF9Z9B8VL)", false).IsTrue();
+        TestDualNode("127.0.0.1:49999(e:sSe258iWUhPXCzadvA5xMMCb9czjKgUrPIJWebm-CoEMCb_G)", false).IsTrue();
     }
 
     [Fact]

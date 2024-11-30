@@ -86,7 +86,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
         }
 
         var sourceAddress = source.Slice(0, index);
-        var sourcePublicKey = source.Slice(index + 1, index2 - index - 1);
+        var sourcePublicKey = source.Slice(index, index2 - index + 1);
 
         if (!NetAddress.TryParse(sourceAddress, out var address))
         {
@@ -128,10 +128,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
             span = span.Slice(written);
         }
 
-        span[0] = '(';
-        span = span.Slice(1);
-
-        if (!this.PublicKey.TryFormat(span, out written))
+        if (!this.PublicKey.TryFormatWithBracket(span, out written))
         {
             return false;
         }
@@ -139,9 +136,6 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
         {
             span = span.Slice(written);
         }
-
-        span[0] = ')';
-        span = span.Slice(1);
 
         written = destination.Length - span.Length;
         return true;
