@@ -55,7 +55,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     {
         if (this.seedKey == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
+            this.logger.TryGet(LogLevel.Error)?.Log("No seed key.");
             return;
         }
 

@@ -38,7 +38,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     #region TypeSpecific
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
-        => TryParse(source, out publicKey, out _);
+        => TryParse(source, out publicKey, out _);//
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey, out int parsedLength)
     {
