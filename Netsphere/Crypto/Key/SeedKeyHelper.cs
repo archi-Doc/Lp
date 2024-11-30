@@ -36,8 +36,9 @@ public static class SeedKeyHelper
         MaxPrivateKeyLengthInBase64 = SeedLengthInBase64 + PublicKeyLengthInBase64; // !!!seed!!!(s:key)
     }
 
-    public static bool TryParsePublicKey(KeyOrientation orientation, ReadOnlySpan<char> source, Span<byte> keyAndChecksum)
+    public static bool TryParsePublicKey(KeyOrientation orientation, ReadOnlySpan<char> source, Span<byte> keyAndChecksum, out int parsedLength)
     {// key, (s:key), (key)
+        parsedLength = 0;
         if (keyAndChecksum.Length != PublicKeyAndChecksumSize)
         {
             CryptoHelper.ThrowSizeMismatchException(nameof(keyAndChecksum), PublicKeySize);
@@ -77,8 +78,16 @@ public static class SeedKeyHelper
                 return false;
             }
 
-            return Base64.Url.FromStringToSpan(source.Slice(3, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
-                ValidateChecksum(keyAndChecksum);
+            if (Base64.Url.FromStringToSpan(source.Slice(3, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
+                ValidateChecksum(keyAndChecksum))
+            {
+                parsedLength = PublicKeyLengthInBase64;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         else
         {// (key)
@@ -87,8 +96,16 @@ public static class SeedKeyHelper
                 return false;
             }
 
-            return Base64.Url.FromStringToSpan(source.Slice(1, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
-                ValidateChecksum(keyAndChecksum);
+            if (Base64.Url.FromStringToSpan(source.Slice(1, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
+                ValidateChecksum(keyAndChecksum))
+            {
+                parsedLength = RawPublicKeyLengthInBase64 + 2;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 

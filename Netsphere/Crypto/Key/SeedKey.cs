@@ -141,7 +141,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         }
 
         Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
-        if (!SeedKeyHelper.TryParsePublicKey(keyOrientation, span, keyAndChecksum))
+        if (!SeedKeyHelper.TryParsePublicKey(keyOrientation, span, keyAndChecksum, out var parsedLength))
         {
             seed.Clear();
             return false;

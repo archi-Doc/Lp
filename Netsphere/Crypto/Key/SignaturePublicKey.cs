@@ -38,9 +38,12 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     #region TypeSpecific
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
+        => TryParse(source, out publicKey, out _);
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey, out int parsedLength)
     {
         Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
-        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Signature, source, keyAndChecksum))
+        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Signature, source, keyAndChecksum, out parsedLength))
         {
             publicKey = new(keyAndChecksum);
             return true;
