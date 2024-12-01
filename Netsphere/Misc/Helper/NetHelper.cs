@@ -368,7 +368,7 @@ public static class NetHelper
         // 1st: node, 2nd: EnvironmentVariable 'node'
         if (!NetNode.TryParse(node, out var netNode, out _))
         {
-            if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
+            if (!BaseHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
             {
                 if (node == Alternative.Name ||
                     Environment.GetEnvironmentVariable(NetConstants.NodeName) == Alternative.Name)
@@ -386,7 +386,7 @@ public static class NetHelper
         // 1st: remotePrivateKey, 2nd: EnvironmentVariable 'remoteprivatekey'
         if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
         {
-            if (!CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemoteSecretKeyName, out signaturePrivateKey))
+            if (!BaseHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemoteSecretKeyName, out signaturePrivateKey))
             {
                 return default;
             }

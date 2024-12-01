@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using Arc.Crypto;
+using Arc;
 using Tinyhand;
 
 namespace Netsphere;

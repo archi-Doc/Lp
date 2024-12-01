@@ -66,7 +66,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     {
         if (seed.Length != SeedKeyHelper.SeedSize)
         {
-            CryptoHelper.ThrowSizeMismatchException(nameof(seed), SeedKeyHelper.SeedSize);
+            BaseHelper.ThrowSizeMismatchException(nameof(seed), SeedKeyHelper.SeedSize);
         }
 
         return new(seed, keyOrientation);
@@ -291,7 +291,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     {
         if (signature.Length != CryptoSign.SignatureSize)
         {
-            CryptoHelper.ThrowSizeMismatchException(nameof(signature), CryptoSign.SignatureSize);
+            BaseHelper.ThrowSizeMismatchException(nameof(signature), CryptoSign.SignatureSize);
         }
 
         this.PrepareKey();
@@ -302,7 +302,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     {
         if (keyMaterial.Length != CryptoBox.KeyMaterialSize)
         {
-            CryptoHelper.ThrowSizeMismatchException(nameof(keyMaterial), CryptoBox.KeyMaterialSize);
+            BaseHelper.ThrowSizeMismatchException(nameof(keyMaterial), CryptoBox.KeyMaterialSize);
         }
 
         this.PrepareKey();

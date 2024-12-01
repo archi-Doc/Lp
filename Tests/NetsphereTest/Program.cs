@@ -80,7 +80,7 @@ public class Program
         }
 
         // Secrets
-        // CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("k", out var privateKey);
+        // BaseHelper.TryParseFromEnvironmentVariable<NodePrivateKey>("k", out var privateKey);
 
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()

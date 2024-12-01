@@ -130,7 +130,7 @@ public class LpBase
         {
             this.remotePublicKey = publicKey;
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
+        else if (BaseHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
         {
             this.remotePublicKey = publicKey;
         }

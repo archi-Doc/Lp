@@ -41,7 +41,7 @@ public static class SeedKeyHelper
         read = 0;
         if (keyAndChecksum.Length != PublicKeyAndChecksumSize)
         {
-            CryptoHelper.ThrowSizeMismatchException(nameof(keyAndChecksum), PublicKeySize);
+            BaseHelper.ThrowSizeMismatchException(nameof(keyAndChecksum), PublicKeySize);
         }
 
         source = source.Trim();

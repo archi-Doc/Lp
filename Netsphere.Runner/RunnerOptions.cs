@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
-using Arc.Crypto;
+using Arc;
 using Arc.Unit;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -92,7 +92,7 @@ public partial record RunnerOptions
 
         if (this.NodePrivateKey is null)
         {
-            if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePublicKeyName, out privateKey))
+            if (BaseHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePublicKeyName, out privateKey))
             {
                 this.NodePrivateKey = privateKey;
             }
@@ -108,7 +108,7 @@ public partial record RunnerOptions
 
         if (!this.RemotePublicKey.IsValid)
         {
-            if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
+            if (BaseHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
             {
                 this.RemotePublicKey = publicKey;
             }
