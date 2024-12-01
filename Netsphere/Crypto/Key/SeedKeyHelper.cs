@@ -50,21 +50,23 @@ public static class SeedKeyHelper
             return false;
         }
 
-        //Fix
         if (source[0] != PublicKeyOpenBracket)
         {// key
-            if (source.Length != RawPublicKeyLengthInBase64)
+            if (source.Length < RawPublicKeyLengthInBase64)
             {
                 return false;
             }
 
-            return Base64.Url.FromStringToSpan(source, keyAndChecksum, out _) &&
-                ValidateChecksum(keyAndChecksum);
-        }
-
-        if (source[^1] != PublicKeyCloseBracket)
-        {
-            return false;
+            if (Base64.Url.FromStringToSpan(source.Slice(0, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
+                ValidateChecksum(keyAndChecksum))
+            {
+                read = RawPublicKeyLengthInBase64;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         if (source[2] == PublicKeySeparator)
@@ -74,7 +76,8 @@ public static class SeedKeyHelper
                 return false;
             }
 
-            if (source.Length != PublicKeyLengthInBase64)
+            if (source.Length < PublicKeyLengthInBase64 ||
+                source[PublicKeyLengthInBase64 - 1] != PublicKeyCloseBracket)
             {
                 return false;
             }
@@ -92,7 +95,8 @@ public static class SeedKeyHelper
         }
         else
         {// (key)
-            if (source.Length != (RawPublicKeyLengthInBase64 + 2))
+            if (source.Length < (RawPublicKeyLengthInBase64 + 2) ||
+                source[RawPublicKeyLengthInBase64 + 1] != PublicKeyCloseBracket)
             {
                 return false;
             }
