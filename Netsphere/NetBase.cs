@@ -30,11 +30,11 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public TimeSpan DefaultTransmissionTimeout { get; set; } = NetConstants.DefaultTransmissionTimeout;
 
-    public NodePublicKey NodePublicKey { get; private set; }
+    public EncryptionPublicKey NodePublicKey { get; private set; }
 
-    public NodePrivateKey NodePrivateKey { get; private set; } = default!;
+    public SeedKey NodeSeedKey { get; private set; } = default!;
 
-    public bool IsValidNodeKey => this.NodePrivateKey is not null;
+    public bool IsValidNodeKey => this.NodeSeedKey is not null;
 
     internal Func<ServerConnection, ServerConnectionContext> NewServerConnectionContext { get; set; }
 
@@ -65,11 +65,10 @@ public class NetBase : UnitBase, IUnitPreparable
         }
 
         // Node key
-        if (this.NodePrivateKey == null ||
-            !this.NodePrivateKey.Validate())
+        if (this.NodeSeedKey is null)
         {
-            this.NodePrivateKey = NodePrivateKey.Create();
-            this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
+            this.NodeSeedKey = SeedKey.NewEncryption();
+            this.NodePublicKey = this.NodeSeedKey.GetEncryptionPublicKey();
         }
     }
 
@@ -82,26 +81,26 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         this.NetOptions = netsphereOptions;
 
-        if (!string.IsNullOrEmpty(this.NetOptions.NodePrivateKey) &&
-            NodePrivateKey.TryParse(this.NetOptions.NodePrivateKey, out var privateKey))
+        if (!string.IsNullOrEmpty(this.NetOptions.NodeSecretKey) &&
+            SeedKey.TryParse(this.NetOptions.NodeSecretKey, out var seedKey))
         {
-            this.SetNodePrivateKey(privateKey);
+            this.SetNodeSeedKey(seedKey);
         }
 
-        this.NetOptions.NodePrivateKey = string.Empty; // Erase
+        this.NetOptions.NodeSecretKey = string.Empty; // Erase
     }
 
-    public bool SetNodePrivateKey(NodePrivateKey privateKey)
+    public bool SetNodeSeedKey(SeedKey privateKey)
     {
         try
         {
-            this.NodePrivateKey = privateKey;
-            this.NodePublicKey = privateKey.ToPublicKey();
+            this.NodeSeedKey = privateKey;
+            this.NodePublicKey = privateKey.GetEncryptionPublicKey();
             return true;
         }
         catch
         {
-            this.NodePrivateKey = default!;
+            this.NodeSeedKey = default!;
             this.NodePublicKey = default!;
             return false;
         }
@@ -109,6 +108,6 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public byte[] SerializeNodePrivateKey()
     {
-        return TinyhandSerializer.Serialize(this.NodePrivateKey);
+        return TinyhandSerializer.Serialize(this.NodeSeedKey);
     }
 }

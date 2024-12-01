@@ -77,14 +77,14 @@ internal class MergerRemoteAgent : IMergerRemote
             }
 
             var valueProof = ValueProof.Create(value);
-            this.merger.SignProof(valueProof, CredentialProof.LpExpirationMics);
+            this.merger.TrySignProof(valueProof, CredentialProof.LpExpirationMics);
             return valueProof;
         }
         else if (evidence.Validate())
         {// Evidence(ValueProof) -> CredentialProof
             var netNode = this.netStats.GetOwnNetNode();
             var credentialProof = CredentialProof.Create(evidence, netNode);
-            this.merger.SignProof(credentialProof, CredentialProof.LpExpirationMics);
+            this.merger.TrySignProof(credentialProof, CredentialProof.LpExpirationMics);
             return credentialProof;
         }
 

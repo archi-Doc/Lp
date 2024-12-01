@@ -12,5 +12,6 @@ public static class Subcommand
         context.AddSubcommand(typeof(NewAuthoritySubcommand));
         context.AddSubcommand(typeof(RemoveAuthoritySubcommand));
         context.AddSubcommand(typeof(ShowAuthoritySubcommand));
+        context.AddSubcommand(typeof(ChangeAuthorityPasswordSubcommand));
     }
 }

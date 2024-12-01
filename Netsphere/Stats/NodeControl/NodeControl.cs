@@ -7,7 +7,7 @@ using ValueLink.Integrality;
 namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true)]
-public sealed partial class NodeControl : ITinyhandSerializationCallback
+public sealed partial class NodeControl
 {
     public static readonly int MaxLifelineNodes = 32;
     public static readonly int SufficientLifelineNodes = 24;
@@ -324,22 +324,20 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         }
     }
 
-    void ITinyhandSerializationCallback.OnBeforeSerialize()
-    {
-    }
-
-    void ITinyhandSerializationCallback.OnAfterDeserialize()
+    [TinyhandOnDeserialized]
+    private void OnAfterDeserialize()
     {
         this.LoadNodeList();
         this.Prepare();
     }
 
-    void ITinyhandSerializationCallback.OnAfterReconstruct()
+    [TinyhandOnReconstructed]
+    private void OnAfterReconstruct()
     {
         this.LoadNodeList();
     }
 
-    internal void Prepare()
+    private void Prepare()
     {
         List<LifelineNode>? offlineToUnchecked = default;
         foreach (var x in this.lifelineNodes.OfflineLinkChain)
@@ -366,7 +364,7 @@ public sealed partial class NodeControl : ITinyhandSerializationCallback
         var nodes = this.netBase.NetOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            if (!NetNode.TryParse(x, out var node))
+            if (!NetNode.TryParse(x, out var node, out _))
             {
                 continue;
             }

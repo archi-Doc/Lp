@@ -9,7 +9,7 @@ public record RestartOptions
     [SimpleOption("RunnerNode", Description = "Runner nodes", Required = true)]
     public string RunnerNode { get; init; } = string.Empty;
 
-    [SimpleOption(NetConstants.RemotePrivateKeyName, Description = "Private key for remote operation", GetEnvironmentVariable = true)]
+    [SimpleOption(NetConstants.RemoteSecretKeyName, Description = "Private key for remote operation", GetEnvironmentVariable = true)]
     public string RemotePrivateKeyString { get; set; } = string.Empty;
 
     [SimpleOption("ContainerPort", Description = "Port number associated with the container")]
@@ -17,13 +17,13 @@ public record RestartOptions
 
     public void Prepare()
     {
-        if (SignaturePrivateKey.TryParse(this.RemotePrivateKeyString, out var privateKey))
+        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey))
         {
-            this.RemotePrivateKey = privateKey;
+            this.RemoteSeedKey = seedKey;
         }
 
         this.RemotePrivateKeyString = string.Empty;
     }
 
-    public SignaturePrivateKey? RemotePrivateKey { get; private set; }
+    public SeedKey? RemoteSeedKey { get; private set; }
 }

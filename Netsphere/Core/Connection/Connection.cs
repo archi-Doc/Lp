@@ -247,15 +247,15 @@ public abstract class Connection : IDisposable
         this.OnStateChanged();
     }
 
-    public bool SignWithSalt<T>(T value, SignaturePrivateKey privateKey)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+    public void SignWithSalt<T>(T value, SeedKey seedKey)
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         value.Salt = this.Salt;
-        return value.Sign(privateKey);
+        value.Sign(seedKey);
     }
 
     public bool ValidateAndVerifyWithSalt<T>(T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         if (value.Salt != this.Salt)
         {
@@ -455,7 +455,7 @@ Wait:
 
     internal void CleanReceiveTransmission()
     {// using (this.receiveTransmissions.LockObject.EnterScope())
-        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
+        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));//
 
         // Release receive transmissions that have elapsed a certain time after being disposed.
         var currentMics = Mics.FastSystem;

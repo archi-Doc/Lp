@@ -37,18 +37,18 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private void PrepareKey(DefaultCommandOptions options)
     {
-        if (NodePrivateKey.TryParse(options.NodePrivateKey, out var privateKey))
+        if (SeedKey.TryParse(options.NodeSecretKey, out var seedKey))
         {
-            this.netControl.NetBase.SetNodePrivateKey(privateKey);
-            this.netControl.NetTerminal.SetNodeKey(privateKey);
+            this.netControl.NetBase.SetNodeSeedKey(seedKey);
+            this.netControl.NetTerminal.SetNodeSeedKey(seedKey);
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePrivateKeyName, out privateKey))
+        else if (CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.NodeSecretKeyName, out seedKey))
         {
-            this.netControl.NetBase.SetNodePrivateKey(privateKey);
-            this.netControl.NetTerminal.SetNodeKey(privateKey);
+            this.netControl.NetBase.SetNodeSeedKey(seedKey);
+            this.netControl.NetTerminal.SetNodeSeedKey(seedKey);
         }
 
-        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey, out _))
         {
             this.remoteData.RemotePublicKey = publicKey;
         }
@@ -60,7 +60,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private async Task PunchNode(string punchNode)
     {
-        if (!NetAddress.TryParse(punchNode, out var node))
+        if (!NetAddress.TryParse(punchNode, out var node, out _))
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<NetAddress>("punchnode", out node))
             {
@@ -90,8 +90,8 @@ public record DefaultCommandOptions
     [SimpleOption("PunchNode", Description = "Punch node")]
     public string PunchNode { get; init; } = string.Empty;
 
-    [SimpleOption("NodePrivatekey", Description = "Node private key")]
-    public string NodePrivateKey { get; init; } = string.Empty;
+    [SimpleOption("NodeSecretKey", Description = "Node secret key")]
+    public string NodeSecretKey { get; init; } = string.Empty;
 
     [SimpleOption("RemotePublickey", Description = "Remote public key")]
     public string RemotePublicKey { get; set; } = string.Empty;

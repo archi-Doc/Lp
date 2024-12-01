@@ -8,32 +8,41 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("remove-authority")]
 public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
-    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, Control control)
+    public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, AuthorityControl authorityControl, IUserInterfaceService userInterfaceService)
     {
-        this.control = control;
+        this.authorityControl = authorityControl;
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
+    public async Task RunAsync(AuthoritySubcommandNameOptions options, string[] args)
     {
-        var result = this.control.AuthorityControl.RemoveAuthority(option.AuthorityName);
-
-        if (result == AuthorityResult.Success)
-        {
-            this.logger.TryGet()?.Log(Hashed.Authority.Removed, option.AuthorityName);
+        if (!this.authorityControl.Exists(options.AuthorityName))
+        {// Not found
+            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, options.AuthorityName);
+            return;
         }
-        else if (result == AuthorityResult.NotFound)
+        else
         {
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, option.AuthorityName);
+            if (await this.userInterfaceService.RequestYesOrNo(Hashed.Authority.RemoveConfirm, options.AuthorityName) != true)
+            {
+                return;
+            }
+        }
+
+        var result = this.authorityControl.RemoveAuthority(options.AuthorityName);
+
+        if (result)
+        {// Success
+            this.logger.TryGet()?.Log(Hashed.Authority.Removed, options.AuthorityName);
+        }
+        else
+        {// Failed
+            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
         }
     }
 
-    private readonly Control control;
+    private readonly AuthorityControl authorityControl;
     private readonly ILogger logger;
-}
-
-public record AuthoritySubcommandNameOptions
-{
-    [SimpleOption("Name", Description = "Authority name", Required = true)]
-    public string AuthorityName { get; init; } = string.Empty;
+    private readonly IUserInterfaceService userInterfaceService;
 }

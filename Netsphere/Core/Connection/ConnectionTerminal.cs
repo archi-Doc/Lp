@@ -192,8 +192,8 @@ public class ConnectionTerminal
         }
 
         // Create a new encryption key
-        var privateKey = NodePrivateKey.Create();
-        var publicKey = privateKey.ToPublicKey();
+        var seedKey = SeedKey.NewEncryption();
+        var publicKey = seedKey.GetEncryptionPublicKey();
 
         // Create a new connection
         var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
@@ -203,7 +203,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -237,13 +237,13 @@ public class ConnectionTerminal
             minimumNumberOfRelays = this.NetTerminal.MinimumNumberOfRelays;
         }
 
-        var privateKey = this.NetTerminal.NodePrivateKey;
+        var seedKey = this.NetTerminal.NodeSeedKey;
         var publicKey = this.NetTerminal.NodePublicKey;
         if (minimumNumberOfRelays > 0)
         {
             // mode = Connection.ConnectMode.NoReuse; // Do not reuse connections.
-            privateKey = NodePrivateKey.Create(); // Do not reuse node encryption keys.
-            publicKey = privateKey.ToPublicKey();
+            seedKey = SeedKey.NewEncryption(); // Do not reuse node encryption keys.
+            publicKey = seedKey.GetEncryptionPublicKey();
         }
 
         using (this.clientConnections.LockObject.EnterScope())
@@ -277,7 +277,7 @@ public class ConnectionTerminal
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, privateKey, node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, t.Value);
         if (newConnection is null)
         {
             return default;
@@ -365,15 +365,10 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, NodePrivateKey clientPrivateKey, NodePublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
-        // KeyMaterial
-        var pair = new NodeKeyPair(clientPrivateKey, serverPublicKey);
-        var material = pair.DeriveKeyMaterial();
-        if (material is null)
-        {
-            return default;
-        }
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
@@ -384,15 +379,10 @@ public class ConnectionTerminal
 
     internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
     {
-        // KeyMaterial
-        var pair = new NodeKeyPair(this.NetTerminal.NodePrivateKey, p.ClientPublicKey);
-        var material = pair.DeriveKeyMaterial();
-        if (material is null)
-        {
-            return false;
-        }
-
         var node = new NetNode(in endPoint, p.ClientPublicKey);
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        this.NetTerminal.NodeSeedKey.DeriveKeyMaterial(p.ClientPublicKey, material);
+
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         this.netStats.NodeControl.TryAddUnknownNode(node);
@@ -406,16 +396,17 @@ public class ConnectionTerminal
         return true;
     }
 
-    internal void CreateEmbryo(byte[] material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
+    //Imp
+    internal void CreateEmbryo(ReadOnlySpan<byte> material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
     {// ClientSalt, ServerSalt, Material, ClientSalt2, ServerSalt2
-        Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + KeyHelper.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
+        Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + CryptoBox.KeyMaterialSize + sizeof(ulong) + sizeof(ulong)];
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
         span = span.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(span, p2.ServerSalt);
         span = span.Slice(sizeof(ulong));
-        material.AsSpan().CopyTo(span);
-        span = span.Slice(KeyHelper.PrivateKeyLength);
+        material.CopyTo(span);
+        span = span.Slice(CryptoBox.KeyMaterialSize);
         BitConverter.TryWriteBytes(span, p.ClientSalt2);
         span = span.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(span, p2.ServerSalt2);

@@ -1,47 +1,48 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using Arc.Collections;
+using System.Runtime.InteropServices;
 
-#pragma warning disable SA1204
+#pragma warning disable SA1202
 
 namespace Netsphere.Crypto;
 
-/// <summary>
-/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).<br/>
-/// Encryption: ECDiffieHellman, secp256r1.
-/// </summary>
 [TinyhandObject]
+[StructLayout(LayoutKind.Explicit)]
 public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<EncryptionPublicKey>, IStringConvertible<EncryptionPublicKey>
-{
-    #region Unique
+{// (s:key)
+    public const char Identifier = 'e';
 
-    private static ObjectCache<EncryptionPublicKey, ECDiffieHellman> Cache { get; } = new(100);
+    #region FieldAndProperty
 
-    public ObjectCache<EncryptionPublicKey, ECDiffieHellman>.Interface TryGetEcdh()
-    {
-        if (Cache.TryGet(this) is not { } e)
-        {
-            var x = new byte[32];
-            this.WriteX(x);
-            e = KeyHelper.CreateEcdhFromX(x, this.YTilde);
-        }
+    [Key(0)]
+    [FieldOffset(0)]
+    private readonly ulong x0;
 
-        return Cache.CreateInterface(this, e);
-    }
+    [Key(1)]
+    [FieldOffset(8)]
+    private readonly ulong x1;
+
+    [Key(2)]
+    [FieldOffset(16)]
+    private readonly ulong x2;
+
+    [Key(3)]
+    [FieldOffset(24)]
+    private readonly ulong x3;
 
     #endregion
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey, out int read)
     {
-        if (KeyHelper.TryParsePublicKey(source, out var keyValue, out var x) &&
-            KeyHelper.GetKeyClass(keyValue) == KeyClass.Encryption)
+        Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
+        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Encryption, source, keyAndChecksum, out read))
         {
-            publicKey = new(keyValue, x);
+            publicKey = new(keyAndChecksum);
             return true;
         }
 
@@ -49,40 +50,19 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         return false;
     }
 
-    public static int MaxStringLength
-        => KeyHelper.PublicKeyLengthInBase64;
+    public static int MaxStringLength => SeedKeyHelper.PublicKeyLengthInBase64;
 
     public int GetStringLength()
-        => KeyHelper.PublicKeyLengthInBase64;
+        => SeedKeyHelper.PublicKeyLengthInBase64;
 
-    [SkipLocalsInit]
     public bool TryFormat(Span<char> destination, out int written)
-    {
-        if (destination.Length < KeyHelper.PublicKeyLengthInBase64)
-        {
-            written = 0;
-            return false;
-        }
+        => SeedKeyHelper.TryFormatPublicKey(this.AsSpan(), destination, out written);
 
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength + KeyHelper.ChecksumLength];
-        this.TryWriteBytes(span, out _);
-        KeyHelper.SetChecksum(span);
-        return Base64.Url.FromByteArrayToSpan(span, destination, out written);
-    }
+    public bool TryFormatWithBracket(Span<char> destination, out int written)
+        => SeedKeyHelper.TryFormatPublicKeyWithBracket(Identifier, this.AsSpan(), destination, out written);
 
-    public EncryptionPublicKey(ulong x0, ulong x1, ulong x2, ulong x3, uint yTilde)
+    public EncryptionPublicKey(ReadOnlySpan<byte> b)
     {
-        this.keyValue = KeyHelper.CreatePublicKeyValue(KeyClass.Encryption, yTilde);
-        this.x0 = x0;
-        this.x1 = x1;
-        this.x2 = x2;
-        this.x3 = x3;
-    }
-
-    internal EncryptionPublicKey(byte keyValue, ReadOnlySpan<byte> x)
-    {
-        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
-        var b = x;
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x1 = BitConverter.ToUInt64(b);
@@ -92,139 +72,91 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public bool IsSameKey(EncryptionPrivateKey privateKey)
+    public EncryptionPublicKey(ulong x0, ulong x1, ulong x2, ulong x3)
     {
-        if (KeyHelper.ToPublicKeyValue(privateKey.KeyValue) != this.KeyValue)
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
+    }
+
+    public SignaturePublicKey ConvertToSignaturePublicKey()
+    {
+        var key = default(SignaturePublicKey);
+        CryptoDual.PublicKey_BoxToSign(this.AsSpan(), key.UnsafeAsSpan());
+        return key;
+    }
+
+    public bool Equals(EncryptionPublicKey other)
+        => this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
+
+    public bool TryEncrypt(ReadOnlySpan<byte> data, ReadOnlySpan<byte> nonce24, ReadOnlySpan<byte> secretKey32, Span<byte> cipher)
+    {
+        if (nonce24.Length != CryptoBox.NonceSize)
         {
             return false;
         }
 
-        var span = privateKey.X.AsSpan();
-        if (span.Length != KeyHelper.PublicKeyHalfLength)
+        if (secretKey32.Length != CryptoBox.SecretKeySize)
         {
             return false;
         }
 
-        if (this.x0 != BitConverter.ToUInt64(span))
+        if (cipher.Length != data.Length + CryptoBox.MacSize)
         {
             return false;
         }
 
-        span = span.Slice(sizeof(ulong));
-        if (this.x1 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
-        span = span.Slice(sizeof(ulong));
-        if (this.x2 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
-        span = span.Slice(sizeof(ulong));
-        if (this.x3 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
+        CryptoBox.Encrypt(data, nonce24, secretKey32, this.AsSpan(), cipher);
         return true;
     }
 
-    public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
-        => this.KeyClass == KeyClass.Encryption;
+    public bool TryDecrypt(ReadOnlySpan<byte> cipher, ReadOnlySpan<byte> nonce24, ReadOnlySpan<byte> secretKey32, Span<byte> data)
+    {
+        if (nonce24.Length != CryptoBox.NonceSize)
+        {
+            return false;
+        }
 
-    public bool Equals(EncryptionPublicKey other)
-        => this.keyValue == other.keyValue &&
-        this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
+        if (secretKey32.Length != CryptoBox.SecretKeySize)
+        {
+            return false;
+        }
 
-    public override string ToString()
-        => $"({this.ToBase64()})";
+        if (data.Length != cipher.Length - CryptoBox.MacSize)
+        {
+            return false;
+        }
+
+        return CryptoBox.TryDecrypt(cipher, nonce24, secretKey32, this.AsSpan(), data);
+    }
 
     #endregion
 
     #region Common
 
-    [Key(0)]
-    private readonly byte keyValue;
+    public bool IsValid
+        => this.x0 != 0;
 
-    [Key(1)]
-    private readonly ulong x0;
+    public bool Validate()
+        => this.IsValid;
 
-    [Key(2)]
-    private readonly ulong x1;
+    [UnscopedRef]
+    public ReadOnlySpan<byte> AsSpan()
+        => MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref Unsafe.AsRef(in this), 1));
 
-    [Key(3)]
-    private readonly ulong x2;
-
-    [Key(4)]
-    private readonly ulong x3;
-
-    public bool IsValid => this.x0 != 0;
-
-    public byte KeyValue => this.keyValue;
-
-    public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
-
-    public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
-
-    public ulong X0 => this.x0;
-
-    public ulong X1 => this.x1;
-
-    public ulong X2 => this.x2;
-
-    public ulong X3 => this.x3;
-
-    public bool TryWriteBytes(Span<byte> destination, out int written)
-    {
-        if (destination.Length < KeyHelper.EncodedLength)
-        {
-            written = 0;
-            return false;
-        }
-
-        var b = destination;
-        b[0] = this.keyValue;
-        b = b.Slice(1);
-        this.WriteX(b);
-
-        written = KeyHelper.EncodedLength;
-        return true;
-    }
-
-    public void WriteX(Span<byte> span)
-    {
-        var b = span;
-        BitConverter.TryWriteBytes(b, this.x0);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x1);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x2);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x3);
-    }
-
-    public ulong GetChecksum()
-    {
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
-        this.TryWriteBytes(span, out _);
-        return XxHash3.Hash64(span);
-    }
-
-    public string ToBase64()
-    {
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength + KeyHelper.ChecksumLength];
-        this.TryWriteBytes(span, out _);
-        KeyHelper.SetChecksum(span);
-        return $"{Base64.Url.FromByteArrayToString(span)}";
-    }
-
-    public Identifier ToIdentifier()
-        => new(this.x0, this.x1, this.x2, this.x3);
+    internal Span<byte> UnsafeAsSpan()
+        => MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref Unsafe.AsRef(in this), 1));
 
     public override int GetHashCode()
         => (int)this.x0;
+
+    public override string ToString()
+    {
+        Span<char> s = stackalloc char[SeedKeyHelper.PublicKeyLengthInBase64];
+        this.TryFormatWithBracket(s, out _);
+        return s.ToString();
+    }
 
     #endregion
 }

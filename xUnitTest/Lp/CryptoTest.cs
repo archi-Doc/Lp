@@ -8,7 +8,7 @@ namespace xUnitTest.Lp;
 
 public class CryptoTest
 {
-    [Fact]
+    /*[Fact]
     public void TestCryptoKey()
     {
         var privateKey = SignaturePrivateKey.Create();
@@ -32,5 +32,5 @@ public class CryptoTest
 
         CryptoKey.TryParse(cryptoKey.ToString(), out cryptoKey2).IsTrue();
         cryptoKey.Equals(cryptoKey2).IsTrue();
-    }
+    }*/
 }

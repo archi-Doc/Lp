@@ -57,7 +57,7 @@ public partial record LpOptions
     [SimpleOption("Alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
-    [SimpleOption(NetConstants.NodePrivateKeyName, Description = "Node private key", GetEnvironmentVariable = true)]
+    [SimpleOption(NetConstants.NodeSecretKeyName, Description = "Node private key", GetEnvironmentVariable = true)]
     public string NodePrivateKey { get; set; } = string.Empty;
 
     [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Remote public key", GetEnvironmentVariable = true)]
@@ -86,7 +86,7 @@ public partial record LpOptions
         return new NetOptions() with
         {
             Port = this.Port,
-            NodePrivateKey = this.NodePrivateKey,
+            NodeSecretKey = this.NodePrivateKey,
             NodeList = this.NodeList,
             EnablePing = this.EnablePing,
             EnableServer = this.EnableServer,

@@ -73,7 +73,7 @@ public sealed partial class PacketTerminal
     private readonly Item.GoshujinClass items = new();
 
     public static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out BytePool.RentMemory rentMemory)
-        where TPacket : IPacket, ITinyhandSerialize<TPacket>
+        where TPacket : IPacket, ITinyhandSerializable<TPacket>
     {
         if (packetId == 0)
         {
@@ -113,8 +113,8 @@ public sealed partial class PacketTerminal
     /// <summary>
     /// Sends a packet to a specified address and waits for a response.
     /// </summary>
-    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
-    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerializable.</typeparam>
+    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerializable.</typeparam>
     /// <param name="netAddress">The address to send the packet to.</param>
     /// <param name="packet">The packet to send.</param>
     /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
@@ -126,8 +126,8 @@ public sealed partial class PacketTerminal
     /// <param name="incomingCircuit">true if the incoming circuit is used; otherwise, false.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="NetResult"/>, the received packet value of type <typeparamref name="TReceive"/>, and the round-trip time in microseconds.</returns>
     public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetAddress netAddress, TSend packet, int relayNumber = 0, CancellationToken cancellationToken = default, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6, bool incomingCircuit = false)
-        where TSend : IPacket, ITinyhandSerialize<TSend>
-        where TReceive : IPacket, ITinyhandSerialize<TReceive>
+        where TSend : IPacket, ITinyhandSerializable<TSend>
+        where TReceive : IPacket, ITinyhandSerializable<TReceive>
     {
         if (!this.netTerminal.IsActive)
         {
@@ -181,8 +181,8 @@ public sealed partial class PacketTerminal
     /*/// <summary>
     /// Sends a packet to a specified address and waits for a response.
     /// </summary>
-    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerialize.</typeparam>
-    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerialize.</typeparam>
+    /// <typeparam name="TSend">The type of the packet to send. Must implement IPacket and ITinyhandSerializable.</typeparam>
+    /// <typeparam name="TReceive">The type of the packet to receive. Must implement IPacket and ITinyhandSerializable.</typeparam>
     /// <param name="endPoint">The endpoint to send the packet to.</param>
     /// <param name="packet">The packet to send.</param>
     /// <param name="relayNumber">Specify the minimum number of relays or the target relay [default is 0].<br/>
@@ -191,8 +191,8 @@ public sealed partial class PacketTerminal
     /// 0 &gt;: The minimum number of relays.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceive<TSend, TReceive>(NetEndpoint endPoint, TSend packet, int relayNumber = 0)
-    where TSend : IPacket, ITinyhandSerialize<TSend>
-    where TReceive : IPacket, ITinyhandSerialize<TReceive>
+    where TSend : IPacket, ITinyhandSerializable<TSend>
+    where TReceive : IPacket, ITinyhandSerializable<TReceive>
     {
         if (!this.netTerminal.IsActive)
         {

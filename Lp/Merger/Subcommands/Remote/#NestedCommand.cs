@@ -28,7 +28,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 
     public RobustConnection? RobustConnection { get; set; }
 
-    public SignaturePrivateKey RemoteKey { get; set; } = SignaturePrivateKey.Empty;
+    public SeedKey? RemoteKey { get; set; }
 }
 
 [SimpleCommand("merger-remote")]
@@ -45,7 +45,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     public async Task RunAsync(CommandOptions options, string[] args)
     {
-        NetNode? node = NetNode.Alternative;
+        NetNode? node = Alternative.NetNode;
         if (!string.IsNullOrEmpty(options.Node))
         {
             if (!NetNode.TryParseNetNode(this.logger, options.Node, out var n))
@@ -62,14 +62,14 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             authority = args[0];
         }
 
-        var privateKey = await this.lpService.GetSignaturePrivateKey(this.logger, authority, options.Vault, options.PrivateKey);
-        if (privateKey is null)
+        var seedKey = await this.lpService.GetSignaturePrivateKey(this.logger, authority, options.Vault, options.PrivateKey);
+        if (seedKey is null)
         {
             return;
         }
 
         this.userInterfaceService.WriteLine(node.ToString());
-        this.userInterfaceService.WriteLine($"Remote key: {privateKey.ToPublicKey()}");
+        this.userInterfaceService.WriteLine($"Remote key: {seedKey.GetSignaturePublicKey()}");
 
         this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
             node,
@@ -77,7 +77,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 async connection =>
                 {
                     var token = new AuthenticationToken(connection.Salt);
-                    token.Sign(privateKey);
+                    seedKey.Sign(token);
                     return await connection.GetService<IMergerRemote>().Authenticate(token) == NetResult.Success;
                 }));
 

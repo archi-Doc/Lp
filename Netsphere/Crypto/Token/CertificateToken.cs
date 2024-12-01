@@ -12,7 +12,7 @@ namespace Netsphere.Crypto;
 /// <typeparam name="T">The type of the certificate object.</typeparam>
 [TinyhandObject]
 public partial class CertificateToken<T> : ISignAndVerify, IEquatable<CertificateToken<T>>, IStringConvertible<CertificateToken<T>>
-    where T : ITinyhandSerialize<T>
+    where T : ITinyhandSerializable<T>
 {
     private const char Identifier = 'C';
 
@@ -50,8 +50,8 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
 
     #endregion
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CertificateToken<T> token)
-        => TokenHelper.TryParse(Identifier, source, out token);
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CertificateToken<T> token, out int read)
+        => TokenHelper.TryParse(Identifier, source, out token, out read);
 
     public bool Validate()
     {

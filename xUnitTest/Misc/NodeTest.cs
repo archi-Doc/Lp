@@ -64,7 +64,7 @@ public class NodeTest
     [Fact]
     public void DualAddressAndPublicKey1()
     {
-        TestDualNode("127.0.0.1:49999(CDglzWlh9k899xGikhmm6_8gcxEXh1mAl5DwMjeIF9Z9B8VL)", false).IsTrue();
+        TestDualNode("127.0.0.1:49999(e:sSe258iWUhPXCzadvA5xMMCb9czjKgUrPIJWebm-CoEMCb_G)", false).IsTrue();
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class NodeTest
 
     private static bool TestDualNode(string utf16, bool validation, bool compareUtf16 = true)
     {
-        if (!NetNode.TryParse(utf16, out var node))
+        if (!NetNode.TryParse(utf16, out var node, out _))
         {
             throw new Exception();
         }
@@ -158,7 +158,7 @@ public class NodeTest
             utf16.Is(destination.ToString());
         }
 
-        if (!NetNode.TryParse(destination, out var node2))
+        if (!NetNode.TryParse(destination, out var node2, out _))
         {
             throw new Exception();
         }
@@ -176,7 +176,7 @@ public class NodeTest
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
-        if (!NetNode.TryParse(destination, out var addressAndKey2))
+        if (!NetNode.TryParse(destination, out var addressAndKey2, out _))
         {
             throw new Exception();
         }
@@ -190,26 +190,26 @@ public class NodeTest
 
     private static void GenerateDualNode(RandomVault r, int type, out NetNode addressAndKey)
     {
-        var key = NodePrivateKey.Create();
+        var key = SeedKey.NewEncryption();
 
         var port = (ushort)r.NextInt32(NetConstants.MinPort, NetConstants.MaxPort);
         if (type == 0)
         {// IPv4
             var address4 = r.NextUInt32();
-            addressAndKey = new(new(address4, 0, 0, port), key.ToPublicKey());
+            addressAndKey = new(new(address4, 0, 0, port), key.GetEncryptionPublicKey());
         }
         else if (type == 1)
         {// IPv6
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(0, address6a, address6b, port), key.ToPublicKey());
+            addressAndKey = new(new(0, address6a, address6b, port), key.GetEncryptionPublicKey());
         }
         else
         {
             var address4 = r.NextUInt32();
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(address4, address6a, address6b, port), key.ToPublicKey());
+            addressAndKey = new(new(address4, address6a, address6b, port), key.GetEncryptionPublicKey());
         }
     }
 

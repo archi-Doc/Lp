@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
-using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.AuthorityCommand;
@@ -30,15 +29,15 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         }
 
         var seconds = option.LifetimeInSeconds < 0 ? 0 : option.LifetimeInSeconds;
-        var authorityInfo = new Lp.T3cs.Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
-        var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
+        var authority = new Authority(seed, option.Lifetime, Mics.FromSeconds(seconds));
+        var result = this.authorityControl.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authority);
 
-        if (result == AuthorityResult.Success)
-        {
+        if (result)
+        {// Success
             this.logger.TryGet()?.Log(Hashed.Authority.Created, option.Name);
         }
-        else if (result == AuthorityResult.AlreadyExists)
-        {
+        else
+        {// Failed
             this.logger.TryGet()?.Log(Hashed.Authority.AlreadyExists, option.Name);
         }
     }

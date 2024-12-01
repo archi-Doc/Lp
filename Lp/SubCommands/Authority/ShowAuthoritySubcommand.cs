@@ -17,10 +17,16 @@ public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNa
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
+        if (!this.authorityControl.Exists(option.AuthorityName))
+        {// Not found
+            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, option.AuthorityName);
+            return;
+        }
+
         var authority = await this.authorityControl.GetAuthority(option.AuthorityName);
         if (authority != null)
         {
-            this.consoleService.WriteLine($"{option.AuthorityName}: {authority.UnsafeToString()}");
+            this.consoleService.WriteLine($"{option.AuthorityName}: {authority.ToString()}");
         }
         else
         {

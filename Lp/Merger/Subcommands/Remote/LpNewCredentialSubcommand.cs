@@ -25,13 +25,13 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (!SignaturePublicKey.TryParse(options.PublicKey, out var publicKey))
+        if (!SignaturePublicKey.TryParse(options.PublicKey, out var publicKey, out _))
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidPublicKey);
             return;
         }
 
-        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
+        /*if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
         {
             return;
         }
@@ -62,7 +62,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             !credentialProof.ValidateAndVerify())
         {
             return;
-        }
+        }*/
     }
 
     private readonly ILogger logger;

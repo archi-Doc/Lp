@@ -126,7 +126,7 @@ public class LpBase
             this.NodeName = System.Environment.OSVersion.ToString();
         }
 
-        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey, out _))
         {
             this.remotePublicKey = publicKey;
         }
@@ -134,10 +134,6 @@ public class LpBase
         {
             this.remotePublicKey = publicKey;
         }
-
-        // Remote public key
-        // SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
-        // this.RemotePublicKey = remoteKey;
     }
 
     public bool TryGetRemotePublicKey(out SignaturePublicKey publicKey)

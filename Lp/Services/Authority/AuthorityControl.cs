@@ -12,104 +12,97 @@ public class AuthorityControl
 {
     public const string VaultPrefix = "Authority\\";
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static string GetVaultName(string name) => VaultPrefix + name;
+
+    #region FieldAndProperty
+
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly VaultControl vaultControl;
+
+    #endregion
+
     public AuthorityControl(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
-        this.UserInterfaceService = userInterfaceService;
+        this.userInterfaceService = userInterfaceService;
         this.vaultControl = vaultControl;
     }
 
-    public string[] GetNames()
-        => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
-
-    public async Task<Authority?> GetAuthority(string name)
-    {
-        AuthorityInterface? authorityInterface;
-        using (this.lockObject.EnterScope())
-        {
-            if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
-            {// New interface
-                var vaultName = GetVaultName(name);
-                if (!this.vaultControl.Root.TryGetByteArray(vaultName, out var decrypted, out _))
-                {// Not found
-                    return null;
-                }
-
-                authorityInterface = new AuthorityInterface(this, name, decrypted);
-                this.nameToInterface.Add(name, authorityInterface);
-            }
-        }
-
-        return await authorityInterface.Prepare().ConfigureAwait(false);
-    }
-
-    public AuthorityResult NewAuthority(string name, string passPhrase, Authority authority)
+    public async Task<Authority?> GetAuthority(string name, string? password = null)
     {
         var vaultName = GetVaultName(name);
-
-        using (this.lockObject.EnterScope())
-        {
-            if (this.vaultControl.Root.Exists(vaultName))
+        Vault? vault;
+        Authority? authority = default;
+        if (password is not null)
+        {// Password is specified.
+            if (!this.vaultControl.Root.TryGetVault(vaultName, password, out vault))
             {
-                return AuthorityResult.AlreadyExists;
-            }
-
-            PasswordEncryption.Encrypt(TinyhandSerializer.Serialize(authority), passPhrase, out var encrypted);//
-            if (this.vaultControl.Root.TryAddByteArray(vaultName, encrypted, out _))
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.AlreadyExists;
+                return default;
             }
         }
-    }
-
-    public bool Exists(string name)
-        => this.vaultControl.Root.Exists(GetVaultName(name));
-
-    public AuthorityResult RemoveAuthority(string name)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vaultControl.Root.Remove(GetVaultName(name));
-
-            if (vaultRemoved)
+        else
+        {// Not specified.
+            if (this.vaultControl.Root.TryGetVault(vaultName, string.Empty, out vault))
             {
-                return AuthorityResult.Success;
+                authority = Authority.GetFromVault(vault);
+                if (authority is null ||
+                    authority.IsExpired())
+                {
+                    vault = null;
+                }
             }
-            else
+
+            while (vault is null)
             {
-                return AuthorityResult.NotFound;
+                password = await this.userInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
+                if (password == null)
+                {// Canceled
+                    return default;
+                }
+
+                this.vaultControl.Root.TryGetVault(vaultName, password, out vault);
             }
         }
-    }
 
-    public async Task<Authority?> GetLpAuthority(ILogger? logger)
-    {
-        var authority = await this.GetAuthority(LpConstants.LpAlias).ConfigureAwait(false);
-        if (authority == null ||
-            !authority.PublicKey.Equals(LpConstants.LpPublicKey))
+        authority ??= Authority.GetFromVault(vault);
+        if (password is not null)
         {
-            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, LpConstants.LpAlias);
-            return default;
+            authority?.ResetExpirationMics();
         }
 
         return authority;
     }
 
-    #region FieldAndProperty
+    public string[] GetNames()
+        => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static string GetVaultName(string name) => VaultPrefix + name;
+    public bool Exists(string name)
+        => this.vaultControl.Root.Exists(GetVaultName(name));
 
-#pragma warning disable SA1401
-    internal IUserInterfaceService UserInterfaceService;
-#pragma warning restore SA1401
-    private readonly VaultControl vaultControl;
-    private readonly Lock lockObject = new();
-    private readonly Dictionary<string, AuthorityInterface> nameToInterface = new();
+    public bool NewAuthority(string name, string password, Authority authority)
+    {
+        var vaultName = GetVaultName(name);
+        if (!this.vaultControl.Root.TryAddVault(vaultName, out var vault, out _))
+        {
+            return false;
+        }
 
-    #endregion
+        authority.Vault = vault;
+        vault.SetPassword(password);
+        vault.AddObject(Authority.Name, authority);
+        return true;
+    }
+
+    public bool RemoveAuthority(string name)
+    {
+        var vaultName = GetVaultName(name);
+        if (this.vaultControl.Root.Remove(vaultName))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }

@@ -19,7 +19,7 @@ internal class TestServiceImpl : ITestService
     async NetTask<string?> ITestService.DoubleString(string input)
         => input + input;
 
-    [NetServiceFilter<NullFilter>]
+    // [NetServiceFilter<NullFilter>]
     public async NetTask<byte[]?> Pingpong(byte[] data)
     {
         return data;
@@ -27,6 +27,12 @@ internal class TestServiceImpl : ITestService
 
     async NetTask<NetResult> INetServiceAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
+        var transmissionContext = TransmissionContext.Current;
+        if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))
+        {// Invalid token
+            return NetResult.NotAuthenticated;
+        }
+
         return NetResult.Success;
     }
 }

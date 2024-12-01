@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 
 namespace Netsphere;
@@ -46,11 +44,11 @@ public class RobustConnection
         this.authenticate = authenticate;
     }
 
-    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, SignaturePrivateKey signaturePrivateKey)
+    public static async Task<bool> SetAuthenticationToken(ClientConnection connection, SeedKey seedKey)
     {
         var context = connection.GetContext();
         var token = new AuthenticationToken(connection.Salt);
-        token.Sign(signaturePrivateKey);
+        token.Sign(seedKey);
         if (context.AuthenticationTokenEquals(token.PublicKey))
         {
             return true;

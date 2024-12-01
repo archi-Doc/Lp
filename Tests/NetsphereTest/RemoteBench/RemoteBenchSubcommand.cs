@@ -22,7 +22,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetNode.TryParse(options.Node, out var node))
+        if (!NetNode.TryParse(options.Node, out var node, out _))
         {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
             if (!NetAddress.TryParse(this.logger, options.Node, out var address))
             {
@@ -54,10 +54,10 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        var privateKey = SignaturePrivateKey.Create();
+        var seedKey = SeedKey.NewSignature();
         var agreement = connection.Agreement with { EnableBidirectionalConnection = true, MinimumConnectionRetentionMics = Mics.FromMinutes(5), };
         var token = new CertificateToken<ConnectionAgreement>(agreement);
-        connection.SignWithSalt(token, privateKey);
+        connection.SignWithSalt(token, seedKey);
         connection.ValidateAndVerifyWithSalt(token);
 
         // var r = await connection.UpdateAgreement(token);

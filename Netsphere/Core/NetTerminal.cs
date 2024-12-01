@@ -47,7 +47,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
 
-    public NodePublicKey NodePublicKey { get; private set; }
+    public EncryptionPublicKey NodePublicKey { get; private set; }
 
     public NetStats NetStats { get; }
 
@@ -73,7 +73,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public IRelayControl RelayControl { get; private set; }
 
-    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
+    internal SeedKey NodeSeedKey { get; private set; } = default!;
 
     internal NetSender NetSender { get; }
 
@@ -137,10 +137,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return await this.Connect(netNode, mode).ConfigureAwait(false);
     }
 
-    public void SetNodeKey(NodePrivateKey nodePrivateKey)
+    public void SetNodeSeedKey(SeedKey nodePrivateKey)
     {
-        this.NodePrivateKey = nodePrivateKey;
-        this.NodePublicKey = nodePrivateKey.ToPublicKey();
+        this.NodeSeedKey = nodePrivateKey;
+        this.NodePublicKey = nodePrivateKey.GetEncryptionPublicKey();
     }
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
@@ -152,15 +152,15 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (!this.IsAlternative)
         {
-            this.NodePrivateKey = this.NetBase.NodePrivateKey;
+            this.NodeSeedKey = this.NetBase.NodeSeedKey;
         }
         else
         {
-            this.NodePrivateKey = NodePrivateKey.AlternativePrivateKey;
-            this.Port = NetAddress.Alternative.Port;
+            this.NodeSeedKey = Alternative.SeedKey;
+            this.Port = Alternative.Port;
         }
 
-        this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
+        this.NodePublicKey = this.NodeSeedKey.GetEncryptionPublicKey();
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)

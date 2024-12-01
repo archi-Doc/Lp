@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = "lockObject")]
-public sealed partial class NetStats : ITinyhandSerializationCallback
+public sealed partial class NetStats
 {
     public const string Filename = "NetStat.tinyhand";
 
@@ -156,16 +156,14 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         }
     }
 
-    void ITinyhandSerializationCallback.OnAfterReconstruct()
-    {
-    }
-
-    void ITinyhandSerializationCallback.OnBeforeSerialize()
+    [TinyhandOnSerializing]
+    private void OnSerializing()
     {
         this.LastMics = Mics.GetUtcNow();
     }
 
-    void ITinyhandSerializationCallback.OnAfterDeserialize()
+    [TinyhandOnDeserialized]
+    private void OnDeserialized()
     {
         var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);

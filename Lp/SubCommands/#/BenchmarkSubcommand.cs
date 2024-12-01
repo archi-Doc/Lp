@@ -21,7 +21,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         try
         {
             // var testKeyString = TinyhandSerializer.SerializeToString(AuthorityPrivateKey.Create());
-            this.privateKey = SignaturePrivateKey.Create();
+            this.seedKey = SeedKey.NewSignature();
         }
         catch
         {
@@ -53,13 +53,13 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private async Task RunCryptoBenchmark(BenchmarkOptions options)
     {
-        if (this.privateKey == null)
+        if (this.seedKey == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
+            this.logger.TryGet(LogLevel.Error)?.Log("No seed key.");
             return;
         }
 
-        this.userInterfaceService.WriteLine($"Key: {this.privateKey.ToString()}");
+        this.userInterfaceService.WriteLine($"Key: {this.seedKey.ToString()}");
 
         var bytes = TinyhandSerializer.Serialize(TestKeyString);
 
@@ -70,10 +70,11 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
             benchTimer.Start();
 
+            var sign = new byte[CryptoSign.SignatureSize];
             for (var i = 0; i < 1000; i++)
             {
-                var sign = this.privateKey.SignData(bytes);
-                var valid = this.privateKey.VerifyData(bytes, sign);
+                this.seedKey.Sign(bytes, sign);
+                var valid = this.seedKey.GetSignaturePublicKey().Verify(bytes, sign);
             }
 
             this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
@@ -84,16 +85,9 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private async Task RunCrypto2Benchmark(BenchmarkOptions options)
     {
-        if (this.privateKey == null)
+        if (this.seedKey == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
-            return;
-        }
-
-        var y = Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.privateKey.Y);
-        var y2 = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(this.privateKey.X, y);
-        if (y2 == null || !y2.SequenceEqual(this.privateKey.Y))
-        {
+            this.logger.TryGet(LogLevel.Error)?.Log("No seed key.");
             return;
         }
 
@@ -107,11 +101,11 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
             benchTimer.Start();
 
+            var sign = new byte[CryptoSign.SignatureSize];
             for (var i = 0; i < 1000; i++)
             {
-                var sign = this.privateKey.SignData(bytes);
-                y2 = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(this.privateKey.X, y);
-                var valid = this.privateKey.VerifyData(bytes, sign);
+                this.seedKey.Sign(bytes, sign);
+                var valid = this.seedKey.GetSignaturePublicKey().Verify(bytes, sign);
             }
 
             this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
@@ -144,7 +138,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private IUserInterfaceService userInterfaceService;
     private ILogger<BenchmarkSubcommand> logger;
-    private SignaturePrivateKey? privateKey;
+    private SeedKey? seedKey;
 }
 
 public record BenchmarkOptions

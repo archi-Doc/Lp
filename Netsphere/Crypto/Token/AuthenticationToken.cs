@@ -46,8 +46,8 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
 
     #endregion
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out AuthenticationToken instance)
-        => TokenHelper.TryParse(Identifier, source, out instance);
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out AuthenticationToken instance, out int read)
+        => TokenHelper.TryParse(Identifier, source, out instance, out read);
 
     public bool Validate()
     {

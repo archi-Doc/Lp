@@ -6,8 +6,8 @@ Dialog = {
 
     Password = {
         Enter = "Enter password"
-        EnterCurrent = "Enter current password"
-        EnterNew = "Enter new password"
+        EnterCurrent = "Enter the current password"
+        EnterNew = "Enter the new password"
         Confirm = "Confirm password"
         EmptyWarning = "Empty password should not be used."
         EmptyConfirm = "Are you sure you want to continue without password?"
@@ -38,17 +38,18 @@ Error = {
 }
 
 Vault = {
+    AlreadyExists = "{0} already exists"
     AskNew = "Do you want to create new Vault?"
-    Create = "Creating new Vault"
-    EnterPassword = "Enter Vault password"
-    ChangePassword = "Changing Vault password"
+    Create = "Creating new vault"
+    EnterPassword = "Enter vault password"
+    ChangePassword = "Changing vault password"
     NoData = "Vault could not get '{0}'"
     NoRestore = "Vault could not restore data '{0}'"
     NotFound = "{0} is not found"
     NotAvailable = "Could not get vault '{0}'"
     AddSuccess = "{0} is successfully added"
-    DeleteSuccess = "{0} is successfully deleted"
-    AlreadyExists = "{0} already exists"
+    RemoveConfirm = "Are you sure you want to remove vault '{0}' ?"
+    Removed = "Vault '{0}' is successfully removed"
 }
 
 Authority = {
@@ -56,8 +57,10 @@ Authority = {
     Created = "Authority '{0}' is successfully created"
     Removed = "Authority '{0}' is successfully removed"
     NotFound = "Authority '{0}' is not found"
-    NotAvailable = "Could not get Authority '{0}'"
-    EnterPassword = "Enter Authority '{0}' password"
+    NotAvailable = "Could not get authority '{0}'"
+    EnterPassword = "Enter authority '{0}' password"
+    ChangePassword = "Changing authority password"
+    RemoveConfirm = "Are you sure you want to remove authority '{0}' ?"
 }
 
 Seedphrase = {

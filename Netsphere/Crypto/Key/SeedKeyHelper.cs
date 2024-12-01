@@ -3,7 +3,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Netsphere.Crypto2;
+namespace Netsphere.Crypto;
 
 #pragma warning disable SA1204
 #pragma warning disable SA1401
@@ -36,8 +36,9 @@ public static class SeedKeyHelper
         MaxPrivateKeyLengthInBase64 = SeedLengthInBase64 + PublicKeyLengthInBase64; // !!!seed!!!(s:key)
     }
 
-    public static bool TryParsePublicKey(KeyOrientation orientation, ReadOnlySpan<char> source, Span<byte> keyAndChecksum)
+    public static bool TryParsePublicKey(KeyOrientation orientation, ReadOnlySpan<char> source, Span<byte> keyAndChecksum, out int read)
     {// key, (s:key), (key)
+        read = 0;
         if (keyAndChecksum.Length != PublicKeyAndChecksumSize)
         {
             CryptoHelper.ThrowSizeMismatchException(nameof(keyAndChecksum), PublicKeySize);
@@ -49,6 +50,7 @@ public static class SeedKeyHelper
             return false;
         }
 
+        //Fix
         if (source[0] != PublicKeyOpenBracket)
         {// key
             if (source.Length != RawPublicKeyLengthInBase64)
@@ -77,8 +79,16 @@ public static class SeedKeyHelper
                 return false;
             }
 
-            return Base64.Url.FromStringToSpan(source.Slice(3, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
-                ValidateChecksum(keyAndChecksum);
+            if (Base64.Url.FromStringToSpan(source.Slice(3, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
+                ValidateChecksum(keyAndChecksum))
+            {
+                read = PublicKeyLengthInBase64;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         else
         {// (key)
@@ -87,8 +97,16 @@ public static class SeedKeyHelper
                 return false;
             }
 
-            return Base64.Url.FromStringToSpan(source.Slice(1, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
-                ValidateChecksum(keyAndChecksum);
+            if (Base64.Url.FromStringToSpan(source.Slice(1, RawPublicKeyLengthInBase64), keyAndChecksum, out _) &&
+                ValidateChecksum(keyAndChecksum))
+            {
+                read = RawPublicKeyLengthInBase64 + 2;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 

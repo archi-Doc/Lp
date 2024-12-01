@@ -150,10 +150,10 @@ public class Program
             })
             .SetupOptions<NetOptions>((context, options) =>
             {
-                if (string.IsNullOrEmpty(options.NodePrivateKey) &&
+                if (string.IsNullOrEmpty(options.NodeSecretKey) &&
                 Environment.GetEnvironmentVariable("node_privatekey") is { } nodePrivateKey)
                 {
-                    options.NodePrivateKey = nodePrivateKey;
+                    options.NodeSecretKey = nodePrivateKey;
                 }
 
                 options.Port = 50000;

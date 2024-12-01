@@ -23,11 +23,11 @@ public partial class GetInformationPacketResponse : IPacket
     {
     }
 
-    public GetInformationPacketResponse(NodePublicKey publicKey)
+    public GetInformationPacketResponse(EncryptionPublicKey publicKey)
     {
         this.PublicKey = publicKey;
     }
 
     [Key(0)]
-    public NodePublicKey PublicKey { get; private set; }
+    public EncryptionPublicKey PublicKey { get; private set; }
 }

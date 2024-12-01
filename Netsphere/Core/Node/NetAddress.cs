@@ -12,9 +12,6 @@ namespace Netsphere;
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable // , IEquatable<NetAddress>
 {// 24 bytes. IEquatable<NetAddress> -> record struct
     public const char RelayIdSeparator = '&';
-    public const string AlternativeName = "alternative";
-    public const ushort AlternativePort = 49151;
-    public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
     public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
     public static bool SkipValidation { get; set; }
@@ -141,6 +138,9 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     }
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
+        => TryParse(source, out instance, out _);
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance, out int read)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port = 0;
         uint address4 = 0;
@@ -148,6 +148,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         ulong address6b;
 
         instance = default;
+        read = 0;
 
         source = source.Trim();
         if (source.Length == 0)
@@ -155,6 +156,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
+        var initialLength = source.Length;
         TryParseRelayId(ref source, out var relayId);
 
         if (IsIpv4Address(source))
@@ -166,20 +168,23 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         TryParseIPv6(ref source, ref port, out address6a, out address6b);
 
         instance = new(relayId, address4, address6a, address6b, port);
+        read = initialLength - source.Length;
         return true;
     }
 
     public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
         address = default;
-        if (string.Compare(source, AlternativeName, true) == 0)
+        // read = 0;
+        if (string.Compare(source, Alternative.Name, true) == 0)
         {
-            address = NetAddress.Alternative;
+            address = Alternative.NetAddress;
+            // read = Alternative.Name.Length;
             return true;
         }
         else
         {
-            if (!NetAddress.TryParse(source, out address))
+            if (!NetAddress.TryParse(source, out address, out _))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;

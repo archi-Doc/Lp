@@ -198,7 +198,7 @@ public class Control
         {
             if (context.TryGetOptions<LpOptions>(out var options))
             {
-                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
+                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey, out _))
                 {// CertificateRelayControl
                     context.AddSingleton<IRelayControl, CertificateRelayControl>();
                 }
@@ -459,13 +459,13 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
             var privault = this.LpBase.Options.RelayPeerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    seedKey = SeedKey.NewSignature();
+                    this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
         }
@@ -473,13 +473,13 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.ContentPeerPrivault))
         {// ContentPeerPrivault is valid
             var privault = this.LpBase.Options.ContentPeerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    seedKey = SeedKey.NewSignature();
+                    this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
         }
@@ -489,7 +489,7 @@ public class Control
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
         {
-            if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
+            if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
                 this.Logger.Get<CertificateRelayControl>().Log($"{relayPublicKey.ToString()}");
@@ -503,17 +503,17 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
         {// MergerPrivault is valid
             var privault = this.LpBase.Options.MergerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    seedKey = SeedKey.New(KeyOrientation.Signature);
+                    this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
 
-            context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, privateKey);
+            context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
             this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
@@ -521,17 +521,17 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
         {// RelayMergerPrivault is valid
             var privault = this.LpBase.Options.RelayMergerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    seedKey = SeedKey.New(KeyOrientation.Signature);
+                    this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
 
-            context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, privateKey);
+            context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
             this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
@@ -543,12 +543,12 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerPrivault))
         {// LinkerPrivault is valid
             var privault = this.LpBase.Options.LinkerPrivault;
-            if (!SignaturePrivateKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SignaturePrivateKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))
                 {
                     await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, privault);
-                    privateKey = SignaturePrivateKey.Create();
+                    privateKey = SeedKey.New(KeyOrientation.Signature);
                     this.VaultControl.Root.AddObject(privault, privateKey);
                 }
             }
@@ -574,7 +574,7 @@ public class Control
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        this.VaultControl.Root.AddObject(NetConstants.NodePrivateKeyName, this.NetControl.NetBase.NodePrivateKey);
+        this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetControl.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));
@@ -606,8 +606,18 @@ public class Control
 
     public async Task<bool> TryTerminate(bool forceTerminate = false)
     {
-        if (forceTerminate ||
-            !this.LpBase.Options.ConfirmExit)
+        if (forceTerminate)
+        {// Force termination
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        if (this.UserInterfaceService.IsInputMode)
+        {// Input mode
+            return false;
+        }
+
+        if (!this.LpBase.Options.ConfirmExit)
         {// No confirmation
             this.Core.Terminate(); // this.Terminate(false);
             return true;
@@ -675,7 +685,7 @@ public class Control
                 {
                     if (string.Compare(command, "exit", true) == 0)
                     {// Exit
-                        if (this.TryTerminate().Result == true)
+                        if (this.TryTerminate(true).Result == true)
                         { // To view mode
                             this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
                             return;
@@ -756,19 +766,19 @@ public class Control
             return;
         }
 
-        if (!this.VaultControl.Root.TryGetObject<NodePrivateKey>(NetConstants.NodePrivateKeyName, out var key, out _))
+        if (!this.VaultControl.Root.TryGetObject<SeedKey>(NetConstants.NodeSecretKeyName, out var key, out _))
         {// Failure
             if (!this.VaultControl.NewlyCreated)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodePrivateKeyName);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
             }
 
             return;
         }
 
-        if (!this.NetControl.NetBase.SetNodePrivateKey(key))
+        if (!this.NetControl.NetBase.SetNodeSeedKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodePrivateKeyName);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
             return;
         }
     }

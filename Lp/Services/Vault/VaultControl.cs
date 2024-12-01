@@ -54,7 +54,7 @@ public partial class VaultControl
         }
         else
         {
-            var result = await this.LoadAsync(this.lpBase.Options.VaultPass).ConfigureAwait(false);
+            var result = await this.ReadAndDecrypt(this.lpBase.Options.VaultPass).ConfigureAwait(false);
             if (result)
             {
                 return;
@@ -87,7 +87,7 @@ public partial class VaultControl
         this.Root.SetPassword(password);
     }
 
-    private async Task<bool> LoadAsync(string? lppass)
+    private async Task<bool> ReadAndDecrypt(string? lppass)
     {
         byte[] data;
         try

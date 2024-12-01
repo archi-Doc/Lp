@@ -16,7 +16,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<SignatureBenchmark>();
+        DebugRun<ServiceIdBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
@@ -27,9 +27,7 @@ public class Program
             typeof(NetSenderBenchmark),
             typeof(PacketBenchmark),
             typeof(AddressBenchmark),
-            typeof(PublicKeyBenchmark),
             typeof(ChecksumBenchmark),
-            typeof(SignatureBenchmark),
             typeof(CreditBenchmark),
             typeof(DoubleDecimalBenchmark),
             typeof(MicsBenchmark),

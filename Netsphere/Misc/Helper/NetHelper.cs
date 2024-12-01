@@ -19,12 +19,12 @@ public static class NetHelper
 
     public static async Task<NetNode?> TryGetNetNode(NetTerminal netTerminal, string nodeString)
     {
-        if (NetNode.TryParse(nodeString, out var netNode))
+        if (NetNode.TryParse(nodeString, out var netNode, out _))
         {
             return netNode;
         }
 
-        if (!NetAddress.TryParse(nodeString, out var netAddress))
+        if (!NetAddress.TryParse(nodeString, out var netAddress, out _))
         {
             return null;
         }
@@ -271,35 +271,22 @@ public static class NetHelper
     public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory rentMemory, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    public static bool Sign<T>(this T value, SignaturePrivateKey privateKey)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+    public static void Sign<T>(this T value, SeedKey seedKey)
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
-        var ecdsa = privateKey.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
-        var writer = TinyhandWriter.CreateFromBytePool();
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
-            value.PublicKey = privateKey.ToPublicKey();
+            value.PublicKey = seedKey.GetSignaturePublicKey();
             value.SignedMics = Mics.FastCorrected;
+
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[32];
-            var rentMemory = writer.FlushAndGetRentMemory();
-            Sha3Helper.Get256_Span(rentMemory.Span, hash);
-            rentMemory.Return();
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
 
-            var sign = new byte[KeyHelper.SignatureLength];
-            if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
-            {
-                return false;
-            }
-
-            value.Signature = sign; // value.SetSignInternal(sign);
-            return true;
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            value.Signature = sign;
         }
         finally
         {
@@ -315,7 +302,7 @@ public static class NetHelper
     /// <param name="salt">The salt value to compare with the object's salt.</param>
     /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
     public static bool ValidateAndVerifyWithSalt<T>(this T value, ulong salt)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
         => value.Salt == salt && value.ValidateAndVerify();
 
     /// <summary>
@@ -325,7 +312,7 @@ public static class NetHelper
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <returns><see langword="true" />: Success.</returns>
     public static bool ValidateAndVerify<T>(this T value)
-        where T : ITinyhandSerialize<T>, ISignAndVerify
+        where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         if (!value.Validate())
         {
@@ -338,7 +325,7 @@ public static class NetHelper
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             var rentMemory = writer.FlushAndGetRentMemory();
-            var result = value.PublicKey.VerifyData(rentMemory.Span, value.Signature);
+            var result = value.PublicKey.Verify(rentMemory.Span, value.Signature);
             rentMemory.Return();
             return result;
         }
@@ -352,7 +339,7 @@ public static class NetHelper
         => (ulong)Tinyhand.TinyhandHelper.GetFullNameId<TSend>() | ((ulong)Tinyhand.TinyhandHelper.GetFullNameId<TReceive>() << 32);
 
     public static string ToBase64<T>(this T value)
-        where T : ITinyhandSerialize<T>
+        where T : ITinyhandSerializable<T>
     {
         return Base64.Url.FromByteArrayToString(TinyhandSerializer.SerializeObject(value));
     }
@@ -379,14 +366,14 @@ public static class NetHelper
         where TService : INetService, INetServiceAgreement
     {
         // 1st: node, 2nd: EnvironmentVariable 'node'
-        if (!NetNode.TryParse(node, out var netNode))
+        if (!NetNode.TryParse(node, out var netNode, out _))
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
             {
-                if (node == NetAddress.AlternativeName ||
-                    Environment.GetEnvironmentVariable(NetConstants.NodeName) == NetAddress.AlternativeName)
+                if (node == Alternative.Name ||
+                    Environment.GetEnvironmentVariable(NetConstants.NodeName) == Alternative.Name)
                 {
-                    netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative).ConfigureAwait(false);
+                    netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress).ConfigureAwait(false);
                 }
 
                 if (netNode is null)
@@ -397,9 +384,9 @@ public static class NetHelper
         }
 
         // 1st: remotePrivateKey, 2nd: EnvironmentVariable 'remoteprivatekey'
-        if (!SignaturePrivateKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
+        if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
         {
-            if (!CryptoHelper.TryParseFromEnvironmentVariable<SignaturePrivateKey>(NetConstants.RemotePrivateKeyName, out signaturePrivateKey))
+            if (!CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemoteSecretKeyName, out signaturePrivateKey))
             {
                 return default;
             }
@@ -415,11 +402,7 @@ public static class NetHelper
 
         var agreement = connection.Agreement with { MaxStreamLength = maxStreamLength, };
         var token = new CertificateToken<ConnectionAgreement>(agreement);
-        if (!connection.SignWithSalt(token, signaturePrivateKey))
-        {
-            connection.Dispose();
-            return default;
-        }
+        connection.SignWithSalt(token, signaturePrivateKey);
 
         var result = await service.UpdateAgreement(token).ValueAsync.ConfigureAwait(false);
         if (result != NetResult.Success)

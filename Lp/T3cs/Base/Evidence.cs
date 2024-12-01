@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
@@ -64,40 +62,28 @@ public sealed partial class Evidence : IValidatable
 
     #endregion
 
-    public bool TrySign(SignaturePrivateKey signaturePrivateKey, int mergerIndex)
+    public bool TrySign(SeedKey seedKey, int mergerIndex)
     {
-        var ecdsa = signaturePrivateKey.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
         if (!this.Proof.TryGetCredit(out var credit))
         {
             return false;
         }
 
         if (credit.MergerCount <= mergerIndex ||
-            !credit.Mergers[mergerIndex].Equals(signaturePrivateKey.ToPublicKey()))
+            !credit.Mergers[mergerIndex].Equals(seedKey.GetSignaturePublicKey()))
         {//
             return false;
         }
 
-        var writer = TinyhandWriter.CreateFromBytePool();
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, this, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[Sha3_256.HashLength];
-            var rentMemory = writer.FlushAndGetRentMemory();
-            Sha3Helper.Get256_Span(rentMemory.Span, hash);
-            rentMemory.Return();
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
 
-            var sign = new byte[KeyHelper.SignatureLength];
-            if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
-            {
-                return false;
-            }
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
 
             if (mergerIndex == 0)
             {
@@ -173,7 +159,7 @@ public sealed partial class Evidence : IValidatable
             {
                 TinyhandSerializer.SerializeObject(ref writer, this, TinyhandSerializerOptions.Signature);
                 var rentMemory = writer.FlushAndGetRentMemory();
-                var result = credit.Mergers[mergerIndex].VerifyData(rentMemory.Span, signature);
+                var result = credit.Mergers[mergerIndex].Verify(rentMemory.Span, signature);
                 rentMemory.Return();
                 return result;
             }

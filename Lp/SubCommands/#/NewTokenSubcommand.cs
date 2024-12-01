@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -27,7 +28,8 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
         }
 
         var token = new CertificateToken<ConnectionAgreement>(new ConnectionAgreement());
-        authority.Sign(token);
+        var seedKey = authority.GetSeedKey();
+        seedKey.Sign(token);
         var st = token.ToString();
         this.consoleService.WriteLine(st);
 

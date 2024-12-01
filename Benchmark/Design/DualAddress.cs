@@ -128,7 +128,7 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>
 
     public bool IsValidIpv6 => this.Port6 != 0;
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualAddress instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualAddress instance, out int read)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port4 = 0;
         ushort port6 = 0;
@@ -137,6 +137,7 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>
         ulong address6b = 0;
 
         instance = default;
+        read = 0;
 
         source = source.Trim();
         if (source.Length == 0)
@@ -152,6 +153,7 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>
         TryParseIPv6(ref source, out port6, out address6a, out address6b);
 
         instance = new(port4, address4, port6, address6a, address6b);
+        read = source.Length;//Fix
         return true;
     }
 

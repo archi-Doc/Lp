@@ -15,15 +15,15 @@ public class LpService
         this.vaultControl = vaultControl;
     }
 
-    public async Task<SignaturePrivateKey?> GetSignaturePrivateKey(ILogger? logger, string authority, string vault, string privateKeyString)
+    public async Task<SeedKey?> GetSignaturePrivateKey(ILogger? logger, string authority, string vault, string privateKeyString)
     {
-        SignaturePrivateKey? privateKey;
+        SeedKey? seedKey;
 
         if (!string.IsNullOrEmpty(authority))
         {// Authority
             if (await this.authorityControl.GetAuthority(authority).ConfigureAwait(false) is { } auth)
             {
-                return auth.UnsafeGetPrivateKey();
+                return auth.GetSeedKey();
             }
             else
             {
@@ -33,9 +33,9 @@ public class LpService
 
         if (!string.IsNullOrEmpty(vault))
         {// Vault
-            if (this.vaultControl.Root.TryGetObject<SignaturePrivateKey>(vault, out privateKey, out _))
+            if (this.vaultControl.Root.TryGetObject<SeedKey>(vault, out seedKey, out _))
             {
-                return privateKey;
+                return seedKey;
             }
             else
             {
@@ -45,9 +45,9 @@ public class LpService
 
         if (!string.IsNullOrEmpty(privateKeyString))
         {// PrivateKey
-            if (SignaturePrivateKey.TryParse(privateKeyString, out privateKey))
+            if (SeedKey.TryParse(privateKeyString, out seedKey))
             {
-                return privateKey;
+                return seedKey;
             }
             else
             {

@@ -12,7 +12,7 @@ using Netsphere.Relay;
 
 namespace Playground;
 
-[SimpleCommand("relay", Default = true)]
+[SimpleCommand("relay")]
 public class RelayCommand : ISimpleCommandAsync
 {
     public RelayCommand(ILogger<RelayCommand> logger, NetControl netControl, IRelayControl relayControl)
@@ -31,13 +31,13 @@ public class RelayCommand : ISimpleCommandAsync
         var netTerminal = this.netControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        var privateKey = SignaturePrivateKey.Create();
+        var seedKey = SeedKey.NewSignature();
         if (this.relayControl is CertificateRelayControl rc)
         {
-            rc.SetCertificatePublicKey(privateKey.ToPublicKey());
+            rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
         }
 
-        var netNode = await netTerminal.UnsafeGetNetNode(NetAddress.Alternative);
+        var netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress);
         if (netNode is null)
         {
             return;
@@ -52,7 +52,7 @@ public class RelayCommand : ISimpleCommandAsync
 
             var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
-            clientConnection.SignWithSalt(token, privateKey);
+            clientConnection.SignWithSalt(token, seedKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
@@ -80,7 +80,7 @@ public class RelayCommand : ISimpleCommandAsync
 
             var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
-            clientConnection.SignWithSalt(token, privateKey);
+            clientConnection.SignWithSalt(token, seedKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {

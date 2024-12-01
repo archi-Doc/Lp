@@ -7,38 +7,22 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents ipv4/ipv6 node information.<br/>
-/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="NodePublicKey"/>.
+/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="EncryptionPublicKey"/>.
 /// </summary>
 [TinyhandObject]
 public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
-    // public static readonly NetNode Default = new(); // Do not use default values as instances are reused during deserialization, leading to inconsistency.
-    private static NetNode? alternative;
-
-    public static NetNode Alternative
-    {
-        get
-        {
-            if (alternative is null)
-            {
-                alternative = new NetNode(NetAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
-            }
-
-            return alternative;
-        }
-    }
-
     public NetNode()
     {
     }
 
-    public NetNode(NetAddress address, NodePublicKey publicKey)
+    public NetNode(NetAddress address, EncryptionPublicKey publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
     }
 
-    public NetNode(in NetEndpoint endPoint, NodePublicKey publicKey)
+    public NetNode(in NetEndpoint endPoint, EncryptionPublicKey publicKey)
     {
         this.Address = new(endPoint);
         this.PublicKey = publicKey;
@@ -54,19 +38,19 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
     public NetAddress Address { get; protected set; }
 
     [Key(1)]
-    public NodePublicKey PublicKey { get; protected set; }
+    public EncryptionPublicKey PublicKey { get; protected set; }
 
     public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         if (string.Compare(source, "alt", true) == 0)
         {
-            node = NetNode.Alternative;
+            node = Alternative.NetNode;
             return true;
         }
         else
         {
-            if (!NetNode.TryParse(source, out var address))
+            if (!NetNode.TryParse(source, out var address, out _))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;
@@ -83,45 +67,44 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
         }
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance, out int read)
     {// Ip address (public key)
         source = source.Trim();
+        instance = default;
+        read = 0;
 
         var index = source.IndexOf('(');
         if (index < 0)
         {
-            instance = default;
             return false;
         }
 
         var index2 = source.IndexOf(')');
         if (index2 < 0)
         {
-            instance = default;
             return false;
         }
 
         var sourceAddress = source.Slice(0, index);
-        var sourcePublicKey = source.Slice(index + 1, index2 - index - 1);
+        var sourcePublicKey = source.Slice(index, index2 - index + 1);
 
-        if (!NetAddress.TryParse(sourceAddress, out var address))
+        if (!NetAddress.TryParse(sourceAddress, out var address, out _))
         {
-            instance = default;
             return false;
         }
 
-        if (!NodePublicKey.TryParse(sourcePublicKey, out var publicKey))
+        if (!EncryptionPublicKey.TryParse(sourcePublicKey, out var publicKey, out _))
         {
-            instance = default;
             return false;
         }
 
         instance = new(address, publicKey);
+        read = index2 + 1;
         return true;
     }
 
     public static int MaxStringLength
-        => NetAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
+        => NetAddress.MaxStringLength + SeedKey.MaxStringLength + 2;
 
     public int GetStringLength()
         => -1;
@@ -144,10 +127,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
             span = span.Slice(written);
         }
 
-        span[0] = '(';
-        span = span.Slice(1);
-
-        if (!this.PublicKey.TryFormat(span, out written))
+        if (!this.PublicKey.TryFormatWithBracket(span, out written))
         {
             return false;
         }
@@ -155,9 +135,6 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
         {
             span = span.Slice(written);
         }
-
-        span[0] = ')';
-        span = span.Slice(1);
 
         written = destination.Length - span.Length;
         return true;

@@ -83,7 +83,7 @@ public sealed partial class CreditB
 [Config(typeof(BenchmarkConfig))]
 public class CreditBenchmark
 {
-    public SignaturePrivateKey PrivateKey { get; private set; }
+    public SeedKey SeedKey { get; private set; }
 
     public SignaturePublicKey PublicKey { get; private set; }
 
@@ -105,8 +105,8 @@ public class CreditBenchmark
 
     public CreditBenchmark()
     {
-        this.PrivateKey = SignaturePrivateKey.Create(new byte[] { 0, 1, 2, 3, });
-        this.PublicKey = this.PrivateKey.ToPublicKey();
+        this.SeedKey = SeedKey.New(KeyOrientation.Signature);
+        this.PublicKey = this.SeedKey.GetSignaturePublicKey();
 
         this.Credit1 = new(this.PublicKey, 1);
         this.Credit3 = new(this.PublicKey, 3);

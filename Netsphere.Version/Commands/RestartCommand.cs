@@ -24,7 +24,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
         options.Prepare();
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
-        if (options.RemotePrivateKey is not { } privateKey)
+        if (options.RemoteSeedKey is not { } privateKey)
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote private key");
             return;

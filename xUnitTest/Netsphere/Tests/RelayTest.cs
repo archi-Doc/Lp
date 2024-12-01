@@ -35,13 +35,13 @@ public class RelayTest
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
 
         var netTerminal = this.NetControl.NetTerminal;
-        var privateKey = SignaturePrivateKey.Create();
+        var seedKey = SeedKey.NewSignature();
         if (netTerminal.RelayControl is CertificateRelayControl rc)
         {
-            rc.SetCertificatePublicKey(privateKey.ToPublicKey());
+            rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
         }
 
-        var netNode = (await netTerminal.UnsafeGetNetNode(NetAddress.Alternative))!;
+        var netNode = (await netTerminal.UnsafeGetNetNode(Alternative.NetAddress))!;
         netNode.IsNotNull();
 
         using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 0))!)
@@ -50,7 +50,7 @@ public class RelayTest
 
             var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
-            clientConnection.SignWithSalt(token, privateKey);
+            clientConnection.SignWithSalt(token, seedKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
@@ -64,7 +64,7 @@ public class RelayTest
 
             var block = new CreateRelayBlock();
             var token = new CertificateToken<CreateRelayBlock>(block);
-            clientConnection.SignWithSalt(token, privateKey);
+            clientConnection.SignWithSalt(token, seedKey);
             var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
@@ -76,7 +76,7 @@ public class RelayTest
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 
-        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.ReuseIfAvailable, 2))!)
+        using (var connection = (await this.NetControl.NetTerminal.Connect(Alternative.NetNode, Connection.ConnectMode.ReuseIfAvailable, 2))!)
         {
             connection.IsNotNull();
             var basicService = connection.GetService<IBasicService>();
@@ -109,7 +109,7 @@ public class RelayTest
 
         var st = await netTerminal.OutgoingCircuit.UnsafeDetailedToString();
 
-        using (var connection = (await this.NetControl.NetTerminal.Connect(NetNode.Alternative, Connection.ConnectMode.NoReuse, 2))!)
+        using (var connection = (await this.NetControl.NetTerminal.Connect(Alternative.NetNode, Connection.ConnectMode.NoReuse, 2))!)
         {
             var service = connection.GetService<IStreamService>();
             service.IsNotNull();

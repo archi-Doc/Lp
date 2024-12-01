@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Globalization;
+using System.Text;
 using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -21,9 +23,15 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     {
         this.logger.TryGet()?.Log($"New vault key");
 
-        if (!string.IsNullOrEmpty(options.PrivateKey))
-        {
+        if (!string.IsNullOrEmpty(options.SecretKey))
+        {// From private key
             this.ParsePrivateKey(options);
+            return;
+        }
+
+        if (options.Kind == VaultKind.String)
+        {
+            this.AddByteArray(options.Name, Encoding.UTF8.GetBytes("test"));
             return;
         }
 
@@ -48,55 +56,29 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
             }
         }
 
-        var prefix = GetPrefix(options.KeyClass, options);
-        if (options.KeyClass == KeyClass.Signature)
+        if (options.Kind == VaultKind.EncryptionKey)
         {
-            var key = seed is null ? SignaturePrivateKey.Create() : SignaturePrivateKey.Create(seed);
+            var key = seed is null ? SeedKey.NewEncryption() : SeedKey.NewEncryption(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
-            this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-            this.AddVault(options.Name, key);
+            this.logger.TryGet()?.Log(key.GetEncryptionPublicKey().ToString());
+            this.AddObject(options.Name, key);
         }
-        else if (options.KeyClass == KeyClass.NodeEncryption)
+        else if (options.Kind == VaultKind.SignatureKey)
         {
-            var key = seed is null ? NodePrivateKey.Create() : NodePrivateKey.Create(seed);
+            var key = seed is null ? SeedKey.NewSignature() : SeedKey.NewSignature(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
-            this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-            this.AddVault(options.Name, key);
-        }
-        else
-        {
-            var key = seed is null ? EncryptionPrivateKey.Create() : EncryptionPrivateKey.Create(seed);
-            this.userInterfaceService.WriteLine(key.UnsafeToString());
-            this.logger.TryGet()?.Log(prefix + key.ToPublicKey().ToString());
-            this.AddVault(options.Name, key);
+            this.logger.TryGet()?.Log(key.GetSignaturePublicKey().ToString());
+            this.AddObject(options.Name, key);
         }
     }
 
-    private static string GetPrefix(KeyClass keyClass, NewVaultOptions options)
-        => keyClass.ToString() + (string.IsNullOrEmpty(options.Name) ? " Temporary: " : $" {options.Name}: ");
-
     private void ParsePrivateKey(NewVaultOptions options)
     {
-        if (SignaturePrivateKey.TryParse(options.PrivateKey, out var signaturePrivateKey))
+        if ((options.Kind == VaultKind.EncryptionKey || options.Kind == VaultKind.SignatureKey) &&
+            SeedKey.TryParse(options.SecretKey, out var seedKey))
         {
-            this.userInterfaceService.WriteLine(signaturePrivateKey.UnsafeToString());
-            var prefix = GetPrefix(signaturePrivateKey.KeyClass, options);
-            this.logger.TryGet()?.Log(prefix + signaturePrivateKey.ToPublicKey().ToString());
-            this.AddVault(options.Name, signaturePrivateKey);
-        }
-        else if (EncryptionPrivateKey.TryParse(options.PrivateKey, out var encryptionPrivateKey))
-        {
-            this.userInterfaceService.WriteLine(encryptionPrivateKey.UnsafeToString());
-            var prefix = GetPrefix(encryptionPrivateKey.KeyClass, options);
-            this.logger.TryGet()?.Log(prefix + encryptionPrivateKey.ToPublicKey().ToString());
-            this.AddVault(options.Name, encryptionPrivateKey);
-        }
-        else if (NodePrivateKey.TryParse(options.PrivateKey, out var nodePrivateKey))
-        {
-            this.userInterfaceService.WriteLine(nodePrivateKey.UnsafeToString());
-            var prefix = GetPrefix(nodePrivateKey.KeyClass, options);
-            this.logger.TryGet()?.Log(prefix + nodePrivateKey.ToPublicKey().ToString());
-            this.AddVault(options.Name, nodePrivateKey);
+            this.userInterfaceService.WriteLine(seedKey.UnsafeToString());
+            this.AddObject(options.Name, seedKey);
         }
         else
         {
@@ -104,7 +86,18 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
     }
 
-    private void AddVault(string name, ITinyhandSerialize data)
+    private void AddByteArray(string name, byte[] data)
+    {
+        if (!string.IsNullOrEmpty(name))
+        {
+            if (!this.vaultControl.Root.TryAddByteArray(name, data, out _))
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
+            }
+        }
+    }
+
+    private void AddObject(string name, ITinyhandSerializable data)
     {
         if (!string.IsNullOrEmpty(name))
         {
@@ -121,17 +114,24 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     private readonly VaultControl vaultControl;
 }
 
+public enum VaultKind
+{
+    String,
+    EncryptionKey,
+    SignatureKey,
+}
+
 public record NewVaultOptions
 {
     [SimpleOption("Name", Description = "Vault name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("Class", Description = "Key class [Encryption, Signature, NodeEncryption]")]
-    public KeyClass KeyClass { get; init; } = KeyClass.Signature;
+    [SimpleOption("Kind", Description = "Kind [string, encryption, signature]")]
+    public VaultKind Kind { get; init; } = VaultKind.SignatureKey;
 
-    [SimpleOption("Seed", Description = "Seedphrase")]
+    [SimpleOption("Seed", Description = "Seedphrase from which the vault is created")]
     public string? Seedphrase { get; init; }
 
-    [SimpleOption("PrivateKey", Description = "PrivateKey")]
-    public string? PrivateKey { get; init; }
+    [SimpleOption("SecretKey", Description = "Secret key from which the vault is created")]
+    public string? SecretKey { get; init; }
 }
