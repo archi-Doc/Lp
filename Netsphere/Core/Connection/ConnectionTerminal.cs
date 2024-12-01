@@ -386,7 +386,7 @@ public class ConnectionTerminal
         serverPublicKey.AsSpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
         var e2 = default(Embryo2);
-        Arc.Crypto.Sha3Helper.Get512_Span(buffer, e2.Span);
+        Arc.Crypto.Sha3Helper.Get512_Span(buffer, e2.Span);//
 
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
