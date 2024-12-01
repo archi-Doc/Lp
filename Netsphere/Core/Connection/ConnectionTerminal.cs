@@ -371,6 +371,23 @@ public class ConnectionTerminal
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
+
+        // CreateEmbryo
+        Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize]; // Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32)
+        var span = buffer;
+        BitConverter.TryWriteBytes(span, p.ClientSalt);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, p2.ServerSalt);
+        span = span.Slice(sizeof(ulong));
+        material.CopyTo(span);
+        span = span.Slice(CryptoBox.KeyMaterialSize);
+        clientSeedKey.GetEncryptionPublicKey().AsSpan().CopyTo(span);
+        span = span.Slice(CryptoBox.PublicKeySize);
+        serverPublicKey.AsSpan().CopyTo(span);
+        span = span.Slice(CryptoBox.PublicKeySize);
+        var e2 = default(Embryo2);
+        Arc.Crypto.Sha3Helper.Get512_Span(buffer, e2.Span);
+
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
 
