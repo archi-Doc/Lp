@@ -37,7 +37,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private void PrepareKey(DefaultCommandOptions options)
     {
-        if (SeedKey.TryParse(options.NodeSecretKey, out var seedKey, out _))
+        if (SeedKey.TryParse(options.NodeSecretKey, out var seedKey))
         {
             this.netControl.NetBase.SetNodeSeedKey(seedKey);
             this.netControl.NetTerminal.SetNodeSeedKey(seedKey);

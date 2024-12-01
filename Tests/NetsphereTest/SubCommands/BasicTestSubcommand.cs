@@ -17,7 +17,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!NetAddress.TryParse(this.logger, options.NetNode, out var address, out _))
+        if (!NetAddress.TryParse(this.logger, options.NetNode, out var address))
         {
             return;
         }

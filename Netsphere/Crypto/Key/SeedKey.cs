@@ -23,6 +23,9 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     public bool TryFormat(Span<char> destination, out int written)
         => this.UnsafeTryFormat(destination, out written);
 
+    public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out SeedKey secretKey)
+        => TryParse(base64url, out secretKey, out _);
+
     public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out SeedKey secretKey, out int read)
     {// !!!seed!!!, !!!seed!!!(s:key)
         Span<byte> seed = stackalloc byte[SeedKeyHelper.SeedSize];

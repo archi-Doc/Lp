@@ -75,7 +75,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     private void ParsePrivateKey(NewVaultOptions options)
     {
         if ((options.Kind == VaultKind.EncryptionKey || options.Kind == VaultKind.SignatureKey) &&
-            SeedKey.TryParse(options.SecretKey, out var seedKey, out _))
+            SeedKey.TryParse(options.SecretKey, out var seedKey))
         {
             this.userInterfaceService.WriteLine(seedKey.UnsafeToString());
             this.AddObject(options.Name, seedKey);

@@ -101,7 +101,7 @@ public partial record RunnerOptions
         this.NodePrivateKeyString = string.Empty;*/
 
         if (!string.IsNullOrEmpty(this.RemotePublicKeyString) &&
-            SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var publicKey))
+            SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var publicKey, out _))
         {
             this.RemotePublicKey = publicKey;
         }

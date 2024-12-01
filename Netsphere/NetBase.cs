@@ -82,7 +82,7 @@ public class NetBase : UnitBase, IUnitPreparable
         this.NetOptions = netsphereOptions;
 
         if (!string.IsNullOrEmpty(this.NetOptions.NodeSecretKey) &&
-            SeedKey.TryParse(this.NetOptions.NodeSecretKey, out var seedKey, out _))
+            SeedKey.TryParse(this.NetOptions.NodeSecretKey, out var seedKey))
         {
             this.SetNodeSeedKey(seedKey);
         }

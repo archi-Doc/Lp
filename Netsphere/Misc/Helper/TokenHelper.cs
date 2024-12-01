@@ -85,7 +85,7 @@ internal static class TokenHelper
         destination[0] = StartChar;
         destination[1] = identifier;
         span = span.Slice(w);
-        span[0] =EndChar;
+        span[0] = EndChar;
 
         written = 3 + w;
         return true;

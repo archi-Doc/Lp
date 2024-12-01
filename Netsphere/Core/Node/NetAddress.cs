@@ -137,6 +137,9 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
     }
 
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
+        => TryParse(source, out instance, out _);
+
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance, out int read)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port = 0;
@@ -169,19 +172,19 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return true;
     }
 
-    public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address, out int read)
+    public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
         address = default;
-        read = 0;
+        // read = 0;
         if (string.Compare(source, Alternative.Name, true) == 0)
         {
             address = Alternative.NetAddress;
-            read = Alternative.Name.Length;
+            // read = Alternative.Name.Length;
             return true;
         }
         else
         {
-            if (!NetAddress.TryParse(source, out address, out read))
+            if (!NetAddress.TryParse(source, out address, out _))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;

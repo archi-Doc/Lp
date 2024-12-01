@@ -98,7 +98,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             {
                 this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
                 this.userInterfaceService.WriteLine($"Value: {value.ToString()}");
-                Value.TryParse(value.ToString(), out var value2);
+                Value.TryParse(value.ToString(), out var value2, out _);
                 this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
 
                 var valueProof = ValueProof.Create(value);

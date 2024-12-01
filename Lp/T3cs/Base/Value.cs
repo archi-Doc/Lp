@@ -40,9 +40,10 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance, out int read)
     {// Owner#Point@Originator/Mergers
         instance = default;
+        read = 0;
         var span = source.Trim();
 
         var pointIndex = span.IndexOf(PointSymbol);
@@ -51,9 +52,10 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
             return false;
         }
 
+        var initialLength = span.Length;
         var ownerSpan = span.Slice(0, pointIndex);
         if (ownerSpan.Length < SignaturePublicKey.MaxStringLength ||
-            !SignaturePublicKey.TryParse(ownerSpan, out var owner))
+            !SignaturePublicKey.TryParse(ownerSpan, out var owner, out _))
         {
             return false;
         }
@@ -71,7 +73,8 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
             return false;
         }
 
-        if (!Credit.TryParse(span.Slice(creditIndex), out var credit))
+        span = span.Slice(creditIndex);
+        if (!Credit.TryParse(span, out var credit, out _))
         {
             return false;
         }
@@ -82,6 +85,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         instance = value;
+        read = initialLength - span.Length;
         return true;
     }
 

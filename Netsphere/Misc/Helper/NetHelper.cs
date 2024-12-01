@@ -384,7 +384,7 @@ public static class NetHelper
         }
 
         // 1st: remotePrivateKey, 2nd: EnvironmentVariable 'remoteprivatekey'
-        if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey, out _))
+        if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemoteSecretKeyName, out signaturePrivateKey))
             {

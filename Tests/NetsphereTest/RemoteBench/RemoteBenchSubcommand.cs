@@ -24,7 +24,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
     {
         if (!NetNode.TryParse(options.Node, out var node, out _))
         {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
-            if (!NetAddress.TryParse(this.logger, options.Node, out var address, out _))
+            if (!NetAddress.TryParse(this.logger, options.Node, out var address))
             {
                 return;
             }

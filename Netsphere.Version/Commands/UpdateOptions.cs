@@ -20,7 +20,7 @@ public partial record UpdateOptions
 
     public void Prepare()
     {
-        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey, out _))
+        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey))
         {
             this.RemoteSeedKey = seedKey;
         }
