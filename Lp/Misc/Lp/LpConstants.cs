@@ -16,7 +16,7 @@ public static class LpConstants
 
     static LpConstants()
     {
-        SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey);
+        SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
         KeyAlias.AddAlias(LpPublicKey, LpAlias);
         Credit.TryCreate(LpPublicKey, [LpPublicKey], out LpCredit!);
     }

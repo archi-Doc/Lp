@@ -19,12 +19,12 @@ public static class NetHelper
 
     public static async Task<NetNode?> TryGetNetNode(NetTerminal netTerminal, string nodeString)
     {
-        if (NetNode.TryParse(nodeString, out var netNode))
+        if (NetNode.TryParse(nodeString, out var netNode, out _))
         {
             return netNode;
         }
 
-        if (!NetAddress.TryParse(nodeString, out var netAddress))
+        if (!NetAddress.TryParse(nodeString, out var netAddress, out _))
         {
             return null;
         }
@@ -366,7 +366,7 @@ public static class NetHelper
         where TService : INetService, INetServiceAgreement
     {
         // 1st: node, 2nd: EnvironmentVariable 'node'
-        if (!NetNode.TryParse(node, out var netNode))
+        if (!NetNode.TryParse(node, out var netNode, out _))
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<NetNode>(NetConstants.NodeName, out netNode))
             {
@@ -384,7 +384,7 @@ public static class NetHelper
         }
 
         // 1st: remotePrivateKey, 2nd: EnvironmentVariable 'remoteprivatekey'
-        if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey))
+        if (!SeedKey.TryParse(remotePrivateKey, out var signaturePrivateKey, out _))
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.RemoteSecretKeyName, out signaturePrivateKey))
             {

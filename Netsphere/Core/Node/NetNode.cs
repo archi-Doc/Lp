@@ -50,7 +50,7 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
         }
         else
         {
-            if (!NetNode.TryParse(source, out var address))
+            if (!NetNode.TryParse(source, out var address, out _))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;
@@ -67,40 +67,39 @@ public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquat
         }
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance, out int read)
     {// Ip address (public key)
         source = source.Trim();
+        instance = default;
+        read = 0;
 
         var index = source.IndexOf('(');
         if (index < 0)
         {
-            instance = default;
             return false;
         }
 
         var index2 = source.IndexOf(')');
         if (index2 < 0)
         {
-            instance = default;
             return false;
         }
 
         var sourceAddress = source.Slice(0, index);
         var sourcePublicKey = source.Slice(index, index2 - index + 1);
 
-        if (!NetAddress.TryParse(sourceAddress, out var address))
+        if (!NetAddress.TryParse(sourceAddress, out var address, out _))
         {
-            instance = default;
             return false;
         }
 
-        if (!EncryptionPublicKey.TryParse(sourcePublicKey, out var publicKey))
+        if (!EncryptionPublicKey.TryParse(sourcePublicKey, out var publicKey, out _))
         {
-            instance = default;
             return false;
         }
 
         instance = new(address, publicKey);
+        read = index2 + 1;
         return true;
     }
 

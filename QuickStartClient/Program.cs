@@ -30,7 +30,7 @@ public class Program
 
         var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>(); // Get a NetControl instance.
         // using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 49152)))
-        NetNode.TryParse("127.0.0.1:49152(Ca-GIp9sQeF0WB7zcQ1HLcWcI9q1Te6sskIUSJMZrQrl34uP)", out var netNode);
+        NetNode.TryParse("127.0.0.1:49152(Ca-GIp9sQeF0WB7zcQ1HLcWcI9q1Te6sskIUSJMZrQrl34uP)", out var netNode, out _);
         using (var connection = await netControl.NetTerminal.Connect(netNode!))
         {// Connect to the server's address (loopback address).
          // All communication in Netsphere is encrypted, and connecting by specifying only the address is not recommended due to the risk of man-in-the-middle attacks.

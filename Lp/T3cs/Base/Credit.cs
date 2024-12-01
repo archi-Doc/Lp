@@ -38,9 +38,10 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #region IStringConvertible
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance, out int read)
     {// @Originator/Merger1+Merger2
         instance = default;
+        read = 0;
         var span = source.Trim();
 
         if (span.Length < 1 || span[0] != CreditSymbol)
@@ -48,99 +49,76 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             return false;
         }
 
+        var initialLength = span.Length;
         span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var originator, out var parsedLength))
+        if (!SignaturePublicKey.TryParse(span, out var originator, out var originatorRead))
         {// Originator
             return false;
         }
 
-        span = span.Slice(parsedLength);
+        span = span.Slice(originatorRead);
 
-        if (span.Length == (1 + SignaturePublicKey.MaxStringLength))
+        if (span.Length == 0 || span[0] != MergerSymbol)
         {
-            if (span[0] != MergerSymbol)
-            {
-                return false;
-            }
+            return false;
+        }
 
-            span = span.Slice(1);
-            if (!SignaturePublicKey.TryParse(span, out var merger1))
-            {
-                return false;
-            }
+        span = span.Slice(1);
+        if (!SignaturePublicKey.TryParse(span, out var merger1, out read))
+        {
+            return false;
+        }
 
+        // MaxMergersCode
+        span = span.Slice(read);
+        if (span.Length == 0)
+        {// Single merger
             instance = new Credit();
             instance.Originator = originator;
             instance.mergers = [merger1,];
+            read = initialLength - span.Length;
             return true;
         }
-        else if (span.Length == (1 + SignaturePublicKey.MaxStringLength) * 2)
+
+        if (span[0] != MergerSeparatorSymbol)
         {
-            if (span[0] != MergerSymbol)
-            {
-                return false;
-            }
+            return false;
+        }
 
-            span = span.Slice(1);
-            if (!SignaturePublicKey.TryParse(span, out var merger1))
-            {
-                return false;
-            }
+        span = span.Slice(1);
+        if (!SignaturePublicKey.TryParse(span, out var merger2, out read))
+        {
+            return false;
+        }
 
-            if (span[0] != MergerSeparatorSymbol)
-            {
-                return false;
-            }
-
-            span = span.Slice(1);
-            if (!SignaturePublicKey.TryParse(span, out var merger2))
-            {
-                return false;
-            }
-
+        span = span.Slice(read);
+        if (span.Length == 0)
+        {// Two merger2
             instance = new Credit();
             instance.Originator = originator;
             instance.mergers = [merger1, merger2,];
+            read = initialLength - span.Length;
             return true;
         }
-        else if (span.Length == (1 + SignaturePublicKey.MaxStringLength) * 3)
+
+        if (span[0] != MergerSeparatorSymbol)
         {
-            if (span[0] != MergerSymbol)
-            {
-                return false;
-            }
+            return false;
+        }
 
-            span = span.Slice(1);
-            if (!SignaturePublicKey.TryParse(span, out var merger1))
-            {
-                return false;
-            }
+        span = span.Slice(1);
+        if (!SignaturePublicKey.TryParse(span, out var merger3, out read))
+        {
+            return false;
+        }
 
-            if (span[0] != MergerSeparatorSymbol)
-            {
-                return false;
-            }
-
-            span = span.Slice(1);
-            if (!SignaturePublicKey.TryParse(span, out var merger2))
-            {
-                return false;
-            }
-
-            if (span[0] != MergerSeparatorSymbol)
-            {
-                return false;
-            }
-
-            span = span.Slice(1);
-            if (!SignaturePublicKey.TryParse(span, out var merger3))
-            {
-                return false;
-            }
-
+        span = span.Slice(read);
+        if (span.Length == 0)
+        {// Three mergers
             instance = new Credit();
             instance.Originator = originator;
             instance.mergers = [merger1, merger2, merger3,];
+            read = initialLength - span.Length;
             return true;
         }
 

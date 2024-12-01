@@ -22,7 +22,7 @@ public partial record ServerOptions
     {
         var result = true;
 
-        if (!SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var remotePublicKey))
+        if (!SignaturePublicKey.TryParse(this.RemotePublicKeyString, out var remotePublicKey, out _))
         {
             logger.TryGet(LogLevel.Fatal)?.Log($"Specify the remote public key (-{NetConstants.RemotePublicKeyName}) for authentication of remote operations.");
             result = false;

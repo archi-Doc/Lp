@@ -17,7 +17,7 @@ public record RestartOptions
 
     public void Prepare()
     {
-        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey))
+        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey, out _))
         {
             this.RemoteSeedKey = seedKey;
         }

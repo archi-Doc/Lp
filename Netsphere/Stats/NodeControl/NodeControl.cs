@@ -364,7 +364,7 @@ public sealed partial class NodeControl
         var nodes = this.netBase.NetOptions.NodeList;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            if (!NetNode.TryParse(x, out var node))
+            if (!NetNode.TryParse(x, out var node, out _))
             {
                 continue;
             }

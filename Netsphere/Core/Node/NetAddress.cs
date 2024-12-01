@@ -137,7 +137,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance, out int read)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port = 0;
         uint address4 = 0;
@@ -145,6 +145,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         ulong address6b;
 
         instance = default;
+        read = 0;
 
         source = source.Trim();
         if (source.Length == 0)
@@ -152,6 +153,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
+        var initialLength = source.Length;
         TryParseRelayId(ref source, out var relayId);
 
         if (IsIpv4Address(source))
@@ -163,20 +165,23 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         TryParseIPv6(ref source, ref port, out address6a, out address6b);
 
         instance = new(relayId, address4, address6a, address6b, port);
+        read = initialLength - source.Length;
         return true;
     }
 
-    public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
+    public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address, out int read)
     {
         address = default;
+        read = 0;
         if (string.Compare(source, Alternative.Name, true) == 0)
         {
             address = Alternative.NetAddress;
+            read = Alternative.Name.Length;
             return true;
         }
         else
         {
-            if (!NetAddress.TryParse(source, out address))
+            if (!NetAddress.TryParse(source, out address, out read))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;

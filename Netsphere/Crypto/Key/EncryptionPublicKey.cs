@@ -37,13 +37,10 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey)
-        => TryParse(source, out publicKey, out _);
-
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey, out int parsedLength)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey, out int read)
     {
         Span<byte> keyAndChecksum = stackalloc byte[SeedKeyHelper.PublicKeyAndChecksumSize];
-        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Encryption, source, keyAndChecksum, out parsedLength))
+        if (SeedKeyHelper.TryParsePublicKey(KeyOrientation.Encryption, source, keyAndChecksum, out read))
         {
             publicKey = new(keyAndChecksum);
             return true;

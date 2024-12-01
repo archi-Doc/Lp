@@ -50,8 +50,8 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
 
     #endregion
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CertificateToken<T> token)
-        => TokenHelper.TryParse(Identifier, source, out token);
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CertificateToken<T> token, out int read)
+        => TokenHelper.TryParse(Identifier, source, out token, out read);
 
     public bool Validate()
     {

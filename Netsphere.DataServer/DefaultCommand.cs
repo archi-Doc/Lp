@@ -37,7 +37,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private void PrepareKey(DefaultCommandOptions options)
     {
-        if (SeedKey.TryParse(options.NodeSecretKey, out var seedKey))
+        if (SeedKey.TryParse(options.NodeSecretKey, out var seedKey, out _))
         {
             this.netControl.NetBase.SetNodeSeedKey(seedKey);
             this.netControl.NetTerminal.SetNodeSeedKey(seedKey);
@@ -48,7 +48,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
             this.netControl.NetTerminal.SetNodeSeedKey(seedKey);
         }
 
-        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey, out _))
         {
             this.remoteData.RemotePublicKey = publicKey;
         }
@@ -60,7 +60,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
 
     private async Task PunchNode(string punchNode)
     {
-        if (!NetAddress.TryParse(punchNode, out var node))
+        if (!NetAddress.TryParse(punchNode, out var node, out _))
         {
             if (!CryptoHelper.TryParseFromEnvironmentVariable<NetAddress>("punchnode", out node))
             {

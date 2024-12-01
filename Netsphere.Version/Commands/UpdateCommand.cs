@@ -27,7 +27,7 @@ internal class UpdateCommand : ISimpleCommandAsync<UpdateOptions>
             return;
         }
 
-        if (!NetAddress.TryParse(options.Address, out var address))
+        if (!NetAddress.TryParse(options.Address, out var address, out _))
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse address: {options.Address}");
             return;

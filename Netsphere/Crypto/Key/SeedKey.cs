@@ -23,10 +23,10 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     public bool TryFormat(Span<char> destination, out int written)
         => this.UnsafeTryFormat(destination, out written);
 
-    public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out SeedKey secretKey)
+    public static bool TryParse(ReadOnlySpan<char> base64url, [MaybeNullWhen(false)] out SeedKey secretKey, out int read)
     {// !!!seed!!!, !!!seed!!!(s:key)
         Span<byte> seed = stackalloc byte[SeedKeyHelper.SeedSize];
-        if (TryParseSeed(base64url, seed, out var keyOrientation))
+        if (TryParseSeed(base64url, seed, out var keyOrientation, out read))
         {
             secretKey = new(seed, keyOrientation);
             seed.Clear();
@@ -35,6 +35,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         else
         {
             secretKey = default;
+            read = 0;
             return false;
         }
     }
@@ -89,15 +90,17 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         this.KeyOrientation = keyOrientation;
     }
 
-    private static bool TryParseSeed(ReadOnlySpan<char> base64url, Span<byte> seed, out KeyOrientation keyOrientation)
+    private static bool TryParseSeed(ReadOnlySpan<char> base64url, Span<byte> seed, out KeyOrientation keyOrientation, out int read)
     {// !!!seed!!!, !!!seed!!!(s:key)
         keyOrientation = KeyOrientation.NotSpecified;
+        read = 0;
         var span = base64url.Trim();
         if (!span.StartsWith(SeedKeyHelper.PrivateKeyBracket))
         {// Invalid
             return false;
         }
 
+        var initialLength = span.Length;
         span = span.Slice(SeedKeyHelper.PrivateKeyBracket.Length);
         var bracketPosition = span.IndexOf(SeedKeyHelper.PrivateKeyBracket);
         if (bracketPosition <= 0)
@@ -123,6 +126,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         span = span.Slice(bracketPosition + SeedKeyHelper.PrivateKeyBracket.Length);
         if (span.Length == 0 || span[0] != SeedKeyHelper.PublicKeyOpenBracket)
         {
+            read = initialLength - span.Length;
             return true;
         }
 
@@ -156,6 +160,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             var key2 = new EncryptionPublicKey(key);
             if (CryptoDual.BoxPublicKey_Equals(key, encryptionPublicKey))
             {
+                read = initialLength - span.Length + parsedLength;
                 return true;
             }
         }
@@ -166,6 +171,7 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             CryptoSign.CreateKey(seed, signatureSecretKey, signaturePublicKey);
             if (key.SequenceEqual(signaturePublicKey))
             {
+                read = initialLength - span.Length + parsedLength;
                 return true;
             }
         }

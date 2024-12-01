@@ -22,9 +22,9 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetNode.TryParse(options.Node, out var node))
+        if (!NetNode.TryParse(options.Node, out var node, out _))
         {// NetNode.TryParseNetNode(this.logger, options.Node, out var node)
-            if (!NetAddress.TryParse(this.logger, options.Node, out var address))
+            if (!NetAddress.TryParse(this.logger, options.Node, out var address, out _))
             {
                 return;
             }

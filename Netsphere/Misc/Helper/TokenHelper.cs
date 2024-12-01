@@ -7,21 +7,31 @@ namespace Netsphere.Misc;
 
 internal static class TokenHelper
 {
-    public static bool TryParse<T>(char identifier, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out T instance)
+    public const char StartChar = '{';
+    public const char EndChar = '}';
+
+    public static bool TryParse<T>(char identifier, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out T instance, out int read)
         where T : ITinyhandSerializable<T>
     {
         instance = default;
+        read = 0;
         source = source.Trim();
         if (source.Length < 3)
         {
             return false;
         }
-        else if (source[0] != '{' || source[1] != identifier || source[source.Length - 1] != '}')
+        else if (source[0] != StartChar || source[1] != identifier)
         {
             return false;
         }
 
-        source = source.Slice(2, source.Length - 3);
+        var last = source.IndexOf(EndChar);//test
+        if (last < 0)
+        {
+            return false;
+        }
+
+        source = source.Slice(2, last - 2);
         var decodedLength = Base64.Url.GetMaxDecodedLength(source.Length);
 
         byte[]? rent = null;
@@ -29,26 +39,29 @@ internal static class TokenHelper
             stackalloc byte[decodedLength] : (rent = ArrayPool<byte>.Shared.Rent(decodedLength));
 
         var result = Base64.Url.FromStringToSpan(source, span, out var written);
-        if (rent != null)
-        {
-            ArrayPool<byte>.Shared.Return(rent);
-        }
-
-        if (!result)
-        {
-            return false;
-        }
-
         try
         {
-            instance = TinyhandSerializer.DeserializeObject<T>(span);
-        }
-        catch
-        {
-            return false;
-        }
+            if (!result)
+            {
+                return false;
+            }
 
-        return instance is not null;
+            TinyhandSerializer.TryDeserializeObject<T>(span, out instance);
+            if (instance is null)
+            {
+                return false;
+            }
+
+            read = last + 1;
+            return true;
+        }
+        finally
+        {
+            if (rent != null)
+            {
+                ArrayPool<byte>.Shared.Return(rent);
+            }
+        }
     }
 
     public static bool TryFormat<T>(T value, char identifier, Span<char> destination, out int written)
@@ -69,10 +82,10 @@ internal static class TokenHelper
             return false;
         }
 
-        destination[0] = '{';
+        destination[0] = StartChar;
         destination[1] = identifier;
         span = span.Slice(w);
-        span[0] = '}';
+        span[0] =EndChar;
 
         written = 3 + w;
         return true;

@@ -198,7 +198,7 @@ public class Control
         {
             if (context.TryGetOptions<LpOptions>(out var options))
             {
-                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey))
+                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey, out _))
                 {// CertificateRelayControl
                     context.AddSingleton<IRelayControl, CertificateRelayControl>();
                 }
@@ -459,7 +459,7 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
             var privault = this.LpBase.Options.RelayPeerPrivault;
-            if (!SeedKey.TryParse(privault, out var seedKey))
+            if (!SeedKey.TryParse(privault, out var seedKey, out _))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
@@ -473,7 +473,7 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.ContentPeerPrivault))
         {// ContentPeerPrivault is valid
             var privault = this.LpBase.Options.ContentPeerPrivault;
-            if (!SeedKey.TryParse(privault, out var seedKey))
+            if (!SeedKey.TryParse(privault, out var seedKey, out _))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
@@ -489,7 +489,7 @@ public class Control
     {
         if (context.ServiceProvider.GetService<IRelayControl>() is CertificateRelayControl certificateRelayControl)
         {
-            if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey))
+            if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
                 this.Logger.Get<CertificateRelayControl>().Log($"{relayPublicKey.ToString()}");
@@ -503,7 +503,7 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
         {// MergerPrivault is valid
             var privault = this.LpBase.Options.MergerPrivault;
-            if (!SeedKey.TryParse(privault, out var seedKey))
+            if (!SeedKey.TryParse(privault, out var seedKey, out _))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
@@ -521,7 +521,7 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
         {// RelayMergerPrivault is valid
             var privault = this.LpBase.Options.RelayMergerPrivault;
-            if (!SeedKey.TryParse(privault, out var seedKey))
+            if (!SeedKey.TryParse(privault, out var seedKey, out _))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
@@ -543,7 +543,7 @@ public class Control
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerPrivault))
         {// LinkerPrivault is valid
             var privault = this.LpBase.Options.LinkerPrivault;
-            if (!SeedKey.TryParse(privault, out var privateKey))
+            if (!SeedKey.TryParse(privault, out var privateKey, out _))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))
                 {

@@ -126,7 +126,7 @@ public class LpBase
             this.NodeName = System.Environment.OSVersion.ToString();
         }
 
-        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey))
+        if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey, out _))
         {
             this.remotePublicKey = publicKey;
         }

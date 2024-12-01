@@ -25,7 +25,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (!SignaturePublicKey.TryParse(options.PublicKey, out var publicKey))
+        if (!SignaturePublicKey.TryParse(options.PublicKey, out var publicKey, out _))
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidPublicKey);
             return;

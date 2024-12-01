@@ -144,7 +144,7 @@ public class NodeTest
 
     private static bool TestDualNode(string utf16, bool validation, bool compareUtf16 = true)
     {
-        if (!NetNode.TryParse(utf16, out var node))
+        if (!NetNode.TryParse(utf16, out var node, out _))
         {
             throw new Exception();
         }
@@ -158,7 +158,7 @@ public class NodeTest
             utf16.Is(destination.ToString());
         }
 
-        if (!NetNode.TryParse(destination, out var node2))
+        if (!NetNode.TryParse(destination, out var node2, out _))
         {
             throw new Exception();
         }
@@ -176,7 +176,7 @@ public class NodeTest
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
-        if (!NetNode.TryParse(destination, out var addressAndKey2))
+        if (!NetNode.TryParse(destination, out var addressAndKey2, out _))
         {
             throw new Exception();
         }
