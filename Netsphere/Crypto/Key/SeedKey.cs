@@ -245,6 +245,18 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
         return new(this.signaturePublicKey);
     }
 
+    public ReadOnlySpan<byte> GetEncryptionPublicKeySpan()
+    {
+        this.PrepareKey();
+        return this.encryptionPublicKey.AsSpan();
+    }
+
+    public ReadOnlySpan<byte> GetSignaturePublicKeySpan()
+    {
+        this.PrepareKey();
+        return this.signaturePublicKey.AsSpan();
+    }
+
     public bool TryEncrypt(ReadOnlySpan<byte> message, ReadOnlySpan<byte> nonce24, ReadOnlySpan<byte> publicKey32, Span<byte> cipher)
     {
         if (nonce24.Length != CryptoBox.NonceSize)

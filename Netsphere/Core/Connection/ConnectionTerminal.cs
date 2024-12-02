@@ -372,7 +372,8 @@ public class ConnectionTerminal
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
 
-        // CreateEmbryo
+        // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
+        var embryo2 = new byte[Connection.EmbryoSize];
         Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize]; // Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32)
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
@@ -381,15 +382,14 @@ public class ConnectionTerminal
         span = span.Slice(sizeof(ulong));
         material.CopyTo(span);
         span = span.Slice(CryptoBox.KeyMaterialSize);
-        clientSeedKey.GetEncryptionPublicKey().AsSpan().CopyTo(span);
+        clientSeedKey.GetEncryptionPublicKeySpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
         serverPublicKey.AsSpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
-        var e2 = default(Embryo2);
-        Arc.Crypto.Sha3Helper.Get512_Span(buffer, e2.Span);//
+        Blake2B.Get512_Span(buffer, embryo2);
 
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
-        connection.Initialize(p2.Agreement, embryo);
+        connection.Initialize(p2.Agreement, embryo, embryo2);
 
         return connection;
     }
@@ -402,8 +402,9 @@ public class ConnectionTerminal
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
 
-        // CreateEmbryo
-        Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize]; // Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32)
+        // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
+        var embryo2 = new byte[Connection.EmbryoSize];
+        Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize];
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
         span = span.Slice(sizeof(ulong));
@@ -413,14 +414,13 @@ public class ConnectionTerminal
         span = span.Slice(CryptoBox.KeyMaterialSize);
         p.ClientPublicKey.AsSpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
-        this.NetTerminal.NodeSeedKey.GetEncryptionPublicKey().AsSpan().CopyTo(span);
+        this.NetTerminal.NodeSeedKey.GetEncryptionPublicKeySpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
-        var e2 = default(Embryo2);
-        Arc.Crypto.Sha3Helper.Get512_Span(buffer, e2.Span);
+        Blake2B.Get512_Span(buffer, embryo2);
 
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         this.netStats.NodeControl.TryAddUnknownNode(node);
-        connection.Initialize(p2.Agreement, embryo);
+        connection.Initialize(p2.Agreement, embryo, embryo2);
 
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
@@ -430,7 +430,7 @@ public class ConnectionTerminal
         return true;
     }
 
-    //Imp
+    //Obsolete
     internal void CreateEmbryo(ReadOnlySpan<byte> material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
     {// ClientSalt, ServerSalt, Material, ClientSalt2, ServerSalt2
         Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + CryptoBox.KeyMaterialSize + sizeof(ulong) + sizeof(ulong)];
