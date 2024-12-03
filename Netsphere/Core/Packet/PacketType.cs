@@ -24,9 +24,9 @@ public enum PacketType : ushort
     GetVersionResponse,
     UpdateVersionResponse,
 
-    // Gene types (256-383)
+    // Protected types (256-383)
     Protected = 256,
 
-    // Packet response types (384-512)
+    // Protected response types (384-512)
     ProtectedResponse = 384,
 }

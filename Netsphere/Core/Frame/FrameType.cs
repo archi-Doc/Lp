@@ -10,5 +10,5 @@ public enum FrameType : ushort
     FollowingGene,
     Knock,
     KnockResponse,
-    Stream,
+    // Stream,
 }
