@@ -4,6 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 using Netsphere.Misc;
 using Tinyhand.IO;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
+
 namespace Netsphere.Crypto;
 
 /// <summary>

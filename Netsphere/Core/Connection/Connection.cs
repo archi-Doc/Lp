@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -25,6 +26,7 @@ public abstract class Connection : IDisposable
     private const int LowerRttLimit = 5_000; // 5ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
+    internal const int EmbryoSize = 64;
     internal const int EmbryoKeyLength = 32;
     internal const int EmbryoIvLength = 16;
 
@@ -60,7 +62,7 @@ public abstract class Connection : IDisposable
     public Connection(Connection connection)
         : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndpoint)
     {
-        this.Initialize(connection.Agreement, connection.embryo);
+        this.Initialize(connection.Agreement, connection.embryo2);
     }
 
     #region FieldAndProperty
@@ -83,9 +85,6 @@ public abstract class Connection : IDisposable
     public NetEndpoint DestinationEndpoint { get; }
 
     public int MinimumNumberOfRelays { get; internal set; }
-
-    public ulong Salt
-        => this.embryo.Salt;
 
     public ConnectionAgreement Agreement { get; private set; } = ConnectionAgreement.Default;
 
@@ -172,7 +171,21 @@ public abstract class Connection : IDisposable
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
 
-    private Embryo embryo;
+    #region Embryo
+
+    private byte[] embryo2 = Array.Empty<byte>();
+
+    // public ulong ConnectionId => this.embryo2[0];
+
+    public ulong Salt => this.embryo2[1];
+
+    public ulong Nonce => this.embryo2[2];
+
+    public ReadOnlySpan<byte> Iv => this.embryo2.AsSpan(16, 16); //temp
+
+    public ReadOnlySpan<byte> Key => this.embryo2.AsSpan(32, Aegis256.KeySize); // embryo[4..8]
+
+    #endregion
 
     // using (this.lockAes.EnterScope())
     private readonly Lock lockAes = new();
@@ -208,10 +221,10 @@ public abstract class Connection : IDisposable
         => this.embryo;*/
 
     internal void UnsafeCopyKey(Span<byte> destination)
-        => this.embryo.Key.CopyTo(destination);
+        => this.Key.CopyTo(destination);
 
     internal void UnsafeCopyIv(Span<byte> destination)
-        => this.embryo.Iv.CopyTo(destination);
+        => this.Iv.CopyTo(destination);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateAckedNode(SendTransmission sendTransmission)
@@ -606,10 +619,10 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionAgreement agreement, Embryo embryo)
+    internal void Initialize(ConnectionAgreement agreement, byte[] embryo2)
     {
         this.Agreement = agreement;
-        this.embryo = embryo;
+        this.embryo2 = embryo2;
     }
 
     internal void AddRtt(int rttMics)
@@ -1227,7 +1240,7 @@ Wait:
     internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
-        this.embryo.Iv.CopyTo(iv);
+        this.Iv.CopyTo(iv);
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
@@ -1252,7 +1265,7 @@ Wait:
     internal bool TryEncryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
-        this.embryo.Iv.CopyTo(iv);
+        this.Iv.CopyTo(iv);
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
@@ -1277,7 +1290,7 @@ Wait:
     internal bool TryDecryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
-        this.embryo.Iv.CopyTo(iv);
+        this.Iv.CopyTo(iv);
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
@@ -1443,7 +1456,7 @@ Wait:
             {
                 aes = Aes.Create();
                 aes.KeySize = 256;
-                aes.Key = this.embryo.Key;
+                aes.Key = this.Key.ToArray();
                 return aes;
             }
         }

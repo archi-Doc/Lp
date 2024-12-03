@@ -3,7 +3,7 @@
 global using Arc.Threading;
 global using CrystalData;
 global using Tinyhand;
-using Arc.Crypto;
+using Arc;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -76,7 +76,7 @@ public class Program
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
 
         var netBase = unit.Context.ServiceProvider.GetRequiredService<NetBase>();
-        if (CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>("nodesecretkey", out var seedKey))
+        if (BaseHelper.TryParseFromEnvironmentVariable<SeedKey>("nodesecretkey", out var seedKey))
         {
             netBase.SetNodeSeedKey(seedKey);
         }

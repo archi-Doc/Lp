@@ -370,9 +370,24 @@ public class ConnectionTerminal
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
 
-        this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
-        connection.Initialize(p2.Agreement, embryo);
+        // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
+        var embryo2 = new byte[Connection.EmbryoSize];
+        Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize]; // Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32)
+        var span = buffer;
+        BitConverter.TryWriteBytes(span, p.ClientSalt);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, p2.ServerSalt);
+        span = span.Slice(sizeof(ulong));
+        material.CopyTo(span);
+        span = span.Slice(CryptoBox.KeyMaterialSize);
+        clientSeedKey.GetEncryptionPublicKeySpan().CopyTo(span);
+        span = span.Slice(CryptoBox.PublicKeySize);
+        serverPublicKey.AsSpan().CopyTo(span);
+        span = span.Slice(CryptoBox.PublicKeySize);
+        Blake2B.Get512_Span(buffer, embryo2);
+
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, embryo2[0], node, endPoint);
+        connection.Initialize(p2.Agreement, embryo2);
 
         return connection;
     }
@@ -383,23 +398,9 @@ public class ConnectionTerminal
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         this.NetTerminal.NodeSeedKey.DeriveKeyMaterial(p.ClientPublicKey, material);
 
-        this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
-        this.netStats.NodeControl.TryAddUnknownNode(node);
-        connection.Initialize(p2.Agreement, embryo);
-
-        using (this.serverConnections.LockObject.EnterScope())
-        {// ConnectionStateCode
-            connection.Goshujin = this.serverConnections;
-        }
-
-        return true;
-    }
-
-    //Imp
-    internal void CreateEmbryo(ReadOnlySpan<byte> material, ConnectPacket p, ConnectPacketResponse p2, out ulong connectionId, out Embryo embryo)
-    {// ClientSalt, ServerSalt, Material, ClientSalt2, ServerSalt2
-        Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + CryptoBox.KeyMaterialSize + sizeof(ulong) + sizeof(ulong)];
+        // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
+        var embryo2 = new byte[Connection.EmbryoSize];
+        Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize];
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
         span = span.Slice(sizeof(ulong));
@@ -407,26 +408,22 @@ public class ConnectionTerminal
         span = span.Slice(sizeof(ulong));
         material.CopyTo(span);
         span = span.Slice(CryptoBox.KeyMaterialSize);
-        BitConverter.TryWriteBytes(span, p.ClientSalt2);
-        span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, p2.ServerSalt2);
+        p.ClientPublicKey.AsSpan().CopyTo(span);
+        span = span.Slice(CryptoBox.PublicKeySize);
+        this.NetTerminal.NodeSeedKey.GetEncryptionPublicKeySpan().CopyTo(span);
+        span = span.Slice(CryptoBox.PublicKeySize);
+        Blake2B.Get512_Span(buffer, embryo2);
 
-        Span<byte> hash = stackalloc byte[64];
-        Arc.Crypto.Sha3Helper.Get512_Span(buffer, hash);
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, embryo2[0], node, endPoint);
+        this.netStats.NodeControl.TryAddUnknownNode(node);
+        connection.Initialize(p2.Agreement, embryo2);
 
-        var salt = BitConverter.ToUInt64(hash);
-        hash = hash.Slice(sizeof(ulong));
+        using (this.serverConnections.LockObject.EnterScope())
+        {// ConnectionStateCode
+            connection.Goshujin = this.serverConnections;
+        }
 
-        connectionId = BitConverter.ToUInt64(hash);
-        hash = hash.Slice(sizeof(ulong));
-
-        var key = new byte[Connection.EmbryoKeyLength];
-        hash.Slice(0, Connection.EmbryoKeyLength).CopyTo(key);
-        hash = hash.Slice(Connection.EmbryoKeyLength);
-
-        var iv = new byte[Connection.EmbryoIvLength];
-        hash.CopyTo(iv);
-        embryo = new(salt, key, iv);
+        return true;
     }
 
     internal void CloseInternal(Connection connection, bool sendCloseFrame)

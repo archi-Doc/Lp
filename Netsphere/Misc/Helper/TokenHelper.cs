@@ -25,7 +25,7 @@ internal static class TokenHelper
             return false;
         }
 
-        var last = source.IndexOf(EndChar);//test
+        var last = source.IndexOf(EndChar);
         if (last < 0)
         {
             return false;

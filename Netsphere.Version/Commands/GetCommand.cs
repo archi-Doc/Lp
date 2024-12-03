@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc;
 using Netsphere.Relay;
 
 namespace Netsphere.Version;
@@ -33,7 +34,7 @@ internal class GetCommand : ISimpleCommandAsync<GetOptions>
         {
             if (value.Token is { } token)
             {
-                this.logger.TryGet()?.Log($"Token: {CryptoHelper.ConvertToString(token)}");
+                this.logger.TryGet()?.Log($"Token: {BaseHelper.ConvertToString(token)}");
                 this.logger.TryGet()?.Log($"Version: {token.Target.ToString()}");
             }
             else

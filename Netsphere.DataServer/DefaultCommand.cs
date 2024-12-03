@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using Arc;
 using Netsphere.Crypto;
 using Netsphere.Packet;
 using Netsphere.Stats;
@@ -42,7 +43,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
             this.netControl.NetBase.SetNodeSeedKey(seedKey);
             this.netControl.NetTerminal.SetNodeSeedKey(seedKey);
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.NodeSecretKeyName, out seedKey))
+        else if (BaseHelper.TryParseFromEnvironmentVariable<SeedKey>(NetConstants.NodeSecretKeyName, out seedKey))
         {
             this.netControl.NetBase.SetNodeSeedKey(seedKey);
             this.netControl.NetTerminal.SetNodeSeedKey(seedKey);
@@ -52,7 +53,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
         {
             this.remoteData.RemotePublicKey = publicKey;
         }
-        else if (CryptoHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
+        else if (BaseHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
         {
             this.remoteData.RemotePublicKey = publicKey;
         }
@@ -62,7 +63,7 @@ public class DefaultCommand : ISimpleCommandAsync<DefaultCommandOptions>
     {
         if (!NetAddress.TryParse(punchNode, out var node, out _))
         {
-            if (!CryptoHelper.TryParseFromEnvironmentVariable<NetAddress>("punchnode", out node))
+            if (!BaseHelper.TryParseFromEnvironmentVariable<NetAddress>("punchnode", out node))
             {
                 return;
             }
