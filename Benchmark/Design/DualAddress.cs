@@ -153,7 +153,7 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>
         TryParseIPv6(ref source, out port6, out address6a, out address6b);
 
         instance = new(port4, address4, port6, address6a, address6b);
-        read = source.Length;//Fix
+        read = source.Length;
         return true;
     }
 
