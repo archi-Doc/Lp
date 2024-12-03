@@ -19,7 +19,7 @@ public class StreamTestSubcommand : ISimpleCommandAsync<StreamTestOptions>
     public async Task RunAsync(StreamTestOptions options, string[] args)
     {
         var data = new byte[10_000_000];
-        RandomVault.Pseudo.NextBytes(data);
+        RandomVault.Xoshiro.NextBytes(data);
         var hash = FarmHash.Hash64(data);
 
         var r = await NetHelper.TryGetStreamService<IRemoteBenchHost>(this.netTerminal, options.Node, options.RemotePrivateKey, 100_000_000);

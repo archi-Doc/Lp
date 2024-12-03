@@ -361,7 +361,7 @@ public abstract class Connection : IDisposable
             uint transmissionId;
             do
             {
-                transmissionId = RandomVault.Pseudo.NextUInt32();
+                transmissionId = RandomVault.Xoshiro.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
@@ -420,7 +420,7 @@ Retry:
             uint transmissionId;
             do
             {
-                transmissionId = RandomVault.Pseudo.NextUInt32();
+                transmissionId = RandomVault.Xoshiro.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
@@ -1100,7 +1100,7 @@ Wait:
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt32();
+        var salt = RandomVault.Xoshiro.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1138,7 +1138,7 @@ Wait:
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt32();
+        var salt = RandomVault.Xoshiro.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1173,7 +1173,7 @@ Wait:
     {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var span = rentArray.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt32();
+        var salt = RandomVault.Xoshiro.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId

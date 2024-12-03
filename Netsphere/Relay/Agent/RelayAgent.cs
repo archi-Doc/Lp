@@ -118,7 +118,7 @@ public partial class RelayAgent
 
             while (true)
             {
-                relayId = (ushort)RandomVault.Pseudo.NextUInt32();
+                relayId = (ushort)RandomVault.Xoshiro.NextUInt32();
                 if (!this.items.RelayIdChain.ContainsKey(relayId))
                 {
                     break;
@@ -127,7 +127,7 @@ public partial class RelayAgent
 
             while (true)
             {
-                outerRelayId = (ushort)RandomVault.Pseudo.NextUInt32();
+                outerRelayId = (ushort)RandomVault.Xoshiro.NextUInt32();
                 if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
@@ -337,7 +337,7 @@ public partial class RelayAgent
                 var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
 
                 // RelayHeader
-                var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));
+                var relayHeader = new RelayHeader(RandomVault.Aegis.NextUInt32(), (byte)paddingLength, new(endpoint));
                 MemoryMarshal.Write(sourceSpan, relayHeader);
                 sourceSpan = sourceSpan.Slice(RelayHeader.Length);
 

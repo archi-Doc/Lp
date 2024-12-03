@@ -67,7 +67,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
     {
         while ((encryption &= EncryptionMask) == 0)
         {
-            encryption = RandomVault.Pseudo.NextUInt32();
+            encryption = RandomVault.Xoshiro.NextUInt32();
         }
 
         Span<byte> encryptionKeySource = stackalloc byte[4 + KeyHelper.PrivateKeyLength + 4]; // Seed[4] + PrivateKey[32] + Seed[4]
@@ -109,7 +109,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
                     Span<byte> iv = stackalloc byte[16];
 
                     span = source;
-                    MemoryMarshal.Write(span, RandomVault.Pseudo.NextUInt32()); // Salt
+                    MemoryMarshal.Write(span, RandomVault.Xoshiro.NextUInt32()); // Salt
                     span = span.Slice(4);
                     MemoryMarshal.Write(span, (uint)originalPublicKey.GetChecksum()); // Checksum
                     span = span.Slice(4);

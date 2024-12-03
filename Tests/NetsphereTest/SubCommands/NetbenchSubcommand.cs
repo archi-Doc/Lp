@@ -88,7 +88,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         const int N = 50_000_000;
         var service = connection.GetService<IRemoteBenchHost>();
         var data = new byte[N];
-        RandomVault.Pseudo.NextBytes(data);
+        RandomVault.Xoshiro.NextBytes(data);
 
         var sw = Stopwatch.StartNew();
         var stream = await service.GetHash(N);
@@ -110,7 +110,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         const int N = 4_000_000;
         var service = connection.GetService<IRemoteBenchHost>();
         var data = new byte[N];
-        RandomVault.Pseudo.NextBytes(data);
+        RandomVault.Xoshiro.NextBytes(data);
 
         var sw = Stopwatch.StartNew();
         var response = await ((IRemoteBenchService)service).GetHash(data).ResponseAsync;

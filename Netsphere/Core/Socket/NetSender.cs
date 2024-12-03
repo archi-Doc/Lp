@@ -261,7 +261,7 @@ internal class NetSender
             while (this.itemsIpv4.TryDequeue(out var item))
             {
 #if DEBUG
-                if (this.deliveryFailureRatio != 0 && RandomVault.Pseudo.NextDouble() < this.deliveryFailureRatio)
+                if (this.deliveryFailureRatio != 0 && RandomVault.Xoshiro.NextDouble() < this.deliveryFailureRatio)
                 {
                     continue;
                 }
@@ -295,7 +295,7 @@ internal class NetSender
             while (this.itemsIpv6.TryDequeue(out var item))
             {
 #if DEBUG
-                if (this.deliveryFailureRatio != 0 && RandomVault.Pseudo.NextDouble() < this.deliveryFailureRatio)
+                if (this.deliveryFailureRatio != 0 && RandomVault.Xoshiro.NextDouble() < this.deliveryFailureRatio)
                 {
                     continue;
                 }
