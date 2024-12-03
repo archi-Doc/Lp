@@ -6,6 +6,9 @@ using System.Runtime.InteropServices;
 using Arc.Crypto;
 using BenchmarkDotNet.Attributes;
 
+#pragma warning disable CS0649
+#pragma warning disable CS0169
+
 namespace Benchmark;
 
 public readonly struct StructEmbryo
