@@ -179,9 +179,7 @@ public abstract class Connection : IDisposable
 
     public ulong Salt => this.embryo2[1];
 
-    public ulong Nonce => this.embryo2[2];
-
-    public ReadOnlySpan<byte> Iv => this.embryo2.AsSpan(16, 16); //temp
+    public ulong Secret => this.embryo2[2];
 
     public ReadOnlySpan<byte> Key => this.embryo2.AsSpan(32, Aegis256.KeySize); // embryo[4..8]
 
@@ -219,12 +217,6 @@ public abstract class Connection : IDisposable
 
     /*internal Embryo UnsafeGetEmbryo()
         => this.embryo;*/
-
-    internal void UnsafeCopyKey(Span<byte> destination)
-        => this.Key.CopyTo(destination);
-
-    internal void UnsafeCopyIv(Span<byte> destination)
-        => this.Iv.CopyTo(destination);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateAckedNode(SendTransmission sendTransmission)
@@ -741,7 +733,7 @@ Wait:
 
         // PacketHeaderCode
         var span = toBeShared.Span.Slice(RelayHeader.RelayIdLength); // SourceRelayId/DestinationRelayId
-        var salt = BitConverter.ToUInt32(span); // Salt
+        var salt4 = BitConverter.ToUInt32(span); // Salt
         span = span.Slice(4);
 
         var packetType = (PacketType)BitConverter.ToUInt16(span); // PacketType
@@ -761,14 +753,9 @@ Wait:
                 return;
             }
 
-            var checksum = BitConverter.ToUInt64(span); // Checksum
+            var nonce8 = BitConverter.ToUInt64(span); // Nonce
             span = span.Slice(8);
-            if (XxHash3.Hash64(span) != checksum)
-            {
-                return;
-            }
-
-            if (!this.TryDecryptCbc(salt, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
+            if (!this.TryDecryptCbc(salt4, nonce8, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
                 return;
             }
@@ -1285,6 +1272,25 @@ Wait:
         }
 
         return result;
+    }
+
+    internal bool TryDecryptCbc(uint salt4, ulong nonce8, Span<byte> span, int spanMax, out int written)
+    {
+        Span<byte> nonce32 = stackalloc byte[32];
+        var s = nonce32;
+        MemoryMarshal.Write(s, salt4);
+        s = s.Slice(sizeof(uint));
+        MemoryMarshal.Write(s, salt4);
+        s = s.Slice(sizeof(uint));
+        MemoryMarshal.Write(s, nonce8);
+        s = s.Slice(sizeof(ulong));
+        MemoryMarshal.Write(s, this.ConnectionId);
+        s = s.Slice(sizeof(ulong));
+        MemoryMarshal.Write(s, this.Secret);
+        s = s.Slice(sizeof(ulong));
+
+        Aegis256.TryDecrypt(span, span, nonce32, this.Key);
+        Aegis256.Encrypt(span, span, nonce32, this.Key);
     }
 
     internal bool TryDecryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
