@@ -386,7 +386,8 @@ public class ConnectionTerminal
         span = span.Slice(CryptoBox.PublicKeySize);
         Blake2B.Get512_Span(buffer, embryo2);
 
-        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, embryo2[0], node, endPoint);
+        var connectionId = BitConverter.ToUInt64(embryo2.AsSpan(0));
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo2);
 
         return connection;
@@ -414,7 +415,8 @@ public class ConnectionTerminal
         span = span.Slice(CryptoBox.PublicKeySize);
         Blake2B.Get512_Span(buffer, embryo2);
 
-        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, embryo2[0], node, endPoint);
+        var connectionId = BitConverter.ToUInt64(embryo2.AsSpan(0));
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         this.netStats.NodeControl.TryAddUnknownNode(node);
         connection.Initialize(p2.Agreement, embryo2);
 

@@ -27,8 +27,6 @@ public abstract class Connection : IDisposable
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
     internal const int EmbryoSize = 64;
-    internal const int EmbryoKeyLength = 32;
-    internal const int EmbryoIvLength = 16;
 
     public enum ConnectMode
     {
@@ -175,13 +173,19 @@ public abstract class Connection : IDisposable
 
     private byte[] embryo2 = Array.Empty<byte>();
 
-    // public ulong ConnectionId => this.embryo2[0];
+    // public ulong ConnectionId => BitConverter.ToUInt64(this.embryo2.AsSpan(0));
 
-    public ulong Salt => this.embryo2[1];
+    public ulong Salt => BitConverter.ToUInt64(this.embryo2.AsSpan(8));
 
-    public ulong Secret => this.embryo2[2];
+    public ulong Secret => BitConverter.ToUInt64(this.embryo2.AsSpan(16));
 
-    public ReadOnlySpan<byte> Key => this.embryo2.AsSpan(32, Aegis256.KeySize); // embryo[4..8]
+    public ReadOnlySpan<byte> Key => this.embryo2.AsSpan(32, Aegis256.KeySize); // embryo[32..]
+
+    internal void UnsafeCopyKey(Span<byte> key)
+        => this.Key.CopyTo(key);//
+
+    internal void UnsafeCopyIv(Span<byte> iv)//
+        => this.embryo2.AsSpan(0, 16).CopyTo(iv);
 
     #endregion
 
