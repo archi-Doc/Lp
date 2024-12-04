@@ -755,7 +755,7 @@ Wait:
 
             var nonce8 = BitConverter.ToUInt64(span); // Nonce
             span = span.Slice(8);
-            if (!this.TryDecryptCbc(salt4, nonce8, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
+            if (!this.TryDecrypt(salt4, nonce8, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
                 return;
             }
@@ -1274,7 +1274,7 @@ Wait:
         return result;
     }
 
-    internal bool TryDecryptCbc(uint salt4, ulong nonce8, Span<byte> span, int spanMax, out int written)
+    internal bool TryDecrypt(uint salt4, ulong nonce8, Span<byte> span, int spanMax, out int written)
     {
         Span<byte> nonce32 = stackalloc byte[32];
         var s = nonce32;
@@ -1289,33 +1289,8 @@ Wait:
         MemoryMarshal.Write(s, this.Secret);
         s = s.Slice(sizeof(ulong));
 
-        Aegis256.TryDecrypt(span, span, nonce32, this.Key);
-        Aegis256.Encrypt(span, span, nonce32, this.Key);
-    }
-
-    internal bool TryDecryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
-    {
-        Span<byte> iv = stackalloc byte[16];
-        this.Iv.CopyTo(iv);
-        BitConverter.TryWriteBytes(iv, salt);
-
-        var aes = this.RentAes();
-        bool result;
-        try
-        {
-            result = aes.TryDecryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
-        }
-        catch
-        {
-            result = false;
-            written = 0;
-        }
-        finally
-        {
-            this.ReturnAes(aes);
-        }
-
-        return result;
+        written = span.Length - ProtectedPacket.TagSize;
+        return Aegis256.TryDecrypt(span[..^ProtectedPacket.TagSize], span, nonce32, this.Key);
     }
 
     internal void CloseAllTransmission()
