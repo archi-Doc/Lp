@@ -81,7 +81,6 @@ public partial class RelayAgent
     private readonly NetTerminal netTerminal;
 
     private readonly RelayExchange.GoshujinClass items = new();
-    private readonly Aes aes = Aes.Create();
 
     private readonly EndPointItem.GoshujinClass endPointCache = new();
     private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
@@ -491,42 +490,4 @@ Exit:
 
         return response;
     }
-
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Aes RentAesInternal()
-    {
-        Aes aes;
-        if (this.aes0 is not null)
-        {
-            aes = this.aes0;
-            this.aes0 = this.aes1;
-            this.aes1 = default;
-            return aes;
-        }
-        else
-        {
-            aes = Aes.Create();
-            aes.KeySize = 256;
-            return aes;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReturnAesInternal(Aes aes)
-    {
-        if (this.aes0 is null)
-        {
-            this.aes0 = aes;
-            return;
-        }
-        else if (this.aes1 is null)
-        {
-            this.aes1 = aes;
-            return;
-        }
-        else
-        {
-            aes.Dispose();
-        }
-    }*/
 }

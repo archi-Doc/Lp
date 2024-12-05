@@ -60,7 +60,7 @@ public abstract class Connection : IDisposable
     public Connection(Connection connection)
         : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndpoint)
     {
-        this.Initialize(connection.Agreement, connection.embryo2);
+        this.Initialize(connection.Agreement, connection.embryo);
     }
 
     #region FieldAndProperty
@@ -171,21 +171,21 @@ public abstract class Connection : IDisposable
 
     #region Embryo
 
-    private byte[] embryo2 = Array.Empty<byte>();
+    private byte[] embryo = Array.Empty<byte>();
 
-    // public ulong ConnectionId => BitConverter.ToUInt64(this.embryo2.AsSpan(0));
+    // public ulong ConnectionId => BitConverter.ToUInt64(this.embryo.AsSpan(0));
 
-    public ulong Salt => BitConverter.ToUInt64(this.embryo2.AsSpan(8));
+    public ulong Salt => BitConverter.ToUInt64(this.embryo.AsSpan(8));
 
-    public ulong Secret => BitConverter.ToUInt64(this.embryo2.AsSpan(16));
+    public ulong Secret => BitConverter.ToUInt64(this.embryo.AsSpan(16));
 
-    public ReadOnlySpan<byte> Key => this.embryo2.AsSpan(32, Aegis256.KeySize); // embryo[32..]
+    public ReadOnlySpan<byte> Key => this.embryo.AsSpan(32, Aegis256.KeySize); // embryo[32..]
 
     internal void UnsafeCopyKey(Span<byte> key)
         => this.Key.CopyTo(key);//
 
     internal void UnsafeCopyIv(Span<byte> iv)//
-        => this.embryo2.AsSpan(0, 16).CopyTo(iv);
+        => this.embryo.AsSpan(0, 16).CopyTo(iv);
 
     #endregion
 
@@ -610,10 +610,10 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionAgreement agreement, byte[] embryo2)
+    internal void Initialize(ConnectionAgreement agreement, byte[] embryo)
     {
         this.Agreement = agreement;
-        this.embryo2 = embryo2;
+        this.embryo = embryo;
     }
 
     internal void AddRtt(int rttMics)

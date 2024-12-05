@@ -8,18 +8,6 @@ namespace Netsphere.Relay;
 
 internal class RelayKey
 {
-    private const int AesPoolSize = 32;
-    private static readonly ObjectPool<Aes> AesPool = new(
-        () =>
-        {
-            var aes = Aes.Create();
-            aes.KeySize = 256;
-            // aes.Mode = CipherMode.CBC;
-            // aes.Padding = PaddingMode.PKCS7;
-            return aes;
-        },
-        AesPoolSize);
-
     public RelayKey()
     {
     }
@@ -72,49 +60,37 @@ internal class RelayKey
             goto Exit;
         }
 
-        var aes = AesPool.Rent();
-
-        try
+        for (var i = 0; i < this.NumberOfRelays; i++)
         {
-            for (var i = 0; i < this.NumberOfRelays; i++)
+            if (rentMemory.RentArray is null)
             {
-                if (rentMemory.RentArray is null)
-                {
-                    goto Exit;
-                }
-
-                aes.Key = this.KeyArray[i];
-                aes.TryDecryptCbc(span, this.IvArray[i], span, out _, PaddingMode.None);
-
-                var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
-                if (relayHeader.Zero == 0)
-                {// Decrypted
-                    var span2 = rentMemory.RentArray.AsSpan();
-                    MemoryMarshal.Write(span2, relayHeader.NetAddress.RelayId);
-                    span2 = span2.Slice(sizeof(ushort));
-                    MemoryMarshal.Write(span2, (ushort)0);
-                    span2 = span2.Slice(sizeof(ushort));
-
-                    span = span.Slice(RelayHeader.Length);
-                    var contentLength = span.Length - relayHeader.PaddingLength;
-                    span.Slice(0, contentLength).CopyTo(span2);
-                    rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
-
-                    originalAddress = relayHeader.NetAddress;
-                    relayNumber = i + 1;
-                    return true;
-                }
+                goto Exit;
             }
 
-            goto Exit; // It might not be encrypted.
+            aes.Key = this.KeyArray[i];
+            aes.TryDecryptCbc(span, this.IvArray[i], span, out _, PaddingMode.None);
+
+            var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
+            if (relayHeader.Zero == 0)
+            {// Decrypted
+                var span2 = rentMemory.RentArray.AsSpan();
+                MemoryMarshal.Write(span2, relayHeader.NetAddress.RelayId);
+                span2 = span2.Slice(sizeof(ushort));
+                MemoryMarshal.Write(span2, (ushort)0);
+                span2 = span2.Slice(sizeof(ushort));
+
+                span = span.Slice(RelayHeader.Length);
+                var contentLength = span.Length - relayHeader.PaddingLength;
+                span.Slice(0, contentLength).CopyTo(span2);
+                rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
+
+                originalAddress = relayHeader.NetAddress;
+                relayNumber = i + 1;
+                return true;
+            }
         }
-        catch
-        {
-        }
-        finally
-        {
-            AesPool.Return(aes);
-        }
+
+        goto Exit; // It might not be encrypted.
 
 Exit:
         originalAddress = default;
@@ -155,7 +131,6 @@ Exit:
             goto Error;
         }
 
-        var aes = AesPool.Rent();
         encrypted = PacketPool.Rent().AsMemory();
 
         // RelayId
@@ -189,8 +164,6 @@ Exit:
         {
             goto Error;
         }
-
-        AesPool.Return(aes);
 
         encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + headerAndContentLength);
         Debug.Assert(encrypted.Memory.Length <= NetConstants.MaxPacketLength);
