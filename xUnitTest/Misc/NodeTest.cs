@@ -71,7 +71,7 @@ public class NodeTest
     public void DualAddressAndPublicKeyRandom()
     {
         const int N = 10;
-        var r = RandomVault.Pseudo;
+        var r = RandomVault.Xoshiro;
 
         for (var i = 0; i < N; i++)
         {

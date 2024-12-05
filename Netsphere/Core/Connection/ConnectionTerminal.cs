@@ -371,7 +371,7 @@ public class ConnectionTerminal
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
 
         // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
-        var embryo2 = new byte[Connection.EmbryoSize];
+        var embryo = new byte[Connection.EmbryoSize];
         Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize]; // Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32)
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
@@ -384,10 +384,11 @@ public class ConnectionTerminal
         span = span.Slice(CryptoBox.PublicKeySize);
         serverPublicKey.AsSpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
-        Blake2B.Get512_Span(buffer, embryo2);
+        Blake2B.Get512_Span(buffer, embryo);
 
-        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, embryo2[0], node, endPoint);
-        connection.Initialize(p2.Agreement, embryo2);
+        var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
+        var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
+        connection.Initialize(p2.Agreement, embryo);
 
         return connection;
     }
@@ -399,7 +400,7 @@ public class ConnectionTerminal
         this.NetTerminal.NodeSeedKey.DeriveKeyMaterial(p.ClientPublicKey, material);
 
         // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
-        var embryo2 = new byte[Connection.EmbryoSize];
+        var embryo = new byte[Connection.EmbryoSize];
         Span<byte> buffer = stackalloc byte[8 + 8 + CryptoBox.KeyMaterialSize + CryptoBox.PublicKeySize + CryptoBox.PublicKeySize];
         var span = buffer;
         BitConverter.TryWriteBytes(span, p.ClientSalt);
@@ -412,11 +413,12 @@ public class ConnectionTerminal
         span = span.Slice(CryptoBox.PublicKeySize);
         this.NetTerminal.NodeSeedKey.GetEncryptionPublicKeySpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
-        Blake2B.Get512_Span(buffer, embryo2);
+        Blake2B.Get512_Span(buffer, embryo);
 
-        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, embryo2[0], node, endPoint);
+        var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
+        var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         this.netStats.NodeControl.TryAddUnknownNode(node);
-        connection.Initialize(p2.Agreement, embryo2);
+        connection.Initialize(p2.Agreement, embryo);
 
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode

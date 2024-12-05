@@ -20,9 +20,9 @@ public partial class RelayNode
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }
 
-    internal byte[] Key { get; private set; } = new byte[Connection.EmbryoKeyLength];
+    internal byte[] Key { get; private set; } = new byte[32];
 
-    internal byte[] Iv { get; private set; } = new byte[Connection.EmbryoIvLength];
+    internal byte[] Iv { get; private set; } = new byte[16];
 
     public void Clear()
     {

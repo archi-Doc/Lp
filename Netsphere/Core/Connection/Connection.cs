@@ -27,8 +27,6 @@ public abstract class Connection : IDisposable
     private const int UpperRttLimit = 1_000_000; // 1000ms
     private const int DefaultRtt = 100_000; // 100ms
     internal const int EmbryoSize = 64;
-    internal const int EmbryoKeyLength = 32;
-    internal const int EmbryoIvLength = 16;
 
     public enum ConnectMode
     {
@@ -62,7 +60,7 @@ public abstract class Connection : IDisposable
     public Connection(Connection connection)
         : this(connection.PacketTerminal, connection.ConnectionTerminal, connection.ConnectionId, connection.DestinationNode, connection.DestinationEndpoint)
     {
-        this.Initialize(connection.Agreement, connection.embryo2);
+        this.Initialize(connection.Agreement, connection.embryo);
     }
 
     #region FieldAndProperty
@@ -173,24 +171,23 @@ public abstract class Connection : IDisposable
 
     #region Embryo
 
-    private byte[] embryo2 = Array.Empty<byte>();
+    private byte[] embryo = Array.Empty<byte>();
 
-    // public ulong ConnectionId => this.embryo2[0];
+    // public ulong ConnectionId => BitConverter.ToUInt64(this.embryo.AsSpan(0));
 
-    public ulong Salt => this.embryo2[1];
+    public ulong Salt => BitConverter.ToUInt64(this.embryo.AsSpan(8));
 
-    public ulong Nonce => this.embryo2[2];
+    public ulong Secret => BitConverter.ToUInt64(this.embryo.AsSpan(16));
 
-    public ReadOnlySpan<byte> Iv => this.embryo2.AsSpan(16, 16); //temp
+    public ReadOnlySpan<byte> Key => this.embryo.AsSpan(32, Aegis256.KeySize); // embryo[32..]
 
-    public ReadOnlySpan<byte> Key => this.embryo2.AsSpan(32, Aegis256.KeySize); // embryo[4..8]
+    internal void UnsafeCopyKey(Span<byte> key)
+        => this.Key.CopyTo(key);//
+
+    internal void UnsafeCopyIv(Span<byte> iv)//
+        => this.embryo.AsSpan(0, 16).CopyTo(iv);
 
     #endregion
-
-    // using (this.lockAes.EnterScope())
-    private readonly Lock lockAes = new();
-    private Aes? aes0;
-    private Aes? aes1;
 
     private SendTransmission.GoshujinClass sendTransmissions = new(); // using (this.sendTransmissions.LockObject.EnterScope())
     private UnorderedLinkedList<SendTransmission> sendAckedList = new();
@@ -219,12 +216,6 @@ public abstract class Connection : IDisposable
 
     /*internal Embryo UnsafeGetEmbryo()
         => this.embryo;*/
-
-    internal void UnsafeCopyKey(Span<byte> destination)
-        => this.Key.CopyTo(destination);
-
-    internal void UnsafeCopyIv(Span<byte> destination)
-        => this.Iv.CopyTo(destination);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UpdateAckedNode(SendTransmission sendTransmission)
@@ -361,7 +352,7 @@ public abstract class Connection : IDisposable
             uint transmissionId;
             do
             {
-                transmissionId = RandomVault.Pseudo.NextUInt32();
+                transmissionId = RandomVault.Xoshiro.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
@@ -420,7 +411,7 @@ Retry:
             uint transmissionId;
             do
             {
-                transmissionId = RandomVault.Pseudo.NextUInt32();
+                transmissionId = RandomVault.Xoshiro.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
@@ -619,10 +610,10 @@ Wait:
         }
     }
 
-    internal void Initialize(ConnectionAgreement agreement, byte[] embryo2)
+    internal void Initialize(ConnectionAgreement agreement, byte[] embryo)
     {
         this.Agreement = agreement;
-        this.embryo2 = embryo2;
+        this.embryo = embryo;
     }
 
     internal void AddRtt(int rttMics)
@@ -741,7 +732,7 @@ Wait:
 
         // PacketHeaderCode
         var span = toBeShared.Span.Slice(RelayHeader.RelayIdLength); // SourceRelayId/DestinationRelayId
-        var salt = BitConverter.ToUInt32(span); // Salt
+        var salt4 = BitConverter.ToUInt32(span); // Salt
         span = span.Slice(4);
 
         var packetType = (PacketType)BitConverter.ToUInt16(span); // PacketType
@@ -761,14 +752,9 @@ Wait:
                 return;
             }
 
-            var checksum = BitConverter.ToUInt64(span); // Checksum
+            var nonce8 = BitConverter.ToUInt64(span); // Nonce
             span = span.Slice(8);
-            if (XxHash3.Hash64(span) != checksum)
-            {
-                return;
-            }
-
-            if (!this.TryDecryptCbc(salt, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
+            if (!this.TryDecrypt(salt4, nonce8, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
                 return;
             }
@@ -1100,7 +1086,7 @@ Wait:
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt32();
+        var salt = RandomVault.Xoshiro.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1117,16 +1103,11 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        int written = 0;
-        var span2 = arrayOwner.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
-        if (!this.TryEncryptCbc(salt, frame, span2, out written))
-        {
-            rentArray = default;
-            return false;
-        }
+        var nonce8 = RandomVault.Aegis.NextUInt64();
+        BitConverter.TryWriteBytes(span, nonce8); // Nonce8
+        span = span.Slice(sizeof(ulong));
 
-        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
-
+        this.Encrypt(salt, nonce8, frame, arrayOwner.AsSpan(PacketHeader.Length + ProtectedPacket.Length), out var written);
         rentArray = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
         return true;
     }
@@ -1138,7 +1119,7 @@ Wait:
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt32();
+        var salt4 = RandomVault.Xoshiro.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1146,7 +1127,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, salt); // Salt
+        BitConverter.TryWriteBytes(span, salt4); // Salt
         span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -1155,16 +1136,16 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        var span2 = span.Slice(sizeof(ulong)); // Checksum
+        var nonce8 = RandomVault.Aegis.NextUInt64();
+        BitConverter.TryWriteBytes(span, nonce8); // Nonce8
+        span = span.Slice(sizeof(ulong));
 
-        frameHeader.CopyTo(span2);
-        span2 = span2.Slice(frameHeader.Length);
-        frameContent.CopyTo(span2);
+        frameHeader.CopyTo(span);
+        span = span.Slice(frameHeader.Length);
+        frameContent.CopyTo(span);
 
-        span2 = arrayOwner.Array.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
-        this.TryEncryptCbc(salt, span2.Slice(0, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
-
-        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
+        span = arrayOwner.Array.AsSpan(PacketHeader.Length + ProtectedPacket.Length);
+        this.Encrypt(salt4, nonce8, span.Slice(0, frameHeader.Length + frameContent.Length), span, out var written);
 
         rentMemory = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
     }
@@ -1173,7 +1154,7 @@ Wait:
     {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var span = rentArray.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt32();
+        var salt4 = RandomVault.Xoshiro.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1181,7 +1162,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // RelayId
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, salt); // Salt
+        BitConverter.TryWriteBytes(span, salt4); // Salt
         span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
@@ -1190,11 +1171,13 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        var span2 = span.Slice(sizeof(ulong)); // Checksum
-        BitConverter.TryWriteBytes(span2, (ushort)FrameType.Ack); // Frame type
+        var nonce8 = RandomVault.Aegis.NextUInt64();
+        BitConverter.TryWriteBytes(span, nonce8); // Nonce8
+        span = span.Slice(sizeof(ulong));
 
-        this.TryEncryptCbc(salt, span2.Slice(0, sizeof(ushort) + length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
-        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span2.Slice(0, written))); // Checksum
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack); // Frame type
+
+        this.Encrypt(salt4, nonce8, span.Slice(0, sizeof(ushort) + length), span, out var written);
         packetLength = PacketHeader.Length + ProtectedPacket.Length + written;
     }
 
@@ -1219,97 +1202,24 @@ Wait:
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.DestinationEndpoint.ToString()}, Delivery:{this.DeliveryRatio.ToString("F2")} ({this.SendCount}/{this.SendCount + this.ResendCount})";
     }
 
-    protected void ReleaseResource()
+    internal void Encrypt(uint salt4, ulong nonce8, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
-        using (this.lockAes.EnterScope())
-        {
-            if (this.aes0 is not null)
-            {
-                this.aes0.Dispose();
-                this.aes0 = default;
-            }
+        Debug.Assert(destination.Length >= (source.Length + ProtectedPacket.TagSize));
 
-            if (this.aes1 is not null)
-            {
-                this.aes1.Dispose();
-                this.aes1 = default;
-            }
-        }
+        Span<byte> nonce = stackalloc byte[32];
+        this.CreateNonce(salt4, nonce8, nonce);
+
+        written = source.Length + ProtectedPacket.TagSize;
+        Aegis256.Encrypt(destination.Slice(0, written), source, nonce, this.Key);
     }
 
-    internal bool TryEncryptCbc(uint salt, ReadOnlySpan<byte> source, Span<byte> destination, out int written)
+    internal bool TryDecrypt(uint salt4, ulong nonce8, Span<byte> span, int spanMax, out int written)
     {
-        Span<byte> iv = stackalloc byte[16];
-        this.Iv.CopyTo(iv);
-        BitConverter.TryWriteBytes(iv, salt);
+        Span<byte> nonce = stackalloc byte[32];
+        this.CreateNonce(salt4, nonce8, nonce);
 
-        var aes = this.RentAes();
-        bool result;
-        try
-        {
-            result = aes.TryEncryptCbc(source, iv, destination, out written, PaddingMode.PKCS7);
-        }
-        catch
-        {
-            result = false;
-            written = 0;
-        }
-        finally
-        {
-            this.ReturnAes(aes);
-        }
-
-        return result;
-    }
-
-    internal bool TryEncryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
-    {
-        Span<byte> iv = stackalloc byte[16];
-        this.Iv.CopyTo(iv);
-        BitConverter.TryWriteBytes(iv, salt);
-
-        var aes = this.RentAes();
-        bool result;
-        try
-        {
-            result = aes.TryEncryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
-        }
-        catch
-        {
-            result = false;
-            written = 0;
-        }
-        finally
-        {
-            this.ReturnAes(aes);
-        }
-
-        return result;
-    }
-
-    internal bool TryDecryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
-    {
-        Span<byte> iv = stackalloc byte[16];
-        this.Iv.CopyTo(iv);
-        BitConverter.TryWriteBytes(iv, salt);
-
-        var aes = this.RentAes();
-        bool result;
-        try
-        {
-            result = aes.TryDecryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
-        }
-        catch
-        {
-            result = false;
-            written = 0;
-        }
-        finally
-        {
-            this.ReturnAes(aes);
-        }
-
-        return result;
+        written = span.Length - ProtectedPacket.TagSize;
+        return Aegis256.TryDecrypt(span[..^ProtectedPacket.TagSize], span, nonce, this.Key);
     }
 
     internal void CloseAllTransmission()
@@ -1378,7 +1288,6 @@ Wait:
     {
         if (this.CurrentState == State.Disposed)
         {
-            this.ReleaseResource();
         }
     }
 
@@ -1440,47 +1349,20 @@ Wait:
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Aes RentAes()
+    private void CreateNonce(uint salt4, ulong nonce8, Span<byte> nonce)
     {
-        using (this.lockAes.EnterScope())
-        {
-            Aes aes;
-            if (this.aes0 is not null)
-            {
-                aes = this.aes0;
-                this.aes0 = this.aes1;
-                this.aes1 = default;
-                return aes;
-            }
-            else
-            {
-                aes = Aes.Create();
-                aes.KeySize = 256;
-                aes.Key = this.Key.ToArray();
-                return aes;
-            }
-        }
-    }
+        Debug.Assert(nonce.Length == 32);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReturnAes(Aes aes)
-    {
-        using (this.lockAes.EnterScope())
-        {
-            if (this.aes0 is null)
-            {
-                this.aes0 = aes;
-                return;
-            }
-            else if (this.aes1 is null)
-            {
-                this.aes1 = aes;
-                return;
-            }
-            else
-            {
-                aes.Dispose();
-            }
-        }
+        var s = nonce;
+        MemoryMarshal.Write(s, salt4);
+        s = s.Slice(sizeof(uint));
+        MemoryMarshal.Write(s, salt4);
+        s = s.Slice(sizeof(uint));
+        MemoryMarshal.Write(s, nonce8);
+        s = s.Slice(sizeof(ulong));
+        MemoryMarshal.Write(s, this.ConnectionId);
+        s = s.Slice(sizeof(ulong));
+        MemoryMarshal.Write(s, this.Secret);
+        s = s.Slice(sizeof(ulong));
     }
 }

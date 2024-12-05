@@ -13,9 +13,9 @@ internal partial class RelayExchange
         this.Endpoint = serverConnection.DestinationEndpoint;
         this.LastAccessMics = Mics.FastSystem;
 
-        this.Key = new byte[Connection.EmbryoKeyLength];
+        this.Key = new byte[32];
         serverConnection.UnsafeCopyKey(this.Key);
-        this.Iv = new byte[Connection.EmbryoIvLength];
+        this.Iv = new byte[16];
         serverConnection.UnsafeCopyIv(this.Iv);
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;

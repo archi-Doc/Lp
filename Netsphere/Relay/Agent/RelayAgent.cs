@@ -81,7 +81,6 @@ public partial class RelayAgent
     private readonly NetTerminal netTerminal;
 
     private readonly RelayExchange.GoshujinClass items = new();
-    private readonly Aes aes = Aes.Create();
 
     private readonly EndPointItem.GoshujinClass endPointCache = new();
     private readonly ConcurrentQueue<NetSender.Item> sendItems = new();
@@ -118,7 +117,7 @@ public partial class RelayAgent
 
             while (true)
             {
-                relayId = (ushort)RandomVault.Pseudo.NextUInt32();
+                relayId = (ushort)RandomVault.Xoshiro.NextUInt32();
                 if (!this.items.RelayIdChain.ContainsKey(relayId))
                 {
                     break;
@@ -127,7 +126,7 @@ public partial class RelayAgent
 
             while (true)
             {
-                outerRelayId = (ushort)RandomVault.Pseudo.NextUInt32();
+                outerRelayId = (ushort)RandomVault.Xoshiro.NextUInt32();
                 if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
@@ -337,7 +336,7 @@ public partial class RelayAgent
                 var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
 
                 // RelayHeader
-                var relayHeader = new RelayHeader(RandomVault.Crypto.NextUInt32(), (byte)paddingLength, new(endpoint));
+                var relayHeader = new RelayHeader(RandomVault.Aegis.NextUInt32(), (byte)paddingLength, new(endpoint));
                 MemoryMarshal.Write(sourceSpan, relayHeader);
                 sourceSpan = sourceSpan.Slice(RelayHeader.Length);
 
@@ -491,42 +490,4 @@ Exit:
 
         return response;
     }
-
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Aes RentAesInternal()
-    {
-        Aes aes;
-        if (this.aes0 is not null)
-        {
-            aes = this.aes0;
-            this.aes0 = this.aes1;
-            this.aes1 = default;
-            return aes;
-        }
-        else
-        {
-            aes = Aes.Create();
-            aes.KeySize = 256;
-            return aes;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReturnAesInternal(Aes aes)
-    {
-        if (this.aes0 is null)
-        {
-            this.aes0 = aes;
-            return;
-        }
-        else if (this.aes1 is null)
-        {
-            this.aes1 = aes;
-            return;
-        }
-        else
-        {
-            aes.Dispose();
-        }
-    }*/
 }

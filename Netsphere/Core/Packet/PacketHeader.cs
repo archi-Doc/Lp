@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Relay;
+
 namespace Netsphere.Packet;
 
 #pragma warning disable CS0649
@@ -7,8 +9,8 @@ namespace Netsphere.Packet;
 internal readonly struct PacketHeader
 {// 18 bytes, PacketHeaderCode, CreatePacketCode
     public const int Length = 18;
-    public const int MaxPayloadLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length;
-    public const int MaxFrameLength = NetConstants.MaxPacketLength - NetConstants.RelayLength - Length - ProtectedPacket.Length; // - 16 (PKCS7 padding requires 16 bytes, but trimming should just fit within the upper limit, so it's probably fine)
+    public const int MaxPayloadLength = NetConstants.MaxPacketLength - RelayHeader.Length - Length;
+    public const int MaxFrameLength = NetConstants.MaxPacketLength - RelayHeader.Length - Length - ProtectedPacket.Length - ProtectedPacket.TagSize;
 
     public readonly ushort SourceRelayId; // 2 bytes
     public readonly ushort DestinationRelayId; // 2 bytes

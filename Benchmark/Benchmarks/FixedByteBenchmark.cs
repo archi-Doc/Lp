@@ -42,7 +42,7 @@ public class FixedByteBenchmark
 
     public FixedByteBenchmark()
     {
-        RandomVault.Pseudo.NextBytes(this.fixedArray);
+        RandomVault.Xoshiro.NextBytes(this.fixedArray);
     }
 
     [GlobalSetup]

@@ -722,7 +722,6 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         else
         {// Disposed
             this.cts.Dispose();
-            this.ReleaseResource();
         }
     }
 

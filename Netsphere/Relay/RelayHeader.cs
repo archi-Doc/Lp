@@ -29,9 +29,9 @@ public readonly struct RelayHeader
     [FieldOffset(0)]
     public readonly uint Zero; // 4 bytes
     [FieldOffset(4)]
-    public readonly uint Salt; // 4 bytes
+    public readonly uint Salt; // 3 bytes
     [FieldOffset(7)]
-    public readonly byte PaddingLength; // 4 bytes
+    public readonly byte PaddingLength; // 1 bytes
     [FieldOffset(8)]
     public readonly NetAddress NetAddress; // 24 bytes
 }

@@ -36,10 +36,10 @@ public class PacketBenchmark
         this.Sha256 = new();
 
         this.Key = new byte[16];
-        RandomVault.Pseudo.NextBytes(this.Key);
+        RandomVault.Xoshiro.NextBytes(this.Key);
         this.Aes.Key = this.Key;
         this.Iv = new byte[16];
-        RandomVault.Pseudo.NextBytes(this.Iv);
+        RandomVault.Xoshiro.NextBytes(this.Iv);
 
         this.Source = new byte[Length];
         this.Encrypted = new byte[Length];

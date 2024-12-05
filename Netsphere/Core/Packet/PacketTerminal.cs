@@ -77,7 +77,7 @@ public sealed partial class PacketTerminal
     {
         if (packetId == 0)
         {
-            packetId = RandomVault.Pseudo.NextUInt64();
+            packetId = RandomVault.Xoshiro.NextUInt64();
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();
@@ -287,7 +287,7 @@ public sealed partial class PacketTerminal
                 if (MemoryMarshal.Read<ushort>(span.Slice(sizeof(ushort))) == 0)
                 {// No relay
                     // Reset packet id in order to improve the accuracy of RTT measurement.
-                    var newPacketId = RandomVault.Pseudo.NextUInt64();
+                    var newPacketId = RandomVault.Xoshiro.NextUInt64();
                     item.PacketIdValue = newPacketId;
 
                     BitConverter.TryWriteBytes(span.Slice(10), newPacketId);

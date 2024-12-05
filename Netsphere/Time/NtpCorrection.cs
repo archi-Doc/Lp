@@ -132,7 +132,7 @@ Retry:
             return false;
         }
 
-        var hostname = this.hostNames[RandomVault.Pseudo.NextInt32(this.hostNames.Length)];
+        var hostname = this.hostNames[RandomVault.Xoshiro.NextInt32(this.hostNames.Length)];
         using (var client = new UdpClient())
         {
             try
