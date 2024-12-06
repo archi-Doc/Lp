@@ -76,7 +76,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             new(
                 async connection =>
                 {
-                    var token = new AuthenticationToken(connection.Salt);
+                    var token = new AuthenticationToken(connection.EmbryoSalt);
                     seedKey.Sign(token);
                     return await connection.GetService<IMergerRemote>().Authenticate(token) == NetResult.Success;
                 }));

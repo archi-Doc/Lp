@@ -10,8 +10,9 @@ public partial class RelayNode
     public RelayNode(ushort relayId, ClientConnection clientConnection)
     {
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
-        clientConnection.UnsafeCopyKey(this.Key);
-        clientConnection.UnsafeCopyIv(this.Iv);
+        clientConnection.EmbryoKey.CopyTo(this.EmbryoKey);
+        this.EmbryoSalt = clientConnection.EmbryoSalt;
+        this.EmbryoSecret = clientConnection.EmbryoSecret;
     }
 
     public ushort RelayId // For chain
@@ -20,14 +21,17 @@ public partial class RelayNode
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }
 
-    internal byte[] Key { get; private set; } = new byte[32];
+    internal byte[] EmbryoKey { get; private set; } = new byte[32];
 
-    internal byte[] Iv { get; private set; } = new byte[16];
+    internal ulong EmbryoSalt { get; private set; }
+
+    internal ulong EmbryoSecret { get; private set; }
 
     public void Clear()
     {
-        this.Key.AsSpan().Fill(0);
-        this.Iv.AsSpan().Fill(0);
+        this.EmbryoKey.AsSpan().Fill(0);
+        this.EmbryoSalt = 0;
+        this.EmbryoSecret = 0;
     }
 
     public override string ToString()

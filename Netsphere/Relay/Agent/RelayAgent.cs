@@ -218,7 +218,7 @@ public partial class RelayAgent
                     goto Exit;
                 }
 
-                this.aes.Key = exchange.Key;
+                this.aes.Key = exchange.EmbryoKey;
                 int written;
                 try
                 {
@@ -324,7 +324,7 @@ public partial class RelayAgent
                 }
             }
 
-            this.aes.Key = exchange.Key;
+            this.aes.Key = exchange.EmbryoKey;
             var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
             if (sourceRelayId == 0)
             {// RelayId(Source/Destination), RelayHeader, Content, Padding
@@ -333,10 +333,9 @@ public partial class RelayAgent
 
                 var contentLength = span.Length;
                 var multiple = contentLength & ~15;
-                var paddingLength = contentLength == multiple ? 0 : (multiple + 16 - contentLength);
 
                 // RelayHeader
-                var relayHeader = new RelayHeader(RandomVault.Aegis.NextUInt32(), (byte)paddingLength, new(endpoint));
+                var relayHeader = new RelayHeader(RandomVault.Aegis.NextUInt32(), new(endpoint));
                 MemoryMarshal.Write(sourceSpan, relayHeader);
                 sourceSpan = sourceSpan.Slice(RelayHeader.Length);
 
@@ -353,7 +352,7 @@ public partial class RelayAgent
                 goto Exit;
             }
 
-            this.aes.Key = exchange.Key;
+            this.aes.Key = exchange.EmbryoKey;
             try
             {//
                 if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
