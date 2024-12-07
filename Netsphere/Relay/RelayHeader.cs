@@ -9,12 +9,14 @@ namespace Netsphere.Relay;
 #pragma warning disable CS0649
 
 [StructLayout(LayoutKind.Explicit)]
-public readonly struct RelayPlainHeader
+public readonly struct RelayHeader
 {// 8 bytes, RelayHeaderCode
     public const int RelayIdLength = 4; // SourceRelayId/DestinationRelayId
-    public const int Length = 8;
+    public const int PlainLength = 4; // Salt
+    public const int CipherLength = 28; // Zero, NetAddress
+    public const int Length = PlainLength + CipherLength;
 
-    public RelayHeader(uint salt)
+    public RelayHeader(uint salt, NetAddress netAddress)
     {
         this.Salt = salt;
         this.NetAddress = netAddress;
@@ -22,8 +24,10 @@ public readonly struct RelayPlainHeader
 
     [FieldOffset(0)]
     public readonly uint Salt; // 4 bytes
+
+    // The byte sequence starting from zero is subject to encryption.
     [FieldOffset(4)]
-    public readonly uint Zero; // 4 bytes. The byte sequence starting from zero is subject to encryption.
+    public readonly uint Zero; // 4 bytes.
     [FieldOffset(8)]
     public readonly NetAddress NetAddress; // 24 bytes
 }

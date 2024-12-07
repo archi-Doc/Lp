@@ -62,6 +62,7 @@ internal class RelayKey
 
         span = span.Slice(RelayHeader.RelayIdLength);
         var salt4 = MemoryMarshal.Read<uint>(span);
+        span = span.Slice(RelayHeader.PlainLength);
         Span<byte> nonce32 = stackalloc byte[32];
 
         for (var i = 0; i < this.NumberOfRelays; i++)
@@ -71,10 +72,8 @@ internal class RelayKey
                 goto Exit;
             }
 
-            RelayHeader.CreateNonce(salt4, this.EmbryoSaltArray[i], this.EmbryoSecretArray[i], nonce32);
-
-            aes.Key = this.EmbryoKeyArray[i];
-            aes.TryDecryptCbc(span, this.IvArray[i], span, out _, PaddingMode.None);
+            RelayHelper.CreateNonce(salt4, this.EmbryoSaltArray[i], this.EmbryoSecretArray[i], nonce32);
+            Aegis256.TryDecrypt(span, span, nonce32, this.EmbryoKeyArray[i], default, 0);
 
             var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
             if (relayHeader.Zero == 0)
@@ -86,9 +85,8 @@ internal class RelayKey
                 span2 = span2.Slice(sizeof(ushort));
 
                 span = span.Slice(RelayHeader.Length);
-                var contentLength = span.Length - relayHeader.PaddingLength;
-                span.Slice(0, contentLength).CopyTo(span2);
-                rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + contentLength);
+                span.CopyTo(span2);
+                rentMemory = rentMemory.RentArray.AsMemory(0, RelayHeader.RelayIdLength + span.Length);
 
                 originalAddress = relayHeader.NetAddress;
                 relayNumber = i + 1;
@@ -153,14 +151,13 @@ Exit:
         content.CopyTo(span);
         span = span.Slice(content.Length);
 
-        var encryptionLength = RelayHeader.EncryptionLength + content.Length;
-        var encryptionContent = encrypted.Span.Slice(RelayHeader.RelayIdAndSaltLength, encryptionLength);
+        var encryptionContent = encrypted.Span.Slice(RelayHeader.RelayIdLength + RelayHeader.PlainLength, RelayHeader.CipherLength + content.Length);
         Span<byte> nonce32 = stackalloc byte[32];
         try
         {
             for (var i = relayNumber - 1; i >= 0; i--)
             {
-                RelayHeader.CreateNonce(relayHeader.Salt, this.EmbryoSaltArray[i], this.EmbryoSecretArray[i], nonce32);
+                RelayHelper.CreateNonce(relayHeader.Salt, this.EmbryoSaltArray[i], this.EmbryoSecretArray[i], nonce32);
                 Aegis256.Encrypt(encryptionContent, encryptionContent, nonce32, this.EmbryoKeyArray[i], default, 0);
             }
         }
@@ -169,7 +166,7 @@ Exit:
             goto Error;
         }
 
-        encrypted = encrypted.Slice(0, RelayHeader.RelayIdAndSaltLength + encryptionLength);
+        encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + RelayHeader.Length + content.Length);
         Debug.Assert(encrypted.Memory.Length <= NetConstants.MaxPacketLength);
         relayEndpoint = this.FirstEndpoint;
         return true;

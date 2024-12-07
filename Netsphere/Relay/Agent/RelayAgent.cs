@@ -218,10 +218,16 @@ public partial class RelayAgent
                     goto Exit;
                 }
 
+                var salt4 = MemoryMarshal.Read<uint>(span);
+                span = span.Slice(sizeof(uint));
+
                 this.aes.Key = exchange.EmbryoKey;
+                Span<byte> nonce32 = stackalloc byte[32];
                 int written;
                 try
                 {
+                    RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
+                    Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
                     if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out written, PaddingMode.None) ||
                         written < RelayHeader.Length)
                     {
