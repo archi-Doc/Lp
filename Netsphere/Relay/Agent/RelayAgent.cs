@@ -194,7 +194,8 @@ public partial class RelayAgent
     public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if (source.RentArray is null)
+        if (source.RentArray is null ||
+            span.Length < RelayHeader.Length)
         {// Invalid data
             goto Exit;
         }
@@ -213,37 +214,22 @@ public partial class RelayAgent
         {// InnerRelayId
             if (exchange.Endpoint.EndPointEquals(endpoint))
             {// Inner -> Outer: Decrypt
-                if ((span.Length & 15) != 0)
-                {// Invalid data
-                    goto Exit;
-                }
-
                 var salt4 = MemoryMarshal.Read<uint>(span);
+                var headerSpan = span;
                 span = span.Slice(sizeof(uint));
 
-                this.aes.Key = exchange.EmbryoKey;
                 Span<byte> nonce32 = stackalloc byte[32];
-                int written;
-                try
-                {
-                    RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
-                    Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
-                    if (!this.aes.TryDecryptCbc(span, exchange.Iv, span, out written, PaddingMode.None) ||
-                        written < RelayHeader.Length)
-                    {
-                        goto Exit;
-                    }
-                }
-                catch
+                RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
+                if (!Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0))
                 {
                     goto Exit;
                 }
 
-                var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
+                var relayHeader = MemoryMarshal.Read<RelayHeader>(headerSpan);
                 if (relayHeader.Zero == 0)
                 { // Decrypted. Process the packet on this node.
-                    span = span.Slice(RelayHeader.Length - RelayHeader.RelayIdLength);
-                    decrypted = source.RentArray.AsMemory(RelayHeader.Length, RelayHeader.RelayIdLength + written - RelayHeader.Length - relayHeader.PaddingLength);
+                    span = span.Slice(RelayHeader.Length - RelayHeader.PlainLength - RelayHeader.RelayIdLength);
+                    decrypted = source.RentArray.AsMemory(RelayHeader.Length, span.Length);
                     if (relayHeader.NetAddress == NetAddress.Relay)
                     {// Initiator -> This node
                         MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
@@ -330,7 +316,6 @@ public partial class RelayAgent
                 }
             }
 
-            this.aes.Key = exchange.EmbryoKey;
             var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
             if (sourceRelayId == 0)
             {// RelayId(Source/Destination), RelayHeader, Content, Padding
@@ -338,7 +323,6 @@ public partial class RelayAgent
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
                 var contentLength = span.Length;
-                var multiple = contentLength & ~15;
 
                 // RelayHeader
                 var relayHeader = new RelayHeader(RandomVault.Aegis.NextUInt32(), new(endpoint));
@@ -346,30 +330,16 @@ public partial class RelayAgent
                 sourceSpan = sourceSpan.Slice(RelayHeader.Length);
 
                 sourceSpan = sourceSpan.Slice(contentLength);
-                sourceSpan.Slice(0, paddingLength).Fill(0x07);
 
-                source = source.RentArray.AsMemory(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength + paddingLength);
+                source = source.RentArray.AsMemory(0, RelayHeader.RelayIdLength + RelayHeader.Length + contentLength);
                 span = source.Span.Slice(RelayHeader.RelayIdLength);
             }
 
             // Encrypt
-            if ((span.Length & 15) != 0)
-            {// Invalid data
-                goto Exit;
-            }
-
-            this.aes.Key = exchange.EmbryoKey;
-            try
-            {//
-                if (!this.aes.TryEncryptCbc(span, exchange.Iv, span, out _, PaddingMode.None))
-                {
-                    goto Exit;
-                }
-            }
-            catch
-            {
-                goto Exit;
-            }
+            var salt4 = MemoryMarshal.Read<uint>(span);
+            Span<byte> nonce32 = stackalloc byte[32];
+            RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
+            Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
 
             if (exchange.Endpoint.EndPoint is { } ep)
             {
