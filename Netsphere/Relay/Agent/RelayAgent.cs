@@ -337,6 +337,7 @@ public partial class RelayAgent
 
             // Encrypt
             var salt4 = MemoryMarshal.Read<uint>(span);
+            span = span.Slice(sizeof(uint));
             Span<byte> nonce32 = stackalloc byte[32];
             RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
             Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);

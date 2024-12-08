@@ -62,7 +62,7 @@ internal class RelayKey
 
         span = span.Slice(RelayHeader.RelayIdLength);
         var salt4 = MemoryMarshal.Read<uint>(span);
-        span = span.Slice(RelayHeader.PlainLength);
+        var encryptedSpan = span.Slice(RelayHeader.PlainLength);
         Span<byte> nonce32 = stackalloc byte[32];
 
         for (var i = 0; i < this.NumberOfRelays; i++)
@@ -73,7 +73,7 @@ internal class RelayKey
             }
 
             RelayHelper.CreateNonce(salt4, this.EmbryoSaltArray[i], this.EmbryoSecretArray[i], nonce32);
-            Aegis256.TryDecrypt(span, span, nonce32, this.EmbryoKeyArray[i], default, 0);
+            Aegis256.TryDecrypt(encryptedSpan, encryptedSpan, nonce32, this.EmbryoKeyArray[i], default, 0);
 
             var relayHeader = MemoryMarshal.Read<RelayHeader>(span);
             if (relayHeader.Zero == 0)
