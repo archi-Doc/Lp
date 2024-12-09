@@ -15,6 +15,8 @@ namespace Playground;
 [SimpleCommand("relay")]
 public class RelayCommand : ISimpleCommandAsync
 {
+    public static bool BreakpointFlag { get; set; } = false;
+
     public RelayCommand(ILogger<RelayCommand> logger, NetControl netControl, IRelayControl relayControl)
     {
         this.logger = logger;
@@ -104,6 +106,7 @@ public class RelayCommand : ISimpleCommandAsync
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
         // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
 
+        BreakpointFlag = true;
         Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
 
         /*sing (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))

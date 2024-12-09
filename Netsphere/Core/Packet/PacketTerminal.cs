@@ -406,6 +406,7 @@ public sealed partial class PacketTerminal
                     var packet = this.netTerminal.RelayAgent.ProcessRelayOperation(destinationRelayId, p);
                     if (packet is not null)
                     {
+                        Console.WriteLine($"{relayNumber} {packet.ToString()}");
                         CreatePacket(packetId, packet, out var rentMemory);
                         // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                         this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
