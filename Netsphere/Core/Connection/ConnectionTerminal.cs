@@ -370,7 +370,6 @@ public class ConnectionTerminal
     {
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
-        Console.WriteLine($"Key material {material[0]}");//
 
         // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
         var embryo = new byte[Connection.EmbryoSize];
@@ -387,7 +386,6 @@ public class ConnectionTerminal
         serverPublicKey.AsSpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
         Blake2B.Get512_Span(buffer, embryo);
-        Console.WriteLine($"Embryo {embryo[0]}");//
 
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
@@ -401,7 +399,6 @@ public class ConnectionTerminal
         var node = new NetNode(in endPoint, p.ClientPublicKey);
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         this.NetTerminal.NodeSeedKey.DeriveKeyMaterial(p.ClientPublicKey, material);
-        Console.WriteLine($"Key material {material[0]}");//
 
         // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
         var embryo = new byte[Connection.EmbryoSize];
@@ -418,7 +415,6 @@ public class ConnectionTerminal
         this.NetTerminal.NodeSeedKey.GetEncryptionPublicKeySpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
         Blake2B.Get512_Span(buffer, embryo);
-        Console.WriteLine($"Embryo {embryo[0]}");//
 
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
@@ -575,7 +571,6 @@ public class ConnectionTerminal
     {// Checked: toBeShared.Length
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(10)); // ConnectionId
-        Console.WriteLine($"A2 {connectionId}");//
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");
@@ -586,7 +581,6 @@ public class ConnectionTerminal
             ServerConnection? connection = default;
             using (this.serverConnections.LockObject.EnterScope())
             {
-                Console.WriteLine($"A3 {connectionId}");//
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
 
                 if (connection?.CurrentState == Connection.State.Closed)
