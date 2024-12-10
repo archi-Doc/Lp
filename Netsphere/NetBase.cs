@@ -96,6 +96,8 @@ public class NetBase : UnitBase, IUnitPreparable
         {
             this.NodeSeedKey = privateKey;
             this.NodePublicKey = privateKey.GetEncryptionPublicKey();
+            var st = this.NodeSeedKey.UnsafeToString();
+            var sts = this.NodePublicKey.ToString();
             return true;
         }
         catch

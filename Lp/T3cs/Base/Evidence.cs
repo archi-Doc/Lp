@@ -71,7 +71,7 @@ public sealed partial class Evidence : IValidatable
 
         if (credit.MergerCount <= mergerIndex ||
             !credit.Mergers[mergerIndex].Equals(seedKey.GetSignaturePublicKey()))
-        {//
+        {
             return false;
         }
 

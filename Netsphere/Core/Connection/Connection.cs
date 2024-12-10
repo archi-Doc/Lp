@@ -173,19 +173,15 @@ public abstract class Connection : IDisposable
 
     private byte[] embryo = Array.Empty<byte>();
 
-    // public ulong ConnectionId => BitConverter.ToUInt64(this.embryo.AsSpan(0));
+    // public ulong ConnectionId => BitConverter.ToUInt64(this.embryo.AsSpan(0)); // Assigned in the constructor.
 
-    public ulong Salt => BitConverter.ToUInt64(this.embryo.AsSpan(8));
+    public ulong EmbryoSalt => BitConverter.ToUInt64(this.embryo.AsSpan(8));
 
-    public ulong Secret => BitConverter.ToUInt64(this.embryo.AsSpan(16));
+    public ulong EmbryoSecret => BitConverter.ToUInt64(this.embryo.AsSpan(16));
 
-    public ReadOnlySpan<byte> Key => this.embryo.AsSpan(32, Aegis256.KeySize); // embryo[32..]
+    // public ulong EmbryoReserved => BitConverter.ToUInt64(this.embryo.AsSpan(24));
 
-    internal void UnsafeCopyKey(Span<byte> key)
-        => this.Key.CopyTo(key);//
-
-    internal void UnsafeCopyIv(Span<byte> iv)//
-        => this.embryo.AsSpan(0, 16).CopyTo(iv);
+    public ReadOnlySpan<byte> EmbryoKey => this.embryo.AsSpan(32, Aegis256.KeySize); // embryo[32..]
 
     #endregion
 
@@ -254,14 +250,14 @@ public abstract class Connection : IDisposable
     public void SignWithSalt<T>(T value, SeedKey seedKey)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
-        value.Salt = this.Salt;
+        value.Salt = this.EmbryoSalt;
         value.Sign(seedKey);
     }
 
     public bool ValidateAndVerifyWithSalt<T>(T value)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
-        if (value.Salt != this.Salt)
+        if (value.Salt != this.EmbryoSalt)
         {
             return false;
         }
@@ -459,7 +455,7 @@ Wait:
 
     internal void CleanReceiveTransmission()
     {// using (this.receiveTransmissions.LockObject.EnterScope())
-        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));//
+        Debug.Assert(this.receiveTransmissions.Count == (this.receiveReceivedList.Count + this.receiveDisposedList.Count));
 
         // Release receive transmissions that have elapsed a certain time after being disposed.
         var currentMics = Mics.FastSystem;
@@ -1210,7 +1206,7 @@ Wait:
         this.CreateNonce(salt4, nonce8, nonce);
 
         written = source.Length + ProtectedPacket.TagSize;
-        Aegis256.Encrypt(destination.Slice(0, written), source, nonce, this.Key);
+        Aegis256.Encrypt(destination.Slice(0, written), source, nonce, this.EmbryoKey);
     }
 
     internal bool TryDecrypt(uint salt4, ulong nonce8, Span<byte> span, int spanMax, out int written)
@@ -1219,7 +1215,7 @@ Wait:
         this.CreateNonce(salt4, nonce8, nonce);
 
         written = span.Length - ProtectedPacket.TagSize;
-        return Aegis256.TryDecrypt(span[..^ProtectedPacket.TagSize], span, nonce, this.Key);
+        return Aegis256.TryDecrypt(span[..^ProtectedPacket.TagSize], span, nonce, this.EmbryoKey);
     }
 
     internal void CloseAllTransmission()
@@ -1362,7 +1358,7 @@ Wait:
         s = s.Slice(sizeof(ulong));
         MemoryMarshal.Write(s, this.ConnectionId);
         s = s.Slice(sizeof(ulong));
-        MemoryMarshal.Write(s, this.Secret);
+        MemoryMarshal.Write(s, this.EmbryoSecret);
         s = s.Slice(sizeof(ulong));
     }
 }

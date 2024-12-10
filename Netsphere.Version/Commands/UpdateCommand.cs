@@ -21,9 +21,9 @@ internal class UpdateCommand : ISimpleCommandAsync<UpdateOptions>
         options.Prepare();
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
-        if (options.RemoteSeedKey is not { } privateKey)
+        if (options.remoteSecretKey is not { } privateKey)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote private key");
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote secret key");
             return;
         }
 

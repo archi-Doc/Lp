@@ -26,7 +26,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
 
         if (options.RemoteSeedKey is not { } privateKey)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote private key");
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote secret key");
             return;
         }
 
@@ -59,7 +59,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
                     return;
                 }
 
-                var token = new AuthenticationToken(connection.Salt);
+                var token = new AuthenticationToken(connection.EmbryoSalt);
                 NetHelper.Sign(token, privateKey);
                 var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
                 if (result != NetResult.Success)

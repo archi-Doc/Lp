@@ -101,7 +101,7 @@ public partial class NodeControlMachine : Machine
             if (!this.nodeControl.TryGetActiveNode(out var node))
             {
                 // No online node
-                this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to node_list.");
+                this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to NodeList.");
                 this.ChangeState(State.NoOnlineNode);
                 return StateResult.Continue;
             }

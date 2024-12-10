@@ -346,7 +346,7 @@ public sealed partial class Vault
         }
     }
 
-    public bool Exists(string name)
+    public bool Contains(string name)
     {
         using (this.lockObject.EnterScope())
         {

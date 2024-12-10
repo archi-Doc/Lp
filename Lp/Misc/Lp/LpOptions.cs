@@ -58,7 +58,7 @@ public partial record LpOptions
     public bool EnableAlternative { get; set; } = false;
 
     [SimpleOption(NetConstants.NodeSecretKeyName, Description = "Node private key", GetEnvironmentVariable = true)]
-    public string NodePrivateKey { get; set; } = string.Empty;
+    public string NodeSecretKey { get; set; } = string.Empty;
 
     [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Remote public key", GetEnvironmentVariable = true)]
     public string RemotePublicKey { get; set; } = string.Empty;
@@ -86,7 +86,7 @@ public partial record LpOptions
         return new NetOptions() with
         {
             Port = this.Port,
-            NodeSecretKey = this.NodePrivateKey,
+            NodeSecretKey = this.NodeSecretKey,
             NodeList = this.NodeList,
             EnablePing = this.EnablePing,
             EnableServer = this.EnableServer,

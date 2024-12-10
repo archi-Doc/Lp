@@ -17,7 +17,7 @@ public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOption
     public async Task RunAsync(CustomSubcommandSetOptions option, string[] args)
     {
         var name = CustomizedCommand.GetName(option.Name);
-        if (!this.vaultControl.Root.Exists(name))
+        if (!this.vaultControl.Root.Contains(name))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.NotFound, option.Name);
             return;

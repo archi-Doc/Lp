@@ -13,10 +13,10 @@ internal partial class RelayExchange
         this.Endpoint = serverConnection.DestinationEndpoint;
         this.LastAccessMics = Mics.FastSystem;
 
-        this.Key = new byte[32];
-        serverConnection.UnsafeCopyKey(this.Key);
-        this.Iv = new byte[16];
-        serverConnection.UnsafeCopyIv(this.Iv);
+        this.EmbryoKey = new byte[32];
+        serverConnection.EmbryoKey.CopyTo(this.EmbryoKey);
+        this.EmbryoSalt = serverConnection.EmbryoSalt;
+        this.EmbryoSecret = serverConnection.EmbryoSecret;
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
         this.RestrictedIntervalMics = relayControl.DefaultRestrictedIntervalMics;
@@ -55,9 +55,11 @@ internal partial class RelayExchange
 
     public bool AllowUnknownNode { get; private set; }
 
-    internal byte[] Key { get; private set; }
+    internal byte[] EmbryoKey { get; private set; }
 
-    internal byte[] Iv { get; private set; }
+    internal ulong EmbryoSalt { get; private set; }
+
+    internal ulong EmbryoSecret { get; private set; }
 
     public bool DecrementAndCheck()
     {// using (items.LockObject.EnterScope())

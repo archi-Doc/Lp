@@ -39,6 +39,7 @@ Error = {
 
 Vault = {
     AlreadyExists = "{0} already exists"
+    NoVault = "{0} does not exist"
     AskNew = "Do you want to create new Vault?"
     Create = "Creating new vault"
     EnterPassword = "Enter vault password"

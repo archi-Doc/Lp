@@ -392,6 +392,7 @@ public sealed partial class PacketTerminal
                 var packet = this.netTerminal.RelayAgent.ProcessPingRelay(destinationRelayId);
                 if (packet is not null)
                 {
+                    // Console.WriteLine($"{relayNumber} {packet.ToString()} -> {endpoint}");
                     CreatePacket(packetId, packet, out var rentMemory);
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);

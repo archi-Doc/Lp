@@ -37,7 +37,7 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
         }
 
         this.versionIdentifier = options.VersionIdentifier;
-        this.publicKey = options.RemotePublicKey;
+        this.publicKey = options.remotePublicKey;
 
         await this.ntpCorrection.CorrectMicsAndUnitLogger(this.logger);
         // Console.WriteLine($"{Mics.ToDateTime(Mics.GetCorrected())}");

@@ -11,7 +11,7 @@ public static class VerificationHelper
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority)
     {
         var context = connection.GetContext();
-        var token = new AuthenticationToken(connection.Salt);
+        var token = new AuthenticationToken(connection.EmbryoSalt);
         authority.GetSeedKey().Sign(token);
         if (context.AuthenticationTokenEquals(token.PublicKey))
         {
@@ -25,7 +25,7 @@ public static class VerificationHelper
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority, Credit credit)
     {
         var context = connection.GetContext();
-        var token = new AuthenticationToken(connection.Salt);
+        var token = new AuthenticationToken(connection.EmbryoSalt);
         authority.GetSeedKey(credit).Sign(token);
         if (context.AuthenticationTokenEquals(token.PublicKey))
         {

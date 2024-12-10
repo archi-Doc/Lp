@@ -2,6 +2,7 @@
 
 using System.Globalization;
 using System.Text;
+using System.Xml.Linq;
 using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -23,15 +24,27 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
     {
         this.logger.TryGet()?.Log($"New vault key");
 
+        if (this.vaultControl.Root.Contains(options.Name))
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, options.Name);
+            return;
+        }
+
         if (!string.IsNullOrEmpty(options.SecretKey))
         {// From private key
-            this.ParsePrivateKey(options);
+            this.ParseAndAddPrivateKey(options);
             return;
         }
 
         if (options.Kind == VaultKind.String)
         {
-            this.AddByteArray(options.Name, Encoding.UTF8.GetBytes("test"));
+            var text = options.Plaintext;
+            if (string.IsNullOrEmpty(text) && args.Length > 0)
+            {
+                text = args[0];
+            }
+
+            this.AddByteArray(options.Name, Encoding.UTF8.GetBytes(text));
             return;
         }
 
@@ -72,7 +85,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         }
     }
 
-    private void ParsePrivateKey(NewVaultOptions options)
+    private void ParseAndAddPrivateKey(NewVaultOptions options)
     {
         if ((options.Kind == VaultKind.EncryptionKey || options.Kind == VaultKind.SignatureKey) &&
             SeedKey.TryParse(options.SecretKey, out var seedKey))
@@ -128,6 +141,9 @@ public record NewVaultOptions
 
     [SimpleOption("Kind", Description = "Kind [string, encryption, signature]")]
     public VaultKind Kind { get; init; } = VaultKind.SignatureKey;
+
+    [SimpleOption("Plaintext", Description = "Plaintext")]
+    public string Plaintext { get; init; } = string.Empty;
 
     [SimpleOption("Seed", Description = "Seedphrase from which the vault is created")]
     public string? Seedphrase { get; init; }

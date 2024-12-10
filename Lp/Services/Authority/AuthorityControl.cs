@@ -77,7 +77,7 @@ public class AuthorityControl
         => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
     public bool Exists(string name)
-        => this.vaultControl.Root.Exists(GetVaultName(name));
+        => this.vaultControl.Root.Contains(GetVaultName(name));
 
     public bool NewAuthority(string name, string password, Authority authority)
     {
