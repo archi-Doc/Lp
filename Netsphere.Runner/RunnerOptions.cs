@@ -85,16 +85,16 @@ public partial record RunnerOptions
     {
         // 1st Argument, 2nd: Environment variable
         /*if (!string.IsNullOrEmpty(this.NodePrivateKeyString) &&
-            NodePrivateKey.TryParse(this.NodePrivateKeyString, out var privateKey))
+            NodeSecretKey.TryParse(this.NodePrivateKeyString, out var privateKey))
         {
-            this.NodePrivateKey = privateKey;
+            this.NodeSecretKey = privateKey;
         }
 
-        if (this.NodePrivateKey is null)
+        if (this.NodeSecretKey is null)
         {
-            if (BaseHelper.TryParseFromEnvironmentVariable<NodePrivateKey>(NetConstants.NodePublicKeyName, out privateKey))
+            if (BaseHelper.TryParseFromEnvironmentVariable<NodeSecretKey>(NetConstants.NodePublicKeyName, out privateKey))
             {
-                this.NodePrivateKey = privateKey;
+                this.NodeSecretKey = privateKey;
             }
         }
 
@@ -117,7 +117,7 @@ public partial record RunnerOptions
 
     private NetNode? containerNode;
 
-    // internal NodePrivateKey? NodePrivateKey { get; set; }
+    // internal NodeSecretKey? NodeSecretKey { get; set; }
 
     internal SignaturePublicKey RemotePublicKey { get; set; }
 }
