@@ -72,7 +72,7 @@ public class Seedphrase
         var index = new uint[length - 1];
         for (var i = 0; i < index.Length; i++)
         {
-            index[i] = RandomVault.Aegis.NextUInt32() % (uint)this.words.Length;
+            index[i] = RandomVault.Default.NextUInt32() % (uint)this.words.Length;
         }
 
         var span = MemoryMarshal.AsBytes<uint>(index);

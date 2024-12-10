@@ -17,7 +17,7 @@ public interface ITestService : INetService // An interface for NetService must 
 [NetServiceObject] // Annotate NetServiceObject attribute.
 internal class TestServiceAgent : ITestService, ITestService2
 {
-    private readonly int number = RandomVault.Xoshiro.NextInt31();
+    private readonly int number = RandomVault.Default.NextInt31();
 
     async NetTask<string?> ITestService.DoubleString(string input)
         => input + input; // Simply repeat a string twice and return it.

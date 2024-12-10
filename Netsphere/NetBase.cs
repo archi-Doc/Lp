@@ -56,7 +56,7 @@ public class NetBase : UnitBase, IUnitPreparable
                 showWarning = true;
             }
 
-            this.NetOptions.Port = RandomVault.Xoshiro.NextInt32(NetConstants.MinPort, NetConstants.MaxPort + 1);
+            this.NetOptions.Port = RandomVault.Default.NextInt32(NetConstants.MinPort, NetConstants.MaxPort + 1);
             if (showWarning)
             {
                 this.UnitLogger.TryGet<NetBase>(LogLevel.Error)?.Log($"Port number must be between {NetConstants.MinPort} and {NetConstants.MaxPort}");

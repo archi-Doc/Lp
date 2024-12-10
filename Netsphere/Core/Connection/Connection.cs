@@ -348,7 +348,7 @@ public abstract class Connection : IDisposable
             uint transmissionId;
             do
             {
-                transmissionId = RandomVault.Xoshiro.NextUInt32();
+                transmissionId = RandomVault.Default.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
@@ -407,7 +407,7 @@ Retry:
             uint transmissionId;
             do
             {
-                transmissionId = RandomVault.Xoshiro.NextUInt32();
+                transmissionId = RandomVault.Default.NextUInt32();
             }
             while (transmissionId == 0 || this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
@@ -1082,40 +1082,7 @@ Wait:
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.AsSpan();
-        var salt = RandomVault.Xoshiro.NextUInt32();
-
-        // PacketHeaderCode, CreatePacketCode
-        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
-        span = span.Slice(sizeof(ushort));
-        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
-        span = span.Slice(sizeof(ushort));
-
-        BitConverter.TryWriteBytes(span, salt); // Salt
-        span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
-        span = span.Slice(sizeof(ushort));
-
-        BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
-        span = span.Slice(sizeof(ulong));
-
-        var nonce8 = RandomVault.Aegis.NextUInt64();
-        BitConverter.TryWriteBytes(span, nonce8); // Nonce8
-        span = span.Slice(sizeof(ulong));
-
-        this.Encrypt(salt, nonce8, frame, arrayOwner.AsSpan(PacketHeader.Length + ProtectedPacket.Length), out var written);
-        rentArray = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
-        return true;
-    }
-
-    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out BytePool.RentMemory rentMemory)
-    {// ProtectedPacketCode
-        Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
-
-        var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
-        var arrayOwner = PacketPool.Rent();
-        var span = arrayOwner.AsSpan();
-        var salt4 = RandomVault.Xoshiro.NextUInt32();
+        var salt4 = RandomVault.Default.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1132,7 +1099,40 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        var nonce8 = RandomVault.Aegis.NextUInt64();
+        var nonce8 = RandomVault.Default.NextUInt64();
+        BitConverter.TryWriteBytes(span, nonce8); // Nonce8
+        span = span.Slice(sizeof(ulong));
+
+        this.Encrypt(salt4, nonce8, frame, arrayOwner.AsSpan(PacketHeader.Length + ProtectedPacket.Length), out var written);
+        rentArray = arrayOwner.AsMemory(0, PacketHeader.Length + ProtectedPacket.Length + written);
+        return true;
+    }
+
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped ReadOnlySpan<byte> frameContent, out BytePool.RentMemory rentMemory)
+    {// ProtectedPacketCode
+        Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
+
+        var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
+        var arrayOwner = PacketPool.Rent();
+        var span = arrayOwner.AsSpan();
+        var salt4 = RandomVault.Default.NextUInt32();
+
+        // PacketHeaderCode, CreatePacketCode
+        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
+        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (ushort)this.DestinationEndpoint.RelayId); // DestinationRelayId
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, salt4); // Salt
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, (ushort)packetType); // PacketType
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
+        span = span.Slice(sizeof(ulong));
+
+        var nonce8 = RandomVault.Default.NextUInt64();
         BitConverter.TryWriteBytes(span, nonce8); // Nonce8
         span = span.Slice(sizeof(ulong));
 
@@ -1150,7 +1150,7 @@ Wait:
     {// ProtectedPacketCode
         var packetType = this is ClientConnection ? PacketType.Protected : PacketType.ProtectedResponse;
         var span = rentArray.AsSpan();
-        var salt4 = RandomVault.Xoshiro.NextUInt32();
+        var salt4 = RandomVault.Default.NextUInt32();
 
         // PacketHeaderCode, CreatePacketCode
         BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
@@ -1167,7 +1167,7 @@ Wait:
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        var nonce8 = RandomVault.Aegis.NextUInt64();
+        var nonce8 = RandomVault.Default.NextUInt64();
         BitConverter.TryWriteBytes(span, nonce8); // Nonce8
         span = span.Slice(sizeof(ulong));
 
