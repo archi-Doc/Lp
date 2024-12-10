@@ -17,8 +17,8 @@ internal partial class ConnectPacket : IPacket
     {
         this.ClientPublicKey = clientPublicKey;
         this.ServerPublicKeyChecksum = serverPublicKeyChecksum;
-        this.ClientSalt = RandomVault.Aegis.NextUInt64();
-        this.ClientSalt2 = RandomVault.Aegis.NextUInt64();
+        this.ClientSalt = RandomVault.Default.NextUInt64();
+        this.ClientSalt2 = RandomVault.Default.NextUInt64();
     }
 
     [Key(0)]
@@ -51,8 +51,8 @@ internal partial class ConnectPacketResponse : IPacket
     public ConnectPacketResponse()
     {
         this.Agreement = ConnectionAgreement.Default with { }; // Create a new instance.
-        this.ServerSalt = RandomVault.Aegis.NextUInt64();
-        this.ServerSalt2 = RandomVault.Aegis.NextUInt64();
+        this.ServerSalt = RandomVault.Default.NextUInt64();
+        this.ServerSalt2 = RandomVault.Default.NextUInt64();
     }
 
     public ConnectPacketResponse(ConnectionAgreement agreement)

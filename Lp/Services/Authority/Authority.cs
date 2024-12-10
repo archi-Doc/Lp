@@ -76,7 +76,7 @@ public sealed partial class Authority
         if (seed == null || seed.Length < MinimumSeedLength)
         {
             this.seed = new byte[MinimumSeedLength];
-            RandomVault.Aegis.NextBytes(this.seed);
+            RandomVault.Default.NextBytes(this.seed);
         }
         else
         {

@@ -143,7 +143,7 @@ Exit:
         span = span.Slice(sizeof(ushort));
 
         // RelayHeader
-        var relayHeader = new RelayHeader(RandomVault.Aegis.NextUInt32(), destination);
+        var relayHeader = new RelayHeader(RandomVault.Default.NextUInt32(), destination);
         MemoryMarshal.Write(span, relayHeader);
         span = span.Slice(RelayHeader.Length);
 
