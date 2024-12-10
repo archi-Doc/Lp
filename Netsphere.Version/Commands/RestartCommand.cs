@@ -60,7 +60,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
                 }
 
                 var token = new AuthenticationToken(connection.EmbryoSalt);
-                NetHelper.Sign(token, privateKey);
+                token.Sign(privateKey);
                 var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
                 if (result != NetResult.Success)
                 {
