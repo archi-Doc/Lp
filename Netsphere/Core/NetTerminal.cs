@@ -297,6 +297,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         // Packet type
         span = span.Slice(8);
         var packetType = BitConverter.ToUInt16(span);
+        Console.WriteLine($"A1 {packetType}");//
 
         if (packetType < 256)
         {// Packet

@@ -741,6 +741,7 @@ Wait:
             return;
         }
 
+        Console.WriteLine($"A4 {packetType}");//
         if (packetType == PacketType.Protected || packetType == PacketType.ProtectedResponse)
         {// ProtectedPacketCode
             if (span.Length < sizeof(ulong))
@@ -750,11 +751,14 @@ Wait:
 
             var nonce8 = BitConverter.ToUInt64(span); // Nonce
             span = span.Slice(8);
+            Console.WriteLine($"A5 {nonce8}");//
             if (!this.TryDecrypt(salt4, nonce8, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
+                Console.WriteLine($"A6{nonce8}");//
                 return;
             }
 
+            Console.WriteLine($"A7 {written}");//
             if (written < 2)
             {
                 return;
