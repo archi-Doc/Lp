@@ -10,7 +10,7 @@ public partial record UpdateOptions
     public string Address { get; init; } = string.Empty;
 
     [SimpleOption(NetConstants.RemoteSecretKeyName, Description = "Private key for remote operation", GetEnvironmentVariable = true)]
-    public string RemotePrivateKeyString { get; set; } = string.Empty;
+    public string RemoteSecretKey { get; set; } = string.Empty;
 
     [SimpleOption("VersionIdentifier", Description = "Version identifier", GetEnvironmentVariable = true)]
     public int VersionIdentifier { get; set; }
@@ -20,13 +20,13 @@ public partial record UpdateOptions
 
     public void Prepare()
     {
-        if (SeedKey.TryParse(this.RemotePrivateKeyString, out var seedKey))
+        if (SeedKey.TryParse(this.RemoteSecretKey, out var seedKey))
         {
-            this.RemoteSeedKey = seedKey;
+            this.remoteSecretKey = seedKey;
         }
 
-        this.RemotePrivateKeyString = string.Empty;
+        this.RemoteSecretKey = string.Empty;
     }
 
-    public SeedKey? RemoteSeedKey { get; private set; }
+    public SeedKey? remoteSecretKey { get; private set; }
 }
