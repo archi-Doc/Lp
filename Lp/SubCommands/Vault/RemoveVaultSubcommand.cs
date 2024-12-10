@@ -18,7 +18,7 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
 
     public async Task RunAsync(SimpleVaultOptions options, string[] args)
     {
-        if (!this.vaultControl.Root.Exists(options.Name))
+        if (!this.vaultControl.Root.Contains(options.Name))
         {// Not found
             this.logger.TryGet()?.Log(Hashed.Authority.NotFound, options.Name);
             return;

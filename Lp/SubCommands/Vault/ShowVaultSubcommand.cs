@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Text;
 using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -16,15 +17,32 @@ public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
         this.vaultControl = vaultControl;
     }
 
-    public async Task RunAsync(SimpleVaultOptions option, string[] args)
+    public async Task RunAsync(SimpleVaultOptions options, string[] args)
     {
-        /*if (this.vaultControl.Root.TryGetObject<SignaturePrivateKey>(option.Name, out var key, out _))
+        if (!this.vaultControl.Root.Contains(options.Name))
         {
-            this.consoleService.WriteLine($"{key.KeyClass.ToString()} {option.Name}: {key.UnsafeToString()}");
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.NoVault, options.Name);
             return;
-        }*/
+        }
 
-        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Vault.NotAvailable, option.Name);
+        if (this.vaultControl.Root.TryGetByteArray(options.Name, out var byteArray, out _))
+        {// Byte array
+            try
+            {
+                var st = Encoding.UTF8.GetString(byteArray);
+                this.consoleService.WriteLine($"Vault '{options.Name}': {st}");
+            }
+            catch
+            {
+            }
+        }
+        else
+        {
+            if (this.vaultControl.Root.TryGetObject<SeedKey>(options.Name, out var key, out _))
+            {
+                this.consoleService.WriteLine($"Vault '{options.Name}': {key.UnsafeToString()}");
+            }
+        }
     }
 
     private readonly IConsoleService consoleService;
