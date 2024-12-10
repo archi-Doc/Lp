@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net.Sockets;
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
@@ -369,7 +370,6 @@ public class ConnectionTerminal
     {
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
-        Console.WriteLine($"Key material {material[0]}");
 
         // CreateEmbryo: Blake2B(Client salt(8), Server salt(8), Key material(32), Client public(32), Server public(32))
         var embryo = new byte[Connection.EmbryoSize];
@@ -386,7 +386,6 @@ public class ConnectionTerminal
         serverPublicKey.AsSpan().CopyTo(span);
         span = span.Slice(CryptoBox.PublicKeySize);
         Blake2B.Get512_Span(buffer, embryo);
-        Console.WriteLine($"Embryo {embryo[0]}");
 
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ClientConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
