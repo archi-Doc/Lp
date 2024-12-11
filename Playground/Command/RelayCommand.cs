@@ -9,6 +9,7 @@ using Netsphere.Packet;
 using SimpleCommandLine;
 using Netsphere.Crypto;
 using Netsphere.Relay;
+using System.Runtime.CompilerServices;
 
 namespace Playground;
 

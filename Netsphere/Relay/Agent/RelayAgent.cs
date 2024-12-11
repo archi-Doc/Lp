@@ -1,10 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using System.Net;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 using Netsphere.Core;
 
@@ -196,8 +193,7 @@ public partial class RelayAgent
     public bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if (source.RentArray is null ||
-            span.Length < (RelayHeader.Length - RelayHeader.RelayIdLength))
+        if (source.RentArray is null)
         {// Invalid data
             goto Exit;
         }
@@ -216,6 +212,11 @@ public partial class RelayAgent
         {// InnerRelayId
             if (exchange.Endpoint.EndPointEquals(endpoint))
             {// Inner -> Outer: Decrypt
+                if (span.Length < (RelayHeader.Length - RelayHeader.RelayIdLength))
+                {// Invalid data
+                    goto Exit;
+                }
+
                 var salt4 = MemoryMarshal.Read<uint>(span);
                 var headerSpan = span;
                 span = span.Slice(sizeof(uint));
@@ -362,7 +363,7 @@ public partial class RelayAgent
 
             var sourceRelayId = MemoryMarshal.Read<RelayId>(source.Span);
             if (sourceRelayId == 0)
-            {// RelayId(Source/Destination), RelayHeader, Content, Padding
+            {// RelayId(Source/Destination), RelayHeader, Content
                 var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
