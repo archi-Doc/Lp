@@ -9,10 +9,6 @@ namespace Netsphere.Relay;
 public static class RelayHelper
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static RelayId SpanToRelayId(ReadOnlySpan<byte> span)
-        => MemoryMarshal.Read<RelayId>(span);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void CreateNonce(uint salt4, ulong salt8, ulong secret, Span<byte> nonce)
     {
         Debug.Assert(nonce.Length == 32);

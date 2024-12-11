@@ -106,7 +106,7 @@ public partial class RelayAgent
         return sb.ToString();
     }
 
-    public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out ushort relayId, out ushort outerRelayId)
+    public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out RelayId relayId, out RelayId outerRelayId)
     {
         relayId = 0;
         outerRelayId = 0;
@@ -119,7 +119,7 @@ public partial class RelayAgent
 
             while (true)
             {
-                relayId = (ushort)RandomVault.Default.NextUInt32();
+                relayId = (RelayId)RandomVault.Default.NextUInt32();
                 if (!this.items.RelayIdChain.ContainsKey(relayId))
                 {
                     break;
@@ -128,7 +128,7 @@ public partial class RelayAgent
 
             while (true)
             {
-                outerRelayId = (ushort)RandomVault.Default.NextUInt32();
+                outerRelayId = (RelayId)RandomVault.Default.NextUInt32();
                 if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
@@ -193,7 +193,7 @@ public partial class RelayAgent
         }
     }
 
-    public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
+    public bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
         if (source.RentArray is null ||
@@ -241,8 +241,8 @@ public partial class RelayAgent
                     if (relayHeader.NetAddress == NetAddress.Relay)
                     {// Initiator -> This node
                         MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
-                        span = span.Slice(sizeof(ushort));
-                        MemoryMarshal.Write(span, (ushort)destinationRelayId); // DestinationRelayId
+                        span = span.Slice(sizeof(RelayId));
+                        MemoryMarshal.Write(span, destinationRelayId); // DestinationRelayId
 
                         if (NetConstants.LogRelay)
                         {
@@ -264,11 +264,11 @@ public partial class RelayAgent
                         }
 
                         MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
-                        span = span.Slice(sizeof(ushort));
+                        span = span.Slice(sizeof(RelayId));
                         MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
                         var operation = EndPointOperation.Update;
-                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(6));
+                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(sizeof(RelayId) + sizeof(uint)));
                         if (packetType == Packet.PacketType.Connect)
                         {// Connect
                             operation = EndPointOperation.SetUnrestricted;
@@ -295,7 +295,7 @@ public partial class RelayAgent
                     if (exchange.OuterEndpoint.EndPoint is { } ep)
                     {// -> Outer relay
                         MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
-                        MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
+                        MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.OuterEndpoint.RelayId);
                         source.IncrementAndShare();
                         this.sendItems.Enqueue(new(ep, source));
 
@@ -389,7 +389,7 @@ public partial class RelayAgent
             if (exchange.Endpoint.EndPoint is { } ep)
             {
                 MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
-                MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.Endpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
 
@@ -460,7 +460,7 @@ Exit:
         return (item.EndPoint, unrestricted);
     }
 
-    internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)
+    internal PingRelayResponse? ProcessPingRelay(RelayId destinationRelayId)
     {
         if (this.NumberOfExchanges == 0)
         {
@@ -483,7 +483,7 @@ Exit:
         return packet;
     }
 
-    internal RelayOperatioResponse? ProcessRelayOperation(ushort destinationRelayId, RelayOperatioPacket p)
+    internal RelayOperatioResponse? ProcessRelayOperation(RelayId destinationRelayId, RelayOperatioPacket p)
     {
         if (this.NumberOfExchanges == 0)
         {

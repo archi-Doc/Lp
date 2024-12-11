@@ -15,7 +15,7 @@ public partial class RelayNode
         this.EmbryoSecret = clientConnection.EmbryoSecret;
     }
 
-    public ushort RelayId // For chain
+    public RelayId RelayId // For chain
         => this.Endpoint.RelayId;
 
     [Link(Type = ChainType.Unordered)]

@@ -14,7 +14,7 @@ public partial class CreateRelayBlock
         this.AllowUnknownNode = allowUnknownNode;
     }
 
-    /*public CreateRelayBlock(ushort relayId)
+    /*public CreateRelayBlock(RelayId relayId)
     {
         this.RelayId = relayId;
     }*/
@@ -36,7 +36,7 @@ public partial class CreateRelayResponse
     {
     }
 
-    public CreateRelayResponse(RelayResult result, ushort relayId, ushort outerRelayId, long relayPoint)
+    public CreateRelayResponse(RelayResult result, RelayId relayId, RelayId outerRelayId, long relayPoint)
     {
         this.Result = result;
         this.RelayId = relayId;
@@ -48,10 +48,10 @@ public partial class CreateRelayResponse
     public RelayResult Result { get; private set; }
 
     [Key(1)]
-    public ushort RelayId { get; private set; }
+    public RelayId RelayId { get; private set; }
 
     [Key(2)]
-    public ushort OuterRelayId { get; private set; }
+    public RelayId OuterRelayId { get; private set; }
 
     [Key(3)]
     public long RelayPoint { get; private set; }

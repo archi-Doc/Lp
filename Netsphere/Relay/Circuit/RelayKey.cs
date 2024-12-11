@@ -137,10 +137,10 @@ Exit:
 
         // RelayId
         var span = encrypted.Span;
-        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
-        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (RelayId)0); // SourceRelayId
+        span = span.Slice(sizeof(RelayId));
         BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId); // DestinationRelayId
-        span = span.Slice(sizeof(ushort));
+        span = span.Slice(sizeof(RelayId));
 
         // RelayHeader
         var relayHeader = new RelayHeader(RandomVault.Default.NextUInt32(), destination);

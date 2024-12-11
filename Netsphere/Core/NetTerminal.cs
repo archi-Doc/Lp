@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.InteropServices;
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
@@ -258,10 +259,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         var span = rentMemory.Span;
 
         // PacketHeaderCode
-        var netEndpoint = new NetEndpoint(RelayHelper.SpanToRelayId(span), endPoint); // SourceRelayId
+        var netEndpoint = new NetEndpoint(MemoryMarshal.Read<RelayId>(span), endPoint); // SourceRelayId
         var relayNumber = 0;
         var incomingRelay = false;
-        var destinationRelayId = RelayHelper.SpanToRelayId(span.Slice(sizeof(RelayId))); // DestinationRelayId
+        var destinationRelayId = MemoryMarshal.Read<RelayId>(span.Slice(sizeof(RelayId))); // DestinationRelayId
         if (destinationRelayId != 0)
         {// Relay
             if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, rentMemory, out var decrypted))
