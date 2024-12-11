@@ -109,7 +109,7 @@ public sealed partial class PacketTerminal
 
         // Get checksum
         span = rentMemory.Span;
-        BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
+        BitConverter.TryWriteBytes(span.Slice(RelayHeader.RelayIdLength), (uint)XxHash3.Hash64(span.Slice(RelayHeader.RelayIdLength + sizeof(uint))));
     }
 
     /// <summary>

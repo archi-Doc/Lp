@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using Netsphere.Core;
 using Netsphere.Crypto;
 using Netsphere.Packet;
+using Netsphere.Relay;
 using Netsphere.Stats;
 
 #pragma warning disable SA1214
@@ -570,7 +571,7 @@ public class ConnectionTerminal
     internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         // PacketHeaderCode
-        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(10)); // ConnectionId
+        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(RelayHeader.RelayIdLength + 6)); // ConnectionId
         if (NetConstants.LogLowLevelNet)
         {
             // this.logger.TryGet(LogLevel.Debug)?.Log($"{(ushort)connectionId:x4} Receive actual");
