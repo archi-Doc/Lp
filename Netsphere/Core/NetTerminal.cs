@@ -258,10 +258,10 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         var span = rentMemory.Span;
 
         // PacketHeaderCode
-        var netEndpoint = new NetEndpoint(BitConverter.ToUInt16(span), endPoint); // SourceRelayId
+        var netEndpoint = new NetEndpoint(RelayHelper.SpanToRelayId(span), endPoint); // SourceRelayId
         var relayNumber = 0;
         var incomingRelay = false;
-        var destinationRelayId = BitConverter.ToUInt16(span.Slice(sizeof(ushort))); // DestinationRelayId
+        var destinationRelayId = RelayHelper.SpanToRelayId(span.Slice(sizeof(RelayId))); // DestinationRelayId
         if (destinationRelayId != 0)
         {// Relay
             if (!this.RelayAgent.ProcessRelay(netEndpoint, destinationRelayId, rentMemory, out var decrypted))
@@ -295,7 +295,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         // relayNumber: 0 No relay, >0 Outgoing, <0 Incoming
 
         // Packet type
-        span = span.Slice(8);
+        span = span.Slice(RelayHeader.RelayIdLength + sizeof(uint));
         var packetType = BitConverter.ToUInt16(span);
 
         if (packetType < 256)

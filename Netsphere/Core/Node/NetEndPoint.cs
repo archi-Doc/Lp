@@ -7,14 +7,14 @@ namespace Netsphere;
 [TinyhandObject]
 public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
 {
-    public NetEndpoint(ushort relayId, IPEndPoint? endPoint)
+    public NetEndpoint(RelayId relayId, IPEndPoint? endPoint)
     {
         this.EndPoint = endPoint;
         this.RelayId = relayId;
     }
 
     [Key(0)]
-    public readonly ushort RelayId;
+    public readonly RelayId RelayId;
 
     [Key(1)]
     public readonly IPEndPoint? EndPoint;

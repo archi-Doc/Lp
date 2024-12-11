@@ -311,13 +311,13 @@ public sealed partial class PacketTerminal
 
         // PacketHeaderCode
         var span = toBeShared.Span;
-        if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(8)))
+        if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(RelayHeader.RelayIdLength + sizeof(uint))))
         {// Checksum
             return;
         }
 
         var packetType = (PacketType)packetUInt16;
-        var packetId = BitConverter.ToUInt64(span.Slice(10));
+        var packetId = BitConverter.ToUInt64(span.Slice(RelayHeader.RelayIdLength + sizeof(uint) + sizeof(PacketType)));
 
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
