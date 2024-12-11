@@ -360,7 +360,7 @@ public partial class RelayAgent
                 }
             }
 
-            var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
+            var sourceRelayId = MemoryMarshal.Read<RelayId>(source.Span);
             if (sourceRelayId == 0)
             {// RelayId(Source/Destination), RelayHeader, Content, Padding
                 var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
