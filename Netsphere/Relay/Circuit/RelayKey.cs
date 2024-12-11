@@ -103,12 +103,12 @@ Exit:
 
     public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out BytePool.RentMemory encrypted, out NetEndpoint relayEndpoint)
     {
-        Debug.Assert(content.Length >= 4);
+        Debug.Assert(content.Length >= RelayHeader.RelayIdLength);
         Debug.Assert(content[0] == 0);
         Debug.Assert(content[1] == 0);
 
         // PacketHeaderCode
-        content = content.Slice(4); // Skip relay id
+        content = content.Slice(RelayHeader.RelayIdLength); // Skip relay id
 
         if (relayNumber < 0)
         {// The target relay
