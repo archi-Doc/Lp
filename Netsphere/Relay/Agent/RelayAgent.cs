@@ -141,7 +141,7 @@ public partial class RelayAgent
         return RelayResult.Success;
     }
 
-    public long AddRelayPoint(ushort relayId, long relayPoint)
+    public long AddRelayPoint(RelayId relayId, long relayPoint)
     {
         using (this.items.LockObject.EnterScope())
         {

@@ -8,7 +8,7 @@ namespace Netsphere.Packet;
 
 internal readonly struct PacketHeader
 {// 18 bytes, PacketHeaderCode, CreatePacketCode
-    public const int Length = 18;
+    public const int Length = 14 + (sizeof(RelayId) * 2);
     public const int MaxPayloadLength = NetConstants.MaxPacketLength - RelayHeader.Length - Length;
     public const int MaxFrameLength = NetConstants.MaxPacketLength - RelayHeader.Length - Length - ProtectedPacket.Length - ProtectedPacket.TagSize;
 
