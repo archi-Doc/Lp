@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
@@ -30,6 +31,7 @@ public readonly partial record struct NetEndpoint : IEquatable<NetEndpoint>
         => this.EndPoint is not null &&
         new NetAddress(this.EndPoint.Address, (ushort)this.EndPoint.Port).IsPrivateOrLocalLoopbackAddress();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EndPointEquals(NetEndpoint endpoint)
     {
         if (this.EndPoint is null)
