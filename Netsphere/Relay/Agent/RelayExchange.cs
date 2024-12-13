@@ -61,6 +61,8 @@ internal partial class RelayExchange
 
     internal ulong EmbryoSecret { get; private set; }
 
+    internal byte[] RelayKeyAndNonce32 { get; private set; }
+
     public bool DecrementAndCheck()
     {// using (items.LockObject.EnterScope())
         if (this.RelayPoint-- <= 0)
@@ -79,4 +81,14 @@ internal partial class RelayExchange
     public void Clean()
     {
     }
+
+    public unsafe void Encrypt(Span<byte> plaintext, uint salt4)
+    {
+        fixed (byte* pointer = plaintext)
+        {
+            var cipher = new Span<byte>(pointer, plaintext.Length + 16);
+        }
+    }
+
+    private byte[] Key => 
 }

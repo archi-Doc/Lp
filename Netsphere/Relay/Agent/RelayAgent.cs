@@ -305,6 +305,8 @@ public partial class RelayAgent
             {// Not decrypted. Relay the packet to the next node.
                 if (exchange.OuterEndpoint.EndPoint is { } ep)
                 {// -> Outer relay
+                    // Encrypt (RelayTagCode)
+
                     MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                     MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.OuterEndpoint.RelayId);
                     source.IncrementAndShare();
@@ -325,7 +327,7 @@ public partial class RelayAgent
             }
         }
         else
-        {// OuterRelayId
+        {// OuterRelayId: Outer(Outer relay or unrestricted) -> Inner relay
             if (exchange.OuterEndpoint.IsValid)
             {// Not outermost relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
@@ -388,6 +390,9 @@ public partial class RelayAgent
             Span<byte> nonce32 = stackalloc byte[32];
             RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
             Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
+
+            // Encrypt (RelayTagCode)
+            exchange.Encrypt(span, salt4);
 
             if (exchange.Endpoint.EndPoint is { } ep)
             {
