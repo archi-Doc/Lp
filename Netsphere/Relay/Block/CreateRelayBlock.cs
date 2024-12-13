@@ -37,10 +37,10 @@ public partial class AssignRelayResponse
     {
     }
 
-    public AssignRelayResponse(RelayResult result, RelayId relayId, RelayId outerRelayId, long relayPoint)
+    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint)
     {
         this.Result = result;
-        this.RelayId = relayId;
+        this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.RelayPoint = relayPoint;
     }
@@ -49,7 +49,7 @@ public partial class AssignRelayResponse
     public RelayResult Result { get; private set; }
 
     [Key(1)]
-    public RelayId RelayId { get; private set; }
+    public RelayId InnerRelayId { get; private set; }
 
     [Key(2)]
     public RelayId OuterRelayId { get; private set; }

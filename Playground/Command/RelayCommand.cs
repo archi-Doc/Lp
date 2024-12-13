@@ -68,7 +68,7 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.InnerRelayId, clientConnection, true);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
@@ -97,13 +97,13 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.InnerRelayId, clientConnection, true);
             await Task.Delay(10);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
 
-            var packet = RelayOperatioPacket.SetOuterEndPoint(new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint));
+            var packet = RelayOperatioPacket.SetOuterEndPoint(new(r.Value.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint));
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
 
             await Task.Delay(10);

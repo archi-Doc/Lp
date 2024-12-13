@@ -96,28 +96,28 @@ public partial class RelayAgent
         {
             foreach (var x in this.items)
             {
-                sb.AppendLine($"[{x.RelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+                sb.AppendLine($"[{x.InnerRelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
             }
         }
 
         return sb.ToString();
     }
 
-    public RelayResult Add(ServerConnection serverConnection, AssignRelayBlock block, out RelayId relayId, out RelayId outerRelayId)
+    public RelayResult Add(ServerConnection serverConnection, AssignRelayBlock block, out RelayId innerRelayId, out RelayId outerRelayId)
     {
-        relayId = 0;
+        innerRelayId = 0;
         outerRelayId = 0;
         using (this.items.LockObject.EnterScope())
         {
             if (this.NumberOfExchanges >= this.relayControl.MaxRelayExchanges)
             {
-                return RelayResult.ParallelRelayLimit;
+                return RelayResult.RelayExchangeLimit;
             }
 
             while (true)
             {
-                relayId = (RelayId)RandomVault.Default.NextUInt32();
-                if (!this.items.RelayIdChain.ContainsKey(relayId))
+                innerRelayId = (RelayId)RandomVault.Default.NextUInt32();
+                if (!this.items.InnerRelayIdChain.ContainsKey(innerRelayId))
                 {
                     break;
                 }
@@ -126,13 +126,13 @@ public partial class RelayAgent
             while (true)
             {
                 outerRelayId = (RelayId)RandomVault.Default.NextUInt32();
-                if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
+                if (!this.items.InnerRelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
                 }
             }
 
-            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection, block));
+            this.items.Add(new(this.relayControl, innerRelayId, outerRelayId, serverConnection, block));
         }
 
         return RelayResult.Success;
@@ -142,7 +142,7 @@ public partial class RelayAgent
     {
         using (this.items.LockObject.EnterScope())
         {
-            var exchange = this.items.RelayIdChain.FindFirst(relayId);
+            var exchange = this.items.InnerRelayIdChain.FindFirst(relayId);
             if (exchange is null)
             {
                 return 0;
@@ -201,14 +201,14 @@ public partial class RelayAgent
         RelayExchange? exchange;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null || !exchange.DecrementAndCheck())
             {// No relay exchange
                 goto Exit;
             }
         }
 
-        if (exchange.RelayId == destinationRelayId)
+        if (exchange.InnerRelayId == destinationRelayId)
         {// InnerRelayId
             if (exchange.Endpoint.EndPointEquals(endpoint))
             {// Inner -> Outer: Decrypt
@@ -389,7 +389,7 @@ public partial class RelayAgent
 
             if (exchange.Endpoint.EndPoint is { } ep)
             {
-                MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
+                MemoryMarshal.Write(source.Span, exchange.InnerRelayId); // SourceRelayId
                 MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.Endpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
@@ -472,7 +472,7 @@ Exit:
         PingRelayResponse? packet;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
                 return null;
@@ -495,7 +495,7 @@ Exit:
         RelayOperatioResponse? response = default;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
                 return null;
