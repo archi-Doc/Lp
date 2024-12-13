@@ -52,7 +52,7 @@ public class CertificateRelayControl : IRelayControl
 
     public SignaturePublicKey CertificatePublicKey { get; private set; }
 
-    public void ProcessRegisterResponder(ResponderControl responders)
+    public void RegisterResponder(ResponderControl responders)
     {
         responders.Register(new CreateRelayResponder(this));
     }

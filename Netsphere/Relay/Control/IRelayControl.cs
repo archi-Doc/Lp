@@ -14,7 +14,7 @@ public interface IRelayControl
 
     long DefaultRestrictedIntervalMics { get; }
 
-    void ProcessRegisterResponder(ResponderControl responders)
+    void RegisterResponder(ResponderControl responders)
     {
     }
 }
