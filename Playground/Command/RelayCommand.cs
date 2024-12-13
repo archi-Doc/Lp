@@ -68,7 +68,7 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.InnerRelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(block, r.Value, clientConnection, true);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
@@ -97,7 +97,7 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.InnerRelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(block, r.Value, clientConnection, true);
             await Task.Delay(10);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");

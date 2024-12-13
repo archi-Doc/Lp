@@ -55,7 +55,7 @@ public class RelayTest
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.InnerRelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(block, r.Value!, clientConnection, true);
         }
 
         using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 1))!)
@@ -69,10 +69,10 @@ public class RelayTest
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.InnerRelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(block, r.Value!, clientConnection, true);
 
             var setRelayPacket = new RelayOperatioPacket();
-            setRelayPacket.OuterEndPoint = new(r.Value.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
+            setRelayPacket.OuterEndPoint = new(r.Value!.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 

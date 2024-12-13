@@ -21,6 +21,7 @@ internal partial class RelayExchange
         serverConnection.EmbryoKey.CopyTo(this.EmbryoKey);
         this.EmbryoSalt = serverConnection.EmbryoSalt;
         this.EmbryoSecret = serverConnection.EmbryoSecret;
+        this.InnerKeyAndNonce = block.InnerKeyAndNonce;
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
         this.RestrictedIntervalMics = relayControl.DefaultRestrictedIntervalMics;
@@ -65,7 +66,9 @@ internal partial class RelayExchange
 
     internal ulong EmbryoSecret { get; private set; }
 
-    internal byte[] RelayKeyAndNonce32 { get; private set; }
+    internal byte[] InnerKeyAndNonce { get; private set; }
+
+    internal byte[] OuterKeyAndNonce { get; private set; } = [];
 
     public bool DecrementAndCheck()
     {// using (items.LockObject.EnterScope())
@@ -107,14 +110,14 @@ internal partial class RelayExchange
         return Aegis128L.TryDecrypt(ciphertext.Slice(0, ciphertext.Length - Aegis128L.MinTagSize), ciphertext, nonce16, this.RelayKey);
     }
 
-    private ReadOnlySpan<byte> RelayKey => this.RelayKeyAndNonce32.AsSpan(0, Aegis128L.KeySize);
+    private ReadOnlySpan<byte> RelayKey => this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CreateNonce(Span<byte> nonce16, uint salt4)
     {
         Debug.Assert(nonce16.Length == Aegis128L.NonceSize);
 
-        this.RelayKeyAndNonce32.AsSpan(Aegis128L.KeySize, Aegis128L.NonceSize).CopyTo(nonce16);
+        this.InnerKeyAndNonce.AsSpan(Aegis128L.KeySize, Aegis128L.NonceSize).CopyTo(nonce16);
         MemoryMarshal.AsRef<uint>(nonce16) ^= salt4;
     }
 }

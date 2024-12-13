@@ -7,12 +7,13 @@ public sealed partial class RelayNode
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
     [Link(Name = "RelayId", TargetMember = "RelayId", Type = ChainType.Unordered)]
-    public RelayNode(RelayId relayId, ClientConnection clientConnection)
+    public RelayNode(RelayId relayId, byte[] innerKeyAndNonce, ClientConnection clientConnection)
     {
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
         clientConnection.EmbryoKey.CopyTo(this.EmbryoKey);
         this.EmbryoSalt = clientConnection.EmbryoSalt;
         this.EmbryoSecret = clientConnection.EmbryoSecret;
+        this.InnerKeyAndNonce = innerKeyAndNonce;
     }
 
     public RelayId RelayId // For chain
@@ -26,6 +27,8 @@ public sealed partial class RelayNode
     internal ulong EmbryoSalt { get; private set; }
 
     internal ulong EmbryoSecret { get; private set; }
+
+    internal byte[] InnerKeyAndNonce { get; private set; } = [];
 
     public void Clear()
     {
