@@ -1,10 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using System.Net;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 using Netsphere.Core;
 
@@ -99,28 +96,28 @@ public partial class RelayAgent
         {
             foreach (var x in this.items)
             {
-                sb.AppendLine($"[{x.RelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+                sb.AppendLine($"[{x.InnerRelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
             }
         }
 
         return sb.ToString();
     }
 
-    public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out ushort relayId, out ushort outerRelayId)
+    public RelayResult Add(ServerConnection serverConnection, AssignRelayBlock block, out RelayId innerRelayId, out RelayId outerRelayId)
     {
-        relayId = 0;
+        innerRelayId = 0;
         outerRelayId = 0;
         using (this.items.LockObject.EnterScope())
         {
-            if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)
+            if (this.NumberOfExchanges >= this.relayControl.MaxRelayExchanges)
             {
-                return RelayResult.ParallelRelayLimit;
+                return RelayResult.RelayExchangeLimit;
             }
 
             while (true)
             {
-                relayId = (ushort)RandomVault.Default.NextUInt32();
-                if (!this.items.RelayIdChain.ContainsKey(relayId))
+                innerRelayId = (RelayId)RandomVault.Default.NextUInt32();
+                if (!this.items.InnerRelayIdChain.ContainsKey(innerRelayId))
                 {
                     break;
                 }
@@ -128,24 +125,24 @@ public partial class RelayAgent
 
             while (true)
             {
-                outerRelayId = (ushort)RandomVault.Default.NextUInt32();
-                if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
+                outerRelayId = (RelayId)RandomVault.Default.NextUInt32();
+                if (!this.items.InnerRelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
                 }
             }
 
-            this.items.Add(new(this.relayControl, relayId, outerRelayId, serverConnection, block));
+            this.items.Add(new(this.relayControl, innerRelayId, outerRelayId, serverConnection, block));
         }
 
         return RelayResult.Success;
     }
 
-    public long AddRelayPoint(ushort relayId, long relayPoint)
+    public long AddRelayPoint(RelayId relayId, long relayPoint)
     {
         using (this.items.LockObject.EnterScope())
         {
-            var exchange = this.items.RelayIdChain.FindFirst(relayId);
+            var exchange = this.items.InnerRelayIdChain.FindFirst(relayId);
             if (exchange is null)
             {
                 return 0;
@@ -193,11 +190,10 @@ public partial class RelayAgent
         }
     }
 
-    public bool ProcessRelay(NetEndpoint endpoint, ushort destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
+    public bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
-        if (source.RentArray is null ||
-            span.Length < (RelayHeader.Length - RelayHeader.RelayIdLength))
+        if (source.RentArray is null)
         {// Invalid data
             goto Exit;
         }
@@ -205,124 +201,133 @@ public partial class RelayAgent
         RelayExchange? exchange;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null || !exchange.DecrementAndCheck())
             {// No relay exchange
                 goto Exit;
             }
         }
 
-        if (exchange.RelayId == destinationRelayId)
-        {// InnerRelayId
-            if (exchange.Endpoint.EndPointEquals(endpoint))
-            {// Inner -> Outer: Decrypt
-                var salt4 = MemoryMarshal.Read<uint>(span);
-                var headerSpan = span;
-                span = span.Slice(sizeof(uint));
-
-                Span<byte> nonce32 = stackalloc byte[32];
-                RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
-                if (!Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0))
+        if (exchange.InnerRelayId == destinationRelayId)
+        {// InnerRelayId: Inner(Originator or Inner relay) -> Self or Outer relay
+            if (!exchange.Endpoint.EndPointEquals(endpoint))
+            {// Despite coming from the inner node, the endpoint does not match.
+                if (NetConstants.LogRelay)
                 {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : invalid endpoint");
+                }
+            }
+
+            // Since it comes from the inner, it is a packet that starts with RelayHeader.
+            if (span.Length < RelayHeader.Length)
+            {// Invalid data
+                goto Exit;
+            }
+
+            // Decrypt (RelayTagCode)
+
+            // Decrypt
+            var salt4 = MemoryMarshal.Read<uint>(span);
+            var headerSpan = span;
+            span = span.Slice(sizeof(uint));
+
+            Span<byte> nonce32 = stackalloc byte[32];
+            RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
+            if (!Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0))
+            {
+                if (NetConstants.LogRelay)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : decryption failue");
+                }
+
+                goto Exit;
+            }
+
+            var relayHeader = MemoryMarshal.Read<RelayHeader>(headerSpan);
+            if (relayHeader.Zero == 0)
+            { // Decrypted. Process the packet on this node.
+                span = span.Slice(RelayHeader.Length - RelayHeader.PlainLength - RelayHeader.RelayIdLength);
+                decrypted = source.Slice(RelayHeader.Length);
+                // decrypted = source.RentArray.AsMemory(RelayHeader.Length, span.Length);
+                if (relayHeader.NetAddress == NetAddress.Relay)
+                {// Initiator -> This node
+                    MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
+                    span = span.Slice(sizeof(RelayId));
+                    MemoryMarshal.Write(span, destinationRelayId); // DestinationRelayId
+
                     if (NetConstants.LogRelay)
                     {
-                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : decryption failue");
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId})");
                     }
 
-                    goto Exit;
-                }
-
-                var relayHeader = MemoryMarshal.Read<RelayHeader>(headerSpan);
-                if (relayHeader.Zero == 0)
-                { // Decrypted. Process the packet on this node.
-                    span = span.Slice(RelayHeader.Length - RelayHeader.PlainLength - RelayHeader.RelayIdLength);
-                    decrypted = source.Slice(RelayHeader.Length);
-                    // decrypted = source.RentArray.AsMemory(RelayHeader.Length, span.Length);
-                    if (relayHeader.NetAddress == NetAddress.Relay)
-                    {// Initiator -> This node
-                        MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
-                        span = span.Slice(sizeof(ushort));
-                        MemoryMarshal.Write(span, (ushort)destinationRelayId); // DestinationRelayId
-
-                        if (NetConstants.LogRelay)
-                        {
-                            this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId})");
-                        }
-
-                        return true;
-                    }
-                    else
-                    {// Initiator -> Other (unrestricted)
-                        if (exchange.OuterEndpoint.IsValid)
-                        {// Inner relay
-                            if (NetConstants.LogRelay)
-                            {
-                                this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}): OuterEndpoint is already set");
-                            }
-
-                            goto Exit;
-                        }
-
-                        MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
-                        span = span.Slice(sizeof(ushort));
-                        MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
-
-                        var operation = EndPointOperation.Update;
-                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(6));
-                        if (packetType == Packet.PacketType.Connect)
-                        {// Connect
-                            operation = EndPointOperation.SetUnrestricted;
-                        }
-                        else
-                        {// Other
-                            operation = EndPointOperation.Update;
-                        }
-
-                        // Close -> EndPointOperation.SetRestricted ?
-
-                        var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
-                        decrypted.IncrementAndShare();
-                        this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
-
-                        if (NetConstants.LogRelay)
-                        {
-                            this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes");
-                        }
-                    }
+                    return true;
                 }
                 else
-                {// Not decrypted. Relay the packet to the next node.
-                    if (exchange.OuterEndpoint.EndPoint is { } ep)
-                    {// -> Outer relay
-                        MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
-                        MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.OuterEndpoint.RelayId);
-                        source.IncrementAndShare();
-                        this.sendItems.Enqueue(new(ep, source));
-
+                {// Initiator -> Other (unrestricted)
+                    if (exchange.OuterEndpoint.IsValid)
+                    {// Inner relay
                         if (NetConstants.LogRelay)
                         {
-                            this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> Outer({exchange.OuterEndpoint}): {source.Memory.Length} bytes");
+                            this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}): OuterEndpoint is already set");
                         }
+
+                        goto Exit;
+                    }
+
+                    MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
+                    span = span.Slice(sizeof(RelayId));
+                    MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
+
+                    var operation = EndPointOperation.Update;
+                    var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(sizeof(RelayId) + sizeof(uint)));
+                    if (packetType == Packet.PacketType.Connect)
+                    {// Connect
+                        operation = EndPointOperation.SetUnrestricted;
                     }
                     else
-                    {// No outer relay. Discard
-                        if (NetConstants.LogRelay)
-                        {
-                            this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> relay: No outer relay");
-                        }
+                    {// Other
+                        operation = EndPointOperation.Update;
+                    }
+
+                    // Close -> EndPointOperation.SetRestricted ?
+
+                    var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
+                    decrypted.IncrementAndShare();
+                    this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
+
+                    if (NetConstants.LogRelay)
+                    {
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes");
                     }
                 }
             }
             else
-            {// Invalid: Discard
-                if (NetConstants.LogRelay)
-                {
-                    this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : invalid");
+            {// Not decrypted. Relay the packet to the next node.
+                if (exchange.OuterEndpoint.EndPoint is { } ep)
+                {// -> Outer relay
+                    // Encrypt (RelayTagCode)
+
+                    MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
+                    MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.OuterEndpoint.RelayId);
+                    source.IncrementAndShare();
+                    this.sendItems.Enqueue(new(ep, source));
+
+                    if (NetConstants.LogRelay)
+                    {
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> Outer({exchange.OuterEndpoint}): {source.Memory.Length} bytes");
+                    }
+                }
+                else
+                {// No outer relay. Discard
+                    if (NetConstants.LogRelay)
+                    {
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> relay: No outer relay");
+                    }
                 }
             }
         }
         else
-        {// OuterRelayId
+        {// OuterRelayId: Outer(Outer relay or unrestricted) -> Inner relay
             if (exchange.OuterEndpoint.IsValid)
             {// Not outermost relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
@@ -360,9 +365,9 @@ public partial class RelayAgent
                 }
             }
 
-            var sourceRelayId = MemoryMarshal.Read<ushort>(source.Span);
+            var sourceRelayId = MemoryMarshal.Read<RelayId>(source.Span);
             if (sourceRelayId == 0)
-            {// RelayId(Source/Destination), RelayHeader, Content, Padding
+            {// RelayId(Source/Destination), RelayHeader, Content
                 var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
@@ -386,10 +391,13 @@ public partial class RelayAgent
             RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
             Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
 
+            // Encrypt (RelayTagCode)
+            exchange.Encrypt(span, salt4);
+
             if (exchange.Endpoint.EndPoint is { } ep)
             {
-                MemoryMarshal.Write(source.Span, exchange.RelayId); // SourceRelayId
-                MemoryMarshal.Write(source.Span.Slice(sizeof(ushort)), exchange.Endpoint.RelayId); // DestinationRelayId
+                MemoryMarshal.Write(source.Span, exchange.InnerRelayId); // SourceRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.Endpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
 
@@ -460,7 +468,7 @@ Exit:
         return (item.EndPoint, unrestricted);
     }
 
-    internal PingRelayResponse? ProcessPingRelay(ushort destinationRelayId)
+    internal PingRelayResponse? ProcessPingRelay(RelayId destinationRelayId)
     {
         if (this.NumberOfExchanges == 0)
         {
@@ -471,7 +479,7 @@ Exit:
         PingRelayResponse? packet;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
                 return null;
@@ -483,7 +491,7 @@ Exit:
         return packet;
     }
 
-    internal RelayOperatioResponse? ProcessRelayOperation(ushort destinationRelayId, RelayOperatioPacket p)
+    internal RelayOperatioResponse? ProcessRelayOperation(RelayId destinationRelayId, RelayOperatioPacket p)
     {
         if (this.NumberOfExchanges == 0)
         {
@@ -494,7 +502,7 @@ Exit:
         RelayOperatioResponse? response = default;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
                 return null;

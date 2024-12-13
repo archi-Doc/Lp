@@ -10,14 +10,14 @@ public class CertificateRelayControl : IRelayControl
 {
     public static readonly IRelayControl Instance = new CertificateRelayControl();
 
-    private class CreateRelayResponder : AsyncResponder<CertificateToken<CreateRelayBlock>, CreateRelayResponse>
+    private class CreateRelayResponder : AsyncResponder<CertificateToken<AssignRelayBlock>, AssignRelayResponse>
     {
         public CreateRelayResponder(CertificateRelayControl relayControl)
         {
             this.relayControl = relayControl;
         }
 
-        public override NetResultValue<CreateRelayResponse> RespondAsync(CertificateToken<CreateRelayBlock> token)
+        public override NetResultValue<AssignRelayResponse> RespondAsync(CertificateToken<AssignRelayBlock> token)
         {
             if (this.ServerConnection.NetTerminal.RelayControl is not CertificateRelayControl ||
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
@@ -27,10 +27,10 @@ public class CertificateRelayControl : IRelayControl
             }
 
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
-            var result = relayAgent.Add(this.ServerConnection, token.Target, out var relayId, out var outerRelayId);
+            var result = relayAgent.Add(this.ServerConnection, token.Target, out var innerRelayId, out var outerRelayId);
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
-            var response = new CreateRelayResponse(result, relayId, outerRelayId, relayPoint);
-            relayAgent.AddRelayPoint(relayId, relayPoint);
+            var response = new AssignRelayResponse(result, innerRelayId, outerRelayId, relayPoint);
+            relayAgent.AddRelayPoint(innerRelayId, relayPoint);
 
             return new(NetResult.Success, response);
         }
@@ -38,10 +38,7 @@ public class CertificateRelayControl : IRelayControl
         private readonly CertificateRelayControl relayControl;
     }
 
-    public int MaxSerialRelays
-        => 5;
-
-    public int MaxParallelRelays
+    public int MaxRelayExchanges
         => 100;
 
     public long DefaultRelayRetensionMics

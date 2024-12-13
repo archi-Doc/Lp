@@ -86,8 +86,10 @@ public sealed partial class PacketTerminal
         scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
         var span = header;
 
-        BitConverter.TryWriteBytes(span, 0u); // SourceRelayId/DestinationRelayId
-        span = span.Slice(sizeof(uint));
+        BitConverter.TryWriteBytes(span, (RelayId)0); // SourceRelayId
+        span = span.Slice(sizeof(RelayId));
+        BitConverter.TryWriteBytes(span, (RelayId)0); // DestinationRelayId
+        span = span.Slice(sizeof(RelayId));
 
         BitConverter.TryWriteBytes(span, 0u); // Hash
         span = span.Slice(sizeof(uint));
@@ -107,7 +109,7 @@ public sealed partial class PacketTerminal
 
         // Get checksum
         span = rentMemory.Span;
-        BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
+        BitConverter.TryWriteBytes(span.Slice(RelayHeader.RelayIdLength), (uint)XxHash3.Hash64(span.Slice(RelayHeader.RelayIdLength + sizeof(uint))));
     }
 
     /// <summary>
@@ -284,14 +286,14 @@ public sealed partial class PacketTerminal
 
                 // PacketHeaderCode
                 var span = item.MemoryOwner.Span;
-                if (MemoryMarshal.Read<ushort>(span.Slice(sizeof(ushort))) == 0)
+                if (MemoryMarshal.Read<RelayId>(span.Slice(sizeof(RelayId))) == 0)
                 {// No relay
                     // Reset packet id in order to improve the accuracy of RTT measurement.
                     var newPacketId = RandomVault.Default.NextUInt64();
                     item.PacketIdValue = newPacketId;
 
-                    BitConverter.TryWriteBytes(span.Slice(10), newPacketId);
-                    BitConverter.TryWriteBytes(span.Slice(4), (uint)XxHash3.Hash64(span.Slice(8)));
+                    BitConverter.TryWriteBytes(span.Slice(RelayHeader.RelayIdLength + 6), newPacketId);
+                    BitConverter.TryWriteBytes(span.Slice(RelayHeader.RelayIdLength), (uint)XxHash3.Hash64(span.Slice(RelayHeader.RelayIdLength + 4)));
                 }
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner.IncrementAndShare());
@@ -302,7 +304,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, int relayNumber, bool incomingRelay, ushort destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, int relayNumber, bool incomingRelay, RelayId destinationRelayId, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         if (NetConstants.LogLowLevelNet)
         {
@@ -311,13 +313,13 @@ public sealed partial class PacketTerminal
 
         // PacketHeaderCode
         var span = toBeShared.Span;
-        if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(8)))
+        if (BitConverter.ToUInt32(span.Slice(RelayHeader.RelayIdLength)) != (uint)XxHash3.Hash64(span.Slice(RelayHeader.RelayIdLength + sizeof(uint))))
         {// Checksum
             return;
         }
 
         var packetType = (PacketType)packetUInt16;
-        var packetId = BitConverter.ToUInt64(span.Slice(10));
+        var packetId = BitConverter.ToUInt64(span.Slice(RelayHeader.RelayIdLength + sizeof(uint) + sizeof(PacketType)));
 
         span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
@@ -480,7 +482,7 @@ public sealed partial class PacketTerminal
             }
         }
 
-        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(RelayHeader.RelayIdLength + 6)); // PacketHeaderCode
         NetEndpoint endpoint;
         if (relayNumber == 0)
         {// No relay
@@ -490,8 +492,8 @@ public sealed partial class PacketTerminal
             }
 
             var span = dataToBeMoved.Span;
-            BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
-            span = span.Slice(sizeof(ushort));
+            BitConverter.TryWriteBytes(span, (RelayId)0); // SourceRelayId
+            span = span.Slice(sizeof(RelayId));
             BitConverter.TryWriteBytes(span, netAddress.RelayId); // DestinationRelayId
         }
         else
@@ -563,12 +565,12 @@ public sealed partial class PacketTerminal
             }
         }
 
-        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(10)); // PacketHeaderCode
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(RelayHeader.RelayIdLength + 6)); // PacketHeaderCode
         if (relayNumber == 0)
         {// No relay
             var span = dataToBeMoved.Span;
-            BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
-            span = span.Slice(sizeof(ushort));
+            BitConverter.TryWriteBytes(span, (RelayId)0); // SourceRelayId
+            span = span.Slice(sizeof(RelayId));
             BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
         }
         else
@@ -613,10 +615,10 @@ public sealed partial class PacketTerminal
 
         // PacketHeaderCode
         var span = dataToBeMoved.Span;
-        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
-        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (RelayId)0); // SourceRelayId
+        span = span.Slice(sizeof(RelayId));
         BitConverter.TryWriteBytes(span, endpoint.RelayId); // DestinationRelayId
-        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(6)); // PacketId
+        var packetId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(sizeof(RelayId) + sizeof(uint))); // PacketId
 
         var item = new Item(endpoint.EndPoint, packetId, dataToBeMoved, responseTcs);
         using (this.items.LockObject.EnterScope())

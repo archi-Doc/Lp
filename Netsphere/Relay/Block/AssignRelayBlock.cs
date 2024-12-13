@@ -3,24 +3,25 @@
 namespace Netsphere.Relay;
 
 [TinyhandObject(ReservedKeyCount = 2)]
-public partial class CreateRelayBlock
+public partial class AssignRelayBlock
 {
-    public CreateRelayBlock()
+    public AssignRelayBlock()
     {
     }
 
-    public CreateRelayBlock(bool allowUnknownNode)
+    public AssignRelayBlock(bool allowUnknownNode)
     {
         this.AllowUnknownNode = allowUnknownNode;
     }
 
-    /*public CreateRelayBlock(ushort relayId)
+    /*public CreateRelayBlock(RelayId relayId)
     {
         this.RelayId = relayId;
     }*/
 
     /// <summary>
-    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.
+    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.<br/>
+    /// This feature is designed with Engagement in mind.
     /// </summary>
     [Key(0)]
     public bool AllowUnknownNode { get; protected set; }
@@ -30,16 +31,16 @@ public partial class CreateRelayBlock
 }
 
 [TinyhandObject]
-public partial class CreateRelayResponse
+public partial class AssignRelayResponse
 {
-    public CreateRelayResponse()
+    public AssignRelayResponse()
     {
     }
 
-    public CreateRelayResponse(RelayResult result, ushort relayId, ushort outerRelayId, long relayPoint)
+    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint)
     {
         this.Result = result;
-        this.RelayId = relayId;
+        this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.RelayPoint = relayPoint;
     }
@@ -48,10 +49,10 @@ public partial class CreateRelayResponse
     public RelayResult Result { get; private set; }
 
     [Key(1)]
-    public ushort RelayId { get; private set; }
+    public RelayId InnerRelayId { get; private set; }
 
     [Key(2)]
-    public ushort OuterRelayId { get; private set; }
+    public RelayId OuterRelayId { get; private set; }
 
     [Key(3)]
     public long RelayPoint { get; private set; }

@@ -7,7 +7,7 @@ public partial class RelayNode
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
     [Link(Name = "RelayId", TargetMember = "RelayId", Type = ChainType.Unordered)]
-    public RelayNode(ushort relayId, ClientConnection clientConnection)
+    public RelayNode(RelayId relayId, ClientConnection clientConnection)
     {
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
         clientConnection.EmbryoKey.CopyTo(this.EmbryoKey);
@@ -15,7 +15,7 @@ public partial class RelayNode
         this.EmbryoSecret = clientConnection.EmbryoSecret;
     }
 
-    public ushort RelayId // For chain
+    public RelayId RelayId // For chain
         => this.Endpoint.RelayId;
 
     [Link(Type = ChainType.Unordered)]

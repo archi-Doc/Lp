@@ -6,9 +6,9 @@ namespace Netsphere.Relay;
 internal partial class RelayExchange
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
-    public RelayExchange(IRelayControl relayControl, ushort relayId, ushort outerRelayId, ServerConnection serverConnection, CreateRelayBlock block)
+    public RelayExchange(IRelayControl relayControl, RelayId innerRelayId, RelayId outerRelayId, ServerConnection serverConnection, AssignRelayBlock block)
     {
-        this.RelayId = relayId;
+        this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.Endpoint = serverConnection.DestinationEndpoint;
         this.LastAccessMics = Mics.FastSystem;
@@ -24,10 +24,10 @@ internal partial class RelayExchange
     }
 
     [Link(Type = ChainType.Unordered, AddValue = false)]
-    public ushort RelayId { get; private set; }
+    public RelayId InnerRelayId { get; private set; }
 
-    [Link(UnsafeTargetChain = "RelayIdChain")]
-    public ushort OuterRelayId { get; private set; }
+    [Link(UnsafeTargetChain = "InnerRelayIdChain")]
+    public RelayId OuterRelayId { get; private set; }
 
     public NetEndpoint Endpoint { get; private set; }
 
@@ -61,6 +61,8 @@ internal partial class RelayExchange
 
     internal ulong EmbryoSecret { get; private set; }
 
+    internal byte[] RelayKeyAndNonce32 { get; private set; }
+
     public bool DecrementAndCheck()
     {// using (items.LockObject.EnterScope())
         if (this.RelayPoint-- <= 0)
@@ -79,4 +81,14 @@ internal partial class RelayExchange
     public void Clean()
     {
     }
+
+    public unsafe void Encrypt(Span<byte> plaintext, uint salt4)
+    {
+        fixed (byte* pointer = plaintext)
+        {
+            var cipher = new Span<byte>(pointer, plaintext.Length + 16);
+        }
+    }
+
+    private byte[] Key => 
 }

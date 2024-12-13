@@ -17,7 +17,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public static bool SkipValidation { get; set; }
 
     [Key(0)]
-    public readonly ushort RelayId; // 2 bytes
+    public readonly RelayId RelayId; // 2 bytes
 
     [Key(1)]
     public readonly ushort Port; // 2 bytes
@@ -31,7 +31,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     [Key(4)]
     public readonly ulong Address6B; // 8 bytes
 
-    public NetAddress(ushort relayId, uint address4, ulong address6a, ulong address6b, ushort port)
+    public NetAddress(RelayId relayId, uint address4, ulong address6a, ulong address6b, ushort port)
     {
         this.RelayId = relayId;
         this.Port = port;
@@ -57,7 +57,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         this.Address6B = original.Address6B;
     }
 
-    public NetAddress(ushort relayId, NetAddress original)
+    public NetAddress(RelayId relayId, NetAddress original)
     {
         this.RelayId = relayId;
         this.Port = original.Port;
@@ -417,7 +417,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public override int GetHashCode()
         => HashCode.Combine(this.RelayId, this.Port, this.Address4, this.Address6A, this.Address6B);*/
 
-    private static bool TryParseRelayId(ref ReadOnlySpan<char> source, out ushort relayId)
+    private static bool TryParseRelayId(ref ReadOnlySpan<char> source, out RelayId relayId)
     {// 123:1.2.3.4:456, 1.2.3.4:456, []
         relayId = 0;
         if (source.Length == 0)
@@ -452,7 +452,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             i = source.Length - 1;
         }
 
-        var result = ushort.TryParse(source.Slice(0, i), out relayId);
+        var result = RelayId.TryParse(source.Slice(0, i), out relayId);
         source = source.Slice(i + 1);
         return result;
     }

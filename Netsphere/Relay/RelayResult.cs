@@ -10,7 +10,7 @@ public enum RelayResult : byte
     Success,
     ConnectionFailure,
     SerialRelayLimit,
-    ParallelRelayLimit,
+    RelayExchangeLimit,
     InvalidEndpoint,
     DuplicateEndpoint,
     DuplicateRelayId,

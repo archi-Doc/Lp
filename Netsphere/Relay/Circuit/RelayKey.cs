@@ -80,9 +80,9 @@ internal class RelayKey
             {// Decrypted
                 var span2 = rentMemory.RentArray.AsSpan();
                 MemoryMarshal.Write(span2, relayHeader.NetAddress.RelayId);
-                span2 = span2.Slice(sizeof(ushort));
-                MemoryMarshal.Write(span2, (ushort)0);
-                span2 = span2.Slice(sizeof(ushort));
+                span2 = span2.Slice(sizeof(RelayId));
+                MemoryMarshal.Write(span2, (RelayId)0);
+                span2 = span2.Slice(sizeof(RelayId));
 
                 span = span.Slice(RelayHeader.Length);
                 span.CopyTo(span2);
@@ -103,12 +103,10 @@ Exit:
 
     public bool TryEncrypt(int relayNumber, NetAddress destination, ReadOnlySpan<byte> content, out BytePool.RentMemory encrypted, out NetEndpoint relayEndpoint)
     {
-        Debug.Assert(content.Length >= 4);
-        Debug.Assert(content[0] == 0);
-        Debug.Assert(content[1] == 0);
+        Debug.Assert(content.Length >= RelayHeader.RelayIdLength);
 
         // PacketHeaderCode
-        content = content.Slice(4); // Skip relay id
+        content = content.Slice(RelayHeader.RelayIdLength); // Skip relay id
 
         if (relayNumber < 0)
         {// The target relay
@@ -137,10 +135,10 @@ Exit:
 
         // RelayId
         var span = encrypted.Span;
-        BitConverter.TryWriteBytes(span, (ushort)0); // SourceRelayId
-        span = span.Slice(sizeof(ushort));
+        BitConverter.TryWriteBytes(span, (RelayId)0); // SourceRelayId
+        span = span.Slice(sizeof(RelayId));
         BitConverter.TryWriteBytes(span, this.FirstEndpoint.RelayId); // DestinationRelayId
-        span = span.Slice(sizeof(ushort));
+        span = span.Slice(sizeof(RelayId));
 
         // RelayHeader
         var relayHeader = new RelayHeader(RandomVault.Default.NextUInt32(), destination);

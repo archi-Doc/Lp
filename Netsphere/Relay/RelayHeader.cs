@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Netsphere.Relay;
@@ -10,10 +8,10 @@ namespace Netsphere.Relay;
 
 [StructLayout(LayoutKind.Explicit)]
 public readonly struct RelayHeader
-{// 8 bytes, RelayHeaderCode
-    public const int RelayIdLength = 4; // SourceRelayId/DestinationRelayId
+{// 32 bytes, RelayHeaderCode
+    public const int RelayIdLength = sizeof(RelayId) * 2; // SourceRelayId/DestinationRelayId
     public const int PlainLength = 4; // Salt
-    public const int CipherLength = 28; // Zero, NetAddress
+    public const int CipherLength = 28; // 36; // Zero, NetAddress
     public const int Length = PlainLength + CipherLength;
 
     public RelayHeader(uint salt, NetAddress netAddress)

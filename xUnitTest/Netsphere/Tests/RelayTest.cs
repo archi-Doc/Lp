@@ -48,31 +48,31 @@ public class RelayTest
         {
             clientConnection.IsNotNull();
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.InnerRelayId, clientConnection, true);
         }
 
         using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 1))!)
         {
             clientConnection.IsNotNull();
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value!.InnerRelayId, clientConnection, true);
 
             var setRelayPacket = new RelayOperatioPacket();
-            setRelayPacket.OuterEndPoint = new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
+            setRelayPacket.OuterEndPoint = new(r.Value.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);
         }
 

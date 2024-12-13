@@ -11,7 +11,7 @@ public partial record RelayAgreement
     }
 
     [Key(0)]
-    public ushort OuterRelayId { get; set; }
+    public RelayId OuterRelayId { get; set; }
 
     [Key(1)]
     public NetNode OuterNode { get; set; } = default!;

@@ -9,6 +9,7 @@ using Netsphere.Packet;
 using SimpleCommandLine;
 using Netsphere.Crypto;
 using Netsphere.Relay;
+using System.Runtime.CompilerServices;
 
 namespace Playground;
 
@@ -52,10 +53,10 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());
@@ -67,7 +68,7 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.InnerRelayId, clientConnection, true);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
@@ -81,10 +82,10 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());
@@ -96,13 +97,13 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.RelayId, clientConnection, true);
+            var result = netTerminal.OutgoingCircuit.AddRelay(r.Value.InnerRelayId, clientConnection, true);
             await Task.Delay(10);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
 
-            var packet = RelayOperatioPacket.SetOuterEndPoint(new(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint));
+            var packet = RelayOperatioPacket.SetOuterEndPoint(new(r.Value.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint));
             await netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
 
             await Task.Delay(10);
