@@ -1,5 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Netsphere.Relay;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
@@ -86,9 +90,31 @@ internal partial class RelayExchange
     {
         fixed (byte* pointer = plaintext)
         {
-            var cipher = new Span<byte>(pointer, plaintext.Length + 16);
+            var ciphertext = new Span<byte>(pointer, plaintext.Length + Aegis128L.MinTagSize);
+            Span<byte> nonce16 = stackalloc byte[Aegis128L.NonceSize];
+            this.CreateNonce(nonce16, salt4);
+
+            Aegis128L.Encrypt(ciphertext, plaintext, nonce16, this.RelayKey);
         }
     }
 
-    private byte[] Key => 
+    public unsafe bool TryDecrypt(Span<byte> ciphertext, uint salt4)
+    {
+        Debug.Assert(ciphertext.Length >= Aegis128L.MinTagSize);
+        Span<byte> nonce16 = stackalloc byte[Aegis128L.NonceSize];
+        this.CreateNonce(nonce16, salt4);
+
+        return Aegis128L.TryDecrypt(ciphertext.Slice(0, ciphertext.Length - Aegis128L.MinTagSize), ciphertext, nonce16, this.RelayKey);
+    }
+
+    private ReadOnlySpan<byte> RelayKey => this.RelayKeyAndNonce32.AsSpan(0, Aegis128L.KeySize);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CreateNonce(Span<byte> nonce16, uint salt4)
+    {
+        Debug.Assert(nonce16.Length == Aegis128L.NonceSize);
+
+        this.RelayKeyAndNonce32.AsSpan(Aegis128L.KeySize, Aegis128L.NonceSize).CopyTo(nonce16);
+        MemoryMarshal.AsRef<uint>(nonce16) ^= salt4;
+    }
 }

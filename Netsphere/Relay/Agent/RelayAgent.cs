@@ -367,7 +367,7 @@ public partial class RelayAgent
 
             var sourceRelayId = MemoryMarshal.Read<RelayId>(source.Span);
             if (sourceRelayId == 0)
-            {// RelayId(Source/Destination), RelayHeader, Content
+            {// RelayId(Source/Destination), RelayHeader, Content(span)
                 var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
