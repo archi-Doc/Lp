@@ -3,7 +3,7 @@
 namespace Netsphere.Relay;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class RelayNode
+public sealed partial class RelayNode
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
     [Link(Name = "RelayId", TargetMember = "RelayId", Type = ChainType.Unordered)]

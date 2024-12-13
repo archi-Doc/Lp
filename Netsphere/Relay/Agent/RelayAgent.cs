@@ -103,7 +103,7 @@ public partial class RelayAgent
         return sb.ToString();
     }
 
-    public RelayResult Add(ServerConnection serverConnection, AssignRelayBlock block, out RelayId innerRelayId, out RelayId outerRelayId)
+    public RelayResult AddExchange(ServerConnection serverConnection, AssignRelayBlock block, out RelayId innerRelayId, out RelayId outerRelayId)
     {
         innerRelayId = 0;
         outerRelayId = 0;
@@ -392,7 +392,7 @@ public partial class RelayAgent
             Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
 
             // Encrypt (RelayTagCode)
-            exchange.Encrypt(span, salt4);
+            //exchange.Encrypt(span, salt4);
 
             if (exchange.Endpoint.EndPoint is { } ep)
             {
