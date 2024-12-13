@@ -20,7 +20,8 @@ public partial class CreateRelayBlock
     }*/
 
     /// <summary>
-    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.
+    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.<br/>
+    /// This feature is designed with Engagement in mind.
     /// </summary>
     [Key(0)]
     public bool AllowUnknownNode { get; protected set; }

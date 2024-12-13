@@ -6,10 +6,7 @@ public class NoRelayControl : IRelayControl
 {
     public static readonly IRelayControl Instance = new NoRelayControl();
 
-    public int MaxSerialRelays
-        => 0;
-
-    public int MaxParallelRelays
+    public int MaxRelayExchanges
         => 0;
 
     public long DefaultRelayRetensionMics

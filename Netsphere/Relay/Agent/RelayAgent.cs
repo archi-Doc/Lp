@@ -109,7 +109,7 @@ public partial class RelayAgent
         outerRelayId = 0;
         using (this.items.LockObject.EnterScope())
         {
-            if (this.NumberOfExchanges >= this.relayControl.MaxParallelRelays)
+            if (this.NumberOfExchanges >= this.relayControl.MaxRelayExchanges)
             {
                 return RelayResult.ParallelRelayLimit;
             }

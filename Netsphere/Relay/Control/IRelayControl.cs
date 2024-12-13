@@ -6,9 +6,7 @@ namespace Netsphere.Relay;
 
 public interface IRelayControl
 {
-    int MaxSerialRelays { get; }
-
-    int MaxParallelRelays { get; }
+    int MaxRelayExchanges { get; }
 
     long DefaultRelayRetensionMics { get; }
 

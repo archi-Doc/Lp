@@ -38,10 +38,7 @@ public class CertificateRelayControl : IRelayControl
         private readonly CertificateRelayControl relayControl;
     }
 
-    public int MaxSerialRelays
-        => 5;
-
-    public int MaxParallelRelays
+    public int MaxRelayExchanges
         => 100;
 
     public long DefaultRelayRetensionMics
