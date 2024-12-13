@@ -48,10 +48,10 @@ public class RelayTest
         {
             clientConnection.IsNotNull();
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
@@ -62,10 +62,10 @@ public class RelayTest
         {
             clientConnection.IsNotNull();
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 

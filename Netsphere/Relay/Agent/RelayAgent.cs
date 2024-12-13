@@ -103,7 +103,7 @@ public partial class RelayAgent
         return sb.ToString();
     }
 
-    public RelayResult Add(ServerConnection serverConnection, CreateRelayBlock block, out RelayId relayId, out RelayId outerRelayId)
+    public RelayResult Add(ServerConnection serverConnection, AssignRelayBlock block, out RelayId relayId, out RelayId outerRelayId)
     {
         relayId = 0;
         outerRelayId = 0;

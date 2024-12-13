@@ -53,10 +53,10 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());
@@ -82,10 +82,10 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new CreateRelayBlock();
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
             clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());

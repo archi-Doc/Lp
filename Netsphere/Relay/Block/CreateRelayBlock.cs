@@ -3,13 +3,13 @@
 namespace Netsphere.Relay;
 
 [TinyhandObject(ReservedKeyCount = 2)]
-public partial class CreateRelayBlock
+public partial class AssignRelayBlock
 {
-    public CreateRelayBlock()
+    public AssignRelayBlock()
     {
     }
 
-    public CreateRelayBlock(bool allowUnknownNode)
+    public AssignRelayBlock(bool allowUnknownNode)
     {
         this.AllowUnknownNode = allowUnknownNode;
     }
@@ -31,13 +31,13 @@ public partial class CreateRelayBlock
 }
 
 [TinyhandObject]
-public partial class CreateRelayResponse
+public partial class AssignRelayResponse
 {
-    public CreateRelayResponse()
+    public AssignRelayResponse()
     {
     }
 
-    public CreateRelayResponse(RelayResult result, RelayId relayId, RelayId outerRelayId, long relayPoint)
+    public AssignRelayResponse(RelayResult result, RelayId relayId, RelayId outerRelayId, long relayPoint)
     {
         this.Result = result;
         this.RelayId = relayId;

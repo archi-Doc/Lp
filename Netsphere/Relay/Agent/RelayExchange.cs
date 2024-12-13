@@ -6,7 +6,7 @@ namespace Netsphere.Relay;
 internal partial class RelayExchange
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
-    public RelayExchange(IRelayControl relayControl, RelayId relayId, RelayId outerRelayId, ServerConnection serverConnection, CreateRelayBlock block)
+    public RelayExchange(IRelayControl relayControl, RelayId relayId, RelayId outerRelayId, ServerConnection serverConnection, AssignRelayBlock block)
     {
         this.RelayId = relayId;
         this.OuterRelayId = outerRelayId;

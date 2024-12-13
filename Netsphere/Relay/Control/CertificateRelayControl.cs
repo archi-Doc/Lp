@@ -10,14 +10,14 @@ public class CertificateRelayControl : IRelayControl
 {
     public static readonly IRelayControl Instance = new CertificateRelayControl();
 
-    private class CreateRelayResponder : AsyncResponder<CertificateToken<CreateRelayBlock>, CreateRelayResponse>
+    private class CreateRelayResponder : AsyncResponder<CertificateToken<AssignRelayBlock>, AssignRelayResponse>
     {
         public CreateRelayResponder(CertificateRelayControl relayControl)
         {
             this.relayControl = relayControl;
         }
 
-        public override NetResultValue<CreateRelayResponse> RespondAsync(CertificateToken<CreateRelayBlock> token)
+        public override NetResultValue<AssignRelayResponse> RespondAsync(CertificateToken<AssignRelayBlock> token)
         {
             if (this.ServerConnection.NetTerminal.RelayControl is not CertificateRelayControl ||
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
@@ -29,7 +29,7 @@ public class CertificateRelayControl : IRelayControl
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
             var result = relayAgent.Add(this.ServerConnection, token.Target, out var relayId, out var outerRelayId);
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
-            var response = new CreateRelayResponse(result, relayId, outerRelayId, relayPoint);
+            var response = new AssignRelayResponse(result, relayId, outerRelayId, relayPoint);
             relayAgent.AddRelayPoint(relayId, relayPoint);
 
             return new(NetResult.Success, response);

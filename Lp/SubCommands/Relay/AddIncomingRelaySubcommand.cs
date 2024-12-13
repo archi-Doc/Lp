@@ -39,10 +39,10 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
                 return;
             }
 
-            var block = new CreateRelayBlock(true);
-            var token = new CertificateToken<CreateRelayBlock>(block);
+            var block = new AssignRelayBlock(true);
+            var token = new CertificateToken<AssignRelayBlock>(block);
             authority.GetSeedKey().SignWithSalt(token, clientConnection.EmbryoSalt);
-            var r = await clientConnection.SendAndReceive<CertificateToken<CreateRelayBlock>, CreateRelayResponse>(token).ConfigureAwait(false);
+            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());
