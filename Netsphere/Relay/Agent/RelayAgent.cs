@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
+using ValueLink;
 
 namespace Netsphere.Relay;
 
@@ -168,17 +169,23 @@ public partial class RelayAgent
 
         this.lastCleanMics = Mics.FastSystem;
 
+        // ValueLink.DeferredList<ServerConnection.GoshujinClass, ServerConnection> deleteConnection = default;
         using (this.items.LockObject.EnterScope())
         {
+            DeferredList<RelayExchange.GoshujinClass, RelayExchange> deleteExchange = new(this.items);
             Queue<RelayExchange>? toDelete = default;
             foreach (var x in this.items)
             {
                 if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
                 {
+                    deleteExchange.Add(x);
+                    x.Goshujin = null;
                     toDelete ??= new();
                     toDelete.Enqueue(x);
                 }
             }
+
+            deleteExchange.DeferredRemove();
 
             if (toDelete is not null)
             {

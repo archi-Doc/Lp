@@ -3,7 +3,7 @@
 namespace Netsphere.Relay;
 
 [TinyhandObject(ReservedKeyCount = 2)]
-public sealed partial class AssignRelayBlock
+public partial class AssignRelayBlock
 {
     public AssignRelayBlock(bool allowUnknownNode = false)
     {
@@ -12,7 +12,7 @@ public sealed partial class AssignRelayBlock
         RandomVault.Default.NextBytes(this.InnerKeyAndNonce);
     }
 
-    private AssignRelayBlock()
+    protected AssignRelayBlock()
     {
     }
 
@@ -22,43 +22,47 @@ public sealed partial class AssignRelayBlock
     }*/
 
     /// <summary>
-    /// Gets a value indicating whether or not to allow communication from unknown nodes.<br/>
+    /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.<br/>
     /// This feature is designed with Engagement in mind.
     /// </summary>
     [Key(0)]
-    public bool AllowUnknownNode { get; private set; }
+    public bool AllowUnknownNode { get; protected set; }
 
     [Key(1)]
-    public byte[] InnerKeyAndNonce { get; private set; } = [];
+    public byte[] InnerKeyAndNonce { get; protected set; } = [];
 
     // [Key(2)]
     // public Linkage? Linkage { get; private set; }
 }
 
 [TinyhandObject]
-public sealed partial class AssignRelayResponse
+public partial class AssignRelayResponse
 {
-    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint)
+    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint, long retensionMics)
     {
         this.Result = result;
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.RelayPoint = relayPoint;
+        this.RetensionMics = retensionMics;
     }
 
-    private AssignRelayResponse()
+    protected AssignRelayResponse()
     {
     }
 
     [Key(0)]
-    public RelayResult Result { get; private set; }
+    public RelayResult Result { get; protected set; }
 
     [Key(1)]
-    public RelayId InnerRelayId { get; private set; }
+    public RelayId InnerRelayId { get; protected set; }
 
     [Key(2)]
-    public RelayId OuterRelayId { get; private set; }
+    public RelayId OuterRelayId { get; protected set; }
 
     [Key(3)]
-    public long RelayPoint { get; private set; }
+    public long RelayPoint { get; protected set; }
+
+    [Key(4)]
+    public long RetensionMics { get; protected set; }
 }
