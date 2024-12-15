@@ -172,28 +172,16 @@ public partial class RelayAgent
         // ValueLink.DeferredList<ServerConnection.GoshujinClass, ServerConnection> deleteConnection = default;
         using (this.items.LockObject.EnterScope())
         {
-            DeferredList<RelayExchange.GoshujinClass, RelayExchange> deleteExchange = new(this.items);
-            Queue<RelayExchange>? toDelete = default;
+            TemporaryQueue<RelayExchange> deleteExchange = default;
             foreach (var x in this.items)
             {
                 if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
                 {
-                    deleteExchange.Add(x);
-                    x.Goshujin = null;
-                    toDelete ??= new();
-                    toDelete.Enqueue(x);
+                    deleteExchange.Enqueue(x);
                 }
             }
 
-            deleteExchange.DeferredRemove();
-
-            if (toDelete is not null)
-            {
-                while (toDelete.TryDequeue(out var x))
-                {
-                    this.items.Remove(x);
-                }
-            }
+            this.items.RemoveAll(ref deleteExchange);
         }
     }
 

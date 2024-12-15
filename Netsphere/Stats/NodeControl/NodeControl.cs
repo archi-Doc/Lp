@@ -109,16 +109,16 @@ public sealed partial class NodeControl
                 }
 
                 // Lifeline offline -> Remove
-                var deleteList = new DeferredList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
+                var deleteQueue = default(TemporaryQueue<LifelineNode>);
                 foreach (var x in this.lifelineNodes.OfflineLinkChain)
                 {
-                    if ((this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
+                    if ((this.lifelineNodes.Count - deleteQueue.Count) > SufficientLifelineNodes)
                     {
-                        deleteList.Add(x);
+                        deleteQueue.Enqueue(x);
                     }
                 }
 
-                deleteList.DeferredRemove();
+                this.lifelineNodes.RemoveAll(ref deleteQueue);
             }
         }
     }
