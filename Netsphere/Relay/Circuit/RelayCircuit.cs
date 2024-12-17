@@ -38,13 +38,14 @@ public class RelayCircuit
 
     #endregion
 
-    public RelayResult AddRelay(RelayId relayId, ClientConnection clientConnection, bool closeRelayedConnections = true)
+    public RelayResult AddRelay(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection, bool closeRelayedConnections = true)
     {
         if (clientConnection.DestinationEndpoint.RelayId != 0)
         {
             return RelayResult.InvalidEndpoint;
         }
 
+        var relayId = assignRelayResponse.InnerRelayId;
         using (this.relayNodes.LockObject.EnterScope())
         {
             var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationEndpoint);
@@ -53,8 +54,8 @@ public class RelayCircuit
                 return result;
             }
 
-            this.relayNodes.Add(new(relayId, clientConnection));
-            this.NewRelayKeyInternal();
+            this.relayNodes.Add(new(relayId, assignRelayBlock.InnerKeyAndNonce, clientConnection));
+            this.ResetRelayKeyInternal();
         }
 
         if (closeRelayedConnections)
@@ -77,7 +78,7 @@ public class RelayCircuit
         using (this.relayNodes.LockObject.EnterScope())
         {
             this.relayNodes.Clear();
-            this.NewRelayKeyInternal();
+            this.ResetRelayKeyInternal();
         }
 
         if (closeRelayedConnections)
@@ -161,7 +162,7 @@ public class RelayCircuit
     {
     }
 
-    private void NewRelayKeyInternal()
+    private void ResetRelayKeyInternal()
     {// using (this.relayNodes.LockObject.EnterScope())
         this.relayKey = new(this.relayNodes);
     }

@@ -194,7 +194,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.Services = services;
         this.IsAlternative = isAlternative;
 
-        this.RelayControl.ProcessRegisterResponder(this.Responders);
+        this.RelayControl.RegisterResponder(this.Responders);
     }
 
     internal async Task<NetResponse> Wait(Task<NetResponse> task, TimeSpan timeout, CancellationToken cancellationToken)

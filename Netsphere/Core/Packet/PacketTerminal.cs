@@ -403,7 +403,7 @@ public sealed partial class PacketTerminal
                 return;
             }
             else if (packetType == PacketType.RelayOperation)
-            {// SetRelay
+            {// RelayOperation
                 if (TinyhandSerializer.TryDeserialize<RelayOperatioPacket>(span, out var p))
                 {
                     var packet = this.netTerminal.RelayAgent.ProcessRelayOperation(destinationRelayId, p);

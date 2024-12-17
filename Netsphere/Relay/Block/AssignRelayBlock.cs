@@ -5,13 +5,15 @@ namespace Netsphere.Relay;
 [TinyhandObject(ReservedKeyCount = 2)]
 public partial class AssignRelayBlock
 {
-    public AssignRelayBlock()
-    {
-    }
-
-    public AssignRelayBlock(bool allowUnknownNode)
+    public AssignRelayBlock(bool allowUnknownNode = false)
     {
         this.AllowUnknownNode = allowUnknownNode;
+        this.InnerKeyAndNonce = new byte[32];
+        RandomVault.Default.NextBytes(this.InnerKeyAndNonce);
+    }
+
+    protected AssignRelayBlock()
+    {
     }
 
     /*public CreateRelayBlock(RelayId relayId)
@@ -26,34 +28,41 @@ public partial class AssignRelayBlock
     [Key(0)]
     public bool AllowUnknownNode { get; protected set; }
 
-    // [Key(1)]
+    [Key(1)]
+    public byte[] InnerKeyAndNonce { get; protected set; } = [];
+
+    // [Key(2)]
     // public Linkage? Linkage { get; private set; }
 }
 
 [TinyhandObject]
 public partial class AssignRelayResponse
 {
-    public AssignRelayResponse()
-    {
-    }
-
-    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint)
+    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint, long retensionMics)
     {
         this.Result = result;
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.RelayPoint = relayPoint;
+        this.RetensionMics = retensionMics;
+    }
+
+    protected AssignRelayResponse()
+    {
     }
 
     [Key(0)]
-    public RelayResult Result { get; private set; }
+    public RelayResult Result { get; protected set; }
 
     [Key(1)]
-    public RelayId InnerRelayId { get; private set; }
+    public RelayId InnerRelayId { get; protected set; }
 
     [Key(2)]
-    public RelayId OuterRelayId { get; private set; }
+    public RelayId OuterRelayId { get; protected set; }
 
     [Key(3)]
-    public long RelayPoint { get; private set; }
+    public long RelayPoint { get; protected set; }
+
+    [Key(4)]
+    public long RetensionMics { get; protected set; }
 }

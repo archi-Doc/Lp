@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
+using ValueLink;
 
 namespace Netsphere.Relay;
 
@@ -103,7 +104,7 @@ public partial class RelayAgent
         return sb.ToString();
     }
 
-    public RelayResult Add(ServerConnection serverConnection, AssignRelayBlock block, out RelayId innerRelayId, out RelayId outerRelayId)
+    public RelayResult AddExchange(ServerConnection serverConnection, AssignRelayBlock block, out RelayId innerRelayId, out RelayId outerRelayId)
     {
         innerRelayId = 0;
         outerRelayId = 0;
@@ -168,24 +169,21 @@ public partial class RelayAgent
 
         this.lastCleanMics = Mics.FastSystem;
 
+        // ValueLink.DeferredList<ServerConnection.GoshujinClass, ServerConnection> deleteConnection = default;
         using (this.items.LockObject.EnterScope())
         {
-            Queue<RelayExchange>? toDelete = default;
+            TemporaryList<RelayExchange> deleteExchange = default;
             foreach (var x in this.items)
             {
                 if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
                 {
-                    toDelete ??= new();
-                    toDelete.Enqueue(x);
+                    deleteExchange.Add(x);
                 }
             }
 
-            if (toDelete is not null)
+            foreach (var x in deleteExchange)
             {
-                while (toDelete.TryDequeue(out var x))
-                {
-                    this.items.Remove(x);
-                }
+                x.Goshujin = null;
             }
         }
     }
@@ -367,7 +365,7 @@ public partial class RelayAgent
 
             var sourceRelayId = MemoryMarshal.Read<RelayId>(source.Span);
             if (sourceRelayId == 0)
-            {// RelayId(Source/Destination), RelayHeader, Content
+            {// RelayId(Source/Destination), RelayHeader, Content(span)
                 var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
@@ -392,7 +390,7 @@ public partial class RelayAgent
             Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
 
             // Encrypt (RelayTagCode)
-            exchange.Encrypt(span, salt4);
+            //exchange.Encrypt(span, salt4);
 
             if (exchange.Endpoint.EndPoint is { } ep)
             {

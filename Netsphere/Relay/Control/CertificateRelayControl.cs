@@ -27,9 +27,10 @@ public class CertificateRelayControl : IRelayControl
             }
 
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
-            var result = relayAgent.Add(this.ServerConnection, token.Target, out var innerRelayId, out var outerRelayId);
+            var result = relayAgent.AddExchange(this.ServerConnection, token.Target, out var innerRelayId, out var outerRelayId);
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
-            var response = new AssignRelayResponse(result, innerRelayId, outerRelayId, relayPoint);
+            var retensionMics = this.relayControl.DefaultRelayRetensionMics;
+            var response = new AssignRelayResponse(result, innerRelayId, outerRelayId, relayPoint, retensionMics);
             relayAgent.AddRelayPoint(innerRelayId, relayPoint);
 
             return new(NetResult.Success, response);
@@ -52,7 +53,7 @@ public class CertificateRelayControl : IRelayControl
 
     public SignaturePublicKey CertificatePublicKey { get; private set; }
 
-    public void ProcessRegisterResponder(ResponderControl responders)
+    public void RegisterResponder(ResponderControl responders)
     {
         responders.Register(new CreateRelayResponder(this));
     }

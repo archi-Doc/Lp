@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
 using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
@@ -109,7 +110,7 @@ public sealed partial class NodeControl
                 }
 
                 // Lifeline offline -> Remove
-                var deleteList = new DeferredList<LifelineNode.GoshujinClass, LifelineNode>(this.lifelineNodes);
+                TemporaryList<LifelineNode> deleteList = default;
                 foreach (var x in this.lifelineNodes.OfflineLinkChain)
                 {
                     if ((this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
@@ -118,7 +119,10 @@ public sealed partial class NodeControl
                     }
                 }
 
-                deleteList.DeferredRemove();
+                foreach (var x in deleteList)
+                {
+                    x.Goshujin = null;
+                }
             }
         }
     }
