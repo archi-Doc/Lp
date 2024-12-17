@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
 using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
@@ -109,16 +110,19 @@ public sealed partial class NodeControl
                 }
 
                 // Lifeline offline -> Remove
-                var deleteQueue = default(TemporaryQueue<LifelineNode>);
+                TemporaryList<LifelineNode> deleteList = default;
                 foreach (var x in this.lifelineNodes.OfflineLinkChain)
                 {
-                    if ((this.lifelineNodes.Count - deleteQueue.Count) > SufficientLifelineNodes)
+                    if ((this.lifelineNodes.Count - deleteList.Count) > SufficientLifelineNodes)
                     {
-                        deleteQueue.Enqueue(x);
+                        deleteList.Add(x);
                     }
                 }
 
-                this.lifelineNodes.RemoveAll(ref deleteQueue);
+                foreach (var x in deleteList)
+                {
+                    x.Goshujin = null;
+                }
             }
         }
     }
