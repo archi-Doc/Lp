@@ -68,7 +68,7 @@ public class ConnectionTerminal
         var systemCurrentMics = Mics.GetSystem();
 
         (UnorderedMap<NetEndpoint, ClientConnection>.Node[] Nodes, int Max) client;
-        Queue<ClientConnection> clientToChange = new();
+        TemporaryList<ClientConnection> clientToChange = default;
         using (this.clientConnections.LockObject.EnterScope())
         {
             client = this.clientConnections.DestinationEndpointChain.UnsafeGetNodes();
@@ -84,7 +84,7 @@ public class ConnectionTerminal
                     if (clientConnection.LastEventMics + clientConnection.Agreement.MinimumConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Close (unused)");
-                        clientToChange.Enqueue(clientConnection);
+                        clientToChange.Add(clientConnection);
 
                         clientConnection.SendCloseFrame();
                     }
@@ -94,7 +94,7 @@ public class ConnectionTerminal
                     if (clientConnection.LastEventMics + NetConstants.ConnectionClosedToDisposalMics < systemCurrentMics)
                     {
                         clientConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{clientConnection.ConnectionIdText} Disposed");
-                        clientToChange.Enqueue(clientConnection);
+                        clientToChange.Add(clientConnection);
 
                         clientConnection.CloseAllTransmission();
                     }
@@ -106,7 +106,7 @@ public class ConnectionTerminal
 
         using (this.clientConnections.LockObject.EnterScope())
         {
-            while (clientToChange.TryDequeue(out var clientConnection))
+            foreach (var clientConnection in clientToChange)
             {
                 if (clientConnection.IsOpen)
                 {// Open -> Closed
@@ -121,7 +121,7 @@ public class ConnectionTerminal
         }
 
         (UnorderedMap<NetEndpoint, ServerConnection>.Node[] Nodes, int Max) server;
-        Queue<ServerConnection> serverToChange = new();
+        TemporaryList<ServerConnection> serverToChange = default;
         using (this.serverConnections.LockObject.EnterScope())
         {
             server = this.serverConnections.DestinationEndpointChain.UnsafeGetNodes();
@@ -137,7 +137,7 @@ public class ConnectionTerminal
                     if (serverConnection.LastEventMics + serverConnection.Agreement.MinimumConnectionRetentionMics < systemCurrentMics)
                     {// Open -> Closed
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Close (unused)");
-                        serverToChange.Enqueue(serverConnection);
+                        serverToChange.Add(serverConnection);
 
                         serverConnection.SendCloseFrame();
                     }
@@ -147,7 +147,7 @@ public class ConnectionTerminal
                     if (serverConnection.LastEventMics + NetConstants.ConnectionClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
                     {
                         serverConnection.Logger.TryGet(LogLevel.Debug)?.Log($"{serverConnection.ConnectionIdText} Disposed");
-                        serverToChange.Enqueue(serverConnection);
+                        serverToChange.Add(serverConnection);
 
                         serverConnection.CloseAllTransmission();
                     }
@@ -159,7 +159,7 @@ public class ConnectionTerminal
 
         using (this.serverConnections.LockObject.EnterScope())
         {
-            while (serverToChange.TryDequeue(out var serverConnection))
+            foreach (var serverConnection in serverToChange)
             {
                 if (serverConnection.IsOpen)
                 {// Open -> Closed
