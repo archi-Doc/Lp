@@ -59,6 +59,11 @@ public class NodeTest
         TestDualAddress("12345&192.168.0.0:49152", false).IsTrue();
         TestDualAddress("123&[2404:6800:4004:80a::2004]:49152", true).IsTrue();
         TestDualAddress("123&172.217.25.228:49152[2404:6800:4004:80a::2004]:49152", true).IsTrue();
+
+        NetAddress.TryParse("222.111.222.111:49152", out address);
+        ((int)address.Port).Is(49152);
+        NetAddress.TryParse("222.111.222.111:1024", out address);
+        ((int)address.Port).Is(1024);
     }
 
     [Fact]
