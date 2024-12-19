@@ -501,7 +501,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         {
             if (sourcePort[digitCount] >= '0' && sourcePort[digitCount] <= '9')
             {
-                digitCount++;
+                continue;
             }
             else
             {
@@ -515,7 +515,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
         else
         {
-            sourcePort = sourcePort.Slice(0, digitCount - 1);
+            sourcePort = sourcePort.Slice(0, digitCount);
         }
 
         if (!ushort.TryParse(sourcePort, out var p))
