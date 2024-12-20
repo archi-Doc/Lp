@@ -23,7 +23,7 @@ public class ShowRelayInformationSubcommand : ISimpleCommandAsync
 
         // Relay circuit
         this.userInterfaceService.WriteLine($"Relay circuit (Client): ");
-        this.userInterfaceService.WriteLine(this.netTerminal.IncomingCircuit.oString());
+        this.userInterfaceService.WriteLine(this.netTerminal.IncomingCircuit.toString());
 
         // Relay exchanges
         this.userInterfaceService.WriteLine($"Relay exchanges (Server): ");
