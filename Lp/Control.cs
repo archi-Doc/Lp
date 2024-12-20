@@ -493,7 +493,7 @@ public class Control
             if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
-                this.Logger.Get<CertificateRelayControl>().Log($"{relayPublicKey.ToString()}");
+                this.Logger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
             }
         }
     }
