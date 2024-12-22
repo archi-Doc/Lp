@@ -2,11 +2,12 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
+/// <summary>
+/// <see cref="RelayKey"/> is a class that caches encryption information for the relay circuit.
+/// </summary>
 internal class RelayKey
 {
     public RelayKey()

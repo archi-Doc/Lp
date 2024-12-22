@@ -32,6 +32,8 @@ internal partial class RelayExchange
 
     public ServerConnection ServerConnection { get; }
 
+    public bool IsOpen => this.ServerConnection.IsOpen;
+
     public NetEndpoint OuterEndpoint { get; set; }
 
     /// <summary>

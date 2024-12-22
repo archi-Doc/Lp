@@ -12,10 +12,12 @@ public sealed partial class RelayNode
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
         this.ClientConnection = clientConnection;
         this.InnerKeyAndNonce = innerKeyAndNonce;
+        this.ClientConnection.Dispose();
     }
 
-    public RelayId RelayId // For chain
-        => this.Endpoint.RelayId;
+    public RelayId RelayId => this.Endpoint.RelayId;
+
+    public bool IsOpen => this.ClientConnection.IsOpen;
 
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }
