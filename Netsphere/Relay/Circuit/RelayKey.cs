@@ -26,9 +26,10 @@ internal class RelayKey
             this.EmbryoSecretArray = new ulong[relayNodes.Count];
             for (var i = 0; node is not null; i++)
             {
-                this.EmbryoKeyArray[i] = node.EmbryoKey;
-                this.EmbryoSaltArray[i] = node.EmbryoSalt;
-                this.EmbryoSecretArray[i] = node.EmbryoSecret;
+                this.EmbryoKeyArray[i] = new byte[Aegis256.KeySize];
+                node.ClientConnection.EmbryoKey.CopyTo(this.EmbryoKeyArray[i]);
+                this.EmbryoSaltArray[i] = node.ClientConnection.EmbryoSalt;
+                this.EmbryoSecretArray[i] = node.ClientConnection.EmbryoSecret;
 
                 node = node.LinkedListLink.Next;
             }

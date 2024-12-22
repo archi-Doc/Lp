@@ -97,7 +97,7 @@ public partial class RelayAgent
         {
             foreach (var x in this.items)
             {
-                sb.AppendLine($"[{x.InnerRelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+                sb.AppendLine($"[{x.InnerRelayId}]{x.ServerConnection.DestinationEndpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
             }
         }
 
@@ -206,9 +206,10 @@ public partial class RelayAgent
             }
         }
 
+        var serverConnection = exchange.ServerConnection;
         if (exchange.InnerRelayId == destinationRelayId)
         {// InnerRelayId: Inner(Originator or Inner relay) -> Self or Outer relay
-            if (!exchange.Endpoint.EndPointEquals(endpoint))
+            if (!serverConnection.DestinationEndpoint.EndPointEquals(endpoint))
             {// Despite coming from the inner node, the endpoint does not match.
                 if (NetConstants.LogLowRelay)
                 {
@@ -230,8 +231,8 @@ public partial class RelayAgent
             span = span.Slice(sizeof(uint));
 
             Span<byte> nonce32 = stackalloc byte[32];
-            RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
-            if (!Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0))
+            RelayHelper.CreateNonce(salt4, serverConnection.EmbryoSalt, serverConnection.EmbryoSecret, nonce32);
+            if (!Aegis256.TryDecrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0))
             {
                 if (NetConstants.LogLowRelay)
                 {
@@ -386,22 +387,22 @@ public partial class RelayAgent
             var salt4 = MemoryMarshal.Read<uint>(span);
             span = span.Slice(sizeof(uint));
             Span<byte> nonce32 = stackalloc byte[32];
-            RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
-            Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
+            RelayHelper.CreateNonce(salt4, serverConnection.EmbryoSalt, serverConnection.EmbryoSecret, nonce32);
+            Aegis256.Encrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0);
 
             // Encrypt (RelayTagCode)
             //exchange.Encrypt(span, salt4);
 
-            if (exchange.Endpoint.EndPoint is { } ep)
+            if (serverConnection.DestinationEndpoint.EndPoint is { } ep)
             {
                 MemoryMarshal.Write(source.Span, exchange.InnerRelayId); // SourceRelayId
-                MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.Endpoint.RelayId); // DestinationRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), serverConnection.DestinationEndpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
 
                 if (NetConstants.LogLowRelay)
                 {// Packets from endpoints other than the outer relay are not accepted.
-                    this.logger.TryGet(LogLevel.Information)?.Log($"Outer({endpoint}) -> this({destinationRelayId}) -> {exchange.Endpoint} : {source.Memory.Length} bytes");
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Outer({endpoint}) -> this({destinationRelayId}) -> {serverConnection.DestinationEndpoint} : {source.Memory.Length} bytes");
                 }
             }
         }

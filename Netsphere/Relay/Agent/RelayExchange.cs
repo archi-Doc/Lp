@@ -14,13 +14,9 @@ internal partial class RelayExchange
     {
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
-        this.Endpoint = serverConnection.DestinationEndpoint;
+        this.ServerConnection = serverConnection;
         this.LastAccessMics = Mics.FastSystem;
 
-        this.EmbryoKey = new byte[32];
-        serverConnection.EmbryoKey.CopyTo(this.EmbryoKey);
-        this.EmbryoSalt = serverConnection.EmbryoSalt;
-        this.EmbryoSecret = serverConnection.EmbryoSecret;
         this.InnerKeyAndNonce = block.InnerKeyAndNonce;
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
@@ -34,7 +30,7 @@ internal partial class RelayExchange
     [Link(UnsafeTargetChain = "InnerRelayIdChain")]
     public RelayId OuterRelayId { get; private set; }
 
-    public NetEndpoint Endpoint { get; private set; }
+    public ServerConnection ServerConnection { get; }
 
     public NetEndpoint OuterEndpoint { get; set; }
 
@@ -59,12 +55,6 @@ internal partial class RelayExchange
     public long RestrictedIntervalMics { get; private set; }
 
     public bool AllowUnknownNode { get; private set; }
-
-    internal byte[] EmbryoKey { get; private set; }
-
-    internal ulong EmbryoSalt { get; private set; }
-
-    internal ulong EmbryoSecret { get; private set; }
 
     internal byte[] InnerKeyAndNonce { get; private set; }
 
