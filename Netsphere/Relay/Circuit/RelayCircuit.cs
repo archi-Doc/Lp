@@ -21,9 +21,6 @@ public class RelayCircuit
 
     #region FieldAndProperty
 
-    public bool IsRelayAvailable
-        => this.relayNodes.Count > 0;
-
     public int NumberOfRelays
         => this.relayNodes.Count;
 
@@ -66,7 +63,27 @@ public class RelayCircuit
         return RelayResult.Success;
     }
 
-    public void Clear(bool closeRelayedConnections = true)
+    public void Clean()
+    {
+        using (this.relayNodes.LockObject.EnterScope())
+        {
+            TemporaryList<RelayNode> deleteList = default;
+            foreach (var x in this.relayNodes)
+            {
+                if (!x.IsOpen)
+                {// Connection is closed
+                    deleteList.Add(x);
+                }
+            }
+
+            foreach (var x in deleteList)
+            {
+                x.Remove();
+            }
+        }
+    }
+
+    public void Close(bool closeRelayedConnections = true)
     {
         var numberOfRelays = this.NumberOfRelays;
         var packet = RelayOperatioPacket.CreateClose();

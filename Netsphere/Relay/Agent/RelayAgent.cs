@@ -172,18 +172,19 @@ public partial class RelayAgent
         // ValueLink.DeferredList<ServerConnection.GoshujinClass, ServerConnection> deleteConnection = default;
         using (this.items.LockObject.EnterScope())
         {
-            TemporaryList<RelayExchange> deleteExchange = default;
+            TemporaryList<RelayExchange> deleteList = default;
             foreach (var x in this.items)
             {
-                if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
+                if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics ||
+                    !x.IsOpen)
                 {
-                    deleteExchange.Add(x);
+                    deleteList.Add(x);
                 }
             }
 
-            foreach (var x in deleteExchange)
+            foreach (var x in deleteList)
             {
-                x.Goshujin = null;
+                x.Remove();
             }
         }
     }
@@ -514,8 +515,7 @@ Exit:
             }
             else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
             {
-                exchange.Goshujin = null;
-                exchange.Clean();
+                exchange.Remove();
             }
         }
 

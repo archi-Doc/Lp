@@ -5,10 +5,10 @@ using Netsphere.Misc;
 
 namespace Netsphere.Responder;
 
-public class TestBlockResponder : SyncResponder<NetTestBlock, NetTestBlock>
+public class TestBlockResponder : SyncResponder<TestBlock, TestBlock>
 {
     public static readonly INetResponder Instance = new TestBlockResponder();
 
-    public override NetResultValue<NetTestBlock> RespondSync(NetTestBlock value)
+    public override NetResultValue<TestBlock> RespondSync(TestBlock value)
         => new(NetResult.Success, value);
 }

@@ -24,6 +24,8 @@ internal partial class RelayExchange
         this.AllowUnknownNode = block.AllowUnknownNode;
     }
 
+    #region FieldAndProperty
+
     [Link(Type = ChainType.Unordered, AddValue = false)]
     public RelayId InnerRelayId { get; private set; }
 
@@ -62,12 +64,15 @@ internal partial class RelayExchange
 
     internal byte[] OuterKeyAndNonce { get; private set; } = [];
 
+    private ReadOnlySpan<byte> RelayKey => this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
+
+    #endregion
+
     public bool DecrementAndCheck()
-    {// using (items.LockObject.EnterScope())
+    {// using (RelayAgent.items.LockObject.EnterScope())
         if (this.RelayPoint-- <= 0)
         {// All RelayPoints have been exhausted.
-            this.Clean();
-            this.Goshujin = null;
+            this.Remove();
             return false;
         }
         else
@@ -75,10 +80,6 @@ internal partial class RelayExchange
             this.LastAccessMics = Mics.FastSystem;
             return true;
         }
-    }
-
-    public void Clean()
-    {
     }
 
     public unsafe void Encrypt(Span<byte> plaintext, uint salt4)
@@ -102,7 +103,17 @@ internal partial class RelayExchange
         return Aegis128L.TryDecrypt(ciphertext.Slice(0, ciphertext.Length - Aegis128L.MinTagSize), ciphertext, nonce16, this.RelayKey);
     }
 
-    private ReadOnlySpan<byte> RelayKey => this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
+    internal void Remove()
+    {// using (RelayAgent.items.LockObject.EnterScope())
+        if (this.Goshujin is not null)
+        {
+            this.Goshujin = null;
+
+            if (this.IsOpen)
+            {
+            }
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CreateNonce(Span<byte> nonce16, uint salt4)

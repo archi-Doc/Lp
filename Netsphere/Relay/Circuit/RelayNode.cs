@@ -28,4 +28,16 @@ public sealed partial class RelayNode
 
     public override string ToString()
         => this.Endpoint.ToString();
+
+    internal void Remove()
+    {// using (RelayCircuit.relayNodes.LockObject.EnterScope())
+        if (this.Goshujin is not null)
+        {
+            this.Goshujin = null;
+
+            if (this.IsOpen)
+            {
+            }
+        }
+    }
 }

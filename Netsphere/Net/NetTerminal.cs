@@ -90,6 +90,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.ConnectionTerminal.Clean();
         this.RelayAgent.Clean();
+        this.IncomingCircuit.Clean();
+        this.OutgoingCircuit.Clean();
     }
 
     public bool TryCreateEndpoint(ref NetAddress address, EndpointResolution endpointResolution, out NetEndpoint endPoint)
