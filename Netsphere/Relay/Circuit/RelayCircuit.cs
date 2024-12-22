@@ -38,7 +38,7 @@ public class RelayCircuit
 
     #endregion
 
-    public RelayResult AddRelay(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection, bool closeRelayedConnections = true)
+    public async Task<RelayResult> AddRelay(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
         if (clientConnection.DestinationEndpoint.RelayId != 0)
         {
@@ -46,6 +46,7 @@ public class RelayCircuit
         }
 
         var relayId = assignRelayResponse.InnerRelayId;
+        ClientConnection? lastConnection = default;
         using (this.relayNodes.LockObject.EnterScope())
         {
             var result = this.CanAddRelayInternal(relayId, clientConnection.DestinationEndpoint);
@@ -54,13 +55,17 @@ public class RelayCircuit
                 return result;
             }
 
+            lastConnection = this.relayNodes.LinkedListChain.Last?.ClientConnection;
+
             this.relayNodes.Add(new(relayId, assignRelayBlock.InnerKeyAndNonce, clientConnection));
             this.ResetRelayKeyInternal();
         }
 
-        if (closeRelayedConnections)
+        if (lastConnection is not null)
         {
-            this.netTerminal.ConnectionTerminal.CloseRelayedConnections(this.NumberOfRelays);
+            var setRelayPacket = new RelayOperatioPacket();
+            setRelayPacket.OuterEndPoint = new(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
+            await this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);//
         }
 
         return RelayResult.Success;
@@ -108,7 +113,7 @@ public class RelayCircuit
 
         if (closeRelayedConnections)
         {
-            this.netTerminal.ConnectionTerminal.CloseRelayedConnections(this.NumberOfRelays);
+            this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
         }
     }
 

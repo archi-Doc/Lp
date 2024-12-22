@@ -295,14 +295,14 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal void CloseRelayedConnections(int minimumNumberOfRelays)
+    internal void CloseRelayedConnections()
     {
         TemporaryList<ClientConnection> list = default;
         using (this.clientConnections.LockObject.EnterScope())
-        {//
+        {
             foreach (var x in this.clientConnections)
             {
-                if (x.MinimumNumberOfRelays > minimumNumberOfRelays)
+                if (x.MinimumNumberOfRelays > 0)
                 {
                     list.Add(x);
                 }
