@@ -12,12 +12,11 @@ public sealed partial class RelayNode
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
         this.ClientConnection = clientConnection;
         this.InnerKeyAndNonce = innerKeyAndNonce;
-        this.ClientConnection.Dispose();
     }
 
-    public RelayId RelayId => this.Endpoint.RelayId;
+    #region FieldAndProperty
 
-    public bool IsOpen => this.ClientConnection.IsOpen;
+    public RelayId RelayId => this.Endpoint.RelayId;
 
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }
@@ -25,6 +24,8 @@ public sealed partial class RelayNode
     public ClientConnection ClientConnection { get; }
 
     internal byte[] InnerKeyAndNonce { get; private set; } = [];
+
+    #endregion
 
     public override string ToString()
         => this.Endpoint.ToString();
@@ -35,9 +36,8 @@ public sealed partial class RelayNode
         {
             this.Goshujin = null;
 
-            if (this.IsOpen)
-            {
-            }
+            this.Endpoint = default;
+            this.ClientConnection.CloseInternal();
         }
     }
 }

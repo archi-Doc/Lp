@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
-using ValueLink;
 
 namespace Netsphere.Relay;
 
@@ -169,14 +168,13 @@ public partial class RelayAgent
 
         this.lastCleanMics = Mics.FastSystem;
 
-        // ValueLink.DeferredList<ServerConnection.GoshujinClass, ServerConnection> deleteConnection = default;
         using (this.items.LockObject.EnterScope())
         {
             TemporaryList<RelayExchange> deleteList = default;
             foreach (var x in this.items)
             {
                 if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics ||
-                    !x.IsOpen)
+                    !x.ServerConnection.IsOpen)
                 {
                     deleteList.Add(x);
                 }
@@ -184,6 +182,11 @@ public partial class RelayAgent
 
             foreach (var x in deleteList)
             {
+                if (NetConstants.LogRelay)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Removed (Clean) {x.ToString()}");
+                }
+
                 x.Remove();
             }
         }
@@ -201,9 +204,12 @@ public partial class RelayAgent
         using (this.items.LockObject.EnterScope())
         {
             exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
-            if (exchange is null || !exchange.DecrementAndCheck())
+            if (exchange is null)
             {// No relay exchange
                 goto Exit;
+            }
+            else if (!exchange.DecrementAndCheck())
+            {// No relay point
             }
         }
 
@@ -515,6 +521,11 @@ Exit:
             }
             else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
             {
+                if (NetConstants.LogRelay)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Removed (Close) {exchange.ToString()}");
+                }
+
                 exchange.Remove();
             }
         }

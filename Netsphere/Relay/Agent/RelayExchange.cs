@@ -34,8 +34,6 @@ internal partial class RelayExchange
 
     public ServerConnection ServerConnection { get; }
 
-    public bool IsOpen => this.ServerConnection.IsOpen;
-
     public NetEndpoint OuterEndpoint { get; set; }
 
     /// <summary>
@@ -103,15 +101,20 @@ internal partial class RelayExchange
         return Aegis128L.TryDecrypt(ciphertext.Slice(0, ciphertext.Length - Aegis128L.MinTagSize), ciphertext, nonce16, this.RelayKey);
     }
 
+    public override string ToString()
+        => $"RelayExchange {this.ServerConnection.DestinationEndpoint.ToString()} Inner {this.InnerRelayId} -> Outer {this.OuterRelayId}";
+
     internal void Remove()
     {// using (RelayAgent.items.LockObject.EnterScope())
         if (this.Goshujin is not null)
         {
             this.Goshujin = null;
 
-            if (this.IsOpen)
-            {
-            }
+            this.InnerRelayId = default;
+            this.OuterRelayId = default;
+            this.OuterEndpoint = default;
+
+            this.ServerConnection.CloseInternal();
         }
     }
 

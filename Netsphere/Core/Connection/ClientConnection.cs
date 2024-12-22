@@ -690,6 +690,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
         }
     }
 
+    public void Close()
+        => this.Dispose();
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void IncrementOpenCount()
     {
@@ -703,9 +706,9 @@ public sealed partial class ClientConnection : Connection, IClientConnectionInte
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ResetOpenCount()
+    internal void SetOpenCount(int count)
     {
-        Volatile.Write(ref this.openCount, 0);
+        Volatile.Write(ref this.openCount, count);
     }
 
     internal override void OnStateChanged()

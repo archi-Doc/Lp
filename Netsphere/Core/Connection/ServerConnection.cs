@@ -86,4 +86,7 @@ public sealed partial class ServerConnection : Connection, IEquatable<ServerConn
             return 0;
         }
     }
+
+    public void Close()
+        => this.Dispose();
 }

@@ -17,6 +17,8 @@ public class RelayCircuit
     {
         this.netTerminal = netTerminal;
         this.incoming = incoming;
+
+        this.logger = this.netTerminal.UnitLogger.GetLogger<RelayCircuit>();
     }
 
     #region FieldAndProperty
@@ -28,6 +30,7 @@ public class RelayCircuit
         => this.relayKey;
 
     private readonly NetTerminal netTerminal;
+    private readonly ILogger logger;
     private readonly bool incoming;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
@@ -57,7 +60,7 @@ public class RelayCircuit
 
         if (closeRelayedConnections)
         {
-            this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
+            this.netTerminal.ConnectionTerminal.CloseRelayedConnections(this.NumberOfRelays);
         }
 
         return RelayResult.Success;
@@ -70,7 +73,7 @@ public class RelayCircuit
             TemporaryList<RelayNode> deleteList = default;
             foreach (var x in this.relayNodes)
             {
-                if (!x.IsOpen)
+                if (!x.ClientConnection.IsOpen)
                 {// Connection is closed
                     deleteList.Add(x);
                 }
@@ -78,6 +81,11 @@ public class RelayCircuit
 
             foreach (var x in deleteList)
             {
+                if (NetConstants.LogRelay)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Removed (Clean) {x.ToString()}");
+                }
+
                 x.Remove();
             }
         }
@@ -100,7 +108,7 @@ public class RelayCircuit
 
         if (closeRelayedConnections)
         {
-            this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
+            this.netTerminal.ConnectionTerminal.CloseRelayedConnections(this.NumberOfRelays);
         }
     }
 
