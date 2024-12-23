@@ -402,21 +402,6 @@ public sealed partial class PacketTerminal
 
                 return;
             }
-            else if (packetType == PacketType.RelayOperation)
-            {// RelayOperation
-                if (TinyhandSerializer.TryDeserialize<RelayOperatioPacket>(span, out var p))
-                {
-                    var packet = this.netTerminal.RelayAgent.ProcessRelayOperation(destinationRelayId, p);
-                    if (packet is not null)
-                    {
-                        CreatePacket(packetId, packet, out var rentMemory);
-                        // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
-                        this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
-                    }
-                }
-
-                return;
-            }
             else if (this.netBase.RespondPacketFunc is { } func)
             {
                 var memory = toBeShared.Slice(toBeShared.Length - span.Length).Memory;

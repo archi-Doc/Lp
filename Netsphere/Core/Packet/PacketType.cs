@@ -10,7 +10,6 @@ public enum PacketType : ushort
     Punch,
     GetInformation,
     PingRelay,
-    RelayOperation,
     GetVersion,
     UpdateVersion,
 
@@ -20,7 +19,6 @@ public enum PacketType : ushort
     PunchResponse,
     GetInformationResponse,
     PingRelayResponse,
-    RelayOperationResponse,
     GetVersionResponse,
     UpdateVersionResponse,
 

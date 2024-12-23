@@ -63,9 +63,11 @@ public class RelayCircuit
 
         if (lastConnection is not null)
         {
-            var setRelayPacket = new RelayOperatioPacket();
-            setRelayPacket.OuterEndPoint = new(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
-            await this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, setRelayPacket, -1);//
+            var outerEndpoint = new NetEndpoint(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
+            var block = new SetupRelayBlock(outerEndpoint);
+            var r = await lastConnection.SendAndReceive<SetupRelayBlock, SetupRelayResponse>(block, SetupRelayBlock.DataId);
+            Console.WriteLine(r.Result);//
+            Console.WriteLine(r.Value?.Result);
         }
 
         return RelayResult.Success;

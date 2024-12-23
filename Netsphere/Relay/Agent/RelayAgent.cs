@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
@@ -192,7 +193,43 @@ public partial class RelayAgent
         }
     }
 
-    public bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
+    internal void ProcessSetupRelay(TransmissionContext transmissionContext)
+    {
+        if (!TinyhandSerializer.TryDeserialize<SetupRelayBlock>(transmissionContext.RentMemory.Memory.Span, out var t))
+        {
+            transmissionContext.Return();
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
+            return;
+        }
+
+        transmissionContext.Return();
+
+        destinationRelayId
+
+        if (this.NumberOfExchanges == 0)
+        {
+            return null;
+        }
+
+        RelayExchange? exchange;
+        RelayOperatioResponse? response = default;
+        using (this.items.LockObject.EnterScope())
+        {
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null)
+            {
+                return null;
+            }
+
+            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
+            {
+                exchange.OuterEndpoint = p.OuterEndPoint;
+                response = new(RelayResult.Success);
+            }
+        }
+    }
+
+    internal bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
         if (source.RentArray is null)
@@ -495,32 +532,5 @@ Exit:
         }
 
         return packet;
-    }
-
-    internal RelayOperatioResponse? ProcessRelayOperation(RelayId destinationRelayId, RelayOperatioPacket p)
-    {
-        if (this.NumberOfExchanges == 0)
-        {
-            return null;
-        }
-
-        RelayExchange? exchange;
-        RelayOperatioResponse? response = default;
-        using (this.items.LockObject.EnterScope())
-        {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
-            if (exchange is null)
-            {
-                return null;
-            }
-
-            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
-            {
-                exchange.OuterEndpoint = p.OuterEndPoint;
-                response = new(RelayResult.Success);
-            }
-        }
-
-        return response;
     }
 }

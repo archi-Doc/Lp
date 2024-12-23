@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Core;
 using Netsphere.Crypto;
+using Netsphere.Relay;
 
 #pragma warning disable SA1202
 
@@ -175,6 +176,11 @@ public class ServerConnectionContext
             else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
             {
                 responder.Respond(transmissionContext);
+            }
+            else if (transmissionContext.DataId == SetupRelayBlock.DataId)
+            {
+                this.NetTerminal.RelayAgent.ProcessSetupRelay(transmissionContext);
+                // this.NetTerminal.RelayControl.ProcessCreateRelay(transmissionContext);
             }
             else
             {
