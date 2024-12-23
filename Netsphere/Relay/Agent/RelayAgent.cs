@@ -118,7 +118,7 @@ public partial class RelayAgent
             while (true)
             {
                 innerRelayId = (RelayId)RandomVault.Default.NextUInt32();
-                if (!this.items.InnerRelayIdChain.ContainsKey(innerRelayId))
+                if (!this.items.RelayIdChain.ContainsKey(innerRelayId))
                 {
                     break;
                 }
@@ -127,7 +127,7 @@ public partial class RelayAgent
             while (true)
             {
                 outerRelayId = (RelayId)RandomVault.Default.NextUInt32();
-                if (!this.items.InnerRelayIdChain.ContainsKey(outerRelayId))
+                if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
                 }
@@ -143,7 +143,7 @@ public partial class RelayAgent
     {
         using (this.items.LockObject.EnterScope())
         {
-            var exchange = this.items.InnerRelayIdChain.FindFirst(relayId);
+            var exchange = this.items.RelayIdChain.FindFirst(relayId);
             if (exchange is null)
             {
                 return 0;
@@ -204,28 +204,24 @@ public partial class RelayAgent
 
         transmissionContext.Return();
 
-        destinationRelayId
-
-        if (this.NumberOfExchanges == 0)
+        var serverConnection = transmissionContext.ServerConnection;
+        if (serverConnection.InnerRelayId == 0)
         {
-            return null;
+            transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.InvalidEndpoint), SetupRelayBlock.DataId);
+            return;
         }
 
-        RelayExchange? exchange;
-        RelayOperatioResponse? response = default;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            var exchange = this.items.RelayIdChain.FindFirst(serverConnection.InnerRelayId);
             if (exchange is null)
             {
-                return null;
+                transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.InvalidEndpoint), SetupRelayBlock.DataId);
+                return;
             }
 
-            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
-            {
-                exchange.OuterEndpoint = p.OuterEndPoint;
-                response = new(RelayResult.Success);
-            }
+            exchange.OuterEndpoint = t.OuterEndpoint;
+            transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.Success), SetupRelayBlock.DataId);
         }
     }
 
@@ -240,7 +236,7 @@ public partial class RelayAgent
         RelayExchange? exchange;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {// No relay exchange
                 goto Exit;
@@ -522,7 +518,7 @@ Exit:
         PingRelayResponse? packet;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
                 return null;

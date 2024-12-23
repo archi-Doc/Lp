@@ -15,6 +15,7 @@ internal partial class RelayExchange
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.ServerConnection = serverConnection;
+        this.ServerConnection.InnerRelayId = innerRelayId;
         this.LastAccessMics = Mics.FastSystem;
 
         this.InnerKeyAndNonce = block.InnerKeyAndNonce;
@@ -26,10 +27,10 @@ internal partial class RelayExchange
 
     #region FieldAndProperty
 
-    [Link(Type = ChainType.Unordered, AddValue = false)]
+    [Link(Type = ChainType.Unordered, Name = "RelayId", AddValue = false)]
     public RelayId InnerRelayId { get; private set; }
 
-    [Link(UnsafeTargetChain = "InnerRelayIdChain")]
+    [Link(UnsafeTargetChain = "RelayIdChain")]
     public RelayId OuterRelayId { get; private set; }
 
     public ServerConnection ServerConnection { get; }
