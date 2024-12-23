@@ -18,16 +18,32 @@ public class ShowRelayInformationSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {// this.logger.TryGet()?.Log
+        string st;
         this.userInterfaceService.WriteLine("Relay information");
         this.userInterfaceService.WriteLine($"Relay control: {this.relayControl.GetType().Name}");
 
         // Relay circuit
-        this.userInterfaceService.WriteLine($"Relay circuit (Client): ");
-        this.userInterfaceService.WriteLine(this.netTerminal.IncomingCircuit.toString());
+        st = this.netTerminal.IncomingCircuit.UnsafeToString();
+        if (!string.IsNullOrEmpty(st))
+        {
+            this.userInterfaceService.WriteLine($"Incoming relay circuit (Client): ");
+            this.userInterfaceService.WriteLine(st);
+        }
+
+        st = this.netTerminal.OutgoingCircuit.UnsafeToString();
+        if (!string.IsNullOrEmpty(st))
+        {
+            this.userInterfaceService.WriteLine($"Outgoing relay circuit (Client): ");
+            this.userInterfaceService.WriteLine(st);
+        }
 
         // Relay exchanges
-        this.userInterfaceService.WriteLine($"Relay exchanges (Server): ");
-        this.userInterfaceService.WriteLine(this.netTerminal.RelayAgent.ToString());
+        st = this.netTerminal.RelayAgent.ToString();
+        if (!string.IsNullOrEmpty(st))
+        {
+            this.userInterfaceService.WriteLine($"Relay exchanges (Server): ");
+            this.userInterfaceService.WriteLine(st);
+        }
     }
 
     private readonly ILogger logger;

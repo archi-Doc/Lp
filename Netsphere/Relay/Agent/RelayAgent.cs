@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
-using ValueLink;
 
 namespace Netsphere.Relay;
 
@@ -97,7 +97,7 @@ public partial class RelayAgent
         {
             foreach (var x in this.items)
             {
-                sb.AppendLine($"[{x.InnerRelayId}]{x.Endpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
+                sb.AppendLine($"[{x.InnerRelayId}]{x.ServerConnection.DestinationEndpoint} - [{x.OuterRelayId}]{x.OuterEndpoint}");
             }
         }
 
@@ -169,26 +169,67 @@ public partial class RelayAgent
 
         this.lastCleanMics = Mics.FastSystem;
 
-        // ValueLink.DeferredList<ServerConnection.GoshujinClass, ServerConnection> deleteConnection = default;
         using (this.items.LockObject.EnterScope())
         {
-            TemporaryList<RelayExchange> deleteExchange = default;
+            TemporaryList<RelayExchange> deleteList = default;
             foreach (var x in this.items)
             {
-                if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics)
+                if (this.lastCleanMics - x.LastAccessMics > x.RelayRetensionMics ||
+                    !x.ServerConnection.IsOpen)
                 {
-                    deleteExchange.Add(x);
+                    deleteList.Add(x);
                 }
             }
 
-            foreach (var x in deleteExchange)
+            foreach (var x in deleteList)
             {
-                x.Goshujin = null;
+                if (NetConstants.LogRelay)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Removed (Clean) {x.ToString()}");
+                }
+
+                x.Remove();
             }
         }
     }
 
-    public bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
+    internal void ProcessSetupRelay(TransmissionContext transmissionContext)
+    {
+        if (!TinyhandSerializer.TryDeserialize<SetupRelayBlock>(transmissionContext.RentMemory.Memory.Span, out var t))
+        {
+            transmissionContext.Return();
+            transmissionContext.SendResultAndForget(NetResult.DeserializationFailed);
+            return;
+        }
+
+        transmissionContext.Return();
+
+        destinationRelayId
+
+        if (this.NumberOfExchanges == 0)
+        {
+            return null;
+        }
+
+        RelayExchange? exchange;
+        RelayOperatioResponse? response = default;
+        using (this.items.LockObject.EnterScope())
+        {
+            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            if (exchange is null)
+            {
+                return null;
+            }
+
+            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
+            {
+                exchange.OuterEndpoint = p.OuterEndPoint;
+                response = new(RelayResult.Success);
+            }
+        }
+    }
+
+    internal bool ProcessRelay(NetEndpoint endpoint, RelayId destinationRelayId, BytePool.RentMemory source, out BytePool.RentMemory decrypted)
     {// This is all the code that performs the actual relay processing.
         var span = source.Span.Slice(RelayHeader.RelayIdLength);
         if (source.RentArray is null)
@@ -200,17 +241,21 @@ public partial class RelayAgent
         using (this.items.LockObject.EnterScope())
         {
             exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
-            if (exchange is null || !exchange.DecrementAndCheck())
+            if (exchange is null)
             {// No relay exchange
                 goto Exit;
             }
+            else if (!exchange.DecrementAndCheck())
+            {// No relay point
+            }
         }
 
+        var serverConnection = exchange.ServerConnection;
         if (exchange.InnerRelayId == destinationRelayId)
         {// InnerRelayId: Inner(Originator or Inner relay) -> Self or Outer relay
-            if (!exchange.Endpoint.EndPointEquals(endpoint))
+            if (!serverConnection.DestinationEndpoint.EndPointEquals(endpoint))
             {// Despite coming from the inner node, the endpoint does not match.
-                if (NetConstants.LogRelay)
+                if (NetConstants.LogLowRelay)
                 {
                     this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : invalid endpoint");
                 }
@@ -230,10 +275,10 @@ public partial class RelayAgent
             span = span.Slice(sizeof(uint));
 
             Span<byte> nonce32 = stackalloc byte[32];
-            RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
-            if (!Aegis256.TryDecrypt(span, span, nonce32, exchange.EmbryoKey, default, 0))
+            RelayHelper.CreateNonce(salt4, serverConnection.EmbryoSalt, serverConnection.EmbryoSecret, nonce32);
+            if (!Aegis256.TryDecrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0))
             {
-                if (NetConstants.LogRelay)
+                if (NetConstants.LogLowRelay)
                 {
                     this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : decryption failue");
                 }
@@ -253,7 +298,7 @@ public partial class RelayAgent
                     span = span.Slice(sizeof(RelayId));
                     MemoryMarshal.Write(span, destinationRelayId); // DestinationRelayId
 
-                    if (NetConstants.LogRelay)
+                    if (NetConstants.LogLowRelay)
                     {
                         this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId})");
                     }
@@ -264,7 +309,7 @@ public partial class RelayAgent
                 {// Initiator -> Other (unrestricted)
                     if (exchange.OuterEndpoint.IsValid)
                     {// Inner relay
-                        if (NetConstants.LogRelay)
+                        if (NetConstants.LogLowRelay)
                         {
                             this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}): OuterEndpoint is already set");
                         }
@@ -293,7 +338,7 @@ public partial class RelayAgent
                     decrypted.IncrementAndShare();
                     this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
 
-                    if (NetConstants.LogRelay)
+                    if (NetConstants.LogLowRelay)
                     {
                         this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes");
                     }
@@ -310,14 +355,14 @@ public partial class RelayAgent
                     source.IncrementAndShare();
                     this.sendItems.Enqueue(new(ep, source));
 
-                    if (NetConstants.LogRelay)
+                    if (NetConstants.LogLowRelay)
                     {
                         this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> Outer({exchange.OuterEndpoint}): {source.Memory.Length} bytes");
                     }
                 }
                 else
                 {// No outer relay. Discard
-                    if (NetConstants.LogRelay)
+                    if (NetConstants.LogLowRelay)
                     {
                         this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> relay: No outer relay");
                     }
@@ -333,7 +378,7 @@ public partial class RelayAgent
                 }
                 else
                 {// Other (unrestricted or restricted)
-                    if (NetConstants.LogRelay)
+                    if (NetConstants.LogLowRelay)
                     {// Packets from endpoints other than the outer relay are not accepted.
                         this.logger.TryGet(LogLevel.Information)?.Log($"Outer({endpoint}) : not accepted");
                     }
@@ -351,7 +396,7 @@ public partial class RelayAgent
                         exchange.RestrictedIntervalMics == 0 ||
                         Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
                     {// Discard
-                        if (NetConstants.LogRelay)
+                        if (NetConstants.LogLowRelay)
                         {// Packets from endpoints other than the outer relay are not accepted.
                             this.logger.TryGet(LogLevel.Information)?.Log($"Outermost({endpoint}) : discard");
                         }
@@ -386,22 +431,22 @@ public partial class RelayAgent
             var salt4 = MemoryMarshal.Read<uint>(span);
             span = span.Slice(sizeof(uint));
             Span<byte> nonce32 = stackalloc byte[32];
-            RelayHelper.CreateNonce(salt4, exchange.EmbryoSalt, exchange.EmbryoSecret, nonce32);
-            Aegis256.Encrypt(span, span, nonce32, exchange.EmbryoKey, default, 0);
+            RelayHelper.CreateNonce(salt4, serverConnection.EmbryoSalt, serverConnection.EmbryoSecret, nonce32);
+            Aegis256.Encrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0);
 
             // Encrypt (RelayTagCode)
             //exchange.Encrypt(span, salt4);
 
-            if (exchange.Endpoint.EndPoint is { } ep)
+            if (serverConnection.DestinationEndpoint.EndPoint is { } ep)
             {
                 MemoryMarshal.Write(source.Span, exchange.InnerRelayId); // SourceRelayId
-                MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.Endpoint.RelayId); // DestinationRelayId
+                MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), serverConnection.DestinationEndpoint.RelayId); // DestinationRelayId
                 source.IncrementAndShare();
                 this.sendItems.Enqueue(new(ep, source));
 
-                if (NetConstants.LogRelay)
+                if (NetConstants.LogLowRelay)
                 {// Packets from endpoints other than the outer relay are not accepted.
-                    this.logger.TryGet(LogLevel.Information)?.Log($"Outer({endpoint}) -> this({destinationRelayId}) -> {exchange.Endpoint} : {source.Memory.Length} bytes");
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Outer({endpoint}) -> this({destinationRelayId}) -> {serverConnection.DestinationEndpoint} : {source.Memory.Length} bytes");
                 }
             }
         }
@@ -487,37 +532,5 @@ Exit:
         }
 
         return packet;
-    }
-
-    internal RelayOperatioResponse? ProcessRelayOperation(RelayId destinationRelayId, RelayOperatioPacket p)
-    {
-        if (this.NumberOfExchanges == 0)
-        {
-            return null;
-        }
-
-        RelayExchange? exchange;
-        RelayOperatioResponse? response = default;
-        using (this.items.LockObject.EnterScope())
-        {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
-            if (exchange is null)
-            {
-                return null;
-            }
-
-            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
-            {
-                exchange.OuterEndpoint = p.OuterEndPoint;
-                response = new(RelayResult.Success);
-            }
-            else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
-            {
-                exchange.Goshujin = null;
-                exchange.Clean();
-            }
-        }
-
-        return response;
     }
 }

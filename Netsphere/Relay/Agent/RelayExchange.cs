@@ -14,13 +14,9 @@ internal partial class RelayExchange
     {
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
-        this.Endpoint = serverConnection.DestinationEndpoint;
+        this.ServerConnection = serverConnection;
         this.LastAccessMics = Mics.FastSystem;
 
-        this.EmbryoKey = new byte[32];
-        serverConnection.EmbryoKey.CopyTo(this.EmbryoKey);
-        this.EmbryoSalt = serverConnection.EmbryoSalt;
-        this.EmbryoSecret = serverConnection.EmbryoSecret;
         this.InnerKeyAndNonce = block.InnerKeyAndNonce;
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
@@ -28,13 +24,15 @@ internal partial class RelayExchange
         this.AllowUnknownNode = block.AllowUnknownNode;
     }
 
+    #region FieldAndProperty
+
     [Link(Type = ChainType.Unordered, AddValue = false)]
     public RelayId InnerRelayId { get; private set; }
 
     [Link(UnsafeTargetChain = "InnerRelayIdChain")]
     public RelayId OuterRelayId { get; private set; }
 
-    public NetEndpoint Endpoint { get; private set; }
+    public ServerConnection ServerConnection { get; }
 
     public NetEndpoint OuterEndpoint { get; set; }
 
@@ -60,22 +58,19 @@ internal partial class RelayExchange
 
     public bool AllowUnknownNode { get; private set; }
 
-    internal byte[] EmbryoKey { get; private set; }
-
-    internal ulong EmbryoSalt { get; private set; }
-
-    internal ulong EmbryoSecret { get; private set; }
-
     internal byte[] InnerKeyAndNonce { get; private set; }
 
     internal byte[] OuterKeyAndNonce { get; private set; } = [];
 
+    private ReadOnlySpan<byte> RelayKey => this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
+
+    #endregion
+
     public bool DecrementAndCheck()
-    {// using (items.LockObject.EnterScope())
+    {// using (RelayAgent.items.LockObject.EnterScope())
         if (this.RelayPoint-- <= 0)
         {// All RelayPoints have been exhausted.
-            this.Clean();
-            this.Goshujin = null;
+            this.Remove();
             return false;
         }
         else
@@ -83,10 +78,6 @@ internal partial class RelayExchange
             this.LastAccessMics = Mics.FastSystem;
             return true;
         }
-    }
-
-    public void Clean()
-    {
     }
 
     public unsafe void Encrypt(Span<byte> plaintext, uint salt4)
@@ -110,7 +101,22 @@ internal partial class RelayExchange
         return Aegis128L.TryDecrypt(ciphertext.Slice(0, ciphertext.Length - Aegis128L.MinTagSize), ciphertext, nonce16, this.RelayKey);
     }
 
-    private ReadOnlySpan<byte> RelayKey => this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
+    public override string ToString()
+        => $"RelayExchange {this.ServerConnection.DestinationEndpoint.ToString()} Inner {this.InnerRelayId} -> Outer {this.OuterRelayId}";
+
+    internal void Remove()
+    {// using (RelayAgent.items.LockObject.EnterScope())
+        if (this.Goshujin is not null)
+        {
+            this.Goshujin = null;
+
+            this.InnerRelayId = default;
+            this.OuterRelayId = default;
+            this.OuterEndpoint = default;
+
+            this.ServerConnection.CloseInternal();
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CreateNonce(Span<byte> nonce16, uint salt4)

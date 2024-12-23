@@ -214,7 +214,7 @@ public class ConnectionTerminal
         newConnection.AddRtt(t.RttMics);
         using (this.clientConnections.LockObject.EnterScope())
         {// ConnectionStateCode
-            newConnection.IncrementOpenCount();
+            newConnection.SetOpenCount(2); // Set to 2 to prevent immediate disposal.
             newConnection.Goshujin = this.clientConnections;
         }
 
@@ -297,20 +297,26 @@ public class ConnectionTerminal
 
     internal void CloseRelayedConnections()
     {
-        ClientConnection[] clients;
+        TemporaryList<ClientConnection> list = default;
         using (this.clientConnections.LockObject.EnterScope())
         {
-            clients = this.clientConnections.Where(x => x.MinimumNumberOfRelays > 0).ToArray();
+            foreach (var x in this.clientConnections)
+            {
+                if (x.MinimumNumberOfRelays > 0)
+                {
+                    list.Add(x);
+                }
+            }
         }
 
-        foreach (var x in clients)
+        foreach (var x in list)
         {
             x.TerminateInternal();
         }
 
         using (this.clientConnections.LockObject.EnterScope())
         {
-            foreach (var x in clients)
+            foreach (var x in list)
             {
                 if (x.IsOpen)
                 {
@@ -439,7 +445,7 @@ public class ConnectionTerminal
             ServerConnection? bidirectionalConnection;
             using (g.LockObject.EnterScope())
             {
-                clientConnection.ResetOpenCount();
+                clientConnection.SetOpenCount(0);
                 if (connection.CurrentState == Connection.State.Open)
                 {// Open -> Close
                     connection.Logger.TryGet(LogLevel.Debug)?.Log($"{connection.ConnectionIdText} Open -> Closed, SendCloseFrame {sendCloseFrame}");

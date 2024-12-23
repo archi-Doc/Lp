@@ -2,11 +2,12 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using Netsphere.Packet;
 
 namespace Netsphere.Relay;
 
+/// <summary>
+/// <see cref="RelayKey"/> is a class that caches encryption information for the relay circuit.
+/// </summary>
 internal class RelayKey
 {
     public RelayKey()
@@ -26,9 +27,10 @@ internal class RelayKey
             this.EmbryoSecretArray = new ulong[relayNodes.Count];
             for (var i = 0; node is not null; i++)
             {
-                this.EmbryoKeyArray[i] = node.EmbryoKey;
-                this.EmbryoSaltArray[i] = node.EmbryoSalt;
-                this.EmbryoSecretArray[i] = node.EmbryoSecret;
+                this.EmbryoKeyArray[i] = new byte[Aegis256.KeySize];
+                node.ClientConnection.EmbryoKey.CopyTo(this.EmbryoKeyArray[i]);
+                this.EmbryoSaltArray[i] = node.ClientConnection.EmbryoSalt;
+                this.EmbryoSecretArray[i] = node.ClientConnection.EmbryoSecret;
 
                 node = node.LinkedListLink.Next;
             }

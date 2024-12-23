@@ -54,7 +54,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
                 return;
             }
 
-            var result = this.netTerminal.IncomingCircuit.AddRelay(block, r.Value, clientConnection, true);
+            var result = await this.netTerminal.IncomingCircuit.AddRelay(block, r.Value, clientConnection);
             Console.WriteLine($"AddRelay: {result.ToString()}");
             Console.WriteLine(this.netTerminal.IncomingCircuit.NumberOfRelays);
 

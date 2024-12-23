@@ -10,33 +10,34 @@ public sealed partial class RelayNode
     public RelayNode(RelayId relayId, byte[] innerKeyAndNonce, ClientConnection clientConnection)
     {
         this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
-        clientConnection.EmbryoKey.CopyTo(this.EmbryoKey);
-        this.EmbryoSalt = clientConnection.EmbryoSalt;
-        this.EmbryoSecret = clientConnection.EmbryoSecret;
+        this.ClientConnection = clientConnection;
         this.InnerKeyAndNonce = innerKeyAndNonce;
     }
 
-    public RelayId RelayId // For chain
-        => this.Endpoint.RelayId;
+    #region FieldAndProperty
+
+    public RelayId RelayId => this.Endpoint.RelayId;
 
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }
 
-    internal byte[] EmbryoKey { get; private set; } = new byte[32];
-
-    internal ulong EmbryoSalt { get; private set; }
-
-    internal ulong EmbryoSecret { get; private set; }
+    public ClientConnection ClientConnection { get; }
 
     internal byte[] InnerKeyAndNonce { get; private set; } = [];
 
-    public void Clear()
-    {
-        this.EmbryoKey.AsSpan().Fill(0);
-        this.EmbryoSalt = 0;
-        this.EmbryoSecret = 0;
-    }
+    #endregion
 
     public override string ToString()
         => this.Endpoint.ToString();
+
+    internal void Remove()
+    {// using (RelayCircuit.relayNodes.LockObject.EnterScope())
+        if (this.Goshujin is not null)
+        {
+            this.Goshujin = null;
+
+            this.Endpoint = default;
+            this.ClientConnection.CloseInternal();
+        }
+    }
 }

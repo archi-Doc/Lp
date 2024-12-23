@@ -265,7 +265,10 @@ public abstract class Connection : IDisposable
         return NetHelper.ValidateAndVerify(value);
     }
 
-    public void Close()
+    /// <summary>
+    /// Close the connection without considering OpenCount.
+    /// </summary>
+    internal void CloseInternal()
         => this.Dispose();
 
     internal void ResetTaichi()
