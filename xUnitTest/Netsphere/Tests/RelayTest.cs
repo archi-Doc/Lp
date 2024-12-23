@@ -119,7 +119,7 @@ public class RelayTest
             await this.TestPutAndGetHash(service);
         }
 
-        netTerminal.OutgoingCircuit.Close();
+        await netTerminal.OutgoingCircuit.Close();
     }
 
     public NetFixture NetFixture { get; }

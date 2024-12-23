@@ -519,7 +519,7 @@ Exit:
                 exchange.OuterEndpoint = p.OuterEndPoint;
                 response = new(RelayResult.Success);
             }
-            else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
+            /*else if (p.RelayOperation == RelayOperatioPacket.Operation.Close)
             {
                 if (NetConstants.LogRelay)
                 {
@@ -527,7 +527,7 @@ Exit:
                 }
 
                 exchange.Remove();
-            }
+            }*/
         }
 
         return response;

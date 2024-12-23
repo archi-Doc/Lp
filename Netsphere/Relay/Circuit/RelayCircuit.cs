@@ -96,13 +96,27 @@ public class RelayCircuit
         }
     }
 
-    public void Close(bool closeRelayedConnections = true)
+    public async Task Close()
     {
-        var numberOfRelays = this.NumberOfRelays;
-        var packet = RelayOperatioPacket.CreateClose();
-        for (var i = -numberOfRelays; i < 0; i++)
+        while (true)
         {
-            _ = this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, i);
+            using (this.relayNodes.LockObject.EnterScope())
+            {// Close sequentially starting from the outermost node.
+                RelayNode? node = this.relayNodes.LinkedListChain.Last;
+                if (node is null)
+                {
+                    break;
+                }
+
+                node.Remove();
+                if (this.relayNodes.Count == 0)
+                {
+                    break;
+                }
+            }
+
+            // Send packets with a time delay.
+            await Task.Delay(10);
         }
 
         using (this.relayNodes.LockObject.EnterScope())
@@ -111,10 +125,7 @@ public class RelayCircuit
             this.ResetRelayKeyInternal();
         }
 
-        if (closeRelayedConnections)
-        {
-            this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
-        }
+        this.netTerminal.ConnectionTerminal.CloseRelayedConnections();
     }
 
     public RelayResult CanAddRelay(RelayId relayId, NetEndpoint endpoint)

@@ -265,6 +265,9 @@ public abstract class Connection : IDisposable
         return NetHelper.ValidateAndVerify(value);
     }
 
+    /// <summary>
+    /// Close the connection without considering OpenCount.
+    /// </summary>
     internal void CloseInternal()
         => this.Dispose();
 

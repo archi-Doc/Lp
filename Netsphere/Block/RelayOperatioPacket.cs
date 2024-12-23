@@ -12,7 +12,6 @@ public sealed partial class RelayOperatioPacket : IPacket
     public enum Operation
     {
         SetOuterEndPoint,
-        Close,
     }
 
     public RelayOperatioPacket()
@@ -25,14 +24,6 @@ public sealed partial class RelayOperatioPacket : IPacket
         {
             RelayOperation = Operation.SetOuterEndPoint,
             OuterEndPoint = outerEndPoint,
-        };
-    }
-
-    public static RelayOperatioPacket CreateClose()
-    {
-        return new()
-        {
-            RelayOperation = Operation.Close,
         };
     }
 

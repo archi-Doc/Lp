@@ -169,7 +169,7 @@ public class RelayCommand : ISimpleCommandAsync
         // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
         // Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
 
-        netTerminal.OutgoingCircuit.Close();
+        await netTerminal.OutgoingCircuit.Close();
         Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
     }
 
