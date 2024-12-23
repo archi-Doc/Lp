@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Netsphere.Relay;
@@ -7,22 +8,30 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.Relay;
 
-[SimpleCommand("add-incomimg-relay", Description = "")]
-public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRelayOptions>
+[SimpleCommand("add-certificate-relay")]
+public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateRelayOptions>
 {
-    public AddIncomingRelaySubcommand(ILogger<AddIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl)
+    public AddCertificateRelaySubcommand(ILogger<AddCertificateRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.netTerminal = netTerminal;
         this.authorityControl = authorityControl;
+        this.vaultControl = vaultControl;
     }
 
-    public async Task RunAsync(NewCertificateRelayOptions options, string[] args)
+    public async Task RunAsync(AddCertificateRelayOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("Add incoming relay");
+        RelayCircuit relayCircuit = options.Incomming switch
+        {
+            true => this.netTerminal.IncomingCircuit,
+            false => this.netTerminal.OutgoingCircuit,
+        };
 
-        if (await this.authorityControl.GetAuthority(options.Authority) is not { } authority)
+        this.userInterfaceService.WriteLine($"Add {relayCircuit.KindText} relay");
+
+        if (!this.vaultControl.Root.TryGetObject<SeedKey>(options.Authority, out var seedKey, out _))
+       //  if (await this.authorityControl.GetAuthority(options.Authority) is not { } authority)
         {
             return;
         }
@@ -41,7 +50,7 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
 
             var block = new AssignRelayBlock(true);
             var token = new CertificateToken<AssignRelayBlock>(block);
-            authority.GetSeedKey().SignWithSalt(token, clientConnection.EmbryoSalt);
+            seedKey.SignWithSalt(token, clientConnection.EmbryoSalt);
             var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
@@ -54,9 +63,9 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
                 return;
             }
 
-            var result = await this.netTerminal.IncomingCircuit.AddRelay(block, r.Value, clientConnection);
+            var result = await relayCircuit.AddRelay(block, r.Value, clientConnection);
             Console.WriteLine($"AddRelay: {result.ToString()}");
-            Console.WriteLine(this.netTerminal.IncomingCircuit.NumberOfRelays);
+            Console.WriteLine(relayCircuit.NumberOfRelays);
 
             var outerAddress = new NetAddress(r.Value.OuterRelayId, netNode.Address);
             Console.WriteLine($"Outer address: {outerAddress.ToString()}");
@@ -73,13 +82,17 @@ public class AddIncomingRelaySubcommand : ISimpleCommandAsync<NewCertificateRela
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NetTerminal netTerminal;
     private readonly AuthorityControl authorityControl;
+    private readonly VaultControl vaultControl;
 }
 
-public record NewCertificateRelayOptions
+public record AddCertificateRelayOptions
 {
     [SimpleOption("Authority", Required = true, Description = "Authority")]
     public string Authority { get; init; } = string.Empty;
 
     [SimpleOption("RelayNode", Required = true, Description = "Relay node")]
     public string RelayNode { get; init; } = string.Empty;
+
+    [SimpleOption("Incomming", Required = false, Description = "")]
+    public bool Incomming { get; init; } = false;
 }

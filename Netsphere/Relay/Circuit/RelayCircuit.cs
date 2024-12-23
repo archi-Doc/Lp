@@ -26,6 +26,12 @@ public class RelayCircuit
     public int NumberOfRelays
         => this.relayNodes.Count;
 
+    public string KindText => this.incoming switch
+    {
+        true => "Incoming",
+        false => "Outgoing",
+    };
+
     internal RelayKey RelayKey
         => this.relayKey;
 
@@ -60,6 +66,8 @@ public class RelayCircuit
             this.relayNodes.Add(new(relayId, assignRelayBlock.InnerKeyAndNonce, clientConnection));
             this.ResetRelayKeyInternal();
         }
+
+        clientConnection.Agreement.MinimumConnectionRetentionMics = assignRelayResponse.RetensionMics;
 
         if (lastConnection is null)
         {
