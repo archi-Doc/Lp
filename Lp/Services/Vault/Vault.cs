@@ -79,7 +79,7 @@ public sealed partial class Vault
     public bool ModifiedFlag { get; private set; } // Since encryption in Vault (Argon2id) is a resource-intensive process, a modification flag is used to ensure encryption and serialization occur only when changes are made.
 
     [Key(0)]
-    private OrderedMap<string, Item> nameToItem = new();
+    private OrderedMap<string, Item> nameToItem = new(StringComparer.InvariantCultureIgnoreCase);
 
     [IgnoreMember]
     private string password = string.Empty; // Consider SecureString

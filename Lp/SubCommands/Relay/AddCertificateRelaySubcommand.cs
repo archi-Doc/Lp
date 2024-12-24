@@ -30,8 +30,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
 
         this.userInterfaceService.WriteLine($"Add {relayCircuit.KindText} relay");
 
-        if (!this.vaultControl.Root.TryGetObject<SeedKey>(options.Authority, out var seedKey, out _))
-       //  if (await this.authorityControl.GetAuthority(options.Authority) is not { } authority)
+        if (!this.vaultControl.Root.TryGetObject<SeedKey>(options.Vault, out var seedKey, out _))
         {
             return;
         }
@@ -87,8 +86,8 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
 
 public record AddCertificateRelayOptions
 {
-    [SimpleOption("Authority", Required = true, Description = "Authority")]
-    public string Authority { get; init; } = string.Empty;
+    [SimpleOption("Vault", Required = true, Description = "Vault")]
+    public string Vault { get; init; } = string.Empty;
 
     [SimpleOption("RelayNode", Required = true, Description = "Relay node")]
     public string RelayNode { get; init; } = string.Empty;
