@@ -32,6 +32,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
 
         if (!this.vaultControl.Root.TryGetObject<SeedKey>(options.Vault, out var seedKey, out _))
         {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.NoVault, options.Vault);
             return;
         }
 
