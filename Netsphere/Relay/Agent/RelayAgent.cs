@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
@@ -221,6 +220,7 @@ public partial class RelayAgent
             }
 
             exchange.OuterEndpoint = t.OuterEndpoint;
+            exchange.OuterKeyAndNonce = t.OuterKeyAndNonce;
             transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.Success), SetupRelayBlock.DataId);
         }
     }
@@ -320,6 +320,11 @@ public partial class RelayAgent
                         goto Exit;
                     }
 
+                    if (decrypted.Memory.Length == 79)
+                    {
+
+                    }
+
                     MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
                     span = span.Slice(sizeof(RelayId));
                     MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
@@ -343,7 +348,7 @@ public partial class RelayAgent
 
                     if (NetConstants.LogLowRelay)
                     {
-                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes");
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes {exchange.OuterRelayId}->{relayHeader.NetAddress.RelayId}");
                     }
                 }
             }
@@ -380,7 +385,8 @@ public partial class RelayAgent
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                     // Outer Decrypt (RelayTagCode)
-                    if (!RelayHelper.TryDecrypt(exchange.OuterKeyAndNonce, ref source, out span))
+                    if (MemoryMarshal.Read<RelayId>(source.Span) != 0 &&
+                        !RelayHelper.TryDecrypt(exchange.OuterKeyAndNonce, ref source, out span))
                     {
                         if (NetConstants.LogLowRelay)
                         {

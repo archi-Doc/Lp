@@ -80,7 +80,7 @@ public abstract class Connection : IDisposable
 
     public NetNode DestinationNode { get; }
 
-    public NetEndpoint DestinationEndpoint { get; }
+    public NetEndpoint DestinationEndpoint { get; internal set; }
 
     public int MinimumNumberOfRelays { get; internal set; }
 

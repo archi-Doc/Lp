@@ -42,12 +42,14 @@ public static class RelayHelper
         sourceSpan = sourceSpan.Slice(RelayHeader.RelayIdLength + sizeof(uint));
         if (Aegis128L.TryDecrypt(sourceSpan.Slice(0, sourceSpan.Length - Aegis128L.MinTagSize), sourceSpan, nonce16, key16))
         {
+            // Console.WriteLine($"Aegis128L Decrypt {sourceSpan.Length}, Nonce:{Hex.FromByteArrayToString(nonce16)}, Key:{Hex.FromByteArrayToString(key16)} : Success");
             source = source.Slice(0, source.Length - Aegis128L.MinTagSize);
             span = source.Span.Slice(RelayHeader.RelayIdLength);
             return true;
         }
         else
         {
+            // Console.WriteLine($"Aegis128L Decrypt {sourceSpan.Length}, Nonce:{Hex.FromByteArrayToString(nonce16)}, Key:{Hex.FromByteArrayToString(key16)} : Failure");
             span = default;
             return false;
         }
@@ -77,5 +79,6 @@ public static class RelayHelper
         source = rentArray.AsMemory(0, source.Length + Aegis128L.MinTagSize);
         sourceSpan = source.Span.Slice(RelayHeader.RelayIdLength + sizeof(uint));
         Aegis128L.Encrypt(sourceSpan, sourceSpan.Slice(0, sourceSpan.Length - Aegis128L.MinTagSize), nonce16, key16);
+        // Console.WriteLine($"Aegis128L Encrypt {sourceSpan.Length}, Nonce:{Hex.FromByteArrayToString(nonce16)}, Key:{Hex.FromByteArrayToString(key16)}");
     }
 }

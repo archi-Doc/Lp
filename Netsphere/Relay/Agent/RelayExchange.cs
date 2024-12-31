@@ -61,7 +61,7 @@ internal partial class RelayExchange
 
     internal byte[] InnerKeyAndNonce { get; private set; }
 
-    internal byte[] OuterKeyAndNonce { get; private set; } = [];
+    internal byte[] OuterKeyAndNonce { get; set; } = [];
 
     private ReadOnlySpan<byte> RelayKey => this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
 

@@ -588,6 +588,10 @@ public class ConnectionTerminal
             using (this.serverConnections.LockObject.EnterScope())
             {
                 this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
+                if (toBeShared.Length == 79)
+                {
+                    Console.WriteLine($"{connection.DestinationEndpoint}, {endpoint}");//
+                }
 
                 if (connection?.CurrentState == Connection.State.Closed)
                 {// Reopen (Closed -> Open)
