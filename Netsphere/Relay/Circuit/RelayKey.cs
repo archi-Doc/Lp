@@ -60,8 +60,9 @@ internal class RelayKey
         }
 
         // Decrypt (RelayTagCode)
-        //if (!RelayHelper.TryDecrypt(this.FirstKeyAndNonce, ref rentMemory, out _))
+        if (!RelayHelper.TryDecrypt(this.FirstKeyAndNonce, ref rentMemory, out _))
         {
+            goto Exit;
         }
 
         var span = rentMemory.Span;
