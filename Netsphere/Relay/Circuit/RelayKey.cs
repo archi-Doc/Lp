@@ -60,6 +60,9 @@ internal class RelayKey
         }
 
         // Decrypt (RelayTagCode)
+        //if (!RelayHelper.TryDecrypt(this.FirstKeyAndNonce, ref rentMemory, out _))
+        {
+        }
 
         var span = rentMemory.Span;
         if (span.Length < (RelayHeader.RelayIdLength + RelayHeader.Length))
@@ -174,6 +177,7 @@ Exit:
         encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + RelayHeader.Length + content.Length);
 
         // Encrypt (RelayTagCode)
+        RelayHelper.Encrypt(this.FirstKeyAndNonce, ref encrypted);
 
         Debug.Assert(encrypted.Memory.Length <= NetConstants.MaxPacketLength);
         relayEndpoint = this.FirstEndpoint;

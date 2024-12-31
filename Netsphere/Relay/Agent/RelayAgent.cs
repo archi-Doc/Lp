@@ -258,7 +258,7 @@ public partial class RelayAgent
             }
 
             // Inner Decrypt (RelayTagCode): source=Relay source id(2), destination id(2), salt(4), Data, Tag(16)
-            //if (!RelayHelper.TryDecrypt(exchange.InnerKeyAndNonce, ref source, out span))
+            if (!RelayHelper.TryDecrypt(exchange.InnerKeyAndNonce, ref source, out _span))
             {
             }
 
