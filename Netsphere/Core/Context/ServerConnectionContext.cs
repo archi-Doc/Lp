@@ -170,17 +170,16 @@ public class ServerConnectionContext
         if (transmissionContext.DataKind == 0)
         {// Block (Responder)
             if (transmissionContext.DataId == ConnectionAgreement.AuthenticationTokenId)
-            {
+            {// SetAuthenticationToken
                 this.SetAuthenticationToken(transmissionContext);
             }
-            else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
-            {
-                responder.Respond(transmissionContext);
-            }
             else if (transmissionContext.DataId == SetupRelayBlock.DataId)
-            {
+            {// SetupRelay
                 this.NetTerminal.RelayAgent.ProcessSetupRelay(transmissionContext);
-                // this.NetTerminal.RelayControl.ProcessCreateRelay(transmissionContext);
+            }
+            else if (this.NetTerminal.Responders.TryGet(transmissionContext.DataId, out var responder))
+            {// Other responders
+                responder.Respond(transmissionContext);
             }
             else
             {

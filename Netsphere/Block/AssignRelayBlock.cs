@@ -5,10 +5,12 @@ namespace Netsphere.Relay;
 [TinyhandObject(ReservedKeyCount = 2)]
 public partial class AssignRelayBlock
 {
+    public const int KeyAndNonceSize = 32;
+
     public AssignRelayBlock(bool allowUnknownNode = false)
     {
         this.AllowUnknownNode = allowUnknownNode;
-        this.InnerKeyAndNonce = new byte[32];
+        this.InnerKeyAndNonce = new byte[KeyAndNonceSize];
         RandomVault.Default.NextBytes(this.InnerKeyAndNonce);
     }
 

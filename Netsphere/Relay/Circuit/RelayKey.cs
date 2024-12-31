@@ -21,6 +21,7 @@ internal class RelayKey
         if (node is not null)
         {
             this.FirstEndpoint = node.Endpoint;
+            this.FirstKeyAndNonce = node.InnerKeyAndNonce;
 
             this.EmbryoKeyArray = new byte[relayNodes.Count][];
             this.EmbryoSaltArray = new ulong[relayNodes.Count];
@@ -41,6 +42,8 @@ internal class RelayKey
 
     public NetEndpoint FirstEndpoint { get; }
 
+    public byte[] FirstKeyAndNonce { get; } = [];
+
     public byte[][] EmbryoKeyArray { get; } = [];
 
     public ulong[] EmbryoSaltArray { get; } = [];
@@ -54,6 +57,11 @@ internal class RelayKey
         {
             originalAddress = default;
             return false;
+        }
+
+        // Decrypt (RelayTagCode)
+        //if (!RelayHelper.TryDecrypt(this.FirstKeyAndNonce, ref rentMemory, out _))
+        {
         }
 
         var span = rentMemory.Span;
@@ -167,6 +175,10 @@ Exit:
         }
 
         encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + RelayHeader.Length + content.Length);
+
+        // Encrypt (RelayTagCode)
+        RelayHelper.Encrypt(this.FirstKeyAndNonce, ref encrypted);
+
         Debug.Assert(encrypted.Memory.Length <= NetConstants.MaxPacketLength);
         relayEndpoint = this.FirstEndpoint;
         return true;

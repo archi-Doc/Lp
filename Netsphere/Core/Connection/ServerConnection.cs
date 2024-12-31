@@ -30,6 +30,8 @@ public sealed partial class ServerConnection : Connection, IEquatable<ServerConn
 
     public ClientConnection? BidirectionalConnection { get; internal set; } // lock (this.ConnectionTerminal.clientConnections.SyncObject)
 
+    internal ushort InnerRelayId { get; set; }
+
     private ServerConnectionContext context;
 
     #endregion

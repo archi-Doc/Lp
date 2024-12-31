@@ -118,7 +118,7 @@ public partial class RelayAgent
             while (true)
             {
                 innerRelayId = (RelayId)RandomVault.Default.NextUInt32();
-                if (!this.items.InnerRelayIdChain.ContainsKey(innerRelayId))
+                if (!this.items.RelayIdChain.ContainsKey(innerRelayId))
                 {
                     break;
                 }
@@ -127,7 +127,7 @@ public partial class RelayAgent
             while (true)
             {
                 outerRelayId = (RelayId)RandomVault.Default.NextUInt32();
-                if (!this.items.InnerRelayIdChain.ContainsKey(outerRelayId))
+                if (!this.items.RelayIdChain.ContainsKey(outerRelayId))
                 {
                     break;
                 }
@@ -143,7 +143,7 @@ public partial class RelayAgent
     {
         using (this.items.LockObject.EnterScope())
         {
-            var exchange = this.items.InnerRelayIdChain.FindFirst(relayId);
+            var exchange = this.items.RelayIdChain.FindFirst(relayId);
             if (exchange is null)
             {
                 return 0;
@@ -204,28 +204,24 @@ public partial class RelayAgent
 
         transmissionContext.Return();
 
-        destinationRelayId
-
-        if (this.NumberOfExchanges == 0)
+        var serverConnection = transmissionContext.ServerConnection;
+        if (serverConnection.InnerRelayId == 0)
         {
-            return null;
+            transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.InvalidEndpoint), SetupRelayBlock.DataId);
+            return;
         }
 
-        RelayExchange? exchange;
-        RelayOperatioResponse? response = default;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            var exchange = this.items.RelayIdChain.FindFirst(serverConnection.InnerRelayId);
             if (exchange is null)
             {
-                return null;
+                transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.InvalidEndpoint), SetupRelayBlock.DataId);
+                return;
             }
 
-            if (p.RelayOperation == RelayOperatioPacket.Operation.SetOuterEndPoint)
-            {
-                exchange.OuterEndpoint = p.OuterEndPoint;
-                response = new(RelayResult.Success);
-            }
+            exchange.OuterEndpoint = t.OuterEndpoint;
+            transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.Success), SetupRelayBlock.DataId);
         }
     }
 
@@ -240,7 +236,7 @@ public partial class RelayAgent
         RelayExchange? exchange;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {// No relay exchange
                 goto Exit;
@@ -261,13 +257,16 @@ public partial class RelayAgent
                 }
             }
 
+            // Inner Decrypt (RelayTagCode): source=Relay source id(2), destination id(2), salt(4), Data, Tag(16)
+            if (!RelayHelper.TryDecrypt(exchange.InnerKeyAndNonce, ref source, out _span))
+            {
+            }
+
             // Since it comes from the inner, it is a packet that starts with RelayHeader.
             if (span.Length < RelayHeader.Length)
             {// Invalid data
                 goto Exit;
             }
-
-            // Decrypt (RelayTagCode)
 
             // Decrypt
             var salt4 = MemoryMarshal.Read<uint>(span);
@@ -348,7 +347,7 @@ public partial class RelayAgent
             {// Not decrypted. Relay the packet to the next node.
                 if (exchange.OuterEndpoint.EndPoint is { } ep)
                 {// -> Outer relay
-                    // Encrypt (RelayTagCode)
+                    // Outer Encrypt (RelayTagCode)
 
                     MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                     MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.OuterEndpoint.RelayId);
@@ -375,6 +374,10 @@ public partial class RelayAgent
             {// Not outermost relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
+                    // Outer Decrypt (RelayTagCode)
+                    //if (!RelayHelper.TryDecrypt(exchange.OuterKeyAndNonce, ref source, out span))
+                    {
+                    }
                 }
                 else
                 {// Other (unrestricted or restricted)
@@ -434,7 +437,7 @@ public partial class RelayAgent
             RelayHelper.CreateNonce(salt4, serverConnection.EmbryoSalt, serverConnection.EmbryoSecret, nonce32);
             Aegis256.Encrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0);
 
-            // Encrypt (RelayTagCode)
+            // Inner Encrypt (RelayTagCode)
             //exchange.Encrypt(span, salt4);
 
             if (serverConnection.DestinationEndpoint.EndPoint is { } ep)
@@ -522,7 +525,7 @@ Exit:
         PingRelayResponse? packet;
         using (this.items.LockObject.EnterScope())
         {
-            exchange = this.items.InnerRelayIdChain.FindFirst(destinationRelayId);
+            exchange = this.items.RelayIdChain.FindFirst(destinationRelayId);
             if (exchange is null)
             {
                 return null;

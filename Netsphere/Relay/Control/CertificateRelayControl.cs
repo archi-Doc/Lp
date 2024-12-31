@@ -31,7 +31,7 @@ public class CertificateRelayControl : IRelayControl
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
             var retensionMics = this.relayControl.DefaultRelayRetensionMics;
             var response = new AssignRelayResponse(result, innerRelayId, outerRelayId, relayPoint, retensionMics);
-            this.ServerConnection.Agreement.MinimumConnectionRetentionMics = retensionMics;//
+            this.ServerConnection.Agreement.MinimumConnectionRetentionMics = retensionMics;
             relayAgent.AddRelayPoint(innerRelayId, relayPoint);
 
             return new(NetResult.Success, response);

@@ -11,13 +11,17 @@ public partial class SetupRelayBlock
     {
     }
 
-    public SetupRelayBlock(NetEndpoint outerEndpoint)
+    public SetupRelayBlock(NetEndpoint outerEndpoint, byte[] outerKeyAndNonce)
     {
         this.OuterEndpoint = outerEndpoint;
+        this.OuterKeyAndNonce = outerKeyAndNonce;
     }
 
     [Key(0)]
     public NetEndpoint OuterEndpoint { get; set; }
+
+    [Key(1)]
+    public byte[] OuterKeyAndNonce { get; set; } = [];
 }
 
 [TinyhandObject]

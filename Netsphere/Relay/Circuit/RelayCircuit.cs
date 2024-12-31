@@ -26,6 +26,12 @@ public class RelayCircuit
     public int NumberOfRelays
         => this.relayNodes.Count;
 
+    public string KindText => this.incoming switch
+    {
+        true => "Incoming",
+        false => "Outgoing",
+    };
+
     internal RelayKey RelayKey
         => this.relayKey;
 
@@ -61,16 +67,23 @@ public class RelayCircuit
             this.ResetRelayKeyInternal();
         }
 
-        if (lastConnection is not null)
+        clientConnection.Agreement.MinimumConnectionRetentionMics = assignRelayResponse.RetensionMics;
+
+        if (lastConnection is null)
         {
-            var outerEndpoint = new NetEndpoint(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
-            var block = new SetupRelayBlock(outerEndpoint);
-            var r = await lastConnection.SendAndReceive<SetupRelayBlock, SetupRelayResponse>(block, SetupRelayBlock.DataId);
-            Console.WriteLine(r.Result);//
-            Console.WriteLine(r.Value?.Result);
+            return RelayResult.Success;
         }
 
-        return RelayResult.Success;
+        var outerEndpoint = new NetEndpoint(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
+        var block = new SetupRelayBlock(outerEndpoint, assignRelayBlock.InnerKeyAndNonce);
+        var r = await lastConnection.SendAndReceive<SetupRelayBlock, SetupRelayResponse>(block, SetupRelayBlock.DataId);
+        if (r.Result != NetResult.Success ||
+            r.Value is null)
+        {
+            return RelayResult.ConnectionFailure;
+        }
+
+        return r.Value.Result;
     }
 
     public void Clean()
