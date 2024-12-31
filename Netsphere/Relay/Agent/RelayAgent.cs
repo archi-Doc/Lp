@@ -258,7 +258,7 @@ public partial class RelayAgent
             }
 
             // Inner Decrypt (RelayTagCode): source=Relay source id(2), destination id(2), salt(4), Data, Tag(16)
-            //if (!exchange.TryDecrypt(true, ref source, out span))
+            //if (!RelayHelper.TryDecrypt(exchange.InnerKeyAndNonce, ref source, out span))
             {
             }
 
@@ -267,8 +267,6 @@ public partial class RelayAgent
             {// Invalid data
                 goto Exit;
             }
-
-            
 
             // Decrypt
             var salt4 = MemoryMarshal.Read<uint>(span);
@@ -377,6 +375,9 @@ public partial class RelayAgent
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                     // Outer Decrypt (RelayTagCode)
+                    //if (!RelayHelper.TryDecrypt(exchange.OuterKeyAndNonce, ref source, out span))
+                    {
+                    }
                 }
                 else
                 {// Other (unrestricted or restricted)

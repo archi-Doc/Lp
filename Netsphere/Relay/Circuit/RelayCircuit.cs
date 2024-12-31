@@ -75,7 +75,7 @@ public class RelayCircuit
         }
 
         var outerEndpoint = new NetEndpoint(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
-        var block = new SetupRelayBlock(outerEndpoint);
+        var block = new SetupRelayBlock(outerEndpoint, assignRelayBlock.InnerKeyAndNonce);
         var r = await lastConnection.SendAndReceive<SetupRelayBlock, SetupRelayResponse>(block, SetupRelayBlock.DataId);
         if (r.Result != NetResult.Success ||
             r.Value is null)

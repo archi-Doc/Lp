@@ -21,6 +21,7 @@ internal class RelayKey
         if (node is not null)
         {
             this.FirstEndpoint = node.Endpoint;
+            this.FirstKeyAndNonce = node.InnerKeyAndNonce;
 
             this.EmbryoKeyArray = new byte[relayNodes.Count][];
             this.EmbryoSaltArray = new ulong[relayNodes.Count];
@@ -40,6 +41,8 @@ internal class RelayKey
     public int NumberOfRelays { get; }
 
     public NetEndpoint FirstEndpoint { get; }
+
+    public byte[] FirstKeyAndNonce { get; } = [];
 
     public byte[][] EmbryoKeyArray { get; } = [];
 
