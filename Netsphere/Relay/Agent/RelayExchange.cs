@@ -102,6 +102,45 @@ internal partial class RelayExchange
         return Aegis128L.TryDecrypt(ciphertext.Slice(0, ciphertext.Length - Aegis128L.MinTagSize), ciphertext, nonce16, this.RelayKey);
     }
 
+    public unsafe bool TryDecrypt(bool isInner, scoped ref BytePool.RentMemory source, out Span<byte> span)
+    {// source=Relay source id(2), destination id(2), salt(4), Data, Tag(16)
+        if (source.Length < RelayHeader.RelayIdLength + sizeof(uint) + Aegis128L.MinTagSize)
+        {
+            span = default;
+            return false;
+        }
+
+        var sourceSpan = source.Span;
+        var sourceLength = source.Length;
+
+        Span<byte> key16;
+        Span<byte> nonce16 = stackalloc byte[Aegis128L.NonceSize];
+        if (isInner)
+        {
+            key16 = this.InnerKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
+            this.InnerKeyAndNonce.AsSpan(Aegis128L.KeySize, Aegis128L.NonceSize).CopyTo(nonce16);
+        }
+        else
+        {
+            key16 = this.OuterKeyAndNonce.AsSpan(0, Aegis128L.KeySize);
+            this.OuterKeyAndNonce.AsSpan(Aegis128L.KeySize, Aegis128L.NonceSize).CopyTo(nonce16);
+        }
+
+        MemoryMarshal.AsRef<uint>(nonce16) ^= MemoryMarshal.Read<uint>(sourceSpan.Slice(RelayHeader.RelayIdLength));
+
+        if (Aegis128L.TryDecrypt(sourceSpan.Slice(0, sourceLength - Aegis128L.MinTagSize), sourceSpan, nonce16, key16))
+        {
+            source = source.Slice(0, sourceLength - Aegis128L.MinTagSize);
+            span = source.Span.Slice(RelayHeader.RelayIdLength);
+            return true;
+        }
+        else
+        {
+            span = default;
+            return false;
+        }
+    }
+
     public override string ToString()
         => $"RelayExchange {this.ServerConnection.DestinationEndpoint.ToString()} Inner {this.InnerRelayId} -> Outer {this.OuterRelayId}";
 

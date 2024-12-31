@@ -257,13 +257,18 @@ public partial class RelayAgent
                 }
             }
 
+            // Inner Decrypt (RelayTagCode): source=Relay source id(2), destination id(2), salt(4), Data, Tag(16)
+            //if (!exchange.TryDecrypt(true, ref source, out span))
+            {
+            }
+
             // Since it comes from the inner, it is a packet that starts with RelayHeader.
             if (span.Length < RelayHeader.Length)
             {// Invalid data
                 goto Exit;
             }
 
-            // Decrypt (RelayTagCode)
+            
 
             // Decrypt
             var salt4 = MemoryMarshal.Read<uint>(span);
@@ -344,7 +349,7 @@ public partial class RelayAgent
             {// Not decrypted. Relay the packet to the next node.
                 if (exchange.OuterEndpoint.EndPoint is { } ep)
                 {// -> Outer relay
-                    // Encrypt (RelayTagCode)
+                    // Outer Encrypt (RelayTagCode)
 
                     MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                     MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.OuterEndpoint.RelayId);
@@ -371,6 +376,7 @@ public partial class RelayAgent
             {// Not outermost relay
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
+                    // Outer Decrypt (RelayTagCode)
                 }
                 else
                 {// Other (unrestricted or restricted)
@@ -430,7 +436,7 @@ public partial class RelayAgent
             RelayHelper.CreateNonce(salt4, serverConnection.EmbryoSalt, serverConnection.EmbryoSecret, nonce32);
             Aegis256.Encrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0);
 
-            // Encrypt (RelayTagCode)
+            // Inner Encrypt (RelayTagCode)
             //exchange.Encrypt(span, salt4);
 
             if (serverConnection.DestinationEndpoint.EndPoint is { } ep)

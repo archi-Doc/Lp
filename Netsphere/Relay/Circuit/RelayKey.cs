@@ -25,14 +25,12 @@ internal class RelayKey
             this.EmbryoKeyArray = new byte[relayNodes.Count][];
             this.EmbryoSaltArray = new ulong[relayNodes.Count];
             this.EmbryoSecretArray = new ulong[relayNodes.Count];
-            this.KeyAndNonceArray = new byte[relayNodes.Count][];
             for (var i = 0; node is not null; i++)
             {
                 this.EmbryoKeyArray[i] = new byte[Aegis256.KeySize];
                 node.ClientConnection.EmbryoKey.CopyTo(this.EmbryoKeyArray[i]);
                 this.EmbryoSaltArray[i] = node.ClientConnection.EmbryoSalt;
                 this.EmbryoSecretArray[i] = node.ClientConnection.EmbryoSecret;
-                this.KeyAndNonceArray[i] = node.InnerKeyAndNonce;
 
                 node = node.LinkedListLink.Next;
             }
@@ -49,8 +47,6 @@ internal class RelayKey
 
     public ulong[] EmbryoSecretArray { get; } = [];
 
-    public byte[][] KeyAndNonceArray { get; } = [];
-
     public bool TryDecrypt(NetEndpoint endpoint, ref BytePool.RentMemory rentMemory, out NetAddress originalAddress, out int relayNumber)
     {
         relayNumber = 0;
@@ -59,6 +55,8 @@ internal class RelayKey
             originalAddress = default;
             return false;
         }
+
+        // Decrypt (RelayTagCode)
 
         var span = rentMemory.Span;
         if (span.Length < (RelayHeader.RelayIdLength + RelayHeader.Length))
@@ -171,6 +169,9 @@ Exit:
         }
 
         encrypted = encrypted.Slice(0, RelayHeader.RelayIdLength + RelayHeader.Length + content.Length);
+
+        // Encrypt (RelayTagCode)
+
         Debug.Assert(encrypted.Memory.Length <= NetConstants.MaxPacketLength);
         relayEndpoint = this.FirstEndpoint;
         return true;
