@@ -112,7 +112,7 @@ public class RelayCommand : ISimpleCommandAsync
             // Console.WriteLine($"{rr.ToString()}");
         }
 
-        /*BreakpointFlag = true;
+        BreakpointFlag = true;
         Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
 
         using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 2))
@@ -144,7 +144,7 @@ public class RelayCommand : ISimpleCommandAsync
         }
 
         await netTerminal.OutgoingCircuit.Close();
-        Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());*/
+        Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
     }
 
     private readonly NetControl netControl;

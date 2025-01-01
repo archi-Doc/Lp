@@ -534,12 +534,6 @@ public sealed partial class PacketTerminal
             return NetResult.InvalidData;
         }
 
-        Console.WriteLine(dataToBeMoved.Length);
-        if (dataToBeMoved.Length == 32)
-        {
-
-        }
-
         var circuit = incomingRelay ? this.netTerminal.IncomingCircuit : this.netTerminal.OutgoingCircuit;
         if (relayNumber > 0)
         {// The minimum number of relays
