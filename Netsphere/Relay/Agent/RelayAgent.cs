@@ -295,6 +295,10 @@ public partial class RelayAgent
                 span = span.Slice(RelayHeader.Length - RelayHeader.PlainLength - RelayHeader.RelayIdLength);
                 decrypted = source.Slice(RelayHeader.Length);
                 // decrypted = source.RentArray.AsMemory(RelayHeader.Length, span.Length);
+                if (decrypted.Memory.Length == 79)
+                {
+
+                }
                 if (relayHeader.NetAddress == NetAddress.Relay)
                 {// Initiator -> This node
                     MemoryMarshal.Write(span, endpoint.RelayId); // SourceRelayId
@@ -318,11 +322,6 @@ public partial class RelayAgent
                         }
 
                         goto Exit;
-                    }
-
-                    if (decrypted.Memory.Length == 79)
-                    {
-
                     }
 
                     MemoryMarshal.Write(span, exchange.OuterRelayId); // SourceRelayId
