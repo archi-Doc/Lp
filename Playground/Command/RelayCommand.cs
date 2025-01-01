@@ -102,14 +102,9 @@ public class RelayCommand : ISimpleCommandAsync
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
 
-            Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
-
             var service2 = clientConnection.GetService<ITestService>();
             var rr2 = await service2.DoubleString("Hello2");
             Console.WriteLine($"{rr2}");
-
-            // var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -2, default, EndpointResolution.PreferIpv6, false);
-            // Console.WriteLine($"{rr.ToString()}");
         }
 
         BreakpointFlag = true;

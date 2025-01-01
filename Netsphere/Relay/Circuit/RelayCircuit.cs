@@ -67,7 +67,7 @@ public class RelayCircuit
             this.ResetRelayKeyInternal();
         }
 
-        clientConnection.MinimumNumberOfRelays = -clientConnection.MinimumNumberOfRelays - 1; // Configure it as a relay connection and specify the relay circuit number (using NetAddress.Relay) to send data through the relay.
+        clientConnection.MinimumNumberOfRelays = -clientConnection.MinimumNumberOfRelays - 1; // Configure it as a relay connection and specify the relay circuit number to send data through the relay (use NetAddress.Relay).
         clientConnection.Agreement.MinimumConnectionRetentionMics = assignRelayResponse.RetensionMics;
 
         if (lastConnection is null)
