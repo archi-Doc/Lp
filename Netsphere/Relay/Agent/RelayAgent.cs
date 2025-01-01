@@ -307,7 +307,7 @@ public partial class RelayAgent
 
                     if (NetConstants.LogLowRelay)
                     {
-                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId})");
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) Self");
                     }
 
                     return true;

@@ -82,6 +82,12 @@ public abstract class Connection : IDisposable
 
     public NetEndpoint DestinationEndpoint { get; internal set; }
 
+    /// <summary>
+    /// Gets the minimum number of relays for the connection.
+    /// 0: Connection that does not require a relay.
+    /// Above 0: Connection that requires the specified number of relays.
+    /// Below 0: Relay connection corresponding to the (-n) th relay.
+    /// </summary>
     public int MinimumNumberOfRelays { get; internal set; }
 
     public ConnectionAgreement Agreement { get; private set; } = ConnectionAgreement.Default;

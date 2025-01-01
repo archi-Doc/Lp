@@ -127,6 +127,7 @@ Exit:
             }
 
             relayNumber = -relayNumber;
+            destination = NetAddress.Relay;
         }
         else if (relayNumber > 0)
         {// The minimum number of relays

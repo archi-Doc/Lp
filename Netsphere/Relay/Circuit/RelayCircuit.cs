@@ -67,6 +67,7 @@ public class RelayCircuit
             this.ResetRelayKeyInternal();
         }
 
+        clientConnection.MinimumNumberOfRelays = -clientConnection.MinimumNumberOfRelays - 1;
         clientConnection.Agreement.MinimumConnectionRetentionMics = assignRelayResponse.RetensionMics;
 
         if (lastConnection is null)
