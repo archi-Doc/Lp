@@ -52,6 +52,14 @@ public class LpLogger
 
                         return;
                     }
+                    else if (context.LogLevel == LogLevel.Information)
+                    {
+                        if (context.LogSourceType == typeof(Crystalizer))
+                        {
+                            context.SetOutput<EmptyLogger>();
+                            return;
+                        }
+                    }
 
                     if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))
                     {// Machines
