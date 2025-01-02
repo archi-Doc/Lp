@@ -5,10 +5,10 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("show-own-node")]
-public class ShowOwnNodeSubcommand : ISimpleCommandAsync
+[SimpleCommand("show-own-netnode")]
+public class ShowOwnNetNodeSubcommand : ISimpleCommandAsync
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
-    public ShowOwnNodeSubcommand(ILogger<ShowOwnNodeSubcommand> logger, IUserInterfaceService userInterfaceService, NetStats netStats)
+    public ShowOwnNetNodeSubcommand(ILogger<ShowOwnNetNodeSubcommand> logger, IUserInterfaceService userInterfaceService, NetStats netStats)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -17,8 +17,6 @@ public class ShowOwnNodeSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        // this.userInterfaceService.WriteLine(typeof(ShowOwnNodeSubcommand).Name);
-
         var node = this.netStats.GetOwnNetNode();
         this.userInterfaceService.WriteLine(node.ToString());
     }

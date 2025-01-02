@@ -13,6 +13,7 @@ public readonly struct RelayHeader
     public const int PlainLength = 4; // Salt
     public const int CipherLength = 28; // 36; // Zero, NetAddress
     public const int Length = PlainLength + CipherLength;
+    public const int TagSize = Aegis128L.MinTagSize;
 
     public RelayHeader(uint salt, NetAddress netAddress)
     {

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
@@ -221,6 +220,7 @@ public partial class RelayAgent
             }
 
             exchange.OuterEndpoint = t.OuterEndpoint;
+            exchange.OuterKeyAndNonce = t.OuterKeyAndNonce;
             transmissionContext.SendAndForget(new SetupRelayResponse(RelayResult.Success), SetupRelayBlock.DataId);
         }
     }
@@ -258,8 +258,12 @@ public partial class RelayAgent
             }
 
             // Inner Decrypt (RelayTagCode): source=Relay source id(2), destination id(2), salt(4), Data, Tag(16)
-            if (!RelayHelper.TryDecrypt(exchange.InnerKeyAndNonce, ref source, out _span))
+            if (!RelayHelper.TryDecrypt(exchange.InnerKeyAndNonce, ref source, out span))
             {
+                if (NetConstants.LogLowRelay)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) : decryption failue2");
+                }
             }
 
             // Since it comes from the inner, it is a packet that starts with RelayHeader.
@@ -299,7 +303,7 @@ public partial class RelayAgent
 
                     if (NetConstants.LogLowRelay)
                     {
-                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId})");
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) Self");
                     }
 
                     return true;
@@ -339,7 +343,7 @@ public partial class RelayAgent
 
                     if (NetConstants.LogLowRelay)
                     {
-                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes");
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Inner({endpoint}) -> this({destinationRelayId}) -> {relayHeader.NetAddress}: {decrypted.Memory.Length} bytes {exchange.OuterRelayId}->{relayHeader.NetAddress.RelayId}");
                     }
                 }
             }
@@ -348,6 +352,7 @@ public partial class RelayAgent
                 if (exchange.OuterEndpoint.EndPoint is { } ep)
                 {// -> Outer relay
                     // Outer Encrypt (RelayTagCode)
+                    RelayHelper.Encrypt(exchange.OuterKeyAndNonce, ref source);
 
                     MemoryMarshal.Write(source.Span, exchange.OuterRelayId);
                     MemoryMarshal.Write(source.Span.Slice(sizeof(RelayId)), exchange.OuterEndpoint.RelayId);
@@ -375,8 +380,13 @@ public partial class RelayAgent
                 if (exchange.OuterEndpoint.EndPointEquals(endpoint))
                 {// Outer relay -> Inner: Encrypt
                     // Outer Decrypt (RelayTagCode)
-                    //if (!RelayHelper.TryDecrypt(exchange.OuterKeyAndNonce, ref source, out span))
+                    if (MemoryMarshal.Read<RelayId>(source.Span) != 0 &&
+                        !RelayHelper.TryDecrypt(exchange.OuterKeyAndNonce, ref source, out span))
                     {
+                        if (NetConstants.LogLowRelay)
+                        {
+                            this.logger.TryGet(LogLevel.Information)?.Log($"Outer({endpoint}) : decryption failue2");
+                        }
                     }
                 }
                 else
@@ -414,7 +424,7 @@ public partial class RelayAgent
             var sourceRelayId = MemoryMarshal.Read<RelayId>(source.Span);
             if (sourceRelayId == 0)
             {// RelayId(Source/Destination), RelayHeader, Content(span)
-                var sourceSpan = source.RentArray.Array.AsSpan(RelayHeader.RelayIdLength);
+                var sourceSpan = source.RentArray!.Array.AsSpan(RelayHeader.RelayIdLength);
                 span.CopyTo(sourceSpan.Slice(RelayHeader.Length));
 
                 var contentLength = span.Length;
@@ -438,7 +448,7 @@ public partial class RelayAgent
             Aegis256.Encrypt(span, span, nonce32, serverConnection.EmbryoKey, default, 0);
 
             // Inner Encrypt (RelayTagCode)
-            //exchange.Encrypt(span, salt4);
+            RelayHelper.Encrypt(exchange.InnerKeyAndNonce, ref source);
 
             if (serverConnection.DestinationEndpoint.EndPoint is { } ep)
             {

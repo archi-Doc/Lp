@@ -44,33 +44,33 @@ public class RelayTest
         var netNode = (await netTerminal.UnsafeGetNetNode(Alternative.NetAddress))!;
         netNode.IsNotNull();
 
-        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 0))!)
+        using (var relayConnection = (await netTerminal.ConnectForRelay(netNode, false, 0))!)
         {
-            clientConnection.IsNotNull();
+            relayConnection.IsNotNull();
 
             var block = new AssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
-            clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
+            relayConnection.SignWithSalt(token, seedKey);
+            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value!, clientConnection);
+            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value!, relayConnection);
             result.Is(RelayResult.Success);
         }
 
-        using (var clientConnection = (await netTerminal.ConnectForRelay(netNode, false, 1))!)
+        using (var relayConnection = (await netTerminal.ConnectForRelay(netNode, false, 1))!)
         {
-            clientConnection.IsNotNull();
+            relayConnection.IsNotNull();
 
             var block = new AssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
-            clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
+            relayConnection.SignWithSalt(token, seedKey);
+            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
             r.IsSuccess.IsTrue();
             r.Value.IsNotNull();
 
-            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value!, clientConnection);
+            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value!, relayConnection);
             result.Is(RelayResult.Success);
         }
 

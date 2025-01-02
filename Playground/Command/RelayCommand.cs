@@ -46,17 +46,17 @@ public class RelayCommand : ISimpleCommandAsync
             return;
         }
 
-        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, false, 0))
+        using (var relayConnection = await netTerminal.ConnectForRelay(netNode, false, 0))
         {
-            if (clientConnection is null)
+            if (relayConnection is null)
             {
                 return;
             }
 
             var block = new AssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
-            clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
+            relayConnection.SignWithSalt(token, seedKey);
+            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());
@@ -68,24 +68,23 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value, clientConnection);
+            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value, relayConnection);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
         }
 
-        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
-        using (var clientConnection = await netTerminal.ConnectForRelay(netNode, false, 1))
+        using (var relayConnection = await netTerminal.ConnectForRelay(netNode, false, 1))
         {
-            if (clientConnection is null)
+            if (relayConnection is null)
             {
                 return;
             }
 
             var block = new AssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
-            clientConnection.SignWithSalt(token, seedKey);
-            var r = await clientConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
+            relayConnection.SignWithSalt(token, seedKey);
+            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 Console.WriteLine(r.Result.ToString());
@@ -97,30 +96,19 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value, clientConnection);
+            var result = await netTerminal.OutgoingCircuit.AddRelay(block, r.Value, relayConnection);
             await Task.Delay(10);
             Console.WriteLine(result.ToString());
             Console.WriteLine($"{netTerminal.OutgoingCircuit.NumberOfRelays} relays");
             Console.WriteLine();
-        }
 
-        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 1))
-        // using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
+            var service2 = relayConnection.GetService<ITestService>();
+            var rr2 = await service2.DoubleString("Hello2");
+            Console.WriteLine($"{rr2}");
+        }
 
         BreakpointFlag = true;
         Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
-
-        /*sing (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 2))
-        {
-            if (clientConnection is null)
-            {
-                return;
-            }
-
-            var service = clientConnection.GetService<ITestService>();
-            var result = await service.DoubleString("Test2");
-            Console.WriteLine(result);
-        }*/
 
         using (var clientConnection = await netTerminal.Connect(netNode, Connection.ConnectMode.NoReuse, 2))
         {
@@ -130,10 +118,6 @@ public class RelayCommand : ISimpleCommandAsync
             }
 
             var service = clientConnection.GetService<ITestService>();
-            /*var token = new CertificateToken<ConnectionAgreement>(clientConnection.Agreement with { MinimumConnectionRetentionMics = Mics.FromMinutes(10), });
-            var rr = await service.UpdateAgreement(token);
-            var result = await service.DoubleString("Test1");
-            Console.WriteLine(result);*/
 
             var count = 0;
             for (var i = 0; i < 1; i++)
@@ -152,22 +136,7 @@ public class RelayCommand : ISimpleCommandAsync
             }
 
             Console.WriteLine(count);
-
-            /*await Task.Delay(1000);
-            this.logger.TryGet()?.Log("Pingpong");
-            var bin2 = new byte[3000];
-            bin2.AsSpan().Fill(0x12);
-            var result2 = await service.Pingpong(bin2);
-            this.logger.TryGet()?.Log((result2 is not null).ToString());*/
         }
-
-        /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -1);
-        Console.WriteLine(rr);*/
-        /*var rr = await netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), -2);
-        Console.WriteLine(rr);*/
-
-        // Console.WriteLine(netTerminal.RelayCircuit.UnsafeToString());
-        // Console.WriteLine(await netTerminal.RelayCircuit.UnsafeDetailedToString());
 
         await netTerminal.OutgoingCircuit.Close();
         Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
