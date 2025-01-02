@@ -63,7 +63,7 @@ public class RelayCircuit
 
             lastConnection = this.relayNodes.LinkedListChain.Last?.ClientConnection;
 
-            this.relayNodes.Add(new(relayId, assignRelayBlock.InnerKeyAndNonce, clientConnection));
+            this.relayNodes.Add(new(assignRelayBlock, assignRelayResponse, clientConnection));
             this.ResetRelayKeyInternal();
         }
 
@@ -160,7 +160,7 @@ public class RelayCircuit
             var i = 0;
             foreach (var x in this.relayNodes)
             {
-                sb.Append($"{i++}: {x.ToString()} - ");
+                sb.Append($"{i++}: {x.ToString()}");
             }
         }
 
