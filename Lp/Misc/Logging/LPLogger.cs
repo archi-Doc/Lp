@@ -56,7 +56,7 @@ public class LpLogger
                     {
                         if (context.LogSourceType == typeof(Crystalizer))
                         {
-                            context.SetOutput<EmptyLogger>();
+                            context.SetOutput<FileLogger<FileLoggerOptions>>();
                             return;
                         }
                     }
