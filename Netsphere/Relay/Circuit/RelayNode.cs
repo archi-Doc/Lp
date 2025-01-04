@@ -7,16 +7,19 @@ public sealed partial class RelayNode
 {
     [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
     [Link(Name = "RelayId", TargetMember = "RelayId", Type = ChainType.Unordered)]
-    public RelayNode(RelayId relayId, byte[] innerKeyAndNonce, ClientConnection clientConnection)
+    public RelayNode(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
-        this.Endpoint = new(relayId, clientConnection.DestinationEndpoint.EndPoint);
+        this.Endpoint = new(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
         this.ClientConnection = clientConnection;
-        this.InnerKeyAndNonce = innerKeyAndNonce;
+        this.InnerKeyAndNonce = assignRelayBlock.InnerKeyAndNonce;
+        this.OuterRelayId = assignRelayResponse.OuterRelayId;
     }
 
     #region FieldAndProperty
 
     public RelayId RelayId => this.Endpoint.RelayId;
+
+    public RelayId OuterRelayId { get; private set; }
 
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }
@@ -28,7 +31,7 @@ public sealed partial class RelayNode
     #endregion
 
     public override string ToString()
-        => this.Endpoint.ToString();
+        => this.Endpoint.IsValid ? $"In:{this.RelayId} Out:{this.OuterRelayId}{NetAddress.RelayIdSeparator}{this.Endpoint.EndPoint?.ToString()}" : string.Empty;
 
     internal void Remove()
     {// using (RelayCircuit.relayNodes.LockObject.EnterScope())

@@ -32,9 +32,9 @@ Error = {
     Connect = "Could not connect to '{0}'"
     Authorization = "Authorization error"
     NoPingFromContainer = "Failed to receive a Ping response from the container"
+    InvalidPublicKey = "PublicKey is invalid"
     InvalidPrivateKey = "PrivateKey is invalid"
     NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey."
-    InvalidPublicKey = "PublicKey is invalid"
 }
 
 Vault = {

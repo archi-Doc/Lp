@@ -35,14 +35,14 @@ public class AuthorityControl
         Authority? authority = default;
         if (password is not null)
         {// Password is specified.
-            if (!this.vaultControl.Root.TryGetVault(vaultName, password, out vault))
+            if (!this.vaultControl.Root.TryGetVault(vaultName, password, out vault, out var result))
             {
                 return default;
             }
         }
         else
         {// Not specified.
-            if (this.vaultControl.Root.TryGetVault(vaultName, string.Empty, out vault))
+            if (this.vaultControl.Root.TryGetVault(vaultName, string.Empty, out vault, out var result))
             {
                 authority = Authority.GetFromVault(vault);
                 if (authority is null ||
@@ -54,13 +54,18 @@ public class AuthorityControl
 
             while (vault is null)
             {
+                if (result != VaultResult.PasswordMismatch && result != VaultResult.PasswordRequired)
+                {
+                    return default;
+                }
+
                 password = await this.userInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
                 if (password == null)
                 {// Canceled
                     return default;
                 }
 
-                this.vaultControl.Root.TryGetVault(vaultName, password, out vault);
+                this.vaultControl.Root.TryGetVault(vaultName, password, out vault, out result);
             }
         }
 

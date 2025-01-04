@@ -235,7 +235,7 @@ public sealed partial class Vault
             }
             else
             {
-                result = VaultResult.InvalidData;
+                result = VaultResult.DeserializationFailure;
                 return false;
             }
         }
@@ -291,14 +291,16 @@ public sealed partial class Vault
     /// <br/>null; it returns true if decryption has been performed and false if not (it does not check the password).<br/>
     /// not null; it returns true only if decryption with the provided password succeeds or the password matches.</param>
     /// <param name="vault">The retrieved vault if successful.</param>
+    /// <param name="result">The result of the operation.</param>
     /// <returns>True if the vault is found and the password matches; otherwise, false.</returns>
-    public bool TryGetVault(string name, string? password, [MaybeNullWhen(false)] out Vault vault)
+    public bool TryGetVault(string name, string? password, [MaybeNullWhen(false)] out Vault vault, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
         {
             if (!this.nameToItem.TryGetValue(name, out var item))
             {// Not found
                 vault = default;
+                result = VaultResult.NotFound;
                 return false;
             }
 
@@ -306,43 +308,60 @@ public sealed partial class Vault
             vault = item.Object as Vault;
             if (password is null)
             {
-                return vault is not null;
+                if (vault is null)
+                {
+                    result = VaultResult.PasswordRequired;
+                    return false;
+                }
+                else
+                {
+                    result = VaultResult.Success;
+                    return true;
+                }
             }
 
             if (vault is not null)
             {
                 if (vault.PasswordEquals(password))
                 {
+                    result = VaultResult.Success;
                     return true;
                 }
                 else
                 {
+                    result = VaultResult.PasswordMismatch;
                     vault = default;
                     return false;
                 }
+            }
+
+            if (item.ByteArray is null)
+            {
+                result = VaultResult.NotFound;
+                vault = default;
+                return false;
+            }
+
+            // Decrypt
+            if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
+            {// Decryption failed
+                result = VaultResult.DecryptionFailure;
+                vault = default;
+                return false;
             }
 
             // Deserialize
-            if (item.ByteArray is not null)
-            {
-                if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
-                {// Decryption failed
-                    vault = default;
-                    return false;
-                }
-
-                var b = plaintext.ToArray();
-                if (!TinyhandSerializer.TryDeserializeObject<Vault>(b, out vault))
-                {// Deserialize failed
-                    vault = default;
-                    return false;
-                }
-
-                vault.Initialize(this, password);
-                item.Object = vault;
+            if (!TinyhandSerializer.TryDeserializeObject<Vault>(plaintext, out vault))
+            {// Deserialize failed
+                result = VaultResult.DeserializationFailure;
+                vault = default;
+                return false;
             }
 
-            return vault is not null;
+            vault.Initialize(this, password);
+            item.Object = vault;
+            result = VaultResult.Success;
+            return true;
         }
     }
 

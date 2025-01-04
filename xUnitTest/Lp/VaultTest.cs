@@ -88,8 +88,8 @@ public class VaultTest
         record2!.Equals(record).IsTrue();
 
         // Child vault
-        root.TryGetVault(this.vaultKey, "2", out var child2).IsFalse();
-        root.TryGetVault(this.vaultKey, "1", out child2!).IsTrue();
+        root.TryGetVault(this.vaultKey, "2", out var child2, out _).IsFalse();
+        root.TryGetVault(this.vaultKey, "1", out child2!, out _).IsTrue();
         child2.TryGetByteArray(this.byteArrayKey, out byteArrayValue2, out result).IsTrue();
         result.Is(VaultResult.Success);
         byteArrayValue2!.SequenceEqual(this.byteArrayValue).IsTrue();

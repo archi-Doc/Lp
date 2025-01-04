@@ -5,10 +5,10 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.Relay;
 
-[SimpleCommand("show-relay-information", Description = "Display relay information")]
-public class ShowRelayInformationSubcommand : ISimpleCommandAsync
+[SimpleCommand("show-relay-circuit", Description = "Display relay information")]
+public class ShowRelayCircuitSubcommand : ISimpleCommandAsync
 {
-    public ShowRelayInformationSubcommand(ILogger<ShowRelayInformationSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, IRelayControl relayControl)
+    public ShowRelayCircuitSubcommand(ILogger<ShowRelayCircuitSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, IRelayControl relayControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
