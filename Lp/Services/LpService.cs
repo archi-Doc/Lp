@@ -27,7 +27,7 @@ public class LpService
             }
             else
             {
-                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotAvailable, vault);
+                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotAvailable, authority);
             }
         }
 

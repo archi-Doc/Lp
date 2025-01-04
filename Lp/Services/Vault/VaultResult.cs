@@ -8,9 +8,9 @@ public enum VaultResult
     AlreadyExists,
     NotFound,
     KindMismatch,
-    Encrypted,
-    Canceled,
+    PasswordRequired,
+    PasswordMismatch,
     InvalidData,
-    ConvertFailure,
     DecryptionFailure,
+    DeserializationFailure,
 }

@@ -24,14 +24,14 @@ public class NestedCommand : NestedCommand<NestedCommand>
     {
     }
 
-    public override string Prefix => "merger-operation >> ";
+    public override string Prefix => "merger-remote >> ";
 
     public RobustConnection? RobustConnection { get; set; }
 
-    public SeedKey? OperationKey { get; set; }
+    public SeedKey? RemoteKey { get; set; }
 }
 
-[SimpleCommand("merger-operation")]
+[SimpleCommand("merger-remote")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
@@ -62,7 +62,8 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             authority = args[0];
         }
 
-        var seedKey = await this.lpService.GetSignaturePrivateKey(this.logger, authority, options.Vault, options.PrivateKey);
+        // Privault
+        var seedKey = await this.lpService.GetSignaturePrivateKey(this.logger, authority, options.Vault, string.Empty);
         if (seedKey is null)
         {
             return;
@@ -108,6 +109,6 @@ public record CommandOptions
     [SimpleOption("Vault", Description = "Vault name")]
     public string Vault { get; init; } = string.Empty;
 
-    [SimpleOption("PrivateKey", Description = "Signature private key string")]
-    public string PrivateKey { get; init; } = string.Empty;
+    // [SimpleOption("PrivateKey", Description = "Signature private key string")]
+    // public string PrivateKey { get; init; } = string.Empty;
 }
