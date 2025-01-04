@@ -24,14 +24,14 @@ public class NestedCommand : NestedCommand<NestedCommand>
     {
     }
 
-    public override string Prefix => "merger-remote >> ";
+    public override string Prefix => "merger-operation >> ";
 
     public RobustConnection? RobustConnection { get; set; }
 
-    public SeedKey? RemoteKey { get; set; }
+    public SeedKey? OperationKey { get; set; }
 }
 
-[SimpleCommand("merger-remote")]
+[SimpleCommand("merger-operation")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
