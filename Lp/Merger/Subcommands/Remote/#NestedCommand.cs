@@ -45,25 +45,19 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
     public async Task RunAsync(CommandOptions options, string[] args)
     {
-        NetNode? node = Alternative.NetNode;
-        if (!string.IsNullOrEmpty(options.Node))
+        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
-            if (!NetNode.TryParseNetNode(this.logger, options.Node, out var n))
-            {
-                return;
-            }
-
-            node = n;
+            return;
         }
 
-        var code = options.Code;
+        /*var code = options.Code;
         if (string.IsNullOrEmpty(code) && args.Length > 0)
         {
             code = args[0];
-        }
+        }*/
 
         // Privault
-        var seedKey = await this.lpService.GetSeedKey(this.logger, code);
+        var seedKey = await this.lpService.GetSeedKey(this.logger, options.Code);
         if (seedKey is null)
         {
             return;
@@ -79,7 +73,16 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 {
                     var token = new AuthenticationToken(connection.EmbryoSalt);
                     connection.SignWithSalt(token, seedKey);
-                    return await connection.GetService<IMergerRemote>().Authenticate(token) == NetResult.Success;
+                    var r = await connection.GetService<IMergerRemote>().Authenticate(token);
+                    if (r.Result == NetResult.Success)
+                    {
+                        connection.Agreement.AcceptAll(r.Agreement);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }));
 
         if (await this.nestedcommand.RobustConnection.Get() is not { } connection)
@@ -106,7 +109,7 @@ public record CommandOptions
     [SimpleOption("Node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)")]
+    [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", Required = true)]
     public string Code { get; init; } = string.Empty;
 
     // [SimpleOption("PrivateKey", Description = "Signature private key string")]

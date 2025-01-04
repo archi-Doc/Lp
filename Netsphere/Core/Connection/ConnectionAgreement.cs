@@ -92,8 +92,13 @@ public partial record ConnectionAgreement
     private long maxStreamLength;
     private int streamBufferSize;
 
-    public void AcceptAll(ConnectionAgreement target)
+    public void AcceptAll(ConnectionAgreement? target)
     {
+        if (target is null)
+        {
+            return;
+        }
+
         this.MaxTransmissions = Math.Max(this.MaxTransmissions, target.MaxTransmissions);
         this.MaxBlockSize = Math.Max(this.MaxBlockSize, target.MaxBlockSize);
 

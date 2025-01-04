@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 [NetServiceInterface]
 public partial interface IMergerRemote : INetService
 {
-    NetTask<NetResult> Authenticate(AuthenticationToken token);
+    NetTask<(NetResult Result, ConnectionAgreement? Agreement)> Authenticate(AuthenticationToken token);
 
     NetTask<Proof?> NewCredential(Evidence? evidence);
 
@@ -32,24 +32,26 @@ internal class MergerRemoteAgent : IMergerRemote
         this.netStats = netStats;
     }
 
-    async NetTask<NetResult> IMergerRemote.Authenticate(AuthenticationToken token)
+    async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> IMergerRemote.Authenticate(AuthenticationToken token)
     {
         if (!this.lpBase.TryGetRemotePublicKey(out var publicKey))
         {
-            return NetResult.NotAuthenticated;
+            return (NetResult.NotAuthenticated, default);
         }
 
+        var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token.PublicKey.Equals(publicKey) &&
-            token.ValidateAndVerifyWithSalt(TransmissionContext.Current.ServerConnection.EmbryoSalt))
+            token.ValidateAndVerifyWithSalt(serverConnection.EmbryoSalt))
         {
             // Console.WriteLine("Authentication success");
+            serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(5);
             this.authenticated = true;
-            return NetResult.Success;
+            return (NetResult.Success, serverConnection.Agreement);
         }
         else
         {
             this.authenticated = false;
-            return NetResult.NotAuthenticated;
+            return (NetResult.NotAuthenticated, default);
         }
     }
 
