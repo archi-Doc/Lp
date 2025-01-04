@@ -52,13 +52,13 @@ public class AuthorityControl
                 }
             }
 
-            if (result != VaultResult.PasswordMismatch && result != VaultResult.PasswordRequired)
-            {
-                return default;
-            }
-
             while (vault is null)
             {
+                if (result != VaultResult.PasswordMismatch && result != VaultResult.PasswordRequired)
+                {
+                    return default;
+                }
+
                 password = await this.userInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
                 if (password == null)
                 {// Canceled

@@ -15,44 +15,26 @@ public class LpService
         this.vaultControl = vaultControl;
     }
 
-    public async Task<SeedKey?> GetSignaturePrivateKey(ILogger? logger, string authority, string vault, string privateKeyString)
+    public async Task<SeedKey?> GetSeedKey(ILogger? logger, string code)
     {
         SeedKey? seedKey;
 
-        if (!string.IsNullOrEmpty(authority))
-        {// Authority
-            if (await this.authorityControl.GetAuthority(authority).ConfigureAwait(false) is { } auth)
-            {
-                return auth.GetSeedKey();
-            }
-            else
-            {
-                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotAvailable, authority);
-            }
+        // Authority
+        if (await this.authorityControl.GetAuthority(code).ConfigureAwait(false) is { } auth)
+        {// Success
+            return auth.GetSeedKey();
         }
 
-        if (!string.IsNullOrEmpty(vault))
-        {// Vault
-            if (this.vaultControl.Root.TryGetObject<SeedKey>(vault, out seedKey, out _))
-            {
-                return seedKey;
-            }
-            else
-            {
-                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Vault.NotAvailable, vault);
-            }
+        // Vault
+        if (this.vaultControl.Root.TryGetObject<SeedKey>(code, out seedKey, out var result))
+        {// Success
+            return seedKey;
         }
 
-        if (!string.IsNullOrEmpty(privateKeyString))
-        {// PrivateKey
-            if (SeedKey.TryParse(privateKeyString, out seedKey))
-            {
-                return seedKey;
-            }
-            else
-            {
-                logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidPrivateKey);
-            }
+        // PrivateKey
+        if (SeedKey.TryParse(code, out seedKey))
+        {
+            return seedKey;
         }
 
         logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPrivateKey);

@@ -56,20 +56,20 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             node = n;
         }
 
-        var authority = options.Authority;
-        if (string.IsNullOrEmpty(authority) && args.Length > 0)
+        var code = options.Code;
+        if (string.IsNullOrEmpty(code) && args.Length > 0)
         {
-            authority = args[0];
+            code = args[0];
         }
 
         // Privault
-        var seedKey = await this.lpService.GetSignaturePrivateKey(this.logger, authority, options.Vault, string.Empty);
+        var seedKey = await this.lpService.GetSeedKey(this.logger, code);
         if (seedKey is null)
         {
             return;
         }
 
-        this.userInterfaceService.WriteLine(node.ToString());
+        this.userInterfaceService.WriteLine($"Node: {node.ToString()}");
         this.userInterfaceService.WriteLine($"Remote key: {seedKey.GetSignaturePublicKey()}");
 
         this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
@@ -78,15 +78,18 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 async connection =>
                 {
                     var token = new AuthenticationToken(connection.EmbryoSalt);
-                    seedKey.Sign(token);
+                    connection.SignWithSalt(token, seedKey);
                     return await connection.GetService<IMergerRemote>().Authenticate(token) == NetResult.Success;
                 }));
 
-        if (await this.nestedcommand.RobustConnection.Get() is null)
+        if (await this.nestedcommand.RobustConnection.Get() is not { } connection)
         {
             this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
             return;
         }
+
+        this.userInterfaceService.WriteLine($"Retention: {Mics.ToSimpleString(connection.Agreement.MinimumConnectionRetentionMics)}");
+        this.userInterfaceService.WriteLine($"Connection successful (merger-remote)");
 
         await this.nestedcommand.MainAsync();
     }
@@ -103,11 +106,8 @@ public record CommandOptions
     [SimpleOption("Node", Description = "Node information", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("Authority", Description = "Authority name")]
-    public string Authority { get; init; } = string.Empty;
-
-    [SimpleOption("Vault", Description = "Vault name")]
-    public string Vault { get; init; } = string.Empty;
+    [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)")]
+    public string Code { get; init; } = string.Empty;
 
     // [SimpleOption("PrivateKey", Description = "Signature private key string")]
     // public string PrivateKey { get; init; } = string.Empty;

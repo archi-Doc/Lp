@@ -27,6 +27,7 @@ public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNa
         if (authority != null)
         {
             this.consoleService.WriteLine($"{option.AuthorityName}: {authority.ToString()}");
+            this.consoleService.WriteLine($"{authority.GetSeedKey().GetSignaturePublicKey().ToString()}");
         }
         else
         {

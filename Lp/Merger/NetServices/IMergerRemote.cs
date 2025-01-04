@@ -39,7 +39,8 @@ internal class MergerRemoteAgent : IMergerRemote
             return NetResult.NotAuthenticated;
         }
 
-        if (token.ValidateAndVerifyWithSalt(TransmissionContext.Current.ServerConnection.EmbryoSalt))
+        if (token.PublicKey.Equals(publicKey) &&
+            token.ValidateAndVerifyWithSalt(TransmissionContext.Current.ServerConnection.EmbryoSalt))
         {
             // Console.WriteLine("Authentication success");
             this.authenticated = true;
