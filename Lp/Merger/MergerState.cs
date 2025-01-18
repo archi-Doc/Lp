@@ -1,13 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
+using Lp.T3cs;
 
 namespace Lp;
 
 [TinyhandObject]
-public partial record MergerState
+public partial class MergerState : CredentialState
 {
-    [Key(0)]
+    [Key(CredentialState.ReservedKeyCount)]
     public NetNode Node { get; private set; } = new();
 
     public MergerState()

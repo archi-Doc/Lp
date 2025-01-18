@@ -44,7 +44,7 @@ internal class MergerRemoteAgent : IMergerRemote
             token.ValidateAndVerifyWithSalt(serverConnection.EmbryoSalt))
         {
             // Console.WriteLine("Authentication success");
-            serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10;
+            serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10);
             this.authenticated = true;
             return (NetResult.Success, serverConnection.Agreement);
         }
