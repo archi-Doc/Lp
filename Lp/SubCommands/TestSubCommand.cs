@@ -104,7 +104,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
                 var valueProof = ValueProof.Create(value);
 
                 owner.TrySignProof(valueProof, 123);
-                var c = new CredentialProof();
             }
         }
     }

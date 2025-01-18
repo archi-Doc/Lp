@@ -57,19 +57,19 @@ public sealed partial class CredentialProof : Proof
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
-    public CredentialProof()
+    private CredentialProof()
     {
-        this.NetNode = new();
+        this.State = default!;
     }
 
-    private CredentialProof(NetNode netNode)
+    private CredentialProof(CredentialState state)
     {
-        this.NetNode = netNode;
+        this.State = state;
     }
 
-    public static CredentialProof Create(Evidence valueProofEvidence, NetNode netNode)
+    public static CredentialProof Create(Evidence valueProofEvidence, CredentialState state)
     {
-        var credentialProof = new CredentialProof(netNode);
+        var credentialProof = new CredentialProof(state);
         credentialProof.ValueProofEvidence = valueProofEvidence;
         return credentialProof;
     }
@@ -80,7 +80,7 @@ public sealed partial class CredentialProof : Proof
     public Evidence ValueProofEvidence { get; private set; } = new();
 
     [Key(Proof.ReservedKeyCount + 1)]
-    public NetNode NetNode { get; private set; }
+    public CredentialState State { get; private set; }
 
     public SignaturePublicKey Originator => this.GetPublicKey();
 
