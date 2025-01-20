@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Stats;
+
 namespace Lp.T3cs;
 
 /// <summary>
@@ -22,6 +24,15 @@ public abstract partial class CredentialState
     }
 
     #region FieldAndProperty
+
+    [Key(0)]
+    public NetNode Node { get; set; } = new();
+
+    [IgnoreMember]
+    public NodeType NodeType { get; set; }
+
+    public virtual bool IsValid
+        => this.Node.IsValid && this.NodeType == NodeType.Direct;
 
     #endregion
 }

@@ -7,16 +7,4 @@ namespace Lp;
 [TinyhandObject]
 public partial class MergerState : CredentialState
 {
-    [Key(CredentialState.ReservedKeyCount)]
-    public NetNode Node { get; private set; } = new();
-
-    public MergerState(NetNode node)
-    {
-        this.Node = node;
-    }
-
-    protected MergerState()
-    {
-        this.Node = new();
-    }
 }

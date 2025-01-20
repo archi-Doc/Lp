@@ -154,7 +154,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public MergerConfiguration? Information { get; protected set; }
 
-    public MergerState State { get; protected set; }
+    public MergerState State { get; protected set; } = new();
 
     protected ILogger logger;
     protected LpBase lpBase;
