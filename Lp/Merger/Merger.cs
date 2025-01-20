@@ -154,12 +154,13 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public MergerConfiguration? Information { get; protected set; }
 
+    public MergerState State { get; protected set; }
+
     protected ILogger logger;
     protected LpBase lpBase;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
     protected SeedKey? mergerSeedKey;
-    protected MergerState mergerState = new();
 
     #endregion
 }
