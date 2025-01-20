@@ -11,8 +11,6 @@ public sealed partial class NetStats
 
     private const int EndpointTrustCapacity = 32;
     private const int EndpointTrustMinimum = 4;
-    private const int PortTrustCapacity = 32;
-    private const int PortTrustMinimum = 4;
 
     public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
     {
@@ -29,7 +27,9 @@ public sealed partial class NetStats
         {
             if (this.OutboundPort.TryGet(out var port))
             {
-                return port == this.netBase.NetOptions.Port ? NodeType.Direct : NodeType.Cone;
+                return (port == this.netBase.NetOptions.Port && this.netBase.IsPortNumberSpecified) ?
+                    NodeType.Direct :
+                    NodeType.Cone;
             }
             else if (this.OutboundPort.UnableToFix)
             {
@@ -46,12 +46,6 @@ public sealed partial class NetStats
     [Key(1)]
     public NodeControl NodeControl { get; private set; }
 
-    /*[Key(2)]
-    public PublicAddress PublicIpv4Address { get; private set; } = new();
-
-    [Key(3)]
-    public PublicAddress PublicIpv6Address { get; private set; } = new();*/
-
     [Key(2)]
     public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
@@ -60,6 +54,9 @@ public sealed partial class NetStats
 
     [Key(4)]
     public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+
+    [Key(5)]
+    public int LastPort { get; private set; }
 
     private readonly Lock lockObject = new();
     private readonly ILogger logger;
@@ -160,11 +157,18 @@ public sealed partial class NetStats
     private void OnSerializing()
     {
         this.LastMics = Mics.GetUtcNow();
+        this.LastPort = this.netBase.NetOptions.Port;
     }
 
     [TinyhandOnDeserialized]
     private void OnDeserialized()
     {
+        if (this.LastPort != this.netBase.NetOptions.Port)
+        {
+            this.Reset();
+            return;
+        }
+
         var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
         if (!range.IsWithin(this.LastMics))

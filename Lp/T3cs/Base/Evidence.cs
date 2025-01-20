@@ -29,7 +29,7 @@ public sealed partial class Evidence : IValidatable
     }
 
     [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
-    public Evidence()
+    internal Evidence()
     {
         this.Proof = default!;
     }

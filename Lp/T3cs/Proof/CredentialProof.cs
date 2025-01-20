@@ -77,7 +77,7 @@ public sealed partial class CredentialProof : Proof
     #region FieldAndProperty
 
     [Key(Proof.ReservedKeyCount)]
-    public Evidence ValueProofEvidence { get; private set; } = new();
+    public Evidence ValueProofEvidence { get; private set; } = default!;
 
     [Key(Proof.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
