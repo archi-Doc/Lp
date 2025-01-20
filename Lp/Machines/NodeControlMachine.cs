@@ -166,10 +166,13 @@ public partial class NodeControlMachine : Machine
         return StateResult.Continue;
     }
 
-    private void ShowStatus()
+    [CommandMethod]
+    protected CommandResult ShowStatus()
     {
         this.logger.TryGet()?.Log($"{this.netStats.NodeType.ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
         this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountActive}");
+
+        return CommandResult.Success;
     }
 
     private async Task<bool> PingIpv4AndIpv6(NetNode netNode, bool isLifelineNode)

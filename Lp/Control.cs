@@ -98,6 +98,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNetNodeSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ShowNodeControlStateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
