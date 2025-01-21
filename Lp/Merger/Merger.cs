@@ -183,7 +183,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.State.Node = this.netStats.FixedNetNode;
         if (this.State.Node is null)
         {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
+            this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
             return;
         }
 
