@@ -9,38 +9,28 @@ namespace Lp.Subcommands;
 [SimpleCommand("punch")]
 public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 {
-    public PunchSubcommand(ILogger<PunchSubcommand> logger, Control control)
+    public PunchSubcommand(ILogger<PunchSubcommand> logger, NetControl netControl)
     {
         this.logger = logger;
-        this.Control = control;
+        this.netControl = netControl;
     }
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!NetAddress.TryParse(this.logger, options.Node, out var node))
+        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        NetAddress nextNode = default;
-        if (!string.IsNullOrEmpty(options.NextNode))
+        using (var connection = await this.netControl.NetTerminal.Connect(node))
         {
-            NetAddress.TryParse(this.logger, options.NextNode, out nextNode);
-        }
-
-        for (var n = 0; n < options.Count; n++)
-        {
-            if (this.Control.Core.IsTerminated)
+            if (connection == null)
             {
-                break;
+                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                return;
             }
 
-            await this.Punch(node, nextNode, options);
-
-            if (n < options.Count - 1)
-            {
-                this.Control.Core.Sleep(TimeSpan.FromSeconds(options.Interval), TimeSpan.FromSeconds(0.1));
-            }
+            // connection.SendAndReceive
         }
     }
 
@@ -77,9 +67,8 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         }*/
     }
 
-    public Control Control { get; set; }
-
-    private ILogger<PunchSubcommand> logger;
+    private readonly NetControl netControl;
+    private readonly ILogger logger;
 }
 
 public record PunchOptions

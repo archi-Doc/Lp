@@ -302,7 +302,7 @@ public sealed partial class NodeControl
     public string Dump()
     {
         string st;
-        st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.activeNodes.Count}";
+        st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.activeNodes.Count}, Unknown nodes: {this.unknownNodes.Count}";
         return st;
     }
 
