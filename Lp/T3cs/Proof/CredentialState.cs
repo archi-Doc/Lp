@@ -26,13 +26,10 @@ public abstract partial class CredentialState
     #region FieldAndProperty
 
     [Key(0)]
-    public NetNode Node { get; set; } = new();
+    public NetNode? Node { get; set; }
 
     [IgnoreMember]
     public NodeType NodeType { get; set; }
-
-    public virtual bool IsValid
-        => this.Node.IsValid && this.NodeType == NodeType.Direct;
 
     #endregion
 }

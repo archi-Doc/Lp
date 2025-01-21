@@ -42,6 +42,7 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
+        this.control.NetControl.NetStats.Update();
         this.control.Merger.UpdateState();
         this.control.RelayMerger.UpdateState();
 

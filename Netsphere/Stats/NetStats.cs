@@ -59,6 +59,12 @@ public sealed partial class NetStats
     [Key(5)]
     public int LastPort { get; private set; }
 
+    [IgnoreMember]
+    public NetNode? FixedNetNode { get; private set; }
+
+    [IgnoreMember]
+    public NodeType FixedNodeType { get; private set; }
+
     private readonly Lock lockObject = new();
     private readonly ILogger logger;
     private readonly NetBase netBase;
@@ -154,6 +160,22 @@ public sealed partial class NetStats
         this.Ipv4Endpoint.Clear();
         this.Ipv6Endpoint.Clear();
         this.OutboundPort.Clear();
+    }
+
+    public void Update()
+    {
+        if (this.FixedNetNode is null)
+        {
+            if (this.TryGetOwnNetNode(out var netNode))
+            {
+                this.FixedNetNode = netNode;
+            }
+        }
+
+        if (this.FixedNodeType == NodeType.Unknown)
+        {
+            this.FixedNodeType = this.NodeType;
+        }
     }
 
     public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)

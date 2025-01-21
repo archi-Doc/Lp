@@ -179,16 +179,19 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        if (!this.State.Node.IsValid)
+        // Check net node
+        this.State.Node = this.netStats.FixedNetNode;
+        if (this.State.Node is null)
         {
-            if (this.netStats.TryGetOwnNetNode(out var netNode))
-            {
-                this.State.Node = netNode;
-                this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
-            }
-            else
-            {
-            }
+            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
+            return;
+        }
+
+        // Check node type
+        if (this.netStats.FixedNodeType != NodeType.Direct)
+        {
+            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
+            return;
         }
     }
 
