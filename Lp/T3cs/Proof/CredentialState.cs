@@ -29,7 +29,7 @@ public abstract partial class CredentialState
     public NetNode? Node { get; set; }
 
     [IgnoreMember]
-    public NodeType NodeType { get; set; }
+    public bool IsActive { get; set; }
 
     #endregion
 }

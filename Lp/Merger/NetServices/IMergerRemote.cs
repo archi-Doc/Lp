@@ -24,6 +24,8 @@ internal class MergerRemoteAgent : IMergerRemote
     private readonly NetStats netStats;
     private bool authenticated;
 
+    private bool IsActiveAndAuthenticated => this.merger.State.IsActive && this.authenticated;
+
     public MergerRemoteAgent(LpBase lpBase, Merger merger, NetStats netStats)
     {
         this.lpBase = lpBase;
@@ -34,6 +36,11 @@ internal class MergerRemoteAgent : IMergerRemote
 
     async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> IMergerRemote.Authenticate(AuthenticationToken token)
     {
+        if (!this.merger.State.IsActive)
+        {
+            return (NetResult.NoNetService, default);
+        }
+
         if (!this.lpBase.TryGetRemotePublicKey(out var publicKey))
         {
             return (NetResult.NotAuthenticated, default);
@@ -57,7 +64,7 @@ internal class MergerRemoteAgent : IMergerRemote
 
     async NetTask<SignaturePublicKey> IMergerRemote.GetPublicKey()
     {
-        if (!this.authenticated)
+        if (!this.IsActiveAndAuthenticated)
         {
             return default;
         }
@@ -67,7 +74,7 @@ internal class MergerRemoteAgent : IMergerRemote
 
     async NetTask<Proof?> IMergerRemote.NewCredential(Evidence? evidence)
     {
-        if (!this.authenticated)
+        if (!this.IsActiveAndAuthenticated)
         {
             return default;
         }

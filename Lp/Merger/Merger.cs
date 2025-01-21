@@ -193,6 +193,13 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
             return;
         }
+
+        // Active
+        if (!this.State.IsActive)
+        {
+            this.State.IsActive = true;
+            this.logger.TryGet(LogLevel.Information)?.Log("Activated");
+        }
     }
 
     protected void InitializeLogger()
