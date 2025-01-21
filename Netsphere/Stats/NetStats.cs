@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Netsphere.Stats;
@@ -132,6 +133,20 @@ public sealed partial class NetStats
     {
         var address = new NetAddress(this.Ipv4Endpoint.FixedOrDefault?.Address, this.Ipv6Endpoint.FixedOrDefault?.Address, (ushort)this.netBase.NetOptions.Port);
         return new(address, this.netBase.NodePublicKey);
+    }
+
+    public bool TryGetOwnNetNode([MaybeNullWhen(false)] out NetNode netNode)
+    {
+        var validIpv4 = this.Ipv4Endpoint.TryGet(out var ipv4);
+        var validIpv6 = this.Ipv6Endpoint.TryGet(out var ipv6);
+        if (validIpv4 || validIpv6)
+        {
+            netNode = new(new NetAddress(ipv4?.Address, ipv6?.Address, (ushort)this.netBase.NetOptions.Port), this.netBase.NodePublicKey);
+            return true;
+        }
+
+        netNode = default;
+        return false;
     }
 
     public void Reset()

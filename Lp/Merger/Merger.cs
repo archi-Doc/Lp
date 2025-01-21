@@ -1,8 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
+using Netsphere.Stats;
 
 #pragma warning disable SA1401
 
@@ -10,11 +12,37 @@ namespace Lp;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public Merger(UnitContext context, UnitLogger unitLogger, LpBase lpBase)
+    #region FieldAndProperty
+
+    [MemberNotNullWhen(true, nameof(Information))]
+    [MemberNotNullWhen(true, nameof(creditDataCrystal))]
+    [MemberNotNullWhen(true, nameof(creditData))]
+    // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
+    public virtual bool Initialized { get; protected set; }
+
+    public SignaturePublicKey MergerPublicKey { get; protected set; }
+
+    public MergerConfiguration? Information { get; protected set; }
+
+    public MergerState State { get; protected set; } = new();
+
+    protected ILogger logger;
+    protected ModestLogger modestLogger;
+    protected LpBase lpBase;
+    protected NetStats netStats;
+    protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
+    protected FullCredit.GoshujinClass? creditData;
+    protected SeedKey? mergerSeedKey;
+
+    #endregion
+
+    public Merger(UnitContext context, UnitLogger unitLogger, LpBase lpBase, NetStats netStats)
         : base(context)
     {
         this.logger = unitLogger.GetLogger<Merger>();
+        this.modestLogger = new(this.logger);
         this.lpBase = lpBase;
+        this.netStats = netStats;
     }
 
     public virtual void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
@@ -38,6 +66,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.creditData = this.creditDataCrystal.Data;
         this.mergerSeedKey = mergerSeedKey;
         this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
+
+        this.InitializeLogger();
 
         this.Initialized = true;
     }
@@ -142,25 +172,29 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         return this.mergerSeedKey.TrySignProof(proof, validMics);
     }
 
-    #region FieldAndProperty
+    public void UpdateState()
+    {
+        if (!this.Initialized)
+        {
+            return;
+        }
 
-    [MemberNotNullWhen(true, nameof(Information))]
-    [MemberNotNullWhen(true, nameof(creditDataCrystal))]
-    [MemberNotNullWhen(true, nameof(creditData))]
-    // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
-    public virtual bool Initialized { get; protected set; }
+        if (!this.State.Node.IsValid)
+        {
+            if (this.netStats.TryGetOwnNetNode(out var netNode))
+            {
+                this.State.Node = netNode;
+                this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
+            }
+            else
+            {
+            }
+        }
+    }
 
-    public SignaturePublicKey MergerPublicKey { get; protected set; }
-
-    public MergerConfiguration? Information { get; protected set; }
-
-    public MergerState State { get; protected set; } = new();
-
-    protected ILogger logger;
-    protected LpBase lpBase;
-    protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
-    protected FullCredit.GoshujinClass? creditData;
-    protected SeedKey? mergerSeedKey;
-
-    #endregion
+    protected void InitializeLogger()
+    {
+        this.modestLogger.SetLogger(this.logger);
+        this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
+    }
 }
