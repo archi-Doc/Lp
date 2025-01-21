@@ -189,7 +189,7 @@ public sealed partial class NodeControl
                 return false;
             }
 
-            this.activeNodes.GetChain.Enqueue(obj);
+            //this.activeNodes.GetChain.Enqueue(obj);
             node = obj;
         }
 
@@ -231,7 +231,7 @@ public sealed partial class NodeControl
             {
                 var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
                 if (item is not null)
-                {
+                {// Lifeline nodes
                     item.LastCheckedMics = Mics.FastSystem;
                     if (item.Goshujin is { } g)
                     {
@@ -297,13 +297,6 @@ public sealed partial class NodeControl
                 }
             }
         }
-    }
-
-    public string Dump()
-    {
-        string st;
-        st = $"Lifeline nodes: {this.lifelineNodes.Count}, Online nodes: {this.activeNodes.Count}, Unknown nodes: {this.unknownNodes.Count}";
-        return st;
     }
 
     public void Validate()

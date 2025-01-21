@@ -99,8 +99,7 @@ public partial class NodeControlMachine : Machine
             }
 
             if (!this.nodeControl.TryGetActiveNode(out var node))
-            {
-                // No online node
+            { // No online node
                 this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to NodeList.");
                 this.ChangeState(State.NoOnlineNode);
                 return StateResult.Continue;
@@ -163,6 +162,12 @@ public partial class NodeControlMachine : Machine
     [StateMethod]
     protected async Task<StateResult> NoOnlineNode(StateParameter parameter)
     {
+        // Check unknown node
+        if (this.nodeControl.TryGetUnknownNode(out var netNode))
+        {
+            _ = await this.PingIpv4AndIpv6(netNode, false);
+        }
+
         return StateResult.Continue;
     }
 
@@ -170,7 +175,7 @@ public partial class NodeControlMachine : Machine
     protected CommandResult ShowStatus()
     {
         this.logger.TryGet()?.Log($"{this.netStats.NodeType.ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
-        this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountActive}");
+        this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountActive}, Unknown: {this.nodeControl.CountUnknown}");
 
         return CommandResult.Success;
     }

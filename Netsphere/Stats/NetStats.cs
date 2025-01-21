@@ -11,7 +11,7 @@ public sealed partial class NetStats
     public const string Filename = "NetStat.tinyhand";
 
     private const int EndpointTrustCapacity = 32;
-    private const int EndpointTrustMinimum = 4;
+    private const int EndpointTrustMinimum = 1;
 
     public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
     {
