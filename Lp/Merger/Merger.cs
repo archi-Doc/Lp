@@ -180,7 +180,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Check net node
-        this.State.Node = this.netStats.FixedNetNode;
+        this.State.Node = this.netStats.OwnNetNode;
         if (this.State.Node is null)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
@@ -188,7 +188,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Check node type
-        if (this.netStats.FixedNodeType != NodeType.Direct)
+        if (this.netStats.OwnNodeType != NodeType.Direct)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
             return;

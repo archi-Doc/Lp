@@ -174,7 +174,7 @@ public partial class NodeControlMachine : Machine
     [CommandMethod]
     protected CommandResult ShowStatus()
     {
-        this.logger.TryGet()?.Log($"{this.netStats.NodeType.ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
+        this.logger.TryGet()?.Log($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
         this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountActive}, Unknown: {this.nodeControl.CountUnknown}");
 
         return CommandResult.Success;

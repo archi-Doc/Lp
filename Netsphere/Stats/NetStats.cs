@@ -22,25 +22,6 @@ public sealed partial class NetStats
 
     #region FieldAndProperty
 
-    public NodeType NodeType
-    {
-        get
-        {
-            if (this.OutboundPort.TryGet(out var port))
-            {
-                return (port == this.netBase.NetOptions.Port && this.netBase.IsPortNumberSpecified) ?
-                    NodeType.Direct :
-                    NodeType.Cone;
-            }
-            else if (this.OutboundPort.UnableToFix)
-            {
-                return NodeType.Symmetric;
-            }
-
-            return NodeType.Unknown;
-        }
-    }
-
     [Key(0)]
     public long LastMics { get; private set; }
 
@@ -60,10 +41,13 @@ public sealed partial class NetStats
     public int LastPort { get; private set; }
 
     [IgnoreMember]
-    public NetNode? FixedNetNode { get; private set; }
+    public NetNode? OwnNetNode { get; private set; }
 
     [IgnoreMember]
-    public NodeType FixedNodeType { get; private set; }
+    public NodeType OwnNodeType { get; private set; }
+
+    [IgnoreMember]
+    public bool DirectConfirmed { get; private set; }
 
     private readonly Lock lockObject = new();
     private readonly ILogger logger;
@@ -135,6 +119,22 @@ public sealed partial class NetStats
         }
     }
 
+    public NodeType GetOwnNodeType()
+    {
+        if (this.OutboundPort.TryGet(out var port))
+        {
+            return (port == this.netBase.NetOptions.Port && this.netBase.IsPortNumberSpecified) ?
+                NodeType.Direct :
+                NodeType.Cone;
+        }
+        else if (this.OutboundPort.UnableToFix)
+        {
+            return NodeType.Symmetric;
+        }
+
+        return NodeType.Unknown;
+    }
+
     public NetNode GetOwnNetNode()
     {
         var address = new NetAddress(this.Ipv4Endpoint.FixedOrDefault?.Address, this.Ipv6Endpoint.FixedOrDefault?.Address, (ushort)this.netBase.NetOptions.Port);
@@ -164,18 +164,15 @@ public sealed partial class NetStats
 
     public void Update()
     {
-        if (this.FixedNetNode is null)
+        if (this.OwnNetNode is null)
         {
             if (this.TryGetOwnNetNode(out var netNode))
             {
-                this.FixedNetNode = netNode;
+                this.OwnNetNode = netNode;
             }
         }
 
-        if (this.FixedNodeType == NodeType.Unknown)
-        {
-            this.FixedNodeType = this.NodeType;
-        }
+        this.OwnNodeType = this.GetOwnNodeType();
     }
 
     public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)
