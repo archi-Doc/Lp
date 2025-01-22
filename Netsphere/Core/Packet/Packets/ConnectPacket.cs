@@ -22,7 +22,7 @@ internal partial class ConnectPacket : IPacket
     }
 
     [Key(0)]
-    public uint NetIdentification { get; set; }
+    public uint NetsphereId { get; set; }
 
     // [Key(1)]
     // public ushort RelayId { get; set; }

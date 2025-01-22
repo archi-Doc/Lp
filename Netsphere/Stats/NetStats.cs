@@ -11,7 +11,7 @@ public sealed partial class NetStats
     public const string Filename = "NetStat.tinyhand";
 
     private const int EndpointTrustCapacity = 32;
-    private const int EndpointTrustMinimum = 1;
+    private const int EndpointTrustMinimum = 4;
 
     public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
     {
@@ -22,20 +22,20 @@ public sealed partial class NetStats
 
     #region FieldAndProperty
 
-    [Key(0)]
-    public long LastMics { get; private set; }
+    // [Key(0)]
+    // public long LastMics { get; private set; }
 
     [Key(1)]
     public NodeControl NodeControl { get; private set; }
 
     [Key(2)]
-    public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    private IPEndPoint? lastIpv4Endpoint;
 
     [Key(3)]
-    public TrustSource<IPEndPoint?> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    private IPEndPoint? lastIpv6Endpoint;
 
     [Key(4)]
-    public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    private int lastOutboundPort;
 
     [Key(5)]
     public int LastPort { get; private set; }
@@ -48,6 +48,15 @@ public sealed partial class NetStats
 
     [IgnoreMember]
     public bool DirectConfirmed { get; private set; }
+
+    [IgnoreMember]
+    public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+
+    [IgnoreMember]
+    public TrustSource<IPEndPoint?> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+
+    [IgnoreMember]
+    public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     private readonly Lock lockObject = new();
     private readonly ILogger logger;
@@ -190,23 +199,38 @@ public sealed partial class NetStats
     [TinyhandOnSerializing]
     private void OnSerializing()
     {
-        this.LastMics = Mics.GetUtcNow();
+        // this.LastMics = Mics.GetUtcNow();
         this.LastPort = this.netBase.NetOptions.Port;
+
+        this.Ipv4Endpoint.TryGet(out this.lastIpv4Endpoint, out _);
+        this.Ipv6Endpoint.TryGet(out this.lastIpv6Endpoint, out _);
+        this.OutboundPort.TryGet(out this.lastOutboundPort, out _);
     }
 
     [TinyhandOnDeserialized]
     private void OnDeserialized()
     {
-        if (this.LastPort != this.netBase.NetOptions.Port)
+        if (this.LastPort == this.netBase.NetOptions.Port &&
+            this.lastOutboundPort != 0)
         {
-            this.OutboundPort.Clear();
+            this.OutboundPort.Add(this.lastOutboundPort);
         }
 
-        var utcNow = Mics.GetUtcNow();
+        if (this.lastIpv4Endpoint is not null)
+        {
+            this.Ipv4Endpoint.Add(this.lastIpv4Endpoint);
+        }
+
+        if (this.lastIpv6Endpoint is not null)
+        {
+            this.Ipv6Endpoint.Add(this.lastIpv6Endpoint);
+        }
+
+        /*var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
         if (!range.IsWithin(this.LastMics))
         {
             this.Reset();
-        }
+        }*/
     }
 }

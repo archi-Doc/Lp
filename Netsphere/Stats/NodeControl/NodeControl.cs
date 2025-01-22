@@ -189,7 +189,7 @@ public sealed partial class NodeControl
                 return false;
             }
 
-            //this.activeNodes.GetChain.Enqueue(obj);
+            this.activeNodes.GetChain.Enqueue(obj);
             node = obj;
         }
 

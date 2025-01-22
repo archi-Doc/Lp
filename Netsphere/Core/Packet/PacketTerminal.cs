@@ -364,7 +364,7 @@ public sealed partial class PacketTerminal
                 var netOptions = this.netBase.NetOptions;
                 if (netOptions.EnablePing)
                 {
-                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, Netsphere.Version.VersionHelper.VersionInt, netOptions.Phase);
+                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, netOptions.NetsphereId);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
