@@ -196,6 +196,18 @@ public sealed partial class NetStats
         }
     }
 
+    public void ReportEndpoint(IPEndPoint endpoint)
+    {
+        if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            this.Ipv6Endpoint.Add(endpoint);
+        }
+        else if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            this.Ipv4Endpoint.Add(endpoint);
+        }
+    }
+
     [TinyhandOnSerializing]
     private void OnSerializing()
     {

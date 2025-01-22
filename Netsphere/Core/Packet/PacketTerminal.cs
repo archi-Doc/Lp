@@ -349,7 +349,7 @@ public sealed partial class PacketTerminal
 
                     Task.Run(() =>
                     {
-                        var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
+                        var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement, endpoint);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                         // this.SendPacketWithoutRelay(endpoint, rentMemory, default);

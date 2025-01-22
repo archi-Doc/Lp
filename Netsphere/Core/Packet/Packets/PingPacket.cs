@@ -36,7 +36,7 @@ public sealed partial class PingPacketResponse : IPacket
 
     public PingPacketResponse(NetEndpoint endpoint, string message, int netsphereId)
     {
-        this.Endpoint = endpoint;
+        this.SourceEndpoint = endpoint;
         this.Message = message;
         this.NetsphereId = netsphereId;
     }
@@ -46,7 +46,7 @@ public sealed partial class PingPacketResponse : IPacket
     private string _message = string.Empty;
 
     [Key(1)]
-    public NetEndpoint Endpoint { get; set; }
+    public NetEndpoint SourceEndpoint { get; set; }
 
     [Key(2)]
     public int NetsphereId { get; set; }
@@ -55,11 +55,11 @@ public sealed partial class PingPacketResponse : IPacket
     {
         if (string.IsNullOrEmpty(this.Message))
         {
-            return $"{this.Endpoint} {this.NetsphereId}";
+            return $"{this.SourceEndpoint} {this.NetsphereId}";
         }
         else
         {
-            return $"{this.Message} {this.Endpoint} {this.NetsphereId}";
+            return $"{this.Message} {this.SourceEndpoint} {this.NetsphereId}";
         }
     }
 }

@@ -240,7 +240,7 @@ public partial class NodeControlMachine : Machine
 
         if (r.Result == NetResult.Success && r.Value is { } value)
         {// Success
-            return value.Endpoint.EndPoint;
+            return value.SourceEndpoint.EndPoint;
         }
         else
         {
