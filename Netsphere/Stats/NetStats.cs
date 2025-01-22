@@ -121,13 +121,13 @@ public sealed partial class NetStats
 
     public NodeType GetOwnNodeType()
     {
-        if (this.OutboundPort.TryGet(out var port))
+        if (this.OutboundPort.TryGet(out var port, out _))
         {
             return (port == this.netBase.NetOptions.Port && this.netBase.IsPortNumberSpecified) ?
                 NodeType.Direct :
                 NodeType.Cone;
         }
-        else if (this.OutboundPort.UnableToFix)
+        else if (this.OutboundPort.IsInconsistent)
         {
             return NodeType.Symmetric;
         }
@@ -143,8 +143,8 @@ public sealed partial class NetStats
 
     public bool TryGetOwnNetNode([MaybeNullWhen(false)] out NetNode netNode)
     {
-        var validIpv4 = this.Ipv4Endpoint.TryGet(out var ipv4);
-        var validIpv6 = this.Ipv6Endpoint.TryGet(out var ipv6);
+        var validIpv4 = this.Ipv4Endpoint.TryGet(out var ipv4, out _);
+        var validIpv6 = this.Ipv6Endpoint.TryGet(out var ipv6, out _);
         if (validIpv4 || validIpv6)
         {
             netNode = new(new NetAddress(ipv4?.Address, ipv6?.Address, (ushort)this.netBase.NetOptions.Port), this.netBase.NodePublicKey);
@@ -199,8 +199,7 @@ public sealed partial class NetStats
     {
         if (this.LastPort != this.netBase.NetOptions.Port)
         {
-            this.Reset();
-            return;
+            this.OutboundPort.Clear();
         }
 
         var utcNow = Mics.GetUtcNow();

@@ -91,7 +91,7 @@ public partial class NodeControlMachine : Machine
                 return StateResult.Continue;
             }
 
-            if (this.netStats.OutboundPort.UnableToFix)
+            if (this.netStats.OutboundPort.IsInconsistent)
             {// Symmetric (random port)
                 this.ShowStatus();
                 this.ChangeState(State.MaintainOnlineNode);
