@@ -171,10 +171,15 @@ public partial class NodeControlMachine : Machine
     }
 
     [CommandMethod]
-    protected CommandResult ShowStatus()
+    protected CommandResult ShowStatus(bool showNodes = false)
     {
         this.logger.TryGet()?.Log($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
-        this.logger.TryGet()?.Log($"Lifeline online/offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Online: {this.nodeControl.CountActive}, Unknown: {this.nodeControl.CountUnknown}");
+        this.logger.TryGet()?.Log($"Lifeline Online/Offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Active: {this.nodeControl.CountActive}, Unknown: {this.nodeControl.CountUnknown}");
+
+        if (showNodes)
+        {
+            this.nodeControl.ShowNodes();
+        }
 
         return CommandResult.Success;
     }

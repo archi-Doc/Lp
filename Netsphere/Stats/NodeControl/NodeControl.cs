@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Arc.Collections;
 using ValueLink.Integrality;
 
@@ -50,6 +51,37 @@ public sealed partial class NodeControl
     public bool HasSufficientActiveNodes => this.CountActive >= SufficientActiveNodes;
 
     #endregion
+
+    public void ShowNodes()
+    {
+        var sb = new StringBuilder();
+
+        using (this.lifelineNodes.LockObject.EnterScope())
+        {
+            sb.AppendLine("Lifeline Online:");
+            foreach (var x in this.lifelineNodes.OnlineLinkChain)
+            {
+                sb.AppendLine(x.ToString());
+            }
+
+            sb.AppendLine("Lifeline Offline:");
+            foreach (var x in this.lifelineNodes.OfflineLinkChain)
+            {
+                sb.AppendLine(x.ToString());
+            }
+        }
+
+        using (this.activeNodes.LockObject.EnterScope())
+        {
+            sb.AppendLine("Active:");
+            foreach (var x in this.lifelineNodes.OfflineLinkChain)
+            {
+                sb.AppendLine(x.ToString());
+            }
+        }
+
+        Console.WriteLine(sb.ToString());
+    }
 
     public void FromLifelineNodeToActiveNode()
     {

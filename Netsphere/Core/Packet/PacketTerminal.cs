@@ -361,6 +361,7 @@ public sealed partial class PacketTerminal
             }
             else if (packetType == PacketType.Ping)
             {// PingPacket
+                Console.WriteLine($"Ping: {endpoint.IsPrivateOrLocalLoopbackAddress}");//
                 var netOptions = this.netBase.NetOptions;
                 if (netOptions.EnablePing)
                 {

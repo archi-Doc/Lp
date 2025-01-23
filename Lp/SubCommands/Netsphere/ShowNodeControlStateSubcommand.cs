@@ -17,7 +17,7 @@ public class ShowNodeControlStateSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        await this.bigMachine.NodeControlMachine.GetOrCreate().Command.ShowStatus();
+        await this.bigMachine.NodeControlMachine.GetOrCreate().Command.ShowStatus(true);
     }
 
     private readonly ILogger logger;
