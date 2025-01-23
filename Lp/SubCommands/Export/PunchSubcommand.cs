@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net;
 using Netsphere;
+using Netsphere.Packet;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
@@ -17,21 +19,37 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
+        if (!NetNode.TryParseNetNode(this.logger, options.DestinationNode, out var node))
         {
             return;
         }
 
-        using (var connection = await this.netControl.NetTerminal.Connect(node))
+        /*using (var connection = await this.netControl.NetTerminal.Connect(node))
         {
             if (connection == null)
             {
                 this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
                 return;
             }
+        }*/
 
-            // connection.SendAndReceive
+        NetAddress.TryParse(options.RelayNode, out var relayAddress);
+        this.netControl.NetTerminal.TryCreateEndpoint(ref relayAddress, EndpointResolution.PreferIpv6, out var relayEndpoint);
+        if (!this.netControl.NetStats.TryGetOwnNetNode(out var ownNode))
+        {
+            return;
         }
+
+        var ownAddress = ownNode.Address;
+        if (!this.netControl.NetTerminal.TryCreateEndpoint(ref ownAddress, EndpointResolution.PreferIpv6, out var ownEndpoint))
+        {
+            return;
+        }
+
+        var packetTerminal = this.netControl.NetTerminal.PacketTerminal;
+        var p = new PunchPacket(relayEndpoint, ownEndpoint);
+        var result = await packetTerminal.SendAndReceive<PunchPacket, PunchPacketResponse>(ownNode.Address, p);
+        Console.WriteLine(result);
     }
 
     public async Task Punch(NetAddress node, NetAddress nextNode, PunchOptions options)
@@ -73,17 +91,9 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
 public record PunchOptions
 {
-    [SimpleOption("Node", Description = "Node address", Required = true)]
-    public string Node { get; init; } = string.Empty;
+    [SimpleOption("Destination", Description = "Destination node", Required = true)]
+    public string DestinationNode { get; init; } = string.Empty;
 
-    [SimpleOption("Next", Description = "Next node address")]
-    public string NextNode { get; init; } = string.Empty;
-
-    [SimpleOption("Count", Description = "Count")]
-    public int Count { get; init; } = 1;
-
-    [SimpleOption("Interval", Description = "Interval (seconds)")]
-    public int Interval { get; init; } = 2;
-
-    public override string ToString() => $"{this.Node}";
+    [SimpleOption("Relay", Description = "Relay node")]
+    public string RelayNode { get; init; } = string.Empty;
 }
