@@ -10,18 +10,8 @@ public sealed partial class PunchPacket : IPacket
     public PunchPacket()
     {
     }
-}
 
-[TinyhandObject]
-public sealed partial class PunchPacketResponse : IPacket
-{
-    public static PacketType PacketType => PacketType.PunchResponse;
-
-    public PunchPacketResponse()
-    {
-    }
-
-    public PunchPacketResponse(NetEndpoint relayEndpoint, NetEndpoint destinationEndpoint)
+    public PunchPacket(NetEndpoint relayEndpoint, NetEndpoint destinationEndpoint)
     {
         this.RelayEndpoint = relayEndpoint;
         this.DestinationEndpoint = destinationEndpoint;
@@ -43,5 +33,15 @@ public sealed partial class PunchPacketResponse : IPacket
         {
             return $"{this.DestinationEndpoint}";
         }
+    }
+}
+
+[TinyhandObject]
+public sealed partial class PunchPacketResponse : IPacket
+{
+    public static PacketType PacketType => PacketType.PunchResponse;
+
+    public PunchPacketResponse()
+    {
     }
 }

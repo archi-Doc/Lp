@@ -378,6 +378,31 @@ public sealed partial class PacketTerminal
 
                 return;
             }
+            else if (packetType == PacketType.Punch)
+            {// PunchPacket
+                var netOptions = this.netBase.NetOptions;
+                if (netOptions.EnablePing)
+                {
+                    if (TinyhandSerializer.TryDeserialize<PunchPacket>(span, out var p) &&
+                        p.DestinationEndpoint.IsValid)
+                    {
+                        if (p.RelayEndpoint.IsValid)
+                        {// Relay
+                            var packet = new PunchPacket(default, endpoint);
+                            CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                            this.SendPacketWithoutRelay(p.RelayEndpoint, rentMemory, default);
+                        }
+                        else
+                        {//
+                            var packet = new PunchPacketResponse();
+                            CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                            this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                        }
+                    }
+                }
+
+                return;
+            }
             else if (packetType == PacketType.GetInformation)
             {// GetInformationPacket
                 if (this.netBase.AllowUnsafeConnection)
