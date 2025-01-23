@@ -361,9 +361,9 @@ public sealed partial class PacketTerminal
             }
             else if (packetType == PacketType.Ping)
             {// PingPacket
-                Console.WriteLine($"Ping: {endpoint.IsPrivateOrLocalLoopbackAddress()}");
                 var netOptions = this.netBase.NetOptions;
-                if (netOptions.EnablePing)
+                if (netOptions.EnablePing ||
+                    endpoint.IsPrivateOrLocalLoopbackAddress())
                 {
                     var packet = new PingPacketResponse(endpoint, netOptions.NodeName, netOptions.NetsphereId);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)

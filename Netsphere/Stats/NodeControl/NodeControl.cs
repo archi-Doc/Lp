@@ -356,6 +356,23 @@ public sealed partial class NodeControl
     [TinyhandOnDeserialized]
     private void OnAfterDeserialize()
     {
+        using (this.lifelineNodes.LockObject.EnterScope())
+        {
+            TemporaryList<LifelineNode> deleteList = default;
+            foreach (var x in this.lifelineNodes)
+            {
+                if (!x.Address.IsValidIpv4AndIpv6)
+                {
+                    deleteList.Add(x);
+                }
+            }
+
+            foreach (var x in deleteList)
+            {
+                x.Goshujin = default;
+            }
+        }
+
         this.LoadNodeList();
         this.Prepare();
     }
