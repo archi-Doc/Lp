@@ -386,18 +386,18 @@ public sealed partial class PacketTerminal
                     if (TinyhandSerializer.TryDeserialize<PunchPacket>(span, out var p) &&
                         p.DestinationEndpoint.IsValid)
                     {
-                        Console.WriteLine($"PunchPacket {p.ToString()}");
+                        // Console.WriteLine($"PunchPacket {p.ToString()}");
                         if (p.RelayEndpoint.IsValid)
                         {// Relay
-                            var packet = new PunchPacket(default, endpoint);
+                            var packet = new PunchPacket(default, p.DestinationEndpoint);
                             CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                             this.SendPacketWithoutRelay(p.RelayEndpoint, rentMemory, default);
                         }
                         else
-                        {//
+                        {// Response
                             var packet = new PunchPacketResponse();
                             CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
-                            this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                            this.SendPacketWithoutRelay(p.DestinationEndpoint, rentMemory, default);
                         }
                     }
                 }
