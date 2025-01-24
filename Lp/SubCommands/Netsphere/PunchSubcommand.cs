@@ -37,6 +37,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         this.netControl.NetTerminal.TryCreateEndpoint(ref relayAddress, EndpointResolution.PreferIpv6, out var relayEndpoint);
         if (!this.netControl.NetStats.TryGetOwnNetNode(out var ownNode))
         {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoOwnAddress);
             return;
         }
 
@@ -48,7 +49,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
         var packetTerminal = this.netControl.NetTerminal.PacketTerminal;
         var p = new PunchPacket(relayEndpoint, ownEndpoint);
-        var result = await packetTerminal.SendAndReceive<PunchPacket, PunchPacketResponse>(ownNode.Address, p);
+        var result = await packetTerminal.SendAndReceive<PunchPacket, PunchPacketResponse>(node.Address, p);
         Console.WriteLine(result);
     }
 
