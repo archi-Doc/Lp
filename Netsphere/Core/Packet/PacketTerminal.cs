@@ -386,6 +386,7 @@ public sealed partial class PacketTerminal
                     if (TinyhandSerializer.TryDeserialize<PunchPacket>(span, out var p) &&
                         p.DestinationEndpoint.IsValid)
                     {
+                        Console.WriteLine($"PunchPacket {p.ToString()}");
                         if (p.RelayEndpoint.IsValid)
                         {// Relay
                             var packet = new PunchPacket(default, endpoint);

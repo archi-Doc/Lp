@@ -31,7 +31,7 @@ public sealed partial class PunchPacket : IPacket
         }
         else
         {
-            return $"{this.DestinationEndpoint}";
+            return $"->{this.DestinationEndpoint}";
         }
     }
 }
