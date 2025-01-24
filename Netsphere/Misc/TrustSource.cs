@@ -94,7 +94,7 @@ public sealed partial class TrustSource<T>
 
     public bool IsInconsistent => !this.isFixed && this.items.Count >= this.TrustMinimum;
 
-    public T? FixedOrDefault => this.fixedValue;
+    // public T? FixedOrDefault => this.fixedValue;
 
     private readonly Lock lockObject = new();
     // private readonly ObjectPool<Item> itemPool;

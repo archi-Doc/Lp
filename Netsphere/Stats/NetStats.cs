@@ -69,7 +69,7 @@ public sealed partial class NetStats
         endPoint = default;
         if (endpointResolution == EndpointResolution.PreferIpv6)
         {
-            if (this.Ipv6Endpoint.FixedOrDefault is not null)
+            if (this.Ipv6Endpoint.TryGet(out var ipv6, out _))
             {// Ipv6 supported
                 address.TryCreateIpv6(ref endPoint);
                 if (endPoint.IsValid)
@@ -112,7 +112,7 @@ public sealed partial class NetStats
     public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
     {
         endPoint = default;
-        if (this.Ipv6Endpoint.FixedOrDefault is not null)
+        if (this.Ipv6Endpoint.TryGet(out var ipv6, out _))
         {// Ipv6 supported
             node.Address.TryCreateIpv6(ref endPoint);
             if (endPoint.IsValid)
@@ -146,7 +146,9 @@ public sealed partial class NetStats
 
     public NetNode GetOwnNetNode()
     {
-        var address = new NetAddress(this.Ipv4Endpoint.FixedOrDefault?.Address, this.Ipv6Endpoint.FixedOrDefault?.Address, (ushort)this.netBase.NetOptions.Port);
+        this.Ipv4Endpoint.TryGet(out var ipv4, out _);
+        this.Ipv6Endpoint.TryGet(out var ipv6, out _);
+        var address = new NetAddress(ipv4?.Address, ipv6?.Address, (ushort)this.netBase.NetOptions.Port);
         return new(address, this.netBase.NodePublicKey);
     }
 
