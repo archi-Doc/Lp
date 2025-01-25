@@ -421,13 +421,14 @@ public class ConnectionTerminal
 
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
-        // this.netStats.NodeControl.TryAddUnknownNode(node);
         connection.Initialize(p2.Agreement, embryo);
 
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
         }
+
+        this.netStats.NodeControl.TryAddUnknownNode(node);
 
         return true;
     }

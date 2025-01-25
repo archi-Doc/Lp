@@ -115,10 +115,10 @@ public partial class NodeControlMachine : Machine
         }
 
         // Check unknown node
-        if (this.nodeControl.TryGetUnknownNode(out netNode))
+        /*if (this.nodeControl.TryGetUnknownNode(out netNode))
         {
             _ = await this.PingIpv4AndIpv6(netNode, false);
-        }
+        }*/
 
         // Add active nodes from lifeline nodes.
         if (this.nodeControl.CountActive == 0)
@@ -158,12 +158,19 @@ public partial class NodeControlMachine : Machine
             return StateResult.Continue;
         }
 
-        // Check unknown node
-        if (this.nodeControl.TryGetUnknownNode(out var netNode))
+        // Check active node
+        if (this.nodeControl.TryGetActiveNode(out var node))
         {
-            _ = await this.PingIpv4AndIpv6(netNode, false);
+            _ = await this.PingIpv4AndIpv6(node, false);
         }
 
+        // Check unknown node
+        /*if (this.nodeControl.TryGetUnknownNode(out var netNode))
+        {
+            _ = await this.PingIpv4AndIpv6(netNode, false);
+        }*/
+
+        this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
     }
 
@@ -171,7 +178,7 @@ public partial class NodeControlMachine : Machine
     protected CommandResult ShowStatus(bool showNodes = false)
     {
         this.logger.TryGet()?.Log($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
-        this.logger.TryGet()?.Log($"Lifeline Online/Offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Active: {this.nodeControl.CountActive}, Unknown: {this.nodeControl.CountUnknown}");
+        this.logger.TryGet()?.Log($"Lifeline Online/Offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Active: {this.nodeControl.CountActive}");
 
         if (showNodes)
         {

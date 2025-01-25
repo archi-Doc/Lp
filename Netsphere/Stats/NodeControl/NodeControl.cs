@@ -15,7 +15,7 @@ public sealed partial class NodeControl
     public static readonly int SufficientLifelineNodes = 24;
     public static readonly int MaxActiveNodes = 256;
     public static readonly int MaxUnknownNodes = 32;
-    public static readonly int SufficientActiveNodes = 128;
+    public static readonly int SufficientActiveNodes = 32;
     private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromHours(1);
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
@@ -34,7 +34,7 @@ public sealed partial class NodeControl
     [Key(1)]
     private ActiveNode.GoshujinClass activeNodes = new(); // this.activeNodes.SyncObject
 
-    private ActiveNode.GoshujinClass unknownNodes = new(); // this.unknownNodes.SyncObject
+    // private ActiveNode.GoshujinClass unknownNodes = new(); // this.unknownNodes.SyncObject
 
     public int CountLinfelineOnline => this.lifelineNodes.OnlineLinkChain.Count;
 
@@ -42,7 +42,7 @@ public sealed partial class NodeControl
 
     public int CountActive => this.activeNodes.Count;
 
-    public int CountUnknown => this.unknownNodes.Count;
+    // public int CountUnknown => this.unknownNodes.Count;
 
     public bool CanAddLifelineNode => this.lifelineNodes.Count < MaxLifelineNodes;
 
@@ -176,6 +176,29 @@ public sealed partial class NodeControl
         }
     }
 
+    public bool TryAddUnknownNode(NetNode node)
+    {
+        if (this.HasSufficientActiveNodes)
+        {
+            return false;
+        }
+
+        using (this.activeNodes.LockObject.EnterScope())
+        {
+            if (this.activeNodes.AddressChain.ContainsKey(node.Address))
+            {
+                return false;
+            }
+
+            var item = new ActiveNode(node);
+            item.LastConnectionMicsValue = Mics.FastSystem;
+            item.Goshujin = this.activeNodes;
+        }
+
+        return true;
+    }
+
+    /*
     /// <summary>
     /// Tries to add a NetNode from the incoming connection and check the node later.
     /// </summary>
@@ -208,7 +231,7 @@ public sealed partial class NodeControl
         }
 
         return true;
-    }
+    }*/
 
     public bool TryGetUncheckedLifelineNode([MaybeNullWhen(false)] out NetNode node)
     {
@@ -245,7 +268,7 @@ public sealed partial class NodeControl
         return true;
     }
 
-    public bool TryGetUnknownNode([MaybeNullWhen(false)] out NetNode node)
+    /*public bool TryGetUnknownNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         using (this.unknownNodes.LockObject.EnterScope())
@@ -260,7 +283,7 @@ public sealed partial class NodeControl
         }
 
         return true;
-    }
+    }*/
 
     public BytePool.RentMemory DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
