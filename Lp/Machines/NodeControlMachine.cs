@@ -130,21 +130,7 @@ public partial class NodeControlMachine : Machine
         // Integrate active nodes.
         if (this.nodeControl.TryGetActiveNode(out netNode))
         {
-            using (var connection = await this.netControl.NetTerminal.Connect(netNode))
-            {
-                if (connection is null)
-                {
-                    this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
-                }
-                else
-                {
-                    var service = connection.GetService<Lp.Net.IBasalService>();
-                    if (service is not null)
-                    {
-                        var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
-                    }
-                }
-            }
+            await this.ProcessActiveNode(netNode);
         }
         else
         {
@@ -163,7 +149,15 @@ public partial class NodeControlMachine : Machine
             return StateResult.Continue;
         }
 
-        await this.ProcessRestorationNode();
+        // Integrate active nodes.
+        if (this.nodeControl.TryGetActiveNode(out var netNode))
+        {
+            await this.ProcessActiveNode(netNode);
+        }
+        else
+        {
+            await this.ProcessRestorationNode();
+        }
 
         // Check unknown node
         /*if (this.nodeControl.TryGetUnknownNode(out var netNode))
@@ -278,6 +272,27 @@ public partial class NodeControlMachine : Machine
         }
 
         return false;
+    }
+
+    private async Task ProcessActiveNode(NetNode netNode)
+    {
+        _ = await this.PingIpv4AndIpv6(netNode, true);//
+
+        using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+        {
+            if (connection is null)
+            {
+                this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
+            }
+            else
+            {
+                var service = connection.GetService<Lp.Net.IBasalService>();
+                if (service is not null)
+                {
+                    var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                }
+            }
+        }
     }
 
     private async Task ProcessRestorationNode()

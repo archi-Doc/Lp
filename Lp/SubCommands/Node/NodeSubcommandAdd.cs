@@ -18,22 +18,12 @@ public class NodeSubcommandAdd : ISimpleCommand
     {
         foreach (var x in args)
         {
-            /*if (!NodeAddress.TryParse(x, out var nodeAddress))
-            {// Could not parse
-                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Error.Parse, x);
+            if (!NetNode.TryParseNetNode(this.logger, x, out var node))
+            {
                 continue;
             }
 
-            if (!nodeAddress.IsValid())
-            {// Invalid
-                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Error.InvalidAddress, x);
-                continue;
-            }
-
-            if (this.Control.NetControl.EssentialNode.TryAdd(nodeAddress))
-            {// Success
-                this.logger.TryGet()?.Log(Hashed.Success.NodeAdded, x);
-            }*/
+            this.Control.NetControl.NetStats.NodeControl.TryAddActiveNode(node);//
         }
     }
 

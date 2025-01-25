@@ -181,13 +181,14 @@ public sealed partial class NodeControl
         }
     }
 
-    public bool TryAddUnknownNode(NetNode node)
+    public bool TryAddActiveNode(NetNode node)
     {
         if (this.HasSufficientActiveNodes)
         {
             return false;
         }
-        else if (!node.Validate())
+        else if (!node.Validate() ||
+            !node.Address.IsValidIpv4AndIpv6)
         {
             return false;
         }
