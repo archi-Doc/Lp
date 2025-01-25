@@ -153,7 +153,7 @@ public sealed partial class NodeControl
                     }
 
                     var item = new LifelineNode(x.Address, x.PublicKey);
-                    item.LastCheckedMics = Mics.FastSystem;
+                    item.ConnectionSucceeded();
                     this.lifelineNodes.Add(item);
                     this.lifelineNodes.OnlineLinkChain.AddLast(item);
                 }
@@ -308,19 +308,26 @@ public sealed partial class NodeControl
                 var item = this.lifelineNodes.AddressChain.FindFirst(node.Address);
                 if (item is not null)
                 {// Lifeline nodes
-                    item.LastCheckedMics = Mics.FastSystem;
                     if (item.Goshujin is { } g)
                     {
                         g.UncheckedListChain.Remove(item);
                         if (result == ConnectionResult.Success)
-                        {// Online link
+                        {// -> Online
+                            item.ConnectionSucceeded();
                             g.OnlineLinkChain.AddLast(item);
                             g.OfflineLinkChain.Remove(item);
                         }
                         else
-                        {// Offline link
-                            g.OnlineLinkChain.Remove(item);
-                            g.OfflineLinkChain.AddLast(item);
+                        {
+                            if (item.ConnectionFailed())
+                            { // Remove
+                                item.Goshujin = default;
+                            }
+                            else
+                            {// -> Offline
+                                g.OnlineLinkChain.Remove(item);
+                                g.OfflineLinkChain.AddLast(item);
+                            }
                         }
                     }
                 }
@@ -474,7 +481,7 @@ public sealed partial class NodeControl
         var lifelineRange = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
         foreach (var x in this.lifelineNodes)
         {
-            if (!lifelineRange.IsWithin(x.LastCheckedMics) &&
+            if (!lifelineRange.IsWithin(x.LastConnectedMics) &&
                 x.Goshujin is { } g)
             {// Online/Offline -> Unchecked
                 g.UncheckedListChain.AddFirst(x);

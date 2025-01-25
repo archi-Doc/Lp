@@ -174,7 +174,7 @@ public partial class NodeControlMachine : Machine
         return StateResult.Continue;
     }
 
-    [CommandMethod]
+    [CommandMethod(WithLock = false)]
     protected CommandResult ShowStatus(bool showNodes = false)
     {
         this.logger.TryGet()?.Log($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");

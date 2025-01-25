@@ -9,7 +9,7 @@ namespace Netsphere;
 /// Represents ipv4/ipv6 node information.<br/>
 /// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="EncryptionPublicKey"/>.
 /// </summary>
-[TinyhandObject]
+[TinyhandObject(ReservedKeyCount = 2)]
 public partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
     public NetNode()

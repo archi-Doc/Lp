@@ -8,14 +8,22 @@ namespace Netsphere.Stats;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public sealed partial class LifelineNode : NetNode
 {
+    public const int ConnectionFailureLimit = 3;
+
+    #region FieldAndProperty
+
+    [Key(2)]
+    public long LastConnectedMics { get; set; }
+
+    [Key(3)]
+    public int ConnectionFailureCount { get; set; }
+
+    #endregion
+
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
     [Link(Type = ChainType.LinkedList, Name = "UncheckedList", AutoLink = false)]
     [Link(Type = ChainType.LinkedList, Name = "OnlineLink", AutoLink = false)]
     [Link(Type = ChainType.LinkedList, Name = "OfflineLink", AutoLink = false)]
-    public LifelineNode()
-    {
-    }
-
     public LifelineNode(NetNode netNode)
     {
         this.Address = netNode.Address;
@@ -28,10 +36,18 @@ public sealed partial class LifelineNode : NetNode
         this.PublicKey = publicKey;
     }
 
-    #region FieldAndProperty
+    private LifelineNode()
+    {
+    }
 
-    [Key(2)]
-    public long LastCheckedMics { get; set; }
+    public void ConnectionSucceeded()
+    {
+        this.LastConnectedMics = Mics.FastSystem;
+        this.ConnectionFailureCount = 0;
+    }
 
-    #endregion
+    public bool ConnectionFailed()
+    {
+        return this.ConnectionFailureCount++ >= ConnectionFailureLimit;
+    }
 }
