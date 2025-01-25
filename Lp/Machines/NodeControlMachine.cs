@@ -84,17 +84,8 @@ public partial class NodeControlMachine : Machine
     {
         while (!this.CancellationToken.IsCancellationRequested)
         {
-            if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
-            {// Fixed
-                this.ShowStatus();
-                this.ChangeState(State.MaintainOnlineNode);
-                return StateResult.Continue;
-            }
-
-            if (this.netStats.OutboundPort.IsInconsistent)
-            {// Symmetric (random port)
-                this.ShowStatus();
-                this.ChangeState(State.MaintainOnlineNode);
+            if (this.TryChangeToMaintainState())
+            {
                 return StateResult.Continue;
             }
 
@@ -162,6 +153,11 @@ public partial class NodeControlMachine : Machine
     [StateMethod]
     protected async Task<StateResult> NoOnlineNode(StateParameter parameter)
     {
+        if (this.TryChangeToMaintainState())
+        {
+            return StateResult.Continue;
+        }
+
         // Check unknown node
         if (this.nodeControl.TryGetUnknownNode(out var netNode))
         {
@@ -252,5 +248,24 @@ public partial class NodeControlMachine : Machine
         {
             return default;
         }
+    }
+
+    private bool TryChangeToMaintainState()
+    {
+        if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
+        {// Fixed
+            this.ShowStatus();
+            this.ChangeState(State.MaintainOnlineNode);
+            return true;
+        }
+
+        if (this.netStats.OutboundPort.IsInconsistent)
+        {// Symmetric (random port)
+            this.ShowStatus();
+            this.ChangeState(State.MaintainOnlineNode);
+            return true;
+        }
+
+        return false;
     }
 }
