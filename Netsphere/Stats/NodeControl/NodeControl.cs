@@ -74,7 +74,7 @@ public sealed partial class NodeControl
         using (this.activeNodes.LockObject.EnterScope())
         {
             sb.AppendLine("Active:");
-            foreach (var x in this.lifelineNodes.OfflineLinkChain)
+            foreach (var x in this.activeNodes.LastConnectionMicsChain)
             {
                 sb.AppendLine(x.ToString());
             }
@@ -111,8 +111,8 @@ public sealed partial class NodeControl
     /// <summary>
     /// Maintains the lifeline nodes by adding online nodes to the lifeline and removing offline lifeline nodes if there are sufficient lifeline nodes.
     /// </summary>
-    /// <param name="ownAddress">The address of the own node.</param>
-    public void MaintainLifelineNode(ref NetAddress ownAddress)
+    /// <param name="ownNode">The own net node.</param>
+    public void MaintainLifelineNode(NetNode? ownNode)
     {
         if (!this.CanAddLifelineNode)
         {
@@ -123,6 +123,16 @@ public sealed partial class NodeControl
         {
             using (this.activeNodes.LockObject.EnterScope())
             {
+                // Own -> Active
+                if (ownNode?.IsValid == true &&
+                    !this.activeNodes.AddressChain.ContainsKey(ownNode.Address) &&
+                    this.CanAddActiveNode)
+                {
+                    var item = new ActiveNode(ownNode);
+                    item.LastConnectionMicsValue = Mics.FastSystem;
+                    item.Goshujin = this.activeNodes;
+                }
+
                 // Active -> Lifeline
                 foreach (var x in this.activeNodes)
                 {
@@ -137,7 +147,7 @@ public sealed partial class NodeControl
                     }
 
                     if (!x.Address.IsValidIpv4AndIpv6 ||
-                        ownAddress.Equals(x.Address))
+                        ownNode?.Address.Equals(x.Address) == true)
                     {// Non-dual address or own address
                         continue;
                     }

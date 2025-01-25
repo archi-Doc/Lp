@@ -114,14 +114,8 @@ public partial class NodeControlMachine : Machine
     [StateMethod(2)]
     protected async Task<StateResult> MaintainOnlineNode(StateParameter parameter)
     {
-        NetAddress ownAddress = default;
-        if (this.netStats.OwnNetNode is { } ownNode)
-        {
-            ownAddress = ownNode.Address;
-        }
-
         // Active -> Lifeline, Lifeline offline -> Remove
-        this.nodeControl.MaintainLifelineNode(ref ownAddress);
+        this.nodeControl.MaintainLifelineNode(this.netStats.OwnNetNode);
 
         // Check lifeline node
         if (this.nodeControl.TryGetUncheckedLifelineNode(out var netNode))

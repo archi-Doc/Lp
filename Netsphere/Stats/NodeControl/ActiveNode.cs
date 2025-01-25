@@ -19,12 +19,6 @@ public sealed partial class ActiveNode : NetNode
         };
     }
 
-    [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
-    [Link(Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
-    public ActiveNode()
-    {
-    }
-
     public ActiveNode(NetNode netNode)
     {
         this.Address = netNode.Address;
@@ -35,6 +29,12 @@ public sealed partial class ActiveNode : NetNode
     {
         this.Address = netAddress;
         this.PublicKey = publicKey;
+    }
+
+    [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
+    [Link(Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
+    private ActiveNode()
+    {
     }
 
     #region FieldAndProperty
