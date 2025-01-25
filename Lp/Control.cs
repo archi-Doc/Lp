@@ -407,7 +407,7 @@ public class Control
 
         if (this.LpBase.Options.TestFeatures)
         {
-            NetAddress.SkipValidation = true;
+            // NetAddress.SkipValidation = true;
             this.NetControl.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
         }
 
