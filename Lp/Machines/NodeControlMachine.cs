@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using System.Threading;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
@@ -113,8 +114,14 @@ public partial class NodeControlMachine : Machine
     [StateMethod(2)]
     protected async Task<StateResult> MaintainOnlineNode(StateParameter parameter)
     {
-        // Online -> Lifeline, Lifeline offline -> Remove
-        this.nodeControl.MaintainLifelineNode();
+        NetAddress ownAddress = default;
+        if (this.netStats.OwnNetNode is { } ownNode)
+        {
+            ownAddress = ownNode.Address;
+        }
+
+        // Active -> Lifeline, Lifeline offline -> Remove
+        this.nodeControl.MaintainLifelineNode(ref ownAddress);
 
         // Check lifeline node
         if (this.nodeControl.TryGetUncheckedLifelineNode(out var netNode))
@@ -148,7 +155,7 @@ public partial class NodeControlMachine : Machine
                     var service = connection.GetService<Lp.Net.IBasalService>();
                     if (service is not null)
                     {
-                        var r2 = await this.nodeControl.IntegrateOnlineNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                        var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
                     }
                 }
             }

@@ -92,7 +92,7 @@ public sealed partial class NodeControl
                 foreach (var x in this.lifelineNodes.OnlineLinkChain)
                 {
                     if (this.activeNodes.AddressChain.ContainsKey(x.Address))
-                    {
+                    {// Duplicate
                         continue;
                     }
 
@@ -111,7 +111,8 @@ public sealed partial class NodeControl
     /// <summary>
     /// Maintains the lifeline nodes by adding online nodes to the lifeline and removing offline lifeline nodes if there are sufficient lifeline nodes.
     /// </summary>
-    public void MaintainLifelineNode()
+    /// <param name="ownAddress">The address of the own node.</param>
+    public void MaintainLifelineNode(ref NetAddress ownAddress)
     {
         if (!this.CanAddLifelineNode)
         {
@@ -122,7 +123,7 @@ public sealed partial class NodeControl
         {
             using (this.activeNodes.LockObject.EnterScope())
             {
-                // Online -> Lifeline
+                // Active -> Lifeline
                 foreach (var x in this.activeNodes)
                 {
                     if (this.lifelineNodes.AddressChain.ContainsKey(x.Address))
@@ -133,6 +134,12 @@ public sealed partial class NodeControl
                     if (!this.CanAddLifelineNode)
                     {
                         return;
+                    }
+
+                    if (!x.Address.IsValidIpv4AndIpv6 ||
+                        ownAddress.Equals(x.Address))
+                    {// Non-dual address or own address
+                        continue;
                     }
 
                     var item = new LifelineNode(x.Address, x.PublicKey);
@@ -250,7 +257,7 @@ public sealed partial class NodeControl
         return ActiveNode.Integrality.Default.Differentiate(this.activeNodes, memory);
     }
 
-    public Task<IntegralityResult> IntegrateOnlineNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
+    public Task<IntegralityResult> IntegrateActiveNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
     {
         return ActiveNode.Integrality.Default.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
     }
