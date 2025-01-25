@@ -2,6 +2,7 @@
 
 using System.Net;
 using System.Threading;
+using Netsphere;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
@@ -145,6 +146,10 @@ public partial class NodeControlMachine : Machine
                 }
             }
         }
+        else
+        {
+            await this.ProcessRestorationNode();
+        }
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
@@ -158,11 +163,7 @@ public partial class NodeControlMachine : Machine
             return StateResult.Continue;
         }
 
-        // Check active node
-        if (this.nodeControl.TryGetActiveNode(out var node))
-        {
-            _ = await this.PingIpv4AndIpv6(node, false);
-        }
+        await this.ProcessRestorationNode();
 
         // Check unknown node
         /*if (this.nodeControl.TryGetUnknownNode(out var netNode))
@@ -170,7 +171,7 @@ public partial class NodeControlMachine : Machine
             _ = await this.PingIpv4AndIpv6(netNode, false);
         }*/
 
-        this.TimeUntilRun = TimeSpan.FromSeconds(10);
+        this.TimeUntilRun = TimeSpan.FromSeconds(1);
         return StateResult.Continue;
     }
 
@@ -230,13 +231,16 @@ public partial class NodeControlMachine : Machine
         this.netStats.ReportEndpoint(true, result[0]);
         this.netStats.ReportEndpoint(false, result[1]);
 
-        if (isLifelineNode)
-        {
-            this.nodeControl.ReportLifelineNodeConnection(netNode, ConnectionResult.Success);
-        }
-        else
-        {
-            this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
+        if (netNode.Address.IsValidIpv4AndIpv6)
+        {// LifelineNode and ActiveNode are limited to DualAddress.
+            if (isLifelineNode)
+            {
+                this.nodeControl.ReportLifelineNodeConnection(netNode, ConnectionResult.Success);
+            }
+            else
+            {
+                this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
+            }
         }
 
         return true;
@@ -274,5 +278,27 @@ public partial class NodeControlMachine : Machine
         }
 
         return false;
+    }
+
+    private async Task ProcessRestorationNode()
+    {
+        if (this.nodeControl.RestorationNode is { } restorationNode)
+        {
+            this.nodeControl.RestorationNode = default;
+
+            _ = await this.PingIpv4AndIpv6(restorationNode, true);
+
+            using (var connection = await this.netControl.NetTerminal.Connect(restorationNode))
+            {
+                if (connection is not null)
+                {
+                    var service = connection.GetService<Lp.Net.IBasalService>();
+                    if (service is not null)
+                    {
+                        var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                    }
+                }
+            }
+        }
     }
 }

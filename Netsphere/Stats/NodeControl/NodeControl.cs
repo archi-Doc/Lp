@@ -36,6 +36,9 @@ public sealed partial class NodeControl
 
     // private ActiveNode.GoshujinClass unknownNodes = new(); // this.unknownNodes.SyncObject
 
+    [IgnoreMember]
+    public NetNode? RestorationNode { get; set; }
+
     public int CountLinfelineOnline => this.lifelineNodes.OnlineLinkChain.Count;
 
     public int CountLinfelineOffline => this.lifelineNodes.OfflineLinkChain.Count;
@@ -124,7 +127,9 @@ public sealed partial class NodeControl
             using (this.activeNodes.LockObject.EnterScope())
             {
                 // Own -> Active
-                if (ownNode?.IsValid == true &&
+                if (ownNode is not null &&
+                    ownNode.Address.IsValidIpv4AndIpv6 &&
+                    ownNode.PublicKey.IsValid &&
                     !this.activeNodes.AddressChain.ContainsKey(ownNode.Address) &&
                     this.CanAddActiveNode)
                 {
@@ -411,6 +416,23 @@ public sealed partial class NodeControl
         {
             TemporaryList<LifelineNode> deleteList = default;
             foreach (var x in this.lifelineNodes)
+            {
+                if (!x.Address.IsValidIpv4AndIpv6)
+                {
+                    deleteList.Add(x);
+                }
+            }
+
+            foreach (var x in deleteList)
+            {
+                x.Goshujin = default;
+            }
+        }
+
+        using (this.activeNodes.LockObject.EnterScope())
+        {
+            TemporaryList<ActiveNode> deleteList = default;
+            foreach (var x in this.activeNodes)
             {
                 if (!x.Address.IsValidIpv4AndIpv6)
                 {

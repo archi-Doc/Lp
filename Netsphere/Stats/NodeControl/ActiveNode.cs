@@ -23,6 +23,10 @@ public sealed partial class ActiveNode : NetNode
             {
                 return false;
             }
+            else if (!newItem.Address.IsValidIpv4AndIpv6)
+            {
+                return false;
+            }
 
             return true;
         }

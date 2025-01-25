@@ -428,7 +428,10 @@ public class ConnectionTerminal
             connection.Goshujin = this.serverConnections;
         }
 
-        this.netStats.NodeControl.TryAddUnknownNode(node);
+        if (this.netStats.NodeControl.RestorationNode is null)
+        {
+            this.netStats.NodeControl.RestorationNode = node;
+        }
 
         return true;
     }
