@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Microsoft.VisualBasic;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -17,6 +16,16 @@ public sealed partial class ActiveNode : NetNode
             MaxItems = 100,
             RemoveIfItemNotFound = false,
         };
+
+        public override bool Validate(GoshujinClass goshujin, ActiveNode newItem, ActiveNode? oldItem)
+        {
+            if (!newItem.Address.Validate())
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     public ActiveNode(NetNode netNode)
