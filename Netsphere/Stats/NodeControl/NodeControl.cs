@@ -182,6 +182,10 @@ public sealed partial class NodeControl
         {
             return false;
         }
+        else if (!node.Validate())
+        {
+            return false;
+        }
 
         using (this.activeNodes.LockObject.EnterScope())
         {
