@@ -16,7 +16,7 @@ public sealed partial class NodeControl
     public static readonly int MaxActiveNodes = 256;
     public static readonly int MaxUnknownNodes = 32;
     public static readonly int SufficientActiveNodes = 32;
-    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromMinutes(5)
+    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(0);// Mics.FromMinutes(5)
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
     public NodeControl(NetBase netBase)
@@ -122,11 +122,6 @@ public sealed partial class NodeControl
     /// <param name="ownNode">The own net node.</param>
     public void MaintainLifelineNode(NetNode? ownNode)
     {
-        if (!this.CanAddLifelineNode)
-        {
-            return;
-        }
-
         using (this.lifelineNodes.LockObject.EnterScope())
         {
             using (this.activeNodes.LockObject.EnterScope())
@@ -526,7 +521,7 @@ public sealed partial class NodeControl
     {
         if (trimLifeline)
         {
-            var range = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
+            var range = MicsRange.FromPastToFastCorrected(LifelineCheckIntervalMics);
             foreach (var x in this.lifelineNodes)
             {
                 if (!range.IsWithin(x.LastConnectedMics) &&
@@ -541,7 +536,7 @@ public sealed partial class NodeControl
 
         if (trimActive)
         {
-            var range = MicsRange.FromPastToFastSystem(OnlineValidMics);
+            var range = MicsRange.FromPastToFastCorrected(OnlineValidMics);
             TemporaryList<ActiveNode> deleteList = default;
             foreach (var x in this.activeNodes)
             {
