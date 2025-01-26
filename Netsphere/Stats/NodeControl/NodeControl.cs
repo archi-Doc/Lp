@@ -16,7 +16,7 @@ public sealed partial class NodeControl
     public static readonly int MaxActiveNodes = 256;
     public static readonly int MaxUnknownNodes = 32;
     public static readonly int SufficientActiveNodes = 32;
-    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromHours(1);
+    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromMinutes(5)
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
     public NodeControl(NetBase netBase)
@@ -77,9 +77,9 @@ public sealed partial class NodeControl
         using (this.activeNodes.LockObject.EnterScope())
         {
             sb.AppendLine("Active:");
-            foreach (var x in this.activeNodes.LastConnectionMicsChain)
+            foreach (var x in this.activeNodes.LastConnectedMicsChain)
             {
-                sb.AppendLine(x.ToString());
+                sb.AppendLine(x.ToString() + x.LastConnectedMics);
             }
         }
 
@@ -88,23 +88,28 @@ public sealed partial class NodeControl
 
     public void FromLifelineNodeToActiveNode()
     {
+        if (this.CountActive >= SufficientActiveNodes)
+        {
+            return;
+        }
+
         using (this.lifelineNodes.LockObject.EnterScope())
         {
             using (this.activeNodes.LockObject.EnterScope())
             {
                 foreach (var x in this.lifelineNodes.OnlineLinkChain)
-                {
+                {// Lifeline Online -> Active
                     if (this.activeNodes.AddressChain.ContainsKey(x.Address))
                     {// Duplicate
                         continue;
                     }
 
-                    if (!this.CanAddActiveNode)
+                    if (this.CountActive >= SufficientActiveNodes)
                     {
                         return;
                     }
 
-                    var item = new ActiveNode(x.Address, x.PublicKey);
+                    var item = new ActiveNode(x);
                     this.activeNodes.Add(item);
                 }
             }
@@ -134,7 +139,7 @@ public sealed partial class NodeControl
                     this.CanAddActiveNode)
                 {
                     var item = new ActiveNode(ownNode);
-                    item.LastConnectionMicsValue = Mics.FastSystem;
+                    item.ConnectionSucceeded();
                     item.Goshujin = this.activeNodes;
                 }
 
@@ -201,7 +206,7 @@ public sealed partial class NodeControl
             }
 
             var item = new ActiveNode(node);
-            item.LastConnectionMicsValue = Mics.FastSystem;
+            item.ConnectionSucceeded();
             item.Goshujin = this.activeNodes;
         }
 
@@ -244,6 +249,24 @@ public sealed partial class NodeControl
     }*/
 
     public bool TryGetUncheckedLifelineNode([MaybeNullWhen(false)] out NetNode node)
+    {
+        node = default;
+        using (this.lifelineNodes.LockObject.EnterScope())
+        {
+            var obj = this.lifelineNodes.UncheckedListChain.First;
+            if (obj is null)
+            {
+                return false;
+            }
+
+            node = obj;
+            this.lifelineNodes.UncheckedListChain.Remove(obj);
+        }
+
+        return true;
+    }
+
+    public bool TryGetLifelineNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         using (this.lifelineNodes.LockObject.EnterScope())
@@ -343,12 +366,12 @@ public sealed partial class NodeControl
                     var item2 = this.activeNodes.AddressChain.FindFirst(node.Address);
                     if (item2 is not null)
                     {
-                        item2.LastConnectionMicsValue = Mics.FastSystem;
+                        item2.ConnectionSucceeded();
                     }
                     else if (this.CanAddActiveNode)
                     {
                         item2 = new(node);
-                        item2.LastConnectionMicsValue = Mics.FastSystem;
+                        item2.ConnectionSucceeded();
                         item2.Goshujin = this.activeNodes;
                     }
                 }
@@ -368,7 +391,7 @@ public sealed partial class NodeControl
             {
                 if (result == ConnectionResult.Success)
                 {
-                    item.LastConnectionMicsValue = Mics.FastSystem;
+                    item.ConnectionSucceeded();
                 }
                 else if (result == ConnectionResult.Failure)
                 {
@@ -381,7 +404,7 @@ public sealed partial class NodeControl
                     this.CanAddActiveNode)
                 {
                     item = new(node);
-                    item.LastConnectionMicsValue = Mics.FastSystem;
+                    item.ConnectionSucceeded();
                     item.Goshujin = this.activeNodes;
                 }
             }
@@ -399,13 +422,13 @@ public sealed partial class NodeControl
         }
     }
 
-    public void Trim()
+    public void Trim(bool trimLifeline, bool trimActive)
     {
         using (this.lifelineNodes.LockObject.EnterScope())
         {
             using (this.activeNodes.LockObject.EnterScope())
             {
-                this.TrimInternal();
+                this.TrimInternal(trimLifeline, trimActive);
             }
         }
     }
@@ -476,7 +499,7 @@ public sealed partial class NodeControl
         }
 
         this.ValidateInternal();
-        this.TrimInternal();
+        this.TrimInternal(true, true);
     }
 
     private void LoadNodeList()
@@ -499,34 +522,36 @@ public sealed partial class NodeControl
         }
     }
 
-    private void TrimInternal()
+    private void TrimInternal(bool trimLifeline, bool trimActive)
     {
-        var lifelineRange = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
-        foreach (var x in this.lifelineNodes)
+        if (trimLifeline)
         {
-            if (!lifelineRange.IsWithin(x.LastConnectedMics) &&
-                x.Goshujin is { } g)
-            {// Online/Offline -> Unchecked
-                g.UncheckedListChain.AddFirst(x);
-                g.OfflineLinkChain.Remove(x);
-                g.OfflineLinkChain.Remove(x);
-            }
-        }
-
-        var onlineRange = MicsRange.FromPastToFastSystem(OnlineValidMics);
-        List<ActiveNode>? deleteList = default;
-        foreach (var x in this.activeNodes)
-        {
-            if (!lifelineRange.IsWithin(x.LastConnectionMics) &&
-                x.Goshujin is { } g)
+            var range = MicsRange.FromPastToFastSystem(LifelineCheckIntervalMics);
+            foreach (var x in this.lifelineNodes)
             {
-                deleteList ??= new();
-                deleteList.Add(x);
+                if (!range.IsWithin(x.LastConnectedMics) &&
+                    x.Goshujin is { } g)
+                {// Online/Offline -> Unchecked
+                    g.UncheckedListChain.AddFirst(x);
+                    g.OfflineLinkChain.Remove(x);
+                    g.OfflineLinkChain.Remove(x);
+                }
             }
         }
 
-        if (deleteList is not null)
+        if (trimActive)
         {
+            var range = MicsRange.FromPastToFastSystem(OnlineValidMics);
+            TemporaryList<ActiveNode> deleteList = default;
+            foreach (var x in this.activeNodes)
+            {
+                if (!range.IsWithin(x.LastConnectedMics) &&
+                    x.Goshujin is { } g)
+                {
+                    deleteList.Add(x);
+                }
+            }
+
             foreach (var x in deleteList)
             {
                 x.Goshujin = default;

@@ -28,6 +28,15 @@ public sealed partial class ActiveNode : NetNode
                 return false;
             }
 
+            if (oldItem is not null)
+            {
+                //Console.WriteLine(oldItem.LastConnectedMicsValue);
+                if (oldItem.LastConnectedMicsValue >= newItem.LastConnectedMicsValue)
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
     }
@@ -38,10 +47,11 @@ public sealed partial class ActiveNode : NetNode
         this.PublicKey = netNode.PublicKey;
     }
 
-    public ActiveNode(NetAddress netAddress, EncryptionPublicKey publicKey)
+    public ActiveNode(LifelineNode node)
     {
-        this.Address = netAddress;
-        this.PublicKey = publicKey;
+        this.Address = node.Address;
+        this.PublicKey = node.PublicKey;
+        this.LastConnectedMics = node.LastConnectedMics;
     }
 
     [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
@@ -50,11 +60,16 @@ public sealed partial class ActiveNode : NetNode
     {
     }
 
+    public void ConnectionSucceeded()
+    {
+        this.LastConnectedMicsValue = Mics.FastCorrected;
+    }
+
     #region FieldAndProperty
 
     [Key(2)]
     [Link(Type = ChainType.Ordered, Accessibility = ValueLinkAccessibility.Public)]
-    public long LastConnectionMics { get; private set; }
+    public long LastConnectedMics { get; private set; }
 
     #endregion
 }

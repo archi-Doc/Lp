@@ -42,7 +42,7 @@ public sealed partial class LifelineNode : NetNode
 
     public void ConnectionSucceeded()
     {
-        this.LastConnectedMics = Mics.FastSystem;
+        this.LastConnectedMics = Mics.FastCorrected;
         this.ConnectionFailureCount = 0;
     }
 

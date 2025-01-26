@@ -18,6 +18,7 @@ namespace Lp.Machines;
 public partial class NodeControlMachine : Machine
 {
     private const int ConsumeLifelineCount = 10;
+    private const int FixEndpointThreshold = 10;
 
     public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl)
         : base()
@@ -35,6 +36,7 @@ public partial class NodeControlMachine : Machine
     private readonly NetBase netBase;
     private readonly NetStats netStats;
     private readonly NodeControl nodeControl;
+    private int count = 0;
 
     [StateMethod(0)]
     protected async Task<StateResult> ConsumeLifelineNode(StateParameter parameter)
@@ -83,24 +85,27 @@ public partial class NodeControlMachine : Machine
     [StateMethod(1)]
     protected async Task<StateResult> FixEndpoint(StateParameter parameter)
     {
-        while (!this.CancellationToken.IsCancellationRequested)
+        if (this.TryChangeToMaintainState())
         {
-            if (this.TryChangeToMaintainState())
-            {
-                return StateResult.Continue;
-            }
-
-            if (!this.nodeControl.TryGetActiveNode(out var node))
-            { // No online node
-                this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to NodeList.");
-                this.ChangeState(State.NoOnlineNode);
-                return StateResult.Continue;
-            }
-
-            var result = await this.PingIpv4AndIpv6(node, false);
+            return StateResult.Continue;
         }
 
-        return StateResult.Terminate;
+        if (this.count++ >= FixEndpointThreshold)
+        {
+            this.count = 0;
+            this.ChangeState(State.MaintainOnlineNode);
+            return StateResult.Continue;
+        }
+
+        if (!this.nodeControl.TryGetActiveNode(out var node))
+        { // No online node
+            this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to NodeList.");
+            this.ChangeState(State.NoOnlineNode);
+            return StateResult.Continue;
+        }
+
+        await this.PingAndIntegrateActiveNode(node);
+        return StateResult.Continue;
     }
 
     [StateMethod(2)]
@@ -110,9 +115,9 @@ public partial class NodeControlMachine : Machine
         this.nodeControl.MaintainLifelineNode(this.netStats.OwnNetNode);
 
         // Check lifeline node
-        if (this.nodeControl.TryGetUncheckedLifelineNode(out var netNode))
+        if (this.nodeControl.TryGetUncheckedLifelineNode(out var node))
         {
-            _ = await this.PingIpv4AndIpv6(netNode, true);
+            _ = await this.PingIpv4AndIpv6(node, true);
         }
 
         // Check unknown node
@@ -121,21 +126,20 @@ public partial class NodeControlMachine : Machine
             _ = await this.PingIpv4AndIpv6(netNode, false);
         }*/
 
-        // Add active nodes from lifeline nodes.
-        if (this.nodeControl.CountActive == 0)
-        {
-            this.nodeControl.FromLifelineNodeToActiveNode();
-        }
+        // Lifeline Online -> Active
+        // this.nodeControl.FromLifelineNodeToActiveNode();
 
         // Integrate active nodes.
-        if (this.nodeControl.TryGetActiveNode(out netNode))
+        if (this.nodeControl.TryGetActiveNode(out node))
         {
-            await this.ProcessActiveNode(netNode);
+            await this.PingAndIntegrateActiveNode(node);
         }
         else
         {
             await this.ProcessRestorationNode();
         }
+
+        this.nodeControl.Trim(false, true);
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
@@ -150,9 +154,9 @@ public partial class NodeControlMachine : Machine
         }
 
         // Integrate active nodes.
-        if (this.nodeControl.TryGetActiveNode(out var netNode))
+        if (this.nodeControl.TryGetActiveNode(out var node))
         {
-            await this.ProcessActiveNode(netNode);
+            await this.PingAndIntegrateActiveNode(node);
         }
         else
         {
@@ -190,7 +194,7 @@ public partial class NodeControlMachine : Machine
             return true;
         }
 
-        this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");//
+        // this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
         var ipv6Task = this.PingNetNode(netNode, true);
         var ipv4Task = this.PingNetNode(netNode, false);
         var result = await Task.WhenAll(ipv6Task, ipv4Task);
@@ -235,6 +239,7 @@ public partial class NodeControlMachine : Machine
             if (isLifelineNode)
             {
                 this.nodeControl.ReportLifelineNodeConnection(netNode, ConnectionResult.Success);
+                this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
             }
             else
             {
@@ -279,9 +284,14 @@ public partial class NodeControlMachine : Machine
         return false;
     }
 
-    private async Task ProcessActiveNode(NetNode netNode)
+    private async Task PingAndIntegrateActiveNode(NetNode netNode)
     {
-        _ = await this.PingIpv4AndIpv6(netNode, true);//
+        if (netNode.Equals(this.netStats.OwnNetNode))
+        {
+            return;
+        }
+
+        _ = await this.PingIpv4AndIpv6(netNode, false);
 
         using (var connection = await this.netControl.NetTerminal.Connect(netNode))
         {
@@ -306,7 +316,7 @@ public partial class NodeControlMachine : Machine
         {
             this.nodeControl.RestorationNode = default;
 
-            _ = await this.PingIpv4AndIpv6(restorationNode, true);
+            _ = await this.PingIpv4AndIpv6(restorationNode, false);
 
             using (var connection = await this.netControl.NetTerminal.Connect(restorationNode))
             {
