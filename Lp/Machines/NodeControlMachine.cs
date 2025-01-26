@@ -185,7 +185,12 @@ public partial class NodeControlMachine : Machine
 
     private async Task<bool> PingIpv4AndIpv6(NetNode netNode, bool isLifelineNode)
     {
-        this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
+        if (netNode.Equals(this.netStats.OwnNetNode))
+        {
+            return true;
+        }
+
+        this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");//
         var ipv6Task = this.PingNetNode(netNode, true);
         var ipv4Task = this.PingNetNode(netNode, false);
         var result = await Task.WhenAll(ipv6Task, ipv4Task);

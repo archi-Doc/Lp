@@ -99,6 +99,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowNodeControlStateSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.AddNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
@@ -107,7 +108,6 @@ public class Control
                 Lp.Subcommands.InfoSubcommand.Configure(context);
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
-                Lp.Subcommands.NodeSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CustomSubcommand.Configure(context);

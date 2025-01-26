@@ -1,17 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere;
+using Netsphere.Stats;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("add")]
-public class NodeSubcommandAdd : ISimpleCommand
+[SimpleCommand("add-net-node")]
+public class AddNetNodeSubcommand : ISimpleCommand
 {
-    public NodeSubcommandAdd(ILogger<NodeSubcommandAdd> logger, Control control)
+    public AddNetNodeSubcommand(ILogger<AddNetNodeSubcommand> logger, NetStats netStats)
     {
         this.logger = logger;
-        this.Control = control;
+        this.netStats = netStats;
     }
 
     public void Run(string[] args)
@@ -23,11 +24,10 @@ public class NodeSubcommandAdd : ISimpleCommand
                 continue;
             }
 
-            this.Control.NetControl.NetStats.NodeControl.TryAddActiveNode(node);//
+            this.netStats.NodeControl.TryAddActiveNode(node);
         }
     }
 
-    public Control Control { get; set; }
-
-    private ILogger<NodeSubcommandAdd> logger;
+    private readonly ILogger logger;
+    private readonly NetStats netStats;
 }
