@@ -6,32 +6,21 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-/// <summary>
+/*/// <summary>
 /// Immutable evidence object (authentication within merger).
 /// </summary>
 [TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public sealed partial class Evidence : IValidatable
+public abstract partial class Evidence : IValidatable
 {
-    public static bool TryCreate(Proof proof, [MaybeNullWhen(false)] out Evidence evidence)
-    {
-        if (!proof.TryGetCredit(out var credit))
-        {
-            evidence = default;
-            return false;
-        }
-
-        var obj = new Evidence();
-        obj.Proof = proof;
-
-        evidence = obj;
-        return true;
-    }
-
-    [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
-    internal Evidence()
+    // [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
+    public Evidence()
     {
         this.Proof = default!;
+    }
+
+    protected Evidence(Proof proof)
+    {
+        this.Proof = proof;
     }
 
     #region FieldAndProperty
@@ -47,12 +36,6 @@ public sealed partial class Evidence : IValidatable
 
     [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; private set; }
-
-    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
-    public Proof? LinkedProof { get; private set; }
-
-    [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
-    public ulong LinkageId { get; private set; }
 
     public long ProofMics
         => this.Proof.VerificationMics;
@@ -173,4 +156,4 @@ public sealed partial class Evidence : IValidatable
             }
         }
     }
-}
+}*/

@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Microsoft.VisualBasic;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -17,12 +16,29 @@ public sealed partial class ActiveNode : NetNode
             MaxItems = 100,
             RemoveIfItemNotFound = false,
         };
-    }
 
-    [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
-    [Link(Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
-    public ActiveNode()
-    {
+        public override bool Validate(GoshujinClass goshujin, ActiveNode newItem, ActiveNode? oldItem)
+        {
+            if (!newItem.Address.Validate())
+            {
+                return false;
+            }
+            else if (!newItem.Address.IsValidIpv4AndIpv6)
+            {
+                return false;
+            }
+
+            if (oldItem is not null)
+            {
+                // Console.WriteLine(oldItem.LastConnectedMicsValue);
+                if (oldItem.LastConnectedMicsValue >= newItem.LastConnectedMicsValue)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
     public ActiveNode(NetNode netNode)
@@ -31,17 +47,29 @@ public sealed partial class ActiveNode : NetNode
         this.PublicKey = netNode.PublicKey;
     }
 
-    public ActiveNode(NetAddress netAddress, EncryptionPublicKey publicKey)
+    public ActiveNode(LifelineNode node)
     {
-        this.Address = netAddress;
-        this.PublicKey = publicKey;
+        this.Address = node.Address;
+        this.PublicKey = node.PublicKey;
+        this.LastConnectedMics = node.LastConnectedMics;
+    }
+
+    [Link(Primary = true, Type = ChainType.QueueList, Name = "Get")]
+    [Link(Unique = true, Type = ChainType.Unordered, TargetMember = "Address", AddValue = false)]
+    private ActiveNode()
+    {
+    }
+
+    public void ConnectionSucceeded()
+    {
+        this.LastConnectedMicsValue = Mics.FastCorrected;
     }
 
     #region FieldAndProperty
 
     [Key(2)]
     [Link(Type = ChainType.Ordered, Accessibility = ValueLinkAccessibility.Public)]
-    public long LastConnectionMics { get; private set; }
+    public long LastConnectedMics { get; private set; }
 
     #endregion
 }

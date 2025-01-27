@@ -9,10 +9,10 @@ Dialog = {
         EnterCurrent = "Enter the current password"
         EnterNew = "Enter the new password"
         Confirm = "Confirm password"
-        EmptyWarning = "Empty password should not be used."
+        EmptyWarning = "Empty password should not be used"
         EmptyConfirm = "Are you sure you want to continue without password?"
-        NotMatch = "Password didn't match, try again."
-        Changed = "Password was successfully changed."
+        NotMatch = "Password didn't match, try again"
+        Changed = "Password was successfully changed"
     }
 }
 
@@ -28,13 +28,17 @@ Error = {
     Deserialize = "Could not deserialize '{0}'"
     KeyVault = "Could not deserialize '{0}'"
     Parse = "Could not parse '{0}'"
-    InvalidAddress = "{0} is not valid address."
+    InvalidAddress = "{0} is not valid address"
     Connect = "Could not connect to '{0}'"
     Authorization = "Authorization error"
     NoPingFromContainer = "Failed to receive a Ping response from the container"
     InvalidPublicKey = "PublicKey is invalid"
     InvalidPrivateKey = "PrivateKey is invalid"
-    NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey."
+    NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey"
+    NoFixedNode = "Unable to obtain own IP address due to the lack of a network connection or a NodeList"
+    NoDirectConnection = "Direct network connection through the specified port number is required"
+    NoOwnAddress = "Own IP address is not determined"
+    NoOnlineNode = "No online nodes. Please check your internet connection or add a node to connect (add-net-node)"
 }
 
 Vault = {
@@ -81,7 +85,7 @@ Subcommands = {
     GC = {
         Start = "GC.Collect"
     }
-    
+
     NodeKey = {
         Changed = "Node key changed: {0}"
         InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
@@ -114,10 +118,10 @@ AddStorageResult = {
 
 Merger =
 {
-    NoPrivateKey = "Merger private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault."
+    NoPrivateKey = "Merger private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
 }
 
 Linker =
 {
-    NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault."
+    NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
 }

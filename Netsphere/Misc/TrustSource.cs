@@ -9,12 +9,6 @@ namespace Netsphere;
 [TinyhandObject]
 public sealed partial class TrustSource<T>
 {
-    /*public enum TrustState
-    {
-        Unfixed,
-        Fixed,
-    }*/
-
     public TrustSource(int capacity, int trustMinimum)
     {
         Debug.Assert(capacity > 0);
@@ -90,11 +84,18 @@ public sealed partial class TrustSource<T>
     [IgnoreMember]
     public int TrustMinimum { get; private set; }
 
+    public int Count => this.items.Count;
+
     public bool IsFixed => this.isFixed;
 
-    public bool UnableToFix => !this.isFixed && this.items.Count >= this.TrustMinimum;
+    public bool IsInconsistent => !this.isFixed && this.IsAboveMinimum;
 
-    public T? FixedOrDefault => this.fixedValue;
+    /// <summary>
+    /// Gets a value indicating whether the count of items is above the minimum trust value.
+    /// </summary>
+    public bool IsAboveMinimum => this.items.Count >= this.TrustMinimum;
+
+    // public T? FixedOrDefault => this.fixedValue;
 
     private readonly Lock lockObject = new();
     // private readonly ObjectPool<Item> itemPool;
@@ -195,10 +196,38 @@ public sealed partial class TrustSource<T>
         }
     }
 
-    public bool TryGet([MaybeNullWhen(false)] out T value)
+    public bool TryGetFixed([MaybeNullWhen(false)] out T value)
     {
         value = this.fixedValue;
         return this.isFixed && value is not null;
+    }
+
+    public bool TryGet([MaybeNullWhen(false)] out T value, out bool isFixed)
+    {
+        value = this.fixedValue;
+        if (this.isFixed)
+        {// Fixed
+            isFixed = true;
+            return value is not null;
+        }
+        else
+        {// Not fixed
+            using (this.lockObject.EnterScope())
+            {
+                isFixed = false;
+                var last = this.counters.CountChain.Last;
+                if (last is not null)
+                {// Use the value with the highest count as the provisional value.
+                    value = last.Value;
+                    return value is not null;
+                }
+                else
+                {// No value
+                    value = default;
+                    return false;
+                }
+            }
+        }
     }
 
     public void Clear()

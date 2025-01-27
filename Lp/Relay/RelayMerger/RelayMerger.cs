@@ -2,13 +2,14 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
+using Netsphere.Stats;
 
 namespace Lp.T3cs;
 
 public class RelayMerger : Merger
 {
-    public RelayMerger(UnitContext context, UnitLogger unitLogger, LpBase lpBase)
-        : base(context, unitLogger, lpBase)
+    public RelayMerger(UnitContext context, UnitLogger unitLogger, LpBase lpBase, NetStats netStats)
+        : base(context, unitLogger, lpBase, netStats)
     {
         this.logger = unitLogger.GetLogger<RelayMerger>();
     }
@@ -55,6 +56,8 @@ public class RelayMerger : Merger
 
         this.mergerSeedKey = mergerSeedKey;
         this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
+
+        this.InitializeLogger();
 
         this.Initialized = true;
     }

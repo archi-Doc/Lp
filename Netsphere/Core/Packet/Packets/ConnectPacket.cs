@@ -22,7 +22,7 @@ internal partial class ConnectPacket : IPacket
     }
 
     [Key(0)]
-    public uint NetIdentification { get; set; }
+    public uint NetsphereId { get; set; }
 
     // [Key(1)]
     // public ushort RelayId { get; set; }
@@ -55,15 +55,16 @@ internal partial class ConnectPacketResponse : IPacket
         this.ServerSalt2 = RandomVault.Default.NextUInt64();
     }
 
-    public ConnectPacketResponse(ConnectionAgreement agreement)
+    public ConnectPacketResponse(ConnectionAgreement agreement, NetEndpoint sourceEndpoint)
         : this()
     {
         // this.Success = true;
         this.Agreement = agreement with { }; // Create a new instance.
+        this.SourceEndpoint = sourceEndpoint;
     }
 
-    /*[Key(0)]
-    public bool Success { get; set; }*/
+    [Key(0)]
+    public NetEndpoint SourceEndpoint { get; set; }
 
     [Key(1)]
     public ulong ServerSalt { get; set; }

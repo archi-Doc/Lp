@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Netsphere;
 
@@ -710,14 +712,26 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
         Span<byte> b = stackalloc byte[8];
         BitConverter.TryWriteBytes(b, this.Address6A);
-        if (b[0] == 0xFC || b[0] == 0xFD)
+
+        var b0 = (byte)this.Address6A;
+        var b1 = (byte)(this.Address6A >> 8);
+        if (b0 == 0xFC || b0 == 0xFD)
         {// Unique local address
             return false;
         }
-        else if (b[0] == 0xFE)
+        else if (b0 == 0xFE)
         {
-            if (b[1] >= 0x80 && b[1] <= 0xBF)
+            if (b1 >= 0x80 && b1 <= 0xBF)
             {// Link-local address
+                return false;
+            }
+        }
+        else if (b0 == 0x20 && b1 == 0x01)
+        {// 2001
+            var b2 = (byte)(this.Address6A >> 16);
+            var b3 = (byte)(this.Address6A >> 24);
+            if (b2 == 0x0D && b3 == 0xB8)
+            {
                 return false;
             }
         }

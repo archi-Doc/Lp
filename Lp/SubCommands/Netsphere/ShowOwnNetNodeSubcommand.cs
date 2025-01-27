@@ -18,7 +18,7 @@ public class ShowOwnNetNodeSubcommand : ISimpleCommandAsync
     public async Task RunAsync(string[] args)
     {
         var node = this.netStats.GetOwnNetNode();
-        this.userInterfaceService.WriteLine(node.ToString());
+        this.userInterfaceService.WriteLine($"{this.netStats.GetOwnNodeType().ToString()}: {node.ToString()}");
     }
 
     private readonly ILogger logger;

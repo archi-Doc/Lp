@@ -24,6 +24,8 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public NetOptions NetOptions { get; private set; }
 
+    public bool IsPortNumberSpecified { get; private set; }
+
     public bool AllowUnsafeConnection { get; set; } = false;
 
     public ConnectionAgreement DefaultAgreement { get; set; } = ConnectionAgreement.Default;
@@ -62,6 +64,10 @@ public class NetBase : UnitBase, IUnitPreparable
                 this.UnitLogger.TryGet<NetBase>(LogLevel.Error)?.Log($"Port number must be between {NetConstants.MinPort} and {NetConstants.MaxPort}");
                 this.UnitLogger.TryGet<NetBase>(LogLevel.Error)?.Log($"Port number is set to {this.NetOptions.Port}");
             }
+        }
+        else
+        {
+            this.IsPortNumberSpecified = true;
         }
 
         // Node key

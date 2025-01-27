@@ -349,7 +349,7 @@ public sealed partial class PacketTerminal
 
                     Task.Run(() =>
                     {
-                        var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement);
+                        var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement, endpoint);
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
                         CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                         // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
@@ -362,9 +362,10 @@ public sealed partial class PacketTerminal
             else if (packetType == PacketType.Ping)
             {// PingPacket
                 var netOptions = this.netBase.NetOptions;
-                if (netOptions.EnablePing)
+                if (netOptions.EnablePing ||
+                    endpoint.IsPrivateOrLocalLoopbackAddress())
                 {
-                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, Netsphere.Version.VersionHelper.VersionInt, netOptions.Phase);
+                    var packet = new PingPacketResponse(endpoint, netOptions.NodeName, netOptions.NetsphereId);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
@@ -372,6 +373,32 @@ public sealed partial class PacketTerminal
                     if (NetConstants.LogLowLevelNet)
                     {
                         // this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PingResponse");
+                    }
+                }
+
+                return;
+            }
+            else if (packetType == PacketType.Punch)
+            {// PunchPacket
+                var netOptions = this.netBase.NetOptions;
+                if (netOptions.EnablePing)
+                {
+                    if (TinyhandSerializer.TryDeserialize<PunchPacket>(span, out var p) &&
+                        p.DestinationEndpoint.IsValid)
+                    {
+                        // Console.WriteLine($"PunchPacket {p.ToString()}");
+                        if (p.RelayEndpoint.IsValid)
+                        {// Relay
+                            var packet = new PunchPacket(default, p.DestinationEndpoint);
+                            CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                            this.SendPacketWithoutRelay(p.RelayEndpoint, rentMemory, default);
+                        }
+                        else
+                        {// Response
+                            var packet = new PunchPacketResponse();
+                            CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                            this.SendPacketWithoutRelay(p.DestinationEndpoint, rentMemory, default);
+                        }
                     }
                 }
 

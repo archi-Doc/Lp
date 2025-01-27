@@ -49,10 +49,15 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         var result = await packetTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, p, 0, default, EndpointResolution.NetAddress);
 
         sw.Stop();
-        if (result.Value != null)
+        if (result.Value is not null)
         {
             this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             this.logger.TryGet()?.Log(result.Value.ToString());
+
+            if (result.Value.SourceEndpoint.EndPoint is { } endpoint)
+            {
+                this.Control.NetControl.NetStats.ReportEndpoint(endpoint);
+            }
         }
         else
         {

@@ -205,11 +205,6 @@ public class ConnectionTerminal
         }
 
         var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, t.Value);
-        if (newConnection is null)
-        {
-            return default;
-        }
-
         newConnection.MinimumNumberOfRelays = targetNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
         using (this.clientConnections.LockObject.EnterScope())
@@ -273,17 +268,19 @@ public class ConnectionTerminal
         // Create a new connection
         var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, minimumNumberOfRelays, default).ConfigureAwait(false);
-        if (t.Value is null)
+        var response = t.Value;
+        if (response is null)
         {
             return default;
         }
 
-        var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, t.Value);
-        if (newConnection is null)
+        var ownEndpoint = response.SourceEndpoint;
+        if (ownEndpoint.IsValid)
         {
-            return default;
+            this.netStats.ReportEndpoint(ownEndpoint.EndPoint);
         }
 
+        var newConnection = this.PrepareClientSide(node, endPoint, seedKey, node.PublicKey, packet, response);
         newConnection.MinimumNumberOfRelays = minimumNumberOfRelays;
         newConnection.AddRtt(t.RttMics);
         using (this.clientConnections.LockObject.EnterScope())
@@ -372,7 +369,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal ClientConnection? PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
+    internal ClientConnection PrepareClientSide(NetNode node, NetEndpoint endPoint, SeedKey clientSeedKey, EncryptionPublicKey serverPublicKey, ConnectPacket p, ConnectPacketResponse p2)
     {
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         clientSeedKey.DeriveKeyMaterial(serverPublicKey, material);
@@ -424,13 +421,17 @@ public class ConnectionTerminal
 
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
-        this.netStats.NodeControl.TryAddUnknownNode(node);
         connection.Initialize(p2.Agreement, embryo);
 
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
         }
+
+        /*if (this.netStats.NodeControl.RestorationNode is null)
+        {
+            this.netStats.NodeControl.RestorationNode = node;
+        }*/
 
         return true;
     }

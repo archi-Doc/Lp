@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Netsphere.Stats;
@@ -11,8 +12,6 @@ public sealed partial class NetStats
 
     private const int EndpointTrustCapacity = 32;
     private const int EndpointTrustMinimum = 4;
-    private const int PortTrustCapacity = 32;
-    private const int PortTrustMinimum = 4;
 
     public NetStats(ILogger<NetStats> logger, NetBase netBase, NodeControl nodeControl)
     {
@@ -23,42 +22,40 @@ public sealed partial class NetStats
 
     #region FieldAndProperty
 
-    public NodeType NodeType
-    {
-        get
-        {
-            if (this.OutboundPort.TryGet(out var port))
-            {
-                return port == this.netBase.NetOptions.Port ? NodeType.Direct : NodeType.Cone;
-            }
-            else if (this.OutboundPort.UnableToFix)
-            {
-                return NodeType.Symmetric;
-            }
-
-            return NodeType.Unknown;
-        }
-    }
-
-    [Key(0)]
-    public long LastMics { get; private set; }
+    // [Key(0)]
+    // public long LastMics { get; private set; }
 
     [Key(1)]
     public NodeControl NodeControl { get; private set; }
 
-    /*[Key(2)]
-    public PublicAddress PublicIpv4Address { get; private set; } = new();
-
-    [Key(3)]
-    public PublicAddress PublicIpv6Address { get; private set; } = new();*/
-
     [Key(2)]
-    public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    private IPEndPoint? lastIpv4Endpoint;
 
     [Key(3)]
-    public TrustSource<IPEndPoint?> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+    private IPEndPoint? lastIpv6Endpoint;
 
     [Key(4)]
+    private int lastOutboundPort;
+
+    [Key(5)]
+    public int LastPort { get; private set; }
+
+    [IgnoreMember]
+    public NetNode? OwnNetNode { get; private set; }
+
+    [IgnoreMember]
+    public NodeType OwnNodeType { get; private set; }
+
+    [IgnoreMember]
+    public bool DirectConfirmed { get; private set; }
+
+    [IgnoreMember]
+    public TrustSource<IPEndPoint?> Ipv4Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+
+    [IgnoreMember]
+    public TrustSource<IPEndPoint?> Ipv6Endpoint { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
+
+    [IgnoreMember]
     public TrustSource<int> OutboundPort { get; private set; } = new(EndpointTrustCapacity, EndpointTrustMinimum);
 
     private readonly Lock lockObject = new();
@@ -72,7 +69,7 @@ public sealed partial class NetStats
         endPoint = default;
         if (endpointResolution == EndpointResolution.PreferIpv6)
         {
-            if (this.Ipv6Endpoint.FixedOrDefault is not null)
+            if (this.Ipv6Endpoint.TryGet(out var ipv6, out _))
             {// Ipv6 supported
                 address.TryCreateIpv6(ref endPoint);
                 if (endPoint.IsValid)
@@ -115,7 +112,7 @@ public sealed partial class NetStats
     public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
     {
         endPoint = default;
-        if (this.Ipv6Endpoint.FixedOrDefault is not null)
+        if (this.Ipv6Endpoint.TryGet(out var ipv6, out _))
         {// Ipv6 supported
             node.Address.TryCreateIpv6(ref endPoint);
             if (endPoint.IsValid)
@@ -131,10 +128,42 @@ public sealed partial class NetStats
         }
     }
 
+    public NodeType GetOwnNodeType()
+    {
+        if (this.OutboundPort.TryGet(out var port, out _))
+        {
+            return (port == this.netBase.NetOptions.Port && this.netBase.IsPortNumberSpecified) ?
+                NodeType.Direct :
+                NodeType.Cone;
+        }
+        else if (this.OutboundPort.IsInconsistent)
+        {
+            return NodeType.Symmetric;
+        }
+
+        return NodeType.Unknown;
+    }
+
     public NetNode GetOwnNetNode()
     {
-        var address = new NetAddress(this.Ipv4Endpoint.FixedOrDefault?.Address, this.Ipv6Endpoint.FixedOrDefault?.Address, (ushort)this.netBase.NetOptions.Port);
+        this.Ipv4Endpoint.TryGet(out var ipv4, out _);
+        this.Ipv6Endpoint.TryGet(out var ipv6, out _);
+        var address = new NetAddress(ipv4?.Address, ipv6?.Address, (ushort)this.netBase.NetOptions.Port);
         return new(address, this.netBase.NodePublicKey);
+    }
+
+    public bool TryGetOwnNetNode([MaybeNullWhen(false)] out NetNode netNode)
+    {
+        var validIpv4 = this.Ipv4Endpoint.TryGet(out var ipv4, out _);
+        var validIpv6 = this.Ipv6Endpoint.TryGet(out var ipv6, out _);
+        if (validIpv4 || validIpv6)
+        {
+            netNode = new(new NetAddress(ipv4?.Address, ipv6?.Address, (ushort)this.netBase.NetOptions.Port), this.netBase.NodePublicKey);
+            return true;
+        }
+
+        netNode = default;
+        return false;
     }
 
     public void Reset()
@@ -142,6 +171,19 @@ public sealed partial class NetStats
         this.Ipv4Endpoint.Clear();
         this.Ipv6Endpoint.Clear();
         this.OutboundPort.Clear();
+    }
+
+    public void Update()
+    {
+        if (this.OwnNetNode is null)
+        {
+            if (this.TryGetOwnNetNode(out var netNode))
+            {
+                this.OwnNetNode = netNode;
+            }
+        }
+
+        this.OwnNodeType = this.GetOwnNodeType();
     }
 
     public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)
@@ -156,20 +198,53 @@ public sealed partial class NetStats
         }
     }
 
+    public void ReportEndpoint(IPEndPoint endpoint)
+    {
+        if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            this.Ipv6Endpoint.Add(endpoint);
+        }
+        else if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            this.Ipv4Endpoint.Add(endpoint);
+        }
+    }
+
     [TinyhandOnSerializing]
     private void OnSerializing()
     {
-        this.LastMics = Mics.GetUtcNow();
+        // this.LastMics = Mics.GetUtcNow();
+        this.LastPort = this.netBase.NetOptions.Port;
+
+        this.Ipv4Endpoint.TryGet(out this.lastIpv4Endpoint, out _);
+        this.Ipv6Endpoint.TryGet(out this.lastIpv6Endpoint, out _);
+        this.OutboundPort.TryGet(out this.lastOutboundPort, out _);
     }
 
     [TinyhandOnDeserialized]
     private void OnDeserialized()
     {
-        var utcNow = Mics.GetUtcNow();
+        if (this.LastPort == this.netBase.NetOptions.Port &&
+            this.lastOutboundPort != 0)
+        {
+            this.OutboundPort.Add(this.lastOutboundPort);
+        }
+
+        if (this.lastIpv4Endpoint is not null)
+        {
+            this.Ipv4Endpoint.Add(this.lastIpv4Endpoint);
+        }
+
+        if (this.lastIpv6Endpoint is not null)
+        {
+            this.Ipv6Endpoint.Add(this.lastIpv6Endpoint);
+        }
+
+        /*var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
         if (!range.IsWithin(this.LastMics))
         {
             this.Reset();
-        }
+        }*/
     }
 }
