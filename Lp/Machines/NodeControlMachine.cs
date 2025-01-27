@@ -153,7 +153,7 @@ public partial class NodeControlMachine : Machine
             return true;
         }
 
-        this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
+        // this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
         var ipv6Task = this.PingNetNode(netNode, true);
         var ipv4Task = this.PingNetNode(netNode, false);
         var result = await Task.WhenAll(ipv6Task, ipv4Task);
@@ -216,16 +216,15 @@ public partial class NodeControlMachine : Machine
             return true;
         }
 
-        var isIpv6 = this.netStats.OwnNetNode?.Address.IsValidIpv6 == true &&
-            (RandomVault.Xoshiro.NextUInt32() & 1) == 0;
+        // var isIpv6 = this.netStats.OwnNetNode?.Address.IsValidIpv6 == true && (RandomVault.Xoshiro.NextUInt32() & 1) == 0;
+        var isIpv6 = (RandomVault.Xoshiro.NextUInt32() & 1) == 0;
 
-        this.logger.TryGet()?.Log($"Ping{(isIpv6 ? "Ipv6" : "Ipv4")}: {netNode.ToString()}");
+        // this.logger.TryGet()?.Log($"Ping{(isIpv6 ? "Ipv6" : "Ipv4")}: {netNode.ToString()}");
         var result = await this.PingNetNode(netNode, isIpv6);
+        this.netStats.ReportEndpoint(isIpv6, result);
         if (result is not null)
         {
             this.netStats.OutboundPort.Add(result.Port);
-            this.netStats.ReportEndpoint(isIpv6, result);
-
             if (netNode.Address.IsValidIpv4AndIpv6)
             {// LifelineNode and ActiveNode are limited to DualAddress.
                 this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
