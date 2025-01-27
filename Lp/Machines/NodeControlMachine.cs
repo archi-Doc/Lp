@@ -128,7 +128,7 @@ public partial class NodeControlMachine : Machine
             this.modestLogger.Interval(TimeSpan.FromMinutes(5), Hashed.Error.NoOnlineNode, LogLevel.Fatal)?.Log(Hashed.Error.NoOnlineNode);
         }
 
-        this.TimeUntilRun = TimeSpan.FromSeconds(1);
+        this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
     }
 

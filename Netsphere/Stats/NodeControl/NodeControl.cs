@@ -287,6 +287,34 @@ public sealed partial class NodeControl
         node = default;
         using (this.activeNodes.LockObject.EnterScope())
         {
+            if (!this.activeNodes.GetChain.TryPeek(out var obj))
+            {
+                return false;
+            }
+
+            var n = RandomVault.Xoshiro.NextInt32(0, this.activeNodes.GetChain.Count >> 2);
+            while (n-- > 0)
+            {
+                obj = obj.GetLink.Next;
+                if (obj is null)
+                {
+                    return false;
+                }
+            }
+
+            this.activeNodes.GetChain.Remove(obj);
+            this.activeNodes.GetChain.Enqueue(obj);
+            node = obj;
+        }
+
+        return true;
+    }
+
+    /*public bool TryGetActiveNode([MaybeNullWhen(false)] out NetNode node)
+    {
+        node = default;
+        using (this.activeNodes.LockObject.EnterScope())
+        {
             if (!this.activeNodes.GetChain.TryDequeue(out var obj))
             {
                 return false;
@@ -297,7 +325,7 @@ public sealed partial class NodeControl
         }
 
         return true;
-    }
+    }*/
 
     /*public bool TryGetUnknownNode([MaybeNullWhen(false)] out NetNode node)
     {
