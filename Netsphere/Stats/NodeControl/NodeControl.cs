@@ -53,6 +53,9 @@ public sealed partial class NodeControl
 
     public bool HasSufficientActiveNodes => this.CountActive >= SufficientActiveNodes;
 
+    public bool NoOnlineNode => this.lifelineNodes.OnlineLinkChain.Count == 0 &&
+        this.activeNodes.Count == 0;
+
     #endregion
 
     public void ShowNodes()

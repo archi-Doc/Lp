@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using Lp.Logging;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
@@ -10,12 +11,13 @@ namespace Lp.Machines;
 public partial class NodeControlMachine : Machine
 {
     private const int ConsumeLifelineCount = 10;
-    private const int FixEndpointThreshold = 10;
+    private const int FixEndpointCount = 10;
 
     public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl)
         : base()
     {
         this.logger = logger;
+        this.modestLogger = new(logger);
         this.netBase = netBase;
         this.netControl = netControl;
         this.netStats = this.netControl.NetStats;
@@ -24,6 +26,7 @@ public partial class NodeControlMachine : Machine
     }
 
     private readonly ILogger logger;
+    private readonly ModestLogger modestLogger;
     private readonly NetControl netControl;
     private readonly NetBase netBase;
     private readonly NetStats netStats;
@@ -70,45 +73,11 @@ public partial class NodeControlMachine : Machine
             return StateResult.Terminate;
         }
 
-        this.ChangeState(State.FixEndpoint, true);
+        this.ChangeState(State.MaintainNode, true);
         return StateResult.Continue;
     }
 
     [StateMethod(1)]
-    protected async Task<StateResult> FixEndpoint(StateParameter parameter)
-    {
-        if (!this.netControl.NetTerminal.IsActive)
-        {
-            return StateResult.Continue;
-        }
-
-        if (this.TryChangeToMaintainState())
-        {
-            this.count = 0;
-            this.ChangeState(State.MaintainNode);
-            return StateResult.Continue;
-        }
-
-        if (this.count++ >= FixEndpointThreshold)
-        {
-            this.count = 0;
-            this.ChangeState(State.MaintainNode);
-            return StateResult.Continue;
-        }
-
-        if (!this.nodeControl.TryGetActiveNode(out var node))
-        { // No online node
-            this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Error.NoOnlineNode);
-            this.count = 0;
-            this.ChangeState(State.MaintainNode);
-            return StateResult.Continue;
-        }
-
-        await this.PingAndIntegrateActiveNode(node);
-        return StateResult.Continue;
-    }
-
-    [StateMethod(2)]
     protected async Task<StateResult> MaintainNode(StateParameter parameter)
     {
         if (!this.netControl.NetTerminal.IsActive)
@@ -125,26 +94,39 @@ public partial class NodeControlMachine : Machine
             _ = await this.PingIpv4AndIpv6(node, true);
         }
 
-        // Check unknown node
-        /*if (this.nodeControl.TryGetUnknownNode(out netNode))
-        {
-            _ = await this.PingIpv4AndIpv6(netNode, false);
-        }*/
-
         // Lifeline Online -> Active
         // this.nodeControl.FromLifelineNodeToActiveNode();
 
-        // Integrate active nodes.
-        if (this.nodeControl.TryGetActiveNode(out node))
+        var max = Math.Max(this.nodeControl.CountActive, FixEndpointCount);
+        do
         {
-            await this.PingAndIntegrateActiveNode(node);
+            // Integrate active nodes.
+            if (this.nodeControl.TryGetActiveNode(out node))
+            {
+                await this.PingAndIntegrateActiveNode(node);
+            }
+            else
+            {
+                await this.ProcessRestorationNode();
+                break;
+            }
+
+            if (this.netStats.OutboundPort.IsAboveMinimum &&
+                this.netStats.Ipv4Endpoint.IsFixed &&
+                this.netStats.Ipv6Endpoint.IsFixed)
+            {// Fixed
+                break;
+            }
         }
-        else
-        {
-            await this.ProcessRestorationNode();
-        }
+        while (!this.CancellationToken.IsCancellationRequested &&
+        this.count++ < FixEndpointCount);
 
         this.nodeControl.Trim(false, true);
+
+        if (this.nodeControl.NoOnlineNode)
+        {
+            this.modestLogger.Interval(TimeSpan.FromMinutes(5), Hashed.Error.NoOnlineNode, LogLevel.Fatal)?.Log(Hashed.Error.NoOnlineNode);
+        }
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
@@ -171,7 +153,7 @@ public partial class NodeControlMachine : Machine
             return true;
         }
 
-        // this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
+        this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
         var ipv6Task = this.PingNetNode(netNode, true);
         var ipv4Task = this.PingNetNode(netNode, false);
         var result = await Task.WhenAll(ipv6Task, ipv4Task);
@@ -227,6 +209,59 @@ public partial class NodeControlMachine : Machine
         return true;
     }
 
+    private async Task<bool> PingIpv4OrIpv6(NetNode netNode)
+    {
+        if (netNode.Equals(this.netStats.OwnNetNode))
+        {
+            return true;
+        }
+
+        if (this.netStats.OwnNetNode?.Address.IsValidIpv6 == true)
+        {// ipv6
+            this.logger.TryGet()?.Log($"PingIpv6: {netNode.ToString()}");
+            await this.PingNetNode(netNode, true);
+        }
+
+        
+        var ipv6Task = 
+        var ipv4Task = this.PingNetNode(netNode, false);
+        var result = await Task.WhenAll(ipv6Task, ipv4Task);
+
+        if (result[0] is not null)
+        {
+            if (result[1] is not null)
+            {// Ipv6 available, Ipv4 available
+                this.netStats.OutboundPort.Add(result[0]!.Port);
+            }
+            else
+            {// Ipv6 available, Ipv4 not available
+                this.netStats.OutboundPort.Add(result[0]!.Port);
+            }
+        }
+        else
+        {
+            if (result[1] is not null)
+            {// Ipv6 not available, Ipv4 available
+                this.netStats.OutboundPort.Add(result[1]!.Port);
+            }
+            else
+            {// Ipv6 not available, Ipv4 not available
+                this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
+                return false;
+            }
+        }
+
+        this.netStats.ReportEndpoint(true, result[0]);
+        this.netStats.ReportEndpoint(false, result[1]);
+
+        if (netNode.Address.IsValidIpv4AndIpv6)
+        {// LifelineNode and ActiveNode are limited to DualAddress.
+            this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
+        }
+
+        return true;
+    }
+
     private async Task<IPEndPoint?> PingNetNode(NetNode netNode, bool ipv6)
     {
         var endpointResolution = ipv6 ? EndpointResolution.Ipv6 : EndpointResolution.Ipv4;
@@ -240,23 +275,6 @@ public partial class NodeControlMachine : Machine
         {
             return default;
         }
-    }
-
-    private bool TryChangeToMaintainState()
-    {
-        if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
-        {// Fixed
-            this.ShowStatus();
-            return true;
-        }
-
-        if (this.netStats.OutboundPort.IsInconsistent)
-        {// Symmetric (random port)
-            this.ShowStatus();
-            return true;
-        }
-
-        return false;
     }
 
     private async Task PingAndIntegrateActiveNode(NetNode netNode)

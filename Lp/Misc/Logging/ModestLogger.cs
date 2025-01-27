@@ -42,16 +42,40 @@ public class ModestLogger
     /// <returns>An <see cref="ILogWriter"/> if the identifier is different; otherwise, <c>null</c>.</returns>
     public ILogWriter? NonConsecutive(ulong identifier, LogLevel logLevel = LogLevel.Information)
     {
-        if (this.lastIdentifier == identifier)
+        if (DateTime.UtcNow < this.suppressionTime)
+        {// Suppression time
+            return null;
+        }
+        else if (this.lastIdentifier == identifier)
         {// Same identifier
             return null;
         }
-        else if (DateTime.UtcNow < this.suppressionTime)
+        else
+        {
+            this.lastIdentifier = identifier;
+            return this.logger.TryGet(logLevel);
+        }
+    }
+
+    public ILogWriter? Interval(TimeSpan interval, ulong identifier, LogLevel logLevel = LogLevel.Information)
+    {
+        var utcNow = DateTime.UtcNow;
+        if (utcNow < this.suppressionTime)
         {// Suppression time
             return null;
         }
         else
         {
+            if (this.identifierToDateTime.TryGetValue(identifier, out var lastDateTime))
+            {
+                if (utcNow < lastDateTime + interval)
+                {
+                    return null;
+                }
+            }
+
+            this.identifierToDateTime[identifier] = utcNow;
+
             this.lastIdentifier = identifier;
             return this.logger.TryGet(logLevel);
         }

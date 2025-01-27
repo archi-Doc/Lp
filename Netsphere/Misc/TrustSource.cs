@@ -9,12 +9,6 @@ namespace Netsphere;
 [TinyhandObject]
 public sealed partial class TrustSource<T>
 {
-    /*public enum TrustState
-    {
-        Unfixed,
-        Fixed,
-    }*/
-
     public TrustSource(int capacity, int trustMinimum)
     {
         Debug.Assert(capacity > 0);
@@ -90,9 +84,16 @@ public sealed partial class TrustSource<T>
     [IgnoreMember]
     public int TrustMinimum { get; private set; }
 
+    public int Count => this.items.Count;
+
     public bool IsFixed => this.isFixed;
 
-    public bool IsInconsistent => !this.isFixed && this.items.Count >= this.TrustMinimum;
+    public bool IsInconsistent => !this.isFixed && this.IsAboveMinimum;
+
+    /// <summary>
+    /// Gets a value indicating whether the count of items is above the minimum trust value.
+    /// </summary>
+    public bool IsAboveMinimum => this.items.Count >= this.TrustMinimum;
 
     // public T? FixedOrDefault => this.fixedValue;
 
