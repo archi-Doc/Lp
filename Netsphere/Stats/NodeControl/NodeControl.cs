@@ -16,7 +16,7 @@ public sealed partial class NodeControl
     public static readonly int MaxActiveNodes = 256;
     public static readonly int MaxUnknownNodes = 32;
     public static readonly int SufficientActiveNodes = 32;
-    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(0);// Mics.FromMinutes(5)
+    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromMinutes(5)
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
     public NodeControl(NetBase netBase)

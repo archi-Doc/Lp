@@ -38,6 +38,7 @@ Error = {
     NoFixedNode = "Unable to obtain own IP address due to the lack of a network connection or a NodeList"
     NoDirectConnection = "Direct network connection through the specified port number is required"
     NoOwnAddress = "Own IP address is not determined"
+    NoOnlineNode = "No online nodes. Please check your internet connection or add a node to connect (add-net-node)"
 }
 
 Vault = {

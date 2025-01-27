@@ -1,19 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
-using System.Threading;
-using Netsphere;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
 namespace Lp.Machines;
 
-/// <summary>
-/// Check essential nodes and determine MyStatus.ConnectionType.<br/>
-/// 1: Connect and get nodes.<br/>
-/// 2: Determine MyStatus.ConnectionType.<br/>
-/// 3: Check essential nodes.
-/// </summary>
 [MachineObject(UseServiceProvider = true)]
 public partial class NodeControlMachine : Machine
 {
@@ -85,22 +77,30 @@ public partial class NodeControlMachine : Machine
     [StateMethod(1)]
     protected async Task<StateResult> FixEndpoint(StateParameter parameter)
     {
+        if (!this.netControl.NetTerminal.IsActive)
+        {
+            return StateResult.Continue;
+        }
+
         if (this.TryChangeToMaintainState())
         {
+            this.count = 0;
+            this.ChangeState(State.MaintainNode);
             return StateResult.Continue;
         }
 
         if (this.count++ >= FixEndpointThreshold)
         {
             this.count = 0;
-            this.ChangeState(State.MaintainOnlineNode);
+            this.ChangeState(State.MaintainNode);
             return StateResult.Continue;
         }
 
         if (!this.nodeControl.TryGetActiveNode(out var node))
         { // No online node
-            this.logger.TryGet(LogLevel.Fatal)?.Log("No online nodes. Please check your network connection and add nodes to NodeList.");
-            this.ChangeState(State.NoOnlineNode);
+            this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Error.NoOnlineNode);
+            this.count = 0;
+            this.ChangeState(State.MaintainNode);
             return StateResult.Continue;
         }
 
@@ -109,8 +109,13 @@ public partial class NodeControlMachine : Machine
     }
 
     [StateMethod(2)]
-    protected async Task<StateResult> MaintainOnlineNode(StateParameter parameter)
+    protected async Task<StateResult> MaintainNode(StateParameter parameter)
     {
+        if (!this.netControl.NetTerminal.IsActive)
+        {// Not active
+            return StateResult.Continue;
+        }
+
         // Active -> Lifeline, Lifeline offline -> Remove
         this.nodeControl.MaintainLifelineNode(this.netStats.OwnNetNode);
 
@@ -142,34 +147,6 @@ public partial class NodeControlMachine : Machine
         this.nodeControl.Trim(false, true);
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);
-        return StateResult.Continue;
-    }
-
-    [StateMethod]
-    protected async Task<StateResult> NoOnlineNode(StateParameter parameter)
-    {
-        if (this.TryChangeToMaintainState())
-        {
-            return StateResult.Continue;
-        }
-
-        // Integrate active nodes.
-        if (this.nodeControl.TryGetActiveNode(out var node))
-        {
-            await this.PingAndIntegrateActiveNode(node);
-        }
-        else
-        {
-            await this.ProcessRestorationNode();
-        }
-
-        // Check unknown node
-        /*if (this.nodeControl.TryGetUnknownNode(out var netNode))
-        {
-            _ = await this.PingIpv4AndIpv6(netNode, false);
-        }*/
-
-        this.TimeUntilRun = TimeSpan.FromSeconds(1);
         return StateResult.Continue;
     }
 
@@ -270,14 +247,12 @@ public partial class NodeControlMachine : Machine
         if (this.netStats.Ipv4Endpoint.IsFixed && this.netStats.Ipv6Endpoint.IsFixed)
         {// Fixed
             this.ShowStatus();
-            this.ChangeState(State.MaintainOnlineNode);
             return true;
         }
 
         if (this.netStats.OutboundPort.IsInconsistent)
         {// Symmetric (random port)
             this.ShowStatus();
-            this.ChangeState(State.MaintainOnlineNode);
             return true;
         }
 

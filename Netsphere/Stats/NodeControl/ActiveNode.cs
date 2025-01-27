@@ -30,7 +30,7 @@ public sealed partial class ActiveNode : NetNode
 
             if (oldItem is not null)
             {
-                //Console.WriteLine(oldItem.LastConnectedMicsValue);
+                // Console.WriteLine(oldItem.LastConnectedMicsValue);
                 if (oldItem.LastConnectedMicsValue >= newItem.LastConnectedMicsValue)
                 {
                     return false;
