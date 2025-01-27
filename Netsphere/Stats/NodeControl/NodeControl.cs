@@ -395,7 +395,7 @@ public sealed partial class NodeControl
                 while (!reader.End)
                 {
                     var node = TinyhandSerializer.DeserializeObject<ActiveNode>(ref reader);
-                    if (node is null)
+                    if (node is null || !node.Validate())
                     {
                         continue;
                     }
