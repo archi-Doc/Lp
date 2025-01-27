@@ -121,10 +121,6 @@ public partial class NodeControlMachine : Machine
         while (!this.CancellationToken.IsCancellationRequested &&
         this.count++ < FixEndpointCount);
 
-        var r2 = this.nodeControl.GetActiveNodes();
-        this.nodeControl.ProcessGetActiveNodes(r2.Span);
-        r2.Return();
-
         this.nodeControl.Trim(false, true);
 
         if (this.nodeControl.NoOnlineNode)

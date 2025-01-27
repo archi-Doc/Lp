@@ -366,7 +366,7 @@ public sealed partial class NodeControl
                 ActiveNode? node = this.activeNodes.LastConnectedMicsChain.First;
                 while (count++ < GetActiveNodesMax && node is not null)
                 {
-                    Console.WriteLine(node.LastConnectedMics);
+                    //Console.WriteLine(node.LastConnectedMics);
                     TinyhandSerializer.SerializeObject(ref writer, node);
                     node = node.LastConnectedMicsLink.Next;
                 }
