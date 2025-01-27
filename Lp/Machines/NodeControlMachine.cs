@@ -128,7 +128,7 @@ public partial class NodeControlMachine : Machine
             this.modestLogger.Interval(TimeSpan.FromMinutes(5), Hashed.Error.NoOnlineNode, LogLevel.Fatal)?.Log(Hashed.Error.NoOnlineNode);
         }
 
-        this.TimeUntilRun = TimeSpan.FromSeconds(10);
+        this.TimeUntilRun = TimeSpan.FromSeconds(1);
         return StateResult.Continue;
     }
 
@@ -209,54 +209,31 @@ public partial class NodeControlMachine : Machine
         return true;
     }
 
-    private async Task<bool> PingIpv4OrIpv6(NetNode netNode)
+    private async Task<bool> PingActiveNode(NetNode netNode)
     {
         if (netNode.Equals(this.netStats.OwnNetNode))
         {
             return true;
         }
 
-        if (this.netStats.OwnNetNode?.Address.IsValidIpv6 == true)
-        {// ipv6
-            this.logger.TryGet()?.Log($"PingIpv6: {netNode.ToString()}");
-            await this.PingNetNode(netNode, true);
-        }
+        var isIpv6 = this.netStats.OwnNetNode?.Address.IsValidIpv6 == true &&
+            (RandomVault.Xoshiro.NextUInt32() & 1) == 0;
 
-        
-        var ipv6Task = 
-        var ipv4Task = this.PingNetNode(netNode, false);
-        var result = await Task.WhenAll(ipv6Task, ipv4Task);
-
-        if (result[0] is not null)
+        this.logger.TryGet()?.Log($"Ping{(isIpv6 ? "Ipv6" : "Ipv4")}: {netNode.ToString()}");
+        var result = await this.PingNetNode(netNode, isIpv6);
+        if (result is not null)
         {
-            if (result[1] is not null)
-            {// Ipv6 available, Ipv4 available
-                this.netStats.OutboundPort.Add(result[0]!.Port);
-            }
-            else
-            {// Ipv6 available, Ipv4 not available
-                this.netStats.OutboundPort.Add(result[0]!.Port);
+            this.netStats.OutboundPort.Add(result.Port);
+            this.netStats.ReportEndpoint(isIpv6, result);
+
+            if (netNode.Address.IsValidIpv4AndIpv6)
+            {// LifelineNode and ActiveNode are limited to DualAddress.
+                this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
             }
         }
         else
         {
-            if (result[1] is not null)
-            {// Ipv6 not available, Ipv4 available
-                this.netStats.OutboundPort.Add(result[1]!.Port);
-            }
-            else
-            {// Ipv6 not available, Ipv4 not available
-                this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
-                return false;
-            }
-        }
-
-        this.netStats.ReportEndpoint(true, result[0]);
-        this.netStats.ReportEndpoint(false, result[1]);
-
-        if (netNode.Address.IsValidIpv4AndIpv6)
-        {// LifelineNode and ActiveNode are limited to DualAddress.
-            this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Success);
+            this.nodeControl.ReportActiveNodeConnection(netNode, ConnectionResult.Failure);
         }
 
         return true;
@@ -284,7 +261,7 @@ public partial class NodeControlMachine : Machine
             return;
         }
 
-        _ = await this.PingIpv4AndIpv6(netNode, false);
+        _ = await this.PingActiveNode(netNode);
 
         using (var connection = await this.netControl.NetTerminal.Connect(netNode))
         {
