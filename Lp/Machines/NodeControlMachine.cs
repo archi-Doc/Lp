@@ -121,6 +121,10 @@ public partial class NodeControlMachine : Machine
         while (!this.CancellationToken.IsCancellationRequested &&
         this.count++ < FixEndpointCount);
 
+        var r2 = this.nodeControl.GetActiveNodes();
+        this.nodeControl.ProcessGetActiveNodes(r2.Span);
+        r2.Return();
+
         this.nodeControl.Trim(false, true);
 
         if (this.nodeControl.NoOnlineNode)
@@ -273,7 +277,9 @@ public partial class NodeControlMachine : Machine
                 var service = connection.GetService<Lp.Net.IBasalService>();
                 if (service is not null)
                 {
-                    var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                    // var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                    var r2 = await service.GetActiveNodes();
+                    this.nodeControl.ProcessGetActiveNodes(r2.Span);
                 }
             }
         }
@@ -294,7 +300,9 @@ public partial class NodeControlMachine : Machine
                     var service = connection.GetService<Lp.Net.IBasalService>();
                     if (service is not null)
                     {
-                        var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                        // var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
+                        var r2 = await service.GetActiveNodes();
+                        this.nodeControl.ProcessGetActiveNodes(r2.Span);
                     }
                 }
             }

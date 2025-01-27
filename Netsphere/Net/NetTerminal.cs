@@ -121,6 +121,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             return null;
         }
 
+        if (t.Value.OwnNetNode is not null)
+        {
+            return t.Value.OwnNetNode;
+        }
+
         return new(address, t.Value.PublicKey);
     }
 

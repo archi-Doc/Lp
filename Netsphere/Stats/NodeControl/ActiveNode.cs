@@ -9,7 +9,7 @@ namespace Netsphere.Stats;
 [ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
 public sealed partial class ActiveNode : NetNode
 {
-    internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
+    /*internal class Integrality : Integrality<ActiveNode.GoshujinClass, ActiveNode>
     {
         public static readonly Integrality Default = new()
         {
@@ -31,7 +31,7 @@ public sealed partial class ActiveNode : NetNode
             if (oldItem is not null)
             {
                 // Console.WriteLine(oldItem.LastConnectedMicsValue);
-                if (oldItem.LastConnectedMicsValue >= newItem.LastConnectedMicsValue)
+                if (oldItem.LastConnectedMics >= newItem.LastConnectedMics)
                 {
                     return false;
                 }
@@ -39,7 +39,7 @@ public sealed partial class ActiveNode : NetNode
 
             return true;
         }
-    }
+    }*/
 
     public ActiveNode(NetNode netNode)
     {
@@ -62,13 +62,13 @@ public sealed partial class ActiveNode : NetNode
 
     public void ConnectionSucceeded()
     {
-        this.LastConnectedMicsValue = Mics.FastCorrected;
+        this.LastConnectedMics = Mics.FastCorrected;
     }
 
     #region FieldAndProperty
 
     [Key(2)]
-    [Link(Type = ChainType.Ordered, Accessibility = ValueLinkAccessibility.Public)]
+    [Link(Type = ChainType.ReverseOrdered, Accessibility = ValueLinkAccessibility.Public)]
     public long LastConnectedMics { get; private set; }
 
     #endregion

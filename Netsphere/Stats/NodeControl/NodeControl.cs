@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Arc.Collections;
+using Tinyhand.IO;
 using ValueLink.Integrality;
 
 namespace Netsphere.Stats;
@@ -14,8 +15,8 @@ public sealed partial class NodeControl
     public static readonly int MaxLifelineNodes = 32;
     public static readonly int SufficientLifelineNodes = 24;
     public static readonly int MaxActiveNodes = 256;
-    public static readonly int MaxUnknownNodes = 32;
     public static readonly int SufficientActiveNodes = 32;
+    public static readonly int GetActiveNodesMax = 16;
     private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromMinutes(5)
     private static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
@@ -80,9 +81,9 @@ public sealed partial class NodeControl
         using (this.activeNodes.LockObject.EnterScope())
         {
             sb.AppendLine("Active:");
-            foreach (var x in this.activeNodes.LastConnectedMicsChain)
+            foreach (var x in this.activeNodes)
             {
-                sb.AppendLine(x.ToString() + x.LastConnectedMics);
+                sb.AppendLine(x.ToString());
             }
         }
 
@@ -344,7 +345,7 @@ public sealed partial class NodeControl
         return true;
     }*/
 
-    public BytePool.RentMemory DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
+    /*public BytePool.RentMemory DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
     {
         return ActiveNode.Integrality.Default.Differentiate(this.activeNodes, memory);
     }
@@ -352,6 +353,79 @@ public sealed partial class NodeControl
     public Task<IntegralityResult> IntegrateActiveNode(IntegralityBrokerDelegate brokerDelegate, CancellationToken cancellationToken)
     {
         return ActiveNode.Integrality.Default.Integrate(this.activeNodes, brokerDelegate, cancellationToken);
+    }*/
+
+    public BytePool.RentMemory GetActiveNodes()
+    {
+        var writer = TinyhandWriter.CreateFromBytePool();
+        try
+        {
+            using (this.activeNodes.LockObject.EnterScope())
+            {
+                var count = 0;
+                ActiveNode? node = this.activeNodes.LastConnectedMicsChain.First;
+                while (count++ < GetActiveNodesMax && node is not null)
+                {
+                    Console.WriteLine(node.LastConnectedMics);
+                    TinyhandSerializer.SerializeObject(ref writer, node);
+                    node = node.LastConnectedMicsLink.Next;
+                }
+            }
+
+            return writer.FlushAndGetRentMemory();
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    public void ProcessGetActiveNodes(ReadOnlySpan<byte> span)
+    {
+        if (span.Length == 0)
+        {
+            return;
+        }
+
+        var reader = new TinyhandReader(span);
+        using (this.activeNodes.LockObject.EnterScope())
+        {
+            try
+            {
+                while (!reader.End)
+                {
+                    var node = TinyhandSerializer.DeserializeObject<ActiveNode>(ref reader);
+                    if (node is null)
+                    {
+                        continue;
+                    }
+
+                    if (this.activeNodes.AddressChain.TryGetValue(node.Address, out var item))
+                    {// Exists
+                        if (item.LastConnectedMics < node.LastConnectedMics)
+                        {// Replace
+                            item.Goshujin = default;
+                            node.Goshujin = this.activeNodes;
+                        }
+                    }
+                    else
+                    {// New
+                        node.Goshujin = this.activeNodes;
+                        if (this.activeNodes.Count >= MaxActiveNodes)
+                        {
+                            if (this.activeNodes.LastConnectedMicsChain.Last is { } last)
+                            {
+                                last.Goshujin = default;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                return;
+            }
+        }
     }
 
     public void ReportLifelineNodeConnection(NetNode node, ConnectionResult result)
