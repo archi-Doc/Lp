@@ -110,6 +110,10 @@ public class RelayCircuit
                 x.Remove();
             }
         }
+
+        if (this.incoming)
+        {//Punch
+        }
     }
 
     public async Task Close()
