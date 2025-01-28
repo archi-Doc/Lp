@@ -81,9 +81,9 @@ public sealed partial class NodeControl
         using (this.activeNodes.LockObject.EnterScope())
         {
             sb.AppendLine("Active:");
-            foreach (var x in this.activeNodes)
+            foreach (var x in this.activeNodes.LastConnectedMicsChain)
             {
-                sb.AppendLine(x.ToString());
+                sb.AppendLine($"{Mics.ToDateTime(x.LastConnectedMics).ToString()} {x.ToString()}");
             }
         }
 
@@ -366,7 +366,6 @@ public sealed partial class NodeControl
                 ActiveNode? node = this.activeNodes.LastConnectedMicsChain.First;
                 while (count++ < GetActiveNodesMax && node is not null)
                 {
-                    //Console.WriteLine(node.LastConnectedMics);
                     TinyhandSerializer.SerializeObject(ref writer, node);
                     node = node.LastConnectedMicsLink.Next;
                 }

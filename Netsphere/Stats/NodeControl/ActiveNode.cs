@@ -62,7 +62,7 @@ public sealed partial class ActiveNode : NetNode
 
     public void ConnectionSucceeded()
     {
-        this.LastConnectedMics = Mics.FastCorrected;
+        this.LastConnectedMicsValue = Mics.FastCorrected;
     }
 
     #region FieldAndProperty
