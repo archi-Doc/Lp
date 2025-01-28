@@ -381,7 +381,6 @@ public sealed partial class NodeControl
 
     public void ProcessGetActiveNodes(ReadOnlySpan<byte> span)
     {
-        return;
         if (span.Length == 0)
         {
             return;
@@ -420,7 +419,7 @@ public sealed partial class NodeControl
                         }
                     }
                 }
-            }   
+            }
             catch
             {
                 return;
