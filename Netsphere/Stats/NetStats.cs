@@ -188,6 +188,12 @@ public sealed partial class NetStats
 
     public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)
     {
+        if (endpoint is not null &&
+            !NetAddress.Validate(endpoint.Address))
+        {
+            return;
+        }
+
         if (isIpv6)
         {
             this.Ipv6Endpoint.Add(endpoint);
@@ -200,6 +206,11 @@ public sealed partial class NetStats
 
     public void ReportEndpoint(IPEndPoint endpoint)
     {
+        if (!NetAddress.Validate(endpoint.Address))
+        {
+            return;
+        }
+
         if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
         {
             this.Ipv6Endpoint.Add(endpoint);
