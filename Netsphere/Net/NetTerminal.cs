@@ -313,7 +313,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         }
         else if (packetType < 511)
         {// Gene
-            this.ConnectionTerminal.ProcessReceive(netEndpoint, packetType, rentMemory, currentSystemMics);
+            var outgoingRelay = relayNumber > 0 && !incomingRelay;
+            this.ConnectionTerminal.ProcessReceive(netEndpoint, outgoingRelay, packetType, rentMemory, currentSystemMics);
         }
     }
 }

@@ -574,7 +574,7 @@ public class ConnectionTerminal
         }
     }
 
-    internal void ProcessReceive(NetEndpoint endpoint, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
+    internal void ProcessReceive(NetEndpoint endpoint, bool outgoingRelay, ushort packetUInt16, BytePool.RentMemory toBeShared, long currentSystemMics)
     {// Checked: toBeShared.Length
         // PacketHeaderCode
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(RelayHeader.RelayIdLength + 6)); // ConnectionId
@@ -585,6 +585,11 @@ public class ConnectionTerminal
 
         if (packetUInt16 < 384)
         {// Client -> Server
+            if (outgoingRelay)
+            {
+                return;
+            }
+
             ServerConnection? connection = default;
             using (this.serverConnections.LockObject.EnterScope())
             {
