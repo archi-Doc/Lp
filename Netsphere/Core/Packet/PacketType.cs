@@ -12,6 +12,7 @@ public enum PacketType : ushort
     PingRelay,
     GetVersion,
     UpdateVersion,
+    OpenSesami,
 
     // Response packet types (128-255)
     ConnectResponse = 128,
@@ -21,6 +22,7 @@ public enum PacketType : ushort
     PingRelayResponse,
     GetVersionResponse,
     UpdateVersionResponse,
+    OpenSesamiResponse,
 
     // Protected types (256-383)
     Protected = 256,
