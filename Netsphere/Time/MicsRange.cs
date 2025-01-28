@@ -30,7 +30,7 @@ public readonly record struct MicsRange
     public static MicsRange FromPastToFastSystem(long period)
     {
         var upper = Mics.FastSystem;
-        return new(upper - period, upper+ Mics.DefaultMarginMics);
+        return new(upper - period, upper + Mics.DefaultMarginMics);
     }
 
     public static MicsRange FromPastToFastCorrected(long period)
