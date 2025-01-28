@@ -114,7 +114,7 @@ public sealed partial class NodeControl
                     }
 
                     var item = new ActiveNode(x);
-                    this.activeNodes.Add(item);
+                    item.Goshujin = this.activeNodes;
                 }
             }
         }
@@ -265,19 +265,19 @@ public sealed partial class NodeControl
         return true;
     }
 
-    public bool TryGetLifelineNode([MaybeNullWhen(false)] out NetNode node)
+    public bool TryGetLifelineOnlineNode([MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         using (this.lifelineNodes.LockObject.EnterScope())
         {
-            var obj = this.lifelineNodes.UncheckedListChain.First;
+            var obj = this.lifelineNodes.OnlineLinkChain.First;
             if (obj is null)
             {
                 return false;
             }
 
             node = obj;
-            this.lifelineNodes.UncheckedListChain.Remove(obj);
+            this.lifelineNodes.OnlineLinkChain.AddLast(obj);
         }
 
         return true;
@@ -381,6 +381,7 @@ public sealed partial class NodeControl
 
     public void ProcessGetActiveNodes(ReadOnlySpan<byte> span)
     {
+        return;
         if (span.Length == 0)
         {
             return;
@@ -419,7 +420,7 @@ public sealed partial class NodeControl
                         }
                     }
                 }
-            }
+            }   
             catch
             {
                 return;
