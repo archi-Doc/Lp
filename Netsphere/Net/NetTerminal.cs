@@ -34,7 +34,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.RelayControl = relayControl;
         this.RelayAgent = new(relayControl, this);
         this.ConnectionTerminal = new(unitContext.ServiceProvider, this);
-        this.netCleaner = new(this);
 
         this.PacketTransmissionTimeout = NetConstants.DefaultPacketTransmissionTimeout;
     }
@@ -83,20 +82,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
-    private readonly NetIntervalTask netCleaner;
-
     #endregion
-
-    public async Task IntervalTask(CancellationToken cancellationToken)
-    {
-        this.ConnectionTerminal.Clean();
-        this.RelayAgent.Clean();
-        this.IncomingCircuit.Clean();
-        this.OutgoingCircuit.Clean();
-
-        await this.IncomingCircuit.Maintain(cancellationToken);
-        await this.OutgoingCircuit.Maintain(cancellationToken);
-    }
 
     public bool TryCreateEndpoint(ref NetAddress address, EndpointResolution endpointResolution, out NetEndpoint endPoint)
         => this.NetStats.TryCreateEndpoint(ref address, endpointResolution, out endPoint);
@@ -179,9 +165,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.CurrentState = State.Active;
 
-        var core = message.ParentCore;
-        await this.NetSender.StartAsync(core);
-        this.netCleaner.Start(core);
+        await this.NetSender.StartAsync(message.ParentCore);
     }
 
     void IUnitExecutable.Stop(UnitMessage.Stop message)
@@ -196,7 +180,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         await this.ConnectionTerminal.Terminate(cancellationToken).ConfigureAwait(false);
 
         this.NetSender.Stop();
-        this.netCleaner.Stop();
     }
 
     internal void Initialize(ResponderControl responders, ServiceControl services, bool isAlternative)
@@ -319,5 +302,16 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             var outgoingRelay = relayNumber > 0 && !incomingRelay;
             this.ConnectionTerminal.ProcessReceive(netEndpoint, outgoingRelay, packetType, rentMemory, currentSystemMics);
         }
+    }
+
+    internal async Task IntervalTask(CancellationToken cancellationToken)
+    {
+        this.ConnectionTerminal.Clean();
+        this.RelayAgent.Clean();
+        this.IncomingCircuit.Clean();
+        this.OutgoingCircuit.Clean();
+
+        await this.IncomingCircuit.Maintain(cancellationToken);
+        await this.OutgoingCircuit.Maintain(cancellationToken);
     }
 }

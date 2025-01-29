@@ -93,7 +93,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.RemoteDataSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.BenchmarkSubcommand));
-                context.AddSubcommand(typeof(Lp.Subcommands.SeedphraseSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.NewSeedphraseSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerClient.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));

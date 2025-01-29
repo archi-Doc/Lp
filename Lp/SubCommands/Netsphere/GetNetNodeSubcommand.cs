@@ -5,7 +5,7 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("get-net-node")]
+[SimpleCommand("get-netnode")]
 public class GetNetNodeSubcommand : ISimpleCommandAsync<GetNetNodeOptions>
 {
     public GetNetNodeSubcommand(ILogger<GetNetNodeSubcommand> logger, NetTerminal netTerminal)

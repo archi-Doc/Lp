@@ -21,10 +21,11 @@ using Netsphere.Packet;
 using Netsphere.Relay;
 using Netsphere.Responder;
 using Netsphere.Stats;
+using static Netsphere.ServiceControl.Table;
 
 namespace Netsphere;
 
-public class NetControl : UnitBase, IUnitPreparable
+public class NetControl : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public class Builder : UnitBuilder<Unit>
     {
@@ -127,6 +128,33 @@ public class NetControl : UnitBase, IUnitPreparable
             => this.Context.SendTerminateAsync(new());
     }
 
+    private class IntervalTask : TaskCore
+    {
+        public IntervalTask(ThreadCoreBase? core, NetControl netControl)
+            : base(core, Process, false)
+        {
+            this.netControl = netControl;
+        }
+
+        private static async Task Process(object? parameter)
+        {
+            var core = (IntervalTask)parameter!;
+
+            while (await core.Delay(1_000).ConfigureAwait(false))
+            {
+                await core.netControl.NetTerminal.IntervalTask(core.CancellationToken);
+                if (core.netControl.Alternative is { } alternative)
+                {
+                    await alternative.IntervalTask(core.CancellationToken);
+                }
+
+                core.netControl.NetStats.Update();
+            }
+        }
+
+        private readonly NetControl netControl;
+    }
+
     public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, NetTerminal netTerminal, IRelayControl relayControl)
         : base(context)
     {
@@ -180,7 +208,8 @@ public class NetControl : UnitBase, IUnitPreparable
 
     internal IServiceProvider ServiceProvider { get; }
 
-    private UnitLogger unitLogger;
+    private readonly UnitLogger unitLogger;
+    private IntervalTask? intervalTask;
 
     #endregion
 
@@ -208,5 +237,20 @@ public class NetControl : UnitBase, IUnitPreparable
         {
             context.SetOutput<TOutput>();
         }
+    }
+
+    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
+    {
+        this.intervalTask ??= new(message.ParentCore, this);
+        this.intervalTask.Start();
+    }
+
+    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    {
+    }
+
+    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
+    {
+        this.intervalTask?.Terminate();
     }
 }
