@@ -83,16 +83,19 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
-    private readonly NetCleaner netCleaner;
+    private readonly NetIntervalTask netCleaner;
 
     #endregion
 
-    public void Clean()
+    public async Task IntervalTask(CancellationToken cancellationToken)
     {
         this.ConnectionTerminal.Clean();
         this.RelayAgent.Clean();
         this.IncomingCircuit.Clean();
         this.OutgoingCircuit.Clean();
+
+        await this.IncomingCircuit.Maintain(cancellationToken);
+        await this.OutgoingCircuit.Maintain(cancellationToken);
     }
 
     public bool TryCreateEndpoint(ref NetAddress address, EndpointResolution endpointResolution, out NetEndpoint endPoint)

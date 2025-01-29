@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Text;
+using System.Threading;
 
 namespace Netsphere.Relay;
 
@@ -12,6 +13,7 @@ public class RelayCircuit
 {
     private const int MaxOutgoingSerialRelays = 5;
     private const int MaxIncomingSerialRelays = 1;
+    private static readonly long PingIntervalMics = Mics.FromSeconds(60);
 
     public RelayCircuit(NetTerminal netTerminal, bool incoming)
     {
@@ -41,6 +43,7 @@ public class RelayCircuit
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
     private RelayKey relayKey = new();
+    private long lastPingMics;
 
     #endregion
 
@@ -110,9 +113,21 @@ public class RelayCircuit
                 x.Remove();
             }
         }
+    }
 
-        if (this.incoming)
-        {//Punch
+    public async Task Maintain(CancellationToken cancellationToken)
+    {
+        if (this.NumberOfRelays > 0 && this.incoming)
+        {// Ping
+            if (this.lastPingMics + PingIntervalMics < Mics.FastSystem)
+            {
+                this.lastPingMics = Mics.FastSystem;
+                var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), this.NumberOfRelays, cancellationToken, EndpointResolution.PreferIpv6, this.incoming);
+                Console.WriteLine(r.Result);
+                if (r.Result != NetResult.Success)
+                {
+                }
+            }
         }
     }
 

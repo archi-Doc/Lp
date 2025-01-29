@@ -11,13 +11,14 @@ namespace Lp.Subcommands.Relay;
 [SimpleCommand("add-certificate-relay")]
 public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateRelayOptions>
 {
-    public AddCertificateRelaySubcommand(ILogger<AddCertificateRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl)
+    public AddCertificateRelaySubcommand(ILogger<AddCertificateRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl, LpService lpService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.netTerminal = netTerminal;
         this.authorityControl = authorityControl;
         this.vaultControl = vaultControl;
+        this.lpService = lpService;
     }
 
     public async Task RunAsync(AddCertificateRelayOptions options, string[] args)
@@ -30,9 +31,10 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
 
         this.userInterfaceService.WriteLine($"Add {relayCircuit.KindText} relay");
 
-        if (!this.vaultControl.Root.TryGetObject<SeedKey>(options.Vault, out var seedKey, out _))
+        // Code
+        var seedKey = await this.lpService.GetSeedKey(this.logger, options.Code);
+        if (seedKey is null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.NoVault, options.Vault);
             return;
         }
 
@@ -83,12 +85,13 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
     private readonly NetTerminal netTerminal;
     private readonly AuthorityControl authorityControl;
     private readonly VaultControl vaultControl;
+    private readonly LpService lpService;
 }
 
 public record AddCertificateRelayOptions
 {
-    [SimpleOption("Vault", Required = true, Description = "Vault")]
-    public string Vault { get; init; } = string.Empty;
+    [SimpleOption("Code", Required = true, Description = "Code")]
+    public string Code { get; init; } = string.Empty;
 
     [SimpleOption("RelayNode", Required = true, Description = "Relay node")]
     public string RelayNode { get; init; } = string.Empty;

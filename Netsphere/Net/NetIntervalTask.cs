@@ -2,11 +2,11 @@
 
 namespace Netsphere.Core;
 
-internal class NetCleaner
+internal class NetIntervalTask
 {
-    private class CleanerTask : TaskCore
+    private class IntervalTask : TaskCore
     {
-        public CleanerTask(ThreadCoreBase? core, NetCleaner parent)
+        public IntervalTask(ThreadCoreBase? core, NetIntervalTask parent)
             : base(core, Process, false)
         {
             this.parent = parent;
@@ -14,24 +14,24 @@ internal class NetCleaner
 
         private static async Task Process(object? parameter)
         {
-            var core = (CleanerTask)parameter!;
+            var core = (IntervalTask)parameter!;
 
             while (await core.Delay(1_000).ConfigureAwait(false))
             {
-                core.parent.netTerminal.Clean();
+                await core.parent.netTerminal.IntervalTask(core.CancellationToken);
             }
         }
 
-        private readonly NetCleaner parent;
+        private readonly NetIntervalTask parent;
     }
 
-    public NetCleaner(NetTerminal netTerminal)
+    public NetIntervalTask(NetTerminal netTerminal)
     {
         this.netTerminal = netTerminal;
     }
 
     private readonly NetTerminal netTerminal;
-    private CleanerTask? task;
+    private IntervalTask? task;
 
     public void Start(ThreadCoreBase parent)
     {
