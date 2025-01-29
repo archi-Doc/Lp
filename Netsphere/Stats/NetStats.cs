@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Netsphere.Relay;
 
 namespace Netsphere.Stats;
 
@@ -45,6 +46,11 @@ public sealed partial class NetStats
 
     [IgnoreMember]
     public NodeType OwnNodeType { get; private set; }
+
+    [IgnoreMember]
+    public NetNode? PeerNetNode { get; private set; }
+
+    public bool IsOpenNode => this.OwnNodeType == NodeType.Direct;
 
     [IgnoreMember]
     public bool DirectConfirmed { get; private set; }
@@ -173,7 +179,7 @@ public sealed partial class NetStats
         this.OutboundPort.Clear();
     }
 
-    public void Update()
+    public void Update(RelayCircuit incomingCircuit)
     {
         if (this.OwnNetNode is null)
         {
@@ -184,6 +190,17 @@ public sealed partial class NetStats
         }
 
         this.OwnNodeType = this.GetOwnNodeType();
+
+        if (this.IsOpenNode)
+        {
+            // this.PeerNetNode = this.OwnNetNode;
+        }
+
+        if (incomingCircuit.IsIncoming &&
+            incomingCircuit.TryGetOutermostEndpoint(out var endpoint))
+        {
+            this.PeerNetNode = new(endpoint, this.netBase.NodePublicKey);//
+        }
     }
 
     public void ReportEndpoint(bool isIpv6, IPEndPoint? endpoint)

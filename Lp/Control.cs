@@ -97,6 +97,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerClient.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.MergerRemote.Command));
                 context.AddSubcommand(typeof(Lp.Subcommands.NewTokenSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.ShowPeerNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowNodeControlStateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.AddNetNodeSubcommand));

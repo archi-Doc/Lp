@@ -23,7 +23,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
 
     public async Task RunAsync(AddCertificateRelayOptions options, string[] args)
     {
-        RelayCircuit relayCircuit = options.Incomming switch
+        RelayCircuit relayCircuit = options.Incoming switch
         {
             true => this.netTerminal.IncomingCircuit,
             false => this.netTerminal.OutgoingCircuit,
@@ -96,6 +96,6 @@ public record AddCertificateRelayOptions
     [SimpleOption("RelayNode", Required = true, Description = "Relay node")]
     public string RelayNode { get; init; } = string.Empty;
 
-    [SimpleOption("Incomming", Required = false, Description = "")]
-    public bool Incomming { get; init; } = false;
+    [SimpleOption("Incoming", Required = false, Description = "")]
+    public bool Incoming { get; init; } = false;
 }

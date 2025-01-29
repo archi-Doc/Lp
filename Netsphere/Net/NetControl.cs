@@ -148,7 +148,7 @@ public class NetControl : UnitBase, IUnitPreparable, IUnitExecutable
                     await alternative.IntervalTask(core.CancellationToken);
                 }
 
-                core.netControl.NetStats.Update();
+                core.netControl.NetStats.Update(core.netControl.NetTerminal.IncomingCircuit);
             }
         }
 
