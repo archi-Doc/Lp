@@ -9,8 +9,16 @@ public sealed partial class RelayNode
     [Link(Name = "RelayId", TargetMember = "RelayId", Type = ChainType.Unordered)]
     public RelayNode(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
-        this.Address = new(assignRelayResponse.OuterRelayId, assignRelayResponse.RelayNetAddress);
         this.Endpoint = new(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
+        if (assignRelayResponse.RelayNetAddress.IsValid)
+        {
+            this.Address = new(assignRelayResponse.OuterRelayId, assignRelayResponse.RelayNetAddress);
+        }
+        else
+        {
+            this.Address = new(this.Endpoint);
+        }
+
         this.ClientConnection = clientConnection;
         this.InnerKeyAndNonce = assignRelayBlock.InnerKeyAndNonce;
         this.OuterRelayId = assignRelayResponse.OuterRelayId;

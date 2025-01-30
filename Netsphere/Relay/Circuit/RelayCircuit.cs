@@ -73,7 +73,8 @@ public class RelayCircuit
             return RelayResult.InvalidEndpoint;
         }
 
-        if (!assignRelayResponse.RelayNetAddress.Equals(clientConnection.DestinationEndpoint.EndPoint))
+        if (assignRelayResponse.RelayNetAddress.IsValid &&
+            !assignRelayResponse.RelayNetAddress.Equals(clientConnection.DestinationEndpoint.EndPoint))
         {
             return RelayResult.InvalidEndpoint;
         }

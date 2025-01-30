@@ -13,7 +13,7 @@ public static class Alternative
     {
         SeedKey = SeedKey.NewSignature();
         PublicKey = SeedKey.GetEncryptionPublicKey();
-        NetAddress = new(IPAddress.Loopback, Port);
+        NetAddress = new(IPAddress.IPv6Loopback, Port);//
         NetNode = new(NetAddress, PublicKey);
     }
 
