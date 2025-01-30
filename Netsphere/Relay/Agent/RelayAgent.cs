@@ -483,7 +483,7 @@ Exit:
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
             this.netTerminal.NetStats.TryCreateEndpoint(ref netAddress, EndpointResolution.PreferIpv6, out var endpoint);
-            item = new(netAddress, endpoint.EndPoint ?? .);
+            item = new(netAddress, endpoint.EndPoint);
             this.endPointCache.Add(item);
             if (this.endPointCache.Count > EndPointCacheSize &&
                 this.endPointCache.LinkedListChain.First is { } i)
