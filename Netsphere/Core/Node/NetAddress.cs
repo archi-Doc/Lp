@@ -249,6 +249,12 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
+        if (!this.IsValid)
+        {
+            written = 0;
+            return true;
+        }
+
         var span = destination;
         if (this.RelayId != 0)
         {

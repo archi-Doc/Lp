@@ -197,9 +197,9 @@ public sealed partial class NetStats
         }
 
         if (incomingCircuit.IsIncoming &&
-            incomingCircuit.TryGetOutermostEndpoint(out var endpoint))
+            incomingCircuit.TryGetOutermostAddress(out var address))
         {
-            this.PeerNetNode = new(endpoint, this.netBase.NodePublicKey);//
+            this.PeerNetNode = new(address, this.netBase.NodePublicKey);
         }
     }
 
