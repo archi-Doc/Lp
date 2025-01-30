@@ -402,7 +402,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void CreateIPEndPoint(out IPEndPoint endPoint)
     {
         if (this.IsValidIpv4)
@@ -421,7 +421,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         {
             endPoint = new(0, 0);
         }
-    }
+    }*/
 
     public bool Validate()
     {

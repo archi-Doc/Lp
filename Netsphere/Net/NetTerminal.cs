@@ -274,14 +274,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
                 this.OutgoingCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out originalAddress, out relayNumber))
             {// Outgoing relay
                 span = rentMemory.Span;
-                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
+                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndpointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
             }
             else if (this.IncomingCircuit.RelayKey.NumberOfRelays > 0 &&
                 this.IncomingCircuit.RelayKey.TryDecrypt(netEndpoint, ref rentMemory, out originalAddress, out relayNumber))
             {// Incoming relay
                 span = rentMemory.Span;
-                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndPointOperation.None);
+                var ep2 = this.RelayAgent.GetEndPoint_NotThreadSafe(originalAddress, RelayAgent.EndpointOperation.None);
                 netEndpoint = new(originalAddress.RelayId, ep2.EndPoint);
                 incomingRelay = true;
             }
