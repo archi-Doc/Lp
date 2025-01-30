@@ -24,9 +24,9 @@ internal partial class BasalServiceAgent : IBasalService
 
     #endregion
 
-    public async NetTask<BytePool.RentMemory> DifferentiateActiveNode(ReadOnlyMemory<byte> memory)
+    public async NetTask<BytePool.RentMemory> GetActiveNodes()
     {
-        return this.netStats.NodeControl.DifferentiateActiveNode(memory);
+        return this.netStats.NodeControl.GetActiveNodes();
     }
 
     public async NetTask<BytePool.RentMemory> DifferentiateCredential(ReadOnlyMemory<byte> memory)

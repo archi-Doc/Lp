@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("seedphrase")]
-public class SeedphraseSubcommand : ISimpleCommandAsync
+[SimpleCommand("new-seedphrase")]
+public class NewSeedphraseSubcommand : ISimpleCommandAsync
 {
-    public SeedphraseSubcommand(ILogger<SeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
+    public NewSeedphraseSubcommand(ILogger<NewSeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -26,7 +26,7 @@ public class SeedphraseSubcommand : ISimpleCommandAsync
         // var seed = this.seedPhrase.TryGetSeed(phrase);
     }
 
-    private ILogger<SeedphraseSubcommand> logger;
+    private readonly ILogger logger;
     private IUserInterfaceService userInterfaceService;
     private Control control;
     private Seedphrase seedPhrase;

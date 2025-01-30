@@ -1,9 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Netsphere;
 
@@ -17,6 +16,32 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public static readonly NetAddress Relay = new(0, 0, 0, 1);
 
     public static bool SkipValidation { get; set; }
+
+    public static bool Validate(IPAddress ipAddress)
+    {
+        Span<byte> span = stackalloc byte[16];
+
+        if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            if (ipAddress.TryWriteBytes(span, out _))
+            {
+                var address6A = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
+                var address6B = BitConverter.ToUInt64(span);
+                return Validate6(address6A, address6B);
+            }
+        }
+        else
+        {
+            if (ipAddress.TryWriteBytes(span, out _))
+            {
+                var address4 = BitConverter.ToUInt32(span);
+                return Validate4(address4);
+            }
+        }
+
+        return false;
+    }
 
     [Key(0)]
     public readonly RelayId RelayId; // 2 bytes
@@ -224,6 +249,12 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
+        if (!this.IsValid)
+        {
+            written = 0;
+            return true;
+        }
+
         var span = destination;
         if (this.RelayId != 0)
         {
@@ -386,7 +417,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
         if (ipv4)
         {
-            if (!this.Validate4())
+            if (!Validate4(this.Address4))
             {
                 return false;
             }
@@ -394,7 +425,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
         if (ipv6)
         {
-            if (!this.Validate6())
+            if (!Validate6(this.Address6A, this.Address6B))
             {
                 return false;
             }
@@ -647,10 +678,10 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return false; // Unknown
     }
 
-    private bool Validate4()
+    private static bool Validate4(uint address4)
     {
         Span<byte> address = stackalloc byte[4];
-        BitConverter.TryWriteBytes(address, this.Address4);
+        BitConverter.TryWriteBytes(address, address4);
 
         if (address[0] == 0 || address[0] == 10 || address[0] == 127)
         {// Current network, Private network, loopback addresses.
@@ -703,18 +734,18 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return true;
     }
 
-    private bool Validate6()
+    private static bool Validate6(ulong address6A, ulong address6B)
     {
-        if (this.Address6A == 0 && (this.Address6B == 0 || this.Address6B == 0x0100000000000000))
+        if (address6A == 0 && (address6B == 0 || address6B == 0x0100000000000000))
         {// Unspecified address, Loopback address
             return false;
         }
 
         Span<byte> b = stackalloc byte[8];
-        BitConverter.TryWriteBytes(b, this.Address6A);
+        BitConverter.TryWriteBytes(b, address6A);
 
-        var b0 = (byte)this.Address6A;
-        var b1 = (byte)(this.Address6A >> 8);
+        var b0 = (byte)address6A;
+        var b1 = (byte)(address6A >> 8);
         if (b0 == 0xFC || b0 == 0xFD)
         {// Unique local address
             return false;
@@ -728,8 +759,8 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
         else if (b0 == 0x20 && b1 == 0x01)
         {// 2001
-            var b2 = (byte)(this.Address6A >> 16);
-            var b3 = (byte)(this.Address6A >> 24);
+            var b2 = (byte)(address6A >> 16);
+            var b3 = (byte)(address6A >> 24);
             if (b2 == 0x0D && b3 == 0xB8)
             {
                 return false;

@@ -6,7 +6,7 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("add-net-node")]
+[SimpleCommand("add-netnode")]
 public class AddNetNodeSubcommand : ISimpleCommand
 {
     public AddNetNodeSubcommand(ILogger<AddNetNodeSubcommand> logger, NetStats netStats)

@@ -408,7 +408,7 @@ public sealed partial class PacketTerminal
             {// GetInformationPacket
                 if (this.netBase.AllowUnsafeConnection)
                 {
-                    var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey);
+                    var packet = new GetInformationPacketResponse(this.netTerminal.NodePublicKey, this.netTerminal.NetStats.OwnNetNode);
                     CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                     // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                     this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);

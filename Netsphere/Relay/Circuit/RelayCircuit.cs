@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Threading;
 
 namespace Netsphere.Relay;
 
@@ -12,11 +14,12 @@ public class RelayCircuit
 {
     private const int MaxOutgoingSerialRelays = 5;
     private const int MaxIncomingSerialRelays = 1;
+    private static readonly long PingIntervalMics = Mics.FromSeconds(60);
 
     public RelayCircuit(NetTerminal netTerminal, bool incoming)
     {
         this.netTerminal = netTerminal;
-        this.incoming = incoming;
+        this.IsIncoming = incoming;
 
         this.logger = this.netTerminal.UnitLogger.GetLogger<RelayCircuit>();
     }
@@ -26,7 +29,9 @@ public class RelayCircuit
     public int NumberOfRelays
         => this.relayNodes.Count;
 
-    public string KindText => this.incoming switch
+    public bool IsIncoming { get; }
+
+    public string KindText => this.IsIncoming switch
     {
         true => "Incoming",
         false => "Outgoing",
@@ -37,12 +42,29 @@ public class RelayCircuit
 
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
-    private readonly bool incoming;
     private readonly RelayNode.GoshujinClass relayNodes = new();
 
     private RelayKey relayKey = new();
+    private long lastPingMics;
 
     #endregion
+
+    public bool TryGetOutermostEndpoint([MaybeNullWhen(false)] out NetEndpoint netEndpoint)
+    {
+        using (this.relayNodes.LockObject.EnterScope())
+        {
+            if (this.relayNodes.LinkedListChain.Last is { } last)
+            {
+                netEndpoint = last.Endpoint;
+                return true;
+            }
+            else
+            {
+                netEndpoint = default;
+                return false;
+            }
+        }
+    }
 
     public async Task<RelayResult> AddRelay(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
@@ -108,6 +130,22 @@ public class RelayCircuit
                 }
 
                 x.Remove();
+            }
+        }
+    }
+
+    public async Task Maintain(CancellationToken cancellationToken)
+    {
+        if (this.NumberOfRelays > 0 && this.IsIncoming)
+        {// Ping
+            if (this.lastPingMics + PingIntervalMics < Mics.FastSystem)
+            {
+                this.lastPingMics = Mics.FastSystem;
+                var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), this.NumberOfRelays, cancellationToken, EndpointResolution.PreferIpv6, this.IsIncoming);
+                Console.WriteLine(r.Result);
+                if (r.Result != NetResult.Success)
+                {
+                }
             }
         }
     }
@@ -181,7 +219,7 @@ public class RelayCircuit
         var task = Parallel.ForAsync(0, endpointArray.Length, cts.Token, async (i, cancellationToken) =>
         {
             var relayNumber = -(1 + i); // this.incoming ? 0 : -(1 + i);
-            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), relayNumber, cancellationToken, EndpointResolution.PreferIpv6, this.incoming);
+            var rr = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), relayNumber, cancellationToken, EndpointResolution.PreferIpv6, this.IsIncoming);
             if (rr.Result == NetResult.Success &&
             rr.Value is { } response)
             {
@@ -231,7 +269,7 @@ public class RelayCircuit
             return RelayResult.InvalidEndpoint;
         }
 
-        if (this.incoming)
+        if (this.IsIncoming)
         {// Incoming circuit
             if (this.relayNodes.Count >= MaxIncomingSerialRelays)
             {
