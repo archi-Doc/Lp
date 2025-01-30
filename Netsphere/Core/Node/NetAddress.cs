@@ -310,6 +310,34 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return true;
     }
 
+    public bool Equals(IPEndPoint? endpoint)
+    {
+        if (endpoint is null)
+        {
+            return false;
+        }
+
+        Span<byte> span = stackalloc byte[16];
+        if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            if (this.IsValidIpv4)
+            {
+                endpoint.Address.TryWriteBytes(span, out _);
+                return this.Port == endpoint.Port && this.Address4 == BitConverter.ToUInt32(span);
+            }
+        }
+        else if (endpoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            if (this.IsValidIpv6)
+            {
+                endpoint.Address.TryWriteBytes(span, out _);
+                return this.Port == endpoint.Port && this.Address6A == BitConverter.ToUInt64(span) && this.Address6B == BitConverter.ToUInt64(span.Slice(sizeof(ulong)));
+            }
+        }
+
+        return false;
+    }
+
     public bool IsPrivateOrLocalLoopbackAddress()
     {
         return (this.IsValidIpv4 && this.IsPrivateOrLocalLoopbackAddressIPv4()) ||

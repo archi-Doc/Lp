@@ -49,18 +49,18 @@ public class RelayCircuit
 
     #endregion
 
-    public bool TryGetOutermostEndpoint([MaybeNullWhen(false)] out NetEndpoint netEndpoint)
+    public bool TryGetOutermostAddress([MaybeNullWhen(false)] out NetAddress netAddress)
     {
         using (this.relayNodes.LockObject.EnterScope())
         {
             if (this.relayNodes.LinkedListChain.Last is { } last)
             {
-                netEndpoint = last.Endpoint;
+                netAddress = last.Address;
                 return true;
             }
             else
             {
-                netEndpoint = default;
+                netAddress = default;
                 return false;
             }
         }
@@ -69,6 +69,11 @@ public class RelayCircuit
     public async Task<RelayResult> AddRelay(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
         if (clientConnection.DestinationEndpoint.RelayId != 0)
+        {
+            return RelayResult.InvalidEndpoint;
+        }
+
+        if (!assignRelayResponse.RelayNetAddress.Equals(clientConnection.DestinationEndpoint.EndPoint))
         {
             return RelayResult.InvalidEndpoint;
         }

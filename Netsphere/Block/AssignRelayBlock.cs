@@ -40,13 +40,14 @@ public partial class AssignRelayBlock
 [TinyhandObject]
 public partial class AssignRelayResponse
 {
-    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint, long retensionMics)
+    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint, long retensionMics, NetNode relayNetNode)
     {
         this.Result = result;
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.RelayPoint = relayPoint;
         this.RetensionMics = retensionMics;
+        this.RelayNetAddress = relayNetNode.Address;
     }
 
     protected AssignRelayResponse()
@@ -67,4 +68,7 @@ public partial class AssignRelayResponse
 
     [Key(4)]
     public long RetensionMics { get; protected set; }
+
+    [Key(5)]
+    public NetAddress RelayNetAddress { get; protected set; }
 }

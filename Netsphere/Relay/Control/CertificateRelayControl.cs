@@ -26,11 +26,16 @@ public class CertificateRelayControl : IRelayControl
                 return new(NetResult.NotAuthenticated);
             }
 
+            if (this.ServerConnection.NetTerminal.NetStats.OwnNetNode is not { } ownNetNode)
+            {
+                return new(NetResult.NoNetwork);
+            }
+
             var relayAgent = this.ServerConnection.NetTerminal.RelayAgent;
             var result = relayAgent.AddExchange(this.ServerConnection, token.Target, out var innerRelayId, out var outerRelayId);
             var relayPoint = this.relayControl.DefaultMaxRelayPoint;
             var retensionMics = this.relayControl.DefaultRelayRetensionMics;
-            var response = new AssignRelayResponse(result, innerRelayId, outerRelayId, relayPoint, retensionMics);
+            var response = new AssignRelayResponse(result, innerRelayId, outerRelayId, relayPoint, retensionMics, ownNetNode);
             this.ServerConnection.Agreement.MinimumConnectionRetentionMics = retensionMics;
             relayAgent.AddRelayPoint(innerRelayId, relayPoint);
 

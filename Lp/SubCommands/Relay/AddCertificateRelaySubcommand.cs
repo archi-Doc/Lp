@@ -66,6 +66,11 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
             }
 
             var result = await relayCircuit.AddRelay(block, r.Value, relayConnection);
+            if (result != RelayResult.Success)
+            {
+                return;
+            }
+
             Console.WriteLine($"AddRelay: {result.ToString()}");
             Console.WriteLine(relayCircuit.NumberOfRelays);
 
