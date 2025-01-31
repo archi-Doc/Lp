@@ -15,7 +15,7 @@ public static class NetConstants
     public const int MaxPort = 60999;
 
     internal const bool LogRelay = false;
-    internal const bool LogLowRelay = false;
+    internal const bool LogLowRelay = true;
     internal const bool LogLowLevelNet = false;
     internal const int AckDelayMics = 10_000; // 10ms
     internal const long ConnectionClosedToDisposalMics = 10_000_000; // 10s

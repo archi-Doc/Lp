@@ -36,7 +36,7 @@ internal partial class BasalServiceAgent : IBasalService
         return CredentialProof.Integrality.Default.Differentiate(this.lpStats.Credentials, memory);
     }
 
-    public async NetTask<string> GetNodeInformation()
+    public async NetTask<string?> GetNodeInformation()
     {
         return this.lpBase.NodeName;
     }
