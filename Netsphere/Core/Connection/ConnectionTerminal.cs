@@ -397,7 +397,7 @@ public class ConnectionTerminal
         return connection;
     }
 
-    internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
+    internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2, int relayNumber)
     {
         var node = new NetNode(in endPoint, p.ClientPublicKey);
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
@@ -422,6 +422,7 @@ public class ConnectionTerminal
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
+        connection.MinimumNumberOfRelays = relayNumber;
 
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
