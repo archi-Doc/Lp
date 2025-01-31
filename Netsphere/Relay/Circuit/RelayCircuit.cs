@@ -55,7 +55,7 @@ public class RelayCircuit
         {
             if (this.relayNodes.LinkedListChain.Last is { } last)
             {
-                netAddress = last.Address;
+                netAddress = new(last.OuterRelayId, last.Address);
                 return true;
             }
             else
