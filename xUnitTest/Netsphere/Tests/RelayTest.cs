@@ -29,7 +29,7 @@ public class RelayTest
     private readonly byte[][] dataArray;
 
     [Fact]
-    public async Task Test1()
+    public async Task TestOutgoing()
     {
         var xo = new Xoshiro256StarStar(123);
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
