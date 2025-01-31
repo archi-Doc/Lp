@@ -148,7 +148,7 @@ public class RelayCircuit
             {
                 this.lastPingMics = Mics.FastSystem;
                 var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), this.NumberOfRelays, cancellationToken, EndpointResolution.PreferIpv6, this.IsIncoming);
-                Console.WriteLine(r.Result);
+                // Console.WriteLine(r.Result);
                 if (r.Result != NetResult.Success)
                 {
                 }

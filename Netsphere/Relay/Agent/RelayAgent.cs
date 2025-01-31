@@ -29,7 +29,7 @@ public partial class RelayAgent
     private partial class EndPointItem
     {
         [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
-        public EndPointItem(NetAddress netAddress, IPEndPoint endPoint)
+        public EndPointItem(NetAddress netAddress, IPEndPoint? endPoint)
         {
             this.NetAddress = netAddress;
             this.EndPoint = endPoint;
@@ -38,7 +38,7 @@ public partial class RelayAgent
         [Link(Type = ChainType.Unordered, AddValue = false)]
         public NetAddress NetAddress { get; }
 
-        public IPEndPoint EndPoint { get; }
+        public IPEndPoint? EndPoint { get; }
 
         public long UnrestrictedMics { get; internal set; }
 
@@ -338,8 +338,11 @@ public partial class RelayAgent
                     // Close -> EndPointOperation.SetRestricted ?
 
                     var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
-                    decrypted.IncrementAndShare();
-                    this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
+                    if (ep2.EndPoint is not null)
+                    {
+                        decrypted.IncrementAndShare();
+                        this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
+                    }
 
                     if (NetConstants.LogLowRelay)
                     {
@@ -478,7 +481,7 @@ Exit:
         }
     }
 
-    internal (IPEndPoint EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, EndpointOperation operation)
+    internal (IPEndPoint? EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, EndpointOperation operation)
     {
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
