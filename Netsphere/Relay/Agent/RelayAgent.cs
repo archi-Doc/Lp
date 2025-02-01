@@ -415,7 +415,7 @@ public partial class RelayAgent
                         goto AcceptIncoming;
                     }
 
-                    // if (exchange.AllowOpenSesami)
+                    if (exchange.AllowOpenSesami)
                     {// Open sesami
                         var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(sizeof(uint)));
                         if (packetType == Packet.PacketType.OpenSesami)

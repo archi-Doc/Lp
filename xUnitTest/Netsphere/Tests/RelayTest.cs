@@ -162,6 +162,8 @@ public class RelayTest
 
         // var rr = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(peerNode.Address, new("test"));
 
+        var r2 = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(Alternative.NetAddress, new());
+        this.NetControl.NetStats.SetOwnNetNodeForTest(r2.Value!.SourceEndpoint, netTerminal.NodePublicKey);
         using (var connection = (await netTerminal.Connect(peerNode))!)
         {
             connection.IsNotNull();

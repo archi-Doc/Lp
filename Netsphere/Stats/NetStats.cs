@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Runtime.CompilerServices;
+using Netsphere.Crypto;
 using Netsphere.Relay;
 
 namespace Netsphere.Stats;
@@ -242,6 +243,11 @@ public sealed partial class NetStats
         {
             this.Ipv4Endpoint.Add(endpoint);
         }
+    }
+
+    public void SetOwnNetNodeForTest(NetEndpoint endpoint, EncryptionPublicKey publicKey)
+    {
+        this.OwnNetNode = new(endpoint, publicKey);
     }
 
     [TinyhandOnSerializing]

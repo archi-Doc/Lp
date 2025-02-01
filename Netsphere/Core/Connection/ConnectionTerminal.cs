@@ -228,10 +228,13 @@ public class ConnectionTerminal
             return null;
         }
 
-        if (node.Address.RelayId != 0 && )
+        if (node.Address.RelayId != 0 && this.netStats.OwnNetNode is { } ownNetNode)
         {// Open sesami
-            var ownNetNode = this.netStats.OwnNetNode;
-            var rr = await this.packetTerminal.SendAndReceive<OpenSesamiPacket, OpenSesamiResponse>(peerNode.Address, new("test"));
+            var rr = await this.packetTerminal.SendAndReceive<OpenSesamiPacket, OpenSesamiResponse>(node.Address, new(ownNetNode)).ConfigureAwait(false);
+            if (rr.Value?.SecretNetNode is { } secretNetNode && secretNetNode.Validate())//
+            {
+                node = secretNetNode;
+            }
         }
 
         if (!this.netStats.TryCreateEndpoint(node, out var endPoint))

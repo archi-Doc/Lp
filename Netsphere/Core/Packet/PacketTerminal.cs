@@ -429,6 +429,33 @@ public sealed partial class PacketTerminal
 
                 return;
             }
+            else if (packetType == PacketType.OpenSesami && relayNumber > 0 && incomingRelay)
+            {
+                if (TinyhandSerializer.TryDeserialize<OpenSesamiPacket>(span, out var p) &&
+                        p.SourceAddress.IsValid)
+                {
+                    OpenSesamiResponse packet;
+                    var sourceAddress = p.SourceAddress.Address;
+                    if (this.netTerminal.IncomingCircuit.AllowOpenSesami &&
+                        this.netTerminal.NetStats.OwnNetNode is { } ownNetNode &&
+                        this.netTerminal.TryCreateEndpoint(ref sourceAddress, EndpointResolution.PreferIpv6, out var ep))
+                    {
+                        // Punch
+                        var punchPacket = new PunchPacket();
+                        CreatePacket(packetId, punchPacket, out var punchMemory); // CreatePacketCode (no relay)
+                        this.SendPacketWithoutRelay(ep, punchMemory, default);
+
+                        packet = new(ownNetNode);
+                    }
+                    else
+                    {
+                        packet = new();
+                    }
+
+                    CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                }
+            }
             else if (this.netBase.RespondPacketFunc is { } func)
             {
                 var memory = toBeShared.Slice(toBeShared.Length - span.Length).Memory;
