@@ -412,6 +412,11 @@ public partial class RelayAgent
                         exchange.RestrictedIntervalMics == 0 ||
                         Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
                     {// Discard
+
+                        if (exchange.AllowOpenSesami)
+                        {
+                        }
+
                         if (NetConstants.LogLowRelay)
                         {// Packets from endpoints other than the outer relay are not accepted.
                             this.logger.TryGet(LogLevel.Information)?.Log($"Outermost({endpoint}) : discard");

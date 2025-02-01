@@ -57,6 +57,8 @@ internal partial class RelayExchange
     /// </summary>
     public long RestrictedIntervalMics { get; private set; }
 
+    public bool AllowOpenSesami { get; private set; }
+
     public bool AllowUnknownNode { get; private set; }
 
     internal byte[] InnerKeyAndNonce { get; private set; }

@@ -158,7 +158,8 @@ public class RelayTest
         alternative.IncomingCircuit.TryGetOutermostAddress(out var netAddress).IsTrue();
         var peerNode = new NetNode(netAddress, netNode.PublicKey);
 
-        var netNode2 = (await netTerminal.UnsafeGetNetNode(netAddress))!;
+        var rr = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(peerNode.Address, new("test"));
+
         using (var connection = (await netTerminal.Connect(peerNode))!)
         {
             connection.IsNotNull();
