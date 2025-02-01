@@ -7,17 +7,18 @@ public sealed partial class OpenSesamiPacket : IPacket
 {
     public static PacketType PacketType => PacketType.OpenSesami;
 
-    public OpenSesamiPacket()
-    {
-    }
-
-    public OpenSesamiPacket(NetEndpoint sourceEndpoint)
+    public OpenSesamiPacket(NetNode sourceEndpoint)
     {
         this.SourceEndpoint = sourceEndpoint;
     }
 
+    private OpenSesamiPacket()
+    {
+        this.SourceEndpoint = default!;
+    }
+
     [Key(0)]
-    public NetEndpoint SourceEndpoint { get; set; }
+    public NetNode SourceEndpoint { get; set; }
 
     public override string ToString()
         => $"{this.SourceEndpoint}";

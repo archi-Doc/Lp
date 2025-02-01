@@ -49,7 +49,7 @@ public class RelayTest
         {
             relayConnection.IsNotNull();
 
-            var block = new AssignRelayBlock();
+            var block = netTerminal.OutgoingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
@@ -64,7 +64,7 @@ public class RelayTest
         {
             relayConnection.IsNotNull();
 
-            var block = new AssignRelayBlock();
+            var block = netTerminal.OutgoingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
@@ -137,6 +137,8 @@ public class RelayTest
             rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
         }
 
+        // alternative.IncomingCircuit.AllowUnknownIncoming = true;
+        alternative.IncomingCircuit.AllowOpenSesami = true;
         var netNode = (await netTerminal.UnsafeGetNetNode(Alternative.NetAddress))!;
         netNode.IsNotNull();
 
@@ -144,7 +146,7 @@ public class RelayTest
         {
             relayConnection.IsNotNull();
 
-            var block = new AssignRelayBlock(true);
+            var block = alternative.IncomingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
@@ -158,7 +160,7 @@ public class RelayTest
         alternative.IncomingCircuit.TryGetOutermostAddress(out var netAddress).IsTrue();
         var peerNode = new NetNode(netAddress, netNode.PublicKey);
 
-        var rr = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(peerNode.Address, new("test"));
+        // var rr = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(peerNode.Address, new("test"));
 
         using (var connection = (await netTerminal.Connect(peerNode))!)
         {

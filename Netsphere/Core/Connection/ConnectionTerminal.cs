@@ -180,6 +180,11 @@ public class ConnectionTerminal
             return null;
         }
 
+        if (node.Address.RelayId != 0)
+        {
+            return null;
+        }
+
         if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
         {
             return null;
@@ -221,6 +226,12 @@ public class ConnectionTerminal
         if (!this.NetTerminal.IsActive)
         {
             return null;
+        }
+
+        if (node.Address.RelayId != 0 && )
+        {// Open sesami
+            var ownNetNode = this.netStats.OwnNetNode;
+            var rr = await this.packetTerminal.SendAndReceive<OpenSesamiPacket, OpenSesamiResponse>(peerNode.Address, new("test"));
         }
 
         if (!this.netStats.TryCreateEndpoint(node, out var endPoint))

@@ -26,6 +26,10 @@ public class RelayCircuit
 
     #region FieldAndProperty
 
+    public bool AllowOpenSesami { get; set; }
+
+    public bool AllowUnknownIncoming { get; set; }
+
     public int NumberOfRelays
         => this.relayNodes.Count;
 
@@ -48,6 +52,9 @@ public class RelayCircuit
     private long lastPingMics;
 
     #endregion
+
+    public AssignRelayBlock NewAssignRelayBlock()
+        => new(this.AllowOpenSesami, this.AllowUnknownIncoming);
 
     public bool TryGetOutermostAddress([MaybeNullWhen(false)] out NetAddress netAddress)
     {

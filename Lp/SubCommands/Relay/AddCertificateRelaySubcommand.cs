@@ -43,6 +43,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
             return;
         }
 
+        relayCircuit.AllowUnknownIncoming = true;
         using (var relayConnection = await this.netTerminal.ConnectForRelay(netNode, true, 0))
         {
             if (relayConnection is null)
@@ -50,7 +51,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
                 return;
             }
 
-            var block = new AssignRelayBlock(true);
+            var block = relayCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             seedKey.SignWithSalt(token, relayConnection.EmbryoSalt);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);

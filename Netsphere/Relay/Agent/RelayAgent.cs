@@ -408,23 +408,31 @@ public partial class RelayAgent
                 var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndpointOperation.None);
                 if (!ep2.Unrestricted)
                 {// Restricted
-                    if (!exchange.AllowUnknownNode ||
-                        exchange.RestrictedIntervalMics == 0 ||
-                        Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
-                    {// Discard
-
-                        if (exchange.AllowOpenSesami)
-                        {
-                        }
-
-                        if (NetConstants.LogLowRelay)
-                        {// Packets from endpoints other than the outer relay are not accepted.
-                            this.logger.TryGet(LogLevel.Information)?.Log($"Outermost({endpoint}) : discard");
-                        }
-
-                        goto Exit;
+                    if (exchange.AllowUnknownIncoming &&
+                       exchange.RestrictedIntervalMics != 0 &&
+                       Mics.FastSystem > this.lastRestrictedMics + exchange.RestrictedIntervalMics)
+                    {// Unknown incoming
+                        goto AcceptIncoming;
                     }
 
+                    // if (exchange.AllowOpenSesami)
+                    {// Open sesami
+                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(sizeof(uint)));
+                        if (packetType == Packet.PacketType.OpenSesami)
+                        {
+                            goto AcceptIncoming;
+                        }
+                    }
+
+                    // Discard
+                    if (NetConstants.LogLowRelay)
+                    {// Packets from endpoints other than the outer relay are not accepted.
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Outermost({endpoint}) : discard");
+                    }
+
+                    goto Exit;
+
+AcceptIncoming:
                     this.lastRestrictedMics = Mics.FastSystem;
                 }
             }
