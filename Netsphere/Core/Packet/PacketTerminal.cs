@@ -431,21 +431,18 @@ public sealed partial class PacketTerminal
             }
             else if (packetType == PacketType.OpenSesami && relayNumber > 0 && incomingRelay)
             {
-                if (TinyhandSerializer.TryDeserialize<OpenSesamiPacket>(span, out var p) &&
-                        p.SourceAddress.IsValid)
+                if (TinyhandSerializer.TryDeserialize<OpenSesamiPacket>(span, out var p))
                 {
                     OpenSesamiResponse packet;
-                    var sourceAddress = p.SourceAddress.Address;
                     if (this.netTerminal.IncomingCircuit.AllowOpenSesami &&
-                        this.netTerminal.NetStats.OwnNetNode is { } ownNetNode &&
-                        this.netTerminal.TryCreateEndpoint(ref sourceAddress, EndpointResolution.PreferIpv6, out var ep))
+                        this.netTerminal.NetStats.OwnNetNode is { } ownNetNode)
                     {
                         // Punch
                         var punchPacket = new PunchPacket();
                         CreatePacket(packetId, punchPacket, out var punchMemory); // CreatePacketCode (no relay)
-                        this.SendPacketWithoutRelay(ep, punchMemory, default);
+                        this.SendPacketWithoutRelay(endpoint, punchMemory, default);
 
-                        packet = new(ownNetNode);
+                        packet = new(ownNetNode.Address);
                     }
                     else
                     {

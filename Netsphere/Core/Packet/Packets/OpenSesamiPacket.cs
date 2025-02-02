@@ -7,20 +7,9 @@ public sealed partial class OpenSesamiPacket : IPacket
 {
     public static PacketType PacketType => PacketType.OpenSesami;
 
-    public OpenSesamiPacket(NetAddress sourceAddress)
-    {
-        this.SourceAddress = sourceAddress;
-    }
-
     public OpenSesamiPacket()
     {
     }
-
-    [Key(0)]
-    public NetAddress SourceAddress { get; set; }
-
-    public override string ToString()
-        => $"{this.SourceAddress}";
 }
 
 [TinyhandObject]

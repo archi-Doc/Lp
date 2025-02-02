@@ -162,16 +162,20 @@ public class RelayTest
 
         // var rr = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(peerNode.Address, new("test"));
 
-        var r2 = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(Alternative.NetAddress, new());
-        this.NetControl.NetStats.SetOwnNetNodeForTest(r2.Value!.SourceEndpoint, netTerminal.NodePublicKey);
+        // var r2 = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(Alternative.NetAddress, new());
+        this.NetControl.NetStats.SetOwnNetNodeForTest(Alternative.NetAddress, alternative.NodePublicKey);
+        NetAddress.SkipValidation = true;
         using (var connection = (await netTerminal.Connect(peerNode))!)
         {
+            NetAddress.SkipValidation = false;
             connection.IsNotNull();
 
             var basicService = connection.GetService<IBasicService>();
             var task = await basicService.SendInt(1).ResponseAsync;
             task.Result.Is(NetResult.Success);
         }
+
+        await alternative.IncomingCircuit.Close();
     }
 
     public NetFixture NetFixture { get; }

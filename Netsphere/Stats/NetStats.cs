@@ -245,9 +245,9 @@ public sealed partial class NetStats
         }
     }
 
-    public void SetOwnNetNodeForTest(NetEndpoint endpoint, EncryptionPublicKey publicKey)
+    public void SetOwnNetNodeForTest(NetAddress address, EncryptionPublicKey publicKey)
     {
-        this.OwnNetNode = new(endpoint, publicKey);
+        this.OwnNetNode = new(address, publicKey);
     }
 
     [TinyhandOnSerializing]
