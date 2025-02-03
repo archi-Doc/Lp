@@ -46,6 +46,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
         if (options.Incoming)
         {
             relayCircuit.AllowOpenSesami = true;
+            relayCircuit.AllowUnknownIncoming = true;
         }
 
         using (var relayConnection = await this.netTerminal.ConnectForRelay(netNode, true, 0))

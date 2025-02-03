@@ -14,6 +14,7 @@ public static class NetConstants
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
+    internal const bool EnableOpenSesami = false;
     internal const bool LogRelay = false;
     internal const bool LogLowRelay = true;
     internal const bool LogLowLevelNet = false;

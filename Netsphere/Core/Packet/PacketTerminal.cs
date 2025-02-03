@@ -429,7 +429,9 @@ public sealed partial class PacketTerminal
 
                 return;
             }
-            else if (packetType == PacketType.OpenSesami && relayNumber > 0 && incomingRelay)
+            else if (NetConstants.EnableOpenSesami &&
+                packetType == PacketType.OpenSesami &&
+                relayNumber > 0 && incomingRelay)
             {
                 if (TinyhandSerializer.TryDeserialize<OpenSesamiPacket>(span, out var p))
                 {

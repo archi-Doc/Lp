@@ -139,6 +139,7 @@ public class RelayTest
 
         // alternative.IncomingCircuit.AllowUnknownIncoming = true;
         alternative.IncomingCircuit.AllowOpenSesami = true;
+        alternative.IncomingCircuit.AllowUnknownIncoming = true;
         var netNode = (await netTerminal.UnsafeGetNetNode(Alternative.NetAddress))!;
         netNode.IsNotNull();
 
