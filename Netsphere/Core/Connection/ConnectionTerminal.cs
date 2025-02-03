@@ -202,7 +202,7 @@ public class ConnectionTerminal
         var publicKey = seedKey.GetEncryptionPublicKey();
 
         // Create a new connection
-        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode(), default);
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, targetNumberOfRelays, default, EndpointResolution.PreferIpv6, incomingRelay).ConfigureAwait(false); // < 0: target
         if (t.Value is null)
         {
@@ -282,7 +282,8 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var sourceNetNode = this.netStats.OwnNetNode?.Address.IsValidIpv4AndIpv6 == true ? this.netStats.OwnNetNode : default;
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode(), sourceNetNode);
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, minimumNumberOfRelays, default).ConfigureAwait(false);
         var response = t.Value;
         if (response is null)
@@ -443,6 +444,11 @@ public class ConnectionTerminal
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
+        }
+
+        if (p.SourceNode is { } sourceNode)
+        {
+            this.netStats.NodeControl.TryAddActiveNode(sourceNode);
         }
 
         /*if (this.netStats.NodeControl.RestorationNode is null)
