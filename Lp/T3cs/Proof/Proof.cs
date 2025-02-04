@@ -21,11 +21,6 @@ namespace Lp.T3cs;
 public abstract partial class Proof : IEquatable<Proof>
 {
     /// <summary>
-    /// The maximum expiration time in microseconds.
-    /// </summary>
-    public const long MaxExpirationMics = Mics.MicsPerDay * 10;
-
-    /// <summary>
     /// The expiration time in microseconds to truncate to.
     /// </summary>
     public const long TruncateExpirationMics = Mics.MicsPerDay;
@@ -45,7 +40,7 @@ public abstract partial class Proof : IEquatable<Proof>
     #region FieldAndProperty
 
     // /// <inheritdoc/>
-    // SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
+    // SignaturePublicKey IVerifiable.PublicKey => this.GetSignatureKey();
 
     // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
     // public SignaturePublicKey PublicKey { get; }
@@ -69,13 +64,18 @@ public abstract partial class Proof : IEquatable<Proof>
     [Key(3)]
     public long ExpirationMics { get; protected set; }
 
+    /// <summary>
+    /// Gets the maximum valid microseconds.
+    /// </summary>
+    public virtual long MaxValidMics => Mics.MicsPerDay * 1;
+
     #endregion
 
     /// <summary>
-    /// Gets the public key associated with the proof.
+    /// Gets the public signature key associated with the proof.
     /// </summary>
     /// <returns>The public key.</returns>
-    public abstract SignaturePublicKey GetPublicKey();
+    public abstract SignaturePublicKey GetSignatureKey();
 
     /// <summary>
     /// Tries to get the credit associated with the proof.
@@ -111,7 +111,7 @@ public abstract partial class Proof : IEquatable<Proof>
         }
 
         var period = this.ExpirationMics - this.VerificationMics;
-        if (period < 0 || period > MaxExpirationMics)
+        if (period < 0 || period > this.MaxValidMics)
         {
             return false;
         }
@@ -124,7 +124,11 @@ public abstract partial class Proof : IEquatable<Proof>
         return true;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Determines whether the specified <see cref="Proof"/> is equal to the current <see cref="Proof"/>.
+    /// </summary>
+    /// <param name="other">The proof to compare with the current proof.</param>
+    /// <returns><c>true</c> if the specified proof is equal to the current proof; otherwise, <c>false</c>.</returns>
     public bool Equals(Proof? other)
     {
         if (other == null)
@@ -135,16 +139,24 @@ public abstract partial class Proof : IEquatable<Proof>
         return this.VerificationMics == other.VerificationMics &&
             this.ExpirationMics == other.ExpirationMics &&
             this.Signature.SequenceEqual(other.Signature) &&
-            this.GetPublicKey().Equals(other.GetPublicKey());
+            this.GetSignatureKey().Equals(other.GetSignatureKey());
     }
 
+    /// <summary>
+    /// Prepares the proof for signing by setting the verification and expiration times.
+    /// </summary>
+    /// <param name="validMics">The valid microseconds.</param>
     internal void PrepareSignInternal(long validMics)
     {
         this.VerificationMics = Mics.GetCorrected();
-        var mics = this.VerificationMics + (validMics > MaxExpirationMics ? MaxExpirationMics : validMics);
+        var mics = this.VerificationMics + Math.Max(validMics, this.MaxValidMics);
         this.ExpirationMics = mics / TruncateExpirationMics * TruncateExpirationMics;
     }
 
+    /// <summary>
+    /// Sets the signature for the proof.
+    /// </summary>
+    /// <param name="sign">The signature.</param>
     internal void SetSignInternal(byte[] sign)
     {
         this.Signature = sign;

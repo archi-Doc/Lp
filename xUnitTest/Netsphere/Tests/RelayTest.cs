@@ -124,7 +124,9 @@ public class RelayTest
     }
 
     // [Fact]
+#pragma warning disable xUnit1013 // Public method should be marked as test
     public async Task TestIncoming()
+#pragma warning restore xUnit1013 // Public method should be marked as test
     {
         var xo = new Xoshiro256StarStar(123);
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);

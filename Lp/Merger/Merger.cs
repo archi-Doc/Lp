@@ -159,7 +159,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SignaturePublicKey GetPublicKey()
+    public SignaturePublicKey GetMergerKey()
         => this.MergerPublicKey;
 
     public bool TrySignProof(Proof proof, long validMics)
@@ -180,8 +180,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Check net node
-        this.State.Node = this.netStats.OwnNetNode;
-        if (this.State.Node is null)
+        this.State.NetNode = this.netStats.OwnNetNode;
+        if (this.State.NetNode is null)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
             return;

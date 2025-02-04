@@ -26,7 +26,7 @@ public abstract partial class CredentialState
     #region FieldAndProperty
 
     [Key(0)]
-    public NetNode? Node { get; set; }
+    public NetNode? NetNode { get; set; }
 
     [IgnoreMember]
     public bool IsActive { get; set; }
