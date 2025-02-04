@@ -8,8 +8,6 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public partial class Credentials
 {
-    public const string Filename = "Credentials.tinyhand";
-
     #region FieldAndProperty
 
     [Key(0)]

@@ -233,7 +233,7 @@ public class Control
                     {
                         // SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration(Credentials.Filename),
+                        FileConfiguration = new GlobalFileConfiguration(),
                     });
 
                     context.AddCrystal<Mono>(new()

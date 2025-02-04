@@ -59,25 +59,26 @@ public sealed partial class CredentialProof : Proof
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     private CredentialProof()
     {
+        this.Value = default!;
         this.State = default!;
     }
 
-    private CredentialProof(CredentialState state)
+    private CredentialProof(Value value, CredentialState state)
     {
+        this.Value = value;
         this.State = state;
     }
 
-    public static CredentialProof Create(Evidence valueProofEvidence, CredentialState state)
+    public static CredentialProof New(Value value, CredentialState state)
     {
-        var credentialProof = new CredentialProof(state);
-        credentialProof.ValueProofEvidence = valueProofEvidence;
+        var credentialProof = new CredentialProof(value, state);
         return credentialProof;
     }
 
     #region FieldAndProperty
 
     [Key(Proof.ReservedKeyCount)]
-    public Evidence ValueProofEvidence { get; private set; } = default!;
+    public Value Value { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
