@@ -92,8 +92,7 @@ internal class MergerRemoteAgent : IMergerRemote
         }
         else if (evidence.Validate())
         {// Evidence(ValueProof) -> CredentialProof
-            var netNode = this.netStats.GetOwnNetNode();
-            var credentialProof = CredentialProof.Create(evidence, this.merger.State);
+            var credentialProof = CredentialProof.New(default, this.merger.State);
             this.merger.TrySignProof(credentialProof, CredentialProof.LpExpirationMics);
             return credentialProof;
         }

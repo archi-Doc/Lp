@@ -24,14 +24,8 @@ public sealed partial class CredentialProof : Proof
 
         public override bool Validate(CredentialProof.GoshujinClass goshujin, CredentialProof newItem, CredentialProof? oldItem)
         {
-            if (!newItem.TryGetValueProof(out var valueProof))
-            {
-                return false;
-            }
-
             if (oldItem is not null &&
-                oldItem.TryGetValueProof(out var valueProof2) &&
-                valueProof2.VerificationMics >= valueProof.VerificationMics)
+                oldItem.VerificationMics >= newItem.VerificationMics)
             {
                 return false;
             }
@@ -41,7 +35,7 @@ public sealed partial class CredentialProof : Proof
                 return false;
             }
 
-            var publicKey = valueProof.GetSignatureKey();
+            var publicKey = newItem.GetSignatureKey();
             if (publicKey.Equals(LpConstants.LpPublicKey))
             {// Lp key
             }
@@ -89,39 +83,19 @@ public sealed partial class CredentialProof : Proof
 
     #endregion
 
-    public bool TryGetValueProof([MaybeNullWhen(false)] out ValueProof valueProof)
-    {
-        valueProof = this.ValueProofEvidence.Proof as ValueProof;
-        return valueProof != null;
-    }
-
     public override SignaturePublicKey GetSignatureKey()
-        => this.TryGetValueProof(out var valueProof) ? valueProof.GetSignatureKey() : default;
+        => this.Value.Credit.Originator;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {
-        if (this.TryGetValueProof(out var valueProof))
-        {
-            return valueProof.TryGetCredit(out credit);
-        }
-        else
-        {
-            credit = default;
-            return false;
-        }
+        credit = this.Value.Credit;
+        return true;
     }
 
     public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
     {
-        if (this.TryGetValueProof(out var valueProof))
-        {
-            return valueProof.TryGetValue(out value);
-        }
-        else
-        {
-            value = default;
-            return false;
-        }
+        value = this.Value;
+        return true;
     }
 
     public override bool Validate()
