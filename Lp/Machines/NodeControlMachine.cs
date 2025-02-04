@@ -85,7 +85,7 @@ public partial class NodeControlMachine : Machine
             return StateResult.Continue;
         }
 
-        // Active -> Lifeline, Lifeline offline -> Remove
+        // Own -> Active, Active -> Lifeline, Lifeline offline -> Remove
         this.nodeControl.MaintainLifelineNode(this.netStats.OwnNetNode);
 
         // Check lifeline node
@@ -97,7 +97,7 @@ public partial class NodeControlMachine : Machine
         // Lifeline Online -> Active
         // this.nodeControl.FromLifelineNodeToActiveNode();
 
-        var max = Math.Max(this.nodeControl.CountActive, FixEndpointCount);
+        var max = Math.Min(this.nodeControl.CountActive, FixEndpointCount);
         do
         {
             // Integrate active nodes.
@@ -111,7 +111,7 @@ public partial class NodeControlMachine : Machine
             }
             else
             {
-                await this.ProcessRestorationNode();
+                // await this.ProcessRestorationNode();
                 break;
             }
 
@@ -123,7 +123,7 @@ public partial class NodeControlMachine : Machine
             }
         }
         while (!this.CancellationToken.IsCancellationRequested &&
-        this.count++ < FixEndpointCount);
+        this.count++ < max);
 
         this.nodeControl.Trim(false, true);
 

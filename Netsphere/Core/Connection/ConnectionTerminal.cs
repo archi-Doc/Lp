@@ -446,7 +446,8 @@ public class ConnectionTerminal
             connection.Goshujin = this.serverConnections;
         }
 
-        if (p.SourceNode is { } sourceNode)
+        if (!this.netStats.NodeControl.HasSufficientActiveNodes &&
+            p.SourceNode is { } sourceNode)
         {
             this.netStats.NodeControl.TryAddActiveNode(sourceNode);
         }
