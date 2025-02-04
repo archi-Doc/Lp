@@ -102,6 +102,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.ShowNodeControlStateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.AddNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);

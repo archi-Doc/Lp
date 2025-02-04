@@ -26,6 +26,10 @@ public class RelayCircuit
 
     #region FieldAndProperty
 
+    public bool AllowOpenSesami { get; set; }
+
+    public bool AllowUnknownIncoming { get; set; }
+
     public int NumberOfRelays
         => this.relayNodes.Count;
 
@@ -49,18 +53,21 @@ public class RelayCircuit
 
     #endregion
 
-    public bool TryGetOutermostEndpoint([MaybeNullWhen(false)] out NetEndpoint netEndpoint)
+    public AssignRelayBlock NewAssignRelayBlock()
+        => new(this.AllowOpenSesami, this.AllowUnknownIncoming);
+
+    public bool TryGetOutermostAddress([MaybeNullWhen(false)] out NetAddress netAddress)
     {
         using (this.relayNodes.LockObject.EnterScope())
         {
             if (this.relayNodes.LinkedListChain.Last is { } last)
             {
-                netEndpoint = last.Endpoint;
+                netAddress = new(last.OuterRelayId, last.Address);
                 return true;
             }
             else
             {
-                netEndpoint = default;
+                netAddress = default;
                 return false;
             }
         }
@@ -69,6 +76,12 @@ public class RelayCircuit
     public async Task<RelayResult> AddRelay(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
         if (clientConnection.DestinationEndpoint.RelayId != 0)
+        {
+            return RelayResult.InvalidEndpoint;
+        }
+
+        if (assignRelayResponse.RelayNetAddress.IsValid &&
+            !assignRelayResponse.RelayNetAddress.Equals(clientConnection.DestinationEndpoint.EndPoint))
         {
             return RelayResult.InvalidEndpoint;
         }
@@ -142,7 +155,7 @@ public class RelayCircuit
             {
                 this.lastPingMics = Mics.FastSystem;
                 var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingRelayPacket, PingRelayResponse>(NetAddress.Relay, new(), this.NumberOfRelays, cancellationToken, EndpointResolution.PreferIpv6, this.IsIncoming);
-                Console.WriteLine(r.Result);
+                // Console.WriteLine(r.Result);
                 if (r.Result != NetResult.Success)
                 {
                 }

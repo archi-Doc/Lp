@@ -7,9 +7,10 @@ public partial class AssignRelayBlock
 {
     public const int KeyAndNonceSize = 32;
 
-    public AssignRelayBlock(bool allowUnknownNode = false)
+    internal AssignRelayBlock(bool allowOpenSesami, bool allowUnknownIncoming)
     {
-        this.AllowUnknownNode = allowUnknownNode;
+        this.AllowOpenSesami = allowOpenSesami;
+        this.AllowUnknownIncoming = allowUnknownIncoming;
         this.InnerKeyAndNonce = new byte[KeyAndNonceSize];
         RandomVault.Default.NextBytes(this.InnerKeyAndNonce);
     }
@@ -18,35 +19,34 @@ public partial class AssignRelayBlock
     {
     }
 
-    /*public CreateRelayBlock(RelayId relayId)
-    {
-        this.RelayId = relayId;
-    }*/
+    [Key(0)]
+    public bool AllowOpenSesami { get; protected set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether or not to allow communication from unknown nodes.<br/>
     /// This feature is designed with Engagement in mind.
     /// </summary>
-    [Key(0)]
-    public bool AllowUnknownNode { get; protected set; }
-
     [Key(1)]
+    public bool AllowUnknownIncoming { get; protected set; }
+
+    [Key(2)]
     public byte[] InnerKeyAndNonce { get; protected set; } = [];
 
-    // [Key(2)]
+    // [Key(3)]
     // public Linkage? Linkage { get; private set; }
 }
 
 [TinyhandObject]
 public partial class AssignRelayResponse
 {
-    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint, long retensionMics)
+    public AssignRelayResponse(RelayResult result, RelayId innerRelayId, RelayId outerRelayId, long relayPoint, long retensionMics, NetNode? relayNetNode)
     {
         this.Result = result;
         this.InnerRelayId = innerRelayId;
         this.OuterRelayId = outerRelayId;
         this.RelayPoint = relayPoint;
         this.RetensionMics = retensionMics;
+        this.RelayNetAddress = relayNetNode is null ? default : relayNetNode.Address;
     }
 
     protected AssignRelayResponse()
@@ -67,4 +67,7 @@ public partial class AssignRelayResponse
 
     [Key(4)]
     public long RetensionMics { get; protected set; }
+
+    [Key(5)]
+    public NetAddress RelayNetAddress { get; protected set; }
 }

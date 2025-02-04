@@ -11,14 +11,16 @@ namespace Lp.Net;
 [NetServiceObject]
 internal partial class BasalServiceAgent : IBasalService
 {
-    public BasalServiceAgent(NetStats netStats, LpStats lpStats)
+    public BasalServiceAgent(LpBase lpBase, NetStats netStats, LpStats lpStats)
     {
+        this.lpBase = lpBase;
         this.netStats = netStats;
         this.lpStats = lpStats;
     }
 
     #region FieldAndProperty
 
+    private readonly LpBase lpBase;
     private readonly NetStats netStats;
     private readonly LpStats lpStats;
 
@@ -32,5 +34,10 @@ internal partial class BasalServiceAgent : IBasalService
     public async NetTask<BytePool.RentMemory> DifferentiateCredential(ReadOnlyMemory<byte> memory)
     {
         return CredentialProof.Integrality.Default.Differentiate(this.lpStats.Credentials, memory);
+    }
+
+    public async NetTask<string?> GetNodeInformation()
+    {
+        return this.lpBase.NodeName;
     }
 }

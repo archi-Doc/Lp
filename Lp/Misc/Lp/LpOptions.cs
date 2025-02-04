@@ -33,7 +33,7 @@ public partial record LpOptions
     // [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
     // public string RemotePublicKeyBase64 { get; init; } = string.Empty;
 
-    [SimpleOption("NodeName", Description = "Node name")]
+    [SimpleOption("NodeName", Description = "Node name", GetEnvironmentVariable = true)]
     public string NodeName { get; init; } = string.Empty;
 
     [SimpleOption("NodeList", Description = "Node list", GetEnvironmentVariable = true)]

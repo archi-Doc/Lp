@@ -10,17 +10,6 @@ public sealed partial class OpenSesamiPacket : IPacket
     public OpenSesamiPacket()
     {
     }
-
-    public OpenSesamiPacket(NetEndpoint sourceEndpoint)
-    {
-        this.SourceEndpoint = sourceEndpoint;
-    }
-
-    [Key(0)]
-    public NetEndpoint SourceEndpoint { get; set; }
-
-    public override string ToString()
-        => $"{this.SourceEndpoint}";
 }
 
 [TinyhandObject]
@@ -32,14 +21,14 @@ public sealed partial class OpenSesamiResponse : IPacket
     {
     }
 
-    public OpenSesamiResponse(NetEndpoint secretEndpoint)
+    public OpenSesamiResponse(NetAddress secretAddress)
     {
-        this.SecretEndpoint = secretEndpoint;
+        this.SecretAddress = secretAddress;
     }
 
     [Key(0)]
-    public NetEndpoint SecretEndpoint { get; set; }
+    public NetAddress SecretAddress { get; set; }
 
     public override string ToString()
-        => $"{this.SecretEndpoint}";
+        => $"{this.SecretAddress}";
 }

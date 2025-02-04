@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Runtime.CompilerServices;
+using Netsphere.Crypto;
 using Netsphere.Relay;
 
 namespace Netsphere.Stats;
@@ -42,6 +44,9 @@ public sealed partial class NetStats
     public int LastPort { get; private set; }
 
     [IgnoreMember]
+    public bool IsIpv6Supported { get; private set; } = true;
+
+    [IgnoreMember]
     public NetNode? OwnNetNode { get; private set; }
 
     [IgnoreMember]
@@ -75,8 +80,8 @@ public sealed partial class NetStats
         endPoint = default;
         if (endpointResolution == EndpointResolution.PreferIpv6)
         {
-            if (this.Ipv6Endpoint.TryGet(out var ipv6, out _))
-            {// Ipv6 supported
+            if (this.IsIpv6Supported || !address.IsValidIpv4)
+            {// Ipv6 supported or Ipv6 only
                 address.TryCreateIpv6(ref endPoint);
                 if (endPoint.IsValid)
                 {
@@ -89,7 +94,7 @@ public sealed partial class NetStats
         }
         else if (endpointResolution == EndpointResolution.NetAddress)
         {
-            if (address.IsValidIpv6)
+            if (this.IsIpv6Supported && address.IsValidIpv6)
             {
                 address.TryCreateIpv6(ref endPoint);
                 if (endPoint.IsValid)
@@ -118,8 +123,8 @@ public sealed partial class NetStats
     public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
     {
         endPoint = default;
-        if (this.Ipv6Endpoint.TryGet(out var ipv6, out _))
-        {// Ipv6 supported
+        if (this.IsIpv6Supported || !node.Address.IsValidIpv4)
+        {// Ipv6 supported or Ipv6 only
             node.Address.TryCreateIpv6(ref endPoint);
             if (endPoint.IsValid)
             {
@@ -181,6 +186,8 @@ public sealed partial class NetStats
 
     public void Update(RelayCircuit incomingCircuit)
     {
+        this.IsIpv6Supported = this.Ipv6Endpoint.TryGet(out _, out _);
+
         if (this.OwnNetNode is null)
         {
             if (this.TryGetOwnNetNode(out var netNode))
@@ -236,6 +243,11 @@ public sealed partial class NetStats
         {
             this.Ipv4Endpoint.Add(endpoint);
         }
+    }
+
+    public void SetOwnNetNodeForTest(NetAddress address, EncryptionPublicKey publicKey)
+    {
+        this.OwnNetNode = new(address, publicKey);
     }
 
     [TinyhandOnSerializing]

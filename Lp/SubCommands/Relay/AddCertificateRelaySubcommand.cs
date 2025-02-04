@@ -43,6 +43,12 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
             return;
         }
 
+        if (options.Incoming)
+        {
+            relayCircuit.AllowOpenSesami = true;
+            relayCircuit.AllowUnknownIncoming = true;
+        }
+
         using (var relayConnection = await this.netTerminal.ConnectForRelay(netNode, true, 0))
         {
             if (relayConnection is null)
@@ -50,7 +56,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
                 return;
             }
 
-            var block = new AssignRelayBlock(true);
+            var block = relayCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             seedKey.SignWithSalt(token, relayConnection.EmbryoSalt);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
@@ -66,6 +72,11 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
             }
 
             var result = await relayCircuit.AddRelay(block, r.Value, relayConnection);
+            if (result != RelayResult.Success)
+            {
+                return;
+            }
+
             Console.WriteLine($"AddRelay: {result.ToString()}");
             Console.WriteLine(relayCircuit.NumberOfRelays);
 

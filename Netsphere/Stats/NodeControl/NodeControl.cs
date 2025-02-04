@@ -92,7 +92,8 @@ public sealed partial class NodeControl
 
     public void FromLifelineNodeToActiveNode()
     {
-        if (this.CountActive >= SufficientActiveNodes)
+        if (this.CountActive >= SufficientActiveNodes ||
+            this.CountActive >= this.CountLinfelineOnline)
         {
             return;
         }

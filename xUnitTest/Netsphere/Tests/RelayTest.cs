@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Arc.Crypto;
 using Netsphere;
 using Netsphere.Crypto;
@@ -29,7 +30,7 @@ public class RelayTest
     private readonly byte[][] dataArray;
 
     [Fact]
-    public async Task Test1()
+    public async Task TestOutgoing()
     {
         var xo = new Xoshiro256StarStar(123);
         this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
@@ -48,7 +49,7 @@ public class RelayTest
         {
             relayConnection.IsNotNull();
 
-            var block = new AssignRelayBlock();
+            var block = netTerminal.OutgoingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
@@ -63,7 +64,7 @@ public class RelayTest
         {
             relayConnection.IsNotNull();
 
-            var block = new AssignRelayBlock();
+            var block = netTerminal.OutgoingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
@@ -120,6 +121,62 @@ public class RelayTest
         }
 
         await netTerminal.OutgoingCircuit.Close();
+    }
+
+    [Fact]
+    public async Task TestIncoming()
+    {
+        var xo = new Xoshiro256StarStar(123);
+        this.NetControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
+
+        var netTerminal = this.NetControl.NetTerminal;
+        var alternative = this.NetControl.Alternative!;
+        var seedKey = SeedKey.NewSignature();
+        if (netTerminal.RelayControl is CertificateRelayControl rc)
+        {
+            rc.SetCertificatePublicKey(seedKey.GetSignaturePublicKey());
+        }
+
+        // alternative.IncomingCircuit.AllowUnknownIncoming = true;
+        alternative.IncomingCircuit.AllowOpenSesami = true;
+        alternative.IncomingCircuit.AllowUnknownIncoming = true;
+        var netNode = (await netTerminal.UnsafeGetNetNode(Alternative.NetAddress))!;
+        netNode.IsNotNull();
+
+        using (var relayConnection = (await alternative.ConnectForRelay(netNode, true, 0))!)
+        {
+            relayConnection.IsNotNull();
+
+            var block = alternative.IncomingCircuit.NewAssignRelayBlock();
+            var token = new CertificateToken<AssignRelayBlock>(block);
+            relayConnection.SignWithSalt(token, seedKey);
+            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token);
+            r.IsSuccess.IsTrue();
+            r.Value.IsNotNull();
+
+            var result = await alternative.IncomingCircuit.AddRelay(block, r.Value!, relayConnection);
+            result.Is(RelayResult.Success);
+        }
+
+        alternative.IncomingCircuit.TryGetOutermostAddress(out var netAddress).IsTrue();
+        var peerNode = new NetNode(netAddress, netNode.PublicKey);
+
+        // var rr = await netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(peerNode.Address, new("test"));
+
+        // var r2 = await this.NetControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(Alternative.NetAddress, new());
+        this.NetControl.NetStats.SetOwnNetNodeForTest(Alternative.NetAddress, alternative.NodePublicKey);
+        NetAddress.SkipValidation = true;
+        using (var connection = (await netTerminal.Connect(peerNode))!)
+        {
+            NetAddress.SkipValidation = false;
+            connection.IsNotNull();
+
+            var basicService = connection.GetService<IBasicService>();
+            var task = await basicService.SendInt(1).ResponseAsync;
+            task.Result.Is(NetResult.Success);
+        }
+
+        await alternative.IncomingCircuit.Close();
     }
 
     public NetFixture NetFixture { get; }

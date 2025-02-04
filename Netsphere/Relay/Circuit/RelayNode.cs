@@ -10,6 +10,15 @@ public sealed partial class RelayNode
     public RelayNode(AssignRelayBlock assignRelayBlock, AssignRelayResponse assignRelayResponse, ClientConnection clientConnection)
     {
         this.Endpoint = new(assignRelayResponse.InnerRelayId, clientConnection.DestinationEndpoint.EndPoint);
+        if (assignRelayResponse.RelayNetAddress.IsValid)
+        {
+            this.Address = new(assignRelayResponse.OuterRelayId, assignRelayResponse.RelayNetAddress);
+        }
+        else
+        {
+            this.Address = new(this.Endpoint);
+        }
+
         this.ClientConnection = clientConnection;
         this.InnerKeyAndNonce = assignRelayBlock.InnerKeyAndNonce;
         this.OuterRelayId = assignRelayResponse.OuterRelayId;
@@ -20,6 +29,8 @@ public sealed partial class RelayNode
     public RelayId RelayId => this.Endpoint.RelayId;
 
     public RelayId OuterRelayId { get; private set; }
+
+    public NetAddress Address { get; private set; }
 
     [Link(Type = ChainType.Unordered)]
     public NetEndpoint Endpoint { get; private set; }

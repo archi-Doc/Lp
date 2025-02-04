@@ -175,6 +175,8 @@ public abstract class Connection : IDisposable
     internal UnorderedLinkedList<SendTransmission> SendList = new(); // lock (this.ConnectionTerminal.SyncSend)
     internal UnorderedLinkedList<Connection>.Node? SendNode; // lock (this.ConnectionTerminal.SyncSend)
 
+    internal RelayKey CorrespondingRelayKey => this.IsClient ? this.NetTerminal.OutgoingCircuit.RelayKey : this.NetTerminal.IncomingCircuit.RelayKey;
+
     #region Embryo
 
     private byte[] embryo = Array.Empty<byte>();

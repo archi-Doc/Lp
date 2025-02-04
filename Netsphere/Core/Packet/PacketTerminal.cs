@@ -350,7 +350,7 @@ public sealed partial class PacketTerminal
                     Task.Run(() =>
                     {
                         var packet = new ConnectPacketResponse(this.netBase.DefaultAgreement, endpoint);
-                        this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet);
+                        this.netTerminal.ConnectionTerminal.PrepareServerSide(endpoint, p, packet, relayNumber);
                         CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
                         // this.SendPacketWithoutRelay(endpoint, rentMemory, default);
                         this.SendPacketWithRelay(endpoint, rentMemory, incomingRelay, relayNumber);
@@ -428,6 +428,32 @@ public sealed partial class PacketTerminal
                 }
 
                 return;
+            }
+            else if (NetConstants.EnableOpenSesami &&
+                packetType == PacketType.OpenSesami &&
+                relayNumber > 0 && incomingRelay)
+            {
+                if (TinyhandSerializer.TryDeserialize<OpenSesamiPacket>(span, out var p))
+                {
+                    OpenSesamiResponse packet;
+                    if (this.netTerminal.IncomingCircuit.AllowOpenSesami &&
+                        this.netTerminal.NetStats.OwnNetNode is { } ownNetNode)
+                    {
+                        // Punch
+                        var punchPacket = new PunchPacket();
+                        CreatePacket(packetId, punchPacket, out var punchMemory); // CreatePacketCode (no relay)
+                        this.SendPacketWithoutRelay(endpoint, punchMemory, default);
+
+                        packet = new(ownNetNode.Address);
+                    }
+                    else
+                    {
+                        packet = new();
+                    }
+
+                    CreatePacket(packetId, packet, out var rentMemory); // CreatePacketCode (no relay)
+                    this.SendPacketWithoutRelay(endpoint, rentMemory, default);
+                }
             }
             else if (this.netBase.RespondPacketFunc is { } func)
             {

@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 using Netsphere.Core;
+using Netsphere.Stats;
 
 namespace Netsphere.Relay;
 
@@ -16,7 +17,7 @@ public partial class RelayAgent
     private const long UnrestrictedRetensionMics = 60_000_000; // 1 minute
     private const int EndPointCacheSize = 100;
 
-    internal enum EndPointOperation
+    internal enum EndpointOperation
     {
         None,
         Update,
@@ -28,17 +29,16 @@ public partial class RelayAgent
     private partial class EndPointItem
     {
         [Link(Primary = true, Name = "LinkedList", Type = ChainType.LinkedList)]
-        public EndPointItem(NetAddress netAddress)
+        public EndPointItem(NetAddress netAddress, IPEndPoint? endPoint)
         {
             this.NetAddress = netAddress;
-            netAddress.CreateIPEndPoint(out var endPoint);
             this.EndPoint = endPoint;
         }
 
         [Link(Type = ChainType.Unordered, AddValue = false)]
         public NetAddress NetAddress { get; }
 
-        public IPEndPoint EndPoint { get; }
+        public IPEndPoint? EndPoint { get; }
 
         public long UnrestrictedMics { get; internal set; }
 
@@ -324,22 +324,25 @@ public partial class RelayAgent
                     span = span.Slice(sizeof(RelayId));
                     MemoryMarshal.Write(span, relayHeader.NetAddress.RelayId); // DestinationRelayId
 
-                    var operation = EndPointOperation.Update;
+                    var operation = EndpointOperation.Update;
                     var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(sizeof(RelayId) + sizeof(uint)));
                     if (packetType == Packet.PacketType.Connect)
                     {// Connect
-                        operation = EndPointOperation.SetUnrestricted;
+                        operation = EndpointOperation.SetUnrestricted;
                     }
                     else
                     {// Other
-                        operation = EndPointOperation.Update;
+                        operation = EndpointOperation.Update;
                     }
 
                     // Close -> EndPointOperation.SetRestricted ?
 
                     var ep2 = this.GetEndPoint_NotThreadSafe(relayHeader.NetAddress, operation);
-                    decrypted.IncrementAndShare();
-                    this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
+                    if (ep2.EndPoint is not null)
+                    {
+                        decrypted.IncrementAndShare();
+                        this.sendItems.Enqueue(new(ep2.EndPoint, decrypted));
+                    }
 
                     if (NetConstants.LogLowRelay)
                     {
@@ -402,21 +405,34 @@ public partial class RelayAgent
             else
             {// Outermost relay
                 // Other (unrestricted or restricted)
-                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndPointOperation.None);
+                var ep2 = this.GetEndPoint_NotThreadSafe(new(endpoint), EndpointOperation.None);
                 if (!ep2.Unrestricted)
                 {// Restricted
-                    if (!exchange.AllowUnknownNode ||
-                        exchange.RestrictedIntervalMics == 0 ||
-                        Mics.FastSystem - this.lastRestrictedMics < exchange.RestrictedIntervalMics)
-                    {// Discard
-                        if (NetConstants.LogLowRelay)
-                        {// Packets from endpoints other than the outer relay are not accepted.
-                            this.logger.TryGet(LogLevel.Information)?.Log($"Outermost({endpoint}) : discard");
-                        }
-
-                        goto Exit;
+                    if (exchange.AllowUnknownIncoming &&
+                       exchange.RestrictedIntervalMics != 0 &&
+                       Mics.FastSystem > this.lastRestrictedMics + exchange.RestrictedIntervalMics)
+                    {// Unknown incoming
+                        goto AcceptIncoming;
                     }
 
+                    if (exchange.AllowOpenSesami)
+                    {// Open sesami
+                        var packetType = MemoryMarshal.Read<Netsphere.Packet.PacketType>(span.Slice(sizeof(uint)));
+                        if (packetType == Packet.PacketType.OpenSesami)
+                        {
+                            goto AcceptIncoming;
+                        }
+                    }
+
+                    // Discard
+                    if (NetConstants.LogLowRelay)
+                    {// Packets from endpoints other than the outer relay are not accepted.
+                        this.logger.TryGet(LogLevel.Information)?.Log($"Outermost({endpoint}) : discard");
+                    }
+
+                    goto Exit;
+
+AcceptIncoming:
                     this.lastRestrictedMics = Mics.FastSystem;
                 }
             }
@@ -478,11 +494,12 @@ Exit:
         }
     }
 
-    internal (IPEndPoint EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, EndPointOperation operation)
+    internal (IPEndPoint? EndPoint, bool Unrestricted) GetEndPoint_NotThreadSafe(NetAddress netAddress, EndpointOperation operation)
     {
         if (!this.endPointCache.NetAddressChain.TryGetValue(netAddress, out var item))
         {
-            item = new(netAddress);
+            this.netTerminal.NetStats.TryCreateEndpoint(ref netAddress, EndpointResolution.PreferIpv6, out var endpoint);
+            item = new(netAddress, endpoint.EndPoint);
             this.endPointCache.Add(item);
             if (this.endPointCache.Count > EndPointCacheSize &&
                 this.endPointCache.LinkedListChain.First is { } i)
@@ -496,12 +513,12 @@ Exit:
         }
 
         var unrestricted = false;
-        if (operation == EndPointOperation.SetUnrestricted)
+        if (operation == EndpointOperation.SetUnrestricted)
         {// Unrestricted
             unrestricted = true;
             item.UnrestrictedMics = Mics.FastSystem;
         }
-        else if (operation == EndPointOperation.SetRestricted)
+        else if (operation == EndpointOperation.SetRestricted)
         {// Restricted
             item.UnrestrictedMics = 0;
         }
@@ -514,7 +531,7 @@ Exit:
             else
             {// Unrestricted
                 unrestricted = true;
-                if (operation == EndPointOperation.Update)
+                if (operation == EndpointOperation.Update)
                 {
                     item.UnrestrictedMics = Mics.FastSystem;
                 }

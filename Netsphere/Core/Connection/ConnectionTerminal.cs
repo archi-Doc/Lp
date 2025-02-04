@@ -180,6 +180,11 @@ public class ConnectionTerminal
             return null;
         }
 
+        if (node.Address.RelayId != 0)
+        {
+            return null;
+        }
+
         if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
         {
             return null;
@@ -197,7 +202,7 @@ public class ConnectionTerminal
         var publicKey = seedKey.GetEncryptionPublicKey();
 
         // Create a new connection
-        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode(), default);
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, targetNumberOfRelays, default, EndpointResolution.PreferIpv6, incomingRelay).ConfigureAwait(false); // < 0: target
         if (t.Value is null)
         {
@@ -222,6 +227,17 @@ public class ConnectionTerminal
         {
             return null;
         }
+
+#if EnableOpenSesami == true
+        if (node.Address.RelayId != 0)
+        {// Open sesami
+            var r1 = await this.packetTerminal.SendAndReceive<OpenSesamiPacket, OpenSesamiResponse>(node.Address, new()).ConfigureAwait(false);
+            if (r1.Value is { } r2 && r2.SecretAddress.Validate())
+            {
+                node = new(r2.SecretAddress, node.PublicKey);
+            }
+        }
+#endif
 
         if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
         {
@@ -266,7 +282,8 @@ public class ConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode());
+        var sourceNetNode = this.netStats.OwnNetNode?.Address.IsValidIpv4AndIpv6 == true ? this.netStats.OwnNetNode : default;
+        var packet = new ConnectPacket(publicKey, node.PublicKey.GetHashCode(), sourceNetNode);
         var t = await this.packetTerminal.SendAndReceive<ConnectPacket, ConnectPacketResponse>(node.Address, packet, minimumNumberOfRelays, default).ConfigureAwait(false);
         var response = t.Value;
         if (response is null)
@@ -397,7 +414,7 @@ public class ConnectionTerminal
         return connection;
     }
 
-    internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2)
+    internal bool PrepareServerSide(NetEndpoint endPoint, ConnectPacket p, ConnectPacketResponse p2, int relayNumber)
     {
         var node = new NetNode(in endPoint, p.ClientPublicKey);
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
@@ -422,10 +439,17 @@ public class ConnectionTerminal
         var connectionId = BitConverter.ToUInt64(embryo.AsSpan(0));
         var connection = new ServerConnection(this.NetTerminal.PacketTerminal, this, connectionId, node, endPoint);
         connection.Initialize(p2.Agreement, embryo);
+        connection.MinimumNumberOfRelays = relayNumber;
 
         using (this.serverConnections.LockObject.EnterScope())
         {// ConnectionStateCode
             connection.Goshujin = this.serverConnections;
+        }
+
+        if (!this.netStats.NodeControl.HasSufficientActiveNodes &&
+            p.SourceNode is { } sourceNode)
+        {
+            this.netStats.NodeControl.TryAddActiveNode(sourceNode);
         }
 
         /*if (this.netStats.NodeControl.RestorationNode is null)

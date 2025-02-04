@@ -53,7 +53,7 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new AssignRelayBlock();
+            var block = netTerminal.OutgoingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
@@ -81,7 +81,7 @@ public class RelayCommand : ISimpleCommandAsync
                 return;
             }
 
-            var block = new AssignRelayBlock();
+            var block = netTerminal.OutgoingCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             relayConnection.SignWithSalt(token, seedKey);
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);

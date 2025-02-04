@@ -22,7 +22,8 @@ internal partial class RelayExchange
 
         this.RelayRetensionMics = relayControl.DefaultRelayRetensionMics;
         this.RestrictedIntervalMics = relayControl.DefaultRestrictedIntervalMics;
-        this.AllowUnknownNode = block.AllowUnknownNode;
+        this.AllowUnknownIncoming = block.AllowUnknownIncoming;
+        this.AllowOpenSesami = block.AllowOpenSesami;
     }
 
     #region FieldAndProperty
@@ -57,7 +58,9 @@ internal partial class RelayExchange
     /// </summary>
     public long RestrictedIntervalMics { get; private set; }
 
-    public bool AllowUnknownNode { get; private set; }
+    public bool AllowOpenSesami { get; private set; }
+
+    public bool AllowUnknownIncoming { get; private set; }
 
     internal byte[] InnerKeyAndNonce { get; private set; }
 

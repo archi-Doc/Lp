@@ -24,14 +24,12 @@ internal partial class AckBuffer
     public AckBuffer(ConnectionTerminal connectionTerminal)
     {
         this.connectionTerminal = connectionTerminal;
-        this.relayCircuit = connectionTerminal.NetTerminal.OutgoingCircuit;
         this.logger = connectionTerminal.UnitLogger.GetLogger<AckBuffer>();
     }
 
     #region FieldAndProperty
 
     private readonly ConnectionTerminal connectionTerminal;
-    private readonly RelayCircuit relayCircuit;
     private readonly ILogger logger;
     private readonly Queue<int> burst = new();
 
@@ -269,7 +267,7 @@ NewPacket:
             }
             else
             {// Relay
-                if (this.relayCircuit.RelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, rentArray.AsMemory(0, packetLength).Span, out var encrypted, out var relayEndpoint))
+                if (connection.CorrespondingRelayKey.TryEncrypt(connection.MinimumNumberOfRelays, connection.DestinationNode.Address, rentArray.AsMemory(0, packetLength).Span, out var encrypted, out var relayEndpoint))
                 {
                     netSender.Send_NotThreadSafe(relayEndpoint.EndPoint, encrypted);
                 }
