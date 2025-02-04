@@ -84,6 +84,8 @@ public sealed partial class CredentialProof : Proof
 
     public SignaturePublicKey Originator => this.GetSignatureKey();
 
+    public override long MaxValidMics => Mics.MicsPerDay * 1;
+
     #endregion
 
     public bool TryGetValueProof([MaybeNullWhen(false)] out ValueProof valueProof)

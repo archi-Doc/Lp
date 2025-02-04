@@ -69,6 +69,8 @@ public abstract partial class Proof : IEquatable<Proof>
     [Key(3)]
     public long ExpirationMics { get; protected set; }
 
+    public virtual long MaxValidMics => Mics.MicsPerDay * 1;
+
     #endregion
 
     /// <summary>
