@@ -55,7 +55,7 @@ public static class SeedKeyExtensions
             }
             else
             {
-                if (!proof.GetPublicKey().Equals(seedKey.GetSignaturePublicKey()))
+                if (!proof.GetSignatureKey().Equals(seedKey.GetSignaturePublicKey()))
                 {
                     return false;
                 }

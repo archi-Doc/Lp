@@ -45,7 +45,7 @@ public abstract partial class Proof : IEquatable<Proof>
     #region FieldAndProperty
 
     // /// <inheritdoc/>
-    // SignaturePublicKey IVerifiable.PublicKey => this.GetPublicKey();
+    // SignaturePublicKey IVerifiable.PublicKey => this.GetSignatureKey();
 
     // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
     // public SignaturePublicKey PublicKey { get; }
@@ -72,10 +72,10 @@ public abstract partial class Proof : IEquatable<Proof>
     #endregion
 
     /// <summary>
-    /// Gets the public key associated with the proof.
+    /// Gets the public signature key associated with the proof.
     /// </summary>
     /// <returns>The public key.</returns>
-    public abstract SignaturePublicKey GetPublicKey();
+    public abstract SignaturePublicKey GetSignatureKey();
 
     /// <summary>
     /// Tries to get the credit associated with the proof.
@@ -135,7 +135,7 @@ public abstract partial class Proof : IEquatable<Proof>
         return this.VerificationMics == other.VerificationMics &&
             this.ExpirationMics == other.ExpirationMics &&
             this.Signature.SequenceEqual(other.Signature) &&
-            this.GetPublicKey().Equals(other.GetPublicKey());
+            this.GetSignatureKey().Equals(other.GetSignatureKey());
     }
 
     internal void PrepareSignInternal(long validMics)

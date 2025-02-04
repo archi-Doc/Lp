@@ -41,7 +41,7 @@ public sealed partial class CredentialProof : Proof
                 return false;
             }
 
-            var publicKey = valueProof.GetPublicKey();
+            var publicKey = valueProof.GetSignatureKey();
             if (publicKey.Equals(LpConstants.LpPublicKey))
             {// Lp key
             }
@@ -82,7 +82,7 @@ public sealed partial class CredentialProof : Proof
     [Key(Proof.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
 
-    public SignaturePublicKey Originator => this.GetPublicKey();
+    public SignaturePublicKey Originator => this.GetSignatureKey();
 
     #endregion
 
@@ -92,8 +92,8 @@ public sealed partial class CredentialProof : Proof
         return valueProof != null;
     }
 
-    public override SignaturePublicKey GetPublicKey()
-        => this.TryGetValueProof(out var valueProof) ? valueProof.GetPublicKey() : default;
+    public override SignaturePublicKey GetSignatureKey()
+        => this.TryGetValueProof(out var valueProof) ? valueProof.GetSignatureKey() : default;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {

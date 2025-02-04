@@ -24,7 +24,7 @@ public class ShowPublicKeySubcommand : ISimpleCommandAsync
         }
 
         var service = connection.GetService<IMergerRemote>();
-        var r = await service.GetPublicKey();
+        var r = await service.GetMergerKey();
 
         this.logger.TryGet()?.Log($"{r.ToString()}");
     }

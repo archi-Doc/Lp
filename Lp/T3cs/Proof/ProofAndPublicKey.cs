@@ -9,7 +9,7 @@ public abstract partial class ProofAndPublicKey : Proof
     [Key(0)] // Key(0) is not used in the Proof class (reserved).
     public SignaturePublicKey PublicKey { get; protected set; }
 
-    public override SignaturePublicKey GetPublicKey()
+    public override SignaturePublicKey GetSignatureKey()
         => this.PublicKey;
 
     internal void PrepareSignInternal(SeedKey seedKey, long validMics)
