@@ -57,6 +57,7 @@ public class Control
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<Seedphrase>();
+                context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
                 context.AddSingleton<Linker>();
@@ -226,6 +227,13 @@ public class Control
                         // SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(LpStats.Filename),
+                    });
+
+                    context.AddCrystal<Credentials>(new()
+                    {
+                        // SaveFormat = SaveFormat.Binary,
+                        NumberOfFileHistories = 0,
+                        FileConfiguration = new GlobalFileConfiguration(Credentials.Filename),
                     });
 
                     context.AddCrystal<Mono>(new()

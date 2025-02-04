@@ -9,10 +9,11 @@ namespace Lp.Subcommands;
 [SimpleCommand("add-netnode")]
 public class AddNetNodeSubcommand : ISimpleCommand
 {
-    public AddNetNodeSubcommand(ILogger<AddNetNodeSubcommand> logger, NetStats netStats)
+    public AddNetNodeSubcommand(ILogger<AddNetNodeSubcommand> logger, NetStats netStats, BigMachine bigMachine)
     {
         this.logger = logger;
         this.netStats = netStats;
+        this.bigMachine = bigMachine;
     }
 
     public void Run(string[] args)
@@ -26,8 +27,11 @@ public class AddNetNodeSubcommand : ISimpleCommand
 
             this.netStats.NodeControl.TryAddActiveNode(node);
         }
+
+        _ = this.bigMachine.NodeControlMachine.GetOrCreate().RunAsync(); // Immediately run the machine to quickly obtain nodes.
     }
 
     private readonly ILogger logger;
     private readonly NetStats netStats;
+    private readonly BigMachine bigMachine;
 }
