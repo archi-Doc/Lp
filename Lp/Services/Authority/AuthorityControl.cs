@@ -41,7 +41,7 @@ public class AuthorityControl
         var publicKey = authority.GetSignaturePublicKey();
         if (!publicKey.Equals(LpConstants.LpPublicKey))
         {
-            logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, name);
+            logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.KeyMismatch);
             return default;
         }
 

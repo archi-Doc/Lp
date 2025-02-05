@@ -13,6 +13,8 @@ public partial interface IMergerRemote : INetService
     NetTask<Proof?> NewCredential(Evidence? evidence);
 
     NetTask<SignaturePublicKey> GetMergerKey();
+
+    NetTask<CredentialProof?> NewCredentialProof(AuthenticationToken token);
 }
 
 [NetServiceObject]
