@@ -265,12 +265,7 @@ public abstract class Connection : IDisposable
     public bool ValidateAndVerifyWithSalt<T>(T value)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
-        if (value.Salt != this.EmbryoSalt)
-        {
-            return false;
-        }
-
-        return NetHelper.ValidateAndVerify(value);
+        return NetHelper.ValidateAndVerifyWithConnection(value, this);
     }
 
     /// <summary>

@@ -129,7 +129,7 @@ internal class ServerCommand : ISimpleCommandAsync<ServerOptions>
             return new(UpdateVersionResult.WrongPublicKey);
         }
 
-        if (!token.ValidateAndVerify())
+        if (!token.ValidateAndVerifyWithSalt(0))
         {// Wrong signature
             return new(UpdateVersionResult.WrongSignature);
         }
