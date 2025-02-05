@@ -49,7 +49,7 @@ internal class MergerRemoteAgent : IMergerRemote
 
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token.PublicKey.Equals(publicKey) &&
-            token.ValidateAndVerifyWithSalt(serverConnection.EmbryoSalt))
+            token.ValidateAndVerifyWithConnection(serverConnection))
         {
             // Console.WriteLine("Authentication success");
             serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10);
@@ -108,7 +108,7 @@ internal class MergerRemoteAgent : IMergerRemote
             return default;
         }
 
-        if (!token.ValidateAndVerifyWithSalt(TransmissionContext.Current.ServerConnection.EmbryoSalt) ||
+        if (!token.ValidateAndVerifyWithConnection(TransmissionContext.Current.ServerConnection) ||
             !token.PublicKey.Equals(LpConstants.LpPublicKey))
         {
             return default;
