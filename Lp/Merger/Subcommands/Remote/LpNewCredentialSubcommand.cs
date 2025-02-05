@@ -31,12 +31,12 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        /*if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
+        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
         {
             return;
         }
 
-        var service = connection.GetService<IMergerRemote>();
+        /*var service = connection.GetService<IMergerRemote>();
         var proof = await service.NewCredential(default);
         if (proof is not ValueProof valueProof ||
             !valueProof.ValidateAndVerify())

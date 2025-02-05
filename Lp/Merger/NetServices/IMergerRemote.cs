@@ -64,8 +64,6 @@ internal class MergerRemoteAgent : IMergerRemote
 
     async NetTask<SignaturePublicKey> IMergerRemote.GetMergerKey()
     {
-        Console.WriteLine(this.IsActiveAndAuthenticated);
-        Console.WriteLine(this.merger.GetMergerKey().ToString());
         if (!this.IsActiveAndAuthenticated)
         {
             return default;
