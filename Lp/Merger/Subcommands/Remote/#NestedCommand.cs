@@ -16,7 +16,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 
         var group = context.GetCommandGroup(t);
         group.AddCommand(typeof(LpNewCredentialSubcommand));
-        group.AddCommand(typeof(ShowPublicKeySubcommand));
+        group.AddCommand(typeof(ShowMergerKeySubcommand));
     }
 
     public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)

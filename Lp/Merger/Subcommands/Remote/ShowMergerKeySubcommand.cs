@@ -1,15 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
-using Netsphere;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.MergerRemote;
 
-[SimpleCommand("show-publickey")]
-public class ShowPublicKeySubcommand : ISimpleCommandAsync
+[SimpleCommand("show-merger-key")]
+public class ShowMergerKeySubcommand : ISimpleCommandAsync
 {
-    public ShowPublicKeySubcommand(ILogger<ShowPublicKeySubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
+    public ShowMergerKeySubcommand(ILogger<ShowMergerKeySubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
