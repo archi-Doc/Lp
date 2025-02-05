@@ -66,6 +66,7 @@ Authority = {
     EnterPassword = "Enter authority '{0}' password"
     ChangePassword = "Changing authority password"
     RemoveConfirm = "Are you sure you want to remove authority '{0}' ?"
+    KeyMismatch = "Does not match the specified Key"
 }
 
 Seedphrase = {

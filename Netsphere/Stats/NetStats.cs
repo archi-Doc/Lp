@@ -200,7 +200,7 @@ public sealed partial class NetStats
 
         if (this.IsOpenNode)
         {
-            // this.PeerNetNode = this.OwnNetNode;
+            this.PeerNetNode = this.OwnNetNode;
         }
 
         if (incomingCircuit.IsIncoming &&

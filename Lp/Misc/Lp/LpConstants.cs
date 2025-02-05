@@ -9,7 +9,7 @@ public static class LpConstants
 {
     public const int MaxNameLength = 32;
     public const string LpAlias = "Lp";
-    public const string LpPublicKeyString = "(BAL-lWmqHC4qMeW1fpNhLdXMMF2MDdR-yBGG_Ly6ehoiyJSX)";
+    public const string LpPublicKeyString = "(s:ki0WYquVtTYJMCgXKZBABJbaUc7URLg-1M7x_gJ0ZVqD8i8Z)";
 
     public static readonly SignaturePublicKey LpPublicKey;
     public static readonly Credit LpCredit;

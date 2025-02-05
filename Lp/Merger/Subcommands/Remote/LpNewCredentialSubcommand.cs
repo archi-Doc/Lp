@@ -31,12 +31,22 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        /*if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
+        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
         {
             return;
         }
 
         var service = connection.GetService<IMergerRemote>();
+        var token = new AuthenticationToken(connection.EmbryoSalt);
+        var credentialProof = await service.NewCredentialProof(token);
+        if (credentialProof is null ||
+            !credentialProof.ValidateAndVerify())
+        {
+            return;
+        }
+
+        Evidence.TryCreate(credentialProof, out var evidence);
+
         var proof = await service.NewCredential(default);
         if (proof is not ValueProof valueProof ||
             !valueProof.ValidateAndVerify())
@@ -62,7 +72,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             !credentialProof.ValidateAndVerify())
         {
             return;
-        }*/
+        }
     }
 
     private readonly ILogger logger;
