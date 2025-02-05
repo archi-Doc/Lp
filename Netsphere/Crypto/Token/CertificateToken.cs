@@ -28,6 +28,12 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
         this.Target = target;
     }
 
+    public CertificateToken(T target, SeedKey seedKey, Connection connection)
+    {
+        this.Target = target;
+        NetHelper.Sign(seedKey, this, connection);
+    }
+
     public static int MaxStringLength => 256;
 
     #region FieldAndProperty

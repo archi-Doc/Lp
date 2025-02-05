@@ -25,9 +25,9 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
     {
     }
 
-    public AuthenticationToken(ulong salt)
+    public AuthenticationToken(SeedKey seedKey, Connection connection)
     {
-        this.Salt = salt;
+        NetHelper.Sign(seedKey, this, connection);
     }
 
     public static int MaxStringLength => 256;

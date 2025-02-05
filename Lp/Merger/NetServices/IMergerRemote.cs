@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere;
 using Netsphere.Crypto;
 using Netsphere.Stats;
 
@@ -10,11 +11,9 @@ public partial interface IMergerRemote : INetService
 {
     NetTask<(NetResult Result, ConnectionAgreement? Agreement)> Authenticate(AuthenticationToken token);
 
-    NetTask<Proof?> NewCredential(Evidence? evidence);
-
     NetTask<SignaturePublicKey> GetMergerKey();
 
-    NetTask<CredentialProof?> NewCredentialProof(AuthenticationToken token);
+    NetTask<CredentialProof?> NewCredentialProof(CertificateToken<Value> token);
 }
 
 [NetServiceObject]
@@ -74,7 +73,7 @@ internal class MergerRemoteAgent : IMergerRemote
         return this.merger.GetMergerKey();
     }
 
-    async NetTask<Proof?> IMergerRemote.NewCredential(Evidence? evidence)
+    /*async NetTask<Proof?> IMergerRemote.NewCredential(Evidence? evidence)
     {
         if (!this.IsActiveAndAuthenticated)
         {
@@ -99,11 +98,24 @@ internal class MergerRemoteAgent : IMergerRemote
             return credentialProof;
         }
 
-        /*if (!TransmissionContext.Current.AuthenticationTokenEquals(this.remotePublicKey))
-        {
-            return T3csResult.NotAuthenticated;
-        }*/
-
         return default;
+    }*/
+
+    async NetTask<CredentialProof?> IMergerRemote.NewCredentialProof(CertificateToken<Value> token)
+    {
+        if (!this.IsActiveAndAuthenticated)
+        {
+            return default;
+        }
+
+        if (!token.ValidateAndVerifyWithSalt(TransmissionContext.Current.ServerConnection.EmbryoSalt) ||
+            !token.PublicKey.Equals(LpConstants.LpPublicKey))
+        {
+            return default;
+        }
+
+        var credentialProof = new CredentialProof(token.Target, this.merger.State);
+        this.merger.TrySignProof(credentialProof, CredentialProof.LpExpirationMics);
+        return credentialProof;
     }
 }

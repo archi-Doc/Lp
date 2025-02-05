@@ -143,6 +143,13 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     {
     }
 
+    public Value(SignaturePublicKey owner, Point point, Credit credit)
+    {
+        this.Owner = owner;
+        this.Point = point;
+        this.Credit = credit;
+    }
+
     public bool Validate()
     {
         if (!this.Owner.Validate())

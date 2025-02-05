@@ -294,6 +294,31 @@ public static class NetHelper
         }
     }
 
+    public static void Sign<T>(this SeedKey seedKey, T value, Connection connection)
+        where T : ITinyhandSerializable<T>, ISignAndVerify
+    {
+        value.Salt = connection.EmbryoSalt;
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
+        try
+        {
+            value.PublicKey = seedKey.GetSignaturePublicKey();
+            value.SignedMics = Mics.FastCorrected;
+
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            value.Signature = sign;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
     /// <summary>
     /// Validates the object members and verifies that the signature is appropriate with the specified salt.
     /// </summary>

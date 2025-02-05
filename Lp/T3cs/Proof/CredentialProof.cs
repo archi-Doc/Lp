@@ -51,22 +51,23 @@ public sealed partial class CredentialProof : Proof
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
-    private CredentialProof()
+    public CredentialProof()
     {
         this.Value = default!;
         this.State = default!;
     }
 
-    private CredentialProof(Value value, CredentialState state)
+    public CredentialProof(Value value, CredentialState state, SeedKey seedKey)
     {
         this.Value = value;
         this.State = state;
+        seedKey.TrySignProof(this, this.MaxValidMics);
     }
 
-    public static CredentialProof New(Value value, CredentialState state)
+    public CredentialProof(Value value, CredentialState state)
     {
-        var credentialProof = new CredentialProof(value, state);
-        return credentialProof;
+        this.Value = value;
+        this.State = state;
     }
 
     #region FieldAndProperty

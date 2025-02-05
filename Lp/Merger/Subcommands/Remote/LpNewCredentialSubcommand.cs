@@ -31,48 +31,29 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } lpAuthority)
+        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } authority)
         {
             return;
         }
 
+        var seedKey = authority.GetSeedKey();
         var service = connection.GetService<IMergerRemote>();
-        var token = new AuthenticationToken(connection.EmbryoSalt);
+        var token = new CertificateToken<Value>(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
         var credentialProof = await service.NewCredentialProof(token);
         if (credentialProof is null ||
-            !credentialProof.ValidateAndVerify())
+            !credentialProof.ValidateAndVerify() ||
+            !credentialProof.GetSignatureKey().Equals(publicKey))
         {
             return;
         }
 
-        Evidence.TryCreate(credentialProof, out var evidence);
-
-        var proof = await service.NewCredential(default);
-        if (proof is not ValueProof valueProof ||
-            !valueProof.ValidateAndVerify())
+        Evidence.TryCreate(credentialProof, seedKey, out var evidence);
+        if (evidence?.ValidateAndVerify() != true)
         {
             return;
         }
 
-        this.logger.TryGet()?.Log($"{valueProof.ToString()}");
-
-        if (!Evidence.TryCreate(valueProof, out var evidence))
-        {
-            return;
-        }
-
-        // Sign
-        if (!lpAuthority.TrySignEvidence(evidence, 0))
-        {
-            return;
-        }
-
-        proof = await service.NewCredential(evidence);
-        if (proof is not CredentialProof credentialProof ||
-            !credentialProof.ValidateAndVerify())
-        {
-            return;
-        }
+        this.logger.TryGet()?.Log($"{evidence.ToString()}");
     }
 
     private readonly ILogger logger;

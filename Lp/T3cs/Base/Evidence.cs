@@ -28,10 +28,28 @@ public sealed partial class Evidence : IValidatable
         return true;
     }
 
+    public static bool TryCreate(Proof proof, SeedKey seedKey, [MaybeNullWhen(false)] out Evidence evidence)
+    {
+        var obj = new Evidence(proof);
+        if (!obj.TrySign(seedKey, 0))
+        {
+            evidence = default;
+            return false;
+        }
+
+        evidence = obj;
+        return true;
+    }
+
     [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
-    internal Evidence()
+    public Evidence()
     {
         this.Proof = default!;
+    }
+
+    public Evidence(Proof proof)
+    {
+        this.Proof = proof;
     }
 
     #region FieldAndProperty
