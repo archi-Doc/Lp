@@ -115,7 +115,7 @@ internal class MergerRemoteAgent : IMergerRemote
         }
 
         var credentialProof = new CredentialProof(token.Target, this.merger.State);
-        this.merger.TrySignProof(credentialProof, CredentialProof.LpExpirationMics);
+        this.merger.TrySign(credentialProof, CredentialProof.LpExpirationMics);
         return credentialProof;
     }
 }

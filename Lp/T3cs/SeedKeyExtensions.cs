@@ -33,7 +33,7 @@ public static class SeedKeyExtensions
         }
     }
 
-    public static bool TrySignProof(this SeedKey seedKey, Proof proof, long validMics)
+    public static bool TrySign(this SeedKey seedKey, Proof proof, long validMics)
     {
         if (validMics > proof.MaxValidMics)
         {

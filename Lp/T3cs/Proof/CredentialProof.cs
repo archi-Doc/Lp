@@ -10,7 +10,7 @@ namespace Lp.T3cs;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public sealed partial class CredentialProof : Proof
 {// Credentials = CredentialProof.Goshujin
-    public const long LpExpirationMics = Mics.MicsPerDay * 10;
+    public const long LpExpirationMics = Mics.MicsPerDay * 1;
 
     #region Integrality
 
@@ -55,13 +55,6 @@ public sealed partial class CredentialProof : Proof
     {
         this.Value = default!;
         this.State = default!;
-    }
-
-    public CredentialProof(Value value, CredentialState state, SeedKey seedKey)
-    {
-        this.Value = value;
-        this.State = state;
-        seedKey.TrySignProof(this, this.MaxValidMics);
     }
 
     public CredentialProof(Value value, CredentialState state)
