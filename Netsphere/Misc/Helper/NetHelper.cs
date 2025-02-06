@@ -326,7 +326,7 @@ public static class NetHelper
     /// <param name="value">The object to be verified.</param>
     /// <param name="salt">The salt value to compare with the object's salt.</param>
     /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
-    public static bool ValidateAndVerifyWithSalt<T>(this T value, ulong salt)
+    public static bool ValidateAndVerify<T>(this T value, ulong salt)
         where T : ITinyhandSerializable<T>, ISignAndVerify
         => value.Salt == salt && ValidateAndVerify(value);
 
@@ -337,7 +337,7 @@ public static class NetHelper
     /// <param name="value">The object to be verified.</param>
     /// <param name="connection">The connection to compare with the object's salt.</param>
     /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
-    public static bool ValidateAndVerifyWithConnection<T>(this T value, Connection connection)
+    public static bool ValidateAndVerify<T>(this T value, Connection connection)
        where T : ITinyhandSerializable<T>, ISignAndVerify
        => value.Salt == connection.EmbryoSalt && ValidateAndVerify(value);
 

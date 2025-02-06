@@ -21,7 +21,7 @@ public class CertificateRelayControl : IRelayControl
         {
             if (this.ServerConnection.NetTerminal.RelayControl is not CertificateRelayControl ||
                 !token.PublicKey.Equals(this.relayControl.CertificatePublicKey) ||
-                !token.ValidateAndVerifyWithConnection(this.ServerConnection))
+                !token.ValidateAndVerify(this.ServerConnection))
             {
                 return new(NetResult.NotAuthenticated);
             }
