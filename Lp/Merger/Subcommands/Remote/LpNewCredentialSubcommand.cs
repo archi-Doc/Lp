@@ -37,7 +37,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
         }
 
         var service = connection.GetService<IMergerRemote>();
-        var token = new CertificateToken<Value>(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
+        var token = CertificateToken<Value>.CreateAndSign(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
         var credentialProof = await service.NewCredentialProof(token);
         if (credentialProof is null ||
             !credentialProof.ValidateAndVerify() ||

@@ -47,7 +47,7 @@ public class RobustConnection
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, SeedKey seedKey)
     {
         var context = connection.GetContext();
-        var token = new AuthenticationToken(seedKey, connection);
+        var token = AuthenticationToken.CreateAndSign(seedKey, connection);
         if (context.AuthenticationTokenEquals(token.PublicKey))
         {
             return true;

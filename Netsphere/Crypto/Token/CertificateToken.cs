@@ -18,6 +18,13 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
 {
     private const char Identifier = 'C';
 
+    public static CertificateToken<T> CreateAndSign(T target, SeedKey seedKey, Connection connection)
+    {
+        var token = new CertificateToken<T>(target);
+        NetHelper.Sign(seedKey, token, connection);
+        return token;
+    }
+
     public CertificateToken()
     {
         this.Target = default!;
@@ -26,12 +33,6 @@ public partial class CertificateToken<T> : ISignAndVerify, IEquatable<Certificat
     public CertificateToken(T target)
     {
         this.Target = target;
-    }
-
-    public CertificateToken(T target, SeedKey seedKey, Connection connection)
-    {
-        this.Target = target;
-        NetHelper.Sign(seedKey, this, connection);
     }
 
     public static int MaxStringLength => 256;

@@ -21,13 +21,15 @@ public sealed partial class AuthenticationToken : ISignAndVerify, IEquatable<Aut
         var maxLength = SignaturePublicKey.MaxStringLength + Base64.Url.GetEncodedLength(KeyHelper.SignatureLength + 8 + 4); // 146
     }*/
 
-    public AuthenticationToken()
+    public static AuthenticationToken CreateAndSign(SeedKey seedKey, Connection connection)
     {
+        var token = new AuthenticationToken();
+        NetHelper.Sign(seedKey, token, connection);
+        return token;
     }
 
-    public AuthenticationToken(SeedKey seedKey, Connection connection)
+    public AuthenticationToken()
     {
-        NetHelper.Sign(seedKey, this, connection);
     }
 
     public static int MaxStringLength => 256;
