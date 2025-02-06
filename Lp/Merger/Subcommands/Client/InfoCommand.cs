@@ -30,7 +30,7 @@ public class InfoCommand : ISimpleCommandAsync
         }
 
         this.logger.TryGet()?.Log(string.Empty);
-        if (await robustConnection.GetConnection(this.logger) is not { } connection)
+        if (await robustConnection.Get(this.logger) is not { } connection)
         {
             return;
         }

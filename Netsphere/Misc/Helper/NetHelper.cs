@@ -271,7 +271,7 @@ public static class NetHelper
     public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory rentMemory, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    public static void Sign<T>(this T value, SeedKey seedKey)
+    public static void Sign<T>(this SeedKey seedKey, T value)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();

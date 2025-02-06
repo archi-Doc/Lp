@@ -20,7 +20,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
 
     public async Task RunAsync(LpNewCredentialOptions options, string[] args)
     {
-        if (await this.nestedcommand.RobustConnection.GetConnection(this.logger) is not { } connection)
+        if (await this.nestedcommand.RobustConnection.Get(this.logger) is not { } connection)
         {
             return;
         }
@@ -31,12 +31,11 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        if (await this.authorityControl.GetLpAuthority(this.logger) is not { } authority)
+        if (await this.authorityControl.GetLpSeedKey(this.logger) is not { } seedKey)
         {
             return;
         }
 
-        var seedKey = authority.GetSeedKey();
         var service = connection.GetService<IMergerRemote>();
         var token = new CertificateToken<Value>(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
         var credentialProof = await service.NewCredentialProof(token);

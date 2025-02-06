@@ -2,6 +2,7 @@
 
 using System.Runtime.CompilerServices;
 using Lp.Services;
+using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -26,6 +27,12 @@ public class AuthorityControl
     {
         this.userInterfaceService = userInterfaceService;
         this.vaultControl = vaultControl;
+    }
+
+    public async Task<SeedKey?> GetLpSeedKey(ILogger logger)
+    {
+        var authority = await this.GetLpAuthority(logger).ConfigureAwait(false);
+        return authority?.GetSeedKey();
     }
 
     public async Task<Authority?> GetLpAuthority(ILogger logger)

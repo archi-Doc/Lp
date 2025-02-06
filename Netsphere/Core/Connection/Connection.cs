@@ -259,7 +259,7 @@ public abstract class Connection : IDisposable
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         value.Salt = this.EmbryoSalt;
-        value.Sign(seedKey);
+        seedKey.Sign(value);
     }
 
     public bool ValidateAndVerifyWithSalt<T>(T value)

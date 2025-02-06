@@ -3,16 +3,11 @@
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Tinyhand.IO;
-using Tinyhand.Tree;
 
 namespace Netsphere;
 
 public static class SeedKeyExtensions
 {
-    public static bool Sign<T>(this SeedKey seedKey, T value)
-        where T : ITinyhandSerializable<T>, ISignAndVerify
-        => seedKey.SignWithSalt(value, 0);
-
     public static bool SignWithSalt<T>(this SeedKey seedKey, T value, ulong salt)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {

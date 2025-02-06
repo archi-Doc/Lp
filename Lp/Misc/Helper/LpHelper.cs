@@ -30,7 +30,7 @@ public static class LpHelper
         }
     }*/
 
-    public static async ValueTask<ClientConnection?> GetConnection(this RobustConnection? robustConnection, ILogger logger)
+    public static async ValueTask<ClientConnection?> Get(this RobustConnection? robustConnection, ILogger logger)
     {
         if (robustConnection is null)
         {
