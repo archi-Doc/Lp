@@ -13,6 +13,14 @@ public partial class CommandGroup
         context.AddSubcommand(typeof(ListCommand));
         context.AddSubcommand(typeof(NewCommand));
         context.AddSubcommand(typeof(SetCommand));
-        context.AddSubcommand(typeof(RunCommand));
+        context.AddSubcommand(typeof(ExecuteCommand));
+    }
+
+    public static void ShowCommands(string[] commands, ILogger logger)
+    {
+        foreach (var x in commands)
+        {
+            logger.TryGet()?.Log(x);
+        }
     }
 }

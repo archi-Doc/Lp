@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("set-command-group")]
-    public class SetCommand : ISimpleCommandAsync<CustomSubcommandSetOptions>
+    public class SetCommand : ISimpleCommandAsync<NewOptions>
     {
         public SetCommand(ILogger<SetCommand> logger, VaultControl vaultControl)
         {
@@ -16,18 +16,19 @@ public partial class CommandGroup
             this.vaultControl = vaultControl;
         }
 
-        public async Task RunAsync(CustomSubcommandSetOptions option, string[] args)
+        public async Task RunAsync(NewOptions option, string[] args)
         {
-            var name = CustomizedCommand.GetName(option.Name);
+            var name = GetName(option.Name);
             if (!this.vaultControl.Root.Contains(name))
             {
                 this.logger.TryGet()?.Log(Hashed.Custom.NotFound, option.Name);
                 return;
             }
 
-            var custom = new CustomizedCommand(option.Command, args);
-            this.vaultControl.Root.AddObject(name, custom);
+            var commands = SimpleParserHelper.SeparateArguments(option.Command);
+            this.vaultControl.Root.TryAdd(name, commands, out _);
             this.logger.TryGet()?.Log(Hashed.Custom.Set, option.Name);
+            ShowCommands(commands, this.logger);
         }
 
         private readonly ILogger logger;

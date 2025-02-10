@@ -7,29 +7,29 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("new")]
-    public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOptions>
+    [SimpleCommand("new-command-group")]
+    public class NewCommand : ISimpleCommandAsync<NewOptions>
     {
-        public CustomSubcommandNew(ILogger<CustomSubcommandNew> logger, VaultControl vaultControl)
+        public NewCommand(ILogger<NewOptions> logger, VaultControl vaultControl)
         {
             this.logger = logger;
             this.vaultControl = vaultControl;
         }
 
-        public async Task RunAsync(CustomSubcommandNewOptions option, string[] args)
+        public async Task RunAsync(NewOptions option, string[] args)
         {
-            var name = CustomizedCommand.GetName(option.Name);
+            var name = GetName(option.Name);
             if (this.vaultControl.Root.Contains(name))
             {
                 this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, option.Name);
                 return;
             }
 
-            var custom = new CustomizedCommand(option.Command, args);
-            if (this.vaultControl.Root.TryAddObject(name, custom, out _))
+            var commands = SimpleParserHelper.SeparateArguments(option.Command);
+            if (this.vaultControl.Root.TryAdd(name, commands, out _))
             {
                 this.logger.TryGet()?.Log(Hashed.Custom.Created, option.Name);
-                this.logger.TryGet()?.Log(custom.Command);
+                ShowCommands(commands, this.logger);
             }
             else
             {
@@ -41,15 +41,12 @@ public partial class CommandGroup
         private readonly VaultControl vaultControl;
     }
 
-    public record CustomSubcommandNewOptions
+    public record NewOptions
     {
-        [SimpleOption("Name", Description = "Customized command name", Required = true)]
+        [SimpleOption("Name", Description = "Command group name", Required = true)]
         public string Name { get; init; } = string.Empty;
 
-        [SimpleOption("Command", Description = "Command")]
+        [SimpleOption("Command", Description = "Command group separated by a separator '|'")]
         public string Command { get; init; } = string.Empty;
-
-        /*[SimpleOption("array", Description = "Command array")]
-        public string[]? CommandArray { get; init; }*/
     }
 }
