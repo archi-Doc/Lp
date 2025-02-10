@@ -13,6 +13,8 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
 {// !!!Base64Url(Seed+Checksum)!!!(s:Base64Url(PublicKey+Checksum))
     public static int MaxStringLength => SeedKeyHelper.MaxPrivateKeyLengthInBase64;
 
+    public static SeedKey Invalid { get; } = new();
+
     public int GetStringLength() => this.KeyOrientation switch
     {
         KeyOrientation.Encryption => SeedKeyHelper.MaxPrivateKeyLengthInBase64,
@@ -191,11 +193,15 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
     [Key(1)]
     public KeyOrientation KeyOrientation { get; private set; } = KeyOrientation.NotSpecified;
 
+    public bool IsValid => this.seed.Length > 0;
+
     private Lock lockObject = new();
     private byte[]? encryptionSecretKey; // X25519 32bytes
     private byte[]? encryptionPublicKey; // X25519 32bytes
     private byte[]? signatureSecretKey; // Ed235519 64bytes
     private byte[]? signaturePublicKey; // Ed235519 32bytes
+
+    #endregion
 
     [MemberNotNull(nameof(encryptionSecretKey), nameof(encryptionPublicKey), nameof(signatureSecretKey), nameof(signaturePublicKey))]
     private void PrepareKey()
@@ -230,8 +236,6 @@ public sealed partial class SeedKey : IEquatable<SeedKey>, IStringConvertible<Se
             this.encryptionPublicKey = boxPublic;
         }
     }
-
-    #endregion
 
     public EncryptionPublicKey GetEncryptionPublicKey()
     {

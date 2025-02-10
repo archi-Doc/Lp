@@ -32,7 +32,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     protected NetStats netStats;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
-    protected SeedKey? mergerSeedKey;
+    protected SeedKey mergerSeedKey = SeedKey.Invalid;
 
     #endregion
 
@@ -162,15 +162,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public SignaturePublicKey GetMergerKey()
         => this.MergerPublicKey;
 
-    public bool TrySignProof(Proof proof, long validMics)
-    {
-        if (this.mergerSeedKey is null)
-        {
-            return false;
-        }
-
-        return this.mergerSeedKey.TrySignProof(proof, validMics);
-    }
+    public bool TrySign(Proof proof, long validMics)
+        => this.mergerSeedKey.TrySign(proof, validMics);
 
     public void UpdateState()
     {

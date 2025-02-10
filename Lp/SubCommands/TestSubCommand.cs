@@ -103,7 +103,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
                 var valueProof = ValueProof.Create(value);
 
-                owner.TrySignProof(valueProof, 123);
+                owner.TrySign(valueProof, 123);
             }
         }
     }

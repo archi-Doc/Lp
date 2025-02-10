@@ -55,8 +55,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
                 return;
             }
 
-            var token = new AuthenticationToken(connection.EmbryoSalt);
-            NetHelper.Sign(token, seedKey);
+            var token = AuthenticationToken.CreateAndSign(seedKey, connection);
             var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {

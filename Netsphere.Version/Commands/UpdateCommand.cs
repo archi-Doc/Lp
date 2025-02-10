@@ -21,7 +21,7 @@ internal class UpdateCommand : ISimpleCommandAsync<UpdateOptions>
         options.Prepare();
         this.logger.TryGet()?.Log($"{options.ToString()}");
 
-        if (options.remoteSecretKey is not { } privateKey)
+        if (options.remoteSecretKey is not { } seedKey)
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not parse remote secret key");
             return;
@@ -37,7 +37,7 @@ internal class UpdateCommand : ISimpleCommandAsync<UpdateOptions>
 
         var versionInfo = new VersionInfo(options.VersionIdentifier, options.VersionKind, Mics.GetCorrected(), 0);
         var token = new CertificateToken<VersionInfo>(versionInfo);
-        token.Sign(privateKey);
+        seedKey.Sign(token);
         this.logger.TryGet()?.Log($"{versionInfo.ToString()}");
 
         var p = new UpdateVersionPacket(token);

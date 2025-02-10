@@ -271,9 +271,34 @@ public static class NetHelper
     public static bool TryDeserialize<T>(BytePool.RentReadOnlyMemory rentMemory, [MaybeNullWhen(false)] out T value)
         => TinyhandSerializer.TryDeserialize<T>(rentMemory.Memory.Span, out value, TinyhandSerializerOptions.Standard);
 
-    public static void Sign<T>(this T value, SeedKey seedKey)
+    public static void Sign<T>(this SeedKey seedKey, T value)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
+        try
+        {
+            value.PublicKey = seedKey.GetSignaturePublicKey();
+            value.SignedMics = Mics.FastCorrected;
+
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            value.Signature = sign;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    public static void Sign<T>(this SeedKey seedKey, T value, Connection connection)
+        where T : ITinyhandSerializable<T>, ISignAndVerify
+    {
+        value.Salt = connection.EmbryoSalt;
+
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
@@ -301,9 +326,20 @@ public static class NetHelper
     /// <param name="value">The object to be verified.</param>
     /// <param name="salt">The salt value to compare with the object's salt.</param>
     /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
-    public static bool ValidateAndVerifyWithSalt<T>(this T value, ulong salt)
+    public static bool ValidateAndVerify<T>(this T value, ulong salt)
         where T : ITinyhandSerializable<T>, ISignAndVerify
-        => value.Salt == salt && value.ValidateAndVerify();
+        => value.Salt == salt && ValidateAndVerify(value);
+
+    /// <summary>
+    /// Validates the object members and verifies that the signature is appropriate with the specified connection (EmbryoSalt).
+    /// </summary>
+    /// <typeparam name="T">The type of the object.</typeparam>
+    /// <param name="value">The object to be verified.</param>
+    /// <param name="connection">The connection to compare with the object's salt.</param>
+    /// <returns><see langword="true"/> if the object members are valid and the signature is appropriate; otherwise, <see langword="false"/>.</returns>
+    public static bool ValidateAndVerify<T>(this T value, Connection connection)
+       where T : ITinyhandSerializable<T>, ISignAndVerify
+       => value.Salt == connection.EmbryoSalt && ValidateAndVerify(value);
 
     /// <summary>
     /// Validates the object members and verifies that the signature is appropriate.
@@ -311,7 +347,7 @@ public static class NetHelper
     /// <param name="value">The object to be verified.</param>
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify<T>(this T value)
+    private static bool ValidateAndVerify<T>(T value)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         if (!value.Validate())

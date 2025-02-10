@@ -259,18 +259,13 @@ public abstract class Connection : IDisposable
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
         value.Salt = this.EmbryoSalt;
-        value.Sign(seedKey);
+        seedKey.Sign(value);
     }
 
     public bool ValidateAndVerifyWithSalt<T>(T value)
         where T : ITinyhandSerializable<T>, ISignAndVerify
     {
-        if (value.Salt != this.EmbryoSalt)
-        {
-            return false;
-        }
-
-        return NetHelper.ValidateAndVerify(value);
+        return NetHelper.ValidateAndVerify(value, this);
     }
 
     /// <summary>

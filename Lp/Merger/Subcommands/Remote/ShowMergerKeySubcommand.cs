@@ -17,7 +17,7 @@ public class ShowMergerKeySubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        if (await this.nestedcommand.RobustConnection.GetConnection(this.logger) is not { } connection)
+        if (await this.nestedcommand.RobustConnection.Get(this.logger) is not { } connection)
         {
             return;
         }
