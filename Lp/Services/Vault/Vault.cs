@@ -114,6 +114,9 @@ public sealed partial class Vault
         }
     }
 
+    public void Add<T>(string name, T obj)
+        => this.AddByteArray(name, TinyhandSerializer.Serialize(obj));
+
     public void AddByteArray(string name, byte[] byteArray)
     {
         using (this.lockObject.EnterScope())

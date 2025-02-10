@@ -33,10 +33,20 @@ public partial class CommandGroup
                 {
                     if (!string.IsNullOrEmpty(x))
                     {
-                        this.userInterfaceService.WriteLine($">> {x}");
-                        this.control.Subcommand(x);
+                        this.userInterfaceService.WriteLine(x);
                     }
                 }
+
+                foreach (var x in commands)
+                {
+                    if (!string.IsNullOrEmpty(x))
+                    {
+                        this.userInterfaceService.EnqueueLine(x);
+                    }
+                }
+
+                // this.userInterfaceService.WriteLine($">> {x}");
+                // this.control.Subcommand(x);
             }
         }
 

@@ -15,6 +15,8 @@ public abstract class IUserInterfaceService : IConsoleService
 
     public abstract void WriteLine(string? message = null);
 
+    public abstract void EnqueueLine(string? message = null);
+
     public abstract string? ReadLine();
 
     public abstract ConsoleKeyInfo ReadKey(bool intercept);

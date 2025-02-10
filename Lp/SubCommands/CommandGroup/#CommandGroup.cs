@@ -12,8 +12,10 @@ public partial class CommandGroup
     {
         context.AddSubcommand(typeof(ListCommand));
         context.AddSubcommand(typeof(NewCommand));
-        context.AddSubcommand(typeof(SetCommand));
+        context.AddSubcommand(typeof(ChangeCommand));
         context.AddSubcommand(typeof(ExecuteCommand));
+        context.AddSubcommand(typeof(ShowCommand));
+        context.AddSubcommand(typeof(RemoveCommand));
     }
 
     public static void ShowCommands(string[] commands, ILogger logger)

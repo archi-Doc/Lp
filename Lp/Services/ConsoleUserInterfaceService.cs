@@ -1,13 +1,48 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+
 namespace Lp.Services;
 
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
+    private readonly UnitCore core;
+    private readonly ILogger logger;
+    private readonly ConsoleTextReader consoleTextReader;
+
+    private class ConsoleTextReader : TextReader
+    {
+        private readonly TextReader original;
+        private readonly ConcurrentQueue<string?> queue = new();
+
+        public ConsoleTextReader(TextReader original)
+        {
+            this.original = original;
+        }
+
+        public void Enqueue(string? line)
+        {
+            this.queue.Enqueue(line);
+        }
+
+        public override string? ReadLine()
+        {
+            if (this.queue.TryDequeue(out var line))
+            {
+                return line;
+            }
+
+            return this.original.ReadLine();
+        }
+    }
+
     public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger)
     {
         this.core = core;
         this.logger = logger;
+        this.consoleTextReader = new ConsoleTextReader(Console.In);
+
+        Console.SetIn(this.consoleTextReader);
     }
 
     public override void Write(string? message = null)
@@ -30,6 +65,11 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         catch
         {
         }
+    }
+
+    public override void EnqueueLine(string? message = null)
+    {
+        this.consoleTextReader.Enqueue(message);
     }
 
     public override string? ReadLine()
@@ -246,7 +286,4 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
             }
         }
     }
-
-    private UnitCore core;
-    private ILogger<DefaultLog> logger;
 }

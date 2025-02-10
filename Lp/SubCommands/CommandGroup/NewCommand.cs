@@ -16,24 +16,24 @@ public partial class CommandGroup
             this.vaultControl = vaultControl;
         }
 
-        public async Task RunAsync(NewOptions option, string[] args)
+        public async Task RunAsync(NewOptions options, string[] args)
         {
-            var name = GetName(option.Name);
+            var name = GetName(options.Name);
             if (this.vaultControl.Root.Contains(name))
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, option.Name);
+                this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, options.Name);
                 return;
             }
 
-            var commands = SimpleParserHelper.SeparateArguments(option.Command);
+            var commands = SimpleParserHelper.SeparateArguments(options.Command);
             if (this.vaultControl.Root.TryAdd(name, commands, out _))
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.Created, option.Name);
+                this.logger.TryGet()?.Log(Hashed.Custom.Created, options.Name);
                 ShowCommands(commands, this.logger);
             }
             else
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, option.Name);
+                this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, options.Name);
             }
         }
 
@@ -46,7 +46,7 @@ public partial class CommandGroup
         [SimpleOption("Name", Description = "Command group name", Required = true)]
         public string Name { get; init; } = string.Empty;
 
-        [SimpleOption("Command", Description = "Command group separated by a separator '|'")]
+        [SimpleOption("Command", Description = "Command group separated by a separator '|'", Required = true)]
         public string Command { get; init; } = string.Empty;
     }
 }
