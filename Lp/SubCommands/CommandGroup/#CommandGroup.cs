@@ -10,12 +10,12 @@ public partial class CommandGroup
 
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddSubcommand(typeof(ListCommand));
-        context.AddSubcommand(typeof(NewCommand));
-        context.AddSubcommand(typeof(ChangeCommand));
-        context.AddSubcommand(typeof(ExecuteCommand));
-        context.AddSubcommand(typeof(ShowCommand));
-        context.AddSubcommand(typeof(RemoveCommand));
+        context.AddSubcommand(typeof(ListCommandGroup));
+        context.AddSubcommand(typeof(NewCommandGroup));
+        context.AddSubcommand(typeof(ChangeCommandGroup));
+        context.AddSubcommand(typeof(ExecuteCommandGroup));
+        context.AddSubcommand(typeof(ShowCommandGroup));
+        context.AddSubcommand(typeof(RemoveCommandGroup));
     }
 
     public static void ShowCommands(string[] commands, ILogger logger)

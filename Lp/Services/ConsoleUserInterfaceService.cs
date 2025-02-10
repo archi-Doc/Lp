@@ -67,7 +67,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
-    public override void EnqueueLine(string? message = null)
+    public override void EnqueueInput(string? message = null)
     {
         this.consoleTextReader.Enqueue(message);
     }

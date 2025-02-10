@@ -8,9 +8,9 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("new-command-group")]
-    public class NewCommand : ISimpleCommandAsync<NewOptions>
+    public class NewCommandGroup : ISimpleCommandAsync<NewOptions>
     {
-        public NewCommand(ILogger<NewOptions> logger, VaultControl vaultControl)
+        public NewCommandGroup(ILogger<NewOptions> logger, VaultControl vaultControl)
         {
             this.logger = logger;
             this.vaultControl = vaultControl;

@@ -7,26 +7,25 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("remove-command-group")]
-    public class RemoveCommand : ISimpleCommandAsync<ExecuteOptions>
+    [SimpleCommand("show-command-group")]
+    public class ShowCommandGroup : ISimpleCommandAsync<ExecuteOptions>
     {
-        public RemoveCommand(ILogger<ExecuteOptions> logger, VaultControl vaultControl)
+        public ShowCommandGroup(ILogger<ShowCommandGroup> logger, VaultControl vaultControl)
         {
-            this.vaultControl = vaultControl;
             this.logger = logger;
+            this.vaultControl = vaultControl;
         }
 
         public async Task RunAsync(ExecuteOptions option, string[] args)
         {
             var name = GetName(option.Name);
-            if (this.vaultControl.Root.Remove(name))
-            {
-                this.logger.TryGet()?.Log(Hashed.Custom.Removed, option.Name);
-            }
-            else
+            if (!this.vaultControl.Root.TryGet<string[]>(name, out var commands, out _))
             {
                 this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Custom.NotFound, option.Name);
+                return;
             }
+
+            ShowCommands(commands, this.logger);
         }
 
         private readonly ILogger logger;

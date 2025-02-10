@@ -8,9 +8,9 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("execute-command-group")]
-    public class ExecuteCommand : ISimpleCommandAsync<ExecuteOptions>
+    public class ExecuteCommandGroup : ISimpleCommandAsync<ExecuteOptions>
     {
-        public ExecuteCommand(ILogger<ExecuteCommand> logger, IUserInterfaceService userInterfaceService, Control control, VaultControl vaultControl)
+        public ExecuteCommandGroup(ILogger<ExecuteCommandGroup> logger, IUserInterfaceService userInterfaceService, Control control, VaultControl vaultControl)
         {
             this.userInterfaceService = userInterfaceService;
             this.control = control;
@@ -41,7 +41,7 @@ public partial class CommandGroup
                 {
                     if (!string.IsNullOrEmpty(x))
                     {
-                        this.userInterfaceService.EnqueueLine(x);
+                        this.userInterfaceService.EnqueueInput(x);
                     }
                 }
 
