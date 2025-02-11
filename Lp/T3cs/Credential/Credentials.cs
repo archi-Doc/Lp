@@ -1,36 +1,28 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.Serialization;
+using System.Net;
 using Arc.Collections;
+using ValueLink.Integrality;
+using static Netsphere.Misc.TimeCorrection;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class Credentials
+public sealed partial class CredentialClass
 {
-    #region FieldAndProperty
+    [Key(0)]
+    private CredentialEvidence.GoshujinClass goshujin = new();
 
-    /*[Key(0)]
-    public Evidence.GoshujinClass MergerCredentials { get; private set; } = new();
-
-    [Key(1)]
-    public Evidence.GoshujinClass RelayCredentials { get; private set; } = new();
-
-    [Key(2)]
-    public Evidence.GoshujinClass CreditCredentials { get; private set; } = new();*/
-
-    #endregion
-
-    public Credentials()
+    public CredentialClass()
     {
     }
 
-    /*private static void ValidateCredentials(Evidence.GoshujinClass credentials)
+    public void Validate()
     {
-        using (credentials.LockObject.EnterScope())
+        using (this.goshujin.LockObject.EnterScope())
         {
-            TemporaryList<Evidence> toDelete = default;
-            foreach (var evidence in credentials)
+            TemporaryList<CredentialEvidence> toDelete = default;
+            foreach (var evidence in this.goshujin)
             {
                 if (!evidence.Validate())
                 {
@@ -40,16 +32,49 @@ public partial class Credentials
 
             foreach (var evidence in toDelete)
             {
-                credentials.Remove(evidence);
+                this.goshujin.Remove(evidence);
             }
         }
+    }
+
+    public Task<IntegralityResult> Integrate(IntegralityBrokerDelegate broker)
+        => CredentialEvidence.Integrality.Default.Integrate(this.goshujin, broker);
+
+    public void Add(CredentialEvidence evidence)
+    {
+        using (this.goshujin.LockObject.EnterScope())
+        {
+            var g = (IIntegralityGoshujin)this.goshujin;
+            g.IntegrateObject(CredentialEvidence.Integrality.Default, evidence);
+        }
+    }
+}
+
+[TinyhandObject]
+public partial class Credentials
+{
+    #region FieldAndProperty
+
+    [Key(0)]
+    public CredentialClass MergerCredentials { get; private set; } = new();
+
+    [Key(1)]
+    public CredentialClass RelayCredentials { get; private set; } = new();
+
+    [Key(2)]
+    public CredentialClass CreditCredentials { get; private set; } = new();
+
+    #endregion
+
+    public Credentials()
+    {
     }
 
     [TinyhandOnDeserialized]
     private void OnDeserialized()
     {
-        ValidateCredentials(this.MergerCredentials);
-        ValidateCredentials(this.RelayCredentials);
-        ValidateCredentials(this.CreditCredentials);
-    }*/
+        this.MergerCredentials.Validate();
+        this.RelayCredentials.Validate();
+        this.CreditCredentials.Validate();
+    }
 }

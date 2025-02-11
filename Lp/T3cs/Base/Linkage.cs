@@ -12,22 +12,23 @@ public sealed partial class Linkage : IValidatable
     // [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
     public Linkage(Evidence linkedEvidence)
     {
-        this.LinkedEvidence = linkedEvidence;
+        // this.LinkedEvidence = linkedEvidence;
     }
 
     private Linkage()
     {
-        this.LinkedEvidence = default!;
+        // this.LinkedEvidence = default!;
     }
 
-    [Key(0)]
-    public Evidence LinkedEvidence { get; private set; }
+    // [Key(0)]
+    // public Evidence LinkedEvidence { get; private set; }
 
     [Key(1)]
     public byte[]? WatchmanSignature { get; private set; }
 
     public bool Validate()
     {
-        return this.LinkedEvidence.Validate();
+        return true;
+        // return this.LinkedEvidence.Validate();
     }
 }

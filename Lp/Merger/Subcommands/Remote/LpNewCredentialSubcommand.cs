@@ -47,13 +47,13 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        Evidence.TryCreate(credentialProof, seedKey, out var evidence);
+        CredentialEvidence.TryCreate(credentialProof, seedKey, out var evidence);
         if (evidence?.ValidateAndVerify() != true)
         {
             return;
         }
 
-        // this.credentials.IntegrateMerger
+        this.credentials.MergerCredentials.Add(evidence);
 
         this.logger.TryGet()?.Log($"{evidence.ToString()}");
     }
