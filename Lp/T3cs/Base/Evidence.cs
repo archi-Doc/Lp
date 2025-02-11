@@ -137,7 +137,8 @@ public abstract partial class Evidence : IValidatable
         writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
         try
         {
-            TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
+            ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+            // TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             var sign = new byte[CryptoSign.SignatureSize];
@@ -215,7 +216,8 @@ public abstract partial class Evidence : IValidatable
             writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
             try
             {
-                TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
+                ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+                // TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
                 var rentMemory = writer.FlushAndGetRentMemory();
                 var result = credit.Mergers[mergerIndex].Verify(rentMemory.Span, signature);
                 rentMemory.Return();

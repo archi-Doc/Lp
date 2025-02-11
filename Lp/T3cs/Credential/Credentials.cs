@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
 using Arc.Collections;
 using ValueLink.Integrality;
-using static Netsphere.Misc.TimeCorrection;
 
 namespace Lp.T3cs;
 
@@ -50,7 +48,7 @@ public sealed partial class CredentialClass
     }
 }
 
-[TinyhandObject]
+[TinyhandObject(UseServiceProvider = true)]
 public partial class Credentials
 {
     #region FieldAndProperty
@@ -67,6 +65,11 @@ public partial class Credentials
     #endregion
 
     public Credentials()
+    {
+    }
+
+    [TinyhandOnSerialized]
+    private void OnSerialized()
     {
     }
 
