@@ -10,7 +10,7 @@ namespace Lp.T3cs;
 /// Immutable evidence object (authentication within merger).
 /// </summary>
 [TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+// [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public sealed partial class Evidence : IValidatable
 {
     public static bool TryCreate(Proof proof, [MaybeNullWhen(false)] out Evidence evidence)
@@ -41,7 +41,7 @@ public sealed partial class Evidence : IValidatable
         return true;
     }
 
-    [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
+    // [Link(Primary = true, Unique = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
     public Evidence()
     {
         this.Proof = default!;

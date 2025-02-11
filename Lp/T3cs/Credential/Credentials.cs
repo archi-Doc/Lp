@@ -10,14 +10,14 @@ public partial class Credentials
 {
     #region FieldAndProperty
 
-    [Key(0)]
+    /*[Key(0)]
     public Evidence.GoshujinClass MergerCredentials { get; private set; } = new();
 
     [Key(1)]
     public Evidence.GoshujinClass RelayCredentials { get; private set; } = new();
 
     [Key(2)]
-    public Evidence.GoshujinClass CreditCredentials { get; private set; } = new();
+    public Evidence.GoshujinClass CreditCredentials { get; private set; } = new();*/
 
     #endregion
 
@@ -25,7 +25,7 @@ public partial class Credentials
     {
     }
 
-    private static void ValidateCredentials(Evidence.GoshujinClass credentials)
+    /*private static void ValidateCredentials(Evidence.GoshujinClass credentials)
     {
         using (credentials.LockObject.EnterScope())
         {
@@ -51,5 +51,5 @@ public partial class Credentials
         ValidateCredentials(this.MergerCredentials);
         ValidateCredentials(this.RelayCredentials);
         ValidateCredentials(this.CreditCredentials);
-    }
+    }*/
 }
