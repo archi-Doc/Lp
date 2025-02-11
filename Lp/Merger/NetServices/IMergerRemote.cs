@@ -114,8 +114,13 @@ internal class MergerRemoteAgent : IMergerRemote
             return default;
         }
 
-        var credentialProof = new CredentialProof(token.Target, this.merger.State);
-        this.merger.TrySign(credentialProof, CredentialProof.LpExpirationMics);
+        var credentialProof = new CredentialProof(this.merger.MergerPublicKey, token.Target, this.merger.State);
+        if (!this.merger.TrySign(credentialProof, CredentialProof.LpExpirationMics) ||
+            !credentialProof.ValidateAndVerify())
+        {
+            return default;
+        }
+
         return credentialProof;
     }
 }

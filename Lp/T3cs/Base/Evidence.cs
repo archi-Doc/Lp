@@ -146,18 +146,18 @@ public sealed partial class Evidence : IValidatable
             return false;
         }
 
-        mergerIndex = Math.Max(mergerIndex, credit.MergerCount);
-        if (mergerIndex >= 0 && !Verify(0, this.MergerSignature0))
+        mergerIndex = Math.Min(mergerIndex, credit.MergerCount);
+        if (mergerIndex > 0 && !Verify(0, this.MergerSignature0))
         {
             return false;
         }
 
-        if (mergerIndex >= 1 && !Verify(1, this.MergerSignature1))
+        if (mergerIndex > 1 && !Verify(1, this.MergerSignature1))
         {
             return false;
         }
 
-        if (mergerIndex >= 2 && !Verify(2, this.MergerSignature2))
+        if (mergerIndex > 2 && !Verify(2, this.MergerSignature2))
         {
             return false;
         }

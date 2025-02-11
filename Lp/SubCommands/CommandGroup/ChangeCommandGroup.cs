@@ -19,15 +19,15 @@ public partial class CommandGroup
         public async Task RunAsync(NewOptions options, string[] args)
         {
             var name = GetName(options.Name);
-            if (!this.vaultControl.Root.Contains(name))
+            /*if (!this.vaultControl.Root.Contains(name))
             {
                 this.logger.TryGet()?.Log(Hashed.Custom.NotFound, options.Name);
                 return;
-            }
+            }*/
 
             var commands = SimpleParserHelper.SeparateArguments(options.Command);
             this.vaultControl.Root.Add(name, commands);
-            this.logger.TryGet()?.Log(Hashed.Custom.Set, options.Name);
+            this.logger.TryGet()?.Log(Hashed.CommandGroup.Set, options.Name);
             ShowCommands(commands, this.logger);
         }
 

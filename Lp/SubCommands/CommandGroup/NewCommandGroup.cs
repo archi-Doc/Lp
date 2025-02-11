@@ -21,19 +21,19 @@ public partial class CommandGroup
             var name = GetName(options.Name);
             if (this.vaultControl.Root.Contains(name))
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, options.Name);
+                this.logger.TryGet()?.Log(Hashed.CommandGroup.AlreadyExists, options.Name);
                 return;
             }
 
             var commands = SimpleParserHelper.SeparateArguments(options.Command);
             if (this.vaultControl.Root.TryAdd(name, commands, out _))
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.Created, options.Name);
+                this.logger.TryGet()?.Log(Hashed.CommandGroup.Created, options.Name);
                 ShowCommands(commands, this.logger);
             }
             else
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.AlreadyExists, options.Name);
+                this.logger.TryGet()?.Log(Hashed.CommandGroup.AlreadyExists, options.Name);
             }
         }
 

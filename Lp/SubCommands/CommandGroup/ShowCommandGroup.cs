@@ -21,7 +21,7 @@ public partial class CommandGroup
             var name = GetName(option.Name);
             if (!this.vaultControl.Root.TryGet<string[]>(name, out var commands, out _))
             {
-                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Custom.NotFound, option.Name);
+                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.CommandGroup.NotFound, option.Name);
                 return;
             }
 

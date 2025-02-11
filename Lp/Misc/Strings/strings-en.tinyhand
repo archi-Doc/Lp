@@ -73,12 +73,12 @@ Seedphrase = {
     Invalid = "Seedphrase '{0}' is invaid"
 }
 
-Custom = {
-    AlreadyExists = "Customized command '{0}' already exists"
-    NotFound = "Customized command '{0}' is not found"
-    Created = "Customized command '{0}' is successfully created"
-    Removed = "Customized command '{0}' is successfully removed"
-    Set = "Customized command '{0}' is successfully set"
+CommandGroup = {
+    AlreadyExists = "Command group '{0}' already exists"
+    NotFound = "Command group '{0}' is not found"
+    Created = "Command group '{0}' is successfully created"
+    Removed = "Command group '{0}' is successfully removed"
+    Set = "Command group '{0}' is successfully set"
 }
 
 Subcommands = {
