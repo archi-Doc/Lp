@@ -91,6 +91,9 @@ public sealed partial class Vault
         this.vaultControl = vaultControl;
     }
 
+    public bool TryAdd<T>(string name, T obj, out VaultResult result)
+        => this.TryAddByteArray(name, TinyhandSerializer.Serialize(obj), out result);
+
     public bool TryAddByteArray(string name, byte[] byteArray, out VaultResult result)
     {
         using (this.lockObject.EnterScope())
@@ -111,6 +114,9 @@ public sealed partial class Vault
         }
     }
 
+    public void Add<T>(string name, T obj)
+        => this.AddByteArray(name, TinyhandSerializer.Serialize(obj));
+
     public void AddByteArray(string name, byte[] byteArray)
     {
         using (this.lockObject.EnterScope())
@@ -126,6 +132,17 @@ public sealed partial class Vault
 
             this.SetModifiedFlag();
         }
+    }
+
+    public bool TryGet<T>(string name, [MaybeNullWhen(false)] out T obj, out VaultResult result)
+    {
+        if (!this.TryGetByteArray(name, out var byteArray, out result))
+        {
+            obj = default;
+            return false;
+        }
+
+        return TinyhandSerializer.TryDeserialize(byteArray, out obj);
     }
 
     public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray, out VaultResult result)

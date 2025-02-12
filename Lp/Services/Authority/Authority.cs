@@ -112,19 +112,19 @@ public sealed partial class Authority
     }
 
     public SeedKey GetSeedKey()
-        => this.seedKeyCache.GetOrAdd(Credit.Default, SeedKey.NewSignature(this.seed));
+        => this.seedKeyCache.GetOrAdd(Credit.Default, x => SeedKey.NewSignature(this.seed));
 
     public SeedKey GetSeedKey(Credit credit)
-        => this.seedKeyCache.GetOrAdd(credit, CreateSeedKey(this.seed, credit));
+        => this.seedKeyCache.GetOrAdd(credit, x => CreateSeedKey(this.seed, x));
 
     public EncryptionPublicKey GetEncryptionPublicKey()
-        => this.GetSeedKey(Credit.Default).GetEncryptionPublicKey();
+        => this.GetSeedKey().GetEncryptionPublicKey();
 
     public EncryptionPublicKey GetEncryptionPublicKey(Credit credit)
         => this.GetSeedKey(credit).GetEncryptionPublicKey();
 
     public SignaturePublicKey GetSignaturePublicKey()
-        => this.GetSeedKey(Credit.Default).GetSignaturePublicKey();
+        => this.GetSeedKey().GetSignaturePublicKey();
 
     public SignaturePublicKey GetSignaturePublicKey(Credit credit)
         => this.GetSeedKey(credit).GetSignaturePublicKey();
@@ -133,5 +133,5 @@ public sealed partial class Authority
         => BitConverter.ToInt32(this.seed.AsSpan());
 
     public override string ToString()
-        => $"PublicKey: {this.GetSeedKey().ToString()}, Lifetime: {this.Lifecycle}, DurationMics: {this.DurationMics}";
+        => $"PublicKey: {this.GetSeedKey().GetSignaturePublicKey()}, Lifetime: {this.Lifecycle}, DurationMics: {this.DurationMics}";
 }

@@ -57,8 +57,9 @@ public sealed partial class CredentialProof : Proof
         this.State = default!;
     }
 
-    public CredentialProof(Value value, CredentialState state)
+    public CredentialProof(SignaturePublicKey credentialKey, Value value, CredentialState state)
     {
+        this.CredentialKey = credentialKey;
         this.Value = value;
         this.State = state;
     }
@@ -66,9 +67,12 @@ public sealed partial class CredentialProof : Proof
     #region FieldAndProperty
 
     [Key(Proof.ReservedKeyCount)]
-    public Value Value { get; private set; }
+    public SignaturePublicKey CredentialKey { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 1)]
+    public Value Value { get; private set; }
+
+    [Key(Proof.ReservedKeyCount + 2)]
     public CredentialState State { get; private set; }
 
     public SignaturePublicKey Originator => this.GetSignatureKey();
@@ -78,7 +82,7 @@ public sealed partial class CredentialProof : Proof
     #endregion
 
     public override SignaturePublicKey GetSignatureKey()
-        => this.Value.Credit.Originator;
+        => this.CredentialKey;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {

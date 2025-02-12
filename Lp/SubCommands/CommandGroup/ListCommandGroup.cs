@@ -8,9 +8,9 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("list-command-group")]
-    public class ListCommand : ISimpleCommandAsync
+    public class ListCommandGroup : ISimpleCommandAsync
     {
-        public ListCommand(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
+        public ListCommandGroup(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
         {
             this.vaultControl = vaultControl;
             this.userInterfaceService = userInterfaceService;
