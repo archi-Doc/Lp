@@ -105,4 +105,7 @@ public sealed partial class CredentialProof : Proof
 
         return true;
     }
+
+    public override string ToString()
+        => $"CredentialProof: {this.CredentialKey}, {this.Value}, {this.State}";
 }

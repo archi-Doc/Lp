@@ -46,7 +46,7 @@ public sealed partial class CredentialClass
         }
     }
 
-    public async Task<IntegralityResult> Integrate(IntegralityBrokerDelegate broker)
+    public async Task<IntegralityResultAndCount> Integrate(IntegralityBrokerDelegate broker)
     {
         using (this.lockObject.EnterScope())
         {
@@ -54,7 +54,7 @@ public sealed partial class CredentialClass
         }
 
         var result = await CredentialEvidence.Integrality.Default.Integrate(this.goshujin, broker).ConfigureAwait(false);
-        if (true)
+        if (result.IsModified)
         {
             using (this.lockObject.EnterScope())
             {
