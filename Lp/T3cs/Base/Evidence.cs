@@ -8,7 +8,7 @@ using ValueLink.Integrality;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
+[ValueLinkObject(Integrality = true)]
 public partial class CredentialEvidence : Evidence
 {
     #region Integrality
