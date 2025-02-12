@@ -105,6 +105,8 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
 
+                context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowMergerCredentialsCommand));
+
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
@@ -344,6 +346,9 @@ public class Control
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
+                //
+                var lppk = LpConstants.LpPublicKey;
+
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 

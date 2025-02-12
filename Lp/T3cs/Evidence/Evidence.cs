@@ -36,7 +36,7 @@ public abstract partial class Evidence : IValidatable
     // public Proof? LinkedProof { get; protected set; }
 
     public long ProofMics
-        => this.Proof.VerificationMics;
+        => this.Proof.SignedMics;
 
     public int MergerCount
         => this.Proof.TryGetCredit(out var credit) ? credit.MergerCount : 0;

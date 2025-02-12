@@ -52,11 +52,11 @@ public abstract partial class Proof : IEquatable<Proof>
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
 
     /// <summary>
-    /// Gets or sets the verification time in microseconds.
+    /// Gets or sets the signed time in microseconds.
     /// </summary>
     [Key(2)]
     [Link(Primary = true, Type = ChainType.Ordered)]
-    public long VerificationMics { get; protected set; }
+    public long SignedMics { get; protected set; }
 
     /// <summary>
     /// Gets or sets the expiration time in microseconds.
@@ -105,18 +105,18 @@ public abstract partial class Proof : IEquatable<Proof>
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>
     public virtual bool Validate()
     {
-        if (this.VerificationMics == 0 || this.ExpirationMics == 0)
+        if (this.SignedMics == 0 || this.ExpirationMics == 0)
         {
             return false;
         }
 
-        var period = this.ExpirationMics - this.VerificationMics;
+        var period = this.ExpirationMics - this.SignedMics;
         if (period < 0 || period > this.MaxValidMics)
         {
             return false;
         }
 
-        if (!MicsRange.IsWithinMargin(Mics.FastCorrected, this.VerificationMics, this.ExpirationMics))
+        if (!MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
         {
             return false;
         }
@@ -136,7 +136,7 @@ public abstract partial class Proof : IEquatable<Proof>
             return false;
         }
 
-        return this.VerificationMics == other.VerificationMics &&
+        return this.SignedMics == other.SignedMics &&
             this.ExpirationMics == other.ExpirationMics &&
             this.Signature.SequenceEqual(other.Signature) &&
             this.GetSignatureKey().Equals(other.GetSignatureKey());
@@ -148,8 +148,8 @@ public abstract partial class Proof : IEquatable<Proof>
     /// <param name="validMics">The valid microseconds.</param>
     internal void PrepareSignInternal(long validMics)
     {
-        this.VerificationMics = Mics.GetCorrected();
-        var mics = this.VerificationMics + Math.Max(validMics, this.MaxValidMics);
+        this.SignedMics = Mics.GetCorrected();
+        var mics = this.SignedMics + Math.Max(validMics, this.MaxValidMics);
         this.ExpirationMics = mics / TruncateExpirationMics * TruncateExpirationMics;
     }
 

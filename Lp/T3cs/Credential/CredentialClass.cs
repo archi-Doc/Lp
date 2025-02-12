@@ -19,6 +19,11 @@ public sealed partial class CredentialClass
     {
     }
 
+    public CredentialEvidence[] ToArray()
+    {
+        return this.immutableGoshujin.ToArray();
+    }
+
     public void Validate()
     {
         using (this.lockObject.EnterScope())

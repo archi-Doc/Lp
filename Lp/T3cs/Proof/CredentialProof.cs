@@ -25,7 +25,7 @@ public sealed partial class CredentialProof : Proof
         public override bool Validate(CredentialProof.GoshujinClass goshujin, CredentialProof newItem, CredentialProof? oldItem)
         {
             if (oldItem is not null &&
-                oldItem.VerificationMics >= newItem.VerificationMics)
+                oldItem.SignedMics >= newItem.SignedMics)
             {
                 return false;
             }
