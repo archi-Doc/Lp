@@ -83,7 +83,7 @@ public sealed partial class NodeControl
             sb.AppendLine("Active:");
             foreach (var x in this.activeNodes.LastConnectedMicsChain)
             {
-                sb.AppendLine($"{Mics.ToDateTime(x.LastConnectedMics).ToString()} {x.ToString()}");
+                sb.AppendLine($"{Mics.MicsToDateTime(x.LastConnectedMics).ToString()} {x.ToString()}");
             }
         }
 

@@ -37,7 +37,7 @@ public partial class NtpMachine : Machine
             this.logger.TryGet()?.Log($"Already corrected {corrected}, {correctedNow.ToString()}");
             this.SetLoggerTimeOffset();
 
-            var ts = Mics.ToTimeSpan(Mics.FromHours(1) - dif);
+            var ts = Mics.MicsToTimeSpan(Mics.FromHours(1) - dif);
             this.TimeUntilRun = ts;
             return StateResult.Continue;
         }

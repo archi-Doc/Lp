@@ -41,9 +41,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         var mics = Mics.GetCorrected();
         this.userInterfaceService.WriteLine($"Mics: {mics}");
-        this.userInterfaceService.WriteLine($"Utc: {Mics.ToDateTime(mics).ToString()}");
-        this.userInterfaceService.WriteLine($"Hour: {Mics.ToDateTime(mics / Mics.MicsPerHour * Mics.MicsPerHour).ToString()}");
-        this.userInterfaceService.WriteLine($"Day: {Mics.ToDateTime(mics / Mics.MicsPerDay * Mics.MicsPerDay).ToString()}");
+        this.userInterfaceService.WriteLine($"Utc: {Mics.MicsToDateTime(mics).ToString()}");
+        this.userInterfaceService.WriteLine($"Hour: {Mics.MicsToDateTime(mics / Mics.MicsPerHour * Mics.MicsPerHour).ToString()}");
+        this.userInterfaceService.WriteLine($"Day: {Mics.MicsToDateTime(mics / Mics.MicsPerDay * Mics.MicsPerDay).ToString()}");
 
         await this.TestLinkageKey();
     }

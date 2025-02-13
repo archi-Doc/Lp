@@ -139,15 +139,15 @@ public static class Mics
 
     public static long FromNanoseconds(double nanoseconds) => (long)(nanoseconds * MicsPerNanosecond);
 
-    public static DateTime ToDateTime(long mics) => new DateTime((long)((double)mics * Time.MicsToTicks));
+    public static DateTime MicsToDateTime(long mics) => new DateTime((long)((double)mics * Time.MicsToTicks));
 
-    public static TimeSpan ToTimeSpan(long mics) => new TimeSpan((long)((double)mics * Time.MicsToTicks));
+    public static TimeSpan MicsToTimeSpan(long mics) => new TimeSpan((long)((double)mics * Time.MicsToTicks));
 
-    public static string ToString(long mics, string? format = null) => ToDateTime(mics).ToString(format);
+    public static string ToString(long mics, string? format = null) => MicsToDateTime(mics).ToString(format);
 
     public static string ToSimpleString(long mics)
     {
-        var ts = ToTimeSpan(mics);
+        var ts = MicsToTimeSpan(mics);
         return ts.TotalDays >= 1
             ? $"{ts.TotalDays:0.00}d"
             : ts.TotalHours >= 1
