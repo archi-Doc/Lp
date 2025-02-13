@@ -19,6 +19,11 @@ public sealed partial class CredentialClass
     {
     }
 
+    public NetTask<BytePool.RentMemory> Differentiate(ReadOnlyMemory<byte> memory)
+    {
+        return NetTask.FromResult(CredentialEvidence.Integrality.Default.Differentiate(this.immutableGoshujin, memory));
+    }
+
     public CredentialEvidence[] ToArray()
     {
         return this.immutableGoshujin.ToArray();

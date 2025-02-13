@@ -2,6 +2,7 @@
 
 using System.Net;
 using Lp.Logging;
+using Lp.T3cs;
 using Netsphere.Packet;
 using Netsphere.Stats;
 
@@ -13,7 +14,7 @@ public partial class NodeControlMachine : Machine
     private const int ConsumeLifelineCount = 10;
     private const int FixEndpointCount = 10;
 
-    public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl)
+    public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl, Credentials credentials)
         : base()
     {
         this.logger = logger;
@@ -23,6 +24,7 @@ public partial class NodeControlMachine : Machine
         this.netStats = this.netControl.NetStats;
         this.nodeControl = nodeControl;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.credentials = credentials;
     }
 
     private readonly ILogger logger;
@@ -31,6 +33,7 @@ public partial class NodeControlMachine : Machine
     private readonly NetBase netBase;
     private readonly NetStats netStats;
     private readonly NodeControl nodeControl;
+    private readonly Credentials credentials;
     private int count = 0;
 
     [StateMethod(0)]
@@ -283,8 +286,12 @@ public partial class NodeControlMachine : Machine
                 var service = connection.GetService<Lp.Net.IBasalService>();
                 if (service is not null)
                 {
+                    // Active node
                     var r2 = await service.GetActiveNodes();
                     this.nodeControl.ProcessGetActiveNodes(r2.Span);
+
+                    // Credentials
+                    var r3 = await this.credentials.MergerCredentials.Integrate(async (x, y) => await service.DifferentiateMergerCredential(x));
                 }
             }
         }
