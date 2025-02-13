@@ -650,7 +650,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         address6b = BitConverter.ToUInt64(span);
 
         int digitCount;
-        for (digitCount = 0; digitCount < sourcePort.Length; digitCount++)
+        for (digitCount = 0; digitCount < sourcePort.Length;)
         {
             if (sourcePort[digitCount] >= '0' && sourcePort[digitCount] <= '9')
             {
@@ -668,7 +668,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
         else
         {
-            sourcePort = sourcePort.Slice(0, digitCount - 1);
+            sourcePort = sourcePort.Slice(0, digitCount);
         }
 
         if (!ushort.TryParse(sourcePort, out var p))
