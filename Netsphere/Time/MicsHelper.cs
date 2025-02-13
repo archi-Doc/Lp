@@ -1,12 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace Netsphere;
 
 public static class MicsHelper
 {
-    public static string ToString(long mics, string? format = null) => Mics.MicsToDateTime(mics).ToString(format);
+    public static DateTime MicsToDateTime(this long mics) => new DateTime((long)((double)mics * Time.MicsToTicks));
 
-    public static string ToSimpleString(long mics)
+    public static TimeSpan MicsToTimeSpan(this long mics) => new TimeSpan((long)((double)mics * Time.MicsToTicks));
+
+    public static string MicsToDateTimeString(this long mics, string? format = null) => MicsToDateTime(mics).ToString(format);
+
+    public static string MicsToTimeSpanString(this long mics)
     {
         var ts = MicsToTimeSpan(mics);
         return ts.TotalDays >= 1

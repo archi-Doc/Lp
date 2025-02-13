@@ -29,7 +29,7 @@ public class MicsSubcommand : ISimpleCommand
             logger.Log($"Mics.FastUtcNow: {Mics.FastUtcNow}");
             logger.Log($"Mics.GetCorrected(): {Mics.GetCorrected()}");
             logger.Log($"Mics.FastCorrected: {Mics.FastCorrected}");
-            logger.Log($"Mics.GetCorrected() : {Mics.MicsToDateTime(Mics.GetCorrected()).ToString()}");
+            logger.Log($"Mics.GetCorrected() : {Mics.GetCorrected().MicsToDateTimeString()}");
             logger.Log($"Time.TimestampToTicks: {Time.TimestampToTicks}");
             logger.Log($"Time.GetSystem(): {Time.GetSystem()}");
             logger.Log($"Time.GetApplication(): {Time.GetApplication()}");

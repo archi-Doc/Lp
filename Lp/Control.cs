@@ -617,7 +617,7 @@ public class Control
 
     public void LogInformation(ILogWriter logger)
     {
-        logger.Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
+        logger.Log($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
         this.LpBase.LogInformation(logger);
     }
 

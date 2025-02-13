@@ -90,7 +90,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             return;
         }
 
-        this.userInterfaceService.WriteLine($"Retention: {Mics.ToSimpleString(connection.Agreement.MinimumConnectionRetentionMics)}");
+        this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
         this.userInterfaceService.WriteLine($"Connection successful (merger-remote)");
 
         await this.nestedcommand.MainAsync();
