@@ -11,7 +11,8 @@ public static class NetConstants
     public const string RemotePublicKeyName = "RemotePublickey";
 
     public const int MaxPacketLength = 1350; // 1500 - 60 - 8 = 1432 bytes
-    public const int MinPort = 49152; // Ephemeral port 49152 - 60999
+    public const int MinPort = 1024;
+    public const int EphemeralPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
     internal const bool EnableOpenSesami = false;
