@@ -25,6 +25,13 @@ public partial class Credentials
     {
     }
 
+    public void Validate()
+    {
+        this.MergerCredentials.Validate();
+        this.RelayCredentials.Validate();
+        this.CreditCredentials.Validate();
+    }
+
     [TinyhandOnSerialized]
     private void OnSerialized()
     {

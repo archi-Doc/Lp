@@ -129,6 +129,7 @@ public partial class NodeControlMachine : Machine
         this.count++ < max);
 
         this.nodeControl.Trim(false, true);
+        this.credentials.Validate();//
 
         if (this.nodeControl.NoOnlineNode)
         {
