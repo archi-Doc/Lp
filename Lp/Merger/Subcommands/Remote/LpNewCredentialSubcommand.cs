@@ -55,7 +55,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
 
         this.credentials.MergerCredentials.Add(evidence);
 
-        this.logger.TryGet()?.Log($"{evidence.ToString()}");
+        this.logger.TryGet()?.Log($"{evidence}");
     }
 
     private readonly ILogger logger;

@@ -32,4 +32,7 @@ public abstract partial class CredentialState
     public bool IsActive { get; set; }
 
     #endregion
+
+    public override string ToString()
+        => $"CredentialState: {this.NetNode}";
 }

@@ -31,8 +31,8 @@
     <PackageReference Include="BigMachines" Version="0.40.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
     <PackageReference Include="SimpleCommandLine" Version="0.26.0" />
-    <PackageReference Include="Tinyhand" Version="0.96.1" />
-    <PackageReference Include="ValueLink" Version="0.74.2" />
+    <PackageReference Include="Tinyhand" Version="0.96.2" />
+    <PackageReference Include="ValueLink" Version="0.75.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -53,10 +53,36 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
     public static int MaxStringLength => SeedKeyHelper.PublicKeyLengthInBase64;
 
     public int GetStringLength()
-        => SeedKeyHelper.PublicKeyLengthInBase64;
+    {
+        if (KeyAlias.TryGetAlias(this, out var alias))
+        {
+            return alias.Length;
+        }
+        else
+        {
+            return SeedKeyHelper.PublicKeyLengthInBase64;
+        }
+    }
 
     public bool TryFormat(Span<char> destination, out int written)
-        => SeedKeyHelper.TryFormatPublicKey(this.AsSpan(), destination, out written);
+    {
+        if (KeyAlias.TryGetAlias(this, out var alias))
+        {
+            if (destination.Length < alias.Length)
+            {
+                written = 0;
+                return false;
+            }
+
+            alias.CopyTo(destination);
+            written = alias.Length;
+            return true;
+        }
+        else
+        {
+            return SeedKeyHelper.TryFormatPublicKey(this.AsSpan(), destination, out written);
+        }
+    }
 
     public bool TryFormatWithBracket(Span<char> destination, out int written)
         => SeedKeyHelper.TryFormatPublicKeyWithBracket(Identifier, this.AsSpan(), destination, out written);
