@@ -346,8 +346,7 @@ public class Control
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
-                //
-                var lppk = LpConstants.LpPublicKey;
+                LpConstants.Initialize();
 
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
