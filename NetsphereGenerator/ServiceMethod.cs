@@ -43,19 +43,34 @@ public class ServiceMethod
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
     {
-        const string taskName = "Netsphere.NetTask";//
-        const string taskName2 = "Netsphere.NetTask<TResponse>";//
-
         var returnObject = method.Method_ReturnObject;
         if (returnObject == null)
         {
             return null;
         }
 
-        if (returnObject.FullName != taskName &&
-            returnObject.OriginalDefinition?.FullName != taskName2)
-        {// Invalid return type
-            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
+        var isNetTask = false;
+        if (returnObject.FullName == NetsphereBody.NetTaskFullName)
+        {// NetTask
+            isNetTask = true;
+        }
+        else if (returnObject.FullName == NetsphereBody.TaskFullName)
+        {// Task
+        }
+        else
+        {
+            var fullName = returnObject.OriginalDefinition?.FullName;
+            if (fullName == NetsphereBody.NetTaskFullName2)
+            {// NetTask<TResponse>
+                isNetTask = true;
+            }
+            else if (fullName == NetsphereBody.TaskFullName2)
+            {// Task<TResult>
+            }
+            else
+            {// Invalid return type
+                method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
+            }
         }
 
         if (method.Body.Abort)
@@ -64,6 +79,7 @@ public class ServiceMethod
         }
 
         var serviceMethod = new ServiceMethod(method);
+        serviceMethod.IsNetTask = isNetTask;
         serviceMethod.MethodId = (uint)Arc.Crypto.FarmHash.Hash64(method.FullName);
         if (obj.NetServiceInterfaceAttribute == null)
         {
@@ -144,6 +160,8 @@ public class ServiceMethod
 
     public int ParameterLength => this.method.Method_Parameters.Length;
 
+    public bool IsNetTask { get; private set; }
+
     public uint MethodId { get; private set; }
 
     public ulong Id { get; private set; }
@@ -151,6 +169,8 @@ public class ServiceMethod
     public string IdString => $"0x{this.Id:x}ul";
 
     public string MethodString => $"Method_{this.Id:x}";
+
+    public string ValueAsyncString => this.IsNetTask ? ".ValueAsync" : string.Empty;
 
     public WithNullable<NetsphereObject>? ReturnObject { get; internal set; }
 
