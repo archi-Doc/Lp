@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using Arc.Collections;
+using Microsoft.VisualBasic;
 using ValueLink.Integrality;
 
 namespace Lp.T3cs;
@@ -19,10 +21,8 @@ public sealed partial class CredentialClass
     {
     }
 
-    public NetTask<BytePool.RentMemory> Differentiate(ReadOnlyMemory<byte> memory)
-    {
-        return NetTask.FromResult(CredentialEvidence.Integrality.Default.Differentiate(this.immutableGoshujin, memory));
-    }
+    public BytePool.RentMemory Differentiate(ReadOnlyMemory<byte> memory)
+        => CredentialEvidence.Integrality.Default.Differentiate(this.immutableGoshujin, memory);
 
     public CredentialEvidence[] ToArray()
     {

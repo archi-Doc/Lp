@@ -173,7 +173,7 @@ public class ConnectionTerminal
         }
     }
 
-    public async Task<ClientConnection?> ConnectForRelay(NetNode node, bool incomingRelay, int targetNumberOfRelays)
+    public async Task<ClientConnection?> ConnectForRelay(NetNode node, bool incomingRelay, int targetNumberOfRelays, EndpointResolution endpointResolution)
     {
         if (!this.NetTerminal.IsActive)
         {
@@ -185,7 +185,8 @@ public class ConnectionTerminal
             return null;
         }
 
-        if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
+        var address = node.Address;
+        if (!this.netStats.TryCreateEndpoint(ref address, endpointResolution, out var endPoint))
         {
             return null;
         }
@@ -221,7 +222,7 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
+    public async Task<ClientConnection?> Connect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6)
     {
         if (!this.NetTerminal.IsActive)
         {
@@ -239,7 +240,8 @@ public class ConnectionTerminal
         }
 #endif
 
-        if (!this.netStats.TryCreateEndpoint(node, out var endPoint))
+        var address = node.Address;
+        if (!this.netStats.TryCreateEndpoint(ref address, endpointResolution, out var endPoint))
         {
             return null;
         }

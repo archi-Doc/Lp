@@ -43,15 +43,25 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
         var success = 0;
         await Parallel.ForEachAsync(nodeList, async (netNode, cancellationToken) =>
         {
+            var endpointResolution = EndpointResolution.PreferIpv6;
+
             // Ping container
             var address = new NetAddress(netNode.Address, options.ContainerPort);
-            if (await this.Ping(address) == false)
+            if (await this.Ping(address, endpointResolution) == false)
             {// No ping
-                return;
+                if (address.IsValidIpv4AndIpv6)
+                {
+                    endpointResolution = EndpointResolution.Ipv4;
+                    this.logger.TryGet()?.Log($"Ipv6 -> Ipv4");
+                    if (await this.Ping(address, endpointResolution) == false)
+                    {// No ping
+                        return;
+                    }
+                }
             }
 
             // Restart
-            using (var connection = await this.netTerminal.Connect(netNode))
+            using (var connection = await this.netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 0, endpointResolution))
             {
                 if (connection == null)
                 {
@@ -83,7 +93,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
             var sec = PingIntervalInSeconds;
             for (var i = 0; i < PingRetries; i++)
             {
-                if (await this.Ping(address))
+                if (await this.Ping(address, endpointResolution))
                 {
                     success++;
                     return;
@@ -97,9 +107,9 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
         this.logger.TryGet()?.Log($"Restart Success/Total: {success}/{nodeList.Count}");
     }
 
-    private async Task<bool> Ping(NetAddress address)
+    private async Task<bool> Ping(NetAddress address, EndpointResolution endpointResolution)
     {
-        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, new());
+        var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(address, new(), 0, default, endpointResolution);
         this.logger.TryGet()?.Log($"Ping({r.Result}): {address.ToString()}");
 
         if (r.Result == NetResult.Success)

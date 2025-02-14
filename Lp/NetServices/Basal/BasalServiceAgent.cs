@@ -33,8 +33,8 @@ internal partial class BasalServiceAgent : IBasalService
         return this.netStats.NodeControl.GetActiveNodes();
     }
 
-    public NetTask<BytePool.RentMemory> DifferentiateMergerCredential(ReadOnlyMemory<byte> memory)
-        => this.credentials.MergerCredentials.Differentiate(memory);
+    public Task<BytePool.RentMemory> DifferentiateMergerCredential(ReadOnlyMemory<byte> memory)
+        => Task.FromResult(this.credentials.MergerCredentials.Differentiate(memory));
 
     public async NetTask<string?> GetNodeInformation()
     {

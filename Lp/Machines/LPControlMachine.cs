@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.Data;
+using Lp.T3cs;
 
 namespace Lp.Machines;
 
@@ -15,15 +16,17 @@ public partial class LpControlMachine : Machine
     private readonly ILogger logger;
     private readonly Control control;
     private readonly LpOptions options;
+    private readonly Credentials credentials;
     private long lifespan;
 
     #endregion
 
-    public LpControlMachine(ILogger<LpControlMachine> logger, Control control, LpOptions options)
+    public LpControlMachine(ILogger<LpControlMachine> logger, Control control, LpOptions options, Credentials credentials)
     {
         this.logger = logger;
         this.control = control;
         this.options = options;
+        this.credentials = credentials;
         this.DefaultTimeout = TimeSpan.FromSeconds(IntervalInSeconds);
 
         this.lifespan = -1;
@@ -42,6 +45,7 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
+        this.credentials.Validate();
         this.control.Merger.UpdateState();
         this.control.RelayMerger.UpdateState();
 

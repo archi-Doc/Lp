@@ -20,4 +20,8 @@ public static class LpConstants
         KeyAlias.AddAlias(LpPublicKey, LpAlias);
         Credit.TryCreate(LpPublicKey, [LpPublicKey], out LpCredit!);
     }
+
+    public static void Initialize()
+    {
+    }
 }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using Arc.Collections;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Packet;
@@ -129,7 +130,6 @@ public partial class NodeControlMachine : Machine
         this.count++ < max);
 
         this.nodeControl.Trim(false, true);
-        this.credentials.Validate();//
 
         if (this.nodeControl.NoOnlineNode)
         {
@@ -292,7 +292,7 @@ public partial class NodeControlMachine : Machine
                     this.nodeControl.ProcessGetActiveNodes(r2.Span);
 
                     // Credentials
-                    var r3 = await this.credentials.MergerCredentials.Integrate(async (x, y) => await service.DifferentiateMergerCredential(x));
+                    _ = await this.credentials.MergerCredentials.Integrate(async (x, y) => await service.DifferentiateMergerCredential(x));
                 }
             }
         }
