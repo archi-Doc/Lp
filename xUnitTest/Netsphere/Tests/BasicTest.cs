@@ -54,6 +54,13 @@ public class BasicTest
             var r2 = await basicService.TestResult2().ResponseAsync;
             r2.Result.Is(NetResult.StreamLengthLimit);
             r2.Value.Is(NetResult.StreamLengthLimit);
+
+            var basicTaskService = connection.GetService<IBasicTaskService>();
+            await basicTaskService.SendInt(1);
+            (await basicTaskService.IncrementInt(2)).Is(3);
+            (await basicTaskService.SumInt(2, 3)).Is(5);
+            await basicTaskService.TestResult();
+            (await basicTaskService.TestResult2()).Is(NetResult.StreamLengthLimit);
         }
     }
 

@@ -14,6 +14,10 @@ namespace Netsphere.Generator;
 
 public class NetsphereBody : VisceralBody<NetsphereObject>
 {
+    public const string TaskFullName = "System.Threading.Tasks.Task";
+    public const string TaskFullName2 = "System.Threading.Tasks.Task<TResult>";
+    public const string NetTaskFullName = "Netsphere.NetTask";
+    public const string NetTaskFullName2 = "Netsphere.NetTask<TResponse>";
     public const string GeneratorName = "NetsphereGenerator";
     public const string FrontendClassName = "Frontend_"; // "__gen_frontend__";
     public const string BackendClassName = "Backend_";
@@ -59,7 +63,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_MethodReturnType = new DiagnosticDescriptor(
-        id: "NSG008", title: "Method return type", messageFormat: "The return type of service method must be NetTask or NetTask<T>",
+        id: "NSG008", title: "Method return type", messageFormat: "The return type of service method must be NetTask or NetTask<T> or Task or Task<TResult>",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_DuplicateServiceMethod = new DiagnosticDescriptor(

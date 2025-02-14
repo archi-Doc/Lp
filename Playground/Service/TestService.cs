@@ -8,7 +8,7 @@ namespace Playground;
 [NetServiceInterface]
 public interface ITestService : INetService, INetServiceAgreement
 {
-    NetTask<string?> DoubleString(string input);
+    Task<string?> DoubleString(string input);
 
     NetTask<byte[]?> Pingpong(byte[] data);
 }
@@ -16,7 +16,7 @@ public interface ITestService : INetService, INetServiceAgreement
 [NetServiceObject]
 internal class TestServiceImpl : ITestService
 {
-    async NetTask<string?> ITestService.DoubleString(string input)
+    async Task<string?> ITestService.DoubleString(string input)
         => input + input;
 
     // [NetServiceFilter<NullFilter>]
