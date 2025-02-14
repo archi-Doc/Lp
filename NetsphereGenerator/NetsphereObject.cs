@@ -674,7 +674,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         {
             if (method.IsNetTask)
             {
-                if (method.ReturnObject == null)
+                if (method.ReturnObject is null)
                 {
                     ssb.AppendLine($"return new({netResult});");
                 }
@@ -692,9 +692,20 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
             else
             {
-                if (method.ReturnObject is not null)
+                if (method.ReturnObject is null)
                 {
-                    ssb.AppendLine($"return default;");
+                    ssb.AppendLine($"return;");
+                }
+                else
+                {
+                    if (returnTypeIsNetResult)
+                    {
+                        ssb.AppendLine($"return {netResult};");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"return default!;");
+                    }
                 }
             }
         }

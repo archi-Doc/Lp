@@ -32,6 +32,7 @@ public class NetFixture : IDisposable
 
                 // NetService
                 context.AddSingleton<BasicServiceImpl>();
+                context.AddSingleton<BasicTaskServiceImpl>();
 
                 // ServiceFilter
                 context.AddSingleton<NullFilter>();
@@ -39,6 +40,7 @@ public class NetFixture : IDisposable
             .ConfigureNetsphere(context =>
             {
                 context.AddNetService<IBasicService, BasicServiceImpl>();
+                context.AddNetService<IBasicTaskService, BasicTaskServiceImpl>();
                 context.AddNetService<IFilterTestService, FilterTestServiceImpl>();
                 context.AddNetService<IStreamService, StreamServiceImpl>();
             });
