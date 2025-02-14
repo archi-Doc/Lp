@@ -43,8 +43,8 @@ public class ServiceMethod
 
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
     {
-        const string taskName = "Netsphere.NetTask";
-        const string taskName2 = "Netsphere.NetTask<TResponse>";
+        const string taskName = "Netsphere.NetTask";//
+        const string taskName2 = "Netsphere.NetTask<TResponse>";//
 
         var returnObject = method.Method_ReturnObject;
         if (returnObject == null)

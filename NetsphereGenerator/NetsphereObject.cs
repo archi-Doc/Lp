@@ -477,7 +477,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     internal void GenerateFrontend_Method(ScopingStringBuilder ssb, GeneratorInformation info, ServiceMethod method)
     {
         var genericString = method.ReturnObject == null ? string.Empty : $"<{method.ReturnObject.FullNameWithNullable}>";
-        var taskString = $"NetTask{genericString}";
+        var taskString = $"NetTask{genericString}";//
         var returnTypeIsNetResult = method.ReturnObject?.FullName == NetsphereBody.NetResultFullName;
         var deserializeString = method.ReturnObject == null ? "NetResult" : method.ReturnObject.FullNameWithNullable;
 
@@ -868,16 +868,16 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     ssb.AppendLine("return;");
                 }
 
-                ssb.AppendLine($"{prefix}await agent.{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await agent.{method.SimpleName}({method.GetTupleNames("rr.Value!", 1)}, context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");//
             }
             else
             {
-                ssb.AppendLine($"{prefix}await agent.{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");
+                ssb.AppendLine($"{prefix}await agent.{method.SimpleName}(context.GetReceiveStream().MaxStreamLength).ValueAsync.ConfigureAwait(false);");//
             }
         }
         else
         {
-            ssb.AppendLine($"{prefix}await agent.{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");
+            ssb.AppendLine($"{prefix}await agent.{method.SimpleName}({method.GetTupleNames("value", 0)}).ValueAsync.ConfigureAwait(false);");//
         }
 
         // ssb.AppendLine("context.Return();"); -> try-finally
@@ -904,7 +904,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
 
         if (method.ReturnObject == null)
-        {// NetTask
+        {
             this.Generate_ReturnRentMemory(ssb);
             ssb.AppendLine($"context.RentMemory = {ServiceMethod.RentMemoryName}.Empty;");
         }

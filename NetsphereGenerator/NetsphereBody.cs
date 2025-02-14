@@ -60,7 +60,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
     public static readonly DiagnosticDescriptor Error_MethodReturnType = new DiagnosticDescriptor(
         id: "NSG008", title: "Method return type", messageFormat: "The return type of service method must be NetTask or NetTask<T>",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);//
 
     public static readonly DiagnosticDescriptor Error_DuplicateServiceMethod = new DiagnosticDescriptor(
         id: "NSG009", title: "Duplicate Service Method", messageFormat: "Duplicate Service Method {0} is found",
