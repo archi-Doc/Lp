@@ -4,7 +4,7 @@ using Netsphere;
 
 namespace Playground;
 
-[NetsphereGeneratorOption(AttachDebugger = false, GenerateToFile = true)]
+[NetsphereGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
 internal class GeneratorOption
 {
 }

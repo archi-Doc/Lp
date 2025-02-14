@@ -7,9 +7,9 @@ namespace Lp.Net;
 [NetServiceInterface]
 public interface IBasalService : INetService
 {
-    NetTask<BytePool.RentMemory> GetActiveNodes();
+    Task<BytePool.RentMemory> GetActiveNodes();
 
     Task<BytePool.RentMemory> DifferentiateMergerCredential(ReadOnlyMemory<byte> memory);
 
-    NetTask<string?> GetNodeInformation();
+    Task<string?> GetNodeInformation();
 }

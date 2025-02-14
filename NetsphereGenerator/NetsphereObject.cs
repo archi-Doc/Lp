@@ -481,139 +481,162 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         var returnTypeIsNetResult = method.ReturnObject?.FullName == NetsphereBody.NetResultFullName;
         var deserializeString = method.ReturnObject == null ? "NetResult" : method.ReturnObject.FullNameWithNullable;
 
-        using (var scopeMethod = ssb.ScopeBrace($"public {taskString} {method.SimpleName}({method.GetParameters()})"))
+        using (var scopeMethod = ssb.ScopeBrace($"public {(method.IsNetTask ? string.Empty : "async ")}{taskString} {method.SimpleName}({method.GetParameters()})"))
         {
             if (method.Kind == ServiceMethod.MethodKind.UpdateAgreement)
             {
-                ssb.AppendLine($"return new {taskString}((({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).UpdateAgreement({method.IdString}, a1));");
+                if (method.IsNetTask)
+                {
+                    ssb.AppendLine($"return new {taskString}((({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).UpdateAgreement({method.IdString}, a1));");
+                }
+                else
+                {
+                    ssb.AppendLine($"return (({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).UpdateAgreement({method.IdString}, a1);");
+                }
+
                 return;
             }
             else if (method.Kind == ServiceMethod.MethodKind.ConnectBidirectionally)
             {
-                ssb.AppendLine($"return new {taskString}((({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).ConnectBidirectionally({method.IdString}, a1));");
+                if (method.IsNetTask)
+                {
+                    ssb.AppendLine($"return new {taskString}((({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).ConnectBidirectionally({method.IdString}, a1));");
+                }
+                else
+                {
+                    ssb.AppendLine($"return (({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).ConnectBidirectionally({method.IdString}, a1);");
+                }
+
                 return;
             }
 
-            ssb.AppendLine($"return new {taskString}(Core());");
-            ssb.AppendLine();
-
-            using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
+            ScopingStringBuilder.IScope? scopeCore = default;
+            if (method.IsNetTask)
             {
-                if (method.ReturnType == ServiceMethod.Type.SendStream)
-                {
-                    if (method.ParameterLength <= 1)
-                    {
-                        ssb.AppendLine($"var response = this.ClientConnection.SendStream(a1, {method.IdString});");
-                    }
-                    else
-                    {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStream(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
-                    }
+                ssb.AppendLine($"return new {taskString}(Core());");
+                ssb.AppendLine();
+                scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()");
+            }
 
-                    ssb.AppendLine("return new(response.Stream, response.Result);");
-                    return;
-                }
-                else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+            if (method.ReturnType == ServiceMethod.Type.SendStream)
+            {
+                if (method.ParameterLength <= 1)
                 {
-                    if (method.ParameterLength <= 1)
-                    {
-                        ssb.AppendLine($"var response = this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString});");
-                    }
-                    else
-                    {
-                        ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStreamAndReceive<{method.GetParameterTypes(1)}, {method.StreamTypeArgument}>(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
-                    }
-
-                    ssb.AppendLine("return new(response.Stream, response.Result);");
-                    return;
-                }
-
-                if (method.ParameterType == ServiceMethod.Type.NetResult)
-                {
-                    ssb.AppendLine($"NetHelper.SerializeNetResult(a1, out var owner);");
-                }
-                else if (method.ParameterType == ServiceMethod.Type.ByteArray ||
-                    method.ParameterType == ServiceMethod.Type.Memory ||
-                    method.ParameterType == ServiceMethod.Type.ReadOnlyMemory)
-                {// a1(Memory<byte>) -> owner(RentMemory)
-                    ssb.AppendLine($"var owner = Arc.Collections.BytePool.RentMemory.CreateFrom(a1);");
-                }
-                else if (method.ParameterType == ServiceMethod.Type.RentMemory)
-                {// a1(RentMemory) -> owner(RentMemory)
-                    ssb.AppendLine("var owner = a1.IncrementAndShare();");
-                }
-                else if (method.ParameterType == ServiceMethod.Type.RentReadOnlyMemory)
-                {
-                    ssb.AppendLine("var owner = a1.IncrementAndShare().UnsafeMemory;");
-                }
-                else if (method.ParameterLength == 0)
-                {
-                    ssb.AppendLine($"var owner = {ServiceMethod.RentMemoryName}.Empty;");
+                    ssb.AppendLine($"var response = this.ClientConnection.SendStream(a1, {method.IdString});");
                 }
                 else
                 {
-                    using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName, 0)}, out var owner))"))
-                    {
-                        AppendReturn("NetResult.SerializationFailed");
-                    }
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStream(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
+                }
+
+                AppendReturn2("response.Stream", "response.Result");
+                scopeCore?.Dispose();
+                return;
+            }
+            else if (method.ReturnType == ServiceMethod.Type.SendStreamAndReceive)
+            {
+                if (method.ParameterLength <= 1)
+                {
+                    ssb.AppendLine($"var response = this.ClientConnection.SendStreamAndReceive<{method.StreamTypeArgument}>(a1, {method.IdString});");
+                }
+                else
+                {
+                    ssb.AppendLine($"var response = await this.ClientConnection.SendBlockAndStreamAndReceive<{method.GetParameterTypes(1)}, {method.StreamTypeArgument}>(({method.GetParameterNames(NetsphereBody.ArgumentName, 1)}), a{method.ParameterLength}, {method.IdString}).ConfigureAwait(false);");
+                }
+
+                AppendReturn2("response.Stream", "response.Result");
+                scopeCore?.Dispose();
+                return;
+            }
+
+            if (method.ParameterType == ServiceMethod.Type.NetResult)
+            {
+                ssb.AppendLine($"NetHelper.SerializeNetResult(a1, out var owner);");
+            }
+            else if (method.ParameterType == ServiceMethod.Type.ByteArray ||
+                method.ParameterType == ServiceMethod.Type.Memory ||
+                method.ParameterType == ServiceMethod.Type.ReadOnlyMemory)
+            {// a1(Memory<byte>) -> owner(RentMemory)
+                ssb.AppendLine($"var owner = Arc.Collections.BytePool.RentMemory.CreateFrom(a1);");
+            }
+            else if (method.ParameterType == ServiceMethod.Type.RentMemory)
+            {// a1(RentMemory) -> owner(RentMemory)
+                ssb.AppendLine("var owner = a1.IncrementAndShare();");
+            }
+            else if (method.ParameterType == ServiceMethod.Type.RentReadOnlyMemory)
+            {
+                ssb.AppendLine("var owner = a1.IncrementAndShare().UnsafeMemory;");
+            }
+            else if (method.ParameterLength == 0)
+            {
+                ssb.AppendLine($"var owner = {ServiceMethod.RentMemoryName}.Empty;");
+            }
+            else
+            {
+                using (var scopeSerialize = ssb.ScopeBrace($"if (!NetHelper.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName, 0)}, out var owner))"))
+                {
+                    AppendReturn("NetResult.SerializationFailed");
+                }
+            }
+
+            ssb.AppendLine();
+            if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
+            {
+                ssb.AppendLine($"var response = await (({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).RpcSendAndReceiveStream(owner, {method.IdString}).ConfigureAwait(false);");
+                ssb.AppendLine("owner.Return();");
+                AppendReturn2("response.Stream", "response.Result");
+            }
+            else
+            {
+                ssb.AppendLine($"var response = await (({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).RpcSendAndReceive(owner, {method.IdString}).ConfigureAwait(false);");
+                ssb.AppendLine("owner.Return();");
+                using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
+                {
+                    AppendReturn("(NetResult)response.DataId");
+                }
+
+                using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
+                {
+                    AppendReturn("response.Result");
                 }
 
                 ssb.AppendLine();
-                if (method.ReturnType == ServiceMethod.Type.ReceiveStream)
+                if (method.ReturnType == ServiceMethod.Type.NetResult)
                 {
-                    ssb.AppendLine($"var response = await (({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).RpcSendAndReceiveStream(owner, {method.IdString}).ConfigureAwait(false);");
-                    ssb.AppendLine("owner.Return();");
-                    ssb.AppendLine("return new(response.Stream, response.Result);");
+                    ssb.AppendLine("NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);");
+                    ssb.AppendLine("response.Value.Return();");
+                }
+                else if (method.ReturnType == ServiceMethod.Type.ByteArray)
+                {
+                    ssb.AppendLine("var result = response.Value.Memory.ToArray();");
+                    ssb.AppendLine("response.Value.Return();");
+                }
+                else if (method.ReturnType == ServiceMethod.Type.Memory ||
+                    method.ReturnType == ServiceMethod.Type.ReadOnlyMemory)
+                {// response.Value(RentMemory) -> result(Memory<byte>)
+                    ssb.AppendLine("var result = response.Value.Memory;");
+                }
+                else if (method.ReturnType == ServiceMethod.Type.RentMemory)
+                {// response.Value(RentMemory) -> result(RentMemory)
+                    ssb.AppendLine("var result = response.Value;");
+                }
+                else if (method.ReturnType == ServiceMethod.Type.RentReadOnlyMemory)
+                {
+                    ssb.AppendLine("var result = response.Value.ReadOnly;");
                 }
                 else
                 {
-                    ssb.AppendLine($"var response = await (({NetsphereBody.IClientConnectionInternalName})this.ClientConnection).RpcSendAndReceive(owner, {method.IdString}).ConfigureAwait(false);");
-                    ssb.AppendLine("owner.Return();");
-                    using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
+                    using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
                     {
-                        AppendReturn("(NetResult)response.DataId");
-                    }
-
-                    using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
-                    {
-                        AppendReturn("response.Result");
+                        AppendReturn("NetResult.DeserializationFailed");
                     }
 
                     ssb.AppendLine();
-                    if (method.ReturnType == ServiceMethod.Type.NetResult)
-                    {
-                        ssb.AppendLine("NetHelper.DeserializeNetResult(response.DataId, response.Value.Memory.Span, out var result);");
-                        ssb.AppendLine("response.Value.Return();");
-                    }
-                    else if (method.ReturnType == ServiceMethod.Type.ByteArray)
-                    {
-                        ssb.AppendLine("var result = response.Value.Memory.ToArray();");
-                        ssb.AppendLine("response.Value.Return();");
-                    }
-                    else if (method.ReturnType == ServiceMethod.Type.Memory ||
-                        method.ReturnType == ServiceMethod.Type.ReadOnlyMemory)
-                    {// response.Value(RentMemory) -> result(Memory<byte>)
-                        ssb.AppendLine("var result = response.Value.Memory;");
-                    }
-                    else if (method.ReturnType == ServiceMethod.Type.RentMemory)
-                    {// response.Value(RentMemory) -> result(RentMemory)
-                        ssb.AppendLine("var result = response.Value;");
-                    }
-                    else if (method.ReturnType == ServiceMethod.Type.RentReadOnlyMemory)
-                    {
-                        ssb.AppendLine("var result = response.Value.ReadOnly;");
-                    }
-                    else
-                    {
-                        using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory.Span, out var result))"))
-                        {
-                            AppendReturn("NetResult.DeserializationFailed");
-                        }
+                    ssb.AppendLine("response.Value.Return();");
+                }
 
-                        ssb.AppendLine();
-                        ssb.AppendLine("response.Value.Return();");
-                    }
-
+                if (method.IsNetTask)
+                {
                     if (method.ReturnObject == null)
                     {
                         ssb.AppendLine($"return default;");
@@ -623,24 +646,55 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                         ssb.AppendLine($"return new(result);");
                     }
                 }
+                else
+                {
+                    if (method.ReturnObject is not null)
+                    {
+                        ssb.AppendLine($"return result;");
+                    }
+                }
+            }
+
+            scopeCore?.Dispose();
+        }
+
+        void AppendReturn2(string result, string netResult)
+        {
+            if (method.IsNetTask)
+            {
+                ssb.AppendLine($"return new({result}, {netResult});");
+            }
+            else
+            {
+                ssb.AppendLine($"return {result};");
             }
         }
 
         void AppendReturn(string netResult)
         {
-            if (method.ReturnObject == null)
+            if (method.IsNetTask)
             {
-                ssb.AppendLine($"return new({netResult});");
-            }
-            else
-            {
-                if (returnTypeIsNetResult)
+                if (method.ReturnObject == null)
                 {
-                    ssb.AppendLine($"return new({netResult}, {netResult});");
+                    ssb.AppendLine($"return new({netResult});");
                 }
                 else
                 {
-                    ssb.AppendLine($"return new(default!, {netResult});");
+                    if (returnTypeIsNetResult)
+                    {
+                        ssb.AppendLine($"return new({netResult}, {netResult});");
+                    }
+                    else
+                    {
+                        ssb.AppendLine($"return new(default!, {netResult});");
+                    }
+                }
+            }
+            else
+            {
+                if (method.ReturnObject is not null)
+                {
+                    ssb.AppendLine($"return default;");
                 }
             }
         }

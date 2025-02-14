@@ -7,7 +7,7 @@ namespace Netsphere;
 /// <summary>
 /// A base interface for net service.<br/>
 /// The requirements are to add the <see cref="NetServiceInterfaceAttribute" /> and to derive from the <see cref="INetService" />.<br/>
-/// The return type of the interface function must be either <see cref="NetTask"/> or <see cref="NetTask{TResponse}"/>(TResponse is Tinyhand serializable).
+/// The return type of the interface function must be either <see cref="NetTask"/> or <see cref="NetTask{TResponse}"/>(TResponse is Tinyhand serializable) or <see cref="Task"/> or <see cref="Task{TResult}"/>.
 /// </summary>
 public interface INetService
 {
