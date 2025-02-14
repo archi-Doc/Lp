@@ -21,6 +21,10 @@ public interface IBasicTaskService : INetService
 [NetServiceObject]
 public class BasicTaskServiceImpl : IBasicTaskService
 {
+    public BasicTaskServiceImpl(NullFilter nullFilter)
+    {
+    }
+
     public async Task SendInt(int x)
     {
     }

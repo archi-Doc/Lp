@@ -32,7 +32,7 @@ public class NetFixture : IDisposable
 
                 // NetService
                 context.AddSingleton<BasicServiceImpl>();
-                context.AddSingleton<BasicTaskServiceImpl>();
+                // context.AddSingleton<BasicTaskServiceImpl>();
 
                 // ServiceFilter
                 context.AddSingleton<NullFilter>();
