@@ -118,11 +118,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0)
-        => this.ConnectionTerminal.Connect(destination, mode, minimumNumberOfRelays);
+    public Task<ClientConnection?> Connect(NetNode destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable, int minimumNumberOfRelays = 0, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6)
+        => this.ConnectionTerminal.Connect(destination, mode, minimumNumberOfRelays, endpointResolution);
 
-    public Task<ClientConnection?> ConnectForRelay(NetNode destination, bool incomingRelay, int targetNumberOfRelays)
-        => this.ConnectionTerminal.ConnectForRelay(destination, incomingRelay, targetNumberOfRelays);
+    public Task<ClientConnection?> ConnectForRelay(NetNode destination, bool incomingRelay, int targetNumberOfRelays, EndpointResolution endpointResolution = EndpointResolution.PreferIpv6)
+        => this.ConnectionTerminal.ConnectForRelay(destination, incomingRelay, targetNumberOfRelays, endpointResolution);
 
     public async Task<ClientConnection?> UnsafeConnect(NetAddress destination, Connection.ConnectMode mode = Connection.ConnectMode.ReuseIfAvailable)
     {

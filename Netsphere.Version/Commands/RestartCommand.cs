@@ -52,6 +52,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
                 if (address.IsValidIpv4AndIpv6)
                 {
                     endpointResolution = EndpointResolution.Ipv4;
+                    this.logger.TryGet()?.Log($"Ipv6 -> Ipv4");
                     if (await this.Ping(address, endpointResolution) == false)
                     {// No ping
                         return;
@@ -60,7 +61,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
             }
 
             // Restart
-            using (var connection = await this.netTerminal.Connect(netNode))
+            using (var connection = await this.netTerminal.Connect(netNode, Connection.ConnectMode.ReuseIfAvailable, 0, endpointResolution))
             {
                 if (connection == null)
                 {

@@ -119,26 +119,6 @@ public sealed partial class NetStats
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateEndpoint(NetNode node, out NetEndpoint endPoint)
-    {
-        endPoint = default;
-        if (this.IsIpv6Supported || !node.Address.IsValidIpv4)
-        {// Ipv6 supported or Ipv6 only
-            node.Address.TryCreateIpv6(ref endPoint);
-            if (endPoint.IsValid)
-            {
-                return true;
-            }
-
-            return node.Address.TryCreateIpv4(ref endPoint);
-        }
-        else
-        {// Ipv4
-            return node.Address.TryCreateIpv4(ref endPoint);
-        }
-    }
-
     public NodeType GetOwnNodeType()
     {
         if (this.OutboundPort.TryGet(out var port, out _))
