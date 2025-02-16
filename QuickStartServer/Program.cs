@@ -27,8 +27,8 @@ public class Program
             .SetupOptions<NetOptions>((context, options) =>
             {// Modify NetOptions
                 options.NodeName = "Test server";
-                options.Port = 49152; // Specify the port number.
-                options.NodeSecretKey = "!!!iSaplN1bFckpIfvcGeb_FVh1jDMuZgEapNLdQ270-AUzuZhF!!!(Ca-GIp9sQeF0WB7zcQ1HLcWcI9q1Te6sskIUSJMZrQrl34uP)"; // Test Private key.
+                options.Port = 1981; // Specify the port number.
+                options.NodeSecretKey = "!!!m6Ao8Rkgsrn1-EqG_kzZgrKmWXt5orPpHAz6DbSaAfUmlLCN!!!(e:XWLus_KiQ3AaNVeBDBp3qaot8wQEbmzlHD3Wkg8cWmXZ5egP)"; // Test Private key.
                 options.EnablePing = true;
                 options.EnableServer = true;
             })

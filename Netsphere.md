@@ -49,7 +49,7 @@ First, define an interface shared between the client and server.
 public interface ITestService : INetService // An interface for NetService must inherit from INetService.
 {
     NetTask<string?> DoubleString(string input); // Declare the service method.
-    // Ensure that both arguments and return values are serializable by Tinyhand serializer, and the return type must be NetTask or NetTask<T>.
+    // Ensure that both arguments and return values are serializable by Tinyhand serializer, and the return type must be NetTask or NetTask<T> or Task or Task<TResult>.
 }
 ```
 
@@ -64,7 +64,7 @@ var unit = new NetControl.Builder().Build(); // Create a NetControl unit that im
 await unit.Run(new NetOptions(), true); // Execute the created unit with default options.
 
 var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>(); // Get a NetControl instance.
-using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 49152)))
+using (var connection = await netControl.NetTerminal.UnsafeConnect(new(IPAddress.Loopback, 1981)))
 {// Connect to the server's address (loopback address).
     // All communication in Netsphere is encrypted, and connecting by specifying only the address is not recommended due to the risk of man-in-the-middle attacks.
     if (connection is null)
@@ -105,18 +105,18 @@ var builder = new NetControl.Builder() // Create a NetControl builder.
     .SetupOptions<NetOptions>((context, options) =>
     {// Modify NetOptions.
         options.NodeName = "Test server";
-        options.Port = 49152; // Specify the port number.
+        options.Port = 1999; // Specify the port number.
         options.EnableEssential = true; // Required when using functions such as UnsafeGetNetNode() or Ping.
         options.EnableServer = true;
     })
     .Configure(context =>
     {
-        context.Services.AddTransient<TestServiceImpl>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
+        context.Services.AddTransient<TestServiceAgent>(); // Register the service implementation. If a default constructor is available, an instance will be automatically created.
     })
     .ConfigureNetsphere(context =>
     {// Register the services provided by the server.
-        context.AddNetService<ITestService, TestServiceImpl>();
-        context.AddNetService<ITestService2, TestServiceImpl>();
+        context.AddNetService<ITestService, TestServiceAgent>();
+        context.AddNetService<ITestService2, TestServiceAgent>();
     });
 
 var unit = builder.Build(); // Create a unit that provides network functionality.
@@ -141,4 +141,58 @@ await unit.Terminate(); // Perform the termination process for the unit.
 - **Service filter**: Generated for each agent type (not for each instance).
 
 
+
+## Adding NetService
+
+**NetService** is the core functionality of Netsphere and is designed to be as easy to use as possible. However, due to its nature, several steps are required when using it:
+
+1. Define the interface shared between the client and server.
+
+   ```csharp
+   [NetServiceInterface]
+   public interface ITestService : INetService
+   {
+       Task<string?> DoubleString(string input);
+   }
+   ```
+
+   
+
+2. Implement the NetService agent (implementation class) on the server side.
+   ```csharp
+   [NetServiceObject]
+   internal class TestServiceAgent : ITestService
+   {
+       async NetTask<string?> ITestService.DoubleString(string input)
+           => input + input;
+   }
+   ```
+
+   
+
+3. Add the network service to the server.
+
+   ```csharp
+   .ConfigureNetsphere(context =>
+   {
+       context.AddNetService<ITestService, TestServiceAgent>();
+   });
+   ```
+
+   It can also be dynamically added via NetTerminal.
+   ```csharp
+   netTerminal.Services.Register<ITestService, TestServiceAgent>();
+   ```
+
+   
+
+4. Register the agent class in the DI container. If forgotten, it will be registered as Transient when the network service is registered.
+   ```csharp
+   .Configure(context =>
+   {
+       context.Services.AddTransient<TestServiceAgent>();
+   })
+   ```
+
+   
 
