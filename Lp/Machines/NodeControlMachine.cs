@@ -36,6 +36,7 @@ public partial class NodeControlMachine : Machine
     private readonly NodeControl nodeControl;
     private readonly Credentials credentials;
     private int count = 0;
+    private long resetLifelineMics;
 
     [StateMethod(0)]
     protected async Task<StateResult> ConsumeLifelineNode(StateParameter parameter)
@@ -77,6 +78,8 @@ public partial class NodeControlMachine : Machine
             return StateResult.Terminate;
         }
 
+        MicsHelper.CheckInteval(ref this.resetLifelineMics, NodeControl.LifelineCheckIntervalMics);
+
         this.ChangeState(State.MaintainNode, true);
         return StateResult.Continue;
     }
@@ -87,6 +90,11 @@ public partial class NodeControlMachine : Machine
         if (!this.netControl.NetTerminal.IsActive)
         {// Not active
             return StateResult.Continue;
+        }
+
+        if (MicsHelper.CheckInteval(ref this.resetLifelineMics, NodeControl.LifelineCheckIntervalMics))
+        {
+            this.nodeControl.Trim(true, false);
         }
 
         // Own -> Active, Active -> Lifeline, Lifeline offline -> Remove

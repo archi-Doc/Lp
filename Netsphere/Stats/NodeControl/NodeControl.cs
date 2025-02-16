@@ -17,8 +17,8 @@ public sealed partial class NodeControl
     public static readonly int MaxActiveNodes = 256;
     public static readonly int SufficientActiveNodes = 32;
     public static readonly int GetActiveNodesMax = 16;
-    private static readonly long LifelineCheckIntervalMics = Mics.FromMinutes(5); // Mics.FromMinutes(5)
-    private static readonly long OnlineValidMics = Mics.FromMinutes(5);
+    public static readonly long LifelineCheckIntervalMics = Mics.FromDays(1);
+    public static readonly long OnlineValidMics = Mics.FromMinutes(5);
 
     public NodeControl(NetBase netBase)
     {
@@ -582,20 +582,16 @@ public sealed partial class NodeControl
 
     private void Prepare()
     {
-        List<LifelineNode>? offlineToUnchecked = default;
+        TemporaryList<LifelineNode> offlineToUnchecked = default;
         foreach (var x in this.lifelineNodes.OfflineLinkChain)
         {// Offline -> Unchecked
-            offlineToUnchecked ??= new();
             offlineToUnchecked.Add(x);
         }
 
-        if (offlineToUnchecked is not null)
+        foreach (var x in offlineToUnchecked)
         {
-            foreach (var x in offlineToUnchecked)
-            {
-                this.lifelineNodes.OfflineLinkChain.Remove(x);
-                this.lifelineNodes.UncheckedListChain.AddFirst(x);
-            }
+            this.lifelineNodes.OfflineLinkChain.Remove(x);
+            this.lifelineNodes.UncheckedListChain.AddFirst(x);
         }
 
         this.ValidateInternal();
@@ -633,7 +629,7 @@ public sealed partial class NodeControl
                     x.Goshujin is { } g)
                 {// Online/Offline -> Unchecked
                     g.UncheckedListChain.AddFirst(x);
-                    g.OfflineLinkChain.Remove(x);
+                    g.OnlineLinkChain.Remove(x);
                     g.OfflineLinkChain.Remove(x);
                 }
             }
