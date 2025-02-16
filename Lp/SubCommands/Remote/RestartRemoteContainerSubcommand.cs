@@ -34,7 +34,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
 
         // Ping container
         this.containerAddress = new(netNode.Address, options.ContainerPort);
-        if (await this.Ping() == false)
+        if (options.IsValidContainerPort && await this.Ping() == false)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPingFromContainer);
         }
@@ -76,17 +76,19 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
         this.logger.TryGet()?.Log($"Waiting...");
         await Task.Delay(TimeSpan.FromSeconds(WaitIntervalInSeconds));
 
-        // Ping container
-        var sec = PingIntervalInSeconds;
-        for (var i = 0; i < PingRetries; i++)
-        {
-            if (await this.Ping())
+        if (options.IsValidContainerPort)
+        {// Ping container
+            var sec = PingIntervalInSeconds;
+            for (var i = 0; i < PingRetries; i++)
             {
-                return;
-            }
+                if (await this.Ping())
+                {
+                    return;
+                }
 
-            await Task.Delay(TimeSpan.FromSeconds(sec));
-            sec *= 2;
+                await Task.Delay(TimeSpan.FromSeconds(sec));
+                sec *= 2;
+            }
         }
     }
 
@@ -119,5 +121,7 @@ public record RestartRemoteContainerOptions
     public string RemotePrivault { get; init; } = string.Empty;
 
     [SimpleOption("ContainerPort", Description = "Port number associated with the container")]
-    public ushort ContainerPort { get; init; } = NetConstants.MinPort;
+    public ushort ContainerPort { get; init; } = 0;
+
+    public bool IsValidContainerPort => this.ContainerPort > 0;
 }
