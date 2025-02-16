@@ -107,7 +107,7 @@ public partial class NodeControlMachine : Machine
         }
 
         // Lifeline Online -> Active
-        // this.nodeControl.FromLifelineNodeToActiveNode();
+        this.nodeControl.FromLifelineNodeToActiveNode();
 
         var max = Math.Min(this.nodeControl.CountActive, FixEndpointCount);
         do
