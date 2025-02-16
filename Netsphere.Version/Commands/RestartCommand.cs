@@ -47,7 +47,7 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
 
             // Ping container
             var address = new NetAddress(netNode.Address, options.ContainerPort);
-            if (await this.Ping(address, endpointResolution) == false)
+            if (options.IsValidContainerPort && await this.Ping(address, endpointResolution) == false)
             {// No ping
                 if (address.IsValidIpv4AndIpv6)
                 {
@@ -83,6 +83,12 @@ public class RestartCommand : ISimpleCommandAsync<RestartOptions>
                 {
                     return;
                 }
+            }
+
+            if (!options.IsValidContainerPort)
+            {
+                success++;
+                return;
             }
 
             // Wait

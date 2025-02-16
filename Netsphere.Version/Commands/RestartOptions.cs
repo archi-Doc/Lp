@@ -13,7 +13,9 @@ public record RestartOptions
     public string RemoteSecretKey { get; set; } = string.Empty;
 
     [SimpleOption("ContainerPort", Description = "Port number associated with the container")]
-    public ushort ContainerPort { get; init; } = NetConstants.EphemeralPort;
+    public ushort ContainerPort { get; init; } = 0;
+
+    public bool IsValidContainerPort => this.ContainerPort > 0;
 
     public void Prepare()
     {
