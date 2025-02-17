@@ -2,7 +2,7 @@
 
 namespace GeneratorOption;
 
-[Netsphere.NetsphereGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
+[NetsphereGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
 [TinyhandGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
 internal class GeneratorOption
 {
