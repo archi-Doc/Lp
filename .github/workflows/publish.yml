@@ -18,10 +18,6 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal
 
-    - name: Package1
-      run: dotnet pack -c Release -o bin Netsphere/Netsphere.csproj
-    - name: Package2
-      run: dotnet pack -c Release -o bin Netsphere.Shared/Netsphere.Shared.csproj
     - name: Package3
       run: dotnet pack -c Release -o bin Lp/Lp.csproj
       
