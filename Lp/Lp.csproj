@@ -33,24 +33,17 @@
 
   <ItemGroup>
     <Compile Remove="Generated\*" />
-    <Compile Remove="NetServices\NetNode\**" />
-    <EmbeddedResource Remove="NetServices\NetNode\**" />
-    <None Remove="NetServices\NetNode\**" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Arc.Threading" Version="0.30.2" />
     <PackageReference Include="CrystalData" Version="0.27.0" />
+    <PackageReference Include="Netsphere" Version="0.18.1" />
+    <PackageReference Include="Netsphere.Shared" Version="0.18.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
-    <ProjectReference Include="..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
-    <ProjectReference Include="..\Netsphere.Shared\Netsphere.Shared.csproj" />
   </ItemGroup>
 
 </Project>
