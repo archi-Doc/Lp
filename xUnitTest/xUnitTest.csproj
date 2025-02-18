@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="Netsphere" Version="0.18.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -21,8 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lp\Lp.csproj" />
-    <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
-    <ProjectReference Include="..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup>

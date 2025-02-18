@@ -21,7 +21,6 @@ using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
-using Netsphere.Interfaces;
 using Netsphere.Relay;
 using SimpleCommandLine;
 
