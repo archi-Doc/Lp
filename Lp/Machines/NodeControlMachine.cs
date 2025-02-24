@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using System.Runtime.CompilerServices;
 using Arc.Collections;
 using Lp.Logging;
 using Lp.T3cs;
@@ -275,10 +276,37 @@ public partial class NodeControlMachine : Machine
         }
     }
 
+    private bool EitherEquals(NetNode netNode, NetNode? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (netNode.Address.IsValidIpv4 && other.Address.IsValidIpv4)
+        {
+            if (netNode.Address.Address4 == other.Address.Address4)
+            {
+                return true;
+            }
+        }
+
+        if (netNode.Address.IsValidIpv6 && other.Address.IsValidIpv6)
+        {
+            if (netNode.Address.Address6A == other.Address.Address6A &&
+                netNode.Address.Address6B == other.Address.Address6B)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private async Task PingAndIntegrateActiveNode(NetNode netNode)
     {
-        if (netNode.Equals(this.netStats.OwnNetNode))
-        {
+        if (this.EitherEquals(netNode, this.netStats.OwnNetNode))
+        {//
             return;
         }
 
