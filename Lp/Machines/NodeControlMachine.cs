@@ -231,7 +231,7 @@ public partial class NodeControlMachine : Machine
         var ownNetNode = this.netStats.OwnNetNode;
         var ipv6Supported = ownNetNode?.Address.IsValidIpv6 == true;
         var ipv4Supported = ownNetNode?.Address.IsValidIpv4 == true;
-        if (netNode.Equals(this.netStats.OwnNetNode))
+        if (this.EitherEquals(netNode, ownNetNode))
         {
             return true;
         }
@@ -306,7 +306,7 @@ public partial class NodeControlMachine : Machine
     private async Task PingAndIntegrateActiveNode(NetNode netNode)
     {
         if (this.EitherEquals(netNode, this.netStats.OwnNetNode))
-        {//
+        {
             return;
         }
 
