@@ -124,30 +124,14 @@ public class Control
             this.SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/Log.txt";
-                if (context.TryGetOptions<LpOptions>(out var lpOptions))
-                {
-                    options.Path = Path.Combine(lpOptions.DataDirectory, logfile);
-                }
-                else
-                {
-                    options.Path = Path.Combine(context.DataDirectory, logfile);
-                }
-
+                options.Path = Path.Combine(context.DataDirectory, logfile);
                 options.MaxLogCapacity = 20;
             });
 
             this.SetupOptions<Lp.Logging.NetsphereLoggerOptions>((context, options) =>
             {// NetsphereLoggerOptions, LogLowLevelNet
                 var logfile = "Logs/Net.txt";
-                if (context.TryGetOptions<LpOptions>(out var lpOptions))
-                {
-                    options.Path = Path.Combine(lpOptions.DataDirectory, logfile);
-                }
-                else
-                {
-                    options.Path = Path.Combine(context.DataDirectory, logfile);
-                }
-
+                options.Path = Path.Combine(context.DataDirectory, logfile);
                 options.MaxLogCapacity = 100;
                 options.Formatter.TimestampFormat = "mm:ss.ffffff K";
                 options.ClearLogsAtStartup = true;
@@ -169,7 +153,7 @@ public class Control
             this.SetupOptions<LpBase>((context, lpBase) =>
             {// LpBase
                 context.GetOptions<LpOptions>(out var options);
-                lpBase.Initialize(options, true, "merger");
+                lpBase.Initialize(context.DataDirectory, options, true, "merger");
             });
 
             this.SetupOptions<NetBase>((context, netBase) =>
@@ -184,12 +168,10 @@ public class Control
 
             this.SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
-                context.GetOptions<LpOptions>(out var lpOptions);
-                // options.RootPath = lpOptions.RootDirectory;
                 options.DefaultSaveFormat = SaveFormat.Utf8;
                 options.DefaultSavePolicy = SavePolicy.Periodic;
                 options.DefaultSaveInterval = TimeSpan.FromMinutes(10);
-                options.GlobalDirectory = new LocalDirectoryConfiguration(LpBase.DataDirectoryName);
+                options.GlobalDirectory = new LocalDirectoryConfiguration(context.DataDirectory);
                 options.EnableFilerLogger = false;
             });
 
@@ -301,6 +283,20 @@ public class Control
 
             // 2nd: Arguments
             SimpleParser.TryParseOptions<LpOptions>(args, out options, options);
+
+            // Set data directory
+            var dataDirectory = options?.DataDirectory;
+            if (string.IsNullOrEmpty(dataDirectory))
+            {
+                dataDirectory = "Local";
+            }
+
+            if (!Path.IsPathRooted(dataDirectory))
+            {
+                dataDirectory = Path.Combine(Directory.GetCurrentDirectory(), dataDirectory);
+            }
+
+            context.DataDirectory = dataDirectory;
 
             if (options is not null)
             {

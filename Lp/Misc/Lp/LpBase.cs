@@ -9,8 +9,6 @@ namespace Lp;
 
 public class LpBase
 {
-    public const string DataDirectoryName = "Local";
-
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
@@ -101,7 +99,7 @@ public class LpBase
         return false;
     }
 
-    public void Initialize(LpOptions options, bool isConsole, string defaultMode)
+    public void Initialize(string dataDirectory, LpOptions options, bool isConsole, string defaultMode)
     {
         this.Options = options;
         this.IsConsole = isConsole;
@@ -118,18 +116,9 @@ public class LpBase
 
         Directory.CreateDirectory(this.RootDirectory);*/
 
-        this.DataDirectory = this.Options.DataDirectory;
-        if (string.IsNullOrEmpty(this.DataDirectory))
-        {
-            this.DataDirectory = DataDirectoryName;
-        }
-
-        if (!Path.IsPathRooted(this.DataDirectory))
-        {
-            this.DataDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.DataDirectory);
-        }
-
+        this.DataDirectory = dataDirectory;
         this.IsFirstRun = !Directory.Exists(this.DataDirectory);
+        Directory.CreateDirectory(this.DataDirectory);
 
         this.NodeName = this.Options.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))
