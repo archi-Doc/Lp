@@ -61,11 +61,11 @@ public partial class VaultControl
             }
 
             // Could not load Vault
-            var reply = await this.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
+            /*var reply = await this.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
-            }
+            }*/
         }
 
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
