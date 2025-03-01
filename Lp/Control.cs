@@ -126,11 +126,11 @@ public class Control
                 var logfile = "Logs/Log.txt";
                 if (context.TryGetOptions<LpOptions>(out var lpOptions))
                 {
-                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
+                    options.Path = Path.Combine(lpOptions.DataDirectory, logfile);
                 }
                 else
                 {
-                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                    options.Path = Path.Combine(context.DataDirectory, logfile);
                 }
 
                 options.MaxLogCapacity = 20;
@@ -141,11 +141,11 @@ public class Control
                 var logfile = "Logs/Net.txt";
                 if (context.TryGetOptions<LpOptions>(out var lpOptions))
                 {
-                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
+                    options.Path = Path.Combine(lpOptions.DataDirectory, logfile);
                 }
                 else
                 {
-                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                    options.Path = Path.Combine(context.DataDirectory, logfile);
                 }
 
                 options.MaxLogCapacity = 100;

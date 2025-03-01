@@ -107,13 +107,13 @@ public class LpBase
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.Options.RootDirectory))
+        if (Path.IsPathRooted(this.Options.DataDirectory))
         {// File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory)
-            this.RootDirectory = this.Options.RootDirectory;
+            this.RootDirectory = this.Options.DataDirectory;
         }
         else
         {
-            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.Options.RootDirectory);
+            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.Options.DataDirectory);
         }
 
         Directory.CreateDirectory(this.RootDirectory);

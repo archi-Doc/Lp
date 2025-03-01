@@ -15,16 +15,13 @@ public partial record LpOptions
     [SimpleOption("VaultPass", Description = "Passphrase for vault", GetEnvironmentVariable = true)]
     public string? VaultPass { get; set; } = null;
 
-    [SimpleOption("Port", Description = "Port number associated with the address")]
+    [SimpleOption("Port", Description = "Port number associated with the address", GetEnvironmentVariable = true)]
     public int Port { get; set; }
 
     [SimpleOption("Test", Description = "Enable test features")]
     public bool TestFeatures { get; set; } = false;
 
-    [SimpleOption("RootDir", Description = "Root directory")]
-    public string RootDirectory { get; init; } = string.Empty;
-
-    [SimpleOption("DataDir", Description = "Data directory")]
+    [SimpleOption("DataDirectory", Description = "Data directory", GetEnvironmentVariable = true)]
     public string DataDirectory { get; init; } = string.Empty;
 
     [SimpleOption("VaultPath", Description = "Vault path")]
