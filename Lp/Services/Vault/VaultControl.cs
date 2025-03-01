@@ -17,7 +17,7 @@ public partial class VaultControl
         }
         else
         {
-            this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
+            this.path = PathHelper.GetRootedFile(this.lpBase.DataDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
         }
 
         this.Root = new(this);

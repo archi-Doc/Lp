@@ -26,7 +26,7 @@ public class LpBase
 
     public bool IsConsole { get; private set; }
 
-    public string RootDirectory { get; private set; } = default!;
+    // public string RootDirectory { get; private set; } = default!;
 
     public string DataDirectory { get; private set; } = default!;
 
@@ -107,8 +107,8 @@ public class LpBase
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.Options.DataDirectory))
-        {// File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory)
+        /*if (Path.IsPathRooted(this.Options.DataDirectory))
+        {
             this.RootDirectory = this.Options.DataDirectory;
         }
         else
@@ -116,8 +116,19 @@ public class LpBase
             this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.Options.DataDirectory);
         }
 
-        Directory.CreateDirectory(this.RootDirectory);
-        this.DataDirectory = Path.Combine(this.RootDirectory, DataDirectoryName);
+        Directory.CreateDirectory(this.RootDirectory);*/
+
+        this.DataDirectory = this.Options.DataDirectory;
+        if (string.IsNullOrEmpty(this.DataDirectory))
+        {
+            this.DataDirectory = DataDirectoryName;
+        }
+
+        if (!Path.IsPathRooted(this.DataDirectory))
+        {
+            this.DataDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.DataDirectory);
+        }
+
         this.IsFirstRun = !Directory.Exists(this.DataDirectory);
 
         this.NodeName = this.Options.NodeName;
@@ -152,7 +163,7 @@ public class LpBase
 
     public void LogInformation(ILogWriter logger)
     {
-        logger.Log($"Root directory: {this.RootDirectory}");
+       // logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");
         logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
 
