@@ -17,7 +17,7 @@ public partial class VaultControl
         }
         else
         {
-            this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
+            this.path = PathHelper.GetRootedFile(this.lpBase.DataDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
         }
 
         this.Root = new(this);
@@ -61,11 +61,11 @@ public partial class VaultControl
             }
 
             // Could not load Vault
-            var reply = await this.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
+            /*var reply = await this.userInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
-            }
+            }*/
         }
 
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));

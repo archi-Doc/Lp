@@ -9,8 +9,6 @@ namespace Lp;
 
 public class LpBase
 {
-    public const string DataDirectoryName = "Local";
-
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
@@ -26,7 +24,7 @@ public class LpBase
 
     public bool IsConsole { get; private set; }
 
-    public string RootDirectory { get; private set; } = default!;
+    // public string RootDirectory { get; private set; } = default!;
 
     public string DataDirectory { get; private set; } = default!;
 
@@ -101,24 +99,26 @@ public class LpBase
         return false;
     }
 
-    public void Initialize(LpOptions options, bool isConsole, string defaultMode)
+    public void Initialize(string dataDirectory, LpOptions options, bool isConsole, string defaultMode)
     {
         this.Options = options;
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.Options.RootDirectory))
-        {// File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory)
-            this.RootDirectory = this.Options.RootDirectory;
+        /*if (Path.IsPathRooted(this.Options.DataDirectory))
+        {
+            this.RootDirectory = this.Options.DataDirectory;
         }
         else
         {
-            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.Options.RootDirectory);
+            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.Options.DataDirectory);
         }
 
-        Directory.CreateDirectory(this.RootDirectory);
-        this.DataDirectory = Path.Combine(this.RootDirectory, DataDirectoryName);
+        Directory.CreateDirectory(this.RootDirectory);*/
+
+        this.DataDirectory = dataDirectory;
         this.IsFirstRun = !Directory.Exists(this.DataDirectory);
+        Directory.CreateDirectory(this.DataDirectory);
 
         this.NodeName = this.Options.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))
@@ -152,7 +152,7 @@ public class LpBase
 
     public void LogInformation(ILogWriter logger)
     {
-        logger.Log($"Root directory: {this.RootDirectory}");
+       // logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");
         logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
 

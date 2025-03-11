@@ -12,19 +12,16 @@ public partial record LpOptions
     [SimpleOption("LoadOptions", Description = "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
-    [SimpleOption("VaultPass", Description = "Passphrase for vault", GetEnvironmentVariable = true)]
+    [SimpleOption("VaultPass", Description = "Passphrase for vault", ReadFromEnvironment = true)]
     public string? VaultPass { get; set; } = null;
 
-    [SimpleOption("Port", Description = "Port number associated with the address")]
+    [SimpleOption("Port", Description = "Port number associated with the address", ReadFromEnvironment = true)]
     public int Port { get; set; }
 
     [SimpleOption("Test", Description = "Enable test features")]
     public bool TestFeatures { get; set; } = false;
 
-    [SimpleOption("RootDir", Description = "Root directory")]
-    public string RootDirectory { get; init; } = string.Empty;
-
-    [SimpleOption("DataDir", Description = "Data directory")]
+    [SimpleOption("DataDirectory", Description = "Data directory", ReadFromEnvironment = true)]
     public string DataDirectory { get; init; } = string.Empty;
 
     [SimpleOption("VaultPath", Description = "Vault path")]
@@ -33,10 +30,10 @@ public partial record LpOptions
     // [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
     // public string RemotePublicKeyBase64 { get; init; } = string.Empty;
 
-    [SimpleOption("NodeName", Description = "Node name", GetEnvironmentVariable = true)]
+    [SimpleOption("NodeName", Description = "Node name", ReadFromEnvironment = true)]
     public string NodeName { get; init; } = string.Empty;
 
-    [SimpleOption("NodeList", Description = "Node list", GetEnvironmentVariable = true)]
+    [SimpleOption("NodeList", Description = "Node list", ReadFromEnvironment = true)]
     public string NodeList { get; init; } = string.Empty;
 
     [SimpleOption("Lifespan", Description = "Time in seconds until the application automatically shuts down.")]
@@ -57,28 +54,28 @@ public partial record LpOptions
     [SimpleOption("Alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
-    [SimpleOption(NetConstants.NodeSecretKeyName, Description = "Node secret key", GetEnvironmentVariable = true)]
+    [SimpleOption(NetConstants.NodeSecretKeyName, Description = "Node secret key", ReadFromEnvironment = true)]
     public string NodeSecretKey { get; set; } = string.Empty;
 
-    [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Remote public key", GetEnvironmentVariable = true)]
+    [SimpleOption(NetConstants.RemotePublicKeyName, Description = "Remote public key", ReadFromEnvironment = true)]
     public string RemotePublicKey { get; set; } = string.Empty;
 
-    [SimpleOption("CertificateRelayPublickey", Description = "Public key for CertificateRelayControl", GetEnvironmentVariable = true)]
+    [SimpleOption("CertificateRelayPublickey", Description = "Public key for CertificateRelayControl", ReadFromEnvironment = true)]
     public string CertificateRelayPublicKey { get; set; } = string.Empty;
 
-    [SimpleOption("RelayPeerPrivault", Description = "Private key or vault name for Relay peer", GetEnvironmentVariable = true)]
+    [SimpleOption("RelayPeerPrivault", Description = "Private key or vault name for Relay peer", ReadFromEnvironment = true)]
     public string RelayPeerPrivault { get; set; } = "RelayPeer";
 
-    [SimpleOption("ContentPeerPrivault", Description = "Private key or vault name for Content peer", GetEnvironmentVariable = true)]
+    [SimpleOption("ContentPeerPrivault", Description = "Private key or vault name for Content peer", ReadFromEnvironment = true)]
     public string ContentPeerPrivault { get; set; } = "ContentPeer";
 
-    [SimpleOption("MergerPrivault", Description = "Private key or vault name for Merger", GetEnvironmentVariable = true)]
+    [SimpleOption("MergerPrivault", Description = "Private key or vault name for Merger", ReadFromEnvironment = true)]
     public string MergerPrivault { get; set; } = "Merger";
 
-    [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", GetEnvironmentVariable = true)]
+    [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", ReadFromEnvironment = true)]
     public string RelayMergerPrivault { get; set; } = "RelayMerger";
 
-    [SimpleOption("LinkerPrivault", Description = "Private key or vault name for Linker", GetEnvironmentVariable = true)]
+    [SimpleOption("LinkerPrivault", Description = "Private key or vault name for Linker", ReadFromEnvironment = true)]
     public string LinkerPrivault { get; set; } = "Linker";
 
     public NetOptions ToNetOptions()
