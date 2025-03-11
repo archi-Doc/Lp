@@ -315,8 +315,6 @@ public class Control
 
         public async Task RunAsync(LpOptions options)
         {
-            this.Context.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>().TryGet()?.Log($"5");
-
             try
             {
                 // Crystalizer
