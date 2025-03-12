@@ -28,6 +28,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        Console.WriteLine($"Width: {Console.WindowWidth}");
+
         var microSleep = new Arc.Threading.MicroSleep();
         this.logger.TryGet()?.Log($"MicroSleep: {microSleep.CurrentMode.ToString()}");
 
