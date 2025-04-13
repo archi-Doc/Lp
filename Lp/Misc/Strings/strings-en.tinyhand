@@ -1,128 +1,109 @@
 // identifier = "string" /* null: Use the default value. */
 
-Dialog = {
-    ConfirmExit = "Are you sure you want to exit?"
-    ConfirmOverwrite = "Are you sure you want to overwrite '{0}' ?"
+Dialog=
+  ConfirmExit = "Are you sure you want to exit?"
+  ConfirmOverwrite = "Are you sure you want to overwrite '{0}' ?"
 
-    Password = {
-        Enter = "Enter password"
-        EnterCurrent = "Enter the current password"
-        EnterNew = "Enter the new password"
-        Confirm = "Confirm password"
-        EmptyWarning = "Empty password should not be used"
-        EmptyConfirm = "Are you sure you want to continue without password?"
-        NotMatch = "Password didn't match, try again"
-        Changed = "Password was successfully changed"
-    }
-}
+  Password=
+    Enter = "Enter password"
+    EnterCurrent = "Enter the current password"
+    EnterNew = "Enter the new password"
+    Confirm = "Confirm password"
+    EmptyWarning = "Empty password should not be used"
+    EmptyConfirm = "Are you sure you want to continue without password?"
+    NotMatch = "Password didn't match, try again"
+    Changed = "Password was successfully changed"
 
-Success = {
-    Output = "Output: {0}"
-    Loaded = "Loaded: {0}"
-    Deserialized = "Deserialized: {0}"
-    NodeAdded = "Node added: {0}"
-}
+Success=
+  Output = "Output: {0}"
+  Loaded = "Loaded: {0}"
+  Deserialized = "Deserialized: {0}"
+  NodeAdded = "Node added: {0}"
 
-Error = {
-    Load = "Could not load '{0}'";
-    Deserialize = "Could not deserialize '{0}'"
-    KeyVault = "Could not deserialize '{0}'"
-    Parse = "Could not parse '{0}'"
-    InvalidAddress = "{0} is not valid address"
-    Connect = "Could not connect to '{0}'"
-    Authorization = "Authorization error"
-    NoPingFromContainer = "Failed to receive a Ping response from the container"
-    InvalidPublicKey = "PublicKey is invalid"
-    InvalidPrivateKey = "PrivateKey is invalid"
-    NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey"
-    NoFixedNode = "Unable to obtain own IP address due to the lack of a network connection or a NodeList"
-    NoDirectConnection = "Direct network connection through the specified port number is required"
-    NoOwnAddress = "Own IP address is not determined"
-    NoOnlineNode = "No online nodes. Please check your internet connection or add a node to connect (add-net-node)"
-}
+Error=
+  Load = "Could not load '{0}'";
+  Deserialize = "Could not deserialize '{0}'"
+  KeyVault = "Could not deserialize '{0}'"
+  Parse = "Could not parse '{0}'"
+  InvalidAddress = "{0} is not valid address"
+  Connect = "Could not connect to '{0}'"
+  Authorization = "Authorization error"
+  NoPingFromContainer = "Failed to receive a Ping response from the container"
+  InvalidPublicKey = "PublicKey is invalid"
+  InvalidPrivateKey = "PrivateKey is invalid"
+  NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey"
+  NoFixedNode = "Unable to obtain own IP address due to the lack of a network connection or a NodeList"
+  NoDirectConnection = "Direct network connection through the specified port number is required"
+  NoOwnAddress = "Own IP address is not determined"
+  NoOnlineNode = "No online nodes. Please check your internet connection or add a node to connect (add-net-node)"
 
-Vault = {
-    AlreadyExists = "{0} already exists"
-    NoVault = "{0} does not exist"
-    AskNew = "Do you want to create new Vault?"
-    Create = "Creating new vault"
-    EnterPassword = "Enter vault password"
-    ChangePassword = "Changing vault password"
-    NoData = "Vault could not get '{0}'"
-    NoRestore = "Vault could not restore data '{0}'"
-    NotFound = "{0} is not found"
-    NotAvailable = "Could not get vault '{0}'"
-    AddSuccess = "{0} is successfully added"
-    RemoveConfirm = "Are you sure you want to remove vault '{0}' ?"
-    Removed = "Vault '{0}' is successfully removed"
-}
+Vault=
+  AlreadyExists = "{0} already exists"
+  NoVault = "{0} does not exist"
+  AskNew = "Do you want to create new Vault?"
+  Create = "Creating new vault"
+  EnterPassword = "Enter vault password"
+  ChangePassword = "Changing vault password"
+  NoData = "Vault could not get '{0}'"
+  NoRestore = "Vault could not restore data '{0}'"
+  NotFound = "{0} is not found"
+  NotAvailable = "Could not get vault '{0}'"
+  AddSuccess = "{0} is successfully added"
+  RemoveConfirm = "Are you sure you want to remove vault '{0}' ?"
+  Removed = "Vault '{0}' is successfully removed"
 
-Authority = {
-    AlreadyExists = "Authority '{0}' already exists"
-    Created = "Authority '{0}' is successfully created"
-    Removed = "Authority '{0}' is successfully removed"
-    NotFound = "Authority '{0}' is not found"
-    NotAvailable = "Could not get authority '{0}'"
-    EnterPassword = "Enter authority '{0}' password"
-    ChangePassword = "Changing authority password"
-    RemoveConfirm = "Are you sure you want to remove authority '{0}' ?"
-    KeyMismatch = "Does not match the specified Key"
-}
+Authority=
+  AlreadyExists = "Authority '{0}' already exists"
+  Created = "Authority '{0}' is successfully created"
+  Removed = "Authority '{0}' is successfully removed"
+  NotFound = "Authority '{0}' is not found"
+  NotAvailable = "Could not get authority '{0}'"
+  EnterPassword = "Enter authority '{0}' password"
+  ChangePassword = "Changing authority password"
+  RemoveConfirm = "Are you sure you want to remove authority '{0}' ?"
+  KeyMismatch = "Does not match the specified Key"
 
-Seedphrase = {
-    Invalid = "Seedphrase '{0}' is invaid"
-}
+Seedphrase=
+  Invalid = "Seedphrase '{0}' is invaid"
 
-CommandGroup = {
-    AlreadyExists = "Command group '{0}' already exists"
-    NotFound = "Command group '{0}' is not found"
-    Created = "Command group '{0}' is successfully created"
-    Removed = "Command group '{0}' is successfully removed"
-    Set = "Command group '{0}' is successfully set"
-}
+CommandGroup=
+  AlreadyExists = "Command group '{0}' already exists"
+  NotFound = "Command group '{0}' is not found"
+  Created = "Command group '{0}' is successfully created"
+  Removed = "Command group '{0}' is successfully removed"
+  Set = "Command group '{0}' is successfully set"
 
-Subcommands = {
-    DevStage = "This feature is in the dev stage"
-    GC = {
-        Start = "GC.Collect"
-    }
+Subcommands=
+  DevStage = "This feature is in the dev stage"
+  GC=
+    Start = "GC.Collect"
 
-    NodeKey = {
-        Changed = "Node key changed: {0}"
-        InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
-    }
-}
+  NodeKey=
+    Changed = "Node key changed: {0}"
+    InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
 
-Storage =
-{
-    CreateLocal = "Creating storage with local filer"
-    CreateS3 = "Creating storage with S3 filer"
-    EnterPath = "Enter storage path"
-    EnterBucket = "Enter S3 bucket name"
-    InvalidFiler = "Filer type '{0}' is invalid"
-    InvalidId = "Storage with specified Id '{0}' is not found"
-    DeleteConfirm = "Are you sure you want to delete the storage"
-    Deleted = "Storage deleted: {0}"
-}
+Storage=
+  CreateLocal = "Creating storage with local filer"
+  CreateS3 = "Creating storage with S3 filer"
+  EnterPath = "Enter storage path"
+  EnterBucket = "Enter S3 bucket name"
+  InvalidFiler = "Filer type '{0}' is invalid"
+  InvalidId = "Storage with specified Id '{0}' is not found"
+  DeleteConfirm = "Are you sure you want to delete the storage"
+  Deleted = "Storage deleted: {0}"
 
-CrystalResult = {
-    NoDirectory = "Directory not found"
-}
+CrystalResult=
+  NoDirectory = "Directory not found"
 
-AddStorageResult = {
-    Success = "Success"
-    Running = ""
-    DuplicateId = "Duplicate id is found"
-    DuplicatePath = "Duplicate path is found"
-    WriteError = "Could not write to the path"
-}
+AddStorageResult=
+  Success = "Success"
+  Running = ""
+  DuplicateId = "Duplicate id is found"
+  DuplicatePath = "Duplicate path is found"
+  WriteError = "Could not write to the path"
 
-Merger =
-{
-    NoPrivateKey = "Merger private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
-}
+Merger=
+  NoPrivateKey = "Merger private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
 
-Linker =
-{
-    NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
-}
+Linker=
+  NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
