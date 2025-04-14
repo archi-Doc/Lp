@@ -18,10 +18,10 @@ public sealed partial class Credit
     public Credit(SignaturePublicKey key, int mergers)
     {
         this.Originator = key;
-        this.mergers = new SignaturePublicKey[mergers];
+        this.Mergers = new SignaturePublicKey[mergers];
         for (var i = 0; i < mergers; i++)
         {
-            this.mergers[i] = key;
+            this.Mergers[i] = key;
         }
 
         this.Standard = key;
@@ -30,9 +30,9 @@ public sealed partial class Credit
     [Key(0)]
     public SignaturePublicKey Originator { get; private set; } = default!;
 
-    [Key(1, AddProperty = "Mergers")]
+    [Key(1)]
     [MaxLength(MaxMergers)]
-    private SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
+    public partial SignaturePublicKey[] Mergers { get; private set; } = [];
 
     [Key(2)]
     public SignaturePublicKey Standard { get; private set; } = default!;

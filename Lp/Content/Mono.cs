@@ -8,7 +8,7 @@ namespace Lp;
 [TinyhandObject]
 public sealed partial class Mono
 {
-    public const string Filename = "Mono.tinyhand";
+    public const string Filename = "Mono";
 
     public Mono()
     {

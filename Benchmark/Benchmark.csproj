@@ -6,6 +6,7 @@
     <LangVersion>default</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <LangVersion>Preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,9 +16,9 @@
   <ItemGroup>
     <PackageReference Include="Arc.Collections" Version="1.22.1" />
     <PackageReference Include="Arc.Crypto" Version="1.39.1" />
-    <PackageReference Include="Netsphere" Version="0.22.1" />
-    <PackageReference Include="Tinyhand" Version="0.97.2" />
-    <PackageReference Include="ValueLink" Version="0.76.0" />
+    <PackageReference Include="Netsphere" Version="0.23.1" />
+    <PackageReference Include="Tinyhand" Version="0.101.0" />
+    <PackageReference Include="ValueLink" Version="0.77.1" />
     
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
