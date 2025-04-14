@@ -17,9 +17,9 @@ public partial interface IMergerClient : INetService
         {
         }
 
-        [Key(0, AddProperty = "MergerName")]
+        [Key(0)]
         [MaxLength(16)]
-        private string mergerName = default!;
+        public partial string MergerName { get; set; } = string.Empty;
     }
 
     NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);

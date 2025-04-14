@@ -60,9 +60,9 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     [Key(5)]
     public long ExpirationMics { get; private set; }
 
-    [Key(6, AddProperty = "Signature", Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     [MaxLength(CryptoSign.SignatureSize)]
-    private byte[] signature = Array.Empty<byte>();
+    public partial byte[] Signature { get; private set; } = [];
 
     public bool Validate()
     {
@@ -88,7 +88,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
         try
         {
             var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
-            return this.Authority.Verify(bytes, this.signature);
+            return this.Authority.Verify(bytes, this.Signature);
         }
         catch
         {

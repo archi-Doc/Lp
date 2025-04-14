@@ -20,7 +20,7 @@ public partial record CreditDataBase
     {
     }
 
-    [Key(0, AddProperty = "Credit", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
+    [Key(0, AddProperty = "", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     protected Credit credit = Credit.Default;
 
     [Key(1, AddProperty = "CreditInformation", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
