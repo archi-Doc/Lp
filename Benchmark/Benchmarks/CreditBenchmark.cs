@@ -32,7 +32,7 @@ public sealed partial class Credit
 
     [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
+    private SignaturePublicKey[] mergers = [];
 
     [Key(2)]
     public SignaturePublicKey Standard { get; private set; } = default!;

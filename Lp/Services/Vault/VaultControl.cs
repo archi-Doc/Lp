@@ -1,10 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
+
 namespace Lp.Services;
 
 public partial class VaultControl
 {
-    public const string Filename = "Vault.tinyhand";
+    public const string Filename = "Vault" + Crystalizer.BinaryExtension;
 
     public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options)
     {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
