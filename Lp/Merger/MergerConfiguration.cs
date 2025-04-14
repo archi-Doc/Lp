@@ -28,9 +28,10 @@ public partial record MergerConfiguration
         return new IMergerClient.InformationResult() with { MergerName = this.MergerName, };
     }
 
+    [Key("MergerName", AddProperty = "MergerName")]
     [DefaultValue(DefaultName)]
     [MaxLength(LpConstants.MaxNameLength)]
-    public partial string MergerName { get; private set; } = string.Empty;
+    private string mergerName = string.Empty;
 
     public Type MergerType { get; set; }
 
