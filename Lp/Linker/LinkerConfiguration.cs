@@ -15,8 +15,8 @@ public partial record LinkerConfiguration
     {
     }
 
-    [Key("LinkerName", AddProperty = "LinkerName")]
+    [KeyAsName]
     [DefaultValue(DefaultName)]
     [MaxLength(LpConstants.MaxNameLength)]
-    private string linkerName = string.Empty;
+    public partia string LinkerName { get; private set; } = string.Empty;
 }
