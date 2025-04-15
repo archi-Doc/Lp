@@ -20,12 +20,12 @@ public partial record CreditDataBase
     {
     }
 
-    [Key(0, AddProperty = "", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    protected Credit credit = Credit.Default;
+    [Key(0)]
+    public Credit Credit { get; init; } = Credit.Default;
 
-    [Key(1, AddProperty = "CreditInformation", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    protected CreditInformation creditInformation = CreditInformation.Default;
+    [Key(1)]
+    protected CreditInformation CreditInformation { get; init; } = CreditInformation.Default;
 
-    [Key(2, AddProperty = "Borrowers", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    protected StorageData<BorrowerData.GoshujinClass> borrowers = new();
+    [Key(2)]
+    protected StorageData<BorrowerData.GoshujinClass> Borrowers { get; init; } = new();
 }*/
