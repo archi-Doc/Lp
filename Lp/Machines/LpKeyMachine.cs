@@ -45,7 +45,7 @@ public partial class LpKeyMachine : Machine
 
         var list = this.lpKeyData.CredentialNodes.ToList();
         list.Add(new(Alternative.NetNode, SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey()));
-        this.lpKeyData.CredentialNodes = list.ToArray();
+        // this.lpKeyData.CredentialNodes = list.ToArray();
 
         // this.userInterfaceService.WriteLine($"Single: ({this.Identifier.ToString()}) - {this.Count++}");
 
