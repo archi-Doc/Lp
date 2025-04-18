@@ -7,9 +7,9 @@ using Netsphere.Crypto;
 namespace Lp.Machines;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record class LpKeyData
+public partial record class LpDogma
 {
-    public const string Filename = "LpKeyData";
+    public const string Filename = "LpDogma";
 
     [KeyAsName]
     public CredentialNode[] CredentialNodes { get; set; } = [];
@@ -19,14 +19,14 @@ public partial record class LpKeyData
 public partial record class CredentialNode([property:KeyAsName(ConvertToString = true)] NetNode Node, [property: KeyAsName(ConvertToString = true)] SignaturePublicKey RemoteKey, [property: KeyAsName(ConvertToString = true)] SignaturePublicKey MergerKey);
 
 [MachineObject(UseServiceProvider = true)]
-public partial class LpKeyMachine : Machine
+public partial class LpDogmaMachine : Machine
 {// Control: context.AddSingleton<Machines.RelayPeerMachine>();
-    public LpKeyMachine(IUserInterfaceService consoleSeuserInterfaceServicevice, ILogger<LpKeyMachine> logger, AuthorityControl authorityControl, LpKeyData lpKeyData)
+    public LpDogmaMachine(IUserInterfaceService consoleSeuserInterfaceServicevice, ILogger<LpDogmaMachine> logger, AuthorityControl authorityControl, LpDogma lpDogma)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
         this.logger = logger;
         this.authorityControl = authorityControl;
-        this.lpKeyData = lpKeyData;
+        this.lpDogma = lpDogma;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(3);
     }
@@ -43,7 +43,7 @@ public partial class LpKeyMachine : Machine
 
         this.userInterfaceService.WriteLine("Lp key confirmed.");
 
-        var list = this.lpKeyData.CredentialNodes.ToList();
+        var list = this.lpDogma.CredentialNodes.ToList();
         list.Add(new(Alternative.NetNode, SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey()));
         // this.lpKeyData.CredentialNodes = list.ToArray();
 
@@ -55,5 +55,5 @@ public partial class LpKeyMachine : Machine
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
     private readonly AuthorityControl authorityControl;
-    private readonly LpKeyData lpKeyData;
+    private readonly LpDogma lpDogma;
 }
