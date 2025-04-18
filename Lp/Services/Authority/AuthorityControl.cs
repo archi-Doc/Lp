@@ -29,26 +29,26 @@ public class AuthorityControl
         this.vaultControl = vaultControl;
     }
 
-    public async Task<SeedKey?> GetLpSeedKey(ILogger logger)
+    public async Task<SeedKey?> GetLpSeedKey(ILogger? logger)
     {
         var authority = await this.GetLpAuthority(logger).ConfigureAwait(false);
         return authority?.GetSeedKey();
     }
 
-    public async Task<Authority?> GetLpAuthority(ILogger logger)
+    public async Task<Authority?> GetLpAuthority(ILogger? logger)
     {
         var name = LpConstants.LpAlias;
         var authority = await this.GetAuthority(name).ConfigureAwait(false);
         if (authority is null)
         {
-            logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, name);
+            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, name);
             return default;
         }
 
         var publicKey = authority.GetSignaturePublicKey();
         if (!publicKey.Equals(LpConstants.LpPublicKey))
         {
-            logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.KeyMismatch);
+            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.KeyMismatch);
             return default;
         }
 

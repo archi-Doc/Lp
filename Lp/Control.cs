@@ -82,6 +82,7 @@ public class Control
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
+                context.AddSingleton<Machines.LpKeyMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
@@ -237,6 +238,12 @@ public class Control
                     {
                         NumberOfFileHistories = 0,
                         FileConfiguration = new GlobalFileConfiguration(Netsphere.Misc.NtpCorrection.Filename),
+                    });
+
+                    context.AddCrystal<Lp.Machines.LpKeyData>(new CrystalConfiguration() with
+                    {
+                        NumberOfFileHistories = 0,
+                        FileConfiguration = new GlobalFileConfiguration(Lp.Machines.LpKeyData.Filename),
                     });
                 }));
         }
@@ -763,6 +770,7 @@ public class Control
         // _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
         _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
+        this.BigMachine.LpKeyMachine.GetOrCreate(); // .RunAsync();
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {
