@@ -1,22 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Logging;
 using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
 namespace Lp.Machines;
-
-[TinyhandObject(ImplicitKeyAsName = true)]
-public partial record class LpDogma
-{
-    public const string Filename = "LpDogma";
-
-    [KeyAsName]
-    public CredentialNode[] CredentialNodes { get; set; } = [];
-}
-
-[TinyhandObject(ImplicitKeyAsName = true)]
-public partial record class CredentialNode([property: KeyAsName(ConvertToString = true)] NetNode Node, [property: KeyAsName(ConvertToString = true)] SignaturePublicKey RemoteKey, [property: KeyAsName(ConvertToString = true)] SignaturePublicKey MergerKey);
 
 [MachineObject(UseServiceProvider = true)]
 public partial class LpDogmaMachine : Machine
@@ -25,6 +14,7 @@ public partial class LpDogmaMachine : Machine
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
         this.logger = logger;
+        this.modestLogger = new(this.logger);
         this.authorityControl = authorityControl;
         this.lpDogma = lpDogma;
 
@@ -40,8 +30,10 @@ public partial class LpDogmaMachine : Machine
         {
             return StateResult.Continue;
         }
-
-        this.userInterfaceService.WriteLine("Lp key confirmed.");
+        else
+        {
+            this.modestLogger.Interval(TimeSpan.FromHours(1), Hashed.Dogma.KeyConfirmed, LogLevel.Information)?.Log(Hashed.Dogma.KeyConfirmed);
+        }
 
         var list = this.lpDogma.CredentialNodes.ToList();
         list.Add(new(Alternative.NetNode, SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey()));
@@ -53,6 +45,7 @@ public partial class LpDogmaMachine : Machine
     }
 
     private readonly IUserInterfaceService userInterfaceService;
+    private readonly ModestLogger modestLogger;
     private readonly ILogger logger;
     private readonly AuthorityControl authorityControl;
     private readonly LpDogma lpDogma;
