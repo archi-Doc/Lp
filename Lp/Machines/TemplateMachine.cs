@@ -22,5 +22,5 @@ public partial class TemplateMachine : Machine
         return StateResult.Continue;
     }
 
-    private IUserInterfaceService userInterfaceService;
+    private readonly IUserInterfaceService userInterfaceService;
 }

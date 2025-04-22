@@ -34,7 +34,7 @@ public static class VerificationHelper
         return result == NetResult.Success;
     }
 
-    public static Identifier GetIdentifier<T>(this T? value, int level)
+    public static Identifier GetIdentifier<T>(this T? value, int level = TinyhandWriter.DefaultSignatureLevel)
         where T : ITinyhandSerializable<T>
     {
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();

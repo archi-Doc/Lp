@@ -3,25 +3,25 @@
 using Netsphere.Crypto;
 using ValueLink;
 
-namespace Lp.Crystal;
+namespace Lp.Content;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record MessageBoard
+public partial record Board
 {
     public const int MaxMessages = 1_000;
 
-    public MessageBoard()
+    public Board()
     {
     }
 
-    [Key(0, AddProperty = "Identifier")]
+    [Key(0)]
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
-    private Identifier identifier;
+    public Identifier identifier { get; private set; }
 
-    [Key(1, AddProperty = "Description")]
-    private Message description = default!;
+    [Key(1)]
+    public Message Description { get; private set; } = default!;
 
-    [Key(2, AddProperty = "Messages", Exclude = true)]
-    private Message.GoshujinClass messages = default!;
+    [Key(2, Exclude = true)]
+    public Message.GoshujinClass Messages { get; private set; } = default!;
 }

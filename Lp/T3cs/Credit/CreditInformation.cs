@@ -18,5 +18,5 @@ public sealed partial class CreditInformation
     public string CreditName { get; private set; } = string.Empty;
 
     [Key(1)]
-    public CreditPolicy CreditPolicy { get; private set; } = CreditPolicy.Default;
+    public CreditColor CreditPolicy { get; private set; } = CreditColor.Default;
 }

@@ -4,7 +4,7 @@ using Lp.T3cs;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
-namespace Lp.Crystal;
+namespace Lp.Content;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
@@ -25,33 +25,33 @@ public partial class Message // : IVerifiable
 
     #region FieldAndProperty
 
-    [Key(0, AddProperty = "Identifier")]
+    [Key(0)]
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
-    private Identifier identifier;
+    public Identifier Identifier { get; private set; }
 
-    [Key(1, AddProperty = "MessageBoardIdentifier")]
-    private Identifier messageBoardIdentifier;
+    [Key(1)]
+    public Identifier MessageBoardIdentifier { get; private set; }
 
-    // [Key(2, AddProperty = "Signature", Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    // private Signature signature = default!;
+    // [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    // public Signature Signature { get; private set; } = default!;
 
-    // [Key(3, AddProperty = "ValueToken", Level = 2)]
-    // private ValueToken valueToken = ValueToken.Default;
+    // [Key(3, Level = 2)]
+    // public ValueToken ValueToken { get; private set; } = ValueToken.Default;
 
-    [Key(4, AddProperty = "Type")]
-    private MessageType type;
+    [Key(4)]
+    public MessageType Type { get; private set; }
 
-    [Key(5, AddProperty = "Name")]
+    [Key(5)]
     [MaxLength(MaxNameLength)]
-    private string name = default!;
+    public partial string Name { get; private set; } = string.Empty;
 
-    [Key(6, AddProperty = "Title")]
+    [Key(6)]
     [MaxLength(MaxTitleLength)]
-    private string title = default!;
+    public partial string Title { get; private set; } = string.Empty;
 
-    [Key(7, AddProperty = "Content")]
+    [Key(7)]
     [MaxLength(MaxContentLength)]
-    private string content = default!;
+    public partial string Content { get; private set; } = string.Empty;
 
     // [Link(Type = ChainType.Ordered, AddValue = false)]
     // public long SignedMics => this.valueToken.Signature.SignedMics;
@@ -91,7 +91,7 @@ public partial class Message // : IVerifiable
 
     public bool Validate()
     {
-        if (this.type == MessageType.Default)
+        if (this.Type == MessageType.Default)
         {
         }
         else

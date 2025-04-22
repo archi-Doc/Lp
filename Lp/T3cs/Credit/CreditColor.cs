@@ -25,14 +25,14 @@ public enum CreditRule
 }
 
 /// <summary>
-/// Represents a credit policy.
+/// Represents a credit color.
 /// </summary>
 [TinyhandObject]
-public sealed partial class CreditPolicy : IValidatable, IEquatable<CreditPolicy>
+public sealed partial record CreditColor
 {
-    public static readonly CreditPolicy Default = new();
+    public static readonly CreditColor Default = new();
 
-    public CreditPolicy()
+    public CreditColor()
     {
     }
 
@@ -60,14 +60,4 @@ public sealed partial class CreditPolicy : IValidatable, IEquatable<CreditPolicy
     public OrderFee OrderFee { get; private set; } = OrderFee.Default;
 
     #endregion
-
-    public bool Equals(CreditPolicy? other)
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool Validate()
-    {
-        throw new NotImplementedException();
-    }
 }
