@@ -12,6 +12,9 @@ public static class BoardHelper
         var creditIdentity = new CreditIdentity()
         {
             SourceIdentifier = default,
+            Originator = originator,
+            Mergers = new[] { merger },
+            Kind = CreditKind.Current,
         };
 
         var identifier = creditIdentity.GetIdentifier();
