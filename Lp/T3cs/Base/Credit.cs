@@ -18,6 +18,22 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public const int MaxMergers = 3; // MaxMergersCode
     public static readonly Credit Default = new();
 
+    #region FieldAndProperty
+
+    [Key(0)]
+    public SignaturePublicKey Originator { get; private set; } = default!;
+
+    [Key(1)]
+    [MaxLength(MaxMergers)]
+    public partial SignaturePublicKey[] Mergers { get; private set; } = [];
+
+    // [Key(2)]
+    // public SignaturePublicKey Standard { get; private set; } = default!;
+
+    public int MergerCount => this.Mergers.Length;
+
+    #endregion
+
     public static bool TryCreate(SignaturePublicKey originator, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
     {
         var obj = new Credit();
@@ -199,22 +215,6 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public Credit()
     {
     }
-
-    #region FieldAndProperty
-
-    [Key(0)]
-    public SignaturePublicKey Originator { get; private set; } = default!;
-
-    [Key(1)]
-    [MaxLength(MaxMergers)]
-    public partial SignaturePublicKey[] Mergers { get; private set; } = [];
-
-    // [Key(2)]
-    // public SignaturePublicKey Standard { get; private set; } = default!;
-
-    public int MergerCount => this.Mergers.Length;
-
-    #endregion
 
     public bool Validate()
     {
