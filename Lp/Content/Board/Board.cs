@@ -3,15 +3,15 @@
 using Netsphere.Crypto;
 using ValueLink;
 
-namespace Lp.Crystal;
+namespace Lp.Content;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record MessageBoard
+public partial record Board
 {
     public const int MaxMessages = 1_000;
 
-    public MessageBoard()
+    public Board()
     {
     }
 

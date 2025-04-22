@@ -4,7 +4,7 @@ using Lp.T3cs;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
-namespace Lp.Crystal;
+namespace Lp.Content;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]

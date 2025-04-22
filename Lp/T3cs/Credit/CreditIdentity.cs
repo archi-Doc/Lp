@@ -10,11 +10,11 @@ namespace Lp.T3cs;
 /// </summary>
 [TinyhandObject]
 public sealed partial record CreditIdentity : IValidatable
-{
+{// [property: Key(4)] string Name
     #region FieldAndProperty
 
     [Key(0)]
-    public Identifier SourceIdentifier { get; private set; }
+    public required Identifier SourceIdentifier { get; init; }
 
     [Key(1)]
     public SignaturePublicKey Originator { get; private set; }
@@ -29,6 +29,11 @@ public sealed partial record CreditIdentity : IValidatable
     public int MergerCount => this.Mergers.Length;
 
     #endregion
+
+    /*[SetsRequiredMembers]
+    public CreditIdentity()
+    {
+    }*/
 
     public bool Validate()
     {
