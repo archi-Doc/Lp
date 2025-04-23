@@ -141,7 +141,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         var mergerPublicKey = SeedKey.New(KeyOrientation.Signature).GetSignaturePublicKey();
-        if (!Credit.TryCreate(param.Proof.PublicKey, [mergerPublicKey,], out var credit))
+        if (!Credit.TryCreate(param.Proof.GetIdentifier(), [mergerPublicKey,], out var credit))//
         {
             return new(T3csResult.UnknownError);
         }

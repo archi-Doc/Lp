@@ -36,7 +36,7 @@ public sealed partial record CreditIdentity : IValidatable
 
     public bool Validate()
     {
-        if (!this.SourceIdentifier.IsDefault())
+        if (!this.SourceIdentifier.IsDefault)
         {
             return false;
         }
