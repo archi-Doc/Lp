@@ -21,7 +21,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     #region FieldAndProperty
 
     [Key(0)]
-    public SignaturePublicKey Originator { get; private set; } = default!;
+    public Identifier Identifier { get; private set; } = default!;
 
     [Key(1)]
     [MaxLength(MaxMergers)]
@@ -34,10 +34,10 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #endregion
 
-    public static bool TryCreate(SignaturePublicKey originator, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
+    public static bool TryCreate(Identifier identifier, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
     {
         var obj = new Credit();
-        obj.Originator = originator;
+        obj.Identifier = identifier;
         obj.Mergers = mergers;
 
         if (obj.Validate())
@@ -67,7 +67,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         var initialLength = span.Length;
         span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var originator, out var originatorRead))
+        if (!Identifier.TryParse(span, out var originator, out var originatorRead))
         {// Originator
             return false;
         }
@@ -90,7 +90,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         if (span.Length == 0)
         {// Single merger
             instance = new Credit();
-            instance.Originator = originator;
+            instance.Identifier = originator;
             instance.Mergers = [merger1,];
             read = initialLength - span.Length;
             return true;
@@ -145,7 +145,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public int GetStringLength()
     {
-        var length = 1 + this.Originator.GetStringLength(); // + 1 + this.Standard.GetStringLength(); // @Originator:Standard/Merger1+Merger2
+        var length = 1 + this.Identifier.GetStringLength(); // + 1 + this.Standard.GetStringLength(); // @Originator:Standard/Merger1+Merger2
         foreach (var x in this.Mergers)
         {
             length += 1 + x.GetStringLength();
@@ -218,11 +218,6 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public bool Validate()
     {
-        if (!this.Originator.Validate())
-        {
-            return false;
-        }
-
         if (this.Mergers == null ||
             this.Mergers.Length == 0 ||
             this.Mergers.Length > MaxMergers)
