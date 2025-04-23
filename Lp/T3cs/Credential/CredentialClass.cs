@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Arc.Collections;
 using Microsoft.VisualBasic;
+using Netsphere.Crypto;
 using ValueLink.Integrality;
 
 namespace Lp.T3cs;
@@ -86,6 +87,12 @@ public sealed partial class CredentialClass
                 this.UpdateGoshujin();
             }
         }
+    }
+
+    public bool TryGet(SignaturePublicKey key, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
+    {
+        credentialEvidence = this.immutableGoshujin.CredentialKeyChain.FindFirst(key);
+        return credentialEvidence is not null;
     }
 
     [MemberNotNull(nameof(goshujin))]

@@ -21,7 +21,7 @@ public sealed partial record CreditIdentity : IValidatable
 
     [Key(2)]
     [MaxLength(Credit.MaxMergers)]
-    public partial SignaturePublicKey[] Mergers { get; init; } = [];
+    public required partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     [Key(3)]
     public required CreditKind Kind { get; init; }

@@ -32,6 +32,18 @@ public sealed partial record CreditColor
 {
     public static readonly CreditColor Default = new();
 
+    public static CreditColor NewBoard()
+    {
+        return new()
+        {
+            Openness = CreditOpenness.Open,
+            Evol = CreditEvol.Unrestricted,
+            Rule = CreditRule.Wild,
+            MaxOwners = 1,
+            CutoffPoint = 0,
+        };
+    }
+
     public CreditColor()
     {
     }
@@ -54,10 +66,10 @@ public sealed partial record CreditColor
     public int CutoffPoint { get; private set; }
 
     [Key(5)]
-    public OwnerFee OwnerFee { get; private set; } = OwnerFee.Default;
+    public OwnerFee? OwnerFee { get; private set; }
 
     [Key(6)]
-    public OrderFee OrderFee { get; private set; } = OrderFee.Default;
+    public OrderFee? OrderFee { get; private set; }
 
     #endregion
 }

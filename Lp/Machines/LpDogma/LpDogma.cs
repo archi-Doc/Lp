@@ -10,7 +10,10 @@ public partial record class LpDogma
     public const string Filename = "LpDogma";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
-    public partial record class CredentialNode([property: KeyAsName(ConvertToString = true)] NetNode Node, [property: KeyAsName(ConvertToString = true)] SignaturePublicKey RemoteKey, [property: KeyAsName(ConvertToString = true)] SignaturePublicKey MergerKey);
+    public partial record class CredentialNode(
+        [property: KeyAsName(ConvertToString = true)] NetNode Node,
+        [property: KeyAsName(ConvertToString = true)] SignaturePublicKey RemoteKey,
+        [property: KeyAsName(ConvertToString = true)] SignaturePublicKey MergerKey);
 
     [KeyAsName]
     public CredentialNode[] CredentialNodes { get; set; } = [];
