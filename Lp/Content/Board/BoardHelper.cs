@@ -7,13 +7,24 @@ namespace Lp.Content;
 
 public static class BoardHelper
 {
-    public static async Task CreateBoard(SignaturePublicKey merger, SignaturePublicKey originator)
+    public static async Task CreateBoard(Credentials credentials, SignaturePublicKey merger, SignaturePublicKey originator)
     {
+        if (!credentials.MergerCredentials.TryGet(merger, out var evidence))
+        {
+            return;
+        }
+
         var creditIdentity = new CreditIdentity()
         {
             SourceIdentifier = default,
+            Originator = originator,
+            Mergers = [merger],
+            Kind = CreditKind.Board,
         };
 
         var identifier = creditIdentity.GetIdentifier();
+
+        var creditColor = CreditColor.NewBoard();
+
     }
 }

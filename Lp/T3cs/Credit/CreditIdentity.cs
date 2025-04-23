@@ -10,30 +10,29 @@ namespace Lp.T3cs;
 /// </summary>
 [TinyhandObject]
 public sealed partial record CreditIdentity : IValidatable
-{// [property: Key(4)] string Name
+{
     #region FieldAndProperty
 
     [Key(0)]
     public required Identifier SourceIdentifier { get; init; }
 
     [Key(1)]
-    public SignaturePublicKey Originator { get; private set; }
+    public required SignaturePublicKey Originator { get; init; }
 
     [Key(2)]
     [MaxLength(Credit.MaxMergers)]
-    public partial SignaturePublicKey[] Mergers { get; private set; } = [];
+    public required partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     [Key(3)]
-    public CreditKind Kind { get; private set; }
+    public required CreditKind Kind { get; init; }
 
     public int MergerCount => this.Mergers.Length;
 
     #endregion
 
-    /*[SetsRequiredMembers]
     public CreditIdentity()
     {
-    }*/
+    }
 
     public bool Validate()
     {
