@@ -3,15 +3,17 @@
 using Lp.T3cs;
 using Netsphere.Crypto;
 
-namespace Lp.Content;
+namespace Lp.Services;
 
-public static class BoardHelper
+public class LpBoardService(Credentials credentials)
 {
-    public static async Task CreateBoard(Credentials credentials, SignaturePublicKey merger, SignaturePublicKey originator)
+    private readonly Credentials credentials = credentials;
+
+    public async Task CreateBoard(SignaturePublicKey merger, SignaturePublicKey originator)
     {
-        if (!credentials.MergerCredentials.TryGet(merger, out var evidence))
+        if (!this.credentials.MergerCredentials.TryGet(merger, out var evidence))
         {
-            return;
+            // return;
         }
 
         var creditIdentity = new CreditIdentity()
@@ -25,6 +27,5 @@ public static class BoardHelper
         var identifier = creditIdentity.GetIdentifier();
 
         var creditColor = CreditColor.NewBoard();
-
     }
 }
