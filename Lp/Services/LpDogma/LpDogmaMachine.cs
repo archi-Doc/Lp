@@ -57,7 +57,8 @@ public partial class LpDogmaMachine : Machine
                 continue;
             }
 
-            using (var connection = await this.netTerminal.Connect(x.NetNode))
+            //x.NetNode
+            using (var connection = await this.netTerminal.Connect(Alternative.NetNode))
             {
                 if (connection is null)
                 {
