@@ -69,7 +69,7 @@ public class Control
                 context.AddTransient<Lp.T3cs.MergerClientAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<MergerRemoteAgent>();
+                context.AddTransient<LpDogmaAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -83,7 +83,7 @@ public class Control
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
-                context.AddSingleton<Machines.LpDogmaMachine>();
+                context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
@@ -241,10 +241,10 @@ public class Control
                         FileConfiguration = new GlobalFileConfiguration(Netsphere.Misc.NtpCorrection.Filename),
                     });
 
-                    context.AddCrystal<Lp.Machines.LpDogma>(new CrystalConfiguration() with
+                    context.AddCrystal<Lp.Services.LpDogma>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration(Lp.Machines.LpDogma.Filename),
+                        FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
                 }));
         }
@@ -534,7 +534,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
-            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -552,7 +552,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
-            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
     }
 

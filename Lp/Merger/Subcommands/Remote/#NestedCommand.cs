@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
@@ -72,7 +73,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 async connection =>
                 {
                     var token = AuthenticationToken.CreateAndSign(seedKey, connection);
-                    var r = await connection.GetService<IMergerRemote>().Authenticate(token);
+                    var r = await connection.GetService<LpDogmaNetService>().Authenticate(token);
                     if (r.Result == NetResult.Success)
                     {
                         connection.Agreement.AcceptAll(r.Agreement);

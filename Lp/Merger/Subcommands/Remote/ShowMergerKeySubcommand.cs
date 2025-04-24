@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using SimpleCommandLine;
 
@@ -22,7 +23,7 @@ public class ShowMergerKeySubcommand : ISimpleCommandAsync
             return;
         }
 
-        var service = connection.GetService<IMergerRemote>();
+        var service = connection.GetService<LpDogmaNetService>();
         var r = await service.GetMergerKey();
 
         this.logger.TryGet()?.Log($"{r.ToString()}");
