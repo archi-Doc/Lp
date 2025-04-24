@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand;
+
 namespace Lp;
 
 public static class StringHelper
