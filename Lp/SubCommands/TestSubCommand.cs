@@ -105,8 +105,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
                 this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
 
                 var valueProof = ValueProof.Create(value);
-
                 owner.TrySign(valueProof, 123);
+                Console.WriteLine(valueProof.ToString());
             }
         }
     }
