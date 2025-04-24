@@ -34,11 +34,11 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #endregion
 
-    public static bool TryCreate(Identifier identifier, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
+    public static bool TryCreate(CreditIdentity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
     {
         var obj = new Credit();
-        obj.Identifier = identifier;
-        obj.Mergers = mergers;
+        obj.Identifier = creditIdentity.GetIdentifier();
+        obj.Mergers = creditIdentity.Mergers;
 
         if (obj.Validate())
         {

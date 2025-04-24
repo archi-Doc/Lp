@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Amazon.Runtime;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -141,7 +142,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         var mergerPublicKey = SeedKey.New(KeyOrientation.Signature).GetSignaturePublicKey();
-        if (!Credit.TryCreate(param.Proof.GetIdentifier(), [mergerPublicKey,], out var credit))//
+        var creditIdentity = new CreditIdentity(CreditKind.Full, param.Proof.PublicKey, [mergerPublicKey]);
+        if (!Credit.TryCreate(creditIdentity, out var credit))
         {
             return new(T3csResult.UnknownError);
         }

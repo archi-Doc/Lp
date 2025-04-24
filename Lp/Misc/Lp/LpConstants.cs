@@ -19,14 +19,8 @@ public static class LpConstants
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
         Alias.Add(LpPublicKey, LpAlias);
-        LpIdentity = new()
-        {
-            SourceIdentifier = default,
-            Originator = LpPublicKey,
-            Mergers = [LpPublicKey],
-            Kind = CreditKind.Full,
-        };
-        Credit.TryCreate(LpIdentity.GetIdentifier(), [LpPublicKey], out LpCredit!);
+        LpIdentity = new(CreditKind.Full, LpPublicKey, [LpPublicKey]);
+        Credit.TryCreate(LpIdentity, out LpCredit!);
     }
 
     public static void Initialize()

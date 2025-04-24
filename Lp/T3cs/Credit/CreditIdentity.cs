@@ -30,8 +30,13 @@ public sealed partial record CreditIdentity : IValidatable
 
     #endregion
 
-    public CreditIdentity()
+    [SetsRequiredMembers]
+    public CreditIdentity(CreditKind creditKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
     {
+        this.SourceIdentifier = default;
+        this.Originator = originator;
+        this.Mergers = mergers;
+        this.Kind = creditKind;
     }
 
     public bool Validate()
