@@ -69,7 +69,7 @@ public partial class LpDogmaMachine : Machine
 
                 var service = connection.GetService<LpDogmaNetService>();
                 var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
-                var r = await service.Authenticate(auth);
+                var r = await service.Authenticate(auth).ResponseAsync;
 
                 var mergerKey = await service.GetMergerKey(); // x.MergerKey
                 var token = CertificateToken<Value>.CreateAndSign(new Value(mergerKey, 1, LpConstants.LpCredit), seedKey, connection);

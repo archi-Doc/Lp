@@ -30,8 +30,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        Console.WriteLine("1");
         Console.WriteLine(LpConstants.LpCredit.ToString());
-        Console.WriteLine(LpConstants.LpPublicKey.ToString());
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");
