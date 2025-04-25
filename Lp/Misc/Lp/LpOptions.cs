@@ -69,8 +69,8 @@ public partial record LpOptions
     [SimpleOption("ContentPeerPrivault", Description = "Private key or vault name for Content peer", ReadFromEnvironment = true)]
     public string ContentPeerPrivault { get; set; } = "ContentPeer";
 
-    [SimpleOption("MergerPrivault", Description = "Private key or vault name for Merger", ReadFromEnvironment = true)]
-    public string MergerPrivault { get; set; } = "Merger";
+    [SimpleOption("MergerCode", Description = "Private key or authority/vault name for Merger", ReadFromEnvironment = true)]
+    public string MergerCode { get; set; } = "Merger";
 
     [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", ReadFromEnvironment = true)]
     public string RelayMergerPrivault { get; set; } = "RelayMerger";

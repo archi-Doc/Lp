@@ -352,7 +352,7 @@ public class Control
                 LpConstants.Initialize();
 
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+                control.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
                 await control.PrepareMerger(this.Context);
@@ -407,9 +407,10 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker)
+    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
-        this.Logger = logger;
+        this.UnitLogger = unitLogger;
+        this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -421,6 +422,7 @@ public class Control
         this.Merger = merger;
         this.RelayMerger = relayMerger;
         this.Linker = linker;
+        this.lpService = lpService;
 
         if (this.LpBase.Options.TestFeatures)
         {
@@ -445,7 +447,7 @@ public class Control
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
-    public UnitLogger Logger { get; }
+    public UnitLogger UnitLogger { get; }
 
     public UnitCore Core { get; }
 
@@ -469,7 +471,9 @@ public class Control
 
     public AuthorityControl AuthorityControl { get; }
 
-    private SimpleParser subcommandParser;
+    private readonly ILogger logger;
+    private readonly SimpleParser subcommandParser;
+    private readonly LpService lpService;
 
     public async Task PreparePeer(UnitContext context)
     {
@@ -511,7 +515,7 @@ public class Control
             if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
-                this.Logger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
+                this.UnitLogger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
             }
         }
     }
@@ -519,22 +523,21 @@ public class Control
     public async Task PrepareMerger(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-        if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
+
+        var code = this.LpBase.Options.MergerCode;
+        if (!string.IsNullOrEmpty(code))
         {// MergerPrivault is valid
-            var privault = this.LpBase.Options.MergerPrivault;
-            if (!SeedKey.TryParse(privault, out var seedKey))
-            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
-                {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    seedKey = SeedKey.New(KeyOrientation.Signature);
-                    this.VaultControl.Root.AddObject(privault, seedKey);
-                }
+            var seedKey = await this.lpService.GetSeedKey(this.logger, code);
+            if (seedKey is null)
+            {
+                seedKey = SeedKey.New(KeyOrientation.Signature);
+                this.VaultControl.Root.AddObject(code, seedKey);
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
             this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            this.logger.TryGet(LogLevel.Error)?.Log("Merger online");
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -609,7 +612,7 @@ public class Control
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
+        var logger = this.UnitLogger.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
         logger.Log("Press Enter key to switch to console mode.");
@@ -805,7 +808,7 @@ public class Control
 
     private async Task TerminateAsync(UnitContext context)
     {
-        this.Logger.Get<DefaultLog>().Log("Termination process initiated");
+        this.UnitLogger.Get<DefaultLog>().Log("Termination process initiated");
 
         try
         {
@@ -821,7 +824,7 @@ public class Control
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        this.Logger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+        this.UnitLogger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
+        this.UnitLogger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
     }
 }
