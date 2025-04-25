@@ -86,6 +86,8 @@ public class Control
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
+                context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
@@ -111,7 +113,6 @@ public class Control
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
-                Lp.Subcommands.InfoSubcommand.Configure(context);
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
@@ -526,7 +527,7 @@ public class Control
 
         var code = this.LpBase.Options.MergerCode;//
         if (!string.IsNullOrEmpty(code))
-        {// MergerPrivault is valid
+        {// Enable merger
             var seedKey = await this.lpService.GetSeedKey(this.logger, code);
             if (seedKey is null)
             {
