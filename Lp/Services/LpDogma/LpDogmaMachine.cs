@@ -87,7 +87,7 @@ public partial class LpDogmaMachine : Machine
                     continue;
                 }
 
-                this.credentials.MergerCredentials.Add(evidence);
+                // this.credentials.MergerCredentials.Add(evidence);
             }
         }
 
