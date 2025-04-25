@@ -58,11 +58,12 @@ public partial class LpDogmaMachine : Machine
                 continue;
             }
 
-            using (var connection = await this.netTerminal.Connect(x.NetNode))
+            var netNode = x.NetNode; // Alternative.NetNode;
+            using (var connection = await this.netTerminal.Connect(netNode))
             {
                 if (connection is null)
                 {
-                    this.userInterfaceService.WriteLine($"Could not connect to {x.NetNode.ToString()}");
+                    this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
                     continue;
                 }
 
@@ -70,13 +71,12 @@ public partial class LpDogmaMachine : Machine
                 var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
                 var r = await service.Authenticate(auth);
 
-                var mk = await service.GetMergerKey();
-                var publicKey = x.MergerKey;
-                var token = CertificateToken<Value>.CreateAndSign(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
+                var mergerKey = await service.GetMergerKey(); // x.MergerKey
+                var token = CertificateToken<Value>.CreateAndSign(new Value(mergerKey, 1, LpConstants.LpCredit), seedKey, connection);
                 var credentialProof = await service.NewCredentialProof(token);
                 if (credentialProof is null ||
                     !credentialProof.ValidateAndVerify() ||
-                    !credentialProof.GetSignatureKey().Equals(publicKey))
+                    !credentialProof.GetSignatureKey().Equals(mergerKey))
                 {
                     continue;
                 }
