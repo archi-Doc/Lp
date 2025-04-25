@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Security.Cryptography.X509Certificates;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -57,8 +58,7 @@ public partial class LpDogmaMachine : Machine
                 continue;
             }
 
-            //x.NetNode
-            using (var connection = await this.netTerminal.Connect(Alternative.NetNode))
+            using (var connection = await this.netTerminal.Connect(x.NetNode))
             {
                 if (connection is null)
                 {
@@ -67,10 +67,26 @@ public partial class LpDogmaMachine : Machine
                 }
 
                 var service = connection.GetService<LpDogmaNetService>();
-                var mk = await service.GetMergerKey();
-                var token = AuthenticationToken.CreateAndSign(seedKey, connection);
-                var r = await service.Authenticate(token);
-                mk = await service.GetMergerKey();
+                var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
+                var r = await service.Authenticate(auth);
+
+                var publicKey = x.MergerKey;
+                var token = CertificateToken<Value>.CreateAndSign(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
+                var credentialProof = await service.NewCredentialProof(token);
+                if (credentialProof is null ||
+                    !credentialProof.ValidateAndVerify() ||
+                    !credentialProof.GetSignatureKey().Equals(publicKey))
+                {
+                    continue;
+                }
+
+                CredentialEvidence.TryCreate(credentialProof, seedKey, out var evidence);
+                if (evidence?.ValidateAndVerify() != true)
+                {
+                    continue;
+                }
+
+                this.credentials.MergerCredentials.Add(evidence);
             }
         }
 

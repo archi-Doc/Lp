@@ -22,10 +22,10 @@ internal class LpDogmaAgent : LpDogmaNetService
 
     async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> LpDogmaNetService.Authenticate(AuthenticationToken token)
     {
-        if (!this.merger.State.IsActive)
+        /*if (!this.merger.State.IsActive)
         {
             return (NetResult.NoNetService, default);
-        }
+        }*/
 
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token.PublicKey.Equals(LpConstants.LpPublicKey) &&
