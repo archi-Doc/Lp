@@ -14,6 +14,8 @@ internal class LpDogmaAgent : LpDogmaNetService
 
     private bool IsActiveAndAuthenticated => this.merger.State.IsActive && this.authenticated;
 
+    private bool IsAuthenticated => this.authenticated;
+
     public LpDogmaAgent(LpBase lpBase, Merger merger)
     {
         this.lpBase = lpBase;
@@ -44,7 +46,7 @@ internal class LpDogmaAgent : LpDogmaNetService
 
     async NetTask<SignaturePublicKey> LpDogmaNetService.GetMergerKey()
     {
-        if (!this.IsActiveAndAuthenticated)
+        if (!this.IsAuthenticated)
         {
             return default;
         }
@@ -82,7 +84,7 @@ internal class LpDogmaAgent : LpDogmaNetService
 
     async NetTask<CredentialProof?> LpDogmaNetService.NewCredentialProof(CertificateToken<Value> token)
     {
-        if (!this.IsActiveAndAuthenticated)
+        if (!this.IsAuthenticated)
         {
             return default;
         }

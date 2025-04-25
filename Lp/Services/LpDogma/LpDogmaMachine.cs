@@ -70,6 +70,7 @@ public partial class LpDogmaMachine : Machine
                 var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
                 var r = await service.Authenticate(auth);
 
+                var mk = await service.GetMergerKey();
                 var publicKey = x.MergerKey;
                 var token = CertificateToken<Value>.CreateAndSign(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
                 var credentialProof = await service.NewCredentialProof(token);
