@@ -524,7 +524,7 @@ public class Control
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
 
-        var code = this.LpBase.Options.MergerCode;
+        var code = this.LpBase.Options.MergerCode;//
         if (!string.IsNullOrEmpty(code))
         {// MergerPrivault is valid
             var seedKey = await this.lpService.GetSeedKey(this.logger, code);
@@ -537,7 +537,6 @@ public class Control
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
             this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
-            this.logger.TryGet(LogLevel.Error)?.Log("Merger online");
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
