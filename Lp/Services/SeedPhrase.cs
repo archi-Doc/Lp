@@ -2,6 +2,7 @@
 
 using System.Runtime.InteropServices;
 using System.Text;
+using Netsphere.Crypto;
 
 namespace Lp;
 
@@ -94,17 +95,17 @@ public class Seedphrase
     /// <summary>
     /// Tries to get a 32 bytes seed (SHA3-256) from the given seed phrase.
     /// </summary>
-    /// <param name="phrase">The seed phrase.</param>
+    /// <param name="seedphrase">The seed phrase.</param>
     /// <returns>A 32 bytes seed (SHA3-256) if the phrase is valid; otherwise, null.</returns>
     /// <exception cref="PanicException">Thrown when the words array or dictionary is not initialized.</exception>
-    public byte[]? TryGetSeed(string phrase)
+    public byte[]? TryGetSeed(string seedphrase)
     {
         if (this.words.Length == 0 || this.dictionary == null)
         {
             throw new PanicException();
         }
 
-        var words = phrase.Split(' ');
+        var words = seedphrase.Split(' ');
         if (words.Length < SeedphraseMinimumNumber)
         {// Minimum length
             return null;
@@ -128,8 +129,30 @@ public class Seedphrase
             return null;
         }
 
-        var seed = Sha3Helper.Get256_ByteArray(System.Text.Encoding.UTF8.GetBytes(phrase));
+        var seed = Sha3Helper.Get256_ByteArray(System.Text.Encoding.UTF8.GetBytes(seedphrase));
         return seed;
+    }
+
+    public bool TryAlter(string seedphrase, ReadOnlySpan<byte> additional, Span<byte> seed32)
+    {
+        if (seed32.Length != 32)
+        {
+            throw new ArgumentException("seed32 must be 32 bytes long.", nameof(seed32));
+        }
+
+        var previousSeed = this.TryGetSeed(seedphrase);
+        if (previousSeed == null)
+        {
+            seed32 = default;
+            return false;
+        }
+
+        Span<byte> hash = stackalloc byte[Blake3.Size];
+        using var hasher = Blake3Hasher.New();
+        hasher.Update(additional);
+        hasher.Update(previousSeed);
+        hasher.Finalize(seed32);
+        return true;
     }
 
     private string[] words = Array.Empty<string>();

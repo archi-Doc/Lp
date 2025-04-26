@@ -10,6 +10,7 @@ public static class Subcommand
     {
         context.AddSubcommand(typeof(NewSignatureKeySubcommand));
         context.AddSubcommand(typeof(NewEncryptionKeySubcommand));
+        context.AddSubcommand(typeof(NewChainKeySubcommand));
     }
 
     public record NewKeyOptions
