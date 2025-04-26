@@ -11,11 +11,10 @@ namespace Lp.Net;
 [NetServiceObject]
 internal partial class BasalServiceAgent : IBasalService
 {
-    public BasalServiceAgent(LpBase lpBase, NetStats netStats, LpStats lpStats, Credentials credentials)
+    public BasalServiceAgent(LpBase lpBase, NetStats netStats, Credentials credentials)
     {
         this.lpBase = lpBase;
         this.netStats = netStats;
-        this.lpStats = lpStats;
         this.credentials = credentials;
     }
 
@@ -23,7 +22,6 @@ internal partial class BasalServiceAgent : IBasalService
 
     private readonly LpBase lpBase;
     private readonly NetStats netStats;
-    private readonly LpStats lpStats;
     private readonly Credentials credentials;
 
     #endregion

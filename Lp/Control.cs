@@ -47,7 +47,6 @@ public class Control
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
-                context.AddSingleton<LpStats>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
@@ -206,13 +205,6 @@ public class Control
                         NumberOfFileHistories = 0,
                         FileConfiguration = new GlobalFileConfiguration(LpSettings.Filename),
                         RequiredForLoading = true,
-                    });
-
-                    context.AddCrystal<LpStats>(new CrystalConfiguration() with
-                    {
-                        // SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 2,
-                        FileConfiguration = new GlobalFileConfiguration(LpStats.Filename),
                     });
 
                     context.AddCrystal<Credentials>(new()
