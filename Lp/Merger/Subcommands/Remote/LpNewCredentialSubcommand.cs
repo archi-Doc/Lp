@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
@@ -37,7 +38,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        var service = connection.GetService<IMergerRemote>();
+        var service = connection.GetService<LpDogmaNetService>();
         var token = CertificateToken<Value>.CreateAndSign(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
         var credentialProof = await service.NewCredentialProof(token);
         if (credentialProof is null ||

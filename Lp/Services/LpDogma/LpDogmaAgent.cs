@@ -1,57 +1,38 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
+using Lp.T3cs;
 using Netsphere.Crypto;
-using Netsphere.Stats;
 
-namespace Lp.T3cs;
-
-[NetServiceInterface]
-public partial interface IMergerRemote : INetService
-{
-    NetTask<(NetResult Result, ConnectionAgreement? Agreement)> Authenticate(AuthenticationToken token);
-
-    NetTask<SignaturePublicKey> GetMergerKey();
-
-    NetTask<CredentialProof?> NewCredentialProof(CertificateToken<Value> token);
-}
+namespace Lp.Services;
 
 [NetServiceObject]
-internal class MergerRemoteAgent : IMergerRemote
+internal class LpDogmaAgent : LpDogmaNetService
 {
     private readonly LpBase lpBase;
     private readonly Merger merger;
-    private readonly SignaturePublicKey remotePublicKey;
-    private readonly NetStats netStats;
     private bool authenticated;
 
     private bool IsActiveAndAuthenticated => this.merger.State.IsActive && this.authenticated;
 
-    public MergerRemoteAgent(LpBase lpBase, Merger merger, NetStats netStats)
+    private bool IsAuthenticated => this.authenticated;
+
+    public LpDogmaAgent(LpBase lpBase, Merger merger)
     {
         this.lpBase = lpBase;
         this.merger = merger;
-        this.lpBase.TryGetRemotePublicKey(out this.remotePublicKey);
-        this.netStats = netStats;
     }
 
-    async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> IMergerRemote.Authenticate(AuthenticationToken token)
+    async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> LpDogmaNetService.Authenticate(AuthenticationToken token)
     {
-        if (!this.merger.State.IsActive)
+        /*if (!this.merger.State.IsActive)
         {
             return (NetResult.NoNetService, default);
-        }
-
-        if (!this.lpBase.TryGetRemotePublicKey(out var publicKey))
-        {
-            return (NetResult.NotAuthenticated, default);
-        }
+        }*/
 
         var serverConnection = TransmissionContext.Current.ServerConnection;
-        if (token.PublicKey.Equals(publicKey) &&
+        if (token.PublicKey.Equals(LpConstants.LpPublicKey) &&
             token.ValidateAndVerify(serverConnection))
         {
-            // Console.WriteLine("Authentication success");
             serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10);
             this.authenticated = true;
             return (NetResult.Success, serverConnection.Agreement);
@@ -63,9 +44,9 @@ internal class MergerRemoteAgent : IMergerRemote
         }
     }
 
-    async NetTask<SignaturePublicKey> IMergerRemote.GetMergerKey()
+    async NetTask<SignaturePublicKey> LpDogmaNetService.GetMergerKey()
     {
-        if (!this.IsActiveAndAuthenticated)
+        if (!this.IsAuthenticated)
         {
             return default;
         }
@@ -101,9 +82,9 @@ internal class MergerRemoteAgent : IMergerRemote
         return default;
     }*/
 
-    async NetTask<CredentialProof?> IMergerRemote.NewCredentialProof(CertificateToken<Value> token)
+    async NetTask<CredentialProof?> LpDogmaNetService.NewCredentialProof(CertificateToken<Value> token)
     {
-        if (!this.IsActiveAndAuthenticated)
+        if (!this.IsAuthenticated)
         {
             return default;
         }

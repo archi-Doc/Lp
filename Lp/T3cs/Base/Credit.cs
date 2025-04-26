@@ -34,11 +34,11 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #endregion
 
-    public static bool TryCreate(Identifier identifier, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
+    public static bool TryCreate(CreditIdentity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
     {
         var obj = new Credit();
-        obj.Identifier = identifier;
-        obj.Mergers = mergers;
+        obj.Identifier = creditIdentity.GetIdentifier();
+        obj.Mergers = creditIdentity.Mergers;
 
         if (obj.Validate())
         {
@@ -67,8 +67,8 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         var initialLength = span.Length;
         span = span.Slice(1);
-        if (!Identifier.TryParse(span, out var originator, out var originatorRead))
-        {// Originator
+        if (!Identifier.TryParse(span, out var identifier, out var originatorRead))
+        {// Identifier
             return false;
         }
 
@@ -90,7 +90,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         if (span.Length == 0)
         {// Single merger
             instance = new Credit();
-            instance.Identifier = originator;
+            instance.Identifier = identifier;
             instance.Mergers = [merger1,];
             read = initialLength - span.Length;
             return true;
@@ -111,7 +111,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         if (span.Length == 0)
         {// Two merger2
             instance = new Credit();
-            instance.Originator = originator;
+            instance.Identifier = identifier;
             instance.Mergers = [merger1, merger2,];
             read = initialLength - span.Length;
             return true;
@@ -132,7 +132,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         if (span.Length == 0)
         {// Three Mergers
             instance = new Credit();
-            instance.Originator = originator;
+            instance.Identifier = identifier;
             instance.Mergers = [merger1, merger2, merger3,];
             read = initialLength - span.Length;
             return true;
@@ -167,7 +167,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         span[0] = CreditSymbol;
         span = span.Slice(1);
 
-        if (!this.Originator.TryFormat(span, out var w))
+        if (!this.Identifier.TryFormat(span, out var w))
         {
             return false;
         }
@@ -242,7 +242,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         {
             return false;
         }
-        else if (!this.Originator.Equals(other.Originator))
+        else if (!this.Identifier.Equals(other.Identifier))
         {
             return false;
         }
@@ -272,19 +272,19 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         // MaxMergersCode
         if (this.MergerCount == 1)
         {
-            return HashCode.Combine(this.Originator, this.Mergers[0]);
+            return HashCode.Combine(this.Identifier, this.Mergers[0]);
         }
         else if (this.MergerCount == 2)
         {
-            return HashCode.Combine(this.Originator, this.Mergers[0], this.Mergers[1]);
+            return HashCode.Combine(this.Identifier, this.Mergers[0], this.Mergers[1]);
         }
         else if (this.MergerCount == 3)
         {
-            return HashCode.Combine(this.Originator, this.Mergers[0], this.Mergers[1], this.Mergers[2]);
+            return HashCode.Combine(this.Identifier, this.Mergers[0], this.Mergers[1], this.Mergers[2]);
         }
         else
         {
-            return HashCode.Combine(this.Originator);
+            return HashCode.Combine(this.Identifier);
         }
     }
 

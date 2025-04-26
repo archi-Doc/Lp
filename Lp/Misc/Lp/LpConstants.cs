@@ -12,13 +12,15 @@ public static class LpConstants
     public const string LpPublicKeyString = "(s:ki0WYquVtTYJMCgXKZBABJbaUc7URLg-1M7x_gJ0ZVqD8i8Z)";
 
     public static readonly SignaturePublicKey LpPublicKey;
+    public static readonly CreditIdentity LpIdentity;
     public static readonly Credit LpCredit;
 
     static LpConstants()
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
-        KeyAlias.AddAlias(LpPublicKey, LpAlias);
-        Credit.TryCreate(LpPublicKey, [LpPublicKey], out LpCredit!);
+        Alias.Add(LpPublicKey, LpAlias);
+        LpIdentity = new(CreditKind.Full, LpPublicKey, [LpPublicKey]);
+        Credit.TryCreate(LpIdentity, out LpCredit!);
     }
 
     public static void Initialize()

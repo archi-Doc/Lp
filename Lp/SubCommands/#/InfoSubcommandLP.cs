@@ -15,7 +15,7 @@ public class InfoSubcommandLp : ISimpleCommand<DumpSubcommandInfoOptions>
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
-        var logger = this.Control.Logger.TryGet<InfoSubcommandLp>(LogLevel.Information);
+        var logger = this.Control.UnitLogger.TryGet<InfoSubcommandLp>(LogLevel.Information);
 
         logger?.Log($"Info: {target}");
 

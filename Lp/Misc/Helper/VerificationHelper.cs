@@ -34,24 +34,6 @@ public static class VerificationHelper
         return result == NetResult.Success;
     }
 
-    public static Identifier GetIdentifier<T>(this T? value, int level = TinyhandWriter.DefaultSignatureLevel)
-        where T : ITinyhandSerializable<T>
-    {
-        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
-        writer.Level = level;
-        try
-        {
-            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-            var identifier = new Identifier(Blake3.Get256_UInt64(span));
-            return identifier;
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
     /// <summary>
     /// Validate object members and verify that the signature is appropriate.
     /// </summary>

@@ -74,10 +74,12 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         span = span.Slice(creditIndex);
-        if (!Credit.TryParse(span, out var credit, out _))
+        if (!Credit.TryParse(span, out var credit, out var read2))
         {
             return false;
         }
+
+        span = span.Slice(read2);
 
         if (!Value.TryCreate(owner, point, credit, out var value))
         {

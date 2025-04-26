@@ -47,8 +47,8 @@ public class Control
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
-                context.AddSingleton<LpStats>();
                 context.AddSingleton<LpService>();
+                context.AddSingleton<LpBoardService>();
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<VaultControl>();
@@ -68,7 +68,7 @@ public class Control
                 context.AddTransient<Lp.T3cs.MergerClientAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<MergerRemoteAgent>();
+                context.AddTransient<LpDogmaAgent>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -82,9 +82,11 @@ public class Control
                 context.AddTransient<Machines.LpControlMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
-                context.AddSingleton<Machines.LpDogmaMachine>();
+                context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
+                context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
@@ -110,7 +112,6 @@ public class Control
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
-                Lp.Subcommands.InfoSubcommand.Configure(context);
                 Lp.Subcommands.ExportSubcommand.Configure(context);
                 Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
@@ -206,13 +207,6 @@ public class Control
                         RequiredForLoading = true,
                     });
 
-                    context.AddCrystal<LpStats>(new CrystalConfiguration() with
-                    {
-                        // SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 2,
-                        FileConfiguration = new GlobalFileConfiguration(LpStats.Filename),
-                    });
-
                     context.AddCrystal<Credentials>(new()
                     {
                         // SaveFormat = SaveFormat.Binary,
@@ -240,10 +234,10 @@ public class Control
                         FileConfiguration = new GlobalFileConfiguration(Netsphere.Misc.NtpCorrection.Filename),
                     });
 
-                    context.AddCrystal<Lp.Machines.LpDogma>(new CrystalConfiguration() with
+                    context.AddCrystal<Lp.Services.LpDogma>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration(Lp.Machines.LpDogma.Filename),
+                        FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
                 }));
         }
@@ -351,7 +345,7 @@ public class Control
                 LpConstants.Initialize();
 
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+                control.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
                 await control.PrepareMerger(this.Context);
@@ -406,9 +400,10 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker)
+    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
-        this.Logger = logger;
+        this.UnitLogger = unitLogger;
+        this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -420,6 +415,7 @@ public class Control
         this.Merger = merger;
         this.RelayMerger = relayMerger;
         this.Linker = linker;
+        this.lpService = lpService;
 
         if (this.LpBase.Options.TestFeatures)
         {
@@ -444,7 +440,7 @@ public class Control
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
-    public UnitLogger Logger { get; }
+    public UnitLogger UnitLogger { get; }
 
     public UnitCore Core { get; }
 
@@ -468,7 +464,9 @@ public class Control
 
     public AuthorityControl AuthorityControl { get; }
 
-    private SimpleParser subcommandParser;
+    private readonly ILogger logger;
+    private readonly SimpleParser subcommandParser;
+    private readonly LpService lpService;
 
     public async Task PreparePeer(UnitContext context)
     {
@@ -510,7 +508,7 @@ public class Control
             if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
-                this.Logger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
+                this.UnitLogger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
             }
         }
     }
@@ -518,22 +516,20 @@ public class Control
     public async Task PrepareMerger(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-        if (!string.IsNullOrEmpty(this.LpBase.Options.MergerPrivault))
-        {// MergerPrivault is valid
-            var privault = this.LpBase.Options.MergerPrivault;
-            if (!SeedKey.TryParse(privault, out var seedKey))
-            {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
-                {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
-                    seedKey = SeedKey.New(KeyOrientation.Signature);
-                    this.VaultControl.Root.AddObject(privault, seedKey);
-                }
+
+        var code = this.LpBase.Options.MergerCode;//
+        if (!string.IsNullOrEmpty(code))
+        {// Enable merger
+            var seedKey = await this.lpService.GetSeedKey(this.logger, code);
+            if (seedKey is null)
+            {
+                seedKey = SeedKey.New(KeyOrientation.Signature);
+                this.VaultControl.Root.AddObject(code, seedKey);
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
-            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
@@ -551,7 +547,7 @@ public class Control
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
-            this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
     }
 
@@ -608,7 +604,7 @@ public class Control
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
+        var logger = this.UnitLogger.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
         logger.Log("Press Enter key to switch to console mode.");
@@ -804,7 +800,7 @@ public class Control
 
     private async Task TerminateAsync(UnitContext context)
     {
-        this.Logger.Get<DefaultLog>().Log("Termination process initiated");
+        this.UnitLogger.Get<DefaultLog>().Log("Termination process initiated");
 
         try
         {
@@ -820,7 +816,7 @@ public class Control
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        this.Logger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+        this.UnitLogger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
+        this.UnitLogger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
     }
 }

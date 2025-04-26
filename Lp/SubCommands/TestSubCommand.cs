@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Arc.Threading;
 using Lp.Data;
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Netsphere.Misc;
@@ -15,19 +16,23 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl authorityControl, Seedphrase seedPhrase, LpStats lpStats)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl authorityControl, Seedphrase seedPhrase, LpBoardService lpBoardService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.control = control;
         this.authorityControl = authorityControl;
         this.seedPhrase = seedPhrase;
+        this.lpBoardService = lpBoardService;
     }
 
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        Console.WriteLine(LpConstants.LpCredit.ToString());
+
+        await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");
 
         var microSleep = new Arc.Threading.MicroSleep();
@@ -89,7 +94,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             var g = new CredentialProof.GoshujinClass();
 
             var owner = SeedKey.NewSignature();
-            if (Credit.TryCreate(LpConstants.LpPublicKey, [SeedKey.NewSignature().GetSignaturePublicKey()], out var credit) &&
+            var creditIdentity = new CreditIdentity(CreditKind.Full, owner.GetSignaturePublicKey(), [SeedKey.NewSignature().GetSignaturePublicKey()]);
+            if (Credit.TryCreate(creditIdentity, out var credit) &&
                 Value.TryCreate(owner.GetSignaturePublicKey(), 111, credit, out var value))
             {
                 this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
@@ -98,7 +104,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
                 this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
 
                 var valueProof = ValueProof.Create(value);
-
                 owner.TrySign(valueProof, 123);
             }
         }
@@ -109,6 +114,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly AuthorityControl authorityControl;
     private readonly Seedphrase seedPhrase;
+    private readonly LpBoardService lpBoardService;
 }
 
 public record TestOptions

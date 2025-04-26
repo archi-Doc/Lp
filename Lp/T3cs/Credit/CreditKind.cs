@@ -4,7 +4,7 @@ namespace Lp.T3cs;
 
 public enum CreditKind : byte
 {
-    Current,
+    Full,
     Board,
     Message,
 }
