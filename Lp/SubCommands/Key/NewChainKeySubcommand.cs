@@ -1,33 +1,26 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.KeyCommand;
 
-[SimpleCommand("new-chain-key")]
-public class NewChainKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
+[SimpleCommand("new-master-key")]
+public class NewMasterKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 {
-    public enum Kind : byte
-    {
-        Merger,
-        RelayMerger,
-        Linker,
-    }
-
-    public NewChainKeySubcommand(ILogger<NewChainKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
+    public NewMasterKeySubcommand(ILogger<NewMasterKeySubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.seedPhrase = seedPhrase;
     }
 
     public void Run(Subcommand.NewKeyOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New chain key");
+        this.logger.TryGet()?.Log("New master key");
 
-        byte[]? seed;
+        /*byte[]? seed;
         var seedphrase = options.Seedphrase?.Trim();
         if (string.IsNullOrEmpty(seedphrase))
         {
@@ -45,13 +38,23 @@ public class NewChainKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
         {
             this.userInterfaceService.WriteLine(Hashed.Seedphrase.Invalid, seedphrase);
             return;
-        }
+        }*/
 
-        var chainKey = new ChainKey(this.seedPhrase, seedphrase);
+        var masterKey = MasterKey.New();
+        this.userInterfaceService.WriteLine(masterKey.ConvertToString());
 
-        var key = chainKey.GetMergerKey();
-        this.userInterfaceService.WriteLine(key.UnsafeToString());
-        // this.logger.TryGet()?.Log(key.GetSignaturePublicKey().ToString());
+        this.CreateSeedKey(masterKey, MasterKey.Kind.Merger);
+        this.CreateSeedKey(masterKey, MasterKey.Kind.RelayMerger);
+        this.CreateSeedKey(masterKey, MasterKey.Kind.Linker);
+    }
+
+    private void CreateSeedKey(MasterKey masterKey, MasterKey.Kind kind)
+    {
+        (var seedphrase, var seedKey) = masterKey.CreateSeedKey(kind);
+        this.userInterfaceService.WriteLine($"{kind} key:");
+        this.userInterfaceService.WriteLine($"{seedphrase}");
+        this.userInterfaceService.WriteLine(seedKey.UnsafeToString());
+        this.logger.TryGet()?.Log(seedKey.GetSignaturePublicKey().ToString());
     }
 
     private readonly ILogger logger;

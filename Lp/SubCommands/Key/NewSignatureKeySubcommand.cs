@@ -8,11 +8,10 @@ namespace Lp.Subcommands.KeyCommand;
 [SimpleCommand("new-signature-key")]
 public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 {
-    public NewSignatureKeySubcommand(ILogger<NewSignatureKeySubcommand> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
+    public NewSignatureKeySubcommand(ILogger<NewSignatureKeySubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.seedPhrase = seedPhrase;
     }
 
     public void Run(Subcommand.NewKeyOptions options, string[] args)
@@ -23,8 +22,8 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
         var phrase = options.Seedphrase?.Trim();
         if (string.IsNullOrEmpty(phrase))
         {
-            phrase = this.seedPhrase.Create();
-            var seed = this.seedPhrase.TryGetSeed(phrase);
+            phrase = Seedphrase.Create();
+            var seed = Seedphrase.TryGetSeed(phrase);
             if (seed is not null)
             {
                 this.userInterfaceService.WriteLine($"Seedphrase: {phrase}");
@@ -37,7 +36,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
         }
         else
         {
-            var seed = this.seedPhrase.TryGetSeed(phrase);
+            var seed = Seedphrase.TryGetSeed(phrase);
             if (seed == null)
             {
                 this.userInterfaceService.WriteLine(Hashed.Seedphrase.Invalid, phrase);
@@ -53,5 +52,3 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly Seedphrase seedPhrase;
-}
