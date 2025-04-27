@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -28,11 +29,12 @@ public static class Seedphrase
     /// The array of words used in the seed phrase dictionary.
     /// </summary>
     private static string[] words = [];
+    private static uint divisor;
 
     /// <summary>
     /// The dictionary mapping words to their indices in the seed phrase dictionary.
     /// </summary>
-    private static Dictionary<string, uint> dictionary = new(StringComparer.InvariantCultureIgnoreCase);
+    private static Dictionary<string, ushort> dictionary = new(StringComparer.InvariantCultureIgnoreCase);
 
     #endregion
 
@@ -49,7 +51,8 @@ public static class Seedphrase
                     if (wordsArray is not null)
                     {
                         words = wordsArray;
-                        for (uint i = 0; i < wordsArray.Length; i++)
+                        divisor = (uint)words.Length;
+                        for (ushort i = 0; i < wordsArray.Length; i++)
                         {
                             dictionary.TryAdd(words[i], i);
                         }
@@ -69,25 +72,29 @@ public static class Seedphrase
     /// <exception cref="PanicException">Thrown when the words array or dictionary is not initialized.</exception>
     public static string Create()
     {
-        if (words.Length == 0 || dictionary == null)
+        if (divisor == 0 || dictionary == null)
         {
             throw new PanicException();
         }
 
-        var length = DefaultNumberOfWords;
-        var index = new uint[length - 1];
+        var index = new ushort[DefaultNumberOfWords - 1];
         for (var i = 0; i < index.Length; i++)
         {
-            index[i] = RandomVault.Default.NextUInt32() % (uint)words.Length;
+            index[i] = (ushort)(RandomVault.Default.NextUInt32() % divisor);
         }
 
-        var span = MemoryMarshal.AsBytes<uint>(index);
-        var checksum = (uint)XxHash3.Hash64(span) % (uint)words.Length;
+        return Create(index);
+    }
+
+    public static string Create(ReadOnlySpan<ushort> seedSpan)
+    {
+        var span = MemoryMarshal.AsBytes<ushort>(seedSpan);
+        var checksum = (ushort)(XxHash3.Hash64(span) % divisor);
 
         var sb = new StringBuilder();
-        for (var i = 0; i < index.Length; i++)
+        for (var i = 0; i < seedSpan.Length; i++)
         {
-            sb.Append(words[index[i]]);
+            sb.Append(words[seedSpan[i]]);
             sb.Append(" ");
         }
 
@@ -116,7 +123,7 @@ public static class Seedphrase
             return null;
         }
 
-        var index = new uint[wordArray.Length];
+        var index = new ushort[wordArray.Length];
         for (var i = 0; i < wordArray.Length; i++)
         {
             if (!dictionary.TryGetValue(wordArray[i], out var j))
@@ -127,8 +134,8 @@ public static class Seedphrase
             index[i] = j;
         }
 
-        var span = MemoryMarshal.AsBytes<uint>(index.AsSpan().Slice(0, index.Length - 1));
-        var checksum = (uint)XxHash3.Hash64(span) % (uint)wordArray.Length;
+        var span = MemoryMarshal.AsBytes<ushort>(index.AsSpan().Slice(0, index.Length - 1));
+        var checksum = (uint)(XxHash3.Hash64(span) % divisor);
         if (checksum != index[index.Length - 1])
         {
             return null;

@@ -536,7 +536,7 @@ public class Control
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
 
-        var code = this.LpBase.Options.MergerCode;//
+        var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
         {// Enable merger
             var seedKey = await this.lpService.GetSeedKey(this.logger, code);
