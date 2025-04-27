@@ -55,7 +55,6 @@ public class Control
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
-                context.AddSingleton<Seedphrase>();
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
@@ -348,6 +347,7 @@ public class Control
                 control.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
+                await control.PrepareMaster(this.Context);
                 await control.PrepareMerger(this.Context);
                 await control.PrepareRelay(this.Context);
                 await control.PrepareLinker(this.Context);
@@ -509,6 +509,25 @@ public class Control
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
                 this.UnitLogger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
+            }
+        }
+    }
+
+    public async Task PrepareMaster(UnitContext context)
+    {
+        var key = this.LpBase.Options.MasterKey;
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (MasterKey.TryParse(key, out var masterKey, out _))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Merger);
+                this.LpBase.Options.MergerCode = seedKey.UnsafeToString();
+
+                (_, seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.RelayMerger);
+                this.LpBase.Options.RelayMergerPrivault = seedKey.UnsafeToString();
+
+                (_, seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Linker);
+                this.LpBase.Options.LinkerPrivault = seedKey.UnsafeToString();
             }
         }
     }

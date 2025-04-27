@@ -138,6 +138,7 @@ public static class Seedphrase
         return seed;
     }
 
+    /*
     /// <summary>
     /// Tries to alter the given seed phrase with additional data to produce a new 32-byte seed.
     /// </summary>
@@ -166,5 +167,5 @@ public static class Seedphrase
         hasher.Update(previousSeed);
         hasher.Finalize(seed32);
         return true;
-    }
+    }*/
 }

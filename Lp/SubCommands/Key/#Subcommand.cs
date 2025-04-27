@@ -8,9 +8,9 @@ public static class Subcommand
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddSubcommand(typeof(NewSignatureKeySubcommand));
         context.AddSubcommand(typeof(NewEncryptionKeySubcommand));
-        context.AddSubcommand(typeof(NewChainKeySubcommand));
+        context.AddSubcommand(typeof(NewMasterKeySubcommand));
+        context.AddSubcommand(typeof(NewSignatureKeySubcommand));
     }
 
     public record NewKeyOptions

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Netsphere.Crypto;
 
 namespace Lp.Services;
@@ -27,11 +29,11 @@ public partial class MasterKey : IStringConvertible<MasterKey>
 
     public static int MaxStringLength { get; }
 
-    static bool IStringConvertible<MasterKey>.TryParse(ReadOnlySpan<char> source, out MasterKey? @object, out int read)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out MasterKey masterKey, out int read)
     {
         if (source.Length < MaxStringLength)
         {
-            @object = null;
+            masterKey = null;
             read = 0;
             return false;
         }
@@ -39,20 +41,20 @@ public partial class MasterKey : IStringConvertible<MasterKey>
         var seed = new byte[Size];
         if (!Base64.Url.FromStringToSpan(source.Slice(0, MaxStringLength), seed, out _))
         {
-            @object = null;
+            masterKey = null;
             read = 0;
             return false;
         }
 
-        @object = new MasterKey(seed);
+        masterKey = new MasterKey(seed);
         read = MaxStringLength;
         return true;
     }
 
-    int IStringConvertible<MasterKey>.GetStringLength()
+    public int GetStringLength()
         => MaxStringLength;
 
-    bool IStringConvertible<MasterKey>.TryFormat(Span<char> destination, out int written)
+    public bool TryFormat(Span<char> destination, out int written)
         => Base64.Url.FromByteArrayToSpan(this.seed, destination, out written);
 
     #endregion
@@ -80,22 +82,28 @@ public partial class MasterKey : IStringConvertible<MasterKey>
     public (string Seedphrase, SeedKey SeedKey) CreateSeedKey(Kind kind)
          => this.GetKey(kind);
 
-    private (string Seedphrase, SeedKey seedKey) GetKey(Kind kind)
+    private (string Seedphrase, SeedKey SeedKey) GetKey(Kind kind)
     {
-        Span<byte> hash = stackalloc byte[Blake3.Size];
-        this.kindAndSeed[0] = (byte)kind;
-        Blake3.Get256_Span(this.kindAndSeed, hash);
+        var size = Seedphrase.DefaultNumberOfWords * sizeof(ushort);
 
+        Span<byte> cipher = stackalloc byte[size];
+        var span = cipher;
+        this.seed.AsSpan().CopyTo(span);
+        span = span.Slice(this.seed.Length);
+        span.Fill((byte)kind);
 
-        using var hasher = Blake3Hasher.New();
-        hasher.Update(additional);
-        hasher.Update(previousSeed);
-        hasher.Finalize(seed32);
+        Span<byte> key32 = stackalloc byte[Aegis256.KeySize];
+        Blake3.Get256_Span(this.seed, key32);
 
-        Span<byte> seed = stackalloc byte[Blake3.Size];
-        if (!Seedphrase.TryAlter(this.seedphrase, [(byte)kind], seed))
-        {
-            return (string.Empty, SeedKey.NewSignature(seed));
-        }
+        Span<byte> nonce32 = stackalloc byte[Aegis256.NonceSize];
+        this.seed.AsSpan(0, Aegis256.NonceSize).CopyTo(nonce32);
+        nonce32[0] ^= (byte)kind;
+        nonce32[16] ^= (byte)kind;
+
+        Aegis256.Encrypt(cipher, cipher, nonce32, key32, default, 0);
+        var array = MemoryMarshal.Cast<byte, ushort>(cipher);
+        var seedphrase = Seedphrase.Create();
+        var seed = Seedphrase.TryGetSeed(seedphrase);
+        return (seedphrase, SeedKey.New(seed, KeyOrientation.Signature));
     }
 }

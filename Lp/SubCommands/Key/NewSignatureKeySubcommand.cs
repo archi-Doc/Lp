@@ -52,3 +52,4 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
+}

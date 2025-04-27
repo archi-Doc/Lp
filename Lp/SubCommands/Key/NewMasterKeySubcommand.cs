@@ -43,6 +43,9 @@ public class NewMasterKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
         var masterKey = MasterKey.New();
         this.userInterfaceService.WriteLine(masterKey.ConvertToString());
 
+        var st = masterKey.ConvertToString();
+        MasterKey.TryParse(st, out var masterKey2, out var read);
+
         this.CreateSeedKey(masterKey, MasterKey.Kind.Merger);
         this.CreateSeedKey(masterKey, MasterKey.Kind.RelayMerger);
         this.CreateSeedKey(masterKey, MasterKey.Kind.Linker);

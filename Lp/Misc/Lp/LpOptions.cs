@@ -63,6 +63,9 @@ public partial record LpOptions
     [SimpleOption("CertificateRelayPublickey", Description = "Public key for CertificateRelayControl", ReadFromEnvironment = true)]
     public string CertificateRelayPublicKey { get; set; } = string.Empty;
 
+    [SimpleOption("MasterKey", Description = "Master key for merger and linker", ReadFromEnvironment = true)]
+    public string MasterKey { get; set; } = string.Empty;
+
     [SimpleOption("RelayPeerPrivault", Description = "Private key or vault name for Relay peer", ReadFromEnvironment = true)]
     public string RelayPeerPrivault { get; set; } = "RelayPeer";
 
