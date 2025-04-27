@@ -25,11 +25,14 @@ public static class Seedphrase
 
     #region FieldAndProperty
 
+    public static uint Mask => mask;
+
     /// <summary>
     /// The array of words used in the seed phrase dictionary.
     /// </summary>
     private static string[] words = [];
     private static uint divisor;
+    private static uint mask;
 
     /// <summary>
     /// The dictionary mapping words to their indices in the seed phrase dictionary.
@@ -52,6 +55,7 @@ public static class Seedphrase
                     {
                         words = wordsArray;
                         divisor = (uint)words.Length;
+                        mask = divisor - 1;
                         for (ushort i = 0; i < wordsArray.Length; i++)
                         {
                             dictionary.TryAdd(words[i], i);
@@ -80,7 +84,7 @@ public static class Seedphrase
         var index = new ushort[DefaultNumberOfWords - 1];
         for (var i = 0; i < index.Length; i++)
         {
-            index[i] = (ushort)(RandomVault.Default.NextUInt32() % divisor);
+            index[i] = (ushort)(RandomVault.Default.NextUInt32() & mask);
         }
 
         return Create(index);
@@ -88,6 +92,11 @@ public static class Seedphrase
 
     public static string Create(ReadOnlySpan<ushort> seedSpan)
     {
+        if (divisor == 0 || dictionary == null)
+        {
+            throw new PanicException();
+        }
+
         var span = MemoryMarshal.AsBytes<ushort>(seedSpan);
         var checksum = (ushort)(XxHash3.Hash64(span) % divisor);
 

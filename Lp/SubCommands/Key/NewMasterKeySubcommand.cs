@@ -1,50 +1,49 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Lp.Services;
-using Netsphere.Crypto;
 using SimpleCommandLine;
+using static Lp.Subcommands.KeyCommand.NewMasterKeySubcommand;
 
 namespace Lp.Subcommands.KeyCommand;
 
 [SimpleCommand("new-master-key")]
-public class NewMasterKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
+public class NewMasterKeySubcommand : ISimpleCommand<Options>
 {
+    public record Options
+    {
+        [SimpleOption("MasterKey", Description = "Master key")]
+        public string? MasterKey { get; init; }
+    }
+
     public NewMasterKeySubcommand(ILogger<NewMasterKeySubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
     }
 
-    public void Run(Subcommand.NewKeyOptions options, string[] args)
+    public void Run(Options options, string[] args)
     {
         this.logger.TryGet()?.Log("New master key");
 
-        /*byte[]? seed;
-        var seedphrase = options.Seedphrase?.Trim();
-        if (string.IsNullOrEmpty(seedphrase))
+        MasterKey? masterKey = default;
+        var st = options.MasterKey?.Trim();
+        if (!string.IsNullOrEmpty(st))
         {
-            seedphrase = Seedphrase.Create();
-            seed = Seedphrase.TryGetSeed(seedphrase);
-
-            this.userInterfaceService.WriteLine($"Seedphrase: {seedphrase}");
-        }
-        else
-        {
-            seed = Seedphrase.TryGetSeed(seedphrase);
+            if (!MasterKey.TryParse(st, out masterKey, out _))
+            {
+                // this.userInterfaceService.WriteLine(Hashed.MasterKey.Invalid, st);
+                return;
+            }
         }
 
-        if (seed == null)
+        if (masterKey is null)
         {
-            this.userInterfaceService.WriteLine(Hashed.Seedphrase.Invalid, seedphrase);
-            return;
-        }*/
+            masterKey = MasterKey.New();
+            this.userInterfaceService.WriteLine(masterKey.ConvertToString());
+        }
 
-        var masterKey = MasterKey.New();
-        this.userInterfaceService.WriteLine(masterKey.ConvertToString());
-
-        var st = masterKey.ConvertToString();
-        MasterKey.TryParse(st, out var masterKey2, out var read);
+        // st = masterKey.ConvertToString();
+        // MasterKey.TryParse(st, out var masterKey2, out var read);
 
         this.CreateSeedKey(masterKey, MasterKey.Kind.Merger);
         this.CreateSeedKey(masterKey, MasterKey.Kind.RelayMerger);
@@ -57,7 +56,6 @@ public class NewMasterKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
         this.userInterfaceService.WriteLine($"{kind} key:");
         this.userInterfaceService.WriteLine($"{seedphrase}");
         this.userInterfaceService.WriteLine(seedKey.UnsafeToString());
-        this.logger.TryGet()?.Log(seedKey.GetSignaturePublicKey().ToString());
     }
 
     private readonly ILogger logger;

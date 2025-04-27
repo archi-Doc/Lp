@@ -80,17 +80,14 @@ public partial class MasterKey : IStringConvertible<MasterKey>
     }
 
     public (string Seedphrase, SeedKey SeedKey) CreateSeedKey(Kind kind)
-         => this.GetKey(kind);
-
-    private (string Seedphrase, SeedKey SeedKey) GetKey(Kind kind)
     {
-        var size = Seedphrase.DefaultNumberOfWords * sizeof(ushort);
+        var size = (Seedphrase.DefaultNumberOfWords - 1) * sizeof(ushort);
 
         Span<byte> cipher = stackalloc byte[size];
-        var span = cipher;
-        this.seed.AsSpan().CopyTo(span);
-        span = span.Slice(this.seed.Length);
-        span.Fill((byte)kind);
+        this.seed.AsSpan(0, size).CopyTo(cipher);
+        cipher[0] ^= (byte)kind;
+        cipher[15] ^= (byte)kind;
+        cipher[30] ^= (byte)kind;
 
         Span<byte> key32 = stackalloc byte[Aegis256.KeySize];
         Blake3.Get256_Span(this.seed, key32);
@@ -102,7 +99,12 @@ public partial class MasterKey : IStringConvertible<MasterKey>
 
         Aegis256.Encrypt(cipher, cipher, nonce32, key32, default, 0);
         var array = MemoryMarshal.Cast<byte, ushort>(cipher);
-        var seedphrase = Seedphrase.Create();
+        for (var i = 0; i < array.Length; i++)
+        {
+            array[i] = (ushort)(array[i] & Seedphrase.Mask);
+        }
+
+        var seedphrase = Seedphrase.Create(array);
         var seed = Seedphrase.TryGetSeed(seedphrase);
         return (seedphrase, SeedKey.New(seed, KeyOrientation.Signature));
     }
