@@ -27,7 +27,7 @@ public static class Seedphrase
     /// <summary>
     /// The array of words used in the seed phrase dictionary.
     /// </summary>
-    private static string[] words = Array.Empty<string>();
+    private static string[] words = [];
 
     /// <summary>
     /// The dictionary mapping words to their indices in the seed phrase dictionary.

@@ -6,40 +6,6 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.KeyCommand;
 
-public class ChainKey
-{
-    public enum Kind : byte
-    {
-        Merger,
-        RelayMerger,
-        Linker,
-    }
-
-    private readonly string originalphrase;
-
-    public static bool TryCreate(string seedphrase, [MaybeNullWhen(false)] out ChainKey chainKey)
-    {
-
-    }
-
-    public ChainKey(string originalphrase)
-    {
-        this.originalphrase = originalphrase;
-    }
-
-    public SeedKey GetMergerKey()
-         => this.GetKey(Kind.Merger);
-
-    private (string SeedPhrase, SeedKey seedKey) GetKey(Kind kind)
-    {
-        Span<byte> seed = stackalloc byte[Blake3.Size];
-        if (!Seedphrase.TryAlter(this.originalphrase, [(byte)kind], seed))
-        {
-            return (string.Empty, SeedKey.NewSignature(seed));
-        }
-    }
-}
-
 [SimpleCommand("new-chain-key")]
 public class NewChainKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 {
