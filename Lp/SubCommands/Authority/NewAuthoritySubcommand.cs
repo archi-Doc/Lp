@@ -8,11 +8,10 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
 {
-    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl, Seedphrase seedphrase)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl)
     {
         this.logger = logger;
         this.authorityControl = authorityControl;
-        this.seedphrase = seedphrase;
     }
 
     public async Task RunAsync(AuthoritySubcommandNewOptions option, string[] args)
@@ -20,7 +19,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         byte[]? seed = default;
         if (option.Seedphrase is not null)
         {
-            seed = this.seedphrase.TryGetSeed(option.Seedphrase);
+            seed = Seedphrase.TryGetSeed(option.Seedphrase);
             if (seed is null)
             {
                 this.logger.TryGet()?.Log(Hashed.Seedphrase.Invalid, option.Seedphrase);
@@ -44,7 +43,6 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
 
     private readonly ILogger logger;
     private readonly AuthorityControl authorityControl;
-    private readonly Seedphrase seedphrase;
 }
 
 public record AuthoritySubcommandNewOptions

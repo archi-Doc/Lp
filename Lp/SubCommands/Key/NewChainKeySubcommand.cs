@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
@@ -14,12 +15,15 @@ public class ChainKey
         Linker,
     }
 
-    private readonly Seedphrase seedphrase;
     private readonly string originalphrase;
 
-    public ChainKey(Seedphrase seedphrase, string originalphrase)
+    public static bool TryCreate(string seedphrase, [MaybeNullWhen(false)] out ChainKey chainKey)
     {
-        this.seedphrase = seedphrase;
+
+    }
+
+    public ChainKey(string originalphrase)
+    {
         this.originalphrase = originalphrase;
     }
 
@@ -29,7 +33,7 @@ public class ChainKey
     private (string SeedPhrase, SeedKey seedKey) GetKey(Kind kind)
     {
         Span<byte> seed = stackalloc byte[Blake3.Size];
-        if (!this.seedphrase.TryAlter(this.originalphrase, [(byte)kind], seed))
+        if (!Seedphrase.TryAlter(this.originalphrase, [(byte)kind], seed))
         {
             return (string.Empty, SeedKey.NewSignature(seed));
         }
@@ -61,14 +65,14 @@ public class NewChainKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
         var seedphrase = options.Seedphrase?.Trim();
         if (string.IsNullOrEmpty(seedphrase))
         {
-            seedphrase = this.seedPhrase.Create();
-            seed = this.seedPhrase.TryGetSeed(seedphrase);
+            seedphrase = Seedphrase.Create();
+            seed = Seedphrase.TryGetSeed(seedphrase);
 
             this.userInterfaceService.WriteLine($"Seedphrase: {seedphrase}");
         }
         else
         {
-            seed = this.seedPhrase.TryGetSeed(seedphrase);
+            seed = Seedphrase.TryGetSeed(seedphrase);
         }
 
         if (seed == null)
@@ -86,5 +90,4 @@ public class NewChainKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions>
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly Seedphrase seedPhrase;
 }

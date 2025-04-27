@@ -2,36 +2,41 @@
 
 using System.Runtime.InteropServices;
 using System.Text;
-using Netsphere.Crypto;
 
 namespace Lp;
 
 /// <summary>
 /// Represents a seed phrase generator and validator.
 /// </summary>
-public class Seedphrase
+public static class Seedphrase
 {
     /// <summary>
-    /// The default number of the seed phrase.
+    /// The default number of words for a seed phrase.
     /// </summary>
-    public const int SeedphraseDefaultNumber = 24; // 11bits x (24-1) = 253 bits
+    public const int DefaultNumberOfWords = 24; // 11bits x (24-1) = 253 bits
 
     /// <summary>
-    /// The minimum number of the seed phrase.
+    /// The minimum number of words required for a seed phrase.
     /// </summary>
-    public const int SeedphraseMinimumNumber = 16;
-
-    /// <summary>
-    /// The number of words in the seed phrase dictionary.
-    /// </summary>
-    public const int NumberOfWords = 2048; // 11bits
+    public const int MinimumNumberOfWords = 16;
 
     private const string SeedphrasesPath = "Misc.Strings.Seedphrases";
 
+    #region FieldAndProperty
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="Seedphrase"/> class.
+    /// The array of words used in the seed phrase dictionary.
     /// </summary>
-    public Seedphrase()
+    private static string[] words = Array.Empty<string>();
+
+    /// <summary>
+    /// The dictionary mapping words to their indices in the seed phrase dictionary.
+    /// </summary>
+    private static Dictionary<string, uint> dictionary = new(StringComparer.InvariantCultureIgnoreCase);
+
+    #endregion
+
+    static Seedphrase()
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         try
@@ -40,13 +45,13 @@ public class Seedphrase
             {
                 if (stream != null)
                 {
-                    var words = TinyhandSerializer.Deserialize<string[]>(stream, TinyhandSerializerOptions.Lz4);
-                    if (words != null)
+                    var wordsArray = TinyhandSerializer.Deserialize<string[]>(stream, TinyhandSerializerOptions.Lz4);
+                    if (wordsArray is not null)
                     {
-                        this.words = words;
-                        for (uint i = 0; i < words.Length; i++)
+                        words = wordsArray;
+                        for (uint i = 0; i < wordsArray.Length; i++)
                         {
-                            this.dictionary.TryAdd(this.words[i], i);
+                            dictionary.TryAdd(words[i], i);
                         }
                     }
                 }
@@ -62,59 +67,59 @@ public class Seedphrase
     /// </summary>
     /// <returns>A new seed phrase as a string.</returns>
     /// <exception cref="PanicException">Thrown when the words array or dictionary is not initialized.</exception>
-    public string Create()
+    public static string Create()
     {
-        if (this.words.Length == 0 || this.dictionary == null)
+        if (words.Length == 0 || dictionary == null)
         {
             throw new PanicException();
         }
 
-        var length = SeedphraseDefaultNumber;
+        var length = DefaultNumberOfWords;
         var index = new uint[length - 1];
         for (var i = 0; i < index.Length; i++)
         {
-            index[i] = RandomVault.Default.NextUInt32() % (uint)this.words.Length;
+            index[i] = RandomVault.Default.NextUInt32() % (uint)words.Length;
         }
 
         var span = MemoryMarshal.AsBytes<uint>(index);
-        var checksum = (uint)XxHash3.Hash64(span) % (uint)this.words.Length;
+        var checksum = (uint)XxHash3.Hash64(span) % (uint)words.Length;
 
         var sb = new StringBuilder();
         for (var i = 0; i < index.Length; i++)
         {
-            sb.Append(this.words[index[i]]);
+            sb.Append(words[index[i]]);
             sb.Append(" ");
         }
 
         // Checksum
-        sb.Append(this.words[checksum]);
+        sb.Append(words[checksum]);
 
         return sb.ToString();
     }
 
     /// <summary>
-    /// Tries to get a 32 bytes seed (SHA3-256) from the given seed phrase.
+    /// Tries to get a 32-byte seed (SHA3-256) from the given seed phrase.
     /// </summary>
     /// <param name="seedphrase">The seed phrase.</param>
-    /// <returns>A 32 bytes seed (SHA3-256) if the phrase is valid; otherwise, null.</returns>
+    /// <returns>A 32-byte seed (SHA3-256) if the phrase is valid; otherwise, null.</returns>
     /// <exception cref="PanicException">Thrown when the words array or dictionary is not initialized.</exception>
-    public byte[]? TryGetSeed(string seedphrase)
+    public static byte[]? TryGetSeed(string seedphrase)
     {
-        if (this.words.Length == 0 || this.dictionary == null)
+        if (words.Length == 0 || dictionary is null)
         {
             throw new PanicException();
         }
 
-        var words = seedphrase.Split(' ');
-        if (words.Length < SeedphraseMinimumNumber)
+        var wordArray = seedphrase.Split(' ');
+        if (wordArray.Length < MinimumNumberOfWords)
         {// Minimum length
             return null;
         }
 
-        var index = new uint[words.Length];
-        for (var i = 0; i < words.Length; i++)
+        var index = new uint[wordArray.Length];
+        for (var i = 0; i < wordArray.Length; i++)
         {
-            if (!this.dictionary.TryGetValue(words[i], out var j))
+            if (!dictionary.TryGetValue(wordArray[i], out var j))
             {
                 return null;
             }
@@ -123,24 +128,32 @@ public class Seedphrase
         }
 
         var span = MemoryMarshal.AsBytes<uint>(index.AsSpan().Slice(0, index.Length - 1));
-        var checksum = (uint)XxHash3.Hash64(span) % (uint)this.words.Length;
+        var checksum = (uint)XxHash3.Hash64(span) % (uint)wordArray.Length;
         if (checksum != index[index.Length - 1])
         {
             return null;
         }
 
-        var seed = Sha3Helper.Get256_ByteArray(System.Text.Encoding.UTF8.GetBytes(seedphrase));
+        var seed = Sha3Helper.Get256_ByteArray(Encoding.UTF8.GetBytes(seedphrase));
         return seed;
     }
 
-    public bool TryAlter(string seedphrase, ReadOnlySpan<byte> additional, Span<byte> seed32)
+    /// <summary>
+    /// Tries to alter the given seed phrase with additional data to produce a new 32-byte seed.
+    /// </summary>
+    /// <param name="seedphrase">The seed phrase.</param>
+    /// <param name="additional">Additional data to alter the seed.</param>
+    /// <param name="seed32">The resulting 32-byte seed.</param>
+    /// <returns>True if the seed was successfully altered; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="seed32"/> is not 32 bytes long.</exception>
+    public static bool TryAlter(string seedphrase, ReadOnlySpan<byte> additional, Span<byte> seed32)
     {
         if (seed32.Length != 32)
         {
             throw new ArgumentException("seed32 must be 32 bytes long.", nameof(seed32));
         }
 
-        var previousSeed = this.TryGetSeed(seedphrase);
+        var previousSeed = TryGetSeed(seedphrase);
         if (previousSeed == null)
         {
             seed32 = default;
@@ -154,7 +167,4 @@ public class Seedphrase
         hasher.Finalize(seed32);
         return true;
     }
-
-    private string[] words = Array.Empty<string>();
-    private Dictionary<string, uint> dictionary = new(StringComparer.InvariantCultureIgnoreCase);
 }
