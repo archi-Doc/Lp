@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Data;
@@ -83,6 +85,8 @@ public partial record LpOptions
 
     public NetOptions ToNetOptions()
     {
+        this.PrepareMasterKey();
+
         return new NetOptions() with
         {
             Port = this.Port,
@@ -92,5 +96,42 @@ public partial record LpOptions
             EnableServer = this.EnableServer,
             EnableAlternative = this.EnableAlternative,
         };
+    }
+
+    private void PrepareMasterKey()
+    {
+        var key = this.MasterKey;
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (!Lp.Services.MasterKey.TryParse(key, out var masterKey, out _))
+            {
+                // this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidMasterKey);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(this.NodeSecretKey))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.Node);
+                this.NodeSecretKey = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.MergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.Merger);
+                this.MergerCode = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.RelayMergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.RelayMerger);
+                this.RelayMergerCode = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.LinkerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.Linker);
+                this.LinkerCode = seedKey.UnsafeToString();
+            }
+        }
     }
 }

@@ -524,6 +524,12 @@ public class Control
                 return;
             }
 
+            if (string.IsNullOrEmpty(this.LpBase.Options.NodeSecretKey))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Node);
+                this.LpBase.Options.NodeSecretKey = seedKey.UnsafeToString();
+            }
+
             if (string.IsNullOrEmpty(this.LpBase.Options.MergerCode))
             {
                 (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Merger);
@@ -564,7 +570,7 @@ public class Control
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))
-        {// RelayMergerPrivault is valid
+        {// RelayMergerCode is valid
             var privault = this.LpBase.Options.RelayMergerCode;
             if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
@@ -586,7 +592,7 @@ public class Control
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
-        {// LinkerPrivault is valid
+        {// LinkerCode is valid
             var privault = this.LpBase.Options.LinkerCode;
             if (!SeedKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
