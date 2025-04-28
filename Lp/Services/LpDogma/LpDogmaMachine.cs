@@ -71,7 +71,7 @@ public partial class LpDogmaMachine : Machine
                 var auth = AuthenticationToken.CreateAndSign(lpSeedKey, connection);
                 var r = await service.Authenticate(auth).ResponseAsync;
 
-                var mergerKey = await service.GetMergerKey(); // x.MergerKey
+                /*var mergerKey = await service.GetMergerKey(); // x.MergerKey
                 var token = CertificateToken<Value>.CreateAndSign(new Value(mergerKey, 1, LpConstants.LpCredit), lpSeedKey, connection);
                 var credentialProof = await service.NewCredentialProof(token);
                 if (credentialProof is null ||
@@ -85,7 +85,7 @@ public partial class LpDogmaMachine : Machine
                 if (evidence?.ValidateAndVerify() != true)
                 {
                     continue;
-                }
+                }*/
 
                 // this.credentials.MergerCredentials.Add(evidence);
             }

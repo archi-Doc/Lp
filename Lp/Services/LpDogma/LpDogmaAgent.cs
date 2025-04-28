@@ -8,18 +8,22 @@ namespace Lp.Services;
 [NetServiceObject]
 internal class LpDogmaAgent : LpDogmaNetService
 {
+    private readonly NetBase netBase;
     private readonly LpBase lpBase;
     private readonly Merger merger;
+    private readonly RelayMerger relayMerger;
     private bool authenticated;
 
     private bool IsActiveAndAuthenticated => this.merger.State.IsActive && this.authenticated;
 
     private bool IsAuthenticated => this.authenticated;
 
-    public LpDogmaAgent(LpBase lpBase, Merger merger)
+    public LpDogmaAgent(NetBase netBase, LpBase lpBase, Merger merger, RelayMerger relayMerger)
     {
+        this.netBase = netBase;
         this.lpBase = lpBase;
         this.merger = merger;
+        this.relayMerger = relayMerger;
     }
 
     async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> LpDogmaNetService.Authenticate(AuthenticationToken token)
@@ -44,14 +48,15 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
     }
 
-    async NetTask<SignaturePublicKey> LpDogmaNetService.GetMergerKey()
+    async NetTask<LpDogmaInformation?> LpDogmaNetService.GetInformation()
     {
         if (!this.IsAuthenticated)
         {
             return default;
         }
 
-        return this.merger.GetMergerKey();
+        var info = new LpDogmaInformation(this.netBase.NodePublicKey, this.merger.GetMergerKey(), this.relayMerger.GetMergerKey(), default);
+        return info;
     }
 
     /*async NetTask<Proof?> IMergerRemote.NewCredential(Evidence? evidence)

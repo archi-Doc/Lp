@@ -105,6 +105,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.AddNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.LpDogmaGetInformationSubcommand));
 
                 context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowMergerCredentialsCommand));
 

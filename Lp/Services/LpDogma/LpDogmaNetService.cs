@@ -10,7 +10,7 @@ public partial interface LpDogmaNetService : INetService
 {
     NetTask<(NetResult Result, ConnectionAgreement? Agreement)> Authenticate(AuthenticationToken token);
 
-    NetTask<SignaturePublicKey> GetMergerKey();
+    NetTask<LpDogmaInformation?> GetInformation();
 
     NetTask<CredentialProof?> NewCredentialProof(CertificateToken<Value> token);
 }

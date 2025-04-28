@@ -111,4 +111,5 @@ Linker=
   NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
 
 Dogma=
+  NoLpKey="Lp key not found"
   KeyConfirmed = "Lp key confirmed"
