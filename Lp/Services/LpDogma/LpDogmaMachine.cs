@@ -36,7 +36,7 @@ public partial class LpDogmaMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        if (await this.authorityControl.GetLpSeedKey(null) is not { } seedKey)
+        if (await this.authorityControl.GetLpSeedKey(null) is not { } lpSeedKey)
         {
             return StateResult.Continue;
         }
@@ -68,11 +68,11 @@ public partial class LpDogmaMachine : Machine
                 }
 
                 var service = connection.GetService<LpDogmaNetService>();
-                var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
+                var auth = AuthenticationToken.CreateAndSign(lpSeedKey, connection);
                 var r = await service.Authenticate(auth).ResponseAsync;
 
                 var mergerKey = await service.GetMergerKey(); // x.MergerKey
-                var token = CertificateToken<Value>.CreateAndSign(new Value(mergerKey, 1, LpConstants.LpCredit), seedKey, connection);
+                var token = CertificateToken<Value>.CreateAndSign(new Value(mergerKey, 1, LpConstants.LpCredit), lpSeedKey, connection);
                 var credentialProof = await service.NewCredentialProof(token);
                 if (credentialProof is null ||
                     !credentialProof.ValidateAndVerify() ||
@@ -81,7 +81,7 @@ public partial class LpDogmaMachine : Machine
                     continue;
                 }
 
-                CredentialEvidence.TryCreate(credentialProof, seedKey, out var evidence);
+                CredentialEvidence.TryCreate(credentialProof, lpSeedKey, out var evidence);
                 if (evidence?.ValidateAndVerify() != true)
                 {
                     continue;
