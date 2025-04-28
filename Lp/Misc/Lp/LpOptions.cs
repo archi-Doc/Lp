@@ -85,7 +85,9 @@ public partial record LpOptions
 
     public NetOptions ToNetOptions()
     {
+        Console.WriteLine($"NodeSecretKey:{ this.NodeSecretKey}");
         this.PrepareMasterKey();
+        Console.WriteLine($"NodeSecretKey:{this.NodeSecretKey}");
 
         return new NetOptions() with
         {
