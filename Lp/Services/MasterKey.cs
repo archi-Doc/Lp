@@ -15,6 +15,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
 
     public enum Kind : byte
     {
+        Node,
         Merger,
         RelayMerger,
         Linker,
@@ -109,6 +110,12 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
 
         var seedphrase = Seedphrase.Create(array);
         var seed = Seedphrase.TryGetSeed(seedphrase);
-        return (seedphrase, SeedKey.New(seed, KeyOrientation.Signature));
+        var orientation = kind switch
+        {
+            Kind.Node => KeyOrientation.Encryption,
+            _ => KeyOrientation.Signature,
+        };
+
+        return (seedphrase, SeedKey.New(seed, orientation));
     }
 }
