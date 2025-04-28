@@ -50,10 +50,10 @@ public record AuthoritySubcommandNewOptions
     [SimpleOption("Name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("Pass", Description = "Passphrase")]
+    [SimpleOption("Passphrase", Description = "Passphrase")]
     public string? Passphrase { get; init; }
 
-    [SimpleOption("Seed", Description = "Seedphrase")]
+    [SimpleOption("Seedphrase", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
 
     [SimpleOption("Lifetime", Description = "Lifetime")]
