@@ -63,7 +63,7 @@ public partial class LpDogmaMachine : Machine
             {
                 if (connection is null)
                 {
-                    this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
+                    // this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
                     continue;
                 }
 
