@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Amazon.Runtime;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
