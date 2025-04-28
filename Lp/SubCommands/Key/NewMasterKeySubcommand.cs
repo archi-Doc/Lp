@@ -11,8 +11,8 @@ public class NewMasterKeySubcommand : ISimpleCommand<Options>
 {
     public record Options
     {
-        [SimpleOption("MasterKey", Description = "Master key")]
-        public string? MasterKey { get; init; }
+        [SimpleOption("Seed", Description = "Base64Url encoded seed byte array")]
+        public string? Seed { get; init; }
     }
 
     public NewMasterKeySubcommand(ILogger<NewMasterKeySubcommand> logger, IUserInterfaceService userInterfaceService)
@@ -26,12 +26,12 @@ public class NewMasterKeySubcommand : ISimpleCommand<Options>
         this.logger.TryGet()?.Log("New master key");
 
         MasterKey? masterKey = default;
-        var st = options.MasterKey?.Trim();
+        var st = options.Seed?.Trim();
         if (!string.IsNullOrEmpty(st))
         {
             if (!MasterKey.TryParse(st, out masterKey, out _))
             {
-                // this.userInterfaceService.WriteLine(Hashed.MasterKey.Invalid, st);
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidSeed);
                 return;
             }
         }

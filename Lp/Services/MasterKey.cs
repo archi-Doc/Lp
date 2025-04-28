@@ -9,7 +9,7 @@ namespace Lp.Services;
 #pragma warning disable SA1204 // Static elements should appear before instance elements
 
 [TinyhandObject]
-public partial class MasterKey : IStringConvertible<MasterKey>
+public sealed partial class MasterKey : IStringConvertible<MasterKey>
 {
     public const int Size = 64;
 
@@ -86,11 +86,14 @@ public partial class MasterKey : IStringConvertible<MasterKey>
         Span<byte> cipher = stackalloc byte[size];
         this.seed.AsSpan(0, size).CopyTo(cipher);
         cipher[0] ^= (byte)kind;
-        cipher[15] ^= (byte)kind;
         cipher[30] ^= (byte)kind;
 
         Span<byte> key32 = stackalloc byte[Aegis256.KeySize];
+        this.seed[0] ^= (byte)kind;
+        this.seed[24] ^= (byte)kind;
         Blake3.Get256_Span(this.seed, key32);
+        this.seed[0] ^= (byte)kind; // Restore
+        this.seed[24] ^= (byte)kind;
 
         Span<byte> nonce32 = stackalloc byte[Aegis256.NonceSize];
         this.seed.AsSpan(0, Aegis256.NonceSize).CopyTo(nonce32);

@@ -518,16 +518,28 @@ public class Control
         var key = this.LpBase.Options.MasterKey;
         if (!string.IsNullOrEmpty(key))
         {
-            if (MasterKey.TryParse(key, out var masterKey, out _))
+            if (!MasterKey.TryParse(key, out var masterKey, out _))
+            {
+                this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidMasterKey);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(this.LpBase.Options.MergerCode))
             {
                 (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Merger);
                 this.LpBase.Options.MergerCode = seedKey.UnsafeToString();
+            }
 
-                (_, seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.RelayMerger);
-                this.LpBase.Options.RelayMergerPrivault = seedKey.UnsafeToString();
+            if (string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.RelayMerger);
+                this.LpBase.Options.RelayMergerCode = seedKey.UnsafeToString();
+            }
 
-                (_, seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Linker);
-                this.LpBase.Options.LinkerPrivault = seedKey.UnsafeToString();
+            if (string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Linker);
+                this.LpBase.Options.LinkerCode = seedKey.UnsafeToString();
             }
         }
     }
@@ -539,7 +551,7 @@ public class Control
         var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
         {// Enable merger
-            var seedKey = await this.lpService.GetSeedKey(this.logger, code);
+            var seedKey = await this.lpService.LoadSeedKey(this.logger, code);
             if (seedKey is null)
             {
                 seedKey = SeedKey.New(KeyOrientation.Signature);
@@ -551,9 +563,9 @@ public class Control
             this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
 
-        if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
+        if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))
         {// RelayMergerPrivault is valid
-            var privault = this.LpBase.Options.RelayMergerPrivault;
+            var privault = this.LpBase.Options.RelayMergerCode;
             if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
@@ -573,9 +585,9 @@ public class Control
     public async Task PrepareLinker(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-        if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerPrivault))
+        if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
         {// LinkerPrivault is valid
-            var privault = this.LpBase.Options.LinkerPrivault;
+            var privault = this.LpBase.Options.LinkerCode;
             if (!SeedKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))

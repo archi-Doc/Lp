@@ -15,7 +15,7 @@ public static class Subcommand
 
     public record NewKeyOptions
     {
-        [SimpleOption("Seed", Description = "Seedphrase")]
+        [SimpleOption("Seedphrase", Description = "Seedphrase")]
         public string? Seedphrase { get; init; }
     }
 }
