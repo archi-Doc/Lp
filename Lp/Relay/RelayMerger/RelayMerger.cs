@@ -54,8 +54,8 @@ public class RelayMerger : Merger
 
         this.relayStatusData = this.relayStatusCrystal.Data;
 
-        this.mergerSeedKey = mergerSeedKey;
-        this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
+        this.seedKey = mergerSeedKey;
+        this.PublicKey = this.seedKey.GetSignaturePublicKey();
 
         this.InitializeLogger();
 

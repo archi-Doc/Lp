@@ -20,7 +20,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
     public virtual bool Initialized { get; protected set; }
 
-    public SignaturePublicKey MergerPublicKey { get; protected set; }
+    public SignaturePublicKey PublicKey { get; protected set; }
 
     public MergerConfiguration? Information { get; protected set; }
 
@@ -32,7 +32,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     protected NetStats netStats;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
-    protected SeedKey mergerSeedKey = SeedKey.Invalid;
+    protected SeedKey seedKey = SeedKey.Invalid;
 
     #endregion
 
@@ -45,7 +45,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.netStats = netStats;
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
+    public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
     {
         this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
@@ -64,8 +64,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         });
 
         this.creditData = this.creditDataCrystal.Data;
-        this.mergerSeedKey = mergerSeedKey;
-        this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
+        this.seedKey = seedKey;
+        this.PublicKey = this.seedKey.GetSignaturePublicKey();
 
         this.InitializeLogger();
 
@@ -89,7 +89,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Information.MergerName}: {this.MergerPublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Information.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Information.MergerName}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Information.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -161,10 +161,10 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public SignaturePublicKey GetMergerKey()
-        => this.MergerPublicKey;
+        => this.PublicKey;
 
     public bool TrySign(Proof proof, long validMics)
-        => this.mergerSeedKey.TrySign(proof, validMics);
+        => this.seedKey.TrySign(proof, validMics);
 
     public void UpdateState()
     {

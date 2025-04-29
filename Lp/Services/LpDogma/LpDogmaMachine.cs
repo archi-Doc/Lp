@@ -45,7 +45,7 @@ public partial class LpDogmaMachine : Machine
             this.modestLogger.Interval(TimeSpan.FromHours(1), Hashed.Dogma.KeyConfirmed, LogLevel.Information)?.Log(Hashed.Dogma.KeyConfirmed);
         }
 
-        foreach (var x in this.lpDogma.CredentialNodes)
+        foreach (var x in this.lpDogma.Mergers)
         {
             if (this.CancellationToken.IsCancellationRequested)
             {
@@ -54,8 +54,17 @@ public partial class LpDogmaMachine : Machine
 
             if (this.credentials.MergerCredentials.TryGet(x.MergerKey, out _))
             {
-                this.userInterfaceService.WriteLine($"{x.MergerKey.ToString()} -> valid");
+                // this.userInterfaceService.WriteLine($"{x.MergerKey.ToString()} -> valid");
                 continue;
+            }
+
+            if (MicsRange.FromPastToFastSystem(Mics.FromHours(1)).IsWithin(x.UpdatedMics))
+            {
+                continue;
+            }
+            else
+            {
+                x.UpdatedMics = Mics.FastSystem;
             }
 
             var netNode = x.NetNode; // Alternative.NetNode;
@@ -71,12 +80,11 @@ public partial class LpDogmaMachine : Machine
                 var auth = AuthenticationToken.CreateAndSign(lpSeedKey, connection);
                 var r = await service.Authenticate(auth).ResponseAsync;
 
-                /*var mergerKey = await service.GetMergerKey(); // x.MergerKey
-                var token = CertificateToken<Value>.CreateAndSign(new Value(mergerKey, 1, LpConstants.LpCredit), lpSeedKey, connection);
+                var token = CertificateToken<Value>.CreateAndSign(new Value(x.MergerKey, 1, LpConstants.LpCredit), lpSeedKey, connection);
                 var credentialProof = await service.NewCredentialProof(token);
                 if (credentialProof is null ||
                     !credentialProof.ValidateAndVerify() ||
-                    !credentialProof.GetSignatureKey().Equals(mergerKey))
+                    !credentialProof.GetSignatureKey().Equals(x.MergerKey))
                 {
                     continue;
                 }
@@ -85,17 +93,11 @@ public partial class LpDogmaMachine : Machine
                 if (evidence?.ValidateAndVerify() != true)
                 {
                     continue;
-                }*/
+                }
 
-                // this.credentials.MergerCredentials.Add(evidence);
+                this.credentials.MergerCredentials.Add(evidence);
             }
         }
-
-        // var list = this.lpDogma.CredentialNodes.ToList();
-        // list.Add(new(Alternative.NetNode, SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey()));
-        // this.lpDogma.CredentialNodes = list.ToArray();
-
-        // this.userInterfaceService.WriteLine($"Single: ({this.Identifier.ToString()}) - {this.Count++}");
 
         return StateResult.Continue;
     }
