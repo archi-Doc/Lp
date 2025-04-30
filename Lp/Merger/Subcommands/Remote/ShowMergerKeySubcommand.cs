@@ -24,9 +24,9 @@ public class ShowMergerKeySubcommand : ISimpleCommandAsync
         }
 
         var service = connection.GetService<LpDogmaNetService>();
-        var r = await service.GetMergerKey();
+        // var r = await service.GetMergerKey();
 
-        this.logger.TryGet()?.Log($"{r.ToString()}");
+        // this.logger.TryGet()?.Log($"{r.ToString()}");
     }
 
     private readonly ILogger logger;

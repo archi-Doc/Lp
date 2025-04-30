@@ -16,7 +16,22 @@ public partial class NodeControlMachine : Machine
     private const int ConsumeLifelineCount = 10;
     private const int FixEndpointCount = 10;
 
-    public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl, Credentials credentials)
+    #region FieldAndProperty
+
+    private readonly ILogger logger;
+    private readonly ModestLogger modestLogger;
+    private readonly NetControl netControl;
+    private readonly NetBase netBase;
+    private readonly NetStats netStats;
+    private readonly NodeControl nodeControl;
+    private readonly LpBase lpBase;
+    private readonly Credentials credentials;
+    private int count = 0;
+    private long resetLifelineMics;
+
+    #endregion
+
+    public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl, LpBase lpBase, Credentials credentials)
         : base()
     {
         this.logger = logger;
@@ -25,19 +40,11 @@ public partial class NodeControlMachine : Machine
         this.netControl = netControl;
         this.netStats = this.netControl.NetStats;
         this.nodeControl = nodeControl;
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.lpBase = lpBase;
         this.credentials = credentials;
-    }
 
-    private readonly ILogger logger;
-    private readonly ModestLogger modestLogger;
-    private readonly NetControl netControl;
-    private readonly NetBase netBase;
-    private readonly NetStats netStats;
-    private readonly NodeControl nodeControl;
-    private readonly Credentials credentials;
-    private int count = 0;
-    private long resetLifelineMics;
+        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+    }
 
     [StateMethod(0)]
     protected async Task<StateResult> ConsumeLifelineNode(StateParameter parameter)
@@ -323,6 +330,8 @@ public partial class NodeControlMachine : Machine
                 var service = connection.GetService<Lp.Net.IBasalService>();
                 if (service is not null)
                 {
+                    this.lpBase.BasalServiceCount++;
+
                     // Active node
                     var r2 = await service.GetActiveNodes();
                     this.nodeControl.ProcessGetActiveNodes(r2.Span);

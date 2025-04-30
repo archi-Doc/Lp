@@ -58,7 +58,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         }*/
 
         // Code
-        var seedKey = await this.lpService.GetSeedKey(this.logger, options.Code);
+        var seedKey = await this.lpService.LoadSeedKey(this.logger, options.Code);
         if (seedKey is null)
         {
             return;

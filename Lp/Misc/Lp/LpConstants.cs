@@ -9,7 +9,8 @@ public static class LpConstants
 {
     public const int MaxNameLength = 32;
     public const string LpAlias = "Lp";
-    public const string LpPublicKeyString = "(s:ki0WYquVtTYJMCgXKZBABJbaUc7URLg-1M7x_gJ0ZVqD8i8Z)";
+    public const string LpKeyAlias = "LpKey";
+    public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";
 
     public static readonly SignaturePublicKey LpPublicKey;
     public static readonly CreditIdentity LpIdentity;
@@ -18,8 +19,9 @@ public static class LpConstants
     static LpConstants()
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
-        Alias.Add(LpPublicKey, LpAlias);
+        Alias.Add(LpPublicKey, LpKeyAlias);
         LpIdentity = new(CreditKind.Full, LpPublicKey, [LpPublicKey]);
+        Alias.Add(LpIdentity.GetIdentifier(), LpAlias);
         Credit.TryCreate(LpIdentity, out LpCredit!);
     }
 

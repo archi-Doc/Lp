@@ -48,15 +48,11 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
             return;
         }
 
-        CredentialEvidence.TryCreate(credentialProof, seedKey, out var evidence);
-        if (evidence?.ValidateAndVerify() != true)
+        if (CredentialEvidence.TryCreate(credentialProof, seedKey, out var evidence) &&
+            this.credentials.MergerCredentials.TryAdd(evidence))
         {
-            return;
+            this.logger.TryGet()?.Log($"{evidence}");
         }
-
-        this.credentials.MergerCredentials.Add(evidence);
-
-        this.logger.TryGet()?.Log($"{evidence}");
     }
 
     private readonly ILogger logger;

@@ -40,7 +40,7 @@ internal class MergerClientAgent : IMergerClient
             return default;
         }
 
-        return this.merger.Information.ToInformationResult();
+        return this.merger.Configuration.ToInformationResult();
     }
 
     public NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param)

@@ -8,14 +8,14 @@ public static class Subcommand
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddSubcommand(typeof(NewSignatureKeySubcommand));
         context.AddSubcommand(typeof(NewEncryptionKeySubcommand));
-        context.AddSubcommand(typeof(NewChainKeySubcommand));
+        context.AddSubcommand(typeof(NewMasterKeySubcommand));
+        context.AddSubcommand(typeof(NewSignatureKeySubcommand));
     }
 
     public record NewKeyOptions
     {
-        [SimpleOption("Seed", Description = "Seedphrase")]
+        [SimpleOption("Seedphrase", Description = "Seedphrase")]
         public string? Seedphrase { get; init; }
     }
 }

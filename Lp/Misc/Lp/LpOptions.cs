@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Data;
@@ -63,6 +65,9 @@ public partial record LpOptions
     [SimpleOption("CertificateRelayPublickey", Description = "Public key for CertificateRelayControl", ReadFromEnvironment = true)]
     public string CertificateRelayPublicKey { get; set; } = string.Empty;
 
+    [SimpleOption("MasterKey", Description = "Master key for merger and linker", ReadFromEnvironment = true)]
+    public string MasterKey { get; set; } = string.Empty;
+
     [SimpleOption("RelayPeerPrivault", Description = "Private key or vault name for Relay peer", ReadFromEnvironment = true)]
     public string RelayPeerPrivault { get; set; } = "RelayPeer";
 
@@ -70,16 +75,18 @@ public partial record LpOptions
     public string ContentPeerPrivault { get; set; } = "ContentPeer";
 
     [SimpleOption("MergerCode", Description = "Private key or authority/vault name for Merger", ReadFromEnvironment = true)]
-    public string MergerCode { get; set; } = "Merger";
+    public string MergerCode { get; set; } = string.Empty;
 
-    [SimpleOption("RelayMergerPrivault", Description = "Private key or vault name for Relay merger", ReadFromEnvironment = true)]
-    public string RelayMergerPrivault { get; set; } = "RelayMerger";
+    [SimpleOption("RelayMergerCode", Description = "Private key or authority/vault name for Relay merger", ReadFromEnvironment = true)]
+    public string RelayMergerCode { get; set; } = string.Empty;
 
-    [SimpleOption("LinkerPrivault", Description = "Private key or vault name for Linker", ReadFromEnvironment = true)]
-    public string LinkerPrivault { get; set; } = "Linker";
+    [SimpleOption("LinkerCode", Description = "Private key or authority/vault name for Linker", ReadFromEnvironment = true)]
+    public string LinkerCode { get; set; } = string.Empty;
 
     public NetOptions ToNetOptions()
     {
+        this.PrepareMasterKey();
+
         return new NetOptions() with
         {
             Port = this.Port,
@@ -89,5 +96,42 @@ public partial record LpOptions
             EnableServer = this.EnableServer,
             EnableAlternative = this.EnableAlternative,
         };
+    }
+
+    private void PrepareMasterKey()
+    {
+        var key = this.MasterKey;
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (!Lp.Services.MasterKey.TryParse(key, out var masterKey, out _))
+            {
+                // this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidMasterKey);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(this.NodeSecretKey))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.Node);
+                this.NodeSecretKey = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.MergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.Merger);
+                this.MergerCode = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.RelayMergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.RelayMerger);
+                this.RelayMergerCode = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.LinkerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(Lp.Services.MasterKey.Kind.Linker);
+                this.LinkerCode = seedKey.UnsafeToString();
+            }
+        }
     }
 }

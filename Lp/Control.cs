@@ -41,9 +41,6 @@ public class Control
 
             this.Configure(context =>
             {
-                // Base
-                LpBase.Configure(context);
-
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
@@ -55,7 +52,6 @@ public class Control
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
-                context.AddSingleton<Seedphrase>();
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
@@ -106,6 +102,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.AddNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.LpDogmaGetInformationSubcommand));
 
                 context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowMergerCredentialsCommand));
 
@@ -348,6 +345,7 @@ public class Control
                 control.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
+                await control.PrepareMaster(this.Context);
                 await control.PrepareMerger(this.Context);
                 await control.PrepareRelay(this.Context);
                 await control.PrepareLinker(this.Context);
@@ -513,14 +511,51 @@ public class Control
         }
     }
 
+    public async Task PrepareMaster(UnitContext context)
+    {
+        var key = this.LpBase.Options.MasterKey;
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (!MasterKey.TryParse(key, out var masterKey, out _))
+            {
+                this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidMasterKey);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(this.LpBase.Options.NodeSecretKey))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Node);
+                this.LpBase.Options.NodeSecretKey = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.LpBase.Options.MergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Merger);
+                this.LpBase.Options.MergerCode = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.RelayMerger);
+                this.LpBase.Options.RelayMergerCode = seedKey.UnsafeToString();
+            }
+
+            if (string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
+            {
+                (_, var seedKey) = masterKey.CreateSeedKey(MasterKey.Kind.Linker);
+                this.LpBase.Options.LinkerCode = seedKey.UnsafeToString();
+            }
+        }
+    }
+
     public async Task PrepareMerger(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
 
-        var code = this.LpBase.Options.MergerCode;//
+        var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
         {// Enable merger
-            var seedKey = await this.lpService.GetSeedKey(this.logger, code);
+            var seedKey = await this.lpService.LoadSeedKey(this.logger, code);
             if (seedKey is null)
             {
                 seedKey = SeedKey.New(KeyOrientation.Signature);
@@ -532,9 +567,9 @@ public class Control
             this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
 
-        if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerPrivault))
-        {// RelayMergerPrivault is valid
-            var privault = this.LpBase.Options.RelayMergerPrivault;
+        if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))
+        {// RelayMergerCode is valid
+            var privault = this.LpBase.Options.RelayMergerCode;
             if (!SeedKey.TryParse(privault, out var seedKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
@@ -554,9 +589,9 @@ public class Control
     public async Task PrepareLinker(UnitContext context)
     {
         var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
-        if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerPrivault))
-        {// LinkerPrivault is valid
-            var privault = this.LpBase.Options.LinkerPrivault;
+        if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
+        {// LinkerCode is valid
+            var privault = this.LpBase.Options.LinkerCode;
             if (!SeedKey.TryParse(privault, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))

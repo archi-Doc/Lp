@@ -15,7 +15,7 @@ public class LpService
         this.vaultControl = vaultControl;
     }
 
-    public async Task<SeedKey?> GetSeedKey(ILogger? logger, string code)
+    public async Task<SeedKey?> LoadSeedKey(ILogger? logger, string code)
     {
         SeedKey? seedKey;
 
@@ -31,7 +31,7 @@ public class LpService
             return seedKey;
         }
 
-        // PrivateKey
+        // Raw string
         if (SeedKey.TryParse(code, out seedKey))
         {
             return seedKey;

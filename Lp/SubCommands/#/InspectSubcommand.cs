@@ -40,6 +40,6 @@ public class InspectSubcommand : ISimpleCommand
     private void InspectMerger()
     {
         var merger = this.control.Merger;
-        this.userInterfaceService.WriteLine($"Merger public key: {merger.MergerPublicKey}");
+        this.userInterfaceService.WriteLine($"Merger public key: {merger.PublicKey}");
     }
 }

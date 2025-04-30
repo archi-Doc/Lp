@@ -7,19 +7,18 @@ namespace Lp.Subcommands;
 [SimpleCommand("new-seedphrase")]
 public class NewSeedphraseSubcommand : ISimpleCommandAsync
 {
-    public NewSeedphraseSubcommand(ILogger<NewSeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
+    public NewSeedphraseSubcommand(ILogger<NewSeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.control = control;
-        this.seedPhrase = seedPhrase;
     }
 
     public async Task RunAsync(string[] args)
     {
         this.logger.TryGet()?.Log($"Create seedphrase");
 
-        var phrase = this.seedPhrase.Create();
+        var phrase = Seedphrase.Create();
         // this.logger.TryGet()?.Log($"{phrase}");
         this.userInterfaceService.WriteLine(phrase);
 
@@ -29,5 +28,4 @@ public class NewSeedphraseSubcommand : ISimpleCommandAsync
     private readonly ILogger logger;
     private IUserInterfaceService userInterfaceService;
     private Control control;
-    private Seedphrase seedPhrase;
 }

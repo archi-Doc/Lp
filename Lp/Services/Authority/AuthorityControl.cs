@@ -37,7 +37,7 @@ public class AuthorityControl
 
     public async Task<Authority?> GetLpAuthority(ILogger? logger)
     {
-        var name = LpConstants.LpAlias;
+        var name = LpConstants.LpKeyAlias;
         var authority = await this.GetAuthority(name).ConfigureAwait(false);
         if (authority is null)
         {

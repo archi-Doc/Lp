@@ -31,6 +31,8 @@ Error=
   NoPingFromContainer = "Failed to receive a Ping response from the container"
   InvalidPublicKey = "PublicKey is invalid"
   InvalidPrivateKey = "PrivateKey is invalid"
+  InvalidMasterKey = "MasterKey is invalid"
+  InvalidSeed = "Seed is invalid"
   NoPrivateKey = "PrivateKey could not be obtained. Please specify the appropriate value for Authority or Vault or PrivateKey"
   NoFixedNode = "Unable to obtain own IP address due to the lack of a network connection or a NodeList"
   NoDirectConnection = "Direct network connection through the specified port number is required"
@@ -109,4 +111,5 @@ Linker=
   NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
 
 Dogma=
+  NoLpKey="Lp key not found"
   KeyConfirmed = "Lp key confirmed"

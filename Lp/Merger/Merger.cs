@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Amazon.Runtime;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -13,44 +12,48 @@ namespace Lp;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
+    private const string NameSuffix = "_M";
+
     #region FieldAndProperty
 
-    [MemberNotNullWhen(true, nameof(Information))]
+    [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(creditDataCrystal))]
     [MemberNotNullWhen(true, nameof(creditData))]
     // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
     public virtual bool Initialized { get; protected set; }
 
-    public SignaturePublicKey MergerPublicKey { get; protected set; }
+    public SignaturePublicKey PublicKey { get; protected set; }
 
-    public MergerConfiguration? Information { get; protected set; }
+    public MergerConfiguration? Configuration { get; protected set; }
 
     public MergerState State { get; protected set; } = new();
 
     protected ILogger logger;
     protected ModestLogger modestLogger;
+    protected NetBase netBase;
     protected LpBase lpBase;
     protected NetStats netStats;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
-    protected SeedKey mergerSeedKey = SeedKey.Invalid;
+    protected SeedKey seedKey = SeedKey.Invalid;
 
     #endregion
 
-    public Merger(UnitContext context, UnitLogger unitLogger, LpBase lpBase, NetStats netStats)
+    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats)
         : base(context)
     {
         this.logger = unitLogger.GetLogger<Merger>();
         this.modestLogger = new(this.logger);
+        this.netBase = netBase;
         this.lpBase = lpBase;
         this.netStats = netStats;
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
+    public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
     {
-        this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
+        this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
-            NumberOfFileHistories = 3,
+            NumberOfFileHistories = 0, // 3
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
             RequiredForLoading = true,
         }).Data;
@@ -64,9 +67,14 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
                 new GlobalDirectoryConfiguration("Merger/Storage")),
         });
 
+        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        {
+            this.netBase.NetOptions.NodeName
+        }
+
         this.creditData = this.creditDataCrystal.Data;
-        this.mergerSeedKey = mergerSeedKey;
-        this.MergerPublicKey = this.mergerSeedKey.GetSignaturePublicKey();
+        this.seedKey = seedKey;
+        this.PublicKey = this.seedKey.GetSignaturePublicKey();
 
         this.InitializeLogger();
 
@@ -82,15 +90,15 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // this.logger.TryGet()?.Log(this.Information.ToString());
 
-        if (this.Information.MergerType == MergerConfiguration.Type.Single)
+        if (this.Configuration.MergerType == MergerConfiguration.Type.Single)
         {// Single credit
-            this.Information.SingleCredit = Credit.Default;
+            this.Configuration.SingleCredit = Credit.Default;
         }
         else
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Information.MergerName}: {this.MergerPublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Information.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Configuration.MergerName}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -162,10 +170,10 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public SignaturePublicKey GetMergerKey()
-        => this.MergerPublicKey;
+        => this.PublicKey;
 
     public bool TrySign(Proof proof, long validMics)
-        => this.mergerSeedKey.TrySign(proof, validMics);
+        => this.seedKey.TrySign(proof, validMics);
 
     public void UpdateState()
     {
