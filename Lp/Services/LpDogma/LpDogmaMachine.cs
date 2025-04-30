@@ -114,7 +114,7 @@ public partial class LpDogmaMachine : Machine
                     this.credentials.MergerCredentials.TryAdd(evidence))
                 {
                     _ = service.AddMergerCredential(evidence);
-                    this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} A has been created and added.");
+                    this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} has been created and added.");
                 }
             }
         }
