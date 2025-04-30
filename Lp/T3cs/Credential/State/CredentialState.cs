@@ -31,6 +31,8 @@ public abstract partial class CredentialState
     [IgnoreMember]
     public bool IsActive { get; set; }
 
+    public bool IsValid => this.NetNode is not null;
+
     #endregion
 
     public override string ToString()

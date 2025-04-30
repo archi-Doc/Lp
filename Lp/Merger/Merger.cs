@@ -49,7 +49,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
-            NumberOfFileHistories = 3,
+            NumberOfFileHistories = 0,
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
             RequiredForLoading = true,
         }).Data;

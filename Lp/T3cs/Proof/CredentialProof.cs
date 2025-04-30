@@ -103,6 +103,11 @@ public sealed partial class CredentialProof : Proof
             return false;
         }
 
+        if (!this.State.IsValid)
+        {
+            return false;
+        }
+
         return true;
     }
 

@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using Lp.T3cs;
+using Netsphere.Crypto;
 
 namespace Lp;
 
@@ -10,7 +11,7 @@ public partial record MergerConfiguration
 {
     public const string MergerFilename = "MergerConfiguration.tinyhand";
     public const string RelayMergerFilename = "RelayMergerConfiguration.tinyhand";
-    public const string DefaultName = "Test merger";
+    public const string DefaultName = "Test1";
     public const int DefaultMaxCredit = 1_000_000;
 
     public enum Type
@@ -29,7 +30,7 @@ public partial record MergerConfiguration
     }
 
     [DefaultValue(DefaultName)]
-    [MaxLength(LpConstants.MaxNameLength)]
+    [MaxLength(Alias.MaxAliasLength)]
     public partial string MergerName { get; private set; } = string.Empty;
 
     public Type MergerType { get; set; }
