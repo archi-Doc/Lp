@@ -35,10 +35,13 @@ public abstract partial class CredentialState
     [IgnoreMember]
     public bool IsActive { get; set; }
 
-    public bool IsValid => this.NetNode is not null && Alias.IsValid(this.Name);
+    public bool IsValid =>
+        this.NetNode is not null &&
+        this.NetNode.Address.IsValidIpv4AndIpv6 &&
+        Alias.IsValid(this.Name);
 
     #endregion
 
     public override string ToString()
-        => $"CredentialState: {this.NetNode}";
+        => $"CredentialState: {this.Name} {this.NetNode}";
 }
