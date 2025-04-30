@@ -12,9 +12,11 @@ namespace Lp;
 
 public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
+    private const string NameSuffix = "_M";
+
     #region FieldAndProperty
 
-    [MemberNotNullWhen(true, nameof(Information))]
+    [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(creditDataCrystal))]
     [MemberNotNullWhen(true, nameof(creditData))]
     // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
@@ -22,12 +24,13 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public SignaturePublicKey PublicKey { get; protected set; }
 
-    public MergerConfiguration? Information { get; protected set; }
+    public MergerConfiguration? Configuration { get; protected set; }
 
     public MergerState State { get; protected set; } = new();
 
     protected ILogger logger;
     protected ModestLogger modestLogger;
+    protected NetBase netBase;
     protected LpBase lpBase;
     protected NetStats netStats;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
@@ -36,18 +39,19 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     #endregion
 
-    public Merger(UnitContext context, UnitLogger unitLogger, LpBase lpBase, NetStats netStats)
+    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats)
         : base(context)
     {
         this.logger = unitLogger.GetLogger<Merger>();
         this.modestLogger = new(this.logger);
+        this.netBase = netBase;
         this.lpBase = lpBase;
         this.netStats = netStats;
     }
 
     public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
     {
-        this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
+        this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 0, // 3
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
@@ -62,6 +66,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             StorageConfiguration = new SimpleStorageConfiguration(
                 new GlobalDirectoryConfiguration("Merger/Storage")),
         });
+
+        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        {
+            this.netBase.NetOptions.NodeName
+        }
 
         this.creditData = this.creditDataCrystal.Data;
         this.seedKey = seedKey;
@@ -81,15 +90,15 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // this.logger.TryGet()?.Log(this.Information.ToString());
 
-        if (this.Information.MergerType == MergerConfiguration.Type.Single)
+        if (this.Configuration.MergerType == MergerConfiguration.Type.Single)
         {// Single credit
-            this.Information.SingleCredit = Credit.Default;
+            this.Configuration.SingleCredit = Credit.Default;
         }
         else
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Information.MergerName}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Information.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Configuration.MergerName}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)

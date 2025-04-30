@@ -27,7 +27,7 @@ public class RelayMerger : Merger
 
     public override void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
     {
-        this.Information = crystalizer.CreateCrystal<MergerConfiguration>(new()
+        this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 3,
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.RelayMergerFilename),
