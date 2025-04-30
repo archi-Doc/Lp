@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using Lp.T3cs;
+using Netsphere.Crypto;
 
 namespace Lp;
 
@@ -9,14 +10,12 @@ namespace Lp;
 public partial record LinkerConfiguration
 {
     public const string Filename = "LinkerConfiguration.tinyhand";
-    public const string DefaultName = "Test linker";
 
     public LinkerConfiguration()
     {
     }
 
     [KeyAsName]
-    [DefaultValue(DefaultName)]
-    [MaxLength(LpConstants.MaxNameLength)]
-    public partial string LinkerName { get; private set; } = string.Empty;
+    [MaxLength(Alias.MaxAliasLength)]
+    public partial string LinkerName { get; set; } = string.Empty;
 }
