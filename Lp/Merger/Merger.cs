@@ -184,6 +184,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // Check net node
         this.State.NetNode = this.netStats.OwnNetNode;
+        this.State.Name = this.Configuration.MergerName;
         if (this.State.NetNode is null)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
