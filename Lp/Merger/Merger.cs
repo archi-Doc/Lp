@@ -69,7 +69,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (string.IsNullOrEmpty(this.Configuration.MergerName))
         {
-            this.netBase.NetOptions.NodeName
+            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
         }
 
         this.creditData = this.creditDataCrystal.Data;
