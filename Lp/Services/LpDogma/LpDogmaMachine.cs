@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Security.Cryptography.X509Certificates;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -10,18 +9,23 @@ namespace Lp.Services;
 [MachineObject(UseServiceProvider = true)]
 public partial class LpDogmaMachine : Machine
 {// Control: context.AddSingleton<Machines.RelayPeerMachine>();
+    private const int BasalServiceThreshold = 3;
+
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ModestLogger modestLogger;
     private readonly ILogger logger;
+    private readonly LpBase lpBase;
     private readonly NetTerminal netTerminal;
     private readonly AuthorityControl authorityControl;
     private readonly LpDogma lpDogma;
     private readonly Credentials credentials;
+    private SeedKey? lpSeedKey = default;
 
-    public LpDogmaMachine(IUserInterfaceService consoleSeuserInterfaceServicevice, ILogger<LpDogmaMachine> logger, NetTerminal netTerminal, AuthorityControl authorityControl, LpDogma lpDogma, Credentials credentials)
+    public LpDogmaMachine(IUserInterfaceService consoleSeuserInterfaceServicevice, ILogger<LpDogmaMachine> logger, LpBase lpBase, NetTerminal netTerminal, AuthorityControl authorityControl, LpDogma lpDogma, Credentials credentials)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
         this.logger = logger;
+        this.lpBase = lpBase;
         this.netTerminal = netTerminal;
         this.modestLogger = new(this.logger);
         this.authorityControl = authorityControl;
@@ -36,13 +40,30 @@ public partial class LpDogmaMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        if (await this.authorityControl.GetLpSeedKey(null) is not { } lpSeedKey)
+        if (this.lpBase.BasalServiceCount < BasalServiceThreshold)
         {
             return StateResult.Continue;
         }
-        else
+
+        if (await this.authorityControl.GetLpSeedKey(null) is not { } seedKey)
         {
-            this.modestLogger.Interval(TimeSpan.FromHours(1), Hashed.Dogma.KeyConfirmed, LogLevel.Information)?.Log(Hashed.Dogma.KeyConfirmed);
+            return StateResult.Continue;
+        }
+
+        this.lpSeedKey = seedKey;
+        // this.modestLogger.Interval(TimeSpan.FromHours(1), Hashed.Dogma.KeyConfirmed, LogLevel.Information)?.Log(Hashed.Dogma.KeyConfirmed);
+        this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Dogma.KeyConfirmed);
+
+        this.ChangeState(State.Maintain, true);
+        return StateResult.Continue;
+    }
+
+    [StateMethod(1)]
+    protected async Task<StateResult> Maintain(StateParameter parameter)
+    {
+        if (this.lpSeedKey is null)
+        {
+            return StateResult.Continue;
         }
 
         foreach (var x in this.lpDogma.Mergers)
@@ -58,13 +79,13 @@ public partial class LpDogmaMachine : Machine
                 continue;
             }
 
-            if (MicsRange.FromPastToFastSystem(Mics.FromHours(1)).IsWithin(x.UpdatedMics))
+            if (MicsRange.FromPastToFastCorrected(Mics.FromHours(1)).IsWithin(x.UpdatedMics))
             {
                 continue;
             }
             else
             {
-                x.UpdatedMics = Mics.FastSystem;
+                x.UpdatedMics = Mics.FastCorrected;
             }
 
             var netNode = x.NetNode; // Alternative.NetNode;
@@ -77,10 +98,10 @@ public partial class LpDogmaMachine : Machine
                 }
 
                 var service = connection.GetService<LpDogmaNetService>();
-                var auth = AuthenticationToken.CreateAndSign(lpSeedKey, connection);
+                var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
                 var r = await service.Authenticate(auth).ResponseAsync;
 
-                var token = CertificateToken<Value>.CreateAndSign(new Value(x.MergerKey, 1, LpConstants.LpCredit), lpSeedKey, connection);
+                var token = CertificateToken<Value>.CreateAndSign(new Value(x.MergerKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
                 var credentialProof = await service.NewCredentialProof(token);
                 if (credentialProof is null ||
                     !credentialProof.ValidateAndVerify() ||
@@ -89,7 +110,7 @@ public partial class LpDogmaMachine : Machine
                     continue;
                 }
 
-                if (CredentialEvidence.TryCreate(credentialProof, lpSeedKey, out var evidence) &&
+                if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
                     this.credentials.MergerCredentials.TryAdd(evidence))
                 {
                     _ = service.AddMergerCredential(evidence);

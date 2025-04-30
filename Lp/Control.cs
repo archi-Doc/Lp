@@ -41,9 +41,6 @@ public class Control
 
             this.Configure(context =>
             {
-                // Base
-                LpBase.Configure(context);
-
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();

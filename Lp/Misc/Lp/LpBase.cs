@@ -9,12 +9,6 @@ namespace Lp;
 
 public class LpBase
 {
-    public static void Configure(IUnitConfigurationContext context)
-    {
-        // Main
-        context.AddSingleton<LpBase>();
-    }
-
     public LpBase()
     {
         this.Settings = TinyhandSerializer.Reconstruct<LpSettings>();
@@ -35,6 +29,8 @@ public class LpBase
     public LpOptions Options { get; private set; } = default!;
 
     public LpSettings Settings { get; set; }
+
+    public int BasalServiceCount { get; set; }
 
     private SignaturePublicKey remotePublicKey;
 
