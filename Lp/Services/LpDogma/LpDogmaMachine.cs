@@ -89,15 +89,12 @@ public partial class LpDogmaMachine : Machine
                     continue;
                 }
 
-                CredentialEvidence.TryCreate(credentialProof, lpSeedKey, out var evidence);
-                if (evidence?.ValidateAndVerify() != true)
+                if (CredentialEvidence.TryCreate(credentialProof, lpSeedKey, out var evidence) &&
+                    this.credentials.MergerCredentials.TryAdd(evidence))
                 {
-                    continue;
+                    _ = service.AddMergerCredential(evidence);
+                    this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} A has been created and added.");
                 }
-
-                this.credentials.MergerCredentials.Add(evidence);
-
-                this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} A has been created and added.");
             }
         }
 

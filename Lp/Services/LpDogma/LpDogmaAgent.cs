@@ -12,18 +12,20 @@ internal class LpDogmaAgent : LpDogmaNetService
     private readonly LpBase lpBase;
     private readonly Merger merger;
     private readonly RelayMerger relayMerger;
+    private readonly Credentials credentials;
     private bool authenticated;
 
     private bool IsActiveAndAuthenticated => this.merger.State.IsActive && this.authenticated;
 
     private bool IsAuthenticated => this.authenticated;
 
-    public LpDogmaAgent(NetBase netBase, LpBase lpBase, Merger merger, RelayMerger relayMerger)
+    public LpDogmaAgent(NetBase netBase, LpBase lpBase, Merger merger, RelayMerger relayMerger, Credentials credentials)
     {
         this.netBase = netBase;
         this.lpBase = lpBase;
         this.merger = merger;
         this.relayMerger = relayMerger;
+        this.credentials = credentials;
     }
 
     async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> LpDogmaNetService.Authenticate(AuthenticationToken token)
@@ -108,5 +110,22 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
 
         return credentialProof;
+    }
+
+    async NetTask<NetResult> LpDogmaNetService.AddMergerCredential(CredentialEvidence evidence)
+    {
+        if (!this.IsAuthenticated)
+        {
+            return NetResult.NotAuthenticated;
+        }
+
+        if (this.credentials.MergerCredentials.TryAdd(evidence))
+        {
+            return NetResult.Success;
+        }
+        else
+        {
+            return NetResult.InvalidData;
+        }
     }
 }

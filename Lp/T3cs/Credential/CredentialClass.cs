@@ -76,8 +76,13 @@ public sealed partial class CredentialClass
         return result;
     }
 
-    public void Add(CredentialEvidence evidence)
+    public bool TryAdd(CredentialEvidence evidence)
     {
+        if (evidence.ValidateAndVerify() != true)
+        {
+            return false;
+        }
+
         using (this.lockObject.EnterScope())
         {
             this.PrepareGoshujin();
@@ -87,6 +92,8 @@ public sealed partial class CredentialClass
                 this.UpdateGoshujin();
             }
         }
+
+        return true;
     }
 
     public bool TryGet(SignaturePublicKey key, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
