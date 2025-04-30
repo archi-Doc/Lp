@@ -96,6 +96,8 @@ public partial class LpDogmaMachine : Machine
                 }
 
                 this.credentials.MergerCredentials.Add(evidence);
+
+                this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} A has been created and added.");
             }
         }
 
