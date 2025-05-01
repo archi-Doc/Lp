@@ -57,22 +57,22 @@ public sealed partial class CredentialProof : Proof
         this.State = default!;
     }
 
-    public CredentialProof(SignaturePublicKey credentialKey, Value value, CredentialState state)
+    public CredentialProof(Value value, CredentialState state)
     {
-        this.CredentialKey = credentialKey;
+        // this.CredentialKey = credentialKey;
         this.Value = value;
         this.State = state;
     }
 
     #region FieldAndProperty
 
-    [Key(Proof.ReservedKeyCount)]
-    public SignaturePublicKey CredentialKey { get; private set; }
+    // [Key(Proof.ReservedKeyCount)]
+    // public SignaturePublicKey CredentialKey { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 1)]
+    [Key(Proof.ReservedKeyCount)]
     public Value Value { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 2)]
+    [Key(Proof.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
 
     public SignaturePublicKey Originator => this.GetSignatureKey();
@@ -82,7 +82,7 @@ public sealed partial class CredentialProof : Proof
     #endregion
 
     public override SignaturePublicKey GetSignatureKey()
-        => this.CredentialKey;
+        => this.Value.Owner;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {
@@ -112,5 +112,5 @@ public sealed partial class CredentialProof : Proof
     }
 
     public override string ToString()
-        => $"CredentialProof:{this.SignedMics.MicsToDateTimeString()} {this.CredentialKey}, {this.Value}, {this.State}";
+        => $"CredentialProof:{this.SignedMics.MicsToDateTimeString()} {this.Value}, {this.State}";
 }

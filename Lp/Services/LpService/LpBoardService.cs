@@ -16,7 +16,7 @@ public class LpBoardService(Credentials credentials)
             // return;
         }
 
-        var creditIdentity = new CreditIdentity(CreditKind.Board, originator, [merger]);
+        var creditIdentity = new Identity(IdentityKind.Board, originator, [merger]);
 
         var identifier = creditIdentity.GetIdentifier();
 

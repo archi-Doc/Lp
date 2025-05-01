@@ -34,7 +34,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #endregion
 
-    public static bool TryCreate(CreditIdentity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
+    public static bool TryCreate(Identity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
     {
         var obj = new Credit();
         obj.Identifier = creditIdentity.GetIdentifier();

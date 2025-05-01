@@ -69,7 +69,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (string.IsNullOrEmpty(this.Configuration.MergerName))
         {
-            this.netBase.NetOptions.NodeName
+            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
         }
 
         this.creditData = this.creditDataCrystal.Data;
@@ -150,7 +150,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         var mergerPublicKey = SeedKey.New(KeyOrientation.Signature).GetSignaturePublicKey();
-        var creditIdentity = new CreditIdentity(CreditKind.Full, param.Proof.PublicKey, [mergerPublicKey]);
+        var creditIdentity = new Identity(CreditKind.Full, param.Proof.PublicKey, [mergerPublicKey]);
         if (!Credit.TryCreate(creditIdentity, out var credit))
         {
             return new(T3csResult.UnknownError);
@@ -184,6 +184,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // Check net node
         this.State.NetNode = this.netStats.OwnNetNode;
+        this.State.Name = this.Configuration.MergerName;
         if (this.State.NetNode is null)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);

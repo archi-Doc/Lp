@@ -90,6 +90,7 @@ public partial record LpOptions
         return new NetOptions() with
         {
             Port = this.Port,
+            NodeName = this.NodeName,
             NodeSecretKey = this.NodeSecretKey,
             NodeList = this.NodeList,
             EnablePing = this.EnablePing,

@@ -42,7 +42,7 @@ public partial class CredentialEvidence : Evidence
     public override Proof Proof => this.CredentialProof;
 
     public SignaturePublicKey CredentialKey
-        => this.CredentialProof.CredentialKey;
+        => this.CredentialProof.GetSignatureKey();
 
     [Key(0)]
     public CredentialProof CredentialProof { get; protected set; } = default!;

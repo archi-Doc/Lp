@@ -17,6 +17,19 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const Point MinPoint = 1; // -MaxPoint;
 
+    #region FieldAndProperty
+
+    [Key(0)]
+    public SignaturePublicKey Owner { get; private set; }
+
+    [Key(1)]
+    public Point Point { get; private set; }
+
+    [Key(2)]
+    public Credit Credit { get; private set; } = new();
+
+    #endregion
+
     public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
     {
         var v = new Value();
@@ -125,19 +138,6 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         written = ownerWritten + 1 + pointWritten + creditWritten;
         return true;
     }
-
-    #endregion
-
-    #region FieldAndProperty
-
-    [Key(0)]
-    public SignaturePublicKey Owner { get; private set; }
-
-    [Key(1)]
-    public Point Point { get; private set; }
-
-    [Key(2)]
-    public Credit Credit { get; private set; } = new();
 
     #endregion
 

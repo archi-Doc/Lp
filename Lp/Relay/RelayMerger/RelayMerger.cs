@@ -8,8 +8,10 @@ namespace Lp.T3cs;
 
 public class RelayMerger : Merger
 {
-    public RelayMerger(UnitContext context, UnitLogger unitLogger, LpBase lpBase, NetStats netStats)
-        : base(context, unitLogger, lpBase, netStats)
+    private const string NameSuffix = "_RM";
+
+    public RelayMerger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats)
+        : base(context, unitLogger, netBase, lpBase, netStats)
     {
         this.logger = unitLogger.GetLogger<RelayMerger>();
     }
@@ -29,7 +31,7 @@ public class RelayMerger : Merger
     {
         this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
         {
-            NumberOfFileHistories = 3,
+            NumberOfFileHistories = 0,
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.RelayMergerFilename),
             RequiredForLoading = true,
         }).Data;
@@ -42,6 +44,11 @@ public class RelayMerger : Merger
             StorageConfiguration = new SimpleStorageConfiguration(
                 new GlobalDirectoryConfiguration("RelayMerger/Storage")),
         });
+
+        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        {
+            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
+        }
 
         this.creditData = this.creditDataCrystal.Data;
 

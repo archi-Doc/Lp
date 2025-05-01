@@ -8,9 +8,14 @@ namespace Lp.T3cs;
 /// <summary>
 /// Represents a credit identity.
 /// </summary>
-[TinyhandObject]
-public sealed partial record CreditIdentity : IValidatable
+[TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
+public partial record Identity : IValidatable
 {
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public const int ReservedKeyCount = 4;
+
     #region FieldAndProperty
 
     [Key(0)]
@@ -24,19 +29,19 @@ public sealed partial record CreditIdentity : IValidatable
     public required partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     [Key(3)]
-    public required CreditKind Kind { get; init; }
+    public required IdentityKind Kind { get; init; }
 
     public int MergerCount => this.Mergers.Length;
 
     #endregion
 
     [SetsRequiredMembers]
-    public CreditIdentity(CreditKind creditKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
+    public Identity(IdentityKind identityKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
     {
         this.SourceIdentifier = default;
         this.Originator = originator;
         this.Mergers = mergers;
-        this.Kind = creditKind;
+        this.Kind = identityKind;
     }
 
     public bool Validate()

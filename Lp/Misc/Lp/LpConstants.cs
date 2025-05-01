@@ -13,7 +13,7 @@ public static class LpConstants
     public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";
 
     public static readonly SignaturePublicKey LpPublicKey;
-    public static readonly CreditIdentity LpIdentity;
+    public static readonly Identity LpIdentity;
     public static readonly Credit LpCredit;
 
     static LpConstants()

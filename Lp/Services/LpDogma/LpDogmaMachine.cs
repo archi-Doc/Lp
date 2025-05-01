@@ -79,7 +79,7 @@ public partial class LpDogmaMachine : Machine
                 continue;
             }
 
-            if (MicsRange.FromPastToFastCorrected(Mics.FromHours(1)).IsWithin(x.UpdatedMics))
+            if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(x.UpdatedMics))
             {
                 continue;
             }
@@ -88,7 +88,7 @@ public partial class LpDogmaMachine : Machine
                 x.UpdatedMics = Mics.FastCorrected;
             }
 
-            var netNode = x.NetNode; // Alternative.NetNode;
+            var netNode = x.NetNode;
             using (var connection = await this.netTerminal.Connect(netNode))
             {
                 if (connection is null)
@@ -114,7 +114,7 @@ public partial class LpDogmaMachine : Machine
                     this.credentials.MergerCredentials.TryAdd(evidence))
                 {
                     _ = service.AddMergerCredential(evidence);
-                    this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} A has been created and added.");
+                    this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} has been created and added.");
                 }
             }
         }
