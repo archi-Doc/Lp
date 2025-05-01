@@ -20,7 +20,7 @@ public static class LpConstants
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
         Alias.Add(LpPublicKey, LpKeyAlias);
-        LpIdentity = new(CreditKind.Full, LpPublicKey, [LpPublicKey]);
+        LpIdentity = new(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
         Alias.Add(LpIdentity.GetIdentifier(), LpAlias);
         Credit.TryCreate(LpIdentity, out LpCredit!);
     }

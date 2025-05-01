@@ -19,19 +19,17 @@ public partial record Identity : IValidatable
     #region FieldAndProperty
 
     [Key(0)]
-    public required Identifier SourceIdentifier { get; init; }
-
-    [Key(1)]
-    public required SignaturePublicKey Originator { get; init; }
-
-    [Key(2)]
-    [MaxLength(Credit.MaxMergers)]
-    public required partial SignaturePublicKey[] Mergers { get; init; } = [];
-
-    [Key(3)]
     public required IdentityKind Kind { get; init; }
 
-    public int MergerCount => this.Mergers.Length;
+    [Key(1)]
+    public required Identifier SourceIdentifier { get; init; }
+
+    [Key(2)]
+    public required SignaturePublicKey Originator { get; init; }
+
+    [Key(3)]
+    [MaxLength(Credit.MaxMergers)]
+    public required partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     #endregion
 
@@ -52,6 +50,12 @@ public partial record Identity : IValidatable
         }
 
         if (!this.Originator.Validate())
+        {
+            return false;
+        }
+
+        if (this.Mergers.Length == 0 ||
+            this.Mergers.Length > Credit.MaxMergers)
         {
             return false;
         }
