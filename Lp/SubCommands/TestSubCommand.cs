@@ -93,7 +93,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             var g = new CredentialProof.GoshujinClass();
 
             var owner = SeedKey.NewSignature();
-            var creditIdentity = new CreditIdentity(CreditKind.Full, owner.GetSignaturePublicKey(), [SeedKey.NewSignature().GetSignaturePublicKey()]);
+            var creditIdentity = new Identity(CreditKind.Full, owner.GetSignaturePublicKey(), [SeedKey.NewSignature().GetSignaturePublicKey()]);
             if (Credit.TryCreate(creditIdentity, out var credit) &&
                 Value.TryCreate(owner.GetSignaturePublicKey(), 111, credit, out var value))
             {

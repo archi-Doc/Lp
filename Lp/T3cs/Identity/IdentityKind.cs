@@ -2,9 +2,9 @@
 
 namespace Lp.T3cs;
 
-public enum CreditKind : byte
+public enum IdentityKind : byte
 {
-    Full,
+    Credit,
     Board,
     Message,
 }
