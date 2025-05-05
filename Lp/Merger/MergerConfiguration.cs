@@ -9,9 +9,8 @@ namespace Lp;
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
 public partial record MergerConfiguration
 {
-    public const string MergerFilename = "MergerConfiguration.tinyhand";
-    public const string RelayMergerFilename = "RelayMergerConfiguration.tinyhand";
-    public const string DefaultName = "Test1";
+    public const string MergerFilename = "MergerConfiguration";
+    public const string RelayMergerFilename = "RelayMergerConfiguration";
     public const int DefaultMaxCredit = 1_000_000;
 
     public enum Type

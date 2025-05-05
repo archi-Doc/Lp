@@ -17,5 +17,5 @@ public partial record LinkerConfiguration
 
     [KeyAsName]
     [MaxLength(Alias.MaxAliasLength)]
-    public partial string LinkerName { get; set; } = string.Empty;
+    public partial string Name { get; set; } = string.Empty;
 }

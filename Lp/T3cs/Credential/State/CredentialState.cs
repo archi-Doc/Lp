@@ -9,6 +9,7 @@ namespace Lp.T3cs;
 /// Represents a proof object (authentication between merger and public key).<br/>
 /// </summary>
 [TinyhandUnion(0, typeof(MergerState))]
+[TinyhandUnion(1, typeof(LinkerState))]
 [TinyhandObject(ReservedKeyCount = CredentialState.ReservedKeyCount)]
 public abstract partial class CredentialState
 {
