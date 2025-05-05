@@ -35,6 +35,11 @@ public partial class CredentialEvidence : Evidence
 
             return true;
         }
+
+        /*public override int Trim(GoshujinClass goshujin, int integratedCount)
+        {
+            return base.Trim(goshujin, integratedCount);
+        }*/
     }
 
     #endregion
@@ -69,4 +74,12 @@ public partial class CredentialEvidence : Evidence
         evidence = obj;
         return true;
     }
+
+    /*protected void CredentialKeyLinkAdded()
+    {
+    }
+
+    protected void CredentialKeyLinkRemoved()
+    {
+    }*/
 }
