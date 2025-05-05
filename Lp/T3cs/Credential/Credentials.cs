@@ -19,6 +19,9 @@ public partial class Credentials
     [Key(2)]
     public CredentialClass CreditCredentials { get; private set; } = new();
 
+    [Key(3)]
+    public CredentialClass LinkerCredentials { get; private set; } = new();
+
     #endregion
 
     public Credentials()
@@ -30,6 +33,7 @@ public partial class Credentials
         this.MergerCredentials.Validate();
         this.RelayCredentials.Validate();
         this.CreditCredentials.Validate();
+        this.LinkerCredentials.Validate();
     }
 
     [TinyhandOnSerialized]
@@ -43,5 +47,6 @@ public partial class Credentials
         this.MergerCredentials.Validate();
         this.RelayCredentials.Validate();
         this.CreditCredentials.Validate();
+        this.LinkerCredentials.Validate();
     }
 }

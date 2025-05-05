@@ -102,7 +102,7 @@ public partial class LpDogmaMachine : Machine
                 var r = await service.Authenticate(auth).ResponseAsync;
 
                 var token = CertificateToken<Value>.CreateAndSign(new Value(x.MergerKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
-                var credentialProof = await service.NewCredentialProof(token);
+                var credentialProof = await service.CreateMergerCredentialProof(token);
                 if (credentialProof is null ||
                     !credentialProof.ValidateAndVerify() ||
                     !credentialProof.GetSignatureKey().Equals(x.MergerKey))
@@ -113,7 +113,7 @@ public partial class LpDogmaMachine : Machine
                 if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
                     this.credentials.MergerCredentials.TryAdd(evidence))
                 {
-                    _ = service.AddMergerCredential(evidence);
+                    _ = service.AddMergerCredentialEvidence(evidence);
                     this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} has been created and added.");
                 }
             }
