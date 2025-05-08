@@ -1,15 +1,61 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
+using Lp.Services;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject(Integrality = true)]
+[ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
 public partial class CredentialEvidence : Evidence
 {
+    #region GoshujinClass
+
+    [TinyhandObject(External = true)]
+    public partial class GoshujinClass
+    {
+        [IgnoreMember]
+        public bool SyncAlias { get; set; }
+
+        public void Validate()
+        {
+            using (this.LockObject.EnterScope())
+            {
+                TemporaryList<CredentialEvidence> toDelete = default;
+                foreach (var evidence in this)
+                {
+                    if (!evidence.Validate())
+                    {
+                        toDelete.Add(evidence);
+                    }
+                }
+
+                foreach (var evidence in toDelete)
+                {
+                    this.Remove(evidence);
+                }
+            }
+        }
+
+        public bool TryAdd(CredentialEvidence evidence)
+        {
+            if (evidence.ValidateAndVerify() != true)
+            {
+                return false;
+            }
+
+            using (this.lockObject.EnterScope())
+            {
+                return ((IIntegralityGoshujin)this).IntegrateObject(Integrality.Default, evidence) == IntegralityResult.Success;
+            }
+        }
+    }
+
+    #endregion
+
     #region Integrality
 
     public class Integrality : Integrality<CredentialEvidence.GoshujinClass, CredentialEvidence>
@@ -35,6 +81,11 @@ public partial class CredentialEvidence : Evidence
 
             return true;
         }
+
+        /*public override int Trim(GoshujinClass goshujin, int integratedCount)
+        {
+            return base.Trim(goshujin, integratedCount);
+        }*/
     }
 
     #endregion
@@ -68,5 +119,21 @@ public partial class CredentialEvidence : Evidence
 
         evidence = obj;
         return true;
+    }
+
+    protected void CredentialKeyLinkAdded()
+    {
+        if (this.Goshujin?.SyncAlias == true)
+        {
+            Alias.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
+        }
+    }
+
+    protected void CredentialKeyLinkRemoved()
+    {
+        if (this.Goshujin?.SyncAlias == true)
+        {
+            Alias.Remove(this.CredentialKey);
+        }
     }
 }

@@ -19,7 +19,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(creditDataCrystal))]
     [MemberNotNullWhen(true, nameof(creditData))]
-    // [MemberNotNullWhen(true, nameof(mergerPrivateKey))]
     public virtual bool Initialized { get; protected set; }
 
     public SignaturePublicKey PublicKey { get; protected set; }
@@ -150,7 +149,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         var mergerPublicKey = SeedKey.New(KeyOrientation.Signature).GetSignaturePublicKey();
-        var creditIdentity = new Identity(CreditKind.Full, param.Proof.PublicKey, [mergerPublicKey]);
+        var creditIdentity = new Identity(IdentityKind.Credit, param.Proof.PublicKey, [mergerPublicKey]);
         if (!Credit.TryCreate(creditIdentity, out var credit))
         {
             return new(T3csResult.UnknownError);

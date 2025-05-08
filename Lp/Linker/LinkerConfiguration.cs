@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.ComponentModel;
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -17,5 +18,5 @@ public partial record LinkerConfiguration
 
     [KeyAsName]
     [MaxLength(Alias.MaxAliasLength)]
-    public partial string LinkerName { get; set; } = string.Empty;
+    public partial string Name { get; set; } = string.Empty;
 }

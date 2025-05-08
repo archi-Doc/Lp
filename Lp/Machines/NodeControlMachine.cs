@@ -337,7 +337,7 @@ public partial class NodeControlMachine : Machine
                     this.nodeControl.ProcessGetActiveNodes(r2.Span);
 
                     // Credentials
-                    _ = await this.credentials.MergerCredentials.Integrate((x, y) => service.DifferentiateMergerCredential(x));
+                    _ = await CredentialEvidence.Integrality.Default.Integrate(this.credentials.MergerCredentials, (x, y) => service.DifferentiateMergerCredential(x));
                 }
             }
         }

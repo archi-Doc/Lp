@@ -40,7 +40,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
 
         var service = connection.GetService<LpDogmaNetService>();
         var token = CertificateToken<Value>.CreateAndSign(new Value(publicKey, 1, LpConstants.LpCredit), seedKey, connection);
-        var credentialProof = await service.NewCredentialProof(token);
+        var credentialProof = await service.CreateMergerCredentialProof(token);
         if (credentialProof is null ||
             !credentialProof.ValidateAndVerify() ||
             !credentialProof.GetSignatureKey().Equals(publicKey))

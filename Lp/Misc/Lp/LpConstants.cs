@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -19,9 +20,9 @@ public static class LpConstants
     static LpConstants()
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
-        Alias.Add(LpPublicKey, LpKeyAlias);
-        LpIdentity = new(CreditKind.Full, LpPublicKey, [LpPublicKey]);
-        Alias.Add(LpIdentity.GetIdentifier(), LpAlias);
+        Alias.Add(LpKeyAlias, LpPublicKey);
+        LpIdentity = new(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
+        Alias.Add(LpAlias, LpIdentity.GetIdentifier());
         Credit.TryCreate(LpIdentity, out LpCredit!);
     }
 
