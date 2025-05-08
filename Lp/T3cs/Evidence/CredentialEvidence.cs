@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -10,13 +11,50 @@ namespace Lp.T3cs;
 [ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
 public partial class CredentialEvidence : Evidence
 {
-    #region Integrality
+    #region GoshujinClass
 
     public partial class GoshujinClass
     {
         [IgnoreMember]
         public bool SyncAlias { get; set; }
+
+        public void Validate()
+        {
+            using (this.LockObject.EnterScope())
+            {
+                TemporaryList<CredentialEvidence> toDelete = default;
+                foreach (var evidence in this)
+                {
+                    if (!evidence.Validate())
+                    {
+                        toDelete.Add(evidence);
+                    }
+                }
+
+                foreach (var evidence in toDelete)
+                {
+                    this.Remove(evidence);
+                }
+            }
+        }
+
+        public bool TryAdd(CredentialEvidence evidence)
+        {
+            if (evidence.ValidateAndVerify() != true)
+            {
+                return false;
+            }
+
+            using (this.lockObject.EnterScope())
+            {
+                return ((IIntegralityGoshujin)this).IntegrateObject(Integrality.Default, evidence) == IntegralityResult.Success;
+            }
+        }
     }
+
+    #endregion
+
+    #region Integrality
 
     public class Integrality : Integrality<CredentialEvidence.GoshujinClass, CredentialEvidence>
     {

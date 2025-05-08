@@ -73,7 +73,7 @@ public partial class LpDogmaMachine : Machine
                 return StateResult.Terminate;
             }
 
-            if (this.credentials.MergerCredentials.TryGet(x.MergerKey, out _))
+            if (this.credentials.MergerCredentials.CredentialKeyChain.FindFirst(x.MergerKey) is not null)
             {
                 // this.userInterfaceService.WriteLine($"{x.MergerKey.ToString()} -> valid");
                 continue;

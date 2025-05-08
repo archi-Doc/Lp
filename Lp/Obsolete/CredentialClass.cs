@@ -1,14 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using Arc.Collections;
-using Microsoft.VisualBasic;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
 namespace Lp.T3cs;
 
+/*
 [TinyhandObject]
 public sealed partial class CredentialClass
 {
@@ -121,4 +120,4 @@ public sealed partial class CredentialClass
             this.immutableGoshujin = newGoshujin;
         }
     }
-}
+}*/
