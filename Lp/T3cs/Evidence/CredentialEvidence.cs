@@ -12,6 +12,12 @@ public partial class CredentialEvidence : Evidence
 {
     #region Integrality
 
+    public partial class GoshujinClass
+    {
+        [IgnoreMember]
+        public bool SyncAlias { get; set; }
+    }
+
     public class Integrality : Integrality<CredentialEvidence.GoshujinClass, CredentialEvidence>
     {
         public static readonly Integrality Default = new()
@@ -75,11 +81,19 @@ public partial class CredentialEvidence : Evidence
         return true;
     }
 
-    /*protected void CredentialKeyLinkAdded()
+    protected void CredentialKeyLinkAdded()
     {
+        if (this.Goshujin?.SyncAlias == true)
+        {
+            Alias.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
+        }
     }
 
     protected void CredentialKeyLinkRemoved()
     {
-    }*/
+        if (this.Goshujin?.SyncAlias == true)
+        {
+            Alias.Remove(this.CredentialKey);
+        }
+    }
 }
