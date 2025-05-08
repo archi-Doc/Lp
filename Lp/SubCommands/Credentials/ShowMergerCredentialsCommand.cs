@@ -19,7 +19,7 @@ public class ShowMergerCredentialsCommand : ISimpleCommand
     {
         foreach (var evidence in this.credentials.MergerCredentials.ToArray())
         {
-            this.userInterfaceService.WriteLine($"{evidence}");
+            this.userInterfaceService.WriteLine($"{evidence.ToReadable()}");
         }
     }
 

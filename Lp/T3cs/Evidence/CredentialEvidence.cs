@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Arc.Collections;
+using Lp.Services;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -13,6 +14,7 @@ public partial class CredentialEvidence : Evidence
 {
     #region GoshujinClass
 
+    [TinyhandObject(External = true)]
     public partial class GoshujinClass
     {
         [IgnoreMember]
