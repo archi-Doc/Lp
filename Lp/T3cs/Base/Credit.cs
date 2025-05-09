@@ -54,7 +54,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #region IStringConvertible
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance, out int read)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance, out int read, IConversionOptions? conversionOptions = default)
     {// @Originator/Merger1+Merger2
         instance = default;
         read = 0;
@@ -67,7 +67,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         var initialLength = span.Length;
         span = span.Slice(1);
-        if (!Identifier.TryParse(span, out var identifier, out var originatorRead))
+        if (!Identifier.TryParse(span, out var identifier, out var originatorRead, conversionOptions))
         {// Identifier
             return false;
         }
@@ -80,7 +80,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
 
         span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var merger1, out read))
+        if (!SignaturePublicKey.TryParse(span, out var merger1, out read, conversionOptions))
         {
             return false;
         }
@@ -102,7 +102,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
 
         span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var merger2, out read))
+        if (!SignaturePublicKey.TryParse(span, out var merger2, out read, conversionOptions))
         {
             return false;
         }
@@ -123,7 +123,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
 
         span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var merger3, out read))
+        if (!SignaturePublicKey.TryParse(span, out var merger3, out read, conversionOptions))
         {
             return false;
         }
@@ -154,7 +154,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         return length;
     }
 
-    public bool TryFormat(Span<char> destination, out int written)
+    public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
     {
         written = 0;
         var length = this.GetStringLength();
@@ -167,7 +167,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         span[0] = CreditSymbol;
         span = span.Slice(1);
 
-        if (!this.Identifier.TryFormat(span, out var w))
+        if (!this.Identifier.TryFormat(span, out var w, conversionOptions))
         {
             return false;
         }
@@ -198,7 +198,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
                 span = span.Slice(1);
             }
 
-            if (!x.TryFormat(span, out w))
+            if (!x.TryFormat(span, out w, conversionOptions))
             {
                 return false;
             }

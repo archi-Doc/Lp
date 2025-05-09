@@ -35,7 +35,6 @@ public partial record MergerConfiguration
 
     public Type MergerType { get; set; }
 
-    [KeyAsName(ConvertToString = true)]
     public Credit? SingleCredit { get; set; }
 
     [DefaultValue(DefaultMaxCredit)]

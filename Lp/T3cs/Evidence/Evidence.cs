@@ -161,5 +161,5 @@ public abstract partial class Evidence : IValidatable
         => $"Evidence {{ {this.Proof} }}";
 
     public string ToReadable()
-        => $"Evidence {{ {this.Proof.ToReadable()} }}";
+        => $"Evidence {{ {this.Proof} }}";
 }

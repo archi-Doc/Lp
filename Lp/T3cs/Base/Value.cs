@@ -53,7 +53,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance, out int read)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance, out int read, IConversionOptions? conversionOptions = default)
     {// Owner#Point@Originator/Mergers
         instance = default;
         read = 0;
@@ -68,7 +68,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         var initialLength = span.Length;
         var ownerSpan = span.Slice(0, pointIndex);
         if (ownerSpan.Length < SignaturePublicKey.MaxStringLength ||
-            !SignaturePublicKey.TryParse(ownerSpan, out var owner, out _))
+            !SignaturePublicKey.TryParse(ownerSpan, out var owner, out _, conversionOptions))
         {
             return false;
         }
@@ -87,7 +87,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         span = span.Slice(creditIndex);
-        if (!Credit.TryParse(span, out var credit, out var read2))
+        if (!Credit.TryParse(span, out var credit, out var read2, conversionOptions))
         {
             return false;
         }
@@ -106,7 +106,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public int GetStringLength() => -1;
 
-    public bool TryFormat(Span<char> destination, out int written)
+    public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
     {
         written = 0;
         if (destination.Length < MaxStringLength)
@@ -115,7 +115,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         var span = destination;
-        if (!this.Owner.TryFormat(span, out var ownerWritten))
+        if (!this.Owner.TryFormat(span, out var ownerWritten, conversionOptions))
         {
             return false;
         }
@@ -130,7 +130,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
         span = span.Slice(pointWritten);
 
-        if (!this.Credit.TryFormat(span, out var creditWritten))
+        if (!this.Credit.TryFormat(span, out var creditWritten, conversionOptions))
         {
             return false;
         }

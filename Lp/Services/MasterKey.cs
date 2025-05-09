@@ -30,7 +30,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
 
     public static int MaxStringLength { get; }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out MasterKey masterKey, out int read)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out MasterKey masterKey, out int read, IConversionOptions? conversionOptions = default)
     {
         if (source.Length < MaxStringLength)
         {
@@ -55,7 +55,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
     public int GetStringLength()
         => MaxStringLength;
 
-    public bool TryFormat(Span<char> destination, out int written)
+    public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
         => Base64.Url.FromByteArrayToSpan(this.seed, destination, out written);
 
     #endregion
