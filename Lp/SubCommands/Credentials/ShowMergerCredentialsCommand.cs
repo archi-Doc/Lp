@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere.Crypto;
 using Netsphere.Stats;
 using SimpleCommandLine;
 
@@ -19,7 +20,7 @@ public class ShowMergerCredentialsCommand : ISimpleCommand
     {
         foreach (var evidence in this.credentials.MergerCredentials.ToArray())
         {
-            this.userInterfaceService.WriteLine($"{evidence.ToReadable()}");
+            this.userInterfaceService.WriteLine($"{evidence.ToString(Alias.Instance)}");
         }
     }
 

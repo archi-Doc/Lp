@@ -166,6 +166,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         var span = destination;
         span[0] = CreditSymbol;
         span = span.Slice(1);
+        written += 1;
 
         if (!this.Identifier.TryFormat(span, out var w, conversionOptions))
         {
@@ -173,6 +174,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
 
         span = span.Slice(w);
+        written += w;
 
         /*span[0] = StandardSymbol;
         span = span.Slice(1);
@@ -191,11 +193,13 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
                 isFirst = false;
                 span[0] = MergerSymbol;
                 span = span.Slice(1);
+                written += 1;
             }
             else
             {
                 span[0] = MergerSeparatorSymbol;
                 span = span.Slice(1);
+                written += 1;
             }
 
             if (!x.TryFormat(span, out w, conversionOptions))
@@ -204,9 +208,9 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             }
 
             span = span.Slice(w);
+            written += w;
         }
 
-        written = length;
         return true;
     }
 

@@ -43,6 +43,8 @@ public abstract partial class CredentialState
 
     #endregion
 
-    public override string ToString()
+    public override string ToString() => this.ToString(default);
+
+    public string ToString(IConversionOptions? conversionOptions)
         => $"CredentialState: {this.Name} {this.NetNode}";
 }

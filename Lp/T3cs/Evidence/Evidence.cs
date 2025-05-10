@@ -157,9 +157,8 @@ public abstract partial class Evidence : IValidatable
         }
     }
 
-    public override string ToString()
-        => $"Evidence {{ {this.Proof} }}";
+    public override string ToString() => this.ToString(default);
 
-    public string ToReadable()
-        => $"Evidence {{ {this.Proof} }}";
+    public string ToString(IConversionOptions? conversionOptions)
+        => $"Evidence {{ {this.Proof.ToString(conversionOptions)} }}";
 }

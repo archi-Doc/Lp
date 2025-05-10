@@ -202,6 +202,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         return hash.ToHashCode();
     }
 
-    public override string ToString()
-        => this.ConvertToString();
+    public override string ToString() => this.ConvertToString();
+
+    public string ToString(IConversionOptions? conversionOptions) => this.ConvertToString(conversionOptions);
 }

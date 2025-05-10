@@ -142,6 +142,11 @@ public abstract partial class Proof : IEquatable<Proof>
             this.GetSignatureKey().Equals(other.GetSignatureKey());
     }
 
+    public override string ToString() => this.ToString(default);
+
+    public virtual string ToString(IConversionOptions? conversionOptions)
+        => $"Proof:";
+
     /// <summary>
     /// Prepares the proof for signing by setting the verification and expiration times.
     /// </summary>
