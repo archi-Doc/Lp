@@ -24,16 +24,15 @@ public partial class LinkerLinkage : Linkage<LinkerProof>
 }*/
 
 [TinyhandObject]
-public partial class Linkage<TProof> : IValidatable
-    where TProof : Proof
+public partial class Linkage : IValidatable
 {
     #region FieldAndProperty
 
     [Key(0)]
-    public TProof ProofA { get; set; }
+    public Proof ProofA { get; set; }
 
     [Key(1)]
-    public TProof ProofB { get; set; }
+    public Proof ProofB { get; set; }
 
     [Key(2)]
     private byte[]? mergerSignatureA1;
@@ -58,7 +57,7 @@ public partial class Linkage<TProof> : IValidatable
 
     #endregion
 
-    public Linkage(TProof proofA, TProof proofB)
+    public Linkage(Proof proofA, Proof proofB)
     {
         this.ProofA = proofA;
         this.ProofB = proofB;
@@ -82,36 +81,5 @@ public partial class Linkage<TProof> : IValidatable
         }
 
         return true;
-    }
-}
-
-/// <summary>
-/// Immutable linkage object (authentication between mergers).
-/// </summary>
-[TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class Linkage : IValidatable
-{// Linkage x Point
-    // [Link(Primary = true, TargetMember = "ProofMics", Type = ChainType.Ordered)]
-    public Linkage(Evidence linkedEvidence)
-    {
-        // this.LinkedEvidence = linkedEvidence;
-    }
-
-    private Linkage()
-    {
-        // this.LinkedEvidence = default!;
-    }
-
-    // [Key(0)]
-    // public Evidence LinkedEvidence { get; private set; }
-
-    [Key(1)]
-    public byte[]? WatchmanSignature { get; private set; }
-
-    public bool Validate()
-    {
-        return true;
-        // return this.LinkedEvidence.Validate();
     }
 }

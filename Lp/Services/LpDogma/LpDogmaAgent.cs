@@ -142,4 +142,14 @@ internal class LpDogmaAgent : LpDogmaNetService
             return NetResult.InvalidData;
         }
     }
+
+    async NetTask<LinkerProof?> LpDogmaNetService.CreateLinkerProof(CertificateToken<Value> token)
+    {
+        if (!this.IsAuthenticated)
+        {
+            return default;
+        }
+
+        return default;
+    }
 }
