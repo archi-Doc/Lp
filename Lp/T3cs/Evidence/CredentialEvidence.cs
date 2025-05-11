@@ -125,7 +125,7 @@ public partial class CredentialEvidence : Evidence
     {
         if (this.Goshujin?.SyncAlias == true)
         {
-            Alias.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
+            Alias.Instance.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
         }
     }
 
@@ -133,7 +133,7 @@ public partial class CredentialEvidence : Evidence
     {
         if (this.Goshujin?.SyncAlias == true)
         {
-            Alias.Remove(this.CredentialKey);
+            Alias.Instance.Remove(this.CredentialKey);
         }
     }
 }
