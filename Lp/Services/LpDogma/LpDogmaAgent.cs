@@ -99,8 +99,8 @@ internal class LpDogmaAgent : LpDogmaNetService
             return default;
         }
 
-        var credentialProof = new CredentialProof(token.Target, this.merger.State);
-        if (!this.merger.TrySign(credentialProof, CredentialProof.LpExpirationMics) ||
+        var credentialProof = new CredentialProof(token.Target, this.linker.State);
+        if (!this.linker.TrySign(credentialProof, CredentialProof.LpExpirationMics) ||
             !credentialProof.ValidateAndVerify())
         {
             return default;

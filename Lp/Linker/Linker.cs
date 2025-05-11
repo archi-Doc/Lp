@@ -78,6 +78,9 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
         this.Initialized = true;
     }
 
+    public bool TrySign(Proof proof, long validMics)
+        => this.seedKey is null ? false : this.seedKey.TrySign(proof, validMics);
+
     public void UpdateState()
     {
         if (!this.Initialized)
