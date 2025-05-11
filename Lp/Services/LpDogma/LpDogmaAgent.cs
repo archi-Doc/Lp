@@ -12,6 +12,7 @@ internal class LpDogmaAgent : LpDogmaNetService
     private readonly LpBase lpBase;
     private readonly Merger merger;
     private readonly RelayMerger relayMerger;
+    private readonly Linker linker;
     private readonly Credentials credentials;
     private bool authenticated;
 
@@ -19,12 +20,13 @@ internal class LpDogmaAgent : LpDogmaNetService
 
     private bool IsAuthenticated => this.authenticated;
 
-    public LpDogmaAgent(NetBase netBase, LpBase lpBase, Merger merger, RelayMerger relayMerger, Credentials credentials)
+    public LpDogmaAgent(NetBase netBase, LpBase lpBase, Merger merger, RelayMerger relayMerger, Credentials credentials, Linker linker)
     {
         this.netBase = netBase;
         this.lpBase = lpBase;
         this.merger = merger;
         this.relayMerger = relayMerger;
+        this.linker = linker;
         this.credentials = credentials;
     }
 
@@ -57,7 +59,7 @@ internal class LpDogmaAgent : LpDogmaNetService
             return default;
         }
 
-        var info = new LpDogmaInformation(this.netBase.NodePublicKey, this.merger.GetMergerKey(), this.relayMerger.GetMergerKey(), default);
+        var info = new LpDogmaInformation(this.netBase.NodePublicKey, this.merger.PublicKey, this.relayMerger.PublicKey, this.linker.PublicKey);
         return info;
     }
 

@@ -15,11 +15,14 @@ public partial record class LpDogma
     [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class CredentialNode(
         NetNode NetNode,
-        SignaturePublicKey MergerKey)
+        SignaturePublicKey PublicKey)
     {
         public long UpdatedMics { get; set; }
     }
 
     [KeyAsName]
     public CredentialNode[] Mergers { get; set; } = [];
+
+    [KeyAsName]
+    public CredentialNode[] Linkers { get; set; } = [];
 }
