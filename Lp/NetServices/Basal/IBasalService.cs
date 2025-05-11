@@ -11,5 +11,7 @@ public interface IBasalService : INetService
 
     Task<BytePool.RentMemory> DifferentiateMergerCredential(ReadOnlyMemory<byte> memory);
 
+    Task<BytePool.RentMemory> DifferentiateLinkerCredential(ReadOnlyMemory<byte> memory);
+
     Task<string?> GetNodeInformation();
 }

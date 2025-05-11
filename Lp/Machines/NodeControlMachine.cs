@@ -338,6 +338,7 @@ public partial class NodeControlMachine : Machine
 
                     // Credentials
                     _ = await CredentialEvidence.Integrality.Default.Integrate(this.credentials.MergerCredentials, (x, y) => service.DifferentiateMergerCredential(x));
+                    _ = await CredentialEvidence.Integrality.Default.Integrate(this.credentials.LinkerCredentials, (x, y) => service.DifferentiateLinkerCredential(x));
                 }
             }
         }
