@@ -20,6 +20,14 @@ public partial class CredentialEvidence : Evidence
         [IgnoreMember]
         public bool SyncAlias { get; set; }
 
+        public CredentialEvidence[] LockAndToArray()
+        {
+            using (this.LockObject.EnterScope())
+            {
+                return this.ToArray();
+            }
+        }
+
         public void Validate()
         {
             using (this.LockObject.EnterScope())

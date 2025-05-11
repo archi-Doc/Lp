@@ -1,0 +1,35 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using Lp.T3cs;
+using Netsphere.Crypto;
+using SimpleCommandLine;
+
+namespace Lp.Subcommands.Credential;
+
+[SimpleCommand("show-credentials")]
+public class ShowCredentialsCommand : ISimpleCommand
+{
+    public ShowCredentialsCommand(IUserInterfaceService userInterfaceService, Credentials credentials)
+    {
+        this.userInterfaceService = userInterfaceService;
+        this.credentials = credentials;
+    }
+
+    public void Run(string[] args)
+    {
+        this.userInterfaceService.WriteLine($"Mergers");
+        foreach (var evidence in this.credentials.MergerCredentials.LockAndToArray())
+        {
+            this.userInterfaceService.WriteLine($"{evidence.ToString(Alias.Instance)}");
+        }
+
+        this.userInterfaceService.WriteLine($"Linkers");
+        foreach (var evidence in this.credentials.LinkerCredentials.LockAndToArray())
+        {
+            this.userInterfaceService.WriteLine($"{evidence.ToString(Alias.Instance)}");
+        }
+    }
+
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly Credentials credentials;
+}
