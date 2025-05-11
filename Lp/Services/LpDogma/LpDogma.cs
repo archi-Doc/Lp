@@ -15,17 +15,17 @@ public partial record class LpDogma
 
     [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class Credential(
-        NetNode NetNode,
-        SignaturePublicKey PublicKey)
+        SignaturePublicKey PublicKey,
+        NetNode NetNode)
     {
         public long UpdatedMics { get; set; }
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class Linkage(
+        SignaturePublicKey LinkerPublicKey,
         Credit Credit1,
-        Credit Credit2,
-        SignaturePublicKey LinkerPublicKey)
+        Credit Credit2)
     {
         public long UpdatedMics { get; set; }
     }

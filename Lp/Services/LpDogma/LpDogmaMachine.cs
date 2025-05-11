@@ -231,7 +231,10 @@ public partial class LpDogmaMachine : Machine
             linkage.UpdatedMics = Mics.FastCorrected;
         }
 
-        // this.credentials.MergerCredentials.LockAndTryGet(linkage.Credit1.Mergers);
+        if (!this.credentials.MergerCredentials.LockAndTryGet(linkage.Credit1.Mergers[0], out var credentialEvidence))
+        {
+            return StateResult.Continue;
+        }
 
         /*var netNode = linkage.NetNode;
         using (var connection = await this.netTerminal.Connect(netNode))

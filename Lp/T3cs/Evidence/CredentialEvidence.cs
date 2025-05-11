@@ -28,6 +28,15 @@ public partial class CredentialEvidence : Evidence
             }
         }
 
+        public bool LockAndTryGet(SignaturePublicKey publicKey, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
+        {
+            using (this.LockObject.EnterScope())
+            {
+                credentialEvidence = this.CredentialKeyChain.FindFirst(publicKey);
+                return credentialEvidence is not null;
+            }
+        }
+
         public void Validate()
         {
             using (this.LockObject.EnterScope())
