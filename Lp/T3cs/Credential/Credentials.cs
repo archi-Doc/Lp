@@ -15,6 +15,9 @@ public sealed partial class Credentials
     [Key(0)]
     private readonly CredentialEvidence.GoshujinClass credentialEvidences = new();
 
+    [Key(1)]
+    private readonly Linkage.GoshujinClass linkages = new();
+
     #endregion
 
     public Credentials()

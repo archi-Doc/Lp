@@ -24,6 +24,7 @@ public partial class LinkerLinkage : Linkage<LinkerProof>
 }*/
 
 [TinyhandObject]
+[ValueLinkObject]
 public partial class Linkage : IValidatable
 {
     #region FieldAndProperty
