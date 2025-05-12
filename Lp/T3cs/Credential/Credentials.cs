@@ -1,40 +1,80 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
+using Netsphere.Crypto;
+using ValueLink.Integrality;
+
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class Credentials
+public sealed partial class Credentials
 {
     #region FieldAndProperty
 
     [Key(0)]
-    public CredentialEvidence.GoshujinClass MergerCredentials { get; private set; } = new();
-
-    [Key(1)]
-    public CredentialEvidence.GoshujinClass RelayCredentials { get; private set; } = new();
-
-    [Key(2)]
-    public CredentialEvidence.GoshujinClass CreditCredentials { get; private set; } = new();
-
-    [Key(3)]
-    public CredentialEvidence.GoshujinClass LinkerCredentials { get; private set; } = new();
+    private readonly CredentialEvidence.GoshujinClass credentialEvidences = new();
 
     #endregion
 
     public Credentials()
     {
-        this.MergerCredentials.SyncAlias = true;
-        this.RelayCredentials.SyncAlias = true;
-        this.CreditCredentials.SyncAlias = true;
-        this.LinkerCredentials.SyncAlias = true;
+        this.credentialEvidences.SyncAlias = true;
+    }
+
+    public CredentialEvidence[] LockAndToArray()
+    {
+        using (this.credentialEvidences.LockObject.EnterScope())
+        {
+            return this.ToArray();
+        }
+    }
+
+    public bool LockAndTryGet(SignaturePublicKey publicKey, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
+    {
+        using (this.credentialEvidences.LockObject.EnterScope())
+        {
+            credentialEvidence = this.credentialEvidences.CredentialKeyChain.FindFirst(publicKey);
+            return credentialEvidence is not null;
+        }
     }
 
     public void Validate()
     {
-        this.MergerCredentials.Validate();
-        this.RelayCredentials.Validate();
-        this.CreditCredentials.Validate();
-        this.LinkerCredentials.Validate();
+        using (this.credentialEvidences.LockObject.EnterScope())
+        {
+            TemporaryList<CredentialEvidence> toDelete = default;
+            foreach (var evidence in this.credentialEvidences)
+            {
+                if (!evidence.Validate())
+                {
+                    toDelete.Add(evidence);
+                }
+            }
+
+            foreach (var evidence in toDelete)
+            {
+                this.credentialEvidences.Remove(evidence);
+            }
+        }
+    }
+
+    public bool TryAdd(CredentialEvidence evidence)
+    {
+        if (evidence.ValidateAndVerify() != true)
+        {
+            return false;
+        }
+
+        using (this.lockObject.EnterScope())
+        {
+            return ((IIntegralityGoshujin)this).IntegrateObject(Integrality.Default, evidence) == IntegralityResult.Success;
+        }
+    }
+
+    public void Validate()
+    {
+        this.credentialEvidences.Validate();
     }
 
     [TinyhandOnSerialized]

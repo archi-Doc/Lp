@@ -57,22 +57,22 @@ public sealed partial class CredentialProof : Proof
         this.State = default!;
     }
 
-    public CredentialProof(Value value, CredentialState state)
+    public CredentialProof(Value value, CredentialKind kind, CredentialState state)
     {
-        // this.CredentialKey = credentialKey;
         this.Value = value;
+        this.Kind = kind;
         this.State = state;
     }
 
     #region FieldAndProperty
 
-    // [Key(Proof.ReservedKeyCount)]
-    // public SignaturePublicKey CredentialKey { get; private set; }
-
     [Key(Proof.ReservedKeyCount)]
     public Value Value { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 1)]
+    public CredentialKind Kind { get; private set; }
+
+    [Key(Proof.ReservedKeyCount + 2)]
     public CredentialState State { get; private set; }
 
     public SignaturePublicKey Originator => this.GetSignatureKey();

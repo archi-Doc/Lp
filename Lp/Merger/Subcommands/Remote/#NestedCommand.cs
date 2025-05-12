@@ -16,7 +16,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
         context.TryAddSingleton(t);
 
         var group = context.GetCommandGroup(t);
-        group.AddCommand(typeof(LpNewCredentialSubcommand));
+        // group.AddCommand(typeof(LpNewCredentialSubcommand));
         group.AddCommand(typeof(ShowMergerKeySubcommand));
     }
 
