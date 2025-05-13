@@ -11,7 +11,7 @@ public sealed partial class Credentials
     public CredentialNodes Nodes { get; private set; } = new();
 
     [Key(1)]
-    private readonly Linkage.GoshujinClass linkages = new();
+    public CredentialLinks Links { get; private set; } = new();
 
     #endregion
 
@@ -22,6 +22,7 @@ public sealed partial class Credentials
     public void Validate()
     {
         this.Nodes.Validate();
+        this.Links.Validate();
     }
 
     [TinyhandOnSerialized]

@@ -14,7 +14,7 @@ public partial interface LpDogmaNetService : INetService
 
     NetTask<CredentialProof?> CreateCredentialProof(CertificateToken<Value> toke, CredentialKind credentialKind);
 
-    NetTask<LinkerProof?> CreateLinkerProof(CertificateToken<Value> token);
+    NetTask<LinkProof?> CreateLinkerProof(CertificateToken<Value> token);
 
     NetTask<NetResult> AddCredentialEvidence(CredentialEvidence evidence);
 }

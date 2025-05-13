@@ -22,7 +22,7 @@ public partial record class LpDogma
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
-    public partial record class Linkage(
+    public partial record class Link(
         SignaturePublicKey LinkerPublicKey,
         Credit Credit1,
         Credit Credit2)
@@ -37,5 +37,5 @@ public partial record class LpDogma
     public Credential[] Linkers { get; set; } = [];
 
     [KeyAsName]
-    public Linkage[] Linkages { get; set; } = [];
+    public Link[] Links { get; set; } = [];
 }

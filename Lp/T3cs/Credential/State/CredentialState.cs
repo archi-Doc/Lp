@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Lp.Services;
 using Netsphere.Crypto;
 
@@ -36,6 +37,7 @@ public abstract partial class CredentialState
     [IgnoreMember]
     public bool IsActive { get; set; }
 
+    [MemberNotNullWhen(true, nameof(NetNode))]
     public bool IsValid =>
         this.NetNode is not null &&
         this.NetNode.Address.IsValidIpv4AndIpv6 &&

@@ -111,7 +111,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
     }
 
-    async NetTask<LinkerProof?> LpDogmaNetService.CreateLinkerProof(CertificateToken<Value> token)
+    async NetTask<LinkProof?> LpDogmaNetService.CreateLinkerProof(CertificateToken<Value> token)
     {
         if (!this.IsAuthenticated)
         {

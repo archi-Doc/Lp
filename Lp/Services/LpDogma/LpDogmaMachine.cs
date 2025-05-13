@@ -84,7 +84,7 @@ public partial class LpDogmaMachine : Machine
             }
         }
 
-        foreach (var x in this.lpDogma.Linkages)
+        foreach (var x in this.lpDogma.Links)
         {
             var result = await this.ProcessLinkage(x);
             if (result == StateResult.Terminate)
@@ -153,7 +153,7 @@ public partial class LpDogmaMachine : Machine
         }
     }
 
-    private async Task<StateResult> ProcessLinkage(LpDogma.Linkage linkage)
+    private async Task<StateResult> ProcessLinkage(LpDogma.Link link)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -167,21 +167,28 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }*/
 
-        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(linkage.UpdatedMics))
+        if (!this.ValidateMergers(link.Credit1) || !this.ValidateMergers(link.Credit2) ||
+            !link.LinkerPublicKey.Validate() || !this.credentials.Nodes.TryGet(link.LinkerPublicKey, out var credentialEvidence))
+        {
+            return StateResult.Continue;
+        }
+
+        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(link.UpdatedMics))
         {
             return StateResult.Continue;
         }
         else
         {
-            linkage.UpdatedMics = Mics.FastCorrected;
+            //linkage.UpdatedMics = Mics.FastCorrected;
         }
 
-        if (!this.credentials.Nodes.TryGet(linkage.Credit1.Mergers[0], out var credentialEvidence))
+        var linkerState = credentialEvidence.CredentialProof.State;
+        if (!linkerState.IsValid)
         {
             return StateResult.Continue;
         }
 
-        /*var netNode = linkage.NetNode;
+        var netNode = linkerState.NetNode;
         using (var connection = await this.netTerminal.Connect(netNode))
         {
             if (connection is null)
@@ -193,6 +200,15 @@ public partial class LpDogmaMachine : Machine
             var service = connection.GetService<LpDogmaNetService>();
             var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
             var r = await service.Authenticate(auth).ResponseAsync;
+
+            var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1);
+            var proof1 = new LinkProof(link.LinkerPublicKey, value1);
+            var value2 = new Value(LpConstants.LpPublicKey, 0, link.Credit2);
+            var proof2 = new LinkProof(link.LinkerPublicKey, value2);
+            this.lpSeedKey.TrySign(proof1, CredentialProof.LpExpirationMics);
+            this.lpSeedKey.TrySign(proof2, CredentialProof.LpExpirationMics);
+
+            var linkage = new Linkage(proof1, proof2);
 
             var token = CertificateToken<Value>.CreateAndSign(new Value(credentialNode.PublicKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
             var credentialProof = await service.CreateLinkerCredentialProof(token);
@@ -215,5 +231,19 @@ public partial class LpDogmaMachine : Machine
     }*/
 
         return StateResult.Continue;
+    }
+
+    private bool ValidateMergers(Credit credit)
+    {
+        foreach (var x in credit.Mergers)
+        {
+            if (!x.Validate() ||
+                !this.credentials.Nodes.TryGet(x, out _))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
