@@ -99,33 +99,7 @@ internal class LpDogmaAgent : LpDogmaNetService
             return NetResult.NotAuthenticated;
         }
 
-        switch (evidence.CredentialProof.Kind)
-        {
-            case CredentialKind.Merger:
-                if (this.credentials.MergerCredentials.TryAdd(evidence))
-                {
-                    return NetResult.Success;
-                }
-
-                break;
-
-            case CredentialKind.RelayMerger:
-                if (this.credentials.RelayCredentials.TryAdd(evidence))
-                {
-                    return NetResult.Success;
-                }
-
-                break;
-            case CredentialKind.Linker:
-                if (this.credentials.LinkerCredentials.TryAdd(evidence))
-                {
-                    return NetResult.Success;
-                }
-
-                break;
-        }
-
-        return NetResult.InvalidData;
+        return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
     }
 
     async NetTask<LinkerProof?> LpDogmaNetService.CreateLinkerProof(CertificateToken<Value> token)

@@ -11,8 +11,7 @@ public class LpBoardService(Credentials credentials)
 
     public async Task CreateBoard(SignaturePublicKey merger, SignaturePublicKey originator)
     {
-        var evidence = this.credentials.MergerCredentials.CredentialKeyChain.FindFirst(merger);
-        if (evidence is null)
+        if (!this.credentials.Nodes.TryGet(merger, out var evidence))
         {
             return;
         }

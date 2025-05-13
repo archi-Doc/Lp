@@ -104,8 +104,7 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        var credentials = this.credentials.FromKind(credentialKind);
-        if (credentials.CredentialKeyChain.FindFirst(credentialNode.PublicKey) is not null)
+        if (!this.credentials.Nodes.TryGet(credentialNode.PublicKey, out _))
         {
             // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;
@@ -144,7 +143,7 @@ public partial class LpDogmaMachine : Machine
             }
 
             if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
-                credentials.TryAdd(evidence))
+                this.credentials.Nodes.TryAdd(evidence))
             {
                 _ = service.AddCredentialEvidence(evidence);
                 this.logger.TryGet()?.Log($"Credential {credentialKind} for {credentialNode.PublicKey.ToString()} has been created and added.");
@@ -177,7 +176,7 @@ public partial class LpDogmaMachine : Machine
             linkage.UpdatedMics = Mics.FastCorrected;
         }
 
-        if (!this.credentials.MergerCredentials.LockAndTryGet(linkage.Credit1.Mergers[0], out var credentialEvidence))
+        if (!this.credentials.Nodes.TryGet(linkage.Credit1.Mergers[0], out var credentialEvidence))
         {
             return StateResult.Continue;
         }

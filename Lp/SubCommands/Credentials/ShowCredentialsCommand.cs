@@ -17,14 +17,8 @@ public class ShowCredentialsCommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        this.userInterfaceService.WriteLine($"Mergers");
-        foreach (var evidence in this.credentials.MergerCredentials.LockAndToArray())
-        {
-            this.userInterfaceService.WriteLine($"{evidence.ToString(Alias.Instance)}");
-        }
-
-        this.userInterfaceService.WriteLine($"Linkers");
-        foreach (var evidence in this.credentials.LinkerCredentials.LockAndToArray())
+        this.userInterfaceService.WriteLine($"Evidences");
+        foreach (var evidence in this.credentials.Nodes.ToArray())
         {
             this.userInterfaceService.WriteLine($"{evidence.ToString(Alias.Instance)}");
         }
