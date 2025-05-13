@@ -9,7 +9,7 @@ public interface IBasalService : INetService
 {
     Task<BytePool.RentMemory> GetActiveNodes();
 
-    Task<BytePool.RentMemory> DifferentiateMergerCredential(ReadOnlyMemory<byte> memory);
+    Task<BytePool.RentMemory> DifferentiateNodes(ReadOnlyMemory<byte> memory);
 
     Task<string?> GetNodeInformation();
 }

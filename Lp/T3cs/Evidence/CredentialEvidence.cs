@@ -19,39 +19,6 @@ public partial class CredentialEvidence : Evidence
     {
         [IgnoreMember]
         public bool SyncAlias { get; set; }
-
-        public void Validate()
-        {
-            using (this.LockObject.EnterScope())
-            {
-                TemporaryList<CredentialEvidence> toDelete = default;
-                foreach (var evidence in this)
-                {
-                    if (!evidence.Validate())
-                    {
-                        toDelete.Add(evidence);
-                    }
-                }
-
-                foreach (var evidence in toDelete)
-                {
-                    this.Remove(evidence);
-                }
-            }
-        }
-
-        public bool TryAdd(CredentialEvidence evidence)
-        {
-            if (evidence.ValidateAndVerify() != true)
-            {
-                return false;
-            }
-
-            using (this.lockObject.EnterScope())
-            {
-                return ((IIntegralityGoshujin)this).IntegrateObject(Integrality.Default, evidence) == IntegralityResult.Success;
-            }
-        }
     }
 
     #endregion

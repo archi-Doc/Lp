@@ -5,7 +5,7 @@ using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
-
+/*
 namespace Lp.Subcommands.MergerRemote;
 
 [SimpleCommand("lp-new-credential", Alias = "lpnc")]
@@ -66,4 +66,4 @@ public record LpNewCredentialOptions
 {
     [SimpleOption("PublicKey", Description = "Target public key", Required = true)]
     public string PublicKey { get; init; } = string.Empty;
-}
+}*/

@@ -2,39 +2,27 @@
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
-public partial class Credentials
+[TinyhandObject(UseServiceProvider = true)]
+public sealed partial class Credentials
 {
     #region FieldAndProperty
 
     [Key(0)]
-    public CredentialEvidence.GoshujinClass MergerCredentials { get; private set; } = new();
+    public CredentialNodes Nodes { get; private set; } = new();
 
     [Key(1)]
-    public CredentialEvidence.GoshujinClass RelayCredentials { get; private set; } = new();
-
-    [Key(2)]
-    public CredentialEvidence.GoshujinClass CreditCredentials { get; private set; } = new();
-
-    [Key(3)]
-    public CredentialEvidence.GoshujinClass LinkerCredentials { get; private set; } = new();
+    public CredentialLinks Links { get; private set; } = new();
 
     #endregion
 
     public Credentials()
     {
-        this.MergerCredentials.SyncAlias = true;
-        this.RelayCredentials.SyncAlias = true;
-        this.CreditCredentials.SyncAlias = true;
-        this.LinkerCredentials.SyncAlias = true;
     }
 
     public void Validate()
     {
-        this.MergerCredentials.Validate();
-        this.RelayCredentials.Validate();
-        this.CreditCredentials.Validate();
-        this.LinkerCredentials.Validate();
+        this.Nodes.Validate();
+        this.Links.Validate();
     }
 
     [TinyhandOnSerialized]

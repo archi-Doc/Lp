@@ -104,7 +104,7 @@ public class Control
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.LpDogmaGetInformationSubcommand));
 
-                context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowMergerCredentialsCommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowCredentialsCommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);

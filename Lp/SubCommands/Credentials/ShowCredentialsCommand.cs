@@ -2,15 +2,14 @@
 
 using Lp.T3cs;
 using Netsphere.Crypto;
-using Netsphere.Stats;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.Credential;
 
-[SimpleCommand("show-merger-credentials")]
-public class ShowMergerCredentialsCommand : ISimpleCommand
+[SimpleCommand("show-credentials")]
+public class ShowCredentialsCommand : ISimpleCommand
 {
-    public ShowMergerCredentialsCommand(IUserInterfaceService userInterfaceService, Credentials credentials)
+    public ShowCredentialsCommand(IUserInterfaceService userInterfaceService, Credentials credentials)
     {
         this.userInterfaceService = userInterfaceService;
         this.credentials = credentials;
@@ -18,7 +17,8 @@ public class ShowMergerCredentialsCommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        foreach (var evidence in this.credentials.MergerCredentials.ToArray())
+        this.userInterfaceService.WriteLine($"Evidences");
+        foreach (var evidence in this.credentials.Nodes.ToArray())
         {
             this.userInterfaceService.WriteLine($"{evidence.ToString(Alias.Instance)}");
         }

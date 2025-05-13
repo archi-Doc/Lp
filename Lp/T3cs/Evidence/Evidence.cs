@@ -160,5 +160,14 @@ public abstract partial class Evidence : IValidatable
     public override string ToString() => this.ToString(default);
 
     public string ToString(IConversionOptions? conversionOptions)
-        => $"Evidence {{ {this.Proof.ToString(conversionOptions)} }}";
+    {
+        if (this.Proof.TryGetCredit(out var credit))
+        {
+            return $"{{{this.Proof.ToString(conversionOptions)}}}{credit.Mergers.ToMergerString(conversionOptions)}";
+        }
+        else
+        {
+            return $"{{ {this.Proof.ToString(conversionOptions)} }}";
+        }
+    }
 }

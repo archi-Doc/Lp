@@ -100,6 +100,17 @@ public abstract partial class Proof : IEquatable<Proof>
     }
 
     /// <summary>
+    /// Tries to get the linker public key associated with the proof.
+    /// </summary>
+    /// <param name="linkerPublicKey"> When this method returns, contains the linker public key if available; otherwise, <c>null</c>.</param>
+    /// <returns><c>true</c> if the linker public key is available; otherwise, <c>false</c>.</returns>
+    public virtual bool TryGetLinkerPublicKey([MaybeNullWhen(false)] out SignaturePublicKey linkerPublicKey)
+    {
+        linkerPublicKey = default;
+        return false;
+    }
+
+    /// <summary>
     /// Validates the proof.
     /// </summary>
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>

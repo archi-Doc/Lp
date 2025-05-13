@@ -168,9 +168,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SignaturePublicKey GetMergerKey()
-        => this.PublicKey;
-
     public bool TrySign(Proof proof, long validMics)
         => this.seedKey.TrySign(proof, validMics);
 

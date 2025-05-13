@@ -44,7 +44,7 @@ public partial record Identity : IValidatable
 
     public bool Validate()
     {
-        if (!this.SourceIdentifier.IsDefault)
+        if (!this.SourceIdentifier.IsValid)
         {
             return false;
         }

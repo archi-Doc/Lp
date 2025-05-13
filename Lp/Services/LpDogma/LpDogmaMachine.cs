@@ -68,57 +68,182 @@ public partial class LpDogmaMachine : Machine
 
         foreach (var x in this.lpDogma.Mergers)
         {
-            if (this.CancellationToken.IsCancellationRequested)
+            var result = await this.ProcessCredential(x, CredentialKind.Merger);
+            if (result == StateResult.Terminate)
             {
                 return StateResult.Terminate;
             }
+        }
 
-            if (this.credentials.MergerCredentials.CredentialKeyChain.FindFirst(x.MergerKey) is not null)
+        foreach (var x in this.lpDogma.Linkers)
+        {
+            var result = await this.ProcessCredential(x, CredentialKind.Linker);
+            if (result == StateResult.Terminate)
             {
-                // this.userInterfaceService.WriteLine($"{x.MergerKey.ToString()} -> valid");
-                continue;
+                return StateResult.Terminate;
             }
+        }
 
-            if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(x.UpdatedMics))
+        foreach (var x in this.lpDogma.Links)
+        {
+            var result = await this.ProcessLinkage(x);
+            if (result == StateResult.Terminate)
             {
-                continue;
-            }
-            else
-            {
-                x.UpdatedMics = Mics.FastCorrected;
-            }
-
-            var netNode = x.NetNode;
-            using (var connection = await this.netTerminal.Connect(netNode))
-            {
-                if (connection is null)
-                {
-                    this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
-                    continue;
-                }
-
-                var service = connection.GetService<LpDogmaNetService>();
-                var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
-                var r = await service.Authenticate(auth).ResponseAsync;
-
-                var token = CertificateToken<Value>.CreateAndSign(new Value(x.MergerKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
-                var credentialProof = await service.CreateMergerCredentialProof(token);
-                if (credentialProof is null ||
-                    !credentialProof.ValidateAndVerify() ||
-                    !credentialProof.GetSignatureKey().Equals(x.MergerKey))
-                {
-                    continue;
-                }
-
-                if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
-                    this.credentials.MergerCredentials.TryAdd(evidence))
-                {
-                    _ = service.AddMergerCredentialEvidence(evidence);
-                    this.logger.TryGet()?.Log($"The credential for {x.MergerKey.ToString()} has been created and added.");
-                }
+                return StateResult.Terminate;
             }
         }
 
         return StateResult.Continue;
+    }
+
+    private async Task<StateResult> ProcessCredential(LpDogma.Credential credentialNode, CredentialKind credentialKind)
+    {
+        if (this.CancellationToken.IsCancellationRequested ||
+            this.lpSeedKey is null)
+        {
+            return StateResult.Terminate;
+        }
+
+        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out _))
+        {
+            // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
+            return StateResult.Continue;
+        }
+
+        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(credentialNode.UpdatedMics))
+        {
+            return StateResult.Continue;
+        }
+        else
+        {
+            credentialNode.UpdatedMics = Mics.FastCorrected;
+        }
+
+        var netNode = credentialNode.NetNode;
+        using (var connection = await this.netTerminal.Connect(netNode))
+        {
+            if (connection is null)
+            {
+                this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
+                return StateResult.Continue;
+            }
+
+            var service = connection.GetService<LpDogmaNetService>();
+            var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
+            var r = await service.Authenticate(auth).ResponseAsync;
+
+            var token = CertificateToken<Value>.CreateAndSign(new Value(credentialNode.PublicKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
+            var credentialProof = await service.CreateCredentialProof(token, credentialKind);
+            if (credentialProof is null ||
+                !credentialProof.ValidateAndVerify() ||
+                !credentialProof.GetSignatureKey().Equals(credentialNode.PublicKey) ||
+                !credentialProof.Value.Equals(token.Target))
+            {
+                return StateResult.Continue;
+            }
+
+            if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
+                this.credentials.Nodes.TryAdd(evidence))
+            {
+                _ = service.AddCredentialEvidence(evidence);
+                this.logger.TryGet()?.Log($"Added: {evidence.ToString()}");
+            }
+
+            return StateResult.Continue;
+        }
+    }
+
+    private async Task<StateResult> ProcessLinkage(LpDogma.Link link)
+    {
+        if (this.CancellationToken.IsCancellationRequested ||
+            this.lpSeedKey is null)
+        {
+            return StateResult.Terminate;
+        }
+
+        /*if (this.credentials.LinkerCredentials.CredentialKeyChain.FindFirst(credentialNode.PublicKey) is not null)
+        {
+            // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
+            return StateResult.Continue;
+        }*/
+
+        if (!this.ValidateMergers(link.Credit1) || !this.ValidateMergers(link.Credit2) ||
+            !link.LinkerPublicKey.Validate() || !this.credentials.Nodes.TryGet(link.LinkerPublicKey, out var credentialEvidence))
+        {
+            return StateResult.Continue;
+        }
+
+        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(link.UpdatedMics))
+        {
+            return StateResult.Continue;
+        }
+        else
+        {
+            //linkage.UpdatedMics = Mics.FastCorrected;
+        }
+
+        var linkerState = credentialEvidence.CredentialProof.State;
+        if (!linkerState.IsValid)
+        {
+            return StateResult.Continue;
+        }
+
+        var netNode = linkerState.NetNode;
+        using (var connection = await this.netTerminal.Connect(netNode))
+        {
+            if (connection is null)
+            {
+                this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
+                return StateResult.Continue;
+            }
+
+            var service = connection.GetService<LpDogmaNetService>();
+            var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
+            var r = await service.Authenticate(auth).ResponseAsync;
+
+            var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1);
+            var proof1 = new LinkProof(link.LinkerPublicKey, value1);
+            var value2 = new Value(LpConstants.LpPublicKey, 0, link.Credit2);
+            var proof2 = new LinkProof(link.LinkerPublicKey, value2);
+            this.lpSeedKey.TrySign(proof1, CredentialProof.LpExpirationMics);
+            this.lpSeedKey.TrySign(proof2, CredentialProof.LpExpirationMics);
+
+            var linkage = new Linkage(proof1, proof2);
+
+            var token = CertificateToken<Value>.CreateAndSign(new Value(credentialNode.PublicKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
+            var credentialProof = await service.CreateLinkerCredentialProof(token);
+            if (credentialProof is null ||
+                !credentialProof.ValidateAndVerify() ||
+                !credentialProof.GetSignatureKey().Equals(credentialNode.PublicKey))
+            {
+                return StateResult.Continue;
+            }
+
+            if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
+                this.credentials.LinkerCredentials.TryAdd(evidence))
+            {
+                _ = service.AddLinkerCredentialEvidence(evidence);
+                this.logger.TryGet()?.Log($"Linker credential for {credentialNode.PublicKey.ToString()} has been created and added.");
+            }
+
+            return StateResult.Continue;
+        }
+    }*/
+
+        return StateResult.Continue;
+    }
+
+    private bool ValidateMergers(Credit credit)
+    {
+        foreach (var x in credit.Mergers)
+        {
+            if (!x.Validate() ||
+                !this.credentials.Nodes.TryGet(x, out _))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
