@@ -15,6 +15,7 @@ public sealed partial class CredentialNodes
 
     public CredentialNodes()
     {
+
     }
 
     public void Validate()
