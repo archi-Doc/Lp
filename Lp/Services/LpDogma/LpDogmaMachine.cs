@@ -104,7 +104,7 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        if (!this.credentials.Nodes.TryGet(credentialNode.PublicKey, out _))
+        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out _))
         {
             // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;
@@ -146,7 +146,7 @@ public partial class LpDogmaMachine : Machine
                 this.credentials.Nodes.TryAdd(evidence))
             {
                 _ = service.AddCredentialEvidence(evidence);
-                this.logger.TryGet()?.Log($"Credential {credentialKind} for {credentialNode.PublicKey.ToString()} has been created and added.");
+                this.logger.TryGet()?.Log($"Added: {evidence.ToString()}");
             }
 
             return StateResult.Continue;

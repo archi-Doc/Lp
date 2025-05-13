@@ -114,5 +114,5 @@ public sealed partial class CredentialProof : Proof
     public override string ToString() => this.ToString(default);
 
     public override string ToString(IConversionOptions? conversionOptions)
-        => $"CredentialProof:{this.SignedMics.MicsToDateTimeString()} {this.Value.ToString(conversionOptions)}, {this.State.ToString(conversionOptions)}";
+        => $"CredentialProof:{this.Kind} {this.SignedMics.MicsToDateTimeString()} {this.Value.ToString(conversionOptions)}, {this.State.ToString(conversionOptions)}";
 }

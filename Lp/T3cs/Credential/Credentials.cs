@@ -2,7 +2,7 @@
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+[TinyhandObject(UseServiceProvider = true)]
 public sealed partial class Credentials
 {
     #region FieldAndProperty

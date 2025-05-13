@@ -87,6 +87,15 @@ internal class LpDogmaAgent : LpDogmaNetService
                 }
 
                 break;
+
+            case CredentialKind.Linker:
+                if (this.linker.TrySign(credentialProof, CredentialProof.LpExpirationMics) &&
+                    credentialProof.ValidateAndVerify())
+                {
+                    return credentialProof;
+                }
+
+                break;
         }
 
         return default;
