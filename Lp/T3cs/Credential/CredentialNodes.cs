@@ -15,7 +15,6 @@ public sealed partial class CredentialNodes
 
     public CredentialNodes()
     {
-
     }
 
     public void Validate()
@@ -35,6 +34,15 @@ public sealed partial class CredentialNodes
             {
                 this.goshujin.Remove(evidence);
             }
+        }
+    }
+
+    public bool TryGet(SignaturePublicKey key, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
+    {
+        using (this.goshujin.LockObject.EnterScope())
+        {
+            credentialEvidence = this.goshujin.CredentialKeyChain.FindFirst(key);
+            return credentialEvidence is not null;
         }
     }
 
@@ -62,15 +70,6 @@ public sealed partial class CredentialNodes
         using (this.goshujin.LockObject.EnterScope())
         {
             return this.goshujin.ToArray();
-        }
-    }
-
-    public bool TryGet(SignaturePublicKey key, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
-    {
-        using (this.goshujin.LockObject.EnterScope())
-        {
-            credentialEvidence = this.goshujin.CredentialKeyChain.FindFirst(key);
-            return credentialEvidence is not null;
         }
     }
 }
