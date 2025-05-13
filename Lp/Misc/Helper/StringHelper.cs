@@ -1,11 +1,49 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc;
+using Lp.T3cs;
+using Netsphere.Crypto;
 using Tinyhand;
 
 namespace Lp;
 
 public static class StringHelper
 {
+    public static string ToMergerString(this SignaturePublicKey[] mergers, IConversionOptions? conversionOptions)
+    {
+        Span<char> buffer = stackalloc char[Credit.MaxStringLength];
+        var span = buffer;
+
+        var written = 0;
+        var isFirst = true;
+        foreach (var x in mergers)
+        {
+            if (isFirst)
+            {
+                isFirst = false;
+                span[0] = Credit.MergerSymbol;
+                span = span.Slice(1);
+                written += 1;
+            }
+            else
+            {
+                span[0] = Credit.MergerSeparatorSymbol;
+                span = span.Slice(1);
+                written += 1;
+            }
+
+            if (!x.TryFormat(span, out var w, conversionOptions))
+            {
+                return string.Empty;
+            }
+
+            span = span.Slice(w);
+            written += w;
+        }
+
+        return buffer.Slice(0, written).ToString();
+    }
+
     /// <summary>
     /// Removes control characters and leading white-space and trailing white-space.
     /// </summary>

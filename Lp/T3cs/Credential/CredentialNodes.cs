@@ -15,6 +15,7 @@ public sealed partial class CredentialNodes
 
     public CredentialNodes()
     {
+        this.goshujin.SyncAlias = true;
     }
 
     public void Validate()
