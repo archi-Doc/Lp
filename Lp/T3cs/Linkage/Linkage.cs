@@ -50,53 +50,31 @@ public partial class Linkage : IValidatable
     #region FieldAndProperty
 
     [Key(0)]
-    public Proof ProofA { get; set; }
+    public Evidence Evidence1 { get; set; }
 
     [Key(1)]
-    public Proof ProofB { get; set; }
+    public Evidence Evidence2 { get; set; }
 
     [Key(2)]
-    private byte[]? mergerSignatureA1;
-
-    [Key(3)]
-    private byte[]? mergerSignatureA2;
-
-    [Key(4)]
-    private byte[]? mergerSignatureA3;
-
-    [Key(5)]
-    private byte[]? mergerSignatureB1;
-
-    [Key(6)]
-    private byte[]? mergerSignatureB2;
-
-    [Key(7)]
-    private byte[]? mergerSignatureB3;
-
-    [Key(8)]
     private byte[]? linkerSignature;
 
     #endregion
 
-    public Linkage(Proof proofA, Proof proofB)
+    public Linkage(Evidence evidence1, Evidence evidence2)
     {
-        this.ProofA = proofA;
-        this.ProofB = proofB;
+        this.Evidence1 = evidence1;
+        this.Evidence2 = evidence2;
     }
 
     public bool Validate()
     {
-        SignaturePublicKey linkerPublicKey;
-        if (!this.ProofA.Validate() ||
-            !this.ProofA.TryGetLinkerPublicKey(out linkerPublicKey) ||
-            !linkerPublicKey.IsValid)
+        if (!this.Evidence1.ValidateLinker() ||
+            !this.Evidence2.ValidateLinker())
         {
             return false;
         }
 
-        if (!this.ProofB.Validate() ||
-            !this.ProofB.TryGetLinkerPublicKey(out linkerPublicKey) ||
-            !linkerPublicKey.IsValid)
+        if (!this.Evidence1.Proof.Equals(this.Evidence2.Proof))
         {
             return false;
         }

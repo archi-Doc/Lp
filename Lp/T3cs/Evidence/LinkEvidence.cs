@@ -9,23 +9,12 @@ using ValueLink.Integrality;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
-public partial class CredentialEvidence : Evidence
+// [ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
+public partial class LinkEvidence : Evidence
 {
-    #region GoshujinClass
-
-    [TinyhandObject(External = true)]
-    public partial class GoshujinClass
-    {
-        [IgnoreMember]
-        public bool SyncAlias { get; set; }
-    }
-
-    #endregion
-
     #region Integrality
 
-    public class Integrality : Integrality<CredentialEvidence.GoshujinClass, CredentialEvidence>
+    /*public class Integrality : Integrality<CredentialEvidence.GoshujinClass, CredentialEvidence>
     {
         public static readonly Integrality Default = new()
         {
@@ -49,30 +38,30 @@ public partial class CredentialEvidence : Evidence
             return true;
         }
 
-        /*public override int Trim(GoshujinClass goshujin, int integratedCount)
+        public override int Trim(GoshujinClass goshujin, int integratedCount)
         {
             return base.Trim(goshujin, integratedCount);
-        }*/
-    }
+        }
+    }*/
 
     #endregion
 
-    public override Proof Proof => this.CredentialProof;
+    // public override Proof Proof => this.CredentialProof;
 
-    public SignaturePublicKey CredentialKey
-        => this.CredentialProof.GetSignatureKey();
+    // public SignaturePublicKey CredentialKey => this.CredentialProof.GetSignatureKey();
 
     [Key(Evidence.ReservedKeyCount)]
-    public CredentialProof CredentialProof { get; protected set; } = default!;
+    public LinkProof LinkProof { get; private set; }
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "CredentialKey")]
-    public CredentialEvidence()
+    public override Proof Proof => this.LinkProof;
+
+    public LinkEvidence()
     {
     }
 
-    public CredentialEvidence(CredentialProof credentialProof)
+    public LinkEvidence(LinkProof linkProof)
     {
-        this.CredentialProof = credentialProof;
+        this.LinkProof = linkProof;
     }
 
     public static bool TryCreate(CredentialProof proof, SeedKey seedKey, [MaybeNullWhen(false)] out CredentialEvidence evidence)
@@ -86,21 +75,5 @@ public partial class CredentialEvidence : Evidence
 
         evidence = obj;
         return true;
-    }
-
-    protected void CredentialKeyLinkAdded()
-    {
-        if (this.Goshujin?.SyncAlias == true)
-        {
-            Alias.Instance.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
-        }
-    }
-
-    protected void CredentialKeyLinkRemoved()
-    {
-        if (this.Goshujin?.SyncAlias == true)
-        {
-            Alias.Instance.Remove(this.CredentialKey);
-        }
     }
 }

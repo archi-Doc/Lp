@@ -188,13 +188,16 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
+        // Linkage x Point
         var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1);
         var proof1 = new LinkProof(link.LinkerPublicKey, value1);
         var value2 = new Value(LpConstants.LpPublicKey, 0, link.Credit2);
         var proof2 = new LinkProof(link.LinkerPublicKey, value2);
         this.lpSeedKey.TrySign(proof1, CredentialProof.LpExpirationMics);
         this.lpSeedKey.TrySign(proof2, CredentialProof.LpExpirationMics);
-        var linkage = new Linkage(proof1, proof2);
+        var evidence1 = new LinkEvidence(proof1);
+        var evidence2 = new LinkEvidence(proof2);
+        var linkage = new Linkage(evidence1, evidence2);
 
         var linkerState = credentialEvidence.CredentialProof.State;
         if (!linkerState.IsValid)

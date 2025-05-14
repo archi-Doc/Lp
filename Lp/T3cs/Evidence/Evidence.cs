@@ -10,18 +10,19 @@ namespace Lp.T3cs;
 /// </summary>
 // [TinyhandObject]
 // [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
+[TinyhandUnion(0, typeof(CredentialEvidence))]
+[TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Evidence : IValidatable
 {
-    public Evidence()
-    {
-    }
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public const int ReservedKeyCount = 4;
 
     #region FieldAndProperty
 
     // [Key(0)]
-    // public Proof Proof { get; protected set; } // Owned by derived classes
-
-    public abstract Proof Proof { get; }
+    public abstract Proof Proof { get; } // Owned by derived classes
 
     [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature0 { get; protected set; }
@@ -42,6 +43,10 @@ public abstract partial class Evidence : IValidatable
         => this.Proof.TryGetCredit(out var credit) ? credit.MergerCount : 0;
 
     #endregion
+
+    public Evidence()
+    {
+    }
 
     public bool TrySign(SeedKey seedKey, int mergerIndex)
     {
@@ -95,6 +100,21 @@ public abstract partial class Evidence : IValidatable
     public bool Validate()
     {
         return this.Proof.Validate();
+    }
+
+    public bool ValidateLinker()
+    {
+        if (!this.Proof.Validate())
+        {
+            return false;
+        }
+
+        if (!this.Proof.TryGetLinkerPublicKey(out _))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public bool ValidateAndVerify(int mergerIndex = Credit.MaxMergers)
