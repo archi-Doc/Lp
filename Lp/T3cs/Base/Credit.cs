@@ -12,7 +12,6 @@ namespace Lp.T3cs;
 public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringConvertible<Credit>
 {
     public const char CreditSymbol = '@';
-    // public const char StandardSymbol = ':';
     public const char MergerSymbol = '/';
     public const char MergerSeparatorSymbol = '+';
     public const int MaxMergers = 3; // MaxMergersCode

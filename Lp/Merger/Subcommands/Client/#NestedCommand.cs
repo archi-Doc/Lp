@@ -62,7 +62,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
             return;
         }
 
-        this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => VerificationHelper.SetAuthenticationToken(x, this.nestedcommand.Authority));
+        this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => NetsphereHelper.SetAuthenticationToken(x, this.nestedcommand.Authority));
         // this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => RobustConnection.SetAuthenticationToken(x, authority.UnsafeGetPrivateKey()));
         this.userInterfaceService.WriteLine(node.ToString());
         await this.nestedcommand.MainAsync();

@@ -44,10 +44,6 @@ public abstract partial class Evidence : IValidatable
 
     #endregion
 
-    public Evidence()
-    {
-    }
-
     public bool TrySign(SeedKey seedKey, int mergerIndex)
     {
         if (!this.Proof.TryGetCredit(out var credit))

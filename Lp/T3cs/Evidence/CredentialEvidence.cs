@@ -57,13 +57,16 @@ public partial class CredentialEvidence : Evidence
 
     #endregion
 
-    public override Proof Proof => this.CredentialProof;
-
-    public SignaturePublicKey CredentialKey
-        => this.CredentialProof.GetSignatureKey();
+    #region FieldAndProperty
 
     [Key(Evidence.ReservedKeyCount)]
     public CredentialProof CredentialProof { get; protected set; } = default!;
+
+    public override Proof Proof => this.CredentialProof;
+
+    public SignaturePublicKey CredentialKey => this.CredentialProof.Value.Owner;
+
+    #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "CredentialKey")]
     public CredentialEvidence()

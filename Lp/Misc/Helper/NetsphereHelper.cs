@@ -2,11 +2,10 @@
 
 using Lp.T3cs;
 using Netsphere.Crypto;
-using Tinyhand.IO;
 
 namespace Lp;
 
-public static class VerificationHelper
+public static class NetsphereHelper
 {
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority)
     {
@@ -34,31 +33,19 @@ public static class VerificationHelper
         return result == NetResult.Success;
     }
 
-    /// <summary>
-    /// Validate object members and verify that the signature is appropriate.
-    /// </summary>
-    /// <param name="proof">The proof to be verified.</param>
-    /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify(this Proof proof)
+    public static async ValueTask<ClientConnection?> Get(this RobustConnection? robustConnection, ILogger logger)
     {
-        if (!proof.Validate())
+        if (robustConnection is null)
         {
-            return false;
+            return null;
         }
 
-        var writer = TinyhandWriter.CreateFromBytePool();
-        writer.Level = TinyhandWriter.DefaultSignatureLevel;
-        try
+        if (await robustConnection.Get() is not { } connection)
         {
-            TinyhandSerializer.SerializeObject<Proof>(ref writer, proof, TinyhandSerializerOptions.Signature);
-            var rentMemory = writer.FlushAndGetRentMemory();
-            var result = proof.GetSignatureKey().Verify(rentMemory.Span, proof.Signature);
-            rentMemory.Return();
-            return result;
+            logger.TryGet()?.Log(Hashed.Error.Connect, robustConnection.DestinationNode.ToString());
+            return null;
         }
-        finally
-        {
-            writer.Dispose();
-        }
+
+        return connection;
     }
 }
