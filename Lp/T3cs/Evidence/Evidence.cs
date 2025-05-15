@@ -113,7 +113,7 @@ public abstract partial class Evidence : IValidatable
         return true;
     }
 
-    public bool ValidateAndVerify(int mergerIndex = Credit.MaxMergers)
+    public bool ValidateAndVerify(int mergerIndex = LpConstants.MaxMergers)
     {
         if (!this.Validate())
         {

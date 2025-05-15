@@ -8,7 +8,16 @@ namespace Lp;
 
 public static class LpConstants
 {
-    public const int MaxNameLength = 32;
+    public const char PointSymbol = '#';
+    public const int MaxPointLength = 19; // 1_000_000_000_000_000_000
+    public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
+    public const Point MinPoint = 1; // -MaxPoint;
+
+    public const char CreditSymbol = '@';
+    public const char MergerSymbol = '/';
+    public const char MergerSeparatorSymbol = '+';
+    public const int MaxMergers = 3; // MaxMergersCode
+
     public const string LpAlias = "Lp";
     public const string LpKeyAlias = "LpKey";
     public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";

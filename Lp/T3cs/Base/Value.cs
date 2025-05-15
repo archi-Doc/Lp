@@ -12,11 +12,6 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConvertible<Value>
 {
-    public const char PointSymbol = '#';
-    public const int MaxPointLength = 19;
-    public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
-    public const Point MinPoint = 1; // -MaxPoint;
-
     #region FieldAndProperty
 
     [Key(0)]
@@ -51,7 +46,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     #region IStringConvertible
 
-    public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
+    public static int MaxStringLength => 1 + SignaturePublicKey.MaxStringLength + LpConstants.MaxPointLength + Credit.MaxStringLength; // Owner#Point + Credit
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Value? instance, out int read, IConversionOptions? conversionOptions = default)
     {// Owner#Point@Originator/Mergers
@@ -59,7 +54,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         read = 0;
         var span = source.Trim();
 
-        var pointIndex = span.IndexOf(PointSymbol);
+        var pointIndex = span.IndexOf(LpConstants.PointSymbol);
         if (pointIndex < 0)
         {
             return false;
@@ -74,7 +69,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         span = span.Slice(pointIndex + 1);
-        var creditIndex = span.IndexOf(Credit.CreditSymbol);
+        var creditIndex = span.IndexOf(LpConstants.CreditSymbol);
         if (creditIndex < 0)
         {
             return false;
@@ -121,7 +116,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         }
 
         span = span.Slice(ownerWritten);
-        span[0] = PointSymbol;
+        span[0] = LpConstants.PointSymbol;
         span = span.Slice(1);
         if (!this.Point.TryFormat(span, out var pointWritten))
         {
@@ -158,7 +153,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
         {
             return false;
         }
-        else if (this.Point < MinPoint || this.Point > MaxPoint)
+        else if (this.Point < LpConstants.MinPoint || this.Point > LpConstants.MaxPoint)
         {
             return false;
         }
