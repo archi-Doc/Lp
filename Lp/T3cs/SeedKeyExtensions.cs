@@ -48,6 +48,10 @@ public static class SeedKeyExtensions
             {
                 proofAndPublicKey.PrepareSignInternal(seedKey, validMics);
             }
+            else if (proof is ProofWithSigner proofWithSigner)
+            {
+                proofWithSigner.PrepareSignInternal(seedKey, validMics);
+            }
             else
             {
                 if (!proof.GetSignatureKey().Equals(seedKey.GetSignaturePublicKey()))

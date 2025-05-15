@@ -104,7 +104,8 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out _))
+        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
+            credentialEvidence.CredentialProof.Value.Point == credentialNode.Point)
         {
             // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;

@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents a credit information (@Originator:Standard/Merger1+Merger2).
+/// Represents a credit information (@Originator/Merger1+Merger2).
 /// </summary>
 [TinyhandObject]
 public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringConvertible<Credit>

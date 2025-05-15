@@ -28,6 +28,7 @@ public abstract partial class ProofWithSigner : Proof
     /// If <c>0</c>, the target <see cref="Value.Owner"/> is used.<br/>
     /// If between <c>1</c> and <c>Value.Credit.MergerCount</c>, a merger key is used.<br/>
     /// Otherwise, the <see cref="LpConstants.LpPublicKey"/> is used.
+    /// </summary>
     [Key(Proof.ReservedKeyCount + 1)]
     public int Signer { get; private set; }
 
@@ -55,5 +56,32 @@ public abstract partial class ProofWithSigner : Proof
     {
         value = this.Value;
         return true;
+    }
+
+    internal void PrepareSignInternal(SeedKey seedKey, long validMics)
+    {
+        this.PrepareSignInternal(validMics);
+
+        var publicKey = seedKey.GetSignaturePublicKey();
+        if (publicKey.Equals(this.Value.Owner))
+        {// Owner
+            this.Signer = 0;
+        }
+        else if (publicKey.Equals(LpConstants.LpPublicKey))
+        {// LpKey
+            this.Signer = -1;
+        }
+        else if (publicKey.Equals(this.Value.Credit.Mergers[0]))
+        {// Merger-0
+            this.Signer = 1;
+        }
+        else if (publicKey.Equals(this.Value.Credit.Mergers[1]))
+        {// Merger-1
+            this.Signer = 2;
+        }
+        else if (publicKey.Equals(this.Value.Credit.Mergers[2]))
+        {// Merger-2
+            this.Signer = 3;
+        }
     }
 }
