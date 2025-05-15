@@ -26,7 +26,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
     public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
     {
-        var v = new Value();
+        var v = Value.UnsafeConstructor();
         v.Owner = owner;
         v.Point = point;
         v.Credit = credit;

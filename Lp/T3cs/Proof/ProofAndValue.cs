@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 public abstract partial class ProofAndValue : Proof
 {
     [Key(0)] // Key(0) is not used in the Proof class (reserved).
-    public Value Value { get; protected set; } = new();
+    public Value Value { get; protected set; } = default!;
 
     public override SignaturePublicKey GetSignatureKey()
         => this.Value.Owner;
