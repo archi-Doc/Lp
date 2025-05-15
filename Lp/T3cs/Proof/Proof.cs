@@ -7,7 +7,8 @@ using Tinyhand.IO;
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents a proof object (authentication between merger and public key).<br/>
+/// Represents a proof object.<br/>
+/// This class holds an authentication key and its proof content.
 /// </summary>
 [TinyhandUnion(0, typeof(ValueProof))]
 [TinyhandUnion(1, typeof(CreateCreditProof))]
@@ -17,7 +18,6 @@ namespace Lp.T3cs;
 [TinyhandUnion(5, typeof(IdentificationProof))]
 [TinyhandUnion(6, typeof(CredentialProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-// [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IEquatable<Proof>
 {
     /// <summary>
@@ -39,29 +39,25 @@ public abstract partial class Proof : IEquatable<Proof>
 
     #region FieldAndProperty
 
-    // /// <inheritdoc/>
-    // SignaturePublicKey IVerifiable.PublicKey => this.GetSignatureKey();
-
-    // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
-    // public SignaturePublicKey PublicKey { get; }
+    // Key(0) and Key(1) are reserved for derived classes.
 
     /// <summary>
     /// Gets or sets the signature.
     /// </summary>
-    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
 
     /// <summary>
     /// Gets or sets the signed time in microseconds.
     /// </summary>
-    [Key(2)]
+    [Key(3)]
     [Link(Primary = true, Type = ChainType.Ordered)]
     public long SignedMics { get; protected set; }
 
     /// <summary>
     /// Gets or sets the expiration time in microseconds.
     /// </summary>
-    [Key(3)]
+    [Key(4)]
     public long ExpirationMics { get; protected set; }
 
     /// <summary>

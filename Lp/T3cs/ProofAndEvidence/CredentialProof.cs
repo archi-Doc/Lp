@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
-public sealed partial class CredentialProof : Proof
+public sealed partial class CredentialProof : ProofWithValue
 {// Credentials = CredentialProof.Goshujin
     #region Integrality
 
@@ -58,8 +58,8 @@ public sealed partial class CredentialProof : Proof
 
     #region FieldAndProperty
 
-    [Key(Proof.ReservedKeyCount)]
-    public Value Value { get; private set; }
+    [Key(Proof.ReservedKeyCount + 0)]
+    public int SignerIndex { get; private set; }
 
     [Key(Proof.ReservedKeyCount + 1)]
     public CredentialKind Kind { get; private set; }
@@ -74,18 +74,13 @@ public sealed partial class CredentialProof : Proof
     #endregion
 
     public override SignaturePublicKey GetSignatureKey()
-        => this.Value.Owner;
-
-    public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {
-        credit = this.Value.Credit;
-        return true;
-    }
+        if (this.SignerIndex >= 0 && this.SignerIndex < this.Value.Credit.MergerCount)
+        {
+            return this.Value.Credit.Mergers[this.SignerIndex];
+        }
 
-    public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
-    {
-        value = this.Value;
-        return true;
+        return this.Value.Owner;
     }
 
     public override bool Validate()
