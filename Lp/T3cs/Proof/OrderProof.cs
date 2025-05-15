@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class OrderProof : ProofAndPublicKey
+public partial class OrderProof : ProofWithPublicKey
 {
     public enum OrderType : byte
     {

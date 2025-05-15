@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class ValueProof : ProofAndValue, IEquatable<ValueProof>
+public sealed partial class ValueProof : ProofWithValue, IEquatable<ValueProof>
 {
     #region FieldAndProperty
 

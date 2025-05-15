@@ -44,7 +44,7 @@ public static class SeedKeyExtensions
         writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
-            if (proof is ProofAndPublicKey proofAndPublicKey)
+            if (proof is ProofWithPublicKey proofAndPublicKey)
             {
                 proofAndPublicKey.PrepareSignInternal(seedKey, validMics);
             }

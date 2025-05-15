@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class LinkProof : ProofAndValue
+public sealed partial class LinkProof : ProofWithValue
 {
     [Key(Proof.ReservedKeyCount)]
     public SignaturePublicKey LinkerPublicKey { get; private set; }

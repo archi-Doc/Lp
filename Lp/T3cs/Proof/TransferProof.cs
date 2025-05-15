@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TransferProof : ProofAndPublicKey
+public partial class TransferProof : ProofWithPublicKey
 {
     public TransferProof()
     {

@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class CreateCreditProof : ProofAndPublicKey
+public partial class CreateCreditProof : ProofWithPublicKey
 {
     public CreateCreditProof()
     {

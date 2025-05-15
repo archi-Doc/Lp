@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class IdentificationProof : ProofAndPublicKey
+public partial class IdentificationProof : ProofWithPublicKey
 {
     public IdentificationProof()
     {

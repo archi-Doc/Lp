@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class EvolProof : ProofAndPublicKey
+public partial class EvolProof : ProofWithPublicKey
 {
     public EvolProof()
     {
