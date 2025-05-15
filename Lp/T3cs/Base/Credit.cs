@@ -11,11 +11,6 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringConvertible<Credit>
 {
-    public const char CreditSymbol = '@';
-    // public const char StandardSymbol = ':';
-    public const char MergerSymbol = '/';
-    public const char MergerSeparatorSymbol = '+';
-    public const int MaxMergers = 3; // MaxMergersCode
     public static readonly Credit Default = new();
 
     #region FieldAndProperty
@@ -24,7 +19,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public Identifier Identifier { get; private set; } = default!;
 
     [Key(1)]
-    [MaxLength(MaxMergers)]
+    [MaxLength(LpConstants.MaxMergers)]
     public partial SignaturePublicKey[] Mergers { get; private set; } = [];
 
     // [Key(2)]
@@ -60,7 +55,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         read = 0;
         var span = source.Trim();
 
-        if (span.Length < 1 || span[0] != CreditSymbol)
+        if (span.Length < 1 || span[0] != LpConstants.CreditSymbol)
         {// @
             return false;
         }
@@ -74,7 +69,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
         span = span.Slice(originatorRead);
 
-        if (span.Length == 0 || span[0] != MergerSymbol)
+        if (span.Length == 0 || span[0] != LpConstants.MergerSymbol)
         {
             return false;
         }
@@ -96,7 +91,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             return true;
         }
 
-        if (span[0] != MergerSeparatorSymbol)
+        if (span[0] != LpConstants.MergerSeparatorSymbol)
         {
             return false;
         }
@@ -117,7 +112,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             return true;
         }
 
-        if (span[0] != MergerSeparatorSymbol)
+        if (span[0] != LpConstants.MergerSeparatorSymbol)
         {
             return false;
         }
@@ -141,7 +136,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         return false;
     }
 
-    public static int MaxStringLength => (1 + SignaturePublicKey.MaxStringLength) * (2 + MaxMergers); // @Originator/Merger1+Merger2
+    public static int MaxStringLength => (1 + SignaturePublicKey.MaxStringLength) * (2 + LpConstants.MaxMergers); // @Originator/Merger1+Merger2
 
     public int GetStringLength()
     {
@@ -164,7 +159,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
 
         var span = destination;
-        span[0] = CreditSymbol;
+        span[0] = LpConstants.CreditSymbol;
         span = span.Slice(1);
         written += 1;
 
@@ -191,13 +186,13 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             if (isFirst)
             {
                 isFirst = false;
-                span[0] = MergerSymbol;
+                span[0] = LpConstants.MergerSymbol;
                 span = span.Slice(1);
                 written += 1;
             }
             else
             {
-                span[0] = MergerSeparatorSymbol;
+                span[0] = LpConstants.MergerSeparatorSymbol;
                 span = span.Slice(1);
                 written += 1;
             }
@@ -224,7 +219,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     {
         if (this.Mergers == null ||
             this.Mergers.Length == 0 ||
-            this.Mergers.Length > MaxMergers)
+            this.Mergers.Length > LpConstants.MaxMergers)
         {
             return false;
         }

@@ -21,13 +21,13 @@ public static class StringHelper
             if (isFirst)
             {
                 isFirst = false;
-                span[0] = Credit.MergerSymbol;
+                span[0] = LpConstants.MergerSymbol;
                 span = span.Slice(1);
                 written += 1;
             }
             else
             {
-                span[0] = Credit.MergerSeparatorSymbol;
+                span[0] = LpConstants.MergerSeparatorSymbol;
                 span = span.Slice(1);
                 written += 1;
             }

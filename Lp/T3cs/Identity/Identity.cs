@@ -28,7 +28,7 @@ public partial record Identity : IValidatable
     public required SignaturePublicKey Originator { get; init; }
 
     [Key(3)]
-    [MaxLength(Credit.MaxMergers)]
+    [MaxLength(LpConstants.MaxMergers)]
     public required partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     #endregion
@@ -55,7 +55,7 @@ public partial record Identity : IValidatable
         }
 
         if (this.Mergers.Length == 0 ||
-            this.Mergers.Length > Credit.MaxMergers)
+            this.Mergers.Length > LpConstants.MaxMergers)
         {
             return false;
         }

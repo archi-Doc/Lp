@@ -33,7 +33,7 @@ public abstract partial class Proof : IEquatable<Proof>
     /// <summary>
     /// Initializes a new instance of the <see cref="Proof"/> class.
     /// </summary>
-    public Proof()
+    protected Proof()
     {
     }
 

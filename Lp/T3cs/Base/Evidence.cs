@@ -8,20 +8,19 @@ namespace Lp.T3cs;
 /// <summary>
 /// Immutable evidence object (authentication within merger).
 /// </summary>
-// [TinyhandObject]
-// [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
+[TinyhandUnion(0, typeof(CredentialEvidence))]
+[TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Evidence : IValidatable
 {
-    public Evidence()
-    {
-    }
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public const int ReservedKeyCount = 4;
 
     #region FieldAndProperty
 
     // [Key(0)]
-    // public Proof Proof { get; protected set; } // Owned by derived classes
-
-    public abstract Proof Proof { get; }
+    public abstract Proof Proof { get; } // Owned by derived classes
 
     [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature0 { get; protected set; }
@@ -31,9 +30,6 @@ public abstract partial class Evidence : IValidatable
 
     [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; protected set; }
-
-    // [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
-    // public Proof? LinkedProof { get; protected set; }
 
     public long ProofMics
         => this.Proof.SignedMics;
@@ -61,7 +57,6 @@ public abstract partial class Evidence : IValidatable
         try
         {
             ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-            // TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             var sign = new byte[CryptoSign.SignatureSize];
@@ -97,7 +92,22 @@ public abstract partial class Evidence : IValidatable
         return this.Proof.Validate();
     }
 
-    public bool ValidateAndVerify(int mergerIndex = Credit.MaxMergers)
+    public bool ValidateLinker()
+    {
+        if (!this.Proof.Validate())
+        {
+            return false;
+        }
+
+        if (!this.Proof.TryGetLinkerPublicKey(out _))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool ValidateAndVerify(int mergerIndex = LpConstants.MaxMergers)
     {
         if (!this.Validate())
         {
@@ -140,7 +150,6 @@ public abstract partial class Evidence : IValidatable
             try
             {
                 ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-                // TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
                 var rentMemory = writer.FlushAndGetRentMemory();
                 var result = credit.Mergers[mergerIndex].Verify(rentMemory.Span, signature);
                 rentMemory.Return();
