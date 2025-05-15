@@ -51,12 +51,6 @@ public sealed partial class CredentialProof : Proof
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
-    public CredentialProof()
-    {
-        this.Value = default!;
-        this.State = default!;
-    }
-
     public CredentialProof(Value value, CredentialKind kind, CredentialState state)
     {
         this.Value = value;
