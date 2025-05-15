@@ -21,6 +21,7 @@ public static class LpConstants
     public const string LpAlias = "Lp";
     public const string LpKeyAlias = "LpKey";
     public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";
+    public const long LpExpirationMics = Mics.MicsPerDay * 1;
 
     public static readonly SignaturePublicKey LpPublicKey;
     public static readonly Identity LpIdentity;

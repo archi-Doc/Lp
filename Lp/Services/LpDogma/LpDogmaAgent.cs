@@ -76,23 +76,24 @@ internal class LpDogmaAgent : LpDogmaNetService
             return default;
         }
 
-        var credentialProof = new CredentialProof(token.Target, kind, this.merger.State);
         switch (kind)
         {
             case CredentialKind.Merger:
-                if (this.merger.TrySign(credentialProof, CredentialProof.LpExpirationMics) &&
-                    credentialProof.ValidateAndVerify())
+                var mergerProof = new CredentialProof(token.Target, kind, this.merger.State);
+                if (this.merger.TrySign(mergerProof, LpConstants.LpExpirationMics) &&
+                    mergerProof.ValidateAndVerify())
                 {
-                    return credentialProof;
+                    return mergerProof;
                 }
 
                 break;
 
             case CredentialKind.Linker:
-                if (this.linker.TrySign(credentialProof, CredentialProof.LpExpirationMics) &&
-                    credentialProof.ValidateAndVerify())
+                var linkerProof = new CredentialProof(token.Target, kind, this.merger.State);
+                if (this.linker.TrySign(linkerProof, LpConstants.LpExpirationMics) &&
+                    linkerProof.ValidateAndVerify())
                 {
-                    return credentialProof;
+                    return linkerProof;
                 }
 
                 break;

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Netsphere;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -135,10 +134,6 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     }
 
     #endregion
-
-    public Value()
-    {
-    }
 
     public Value(SignaturePublicKey owner, Point point, Credit credit)
     {

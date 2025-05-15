@@ -193,8 +193,8 @@ public partial class LpDogmaMachine : Machine
         var proof1 = new LinkProof(link.LinkerPublicKey, value1);
         var value2 = new Value(LpConstants.LpPublicKey, 0, link.Credit2);
         var proof2 = new LinkProof(link.LinkerPublicKey, value2);
-        this.lpSeedKey.TrySign(proof1, CredentialProof.LpExpirationMics);
-        this.lpSeedKey.TrySign(proof2, CredentialProof.LpExpirationMics);
+        this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics);
+        this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var evidence1 = new LinkEvidence(proof1);
         var evidence2 = new LinkEvidence(proof2);
         var linkage = new Linkage(evidence1, evidence2);
