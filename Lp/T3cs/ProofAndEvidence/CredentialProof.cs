@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
-public sealed partial class CredentialProof : ProofWithValue
+public sealed partial class CredentialProof : ProofWithSigner
 {// Credentials = CredentialProof.Goshujin
     #region Integrality
 
@@ -58,13 +58,10 @@ public sealed partial class CredentialProof : ProofWithValue
 
     #region FieldAndProperty
 
-    [Key(Proof.ReservedKeyCount + 0)]
-    public int SignerIndex { get; private set; }
-
-    [Key(Proof.ReservedKeyCount + 1)]
+    [Key(ProofWithSigner.ReservedKeyCount + 0)]
     public CredentialKind Kind { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 2)]
+    [Key(ProofWithSigner.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
 
     public SignaturePublicKey Originator => this.GetSignatureKey();
@@ -72,16 +69,6 @@ public sealed partial class CredentialProof : ProofWithValue
     public override long MaxValidMics => Mics.MicsPerDay * 1;
 
     #endregion
-
-    public override SignaturePublicKey GetSignatureKey()
-    {
-        if (this.SignerIndex >= 0 && this.SignerIndex < this.Value.Credit.MergerCount)
-        {
-            return this.Value.Credit.Mergers[this.SignerIndex];
-        }
-
-        return this.Value.Owner;
-    }
 
     public override bool Validate()
     {

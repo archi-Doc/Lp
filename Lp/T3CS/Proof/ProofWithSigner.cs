@@ -7,10 +7,26 @@ namespace Lp.T3cs;
 
 public abstract partial class ProofWithSigner : Proof
 {
-    [Key(0)] // Key(0) is not used in the Proof class (reserved).
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 2;
+
+    [Key(Proof.ReservedKeyCount)]
     public Value Value { get; protected set; } = default!;
 
-    public override SignaturePublicKey GetSignatureKey() => this.Value.Owner;
+    [Key(Proof.ReservedKeyCount + 1)]
+    public int SignerIndex { get; private set; }
+
+    public override SignaturePublicKey GetSignatureKey()
+    {
+        if (this.SignerIndex >= 0 && this.SignerIndex < this.Value.Credit.MergerCount)
+        {
+            return this.Value.Credit.Mergers[this.SignerIndex];
+        }
+
+        return this.Value.Owner;
+    }
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {

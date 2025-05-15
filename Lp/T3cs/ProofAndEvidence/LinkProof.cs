@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial class LinkProof : ProofWithValue
 {
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ProofWithValue.ReservedKeyCount)]
     public SignaturePublicKey LinkerPublicKey { get; private set; }
 
     public LinkProof(SignaturePublicKey linkerPublicKey, Value value)

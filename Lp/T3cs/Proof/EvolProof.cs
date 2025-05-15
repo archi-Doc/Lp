@@ -9,6 +9,6 @@ public partial class EvolProof : ProofWithPublicKey
     {
     }
 
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public Point Point { get; private set; }
 }

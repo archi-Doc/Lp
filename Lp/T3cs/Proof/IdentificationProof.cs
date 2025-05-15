@@ -9,7 +9,7 @@ public partial class IdentificationProof : ProofWithPublicKey
     {
     }
 
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public string Name { get; private set; } = string.Empty;
 
     public override bool Validate()

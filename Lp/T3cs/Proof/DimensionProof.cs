@@ -12,7 +12,7 @@ public partial class DimensionProof : ProofWithPublicKey
     {
     }
 
-    [Key(5)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public double Dimension { get; private set; }
 
     // public Value Value { get; private set; } = new();

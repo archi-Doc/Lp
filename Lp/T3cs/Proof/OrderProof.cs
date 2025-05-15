@@ -17,18 +17,18 @@ public partial class OrderProof : ProofWithPublicKey
     {
     }
 
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public OrderType Type { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 1)]
+    [Key(ProofWithPublicKey.ReservedKeyCount + 1)]
     public Point Point { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 2)]
+    [Key(ProofWithPublicKey.ReservedKeyCount + 2)]
     public Credit SourceCredit { get; private set; } = new();
 
-    [Key(Proof.ReservedKeyCount + 3)]
+    [Key(ProofWithPublicKey.ReservedKeyCount + 3)]
     public Credit DestinationCredit { get; private set; } = new();
 
-    [Key(Proof.ReservedKeyCount + 4)]
+    [Key(ProofWithPublicKey.ReservedKeyCount + 4)]
     public double Ratio { get; private set; }
 }
