@@ -14,7 +14,7 @@ public sealed partial class CredentialProof : Proof
 
     #region Integrality
 
-    public class Integrality : Integrality<CredentialProof.GoshujinClass, CredentialProof>
+    /*public class Integrality : Integrality<CredentialProof.GoshujinClass, CredentialProof>
     {
         public static readonly Integrality Default = new()
         {
@@ -46,7 +46,7 @@ public sealed partial class CredentialProof : Proof
 
             return true;
         }
-    }
+    }*/
 
     #endregion
 

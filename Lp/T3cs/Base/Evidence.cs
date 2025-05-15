@@ -8,8 +8,6 @@ namespace Lp.T3cs;
 /// <summary>
 /// Immutable evidence object (authentication within merger).
 /// </summary>
-// [TinyhandObject]
-// [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 [TinyhandUnion(0, typeof(CredentialEvidence))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Evidence : IValidatable
@@ -32,9 +30,6 @@ public abstract partial class Evidence : IValidatable
 
     [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; protected set; }
-
-    // [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 100)]
-    // public Proof? LinkedProof { get; protected set; }
 
     public long ProofMics
         => this.Proof.SignedMics;
@@ -62,7 +57,6 @@ public abstract partial class Evidence : IValidatable
         try
         {
             ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-            // TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             var sign = new byte[CryptoSign.SignatureSize];
@@ -156,7 +150,6 @@ public abstract partial class Evidence : IValidatable
             try
             {
                 ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-                // TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
                 var rentMemory = writer.FlushAndGetRentMemory();
                 var result = credit.Mergers[mergerIndex].Verify(rentMemory.Span, signature);
                 rentMemory.Return();

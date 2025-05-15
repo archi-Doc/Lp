@@ -55,25 +55,8 @@ public partial class LinkEvidence : Evidence
 
     public override Proof Proof => this.LinkProof;
 
-    public LinkEvidence()
-    {
-    }
-
     public LinkEvidence(LinkProof linkProof)
     {
         this.LinkProof = linkProof;
-    }
-
-    public static bool TryCreate(CredentialProof proof, SeedKey seedKey, [MaybeNullWhen(false)] out CredentialEvidence evidence)
-    {
-        var obj = new CredentialEvidence(proof);
-        if (!obj.TrySign(seedKey, 0))
-        {
-            evidence = default;
-            return false;
-        }
-
-        evidence = obj;
-        return true;
     }
 }
