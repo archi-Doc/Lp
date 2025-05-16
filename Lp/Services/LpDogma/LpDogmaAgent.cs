@@ -95,7 +95,6 @@ internal class LpDogmaAgent : LpDogmaNetService
         {
             return proof;
         }
-
         return default;
     }
 
