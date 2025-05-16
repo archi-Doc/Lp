@@ -41,6 +41,7 @@ public abstract partial class CredentialState
     public bool IsValid =>
         this.NetNode is not null &&
         this.NetNode.Address.IsValidIpv4AndIpv6 &&
+        this.NetNode.Validate() &&
         Alias.IsValid(this.Name);
 
     #endregion

@@ -168,8 +168,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public bool TrySign(Proof proof, long validMics)
-        => this.seedKey.TrySign(proof, validMics);
+    public SeedKey SeedKey => this.seedKey;
 
     public void UpdateState()
     {

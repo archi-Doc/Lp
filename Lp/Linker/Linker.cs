@@ -34,7 +34,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     private readonly NetStats netStats;
     private ICrystal<FullCredit.GoshujinClass>? dataCrystal;
     private FullCredit.GoshujinClass? data;
-    private SeedKey? seedKey;
+    private SeedKey seedKey = SeedKey.Invalid;
 
     #endregion
 
@@ -78,8 +78,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
         this.Initialized = true;
     }
 
-    public bool TrySign(Proof proof, long validMics)
-        => this.seedKey is null ? false : this.seedKey.TrySign(proof, validMics);
+    public SeedKey SeedKey => this.seedKey;
 
     public void UpdateState()
     {
