@@ -90,8 +90,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         // if (await this.authorityControl.GetAuthority("lp") is { } authority)
         {
-            var g = new CredentialProof.GoshujinClass();
-
             var owner = SeedKey.NewSignature();
             var creditIdentity = new Identity(IdentityKind.Credit, owner.GetSignaturePublicKey(), [SeedKey.NewSignature().GetSignaturePublicKey()]);
             if (Credit.TryCreate(creditIdentity, out var credit) &&

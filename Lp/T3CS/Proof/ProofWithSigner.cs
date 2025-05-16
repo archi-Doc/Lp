@@ -5,6 +5,14 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+[Flags]
+public enum SignerPermission
+{
+    Owner = 1 << 0,
+    Merger = 1 << 1,
+    LpKey = 1 << 2,
+}
+
 /// <summary>
 /// The general Proof class only supports authentication using the target <see cref="SignaturePublicKey"/>,<br/>
 /// but this class supports authentication using the target PublicKey, Mergers, and LpKey.<br/>
@@ -21,6 +29,8 @@ public abstract partial class ProofWithSigner : Proof
     public new const int ReservedKeyCount = Proof.ReservedKeyCount + 2;
 
     #region FieldAndProperty
+
+    public abstract SignerPermission Permission { get; }
 
     [Key(Proof.ReservedKeyCount)]
     public Value Value { get; protected set; } = default!;
@@ -60,6 +70,27 @@ public abstract partial class ProofWithSigner : Proof
     {
         value = this.Value;
         return true;
+    }
+
+    public override bool Validate()
+    {
+        if (!base.Validate())
+        {
+            return false;
+        }
+
+        if (this.Signer == 0)
+        {
+            return this.Permission.HasFlag(SignerPermission.Owner);
+        }
+        else if (this.Signer <= LpConstants.MaxMergers)
+        {
+            return this.Permission.HasFlag(SignerPermission.Merger);
+        }
+        else
+        {
+            return this.Permission.HasFlag(SignerPermission.LpKey);
+        }
     }
 
     internal void PrepareSignInternal(SeedKey seedKey, long validMics)

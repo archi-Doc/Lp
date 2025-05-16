@@ -7,7 +7,7 @@ using ValueLink.Integrality;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
+// [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public sealed partial class CredentialProof : ProofWithSigner
 {// Credentials = CredentialProof.Goshujin
     #region Integrality
@@ -48,7 +48,7 @@ public sealed partial class CredentialProof : ProofWithSigner
 
     #endregion
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
+    // [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public CredentialProof(Value value, CredentialKind kind, CredentialState state)
     {
         this.Value = value;
@@ -57,6 +57,8 @@ public sealed partial class CredentialProof : ProofWithSigner
     }
 
     #region FieldAndProperty
+
+    public override SignerPermission Permission => SignerPermission.Merger | SignerPermission.LpKey;
 
     [Key(ProofWithSigner.ReservedKeyCount + 0)]
     public CredentialKind Kind { get; private set; }
