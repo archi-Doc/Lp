@@ -15,31 +15,31 @@ public partial class Linkage : IValidatable
     public long LinkedMics { get; private set; }
 
     [Key(1)]
-    public ProofWithLinker LinkageProof1 { get; set; }
+    public ProofWithLinker LinkageProof1 { get; private set; }
 
     [Key(2)]
-    public ProofWithLinker LinkageProof2 { get; set; }
+    public ProofWithLinker LinkageProof2 { get; private set; }
 
     [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 10)]
     private byte[]? linkerSignature;
 
     [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    private byte[]? mergerSignature10;
+    public byte[]? MergerSignature10 { get; private set; }
 
     [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
-    private byte[]? mergerSignature11;
+    public byte[]? MergerSignature11 { get; private set; }
 
     [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
-    private byte[]? mergerSignature12;
+    public byte[]? MergerSignature12 { get; private set; }
 
     [Key(7, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    private byte[]? mergerSignature20;
+    public byte[]? MergerSignature20 { get; private set; }
 
     [Key(8, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
-    private byte[]? mergerSignature21;
+    public byte[]? MergerSignature21 { get; private set; }
 
     [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
-    private byte[]? mergerSignature22;
+    public byte[]? MergerSignature22 { get; private set; }
 
     #endregion
 
