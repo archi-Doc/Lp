@@ -45,7 +45,7 @@ public abstract partial class Proof : IEquatable<Proof>
     /// Gets or sets the signature.
     /// </summary>
     [Key(0, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    public byte[] Signature { get; protected set; } = Array.Empty<byte>();
+    public byte[] Signature { get; protected set; } = [];
 
     /// <summary>
     /// Gets or sets the signed time in microseconds.

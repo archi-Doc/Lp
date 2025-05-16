@@ -28,6 +28,8 @@ public class ProofTest
         var owner = ownerKey.GetSignaturePublicKey();
         var mergerKey = SeedKey.NewSignature();
         var merger = mergerKey.GetSignaturePublicKey();
+        var linkerKey = SeedKey.NewSignature();
+        var linker = linkerKey.GetSignaturePublicKey();
 
         var creditIdentity = new Identity(IdentityKind.Credit, owner, [merger,]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
@@ -43,7 +45,23 @@ public class ProofTest
         mergerKey.TrySign(credentialProof, validMics).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
 
-        //var linkageProof = new ProofWithLinker
-        //var linkageEvidence = new LinkageEvidence(credentialProof, owner, 4);
+        var linkageProof = new TestLinkageProof(value, linker);
+        ownerKey.TrySign(linkageProof, validMics).IsTrue();
+        var linkageProof2 = new TestLinkageProof(value, linker);
+        ownerKey.TrySign(linkageProof2, validMics).IsTrue();
+        var linkedMics = Mics.FastCorrected;
+
+        var linkageEvidence = new LinkageEvidence(linkedMics, linkageProof, linkageProof2);
+        mergerKey.TrySign(linkageEvidence, 0).IsTrue();
+        linkageEvidence.ValidateAndVerify().IsTrue();
+
+        var linkageEvidence2 = new LinkageEvidence(linkedMics, linkageProof, linkageProof2);
+        mergerKey.TrySign(linkageEvidence2, 0).IsTrue();
+        linkageEvidence2.ValidateAndVerify().IsTrue();
+
+        Linkage.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
+        linkerKey.TrySign(linkage!, validMics).IsTrue();
+
+        linkage!.ValidateAndVerify().IsTrue();
     }
 }

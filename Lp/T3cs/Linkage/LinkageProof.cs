@@ -5,6 +5,21 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+public partial class TestLinkageProof : LinkageProof
+{
+    public TestLinkageProof(Value value, SignaturePublicKey linkerPublicKey)
+        : base(value, linkerPublicKey)
+    {
+    }
+
+    public override PermittedSigner PermittedSigner => PermittedSigner.Owner;
+
+    public override bool Validate()
+    {
+        return true;
+    }
+}
+
 /// <summary>
 /// The general Proof class only supports authentication using the target <see cref="SignaturePublicKey"/>,<br/>
 /// but this class supports authentication using the target PublicKey, Mergers, and LpKey.<br/>
@@ -41,6 +56,12 @@ public abstract partial class LinkageProof : Proof
     public SignaturePublicKey LinkerPublicKey { get; private set; }
 
     #endregion
+
+    public LinkageProof(Value value, SignaturePublicKey linkerPublicKey)
+    {
+        this.Value = value;
+        this.LinkerPublicKey = linkerPublicKey;
+    }
 
     public override SignaturePublicKey GetSignatureKey()
     {

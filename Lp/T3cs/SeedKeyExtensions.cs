@@ -76,4 +76,60 @@ public static class SeedKeyExtensions
             writer.Dispose();
         }
     }
+
+    public static bool TrySign(this SeedKey seedKey, Evidence evidence, int mergerIndex)
+    {
+        if (!evidence.Proof.TryGetCredit(out var credit))
+        {
+            return false;
+        }
+
+        if (credit.MergerCount <= mergerIndex ||
+            !credit.Mergers[mergerIndex].Equals(seedKey.GetSignaturePublicKey()))
+        {
+            return false;
+        }
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
+        try
+        {
+            ((ITinyhandSerializable)evidence).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            return evidence.SetSignInternal(mergerIndex, sign);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    public static bool TrySign(this SeedKey seedKey, Linkage linkage, long validMics)
+    {
+        if (!seedKey.GetSignaturePublicKey().Equals(linkage.LinkageProof1.LinkerPublicKey))
+        {
+            return false;
+        }
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = Linkage.SignatureLevel - 1;
+        try
+        {
+            TinyhandSerializer.SerializeObject<Linkage>(ref writer, linkage, TinyhandSerializerOptions.Signature);
+            Span<byte> hash = stackalloc byte[Blake3.Size];
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var signature = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, signature);
+            linkage.SetSignInternal(signature);
+            return true;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
 }

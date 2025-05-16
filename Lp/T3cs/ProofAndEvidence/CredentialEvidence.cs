@@ -81,7 +81,7 @@ public partial class CredentialEvidence : Evidence
     public static bool TryCreate(CredentialProof proof, SeedKey seedKey, [MaybeNullWhen(false)] out CredentialEvidence evidence)
     {
         var obj = new CredentialEvidence(proof);
-        if (!obj.TrySign(seedKey, 0))
+        if (!seedKey.TrySign(obj, 0))
         {
             evidence = default;
             return false;

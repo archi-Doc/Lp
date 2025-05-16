@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Security.Policy;
 using Arc.Collections;
+using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
@@ -9,6 +12,8 @@ namespace Lp.T3cs;
 [ValueLinkObject]
 public partial class Linkage : IValidatable
 {
+    public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
+
     private static readonly ObjectPool<LinkageEvidence> EvidencePool = new(() => LinkageEvidence.UnsafeConstructor());
 
     #region FieldAndProperty
@@ -23,7 +28,7 @@ public partial class Linkage : IValidatable
     [Key(2)]
     public LinkageProof LinkageProof2 { get; private set; }
 
-    [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 10)]
+    [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
 
     [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
@@ -46,6 +51,38 @@ public partial class Linkage : IValidatable
 
     #endregion
 
+    public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out Linkage? linkage)
+    {
+        linkage = default;
+        if (!evidence1.LinkageProof1.Equals(evidence2.LinkageProof1) ||
+            !evidence1.LinkageProof2.Equals(evidence2.LinkageProof2))
+        {
+            return false;
+        }
+
+        if (evidence1.LinkedMics != evidence2.LinkedMics)
+        {
+            return false;
+        }
+
+        if (!evidence1.ValidateAndVerify() ||
+            !evidence2.ValidateAndVerify())
+        {
+            return false;
+        }
+
+        linkage = new Linkage(evidence1.LinkageProof1, evidence1.LinkageProof2);
+        linkage.LinkedMics = evidence1.LinkedMics;
+        linkage.MergerSignature10 = evidence1.MergerSignature0;
+        linkage.MergerSignature11 = evidence1.MergerSignature1;
+        linkage.MergerSignature12 = evidence1.MergerSignature2;
+        linkage.MergerSignature20 = evidence2.MergerSignature0;
+        linkage.MergerSignature21 = evidence2.MergerSignature1;
+        linkage.MergerSignature22 = evidence2.MergerSignature2;
+
+        return true;
+    }
+
     public Linkage(LinkageProof proof1, LinkageProof proof2)
     {
         this.LinkageProof1 = proof1;
@@ -54,11 +91,16 @@ public partial class Linkage : IValidatable
 
     public bool Validate()
     {
-        /*if (!this.LinkageProof1.ValidateLinker() ||
-            !this.LinkageProof2.ValidateLinker())
+        if (!this.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
+            !this.LinkageProof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
         {
             return false;
-        }*/
+        }
+
+        if (!linkerPublicKey.Equals(linkerPublicKey2))
+        {
+            return false;
+        }
 
         return true;
     }
@@ -70,11 +112,22 @@ public partial class Linkage : IValidatable
             return false;
         }
 
+        if (!this.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
+        {
+            return false;
+        }
+
+        if (!this.LinkageProof1.ValidateAndVerify() ||
+            !this.LinkageProof2.ValidateAndVerify())
+        {
+            return false;
+        }
+
         var evidence = EvidencePool.Rent();
         try
         {
             evidence.FromLinkage(this, true);
-            if (!evidence.ValidateAndVerify())
+            if (!evidence.ValidateAndVerifyExceptProof())
             {
                 return false;
             }
@@ -90,6 +143,28 @@ public partial class Linkage : IValidatable
             EvidencePool.Return(evidence);
         }
 
-        return true;
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = SignatureLevel;
+        try
+        {
+            ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+            var rentMemory = writer.FlushAndGetRentMemory();
+            var result = linkerPublicKey.Verify(rentMemory.Span, this.linkerSignature);
+            rentMemory.Return();
+            return result;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    internal void SetSignInternal(byte[] sign)
+    {
+        this.linkerSignature = sign;
     }
 }

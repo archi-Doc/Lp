@@ -39,54 +39,6 @@ public abstract partial class Evidence : IValidatable
 
     #endregion
 
-    public bool TrySign(SeedKey seedKey, int mergerIndex)
-    {
-        if (!this.Proof.TryGetCredit(out var credit))
-        {
-            return false;
-        }
-
-        if (credit.MergerCount <= mergerIndex ||
-            !credit.Mergers[mergerIndex].Equals(seedKey.GetSignaturePublicKey()))
-        {
-            return false;
-        }
-
-        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
-        writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
-        try
-        {
-            ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-
-            var sign = new byte[CryptoSign.SignatureSize];
-            seedKey.Sign(span, sign);
-
-            if (mergerIndex == 0)
-            {
-                this.MergerSignature0 = sign;
-            }
-            else if (mergerIndex == 1)
-            {
-                this.MergerSignature1 = sign;
-            }
-            else if (mergerIndex == 2)
-            {
-                this.MergerSignature2 = sign;
-            }
-            else
-            {
-                return false;
-            }
-
-            return true;
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
     public bool Validate()
     {
         return this.Proof.Validate();
@@ -109,13 +61,23 @@ public abstract partial class Evidence : IValidatable
 
     public bool ValidateAndVerify(int mergerIndex = LpConstants.MaxMergers)
     {
+        if (!this.Proof.TryGetCredit(out var credit) ||
+            !this.Proof.ValidateAndVerify())
+        {
+            return false;
+        }
+
+        return this.ValidateAndVerifyExceptProof(mergerIndex);
+    }
+
+    public bool ValidateAndVerifyExceptProof(int mergerIndex = LpConstants.MaxMergers)
+    {
         if (!this.Validate())
         {
             return false;
         }
 
-        if (!this.Proof.TryGetCredit(out var credit) ||
-            !this.Proof.ValidateAndVerify())
+        if (!this.Proof.TryGetCredit(out var credit))
         {
             return false;
         }
@@ -177,6 +139,27 @@ public abstract partial class Evidence : IValidatable
         else
         {
             return $"{{ {this.Proof.ToString(conversionOptions)} }}";
+        }
+    }
+
+    internal bool SetSignInternal(int mergerIndex, byte[] signature)
+    {
+        switch (mergerIndex)
+        {
+            case 0:
+                this.MergerSignature0 = signature;
+                return true;
+
+            case 1:
+                this.MergerSignature1 = signature;
+                return true;
+
+            case 2:
+                this.MergerSignature2 = signature;
+                return true;
+
+            default:
+                return false;
         }
     }
 }
