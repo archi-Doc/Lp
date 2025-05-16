@@ -18,10 +18,10 @@ public partial class Linkage : IValidatable
     public long LinkedMics { get; private set; }
 
     [Key(1)]
-    public ProofWithLinker LinkageProof1 { get; private set; }
+    public LinkageProof LinkageProof1 { get; private set; }
 
     [Key(2)]
-    public ProofWithLinker LinkageProof2 { get; private set; }
+    public LinkageProof LinkageProof2 { get; private set; }
 
     [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 10)]
     private byte[]? linkerSignature;
@@ -46,7 +46,7 @@ public partial class Linkage : IValidatable
 
     #endregion
 
-    public Linkage(ProofWithLinker proof1, ProofWithLinker proof2)
+    public Linkage(LinkageProof proof1, LinkageProof proof2)
     {
         this.LinkageProof1 = proof1;
         this.LinkageProof2 = proof2;

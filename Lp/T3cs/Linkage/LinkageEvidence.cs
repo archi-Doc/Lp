@@ -20,16 +20,16 @@ public partial class LinkageEvidence : Evidence
     public long LinkedMics { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 2)]
-    public ProofWithLinker LinkageProof1 { get; private set; }
+    public LinkageProof LinkageProof1 { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 3)]
-    public ProofWithLinker LinkageProof2 { get; private set; }
+    public LinkageProof LinkageProof2 { get; private set; }
 
     public override Proof Proof => this.LinkageProof1;
 
     #endregion
 
-    public LinkageEvidence(long linkedMics, ProofWithLinker linkageProof, ProofWithLinker linkageProof2)
+    public LinkageEvidence(long linkedMics, LinkageProof linkageProof, LinkageProof linkageProof2)
     {
         this.LinkedMics = linkedMics;
         this.LinkageProof1 = linkageProof;

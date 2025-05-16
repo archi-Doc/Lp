@@ -14,12 +14,16 @@ namespace Lp.T3cs;
 /// otherwise, LpKey is used.
 /// </summary>
 [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
-public abstract partial class ProofWithLinker : Proof
+public abstract partial class LinkageProof : Proof
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
     public new const int ReservedKeyCount = Proof.ReservedKeyCount + 2;
+
+    #region FieldAndProperty
+
+    public abstract PermittedSigner PermittedSigner { get; }
 
     [Key(Proof.ReservedKeyCount + 0)]
     public Value Value { get; protected set; } = default!;
@@ -35,6 +39,8 @@ public abstract partial class ProofWithLinker : Proof
 
     [Key(Proof.ReservedKeyCount + 2)]
     public SignaturePublicKey LinkerPublicKey { get; private set; }
+
+    #endregion
 
     public override SignaturePublicKey GetSignatureKey()
     {
@@ -60,6 +66,27 @@ public abstract partial class ProofWithLinker : Proof
     {
         value = this.Value;
         return true;
+    }
+
+    public override bool Validate()
+    {
+        if (!base.Validate())
+        {
+            return false;
+        }
+
+        if (this.Signer == 0)
+        {
+            return this.PermittedSigner.HasFlag(PermittedSigner.Owner);
+        }
+        else if (this.Signer <= LpConstants.MaxMergers)
+        {
+            return this.PermittedSigner.HasFlag(PermittedSigner.Merger);
+        }
+        else
+        {
+            return this.PermittedSigner.HasFlag(PermittedSigner.LpKey);
+        }
     }
 
     internal void PrepareSignInternal(SeedKey seedKey, long validMics)
