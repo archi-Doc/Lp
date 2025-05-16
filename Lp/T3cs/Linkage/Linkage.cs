@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Collections;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
@@ -8,6 +9,8 @@ namespace Lp.T3cs;
 [ValueLinkObject]
 public partial class Linkage : IValidatable
 {
+    private static readonly ObjectPool<LinkageEvidence> EvidencePool = new(() => LinkageEvidence.UnsafeConstructor());
+
     #region FieldAndProperty
 
     [Key(0)]
@@ -59,44 +62,34 @@ public partial class Linkage : IValidatable
 
         return true;
     }
-}
 
-/*[TinyhandObject]
-[ValueLinkObject]
-public partial class Linkage : IValidatable
-{
-    #region FieldAndProperty
-
-    [Key(0)]
-    public Evidence Evidence1 { get; set; }
-
-    [Key(1)]
-    public Evidence Evidence2 { get; set; }
-
-    [Key(2)]
-    private byte[]? linkerSignature;
-
-    #endregion
-
-    public Linkage(Evidence evidence1, Evidence evidence2)
+    public bool ValidateAndVerify()
     {
-        this.Evidence1 = evidence1;
-        this.Evidence2 = evidence2;
-    }
-
-    public bool Validate()
-    {
-        if (!this.Evidence1.ValidateLinker() ||
-            !this.Evidence2.ValidateLinker())
+        if (!this.Validate())
         {
             return false;
         }
 
-        if (!this.Evidence1.Proof.Equals(this.Evidence2.Proof))
+        var evidence = EvidencePool.Rent();
+        try
         {
-            return false;
+            evidence.FromLinkage(this, true);
+            if (!evidence.ValidateAndVerify())
+            {
+                return false;
+            }
+
+            evidence.FromLinkage(this, false);
+            if (!evidence.ValidateAndVerify())
+            {
+                return false;
+            }
+        }
+        finally
+        {
+            EvidencePool.Return(evidence);
         }
 
         return true;
     }
-}*/
+}

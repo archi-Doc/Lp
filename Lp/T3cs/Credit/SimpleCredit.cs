@@ -22,7 +22,7 @@ public partial record SimpleCredit : ICredit
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     [Key(1)]
-    public Credit Credit { get; protected set; } = new();
+    public Credit Credit { get; protected set; } = Credit.UnsafeConstructor();
 
     [Key(2)]
     public CreditInformation CreditInformation { get; protected set; } = T3cs.CreditInformation.Default;

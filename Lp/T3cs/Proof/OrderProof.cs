@@ -24,10 +24,10 @@ public partial class OrderProof : ProofWithPublicKey
     public Point Point { get; private set; }
 
     [Key(ProofWithPublicKey.ReservedKeyCount + 2)]
-    public Credit SourceCredit { get; private set; } = new();
+    public Credit SourceCredit { get; private set; } = Credit.UnsafeConstructor();
 
     [Key(ProofWithPublicKey.ReservedKeyCount + 3)]
-    public Credit DestinationCredit { get; private set; } = new();
+    public Credit DestinationCredit { get; private set; } = Credit.UnsafeConstructor();
 
     [Key(ProofWithPublicKey.ReservedKeyCount + 4)]
     public double Ratio { get; private set; }

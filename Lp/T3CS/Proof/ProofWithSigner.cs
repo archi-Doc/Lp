@@ -20,6 +20,8 @@ public abstract partial class ProofWithSigner : Proof
     /// </summary>
     public new const int ReservedKeyCount = Proof.ReservedKeyCount + 2;
 
+    #region FieldAndProperty
+
     [Key(Proof.ReservedKeyCount)]
     public Value Value { get; protected set; } = default!;
 
@@ -31,6 +33,8 @@ public abstract partial class ProofWithSigner : Proof
     /// </summary>
     [Key(Proof.ReservedKeyCount + 1)]
     public int Signer { get; private set; }
+
+    #endregion
 
     public override SignaturePublicKey GetSignatureKey()
     {
