@@ -1,13 +1,67 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand.IO;
+
 namespace Lp.T3cs;
 
-/*[TinyhandObject]
-public partial class LinkerLinkage : Linkage<LinkerProof>
-{
-}*/
-
 [TinyhandObject]
+[ValueLinkObject]
+public partial class Linkage : IValidatable
+{
+    #region FieldAndProperty
+
+    [Key(0)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
+    public long LinkedMics { get; private set; }
+
+    [Key(1)]
+    public ProofWithLinker LinkageProof1 { get; set; }
+
+    [Key(2)]
+    public ProofWithLinker LinkageProof2 { get; set; }
+
+    [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 10)]
+    private byte[]? linkerSignature;
+
+    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    private byte[]? mergerSignature10;
+
+    [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
+    private byte[]? mergerSignature11;
+
+    [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
+    private byte[]? mergerSignature12;
+
+    [Key(7, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    private byte[]? mergerSignature20;
+
+    [Key(8, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
+    private byte[]? mergerSignature21;
+
+    [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
+    private byte[]? mergerSignature22;
+
+    #endregion
+
+    public Linkage(ProofWithLinker proof1, ProofWithLinker proof2)
+    {
+        this.LinkageProof1 = proof1;
+        this.LinkageProof2 = proof2;
+    }
+
+    public bool Validate()
+    {
+        /*if (!this.LinkageProof1.ValidateLinker() ||
+            !this.LinkageProof2.ValidateLinker())
+        {
+            return false;
+        }*/
+
+        return true;
+    }
+}
+
+/*[TinyhandObject]
 [ValueLinkObject]
 public partial class Linkage : IValidatable
 {
@@ -45,4 +99,4 @@ public partial class Linkage : IValidatable
 
         return true;
     }
-}
+}*/

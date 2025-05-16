@@ -198,7 +198,7 @@ public partial class LpDogmaMachine : Machine
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var evidence1 = new LinkEvidence(proof1);
         var evidence2 = new LinkEvidence(proof2);
-        var linkage = new Linkage(evidence1, evidence2);
+        // var linkage = new Linkage(evidence1, evidence2);
 
         var linkerState = credentialEvidence.CredentialProof.State;
         if (!linkerState.IsValid)
