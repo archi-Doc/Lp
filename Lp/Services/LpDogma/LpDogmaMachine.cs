@@ -130,15 +130,15 @@ public partial class LpDogmaMachine : Machine
             }
 
             var service = connection.GetService<LpDogmaNetService>();
-            var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
-            var r = await service.Authenticate(auth).ResponseAsync;
+            var authToken = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
+            var r = await service.Authenticate(authToken).ResponseAsync;
 
-            var token = CertificateToken<Value>.CreateAndSign(new Value(credentialNode.PublicKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
-            var credentialProof = await service.CreateCredentialProof(token, credentialKind);
+            var value = new Value(credentialNode.PublicKey, credentialNode.Point, LpConstants.LpCredit);
+            var credentialProof = await service.CreateCredentialProof(value, credentialKind);
             if (credentialProof is null ||
                 !credentialProof.ValidateAndVerify() ||
                 !credentialProof.GetSignatureKey().Equals(credentialNode.PublicKey) ||
-                !credentialProof.Value.Equals(token.Target))
+                !credentialProof.Value.Equals(value))
             {
                 return StateResult.Continue;
             }

@@ -12,9 +12,7 @@ public partial interface LpDogmaNetService : INetService
 
     NetTask<LpDogmaInformation?> GetInformation();
 
-    NetTask<CredentialProof?> CreateCredentialProof(CertificateToken<Value> toke, CredentialKind credentialKind);
-
-    NetTask<LinkProof?> CreateLinkerProof(CertificateToken<Value> token);
+    NetTask<CredentialProof?> CreateCredentialProof(Value value, CredentialKind credentialKind);
 
     NetTask<NetResult> AddCredentialEvidence(CredentialEvidence evidence);
 }
