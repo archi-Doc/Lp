@@ -54,6 +54,8 @@ public partial class LinkageEvidence : Evidence
             this.MergerSignature1 = linkage.MergerSignature21;
             this.MergerSignature2 = linkage.MergerSignature22;
         }
+
+        this.SetIdentifier();//
     }
 
     private void SetIdentifier()

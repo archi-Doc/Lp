@@ -5,6 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+[TinyhandObject]
 public partial class TestLinkageProof : LinkageProof
 {
     public TestLinkageProof(Value value, SignaturePublicKey linkerPublicKey)
@@ -28,6 +29,7 @@ public partial class TestLinkageProof : LinkageProof
 /// if it is between 1 and MergerCount, a Merger is used;<br/>
 /// otherwise, LpKey is used.
 /// </summary>
+[TinyhandUnion(0, typeof(TestLinkageProof))]
 [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
 public abstract partial class LinkageProof : Proof
 {
@@ -86,6 +88,12 @@ public abstract partial class LinkageProof : Proof
     public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
     {
         value = this.Value;
+        return true;
+    }
+
+    public override bool TryGetLinkerPublicKey([MaybeNullWhen(false)] out SignaturePublicKey linkerPublicKey)
+    {
+        linkerPublicKey = this.LinkerPublicKey;
         return true;
     }
 
