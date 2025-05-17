@@ -86,7 +86,7 @@ public partial class LpDogmaMachine : Machine
 
         foreach (var x in this.lpDogma.Links)
         {
-            var result = await this.ProcessLinkage(x);
+            var result = await this.ProcessLink(x);
             if (result == StateResult.Terminate)
             {
                 return StateResult.Terminate;
@@ -154,7 +154,7 @@ public partial class LpDogmaMachine : Machine
         }
     }
 
-    private async Task<StateResult> ProcessLinkage(LpDogma.Link link)
+    private async Task<StateResult> ProcessLink(LpDogma.Link link)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)

@@ -4,6 +4,7 @@ using Lp;
 using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
+using Tinyhand;
 using Xunit;
 
 namespace xUnitTest;
@@ -63,5 +64,10 @@ public class ProofTest
         linkerKey.TrySign(linkage!, validMics).IsTrue();
 
         linkage!.ValidateAndVerify().IsTrue();
+
+        var bin = TinyhandSerializer.Serialize(linkage);
+        var linkage2 = TinyhandSerializer.Deserialize<Linkage>(bin);
+        linkage2!.ValidateAndVerify().IsTrue();
+        bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
     }
 }
