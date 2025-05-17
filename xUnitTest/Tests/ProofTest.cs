@@ -34,7 +34,7 @@ public class ProofTest
 
         var creditIdentity = new Identity(IdentityKind.Credit, owner, [merger,]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
-        var value = new Value(owner, 2, credit!);
+        var value = new Value(owner, 2, credit!); // owner#2@credit
         var state = new MergerState();
         state.NetNode = this.testNode;
         state.Name = "Test1";

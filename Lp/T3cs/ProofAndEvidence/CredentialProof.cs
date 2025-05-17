@@ -58,7 +58,7 @@ public sealed partial class CredentialProof : ProofWithSigner
 
     #region FieldAndProperty
 
-    public override PermittedSigner PermittedSigner => PermittedSigner.Owner | PermittedSigner.Merger | PermittedSigner.LpKey;
+    public override PermittedSigner PermittedSigner => PermittedSigner.Merger | PermittedSigner.LpKey;
 
     [Key(ProofWithSigner.ReservedKeyCount + 0)]
     public CredentialKind Kind { get; private set; }

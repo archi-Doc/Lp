@@ -138,8 +138,8 @@ public abstract partial class Proof : IEquatable<Proof>
             return false;
         }
 
-        if (!MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
-        {
+        if (!MicsRange.IsWithinMargin(Mics.GetCorrected(), this.SignedMics, this.ExpirationMics))
+        {//
             return false;
         }
 
