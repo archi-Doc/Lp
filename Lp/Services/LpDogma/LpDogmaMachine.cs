@@ -1,8 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 
 namespace Lp.Services;
 
@@ -111,7 +113,8 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(credentialNode.UpdatedMics))
+        if (!this.lpBase.Options.TestFeatures &&
+            MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(credentialNode.UpdatedMics))
         {
             return StateResult.Continue;
         }
