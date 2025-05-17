@@ -171,12 +171,12 @@ public partial class LpDogmaMachine : Machine
         if (!this.ValidateMergers(link.Credit1) || !this.ValidateMergers(link.Credit2) ||
             !link.LinkerPublicKey.Validate() || !this.credentials.Nodes.TryGet(link.LinkerPublicKey, out var credentialEvidence))
         {
-            return StateResult.Continue;
+            //return StateResult.Continue;
         }
 
         if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(link.UpdatedMics))
         {
-            return StateResult.Continue;
+            //return StateResult.Continue;
         }
         else
         {
@@ -186,7 +186,7 @@ public partial class LpDogmaMachine : Machine
         SignaturePublicKey[] publicKeys = [.. link.Credit1.Mergers, .. link.Credit2.Mergers, link.LinkerPublicKey,];
         if (publicKeys.Any(x => !x.Validate()))
         {
-            return StateResult.Continue;
+            //return StateResult.Continue;
         }
 
         // Linkage x Point
@@ -196,16 +196,10 @@ public partial class LpDogmaMachine : Machine
         var proof2 = new LinkProof(value2, link.LinkerPublicKey); // @Credit + Linker
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
-        var evidence1 = new LinkEvidence(proof1); // Evidence{Proof{@Credit + Linker}/LpKey}/LpKey
+        var evidence1 = new LinkEvidence(proof1); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         var evidence2 = new LinkEvidence(proof2);
         this.lpSeedKey.TrySign(evidence1, 0);
         // var linkage = new Linkage(evidence1, evidence2);
-
-        var linkerState = credentialEvidence.CredentialProof.State;
-        if (!linkerState.IsValid)
-        {
-            return StateResult.Continue;
-        }
 
         /*var netNode = linkerState.NetNode;
         using (var connection = await this.netTerminal.Connect(netNode))
