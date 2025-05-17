@@ -6,17 +6,32 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
+public enum ProofKey : int
+{
+    ValueProof,
+    CreateCreditProof,
+    EvolProof,
+    TransferProof,
+    DimensionProof,
+    IdentificationProof,
+    CredentialProof,
+    LinkProof,
+    TestLinkageProof,
+}
+
 /// <summary>
 /// Represents a proof object.<br/>
 /// This class holds an authentication key and its proof content.
 /// </summary>
-[TinyhandUnion(0, typeof(ValueProof))]
-[TinyhandUnion(1, typeof(CreateCreditProof))]
-[TinyhandUnion(2, typeof(EvolProof))]
-[TinyhandUnion(3, typeof(TransferProof))]
-[TinyhandUnion(4, typeof(DimensionProof))]
-[TinyhandUnion(5, typeof(IdentificationProof))]
-[TinyhandUnion(6, typeof(CredentialProof))]
+[TinyhandUnion((int)ProofKey.ValueProof, typeof(ValueProof))]
+[TinyhandUnion((int)ProofKey.CreateCreditProof, typeof(CreateCreditProof))]
+[TinyhandUnion((int)ProofKey.EvolProof, typeof(EvolProof))]
+[TinyhandUnion((int)ProofKey.TransferProof, typeof(TransferProof))]
+[TinyhandUnion((int)ProofKey.DimensionProof, typeof(DimensionProof))]
+[TinyhandUnion((int)ProofKey.IdentificationProof, typeof(IdentificationProof))]
+[TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
+[TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
+[TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Proof : IEquatable<Proof>
 {

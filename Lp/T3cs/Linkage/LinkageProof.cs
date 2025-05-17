@@ -29,7 +29,7 @@ public partial class TestLinkageProof : LinkageProof
 /// if it is between 1 and MergerCount, a Merger is used;<br/>
 /// otherwise, LpKey is used.
 /// </summary>
-[TinyhandUnion(0, typeof(TestLinkageProof))]
+[TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
 public abstract partial class LinkageProof : Proof
 {

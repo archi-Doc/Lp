@@ -190,13 +190,12 @@ public partial class LpDogmaMachine : Machine
         }
 
         // Linkage x Point
-        var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1);
-        var proof1 = new LinkProof(link.LinkerPublicKey, value1);
-        var value2 = new Value(LpConstants.LpPublicKey, 0, link.Credit2);
-        var proof2 = new LinkProof(link.LinkerPublicKey, value2);
-        this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics);
+        var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1); // @Credit1
+        var proof1 = new LinkProof(link.LinkerPublicKey, link.LinkerPublicKey); // @Credit + Linker
+
+        this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
-        var evidence1 = new LinkEvidence(proof1);
+        var evidence1 = new LinkEvidence(proof1); // Evidence{Proof{@Credit + Linker}/LpKey}/LpKey
         var evidence2 = new LinkEvidence(proof2);
         // var linkage = new Linkage(evidence1, evidence2);
 
