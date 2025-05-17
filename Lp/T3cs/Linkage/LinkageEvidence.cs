@@ -7,16 +7,16 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Integrality = false, Isolation = IsolationLevel.None)]
-public partial class LinkageEvidence : Evidence
+public sealed partial class LinkageEvidence : Evidence
 {
     #region FieldAndProperty
 
-    [Key(Evidence.ReservedKeyCount + 0)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
-    public Identifier Identifier { get; private set; }
+    // [Key(Evidence.ReservedKeyCount + 0)]
+    // [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
+    // public Identifier Identifier { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 1)]
-    [Link(Type = ChainType.Ordered)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Ordered, AddValue = false)]
     public long LinkedMics { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 2)]
@@ -34,7 +34,7 @@ public partial class LinkageEvidence : Evidence
         this.LinkedMics = linkedMics;
         this.LinkageProof1 = linkageProof;
         this.LinkageProof2 = linkageProof2;
-        this.SetIdentifier();
+        // this.SetIdentifier();
     }
 
     internal void FromLinkage(Linkage linkage, bool first)
@@ -55,10 +55,10 @@ public partial class LinkageEvidence : Evidence
             this.MergerSignature2 = linkage.MergerSignature22;
         }
 
-        this.SetIdentifier();//
+        // this.SetIdentifier();
     }
 
-    private void SetIdentifier()
+    /*private void SetIdentifier()
     {
         TinyhandWriter writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         try
@@ -73,5 +73,5 @@ public partial class LinkageEvidence : Evidence
         {
             writer.Dispose();
         }
-    }
+    }*/
 }
