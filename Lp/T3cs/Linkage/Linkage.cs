@@ -23,10 +23,10 @@ public partial class Linkage : IValidatable
     public long LinkedMics { get; private set; }
 
     [Key(1)]
-    public LinkageProof LinkageProof1 { get; private set; }
+    public Proof LinkageProof1 { get; private set; }
 
     [Key(2)]
-    public LinkageProof LinkageProof2 { get; private set; }
+    public Proof LinkageProof2 { get; private set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
@@ -83,7 +83,7 @@ public partial class Linkage : IValidatable
         return true;
     }
 
-    public Linkage(LinkageProof proof1, LinkageProof proof2)
+    public Linkage(Proof proof1, Proof proof2)
     {
         this.LinkageProof1 = proof1;
         this.LinkageProof2 = proof2;

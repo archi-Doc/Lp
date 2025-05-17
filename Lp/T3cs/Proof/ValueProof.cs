@@ -11,15 +11,9 @@ public sealed partial class ValueProof : ProofWithValue, IEquatable<ValueProof>
 
     #endregion
 
-    public ValueProof()
+    public ValueProof(Value value)
+        : base(value)
     {
-    }
-
-    public static ValueProof Create(Value value)
-    {
-        var proof = new ValueProof();
-        proof.Value = value;
-        return proof;
     }
 
     public override bool Validate()
