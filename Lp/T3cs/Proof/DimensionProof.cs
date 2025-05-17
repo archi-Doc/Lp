@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class DimensionProof : ProofAndPublicKey
+public partial class DimensionProof : ProofWithPublicKey
 {
     private const double MinDimension = -1d;
     private const double MaxDimension = 1d;
@@ -12,7 +12,7 @@ public partial class DimensionProof : ProofAndPublicKey
     {
     }
 
-    [Key(5)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public double Dimension { get; private set; }
 
     // public Value Value { get; private set; } = new();

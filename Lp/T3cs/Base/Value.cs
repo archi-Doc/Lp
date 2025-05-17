@@ -20,13 +20,13 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public Point Point { get; private set; }
 
     [Key(2)]
-    public Credit Credit { get; private set; } = new();
+    public Credit Credit { get; private set; } = Credit.UnsafeConstructor();
 
     #endregion
 
     public static bool TryCreate(SignaturePublicKey owner, Point point, Credit credit, [MaybeNullWhen(false)] out Value value)
     {
-        var v = new Value();
+        var v = Value.UnsafeConstructor();
         v.Owner = owner;
         v.Point = point;
         v.Credit = credit;

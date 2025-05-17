@@ -10,7 +10,7 @@ public sealed partial class ConstraintsAndCovenants
     }
 
     [Key(0)]
-    public Credit SourceCredit { get; private set; } = new();
+    public Credit SourceCredit { get; private set; } = Credit.UnsafeConstructor();
 
     [Key(1)]
     public bool IsUnlinkable { get; private set; } = false;

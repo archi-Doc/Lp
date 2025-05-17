@@ -5,15 +5,15 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TransferProof : ProofAndPublicKey
+public partial class TransferProof : ProofWithPublicKey
 {
     public TransferProof()
     {
     }
 
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public Point Point { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 1)]
+    [Key(ProofWithPublicKey.ReservedKeyCount + 1)]
     public SignaturePublicKey RecipientKey { get; protected set; }
 }

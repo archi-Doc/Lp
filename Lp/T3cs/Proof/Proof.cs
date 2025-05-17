@@ -6,18 +6,33 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
+public enum ProofKey : int
+{
+    ValueProof,
+    CreateCreditProof,
+    EvolProof,
+    TransferProof,
+    DimensionProof,
+    IdentificationProof,
+    CredentialProof,
+    LinkProof,
+    TestLinkageProof,
+}
+
 /// <summary>
-/// Represents a proof object (authentication between merger and public key).<br/>
+/// Represents a proof object.<br/>
+/// This class holds an authentication key and its proof content.
 /// </summary>
-[TinyhandUnion(0, typeof(ValueProof))]
-[TinyhandUnion(1, typeof(CreateCreditProof))]
-[TinyhandUnion(2, typeof(EvolProof))]
-[TinyhandUnion(3, typeof(TransferProof))]
-[TinyhandUnion(4, typeof(DimensionProof))]
-[TinyhandUnion(5, typeof(IdentificationProof))]
-[TinyhandUnion(6, typeof(CredentialProof))]
+[TinyhandUnion((int)ProofKey.ValueProof, typeof(ValueProof))]
+[TinyhandUnion((int)ProofKey.CreateCreditProof, typeof(CreateCreditProof))]
+[TinyhandUnion((int)ProofKey.EvolProof, typeof(EvolProof))]
+[TinyhandUnion((int)ProofKey.TransferProof, typeof(TransferProof))]
+[TinyhandUnion((int)ProofKey.DimensionProof, typeof(DimensionProof))]
+[TinyhandUnion((int)ProofKey.IdentificationProof, typeof(IdentificationProof))]
+[TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
+[TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
+[TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-// [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public abstract partial class Proof : IEquatable<Proof>
 {
     /// <summary>
@@ -39,29 +54,25 @@ public abstract partial class Proof : IEquatable<Proof>
 
     #region FieldAndProperty
 
-    // /// <inheritdoc/>
-    // SignaturePublicKey IVerifiable.PublicKey => this.GetSignatureKey();
-
-    // [Key(0)] -> ProofAndPublicKey, ProofAndCredit, ProofAndValue
-    // public SignaturePublicKey PublicKey { get; }
+    // Key(0) and Key(1) are reserved for derived classes.
 
     /// <summary>
     /// Gets or sets the signature.
     /// </summary>
-    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    public byte[] Signature { get; protected set; } = Array.Empty<byte>();
+    [Key(0, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    public byte[] Signature { get; protected set; } = [];
 
     /// <summary>
     /// Gets or sets the signed time in microseconds.
     /// </summary>
-    [Key(2)]
+    [Key(1)]
     [Link(Primary = true, Type = ChainType.Ordered)]
     public long SignedMics { get; protected set; }
 
     /// <summary>
     /// Gets or sets the expiration time in microseconds.
     /// </summary>
-    [Key(3)]
+    [Key(2)]
     public long ExpirationMics { get; protected set; }
 
     /// <summary>

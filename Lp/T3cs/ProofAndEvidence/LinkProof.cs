@@ -6,30 +6,12 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class LinkProof : ProofAndValue
+public sealed partial class LinkProof : LinkageProof
 {
-    [Key(Proof.ReservedKeyCount)]
-    public SignaturePublicKey LinkerPublicKey { get; private set; }
+    public override PermittedSigner PermittedSigner => PermittedSigner.Merger | PermittedSigner.LpKey;
 
-    public LinkProof(SignaturePublicKey linkerPublicKey, Value value)
+    public LinkProof(Value value, SignaturePublicKey linkerPublicKey)
+        : base(value, linkerPublicKey)
     {
-        this.LinkerPublicKey = linkerPublicKey;
-        this.Value = value;
-    }
-
-    public override bool TryGetLinkerPublicKey([MaybeNullWhen(false)] out SignaturePublicKey linkerPublicKey)
-    {
-        linkerPublicKey = this.LinkerPublicKey;
-        return true;
-    }
-
-    public override bool Validate()
-    {
-        if (!base.Validate())
-        {
-            return false;
-        }
-
-        return true;
     }
 }

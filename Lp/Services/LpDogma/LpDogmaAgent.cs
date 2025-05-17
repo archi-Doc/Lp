@@ -63,40 +63,37 @@ internal class LpDogmaAgent : LpDogmaNetService
         return info;
     }
 
-    async NetTask<CredentialProof?> LpDogmaNetService.CreateCredentialProof(CertificateToken<Value> token, CredentialKind kind)
+    async NetTask<CredentialProof?> LpDogmaNetService.CreateCredentialProof(Value value, CredentialKind kind)
     {
         if (!this.IsAuthenticated)
         {
             return default;
         }
 
-        if (!token.ValidateAndVerify(TransmissionContext.Current.ServerConnection) ||
-            !token.PublicKey.Equals(LpConstants.LpPublicKey))
+        CredentialState? state = kind switch
+        {
+            CredentialKind.Merger => this.merger.State,
+            CredentialKind.Linker => this.linker.State,
+            _ => default,
+        };
+
+        SeedKey? seedKey = kind switch
+        {
+            CredentialKind.Merger => this.merger.SeedKey,
+            CredentialKind.Linker => this.linker.SeedKey,
+            _ => default,
+        };
+
+        if (state is null || seedKey is null)
         {
             return default;
         }
 
-        switch (kind)
+        var proof = new CredentialProof(value, kind, state);
+        if (seedKey.TrySign(proof, LpConstants.LpExpirationMics) &&
+            proof.ValidateAndVerify())
         {
-            case CredentialKind.Merger:
-                var mergerProof = new CredentialProof(token.Target, kind, this.merger.State);
-                if (this.merger.TrySign(mergerProof, LpConstants.LpExpirationMics) &&
-                    mergerProof.ValidateAndVerify())
-                {
-                    return mergerProof;
-                }
-
-                break;
-
-            case CredentialKind.Linker:
-                var linkerProof = new CredentialProof(token.Target, kind, this.merger.State);
-                if (this.linker.TrySign(linkerProof, LpConstants.LpExpirationMics) &&
-                    linkerProof.ValidateAndVerify())
-                {
-                    return linkerProof;
-                }
-
-                break;
+            return proof;
         }
 
         return default;
@@ -110,15 +107,5 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
 
         return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
-    }
-
-    async NetTask<LinkProof?> LpDogmaNetService.CreateLinkerProof(CertificateToken<Value> token)
-    {
-        if (!this.IsAuthenticated)
-        {
-            return default;
-        }
-
-        return default;
     }
 }

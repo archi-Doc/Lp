@@ -86,7 +86,7 @@ public partial class LpDogmaMachine : Machine
 
         foreach (var x in this.lpDogma.Links)
         {
-            var result = await this.ProcessLinkage(x);
+            var result = await this.ProcessLink(x);
             if (result == StateResult.Terminate)
             {
                 return StateResult.Terminate;
@@ -104,7 +104,8 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out _))
+        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
+            credentialEvidence.CredentialProof.Value.Point == credentialNode.Point)
         {
             // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;
@@ -129,15 +130,15 @@ public partial class LpDogmaMachine : Machine
             }
 
             var service = connection.GetService<LpDogmaNetService>();
-            var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
-            var r = await service.Authenticate(auth).ResponseAsync;
+            var authToken = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
+            var r = await service.Authenticate(authToken).ResponseAsync;
 
-            var token = CertificateToken<Value>.CreateAndSign(new Value(credentialNode.PublicKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
-            var credentialProof = await service.CreateCredentialProof(token, credentialKind);
+            var value = new Value(credentialNode.PublicKey, credentialNode.Point, LpConstants.LpCredit);
+            var credentialProof = await service.CreateCredentialProof(value, credentialKind);
             if (credentialProof is null ||
                 !credentialProof.ValidateAndVerify() ||
                 !credentialProof.GetSignatureKey().Equals(credentialNode.PublicKey) ||
-                !credentialProof.Value.Equals(token.Target))
+                !credentialProof.Value.Equals(value))
             {
                 return StateResult.Continue;
             }
@@ -153,7 +154,7 @@ public partial class LpDogmaMachine : Machine
         }
     }
 
-    private async Task<StateResult> ProcessLinkage(LpDogma.Link link)
+    private async Task<StateResult> ProcessLink(LpDogma.Link link)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -189,15 +190,14 @@ public partial class LpDogmaMachine : Machine
         }
 
         // Linkage x Point
-        var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1);
-        var proof1 = new LinkProof(link.LinkerPublicKey, value1);
-        var value2 = new Value(LpConstants.LpPublicKey, 0, link.Credit2);
-        var proof2 = new LinkProof(link.LinkerPublicKey, value2);
-        this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics);
+        var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1); // @Credit1
+        var proof1 = new LinkProof(link.LinkerPublicKey, link.LinkerPublicKey); // @Credit + Linker
+
+        this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
-        var evidence1 = new LinkEvidence(proof1);
+        var evidence1 = new LinkEvidence(proof1); // Evidence{Proof{@Credit + Linker}/LpKey}/LpKey
         var evidence2 = new LinkEvidence(proof2);
-        var linkage = new Linkage(evidence1, evidence2);
+        // var linkage = new Linkage(evidence1, evidence2);
 
         var linkerState = credentialEvidence.CredentialProof.State;
         if (!linkerState.IsValid)

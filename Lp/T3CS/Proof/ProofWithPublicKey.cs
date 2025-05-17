@@ -4,13 +4,17 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public abstract partial class ProofAndPublicKey : Proof
+public abstract partial class ProofWithPublicKey : Proof
 {
-    [Key(0)] // Key(0) is not used in the Proof class (reserved).
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 1;
+
+    [Key(Proof.ReservedKeyCount)]
     public SignaturePublicKey PublicKey { get; protected set; }
 
-    public override SignaturePublicKey GetSignatureKey()
-        => this.PublicKey;
+    public override SignaturePublicKey GetSignatureKey() => this.PublicKey;
 
     internal void PrepareSignInternal(SeedKey seedKey, long validMics)
     {

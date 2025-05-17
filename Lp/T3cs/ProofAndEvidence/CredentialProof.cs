@@ -7,8 +7,8 @@ using ValueLink.Integrality;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
-public sealed partial class CredentialProof : Proof
+// [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
+public sealed partial class CredentialProof : ProofWithSigner
 {// Credentials = CredentialProof.Goshujin
     #region Integrality
 
@@ -48,7 +48,7 @@ public sealed partial class CredentialProof : Proof
 
     #endregion
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
+    // [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "Originator")]
     public CredentialProof(Value value, CredentialKind kind, CredentialState state)
     {
         this.Value = value;
@@ -58,13 +58,12 @@ public sealed partial class CredentialProof : Proof
 
     #region FieldAndProperty
 
-    [Key(Proof.ReservedKeyCount)]
-    public Value Value { get; private set; }
+    public override PermittedSigner PermittedSigner => PermittedSigner.Merger | PermittedSigner.LpKey;
 
-    [Key(Proof.ReservedKeyCount + 1)]
+    [Key(ProofWithSigner.ReservedKeyCount + 0)]
     public CredentialKind Kind { get; private set; }
 
-    [Key(Proof.ReservedKeyCount + 2)]
+    [Key(ProofWithSigner.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
 
     public SignaturePublicKey Originator => this.GetSignatureKey();
@@ -72,21 +71,6 @@ public sealed partial class CredentialProof : Proof
     public override long MaxValidMics => Mics.MicsPerDay * 1;
 
     #endregion
-
-    public override SignaturePublicKey GetSignatureKey()
-        => this.Value.Owner;
-
-    public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
-    {
-        credit = this.Value.Credit;
-        return true;
-    }
-
-    public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
-    {
-        value = this.Value;
-        return true;
-    }
 
     public override bool Validate()
     {

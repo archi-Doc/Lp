@@ -3,12 +3,12 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class EvolProof : ProofAndPublicKey
+public partial class EvolProof : ProofWithPublicKey
 {
     public EvolProof()
     {
     }
 
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ProofWithPublicKey.ReservedKeyCount)]
     public Point Point { get; private set; }
 }

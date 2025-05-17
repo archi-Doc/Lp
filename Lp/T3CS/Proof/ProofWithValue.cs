@@ -5,13 +5,17 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public abstract partial class ProofAndValue : Proof
+public abstract partial class ProofWithValue : Proof
 {
-    [Key(0)] // Key(0) is not used in the Proof class (reserved).
-    public Value Value { get; protected set; } = new();
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 1;
 
-    public override SignaturePublicKey GetSignatureKey()
-        => this.Value.Owner;
+    [Key(Proof.ReservedKeyCount)]
+    public Value Value { get; protected set; } = default!;
+
+    public override SignaturePublicKey GetSignatureKey() => this.Value.Owner;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {

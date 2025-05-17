@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TemplateProof : ProofAndPublicKey
+public partial class TemplateProof : ProofWithPublicKey
 {// Don't forget to add the TinyhandUnion attribute to the Proof class.
     public TemplateProof()
     {
