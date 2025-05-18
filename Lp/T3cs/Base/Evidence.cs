@@ -31,12 +31,6 @@ public abstract partial class Evidence : IValidatable
     [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; protected set; }
 
-    public long ProofMics
-        => this.Proof.SignedMics;
-
-    public int MergerCount
-        => this.Proof.TryGetCredit(out var credit) ? credit.MergerCount : 0;
-
     #endregion
 
     public bool Validate()

@@ -36,7 +36,7 @@ public partial class CredentialEvidence : Evidence
         public override bool Validate(CredentialEvidence.GoshujinClass goshujin, CredentialEvidence newItem, CredentialEvidence? oldItem)
         {
             if (oldItem is not null &&
-                oldItem.ProofMics >= newItem.ProofMics)
+                oldItem.CredentialProof.SignedMics >= newItem.CredentialProof.SignedMics)
             {
                 return false;
             }
