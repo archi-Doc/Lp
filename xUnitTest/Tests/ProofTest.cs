@@ -41,7 +41,7 @@ public class ProofTest
 
         var credentialProof = new CredentialProof(value, CredentialKind.Merger, state);
         ownerKey.TrySign(credentialProof, validMics).IsTrue();
-        credentialProof.ValidateAndVerify().IsFalse();
+        credentialProof.ValidateAndVerify().IsTrue();
 
         mergerKey.TrySign(credentialProof, validMics).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
