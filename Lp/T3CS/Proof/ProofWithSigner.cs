@@ -71,6 +71,11 @@ public abstract partial class ProofWithSigner : Proof
             return false;
         }
 
+        if (!this.Value.Validate())
+        {
+            return false;
+        }
+
         if (this.Signer == 0)
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Owner);

@@ -213,22 +213,26 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public bool Validate()
     {
-        if (this.Mergers == null ||
-            this.Mergers.Length == 0 ||
-            this.Mergers.Length > LpConstants.MaxMergers)
+        if (this.Mergers == null)
         {
             return false;
         }
 
-        for (var i = 0; i < this.Mergers.Length; i++)
+        var count = this.Mergers.Length;
+        if (count == 1)
         {
-            if (!this.Mergers[i].Validate())
-            {
-                return false;
-            }
+            return this.Mergers[0].Validate();
+        }
+        else if (count == 2)
+        {
+            return this.Mergers[0].Validate() && this.Mergers[1].Validate();
+        }
+        else if (count == 3)
+        {
+            return this.Mergers[0].Validate() && this.Mergers[1].Validate() && this.Mergers[2].Validate();
         }
 
-        return true;
+        return false;
     }
 
     public bool Equals(Credit? other)
