@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class ValueProof : ProofWithValue, IEquatable<ValueProof>
+public sealed partial class ValueProof : ProofWithValue
 {
     #region FieldAndProperty
 
@@ -25,12 +25,4 @@ public sealed partial class ValueProof : ProofWithValue, IEquatable<ValueProof>
 
         return true;
     }
-
-    public bool Equals(ValueProof? other)
-    {
-        throw new NotImplementedException();
-    }
-
-    /*public override int GetHashCode()
-        => HashCode.Combine(base.GetHashCode(), this.Value.GetHashCode());*/
 }

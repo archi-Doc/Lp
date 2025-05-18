@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -17,6 +16,8 @@ public static class LpConstants
     public const char MergerSymbol = '/';
     public const char MergerSeparatorSymbol = '+';
     public const int MaxMergers = 3; // MaxMergersCode
+
+    public const long DefaultProofMaxValidMics = Mics.MicsPerDay * 30;
 
     public const string LpAlias = "Lp";
     public const string LpKeyAlias = "LpKey";

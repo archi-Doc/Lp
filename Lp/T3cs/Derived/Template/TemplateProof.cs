@@ -9,7 +9,9 @@ public partial class TemplateProof : ProofWithPublicKey
     {
     }
 
-    public override bool Validate()
+    // public override long MaxValidMics => Mics.MicsPerDay * 1;
+
+    /*public override bool Validate()
     {
         if (!base.Validate())
         {
@@ -17,10 +19,5 @@ public partial class TemplateProof : ProofWithPublicKey
         }
 
         return true;
-    }
-
-    /*public bool ValidateAndVerify()
-    {
-        return LpHelper.ValidateAndVerify(this);
     }*/
 }
