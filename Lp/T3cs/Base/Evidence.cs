@@ -5,20 +5,26 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-/*public partial class Evidence<TProof> : Evidence
+[TinyhandObject]
+public partial class Evidence<TProof> : Evidence
+    where TProof : Proof
 {
-    public TProof Proof { get; private set; }
+    [Key(Evidence.ReservedKeyCount)]
+    public TProof Proof2 { get; private set; }
+
+    public override Proof Proof => this.Proof2;
 
     public Evidence(TProof proof)
     {
-        this.Proof = proof;
+        this.Proof2 = proof;
     }
-}*/
+}
 
 /// <summary>
 /// Immutable evidence object (authentication within merger).
 /// </summary>
 [TinyhandUnion(0, typeof(CredentialEvidence))]
+[TinyhandUnion(1, typeof(Evidence<>))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Evidence : IValidatable
 {
