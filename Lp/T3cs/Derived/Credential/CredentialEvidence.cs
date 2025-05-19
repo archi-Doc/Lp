@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Arc.Collections;
-using Lp.Services;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -36,7 +34,7 @@ public partial class CredentialEvidence : Evidence
         public override bool Validate(CredentialEvidence.GoshujinClass goshujin, CredentialEvidence newItem, CredentialEvidence? oldItem)
         {
             if (oldItem is not null &&
-                oldItem.CredentialProof.SignedMics >= newItem.CredentialProof.SignedMics)
+                oldItem.Proof.SignedMics >= newItem.Proof.SignedMics)
             {
                 return false;
             }
@@ -60,22 +58,18 @@ public partial class CredentialEvidence : Evidence
     #region FieldAndProperty
 
     [Key(Evidence.ReservedKeyCount)]
-    public CredentialProof CredentialProof { get; protected set; } = default!;
+    public CredentialProof Proof { get; protected set; }
 
-    public override Proof Proof => this.CredentialProof;
+    public override Proof BaseProof => this.Proof;
 
-    public SignaturePublicKey CredentialKey => this.CredentialProof.Value.Owner;
+    public SignaturePublicKey CredentialKey => this.Proof.Value.Owner;
 
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "CredentialKey")]
-    public CredentialEvidence()
-    {
-    }
-
     public CredentialEvidence(CredentialProof credentialProof)
     {
-        this.CredentialProof = credentialProof;
+        this.Proof = credentialProof;
     }
 
     public static bool TryCreate(CredentialProof proof, SeedKey seedKey, [MaybeNullWhen(false)] out CredentialEvidence evidence)
@@ -95,7 +89,7 @@ public partial class CredentialEvidence : Evidence
     {
         if (this.Goshujin?.SyncAlias == true)
         {
-            Alias.Instance.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
+            Alias.Instance.TryAdd(this.Proof.State.Name, this.CredentialKey);
         }
     }
 

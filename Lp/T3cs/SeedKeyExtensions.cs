@@ -79,7 +79,7 @@ public static class SeedKeyExtensions
 
     public static bool TrySign(this SeedKey seedKey, Evidence evidence, int mergerIndex)
     {
-        if (!evidence.Proof.TryGetCredit(out var credit))
+        if (!evidence.BaseProof.TryGetCredit(out var credit))
         {
             return false;
         }

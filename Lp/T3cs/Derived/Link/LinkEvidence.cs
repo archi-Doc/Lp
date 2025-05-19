@@ -9,7 +9,7 @@ public partial class LinkEvidence : Evidence
     [Key(Evidence.ReservedKeyCount)]
     public LinkProof LinkProof { get; private set; }
 
-    public override Proof Proof => this.LinkProof;
+    public override Proof BaseProof => this.LinkProof;
 
     public LinkEvidence(LinkProof linkProof)
     {

@@ -25,7 +25,7 @@ public sealed partial class LinkageEvidence : Evidence
     [Key(Evidence.ReservedKeyCount + 3)]
     public Proof LinkageProof2 { get; private set; }
 
-    public override Proof Proof => this.LinkageProof1;
+    public override Proof BaseProof => this.LinkageProof1;
 
     #endregion
 

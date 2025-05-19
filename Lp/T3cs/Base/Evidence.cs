@@ -1,27 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
-
-[TinyhandObject]
-public partial class Evidence<TProof> : Evidence
-    where TProof : Proof
-{
-    [Key(Evidence.ReservedKeyCount)]
-    public TProof Proof2 { get; private set; }
-
-    public override Proof Proof => this.Proof2;
-
-    public Evidence(TProof proof)
-    {
-        this.Proof2 = proof;
-    }
-
-    public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit) => this.Proof2.TryGetCredit(out credit);
-}
 
 /// <summary>
 /// Immutable evidence object (authentication within merger).
@@ -37,46 +18,25 @@ public abstract partial class Evidence : IValidatable
 
     #region FieldAndProperty
 
-    // [Key(0)]
-    public abstract Proof Proof { get; } // Owned by derived classes
+    public abstract Proof BaseProof { get; } // Owned by derived classes
 
-    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(0, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature0 { get; protected set; }
 
-    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
+    [Key(1, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
     public byte[]? MergerSignature1 { get; protected set; }
 
-    [Key(3, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
+    [Key(2, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature2 { get; protected set; }
 
     #endregion
 
-    public abstract bool TryGetCredit([MaybeNullWhen(false)] out Credit credit);
+    public virtual bool Validate() => this.BaseProof.Validate();
 
-    public bool Validate()
+    public virtual bool ValidateAndVerify(int mergerIndex = LpConstants.MaxMergers)
     {
-        return this.Proof.Validate();
-    }
-
-    public bool ValidateLinker()
-    {
-        if (!this.Proof.Validate())
-        {
-            return false;
-        }
-
-        if (!this.Proof.TryGetLinkerPublicKey(out _))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    public bool ValidateAndVerify(int mergerIndex = LpConstants.MaxMergers)
-    {
-        if (!this.Proof.TryGetCredit(out var credit) ||
-            !this.Proof.ValidateAndVerify())
+        if (!this.BaseProof.TryGetCredit(out var credit) ||
+            !this.BaseProof.ValidateAndVerify())
         {
             return false;
         }
@@ -91,7 +51,7 @@ public abstract partial class Evidence : IValidatable
             return false;
         }
 
-        if (!this.Proof.TryGetCredit(out var credit))
+        if (!this.BaseProof.TryGetCredit(out var credit))
         {
             return false;
         }
@@ -146,13 +106,13 @@ public abstract partial class Evidence : IValidatable
 
     public string ToString(IConversionOptions? conversionOptions)
     {
-        if (this.Proof.TryGetCredit(out var credit))
+        if (this.BaseProof.TryGetCredit(out var credit))
         {
-            return $"{{{this.Proof.ToString(conversionOptions)}}}{credit.Mergers.ToMergerString(conversionOptions)}";
+            return $"{{{this.BaseProof.ToString(conversionOptions)}}}{credit.Mergers.ToMergerString(conversionOptions)}";
         }
         else
         {
-            return $"{{ {this.Proof.ToString(conversionOptions)} }}";
+            return $"{{ {this.BaseProof.ToString(conversionOptions)} }}";
         }
     }
 
