@@ -207,6 +207,8 @@ public partial class LpDogmaMachine : Machine
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var linkedMics = Mics.GetMicsId();
         var evidence1 = new LinkageEvidence(linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        var pk = value1.Owner;
+        var r = evidence1.GetMergerIndex(ref pk);
         this.lpSeedKey.TrySign(evidence1);
         var evidence2 = new LinkageEvidence(linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         this.lpSeedKey.TrySign(evidence1);

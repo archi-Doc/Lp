@@ -32,11 +32,34 @@ public sealed partial class LinkageEvidence : Evidence
         this.LinkageProof2 = linkageProof2;
     }
 
+    public (Proof? Proof, int MergerIndex) GetMergerIndex(ref SignaturePublicKey publicKey)
+    {
+        if (this.LinkageProof1.TryGetCredit(out var credit))
+        {
+            var mergerIndex = credit.GetMergerIndex(ref publicKey);
+            if (mergerIndex >= 0)
+            {
+                return (this.LinkageProof1, mergerIndex);
+            }
+        }
+
+        if (this.LinkageProof2.TryGetCredit(out credit))
+        {
+            var mergerIndex = credit.GetMergerIndex(ref publicKey);
+            if (mergerIndex >= 0)
+            {
+                return (this.LinkageProof2, mergerIndex);
+            }
+        }
+
+        return default;
+    }
+
     internal void FromLinkage(Linkage linkage, bool first)
     {
         this.LinkedMicsId = linkage.LinkedMics;
-        this.LinkageProof1 = linkage.LinkageProof1;
-        this.LinkageProof2 = linkage.LinkageProof2;
+        this.LinkageProof1 = linkage.BaseProof1;
+        this.LinkageProof2 = linkage.BaseProof2;
         if (first)
         {
             this.MergerSignature0 = linkage.MergerSignature10;

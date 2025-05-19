@@ -9,7 +9,7 @@ using Tinyhand.IO;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject]
+// [ValueLinkObject]
 public partial class Linkage : IValidatable
 {
     public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
@@ -19,14 +19,14 @@ public partial class Linkage : IValidatable
     #region FieldAndProperty
 
     [Key(0)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
+    // [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
     public long LinkedMics { get; private set; }
 
     [Key(1)]
-    public Proof LinkageProof1 { get; private set; }
+    public Proof BaseProof1 { get; private set; }
 
     [Key(2)]
-    public Proof LinkageProof2 { get; private set; }
+    public Proof BaseProof2 { get; private set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
@@ -85,14 +85,14 @@ public partial class Linkage : IValidatable
 
     public Linkage(Proof proof1, Proof proof2)
     {
-        this.LinkageProof1 = proof1;
-        this.LinkageProof2 = proof2;
+        this.BaseProof1 = proof1;
+        this.BaseProof2 = proof2;
     }
 
     public bool Validate()
     {
-        if (!this.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
-            !this.LinkageProof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
+        if (!this.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
+            !this.BaseProof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
         {
             return false;
         }
@@ -112,13 +112,13 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        if (!this.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
+        if (!this.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
         {
             return false;
         }
 
-        if (!this.LinkageProof1.ValidateAndVerify() ||
-            !this.LinkageProof2.ValidateAndVerify())
+        if (!this.BaseProof1.ValidateAndVerify() ||
+            !this.BaseProof2.ValidateAndVerify())
         {
             return false;
         }
