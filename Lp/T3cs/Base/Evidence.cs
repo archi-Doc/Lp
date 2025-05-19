@@ -5,7 +5,7 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-public partial class Evidence<TProof> : Evidence
+/*public partial class Evidence<TProof> : Evidence
 {
     public TProof Proof { get; private set; }
 
@@ -13,7 +13,7 @@ public partial class Evidence<TProof> : Evidence
     {
         this.Proof = proof;
     }
-}
+}*/
 
 /// <summary>
 /// Immutable evidence object (authentication within merger).
