@@ -102,6 +102,15 @@ public abstract partial class Evidence : IValidatable
         }
     }
 
+    public byte[]? GetSignature(int index)
+        => index switch
+        {
+            0 => this.MergerSignature0,
+            1 => this.MergerSignature1,
+            2 => this.MergerSignature2,
+            _ => null,
+        };
+
     public override string ToString() => this.ToString(default);
 
     public string ToString(IConversionOptions? conversionOptions)

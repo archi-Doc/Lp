@@ -146,11 +146,16 @@ public partial class LpDogmaMachine : Machine
                 return StateResult.Continue;
             }
 
-            if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
-                this.credentials.Nodes.TryAdd(evidence))
+            credentialEvidence = new CredentialEvidence(credentialProof);
+            if (!this.lpSeedKey.TrySign(credentialEvidence))
             {
-                _ = service.AddCredentialEvidence(evidence);
-                this.logger.TryGet()?.Log($"Added: {evidence.ToString()}");
+                return StateResult.Continue;
+            }
+
+            if (this.credentials.Nodes.TryAdd(credentialEvidence))
+            {
+                _ = service.AddCredentialEvidence(credentialEvidence);
+                this.logger.TryGet()?.Log($"Added: {credentialEvidence.ToString()}");
             }
 
             return StateResult.Continue;
@@ -202,9 +207,9 @@ public partial class LpDogmaMachine : Machine
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var linkedMics = Mics.GetMicsId();
         var evidence1 = new LinkageEvidence(linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        this.lpSeedKey.TrySign(evidence1, 0);
+        this.lpSeedKey.TrySign(evidence1);
         var evidence2 = new LinkageEvidence(linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        this.lpSeedKey.TrySign(evidence1, 0);
+        this.lpSeedKey.TrySign(evidence1);
         Linkage.TryCreate(evidence1, evidence2, out var linkage);
 
         /*var netNode = linkerState.NetNode;

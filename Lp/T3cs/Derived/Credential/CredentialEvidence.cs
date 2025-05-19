@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -70,19 +69,6 @@ public partial class CredentialEvidence : Evidence
     public CredentialEvidence(CredentialProof credentialProof)
     {
         this.Proof = credentialProof;
-    }
-
-    public static bool TryCreate(CredentialProof proof, SeedKey seedKey, [MaybeNullWhen(false)] out CredentialEvidence evidence)
-    {
-        var obj = new CredentialEvidence(proof);
-        if (!seedKey.TrySign(obj, 0))
-        {
-            evidence = default;
-            return false;
-        }
-
-        evidence = obj;
-        return true;
     }
 
     protected void CredentialKeyLinkAdded()

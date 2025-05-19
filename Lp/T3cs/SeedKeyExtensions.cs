@@ -107,6 +107,42 @@ public static class SeedKeyExtensions
         }
     }
 
+    public static bool TrySign(this SeedKey seedKey, Evidence evidence)
+    {
+        if (!evidence.BaseProof.TryGetCredit(out var credit))
+        {
+            return false;
+        }
+
+        var publicKey = seedKey.GetSignaturePublicKey();
+        var mergerIndex = credit.GetMergerIndex(ref publicKey);
+        if (mergerIndex < 0)
+        {
+            return false;
+        }
+
+        if (evidence.GetSignature(mergerIndex) is not null)
+        {
+            return true;
+        }
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
+        try
+        {
+            ((ITinyhandSerializable)evidence).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            return evidence.SetSignInternal(mergerIndex, sign);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
     public static bool TrySign(this SeedKey seedKey, Linkage linkage, long validMics)
     {
         if (!linkage.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
