@@ -200,7 +200,7 @@ public partial class LpDogmaMachine : Machine
         var proof2 = new LinkProof(value2, link.LinkerPublicKey); // @Credit + Linker
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
-        var linkedMics = Mics.GetCorrected();
+        var linkedMics = Mics.GetMicsId();
         var evidence1 = new LinkageEvidence(linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         this.lpSeedKey.TrySign(evidence1, 0);
         var evidence2 = new LinkageEvidence(linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger

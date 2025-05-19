@@ -60,7 +60,7 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        if (evidence1.LinkedMics != evidence2.LinkedMics)
+        if (evidence1.LinkedMicsId != evidence2.LinkedMicsId)
         {
             return false;
         }
@@ -72,7 +72,7 @@ public partial class Linkage : IValidatable
         }
 
         linkage = new Linkage(evidence1.LinkageProof1, evidence1.LinkageProof2);
-        linkage.LinkedMics = evidence1.LinkedMics;
+        linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
         linkage.MergerSignature12 = evidence1.MergerSignature2;

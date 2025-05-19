@@ -6,7 +6,7 @@ using Tinyhand.IO;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject(Integrality = false, Isolation = IsolationLevel.None)]
+// [ValueLinkObject(Integrality = false, Isolation = IsolationLevel.None)]
 public sealed partial class LinkageEvidence : Evidence
 {
     #region FieldAndProperty
@@ -16,8 +16,8 @@ public sealed partial class LinkageEvidence : Evidence
     // public Identifier Identifier { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 1)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Ordered, AddValue = false)]
-    public long LinkedMics { get; private set; }
+    // [Link(Primary = true, Unique = true, Type = ChainType.Ordered, AddValue = false)]
+    public long LinkedMicsId { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 2)]
     public Proof LinkageProof1 { get; private set; }
@@ -29,9 +29,9 @@ public sealed partial class LinkageEvidence : Evidence
 
     #endregion
 
-    public LinkageEvidence(long linkedMics, Proof linkageProof, Proof linkageProof2)
+    public LinkageEvidence(long linkedMicsId, Proof linkageProof, Proof linkageProof2)
     {
-        this.LinkedMics = linkedMics;
+        this.LinkedMicsId = linkedMicsId;
         this.LinkageProof1 = linkageProof;
         this.LinkageProof2 = linkageProof2;
         // this.SetIdentifier();
@@ -39,7 +39,7 @@ public sealed partial class LinkageEvidence : Evidence
 
     internal void FromLinkage(Linkage linkage, bool first)
     {
-        this.LinkedMics = linkage.LinkedMics;
+        this.LinkedMicsId = linkage.LinkedMics;
         this.LinkageProof1 = linkage.LinkageProof1;
         this.LinkageProof2 = linkage.LinkageProof2;
         if (first)
