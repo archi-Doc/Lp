@@ -22,7 +22,7 @@ public enum ProofKey : int
 }
 
 /// <summary>
-/// Represents a proof object.<br/>
+/// Represents the base class of Proof.<br/>
 /// This class holds an authentication key and its proof content.
 /// </summary>
 [TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]

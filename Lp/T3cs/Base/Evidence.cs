@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
@@ -18,6 +19,8 @@ public partial class Evidence<TProof> : Evidence
     {
         this.Proof2 = proof;
     }
+
+    public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit) => this.Proof2.TryGetCredit(out credit);
 }
 
 /// <summary>
@@ -47,6 +50,8 @@ public abstract partial class Evidence : IValidatable
     public byte[]? MergerSignature2 { get; protected set; }
 
     #endregion
+
+    public abstract bool TryGetCredit([MaybeNullWhen(false)] out Credit credit);
 
     public bool Validate()
     {
