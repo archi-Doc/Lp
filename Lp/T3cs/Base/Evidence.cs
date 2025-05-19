@@ -24,7 +24,6 @@ public partial class Evidence<TProof> : Evidence
 /// Immutable evidence object (authentication within merger).
 /// </summary>
 [TinyhandUnion(0, typeof(CredentialEvidence))]
-[TinyhandUnion(1, typeof(Evidence<>))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Evidence : IValidatable
 {
