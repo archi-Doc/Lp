@@ -1,20 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Arc.Collections;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
 #pragma warning disable SA1401 // Fields should be private
 
-[TinyhandObject]
+[TinyhandObject(ReservedKeyCount = Linkage.ReservedKeyCount)]
 // [ValueLinkObject]
 public partial class Linkage : IValidatable
 {
-    public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public const int ReservedKeyCount = 10;
 
-    private static readonly ObjectPool<LinkageEvidence> EvidencePool = new(() => LinkageEvidence.UnsafeConstructor());
+    public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
 
     #region FieldAndProperty
 
@@ -23,10 +25,10 @@ public partial class Linkage : IValidatable
     public long LinkedMics { get; protected set; }
 
     [Key(1)]
-    public Proof BaseProof1 { get; protected set; }
+    public LinkageProof BaseProof1 { get; protected set; }
 
     [Key(2)]
-    public Proof BaseProof2 { get; protected set; }
+    public LinkageProof BaseProof2 { get; protected set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
@@ -54,6 +56,25 @@ public partial class Linkage : IValidatable
     public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out Linkage? linkage)
     {
         linkage = default;
+        if (evidence1.IsPrimary)
+        {
+            if (evidence2.IsPrimary)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (evidence2.IsPrimary)
+            {
+                (evidence1, evidence2) = (evidence2, evidence1);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         if (!evidence1.LinkageProof1.Equals(evidence2.LinkageProof1) ||
             !evidence1.LinkageProof2.Equals(evidence2.LinkageProof2))
         {
@@ -83,7 +104,7 @@ public partial class Linkage : IValidatable
         return true;
     }
 
-    public Linkage(Proof proof1, Proof proof2)
+    public Linkage(LinkageProof proof1, LinkageProof proof2)
     {
         this.BaseProof1 = proof1;
         this.BaseProof2 = proof2;
@@ -123,7 +144,7 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        var evidence = EvidencePool.Rent();
+        var evidence = LinkageEvidence.Pool.Rent();
         try
         {
             evidence.FromLinkage(this, true);
@@ -133,14 +154,14 @@ public partial class Linkage : IValidatable
             }
 
             evidence.FromLinkage(this, false);
-            if (!evidence.ValidateAndVerify())
+            if (!evidence.ValidateAndVerifyExceptProof())
             {
                 return false;
             }
         }
         finally
         {
-            EvidencePool.Return(evidence);
+            LinkageEvidence.Pool.Return(evidence);
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();
