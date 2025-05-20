@@ -19,7 +19,7 @@ public sealed partial class LinkageEvidence : Evidence
     #region FieldAndProperty
 
     [Key(Evidence.ReservedKeyCount + 0, Level = int.MaxValue)]
-    public bool IsPrimary { get; private set; }
+    public bool IsPrimary { get; set; }
 
     [Key(Evidence.ReservedKeyCount + 1)]
     // [Link(Primary = true, Unique = true, Type = ChainType.Ordered, AddValue = false)]

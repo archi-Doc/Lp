@@ -134,7 +134,7 @@ internal class LpDogmaAgent : LpDogmaNetService
             return default;
         }
 
-        if (this.merger.SeedKey.TrySign(linkage, LpConstants.LpExpirationMics))
+        if (this.linker.SeedKey.TrySign(linkage, LpConstants.LpExpirationMics))
         {
             return linkage;
         }
