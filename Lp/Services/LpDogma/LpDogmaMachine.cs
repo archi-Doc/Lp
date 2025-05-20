@@ -205,10 +205,6 @@ public partial class LpDogmaMachine : Machine
 
         this.credentials.Nodes.TryGet(link.Credit1.Mergers[0], out var credentialEvidence);
         evidence1 = await this.ConnectAndRunService<LinkageEvidence>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkageEvidence(evidence1));
-        if (evidence1 is not null)
-        {
-            evidence1.IsPrimary = true;//
-        }
 
         var evidence2 = new LinkageEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         evidence2 = await this.ConnectAndRunService<LinkageEvidence>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkageEvidence(evidence2));

@@ -2,6 +2,7 @@
 
 using Arc.Collections;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
@@ -18,7 +19,7 @@ public sealed partial class LinkageEvidence : Evidence
 
     #region FieldAndProperty
 
-    [Key(Evidence.ReservedKeyCount + 0, Level = int.MaxValue)]
+    [Key(Evidence.ReservedKeyCount + 0, Level = TinyhandWriter.DefaultLevel)]
     public bool IsPrimary { get; set; }
 
     [Key(Evidence.ReservedKeyCount + 1)]
