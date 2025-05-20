@@ -85,7 +85,7 @@ public abstract partial class ProofWithSigner : Proof
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Owner);
         }
-        else if (this.Signer <= LpConstants.MaxMergers)
+        else if (this.Signer > 0 && this.Signer <= LpConstants.MaxMergers)
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Merger);
         }

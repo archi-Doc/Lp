@@ -52,6 +52,10 @@ public static class SeedKeyExtensions
             {
                 proofWithSigner.PrepareSignInternal(seedKey, validMics);
             }
+            else if (proof is LinkageProof linkageProof)
+            {
+                linkageProof.PrepareSignInternal(seedKey, validMics);
+            }
             else
             {
                 if (!proof.GetSignatureKey().Equals(seedKey.GetSignaturePublicKey()))
