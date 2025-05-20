@@ -26,10 +26,10 @@ public sealed partial class LinkageEvidence : Evidence
     public long LinkedMicsId { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 2)]
-    public LinkageProof LinkageProof1 { get; private set; }
+    public Proof LinkageProof1 { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 3)]
-    public LinkageProof LinkageProof2 { get; private set; }
+    public Proof LinkageProof2 { get; private set; }
 
     public override Proof BaseProof => this.IsPrimary ? this.LinkageProof1 : this.LinkageProof2;
 

@@ -25,10 +25,10 @@ public partial class Linkage : IValidatable
     public long LinkedMics { get; protected set; }
 
     [Key(1)]
-    public LinkageProof BaseProof1 { get; protected set; }
+    public Proof BaseProof1 { get; protected set; }
 
     [Key(2)]
-    public LinkageProof BaseProof2 { get; protected set; }
+    public Proof BaseProof2 { get; protected set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
@@ -92,7 +92,7 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        linkage = new Linkage(evidence1.LinkageProof1, evidence1.LinkageProof2);
+        linkage = new Linkage((LinkageProof)evidence1.LinkageProof1, (LinkageProof)evidence1.LinkageProof2);
         linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
