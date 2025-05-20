@@ -6,6 +6,7 @@ namespace Lp.T3cs;
 public sealed partial class CredentialProof : ProofWithSigner
 {
     public CredentialProof(Value value, CredentialKind kind, CredentialState state)
+        : base(value)
     {
         this.Value = value;
         this.Kind = kind;

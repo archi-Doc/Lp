@@ -203,7 +203,7 @@ public partial class LpDogmaMachine : Machine
         var linkedMics = Mics.GetMicsId();
         var evidence1 = new LinkageEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         this.lpSeedKey.TrySign(evidence1);
-        var evidence2 = new LinkageEvidence(false, linkedMics, proof2, proof1); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        var evidence2 = new LinkageEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         this.lpSeedKey.TrySign(evidence1);
         Linkage.TryCreate(evidence1, evidence2, out var linkage);
 

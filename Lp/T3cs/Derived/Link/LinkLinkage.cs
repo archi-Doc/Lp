@@ -1,14 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject]
 public partial class LinkLinkage : Linkage
 {
+    public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage? linkage)
+        => TryCreate(() => new LinkLinkage(), evidence1, evidence2, out linkage);
+
     [Link(Primary = true, Unique = true, Type = ChainType.Ordered, TargetMember = "LinkProof1")]
-    public LinkLinkage(LinkProof linkProof1, LinkProof linkProof2)
-        : base(linkProof1, linkProof2)
+    protected LinkLinkage()
+        : base()
     {
     }
 

@@ -36,7 +36,7 @@ public abstract partial class LinkageProof : Proof
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 2;
+    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 3;
 
     #region FieldAndProperty
 

@@ -54,6 +54,10 @@ public partial class Linkage : IValidatable
     #endregion
 
     public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out Linkage? linkage)
+        => TryCreate(() => new Linkage(), evidence1, evidence2, out linkage);
+
+    protected static bool TryCreate<TLinkage>(Func<TLinkage> constructor, LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out TLinkage? linkage)
+        where TLinkage : Linkage
     {
         linkage = default;
         if (evidence1.IsPrimary)
@@ -92,7 +96,9 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        linkage = new Linkage(evidence1.LinkageProof1, evidence1.LinkageProof2);
+        linkage = constructor();
+        linkage.BaseProof1 = evidence1.BaseProof1;
+        linkage.BaseProof2 = evidence1.BaseProof2;
         linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
@@ -104,10 +110,10 @@ public partial class Linkage : IValidatable
         return true;
     }
 
-    public Linkage(LinkageProof proof1, LinkageProof proof2)
+    protected Linkage()
     {
-        this.BaseProof1 = proof1;
-        this.BaseProof2 = proof2;
+        this.BaseProof1 = default!;
+        this.BaseProof2 = default!;
     }
 
     public bool Validate()

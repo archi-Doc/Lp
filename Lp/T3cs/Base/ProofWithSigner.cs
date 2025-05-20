@@ -25,7 +25,7 @@ public abstract partial class ProofWithSigner : Proof
     public abstract PermittedSigner PermittedSigner { get; }
 
     [Key(Proof.ReservedKeyCount + 0)]
-    public Value Value { get; protected set; } = default!;
+    public Value Value { get; protected set; }
 
     /// <summary>
     /// Gets the signer index indicating which key is used for authentication.<br/>
@@ -37,6 +37,11 @@ public abstract partial class ProofWithSigner : Proof
     public int Signer { get; private set; }
 
     #endregion
+
+    public ProofWithSigner(Value value)
+    {
+        this.Value = value;
+    }
 
     public override SignaturePublicKey GetSignatureKey()
     {
