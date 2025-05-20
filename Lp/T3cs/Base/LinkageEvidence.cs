@@ -26,12 +26,16 @@ public sealed partial class LinkageEvidence : Evidence
     public long LinkedMicsId { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 2)]
-    public Proof LinkageProof1 { get; private set; }
+    public Proof BaseProof1 { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 3)]
-    public Proof LinkageProof2 { get; private set; }
+    public Proof BaseProof2 { get; private set; }
 
-    public override Proof BaseProof => this.IsPrimary ? this.LinkageProof1 : this.LinkageProof2;
+    public override Proof BaseProof => this.IsPrimary ? this.BaseProof1 : this.BaseProof2;
+
+    public LinkageProof LinkageProof1 => (LinkageProof)this.BaseProof1;
+
+    public LinkageProof LinkageProof2 => (LinkageProof)this.BaseProof2;
 
     #endregion
 
@@ -39,8 +43,8 @@ public sealed partial class LinkageEvidence : Evidence
     {
         this.IsPrimary = isPrimary;
         this.LinkedMicsId = linkedMicsId;
-        this.LinkageProof1 = linkageProof;
-        this.LinkageProof2 = linkageProof2;
+        this.BaseProof1 = linkageProof;
+        this.BaseProof2 = linkageProof2;
     }
 
     public (Proof? Proof, int MergerIndex) GetMergerIndex(ref SignaturePublicKey publicKey)
@@ -60,8 +64,8 @@ public sealed partial class LinkageEvidence : Evidence
     internal void FromLinkage(Linkage linkage, bool isPrimary)
     {
         this.LinkedMicsId = linkage.LinkedMics;
-        this.LinkageProof1 = linkage.BaseProof1;
-        this.LinkageProof2 = linkage.BaseProof2;
+        this.BaseProof1 = linkage.BaseProof1;
+        this.BaseProof2 = linkage.BaseProof2;
         if (isPrimary)
         {
             this.MergerSignature0 = linkage.MergerSignature10;

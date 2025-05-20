@@ -75,8 +75,8 @@ public partial class Linkage : IValidatable
             }
         }
 
-        if (!evidence1.LinkageProof1.Equals(evidence2.LinkageProof1) ||
-            !evidence1.LinkageProof2.Equals(evidence2.LinkageProof2))
+        if (!evidence1.BaseProof1.Equals(evidence2.BaseProof1) ||
+            !evidence1.BaseProof2.Equals(evidence2.BaseProof2))
         {
             return false;
         }
@@ -92,7 +92,7 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        linkage = new Linkage((LinkageProof)evidence1.LinkageProof1, (LinkageProof)evidence1.LinkageProof2);
+        linkage = new Linkage(evidence1.LinkageProof1, evidence1.LinkageProof2);
         linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
