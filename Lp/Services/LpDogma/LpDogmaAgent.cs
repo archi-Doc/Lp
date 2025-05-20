@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere;
 using Netsphere.Crypto;
 
 namespace Lp.Services;
@@ -107,5 +108,39 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
 
         return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
+    }
+
+    async NetTask<LinkageEvidence?> LpDogmaNetService.SignLinkageEvidence(LinkageEvidence evidence)
+    {
+        if (!this.IsAuthenticated)
+        {
+            return default;
+        }
+
+        if (this.merger.SeedKey.TrySign(evidence))
+        {
+            return evidence;
+        }
+        else
+        {
+            return default;
+        }
+    }
+
+    async NetTask<Linkage?> LpDogmaNetService.SignLinkage(Linkage linkage)
+    {
+        if (!this.IsAuthenticated)
+        {
+            return default;
+        }
+
+        if (this.merger.SeedKey.TrySign(linkage, LpConstants.LpExpirationMics))
+        {
+            return linkage;
+        }
+        else
+        {
+            return default;
+        }
     }
 }

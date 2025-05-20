@@ -202,10 +202,17 @@ public partial class LpDogmaMachine : Machine
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var linkedMics = Mics.GetMicsId();
         var evidence1 = new LinkageEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        this.lpSeedKey.TrySign(evidence1);
+
+        this.credentials.Nodes.TryGet(link.Credit1.Mergers[0], out var credentialEvidence);
+        evidence1 = await this.ConnectAndDelegate<LinkageEvidence>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkageEvidence(evidence1));
+
         var evidence2 = new LinkageEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        this.lpSeedKey.TrySign(evidence1);
+        evidence2 = await this.ConnectAndDelegate<LinkageEvidence>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkageEvidence(evidence2));
+
+        this.credentials.Nodes.TryGet(link.LinkerPublicKey, out credentialEvidence);
         Linkage.TryCreate(evidence1, evidence2, out var linkage);
+        linkage = await this.ConnectAndDelegate<Linkage>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkage(linkage));
+        this.lpSeedKey.TrySign(linkage, LpConstants.LpExpirationMics);
 
         /*var netNode = linkerState.NetNode;
         using (var connection = await this.netTerminal.Connect(netNode))
@@ -241,6 +248,35 @@ public partial class LpDogmaMachine : Machine
     }*/
 
         return StateResult.Continue;
+    }
+
+    private async Task<T?> ConnectAndDelegate<T>(NetNode netNode, Func<LpDogmaNetService, NetTask<T?>> func)
+    {
+        if (this.CancellationToken.IsCancellationRequested ||
+            this.lpSeedKey is null)
+        {
+            return default;
+        }
+
+        using (var connection = await this.netTerminal.Connect(netNode))
+        {
+            if (connection is null)
+            {
+                this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
+                return default;
+            }
+
+            var service = connection.GetService<LpDogmaNetService>();
+            var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
+            var r = await service.Authenticate(auth);
+            if (r.Result != NetResult.Success)
+            {
+                return default;
+            }
+
+            var t = await func(service);
+            return t;
+        }
     }
 
     private bool ValidateMergers(Credit credit)
