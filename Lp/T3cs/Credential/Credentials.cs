@@ -19,7 +19,7 @@ public sealed partial class Credentials
     {
     }
 
-    public void Validate()
+    private void Validate()
     {
         this.Nodes.Validate();
         this.Links.Validate();

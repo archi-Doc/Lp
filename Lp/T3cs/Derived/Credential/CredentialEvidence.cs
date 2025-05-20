@@ -63,6 +63,8 @@ public partial class CredentialEvidence : Evidence
 
     public SignaturePublicKey CredentialKey => this.Proof.Value.Owner;
 
+    public bool IsAuthorized => this.Proof.Value.Point > 0;
+
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "CredentialKey")]

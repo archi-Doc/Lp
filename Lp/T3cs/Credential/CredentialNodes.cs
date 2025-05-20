@@ -18,24 +18,33 @@ public sealed partial class CredentialNodes
         this.goshujin.SyncAlias = true;
     }
 
-    public void Validate()
+    public bool CheckAuthorization(Credit credit)
     {
         using (this.goshujin.LockObject.EnterScope())
         {
-            TemporaryList<CredentialEvidence> toDelete = default;
-            foreach (var evidence in this.goshujin)
+            foreach (var x in credit.Mergers)
             {
-                if (!evidence.Validate())
+                if (!this.CheckAuthorizationInternal(x))
                 {
-                    toDelete.Add(evidence);
+                    return false;
                 }
             }
+        }
 
-            foreach (var evidence in toDelete)
+        return true;
+    }
+
+    public bool CheckAuthorization(SignaturePublicKey publicKey)
+    {
+        using (this.goshujin.LockObject.EnterScope())
+        {
+            if (!this.CheckAuthorizationInternal(publicKey))
             {
-                this.goshujin.Remove(evidence);
+                return false;
             }
         }
+
+        return true;
     }
 
     public bool TryGet(SignaturePublicKey key, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
@@ -72,5 +81,41 @@ public sealed partial class CredentialNodes
         {
             return this.goshujin.ToArray();
         }
+    }
+
+    internal void Validate()
+    {
+        using (this.goshujin.LockObject.EnterScope())
+        {
+            TemporaryList<CredentialEvidence> toDelete = default;
+            foreach (var evidence in this.goshujin)
+            {
+                if (!evidence.Validate())
+                {
+                    toDelete.Add(evidence);
+                }
+            }
+
+            foreach (var evidence in toDelete)
+            {
+                this.goshujin.Remove(evidence);
+            }
+        }
+    }
+
+    private bool CheckAuthorizationInternal(SignaturePublicKey publicKey)
+    {
+        if (!publicKey.Validate())
+        {
+            return false;
+        }
+
+        var credentialEvidence = this.goshujin.CredentialKeyChain.FindFirst(publicKey);
+        if (credentialEvidence is null)
+        {
+            return false;
+        }
+
+        return credentialEvidence.IsAuthorized;
     }
 }

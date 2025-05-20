@@ -176,8 +176,9 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }*/
 
-        if (!this.ValidateMergers(link.Credit1) || !this.ValidateMergers(link.Credit2) ||
-            !link.LinkerPublicKey.Validate() || !this.credentials.Nodes.TryGet(link.LinkerPublicKey, out var credentialEvidence))
+        if (!this.credentials.Nodes.CheckAuthorization(link.Credit1) ||
+            !this.credentials.Nodes.CheckAuthorization(link.Credit2) ||
+            !this.credentials.Nodes.CheckAuthorization(link.LinkerPublicKey))
         {
             return StateResult.Continue;
         }
@@ -190,12 +191,6 @@ public partial class LpDogmaMachine : Machine
         else
         {
             link.UpdatedMics = Mics.FastCorrected;
-        }
-
-        SignaturePublicKey[] publicKeys = [.. link.Credit1.Mergers, .. link.Credit2.Mergers, link.LinkerPublicKey,];
-        if (publicKeys.Any(x => !x.Validate()))
-        {
-            return StateResult.Continue;
         }
 
         // Linkage x Point
