@@ -1,12 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Policy;
 using Arc.Collections;
-using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
+
+#pragma warning disable SA1401 // Fields should be private
 
 [TinyhandObject]
 // [ValueLinkObject]
@@ -20,34 +20,34 @@ public partial class Linkage : IValidatable
 
     [Key(0)]
     // [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
-    public long LinkedMics { get; private set; }
+    public long LinkedMics { get; protected set; }
 
     [Key(1)]
-    public Proof BaseProof1 { get; private set; }
+    public Proof BaseProof1 { get; protected set; }
 
     [Key(2)]
-    public Proof BaseProof2 { get; private set; }
+    public Proof BaseProof2 { get; protected set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
 
     [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    public byte[]? MergerSignature10 { get; private set; }
+    public byte[]? MergerSignature10 { get; protected set; }
 
     [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
-    public byte[]? MergerSignature11 { get; private set; }
+    public byte[]? MergerSignature11 { get; protected set; }
 
     [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
-    public byte[]? MergerSignature12 { get; private set; }
+    public byte[]? MergerSignature12 { get; protected set; }
 
     [Key(7, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    public byte[]? MergerSignature20 { get; private set; }
+    public byte[]? MergerSignature20 { get; protected set; }
 
     [Key(8, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
-    public byte[]? MergerSignature21 { get; private set; }
+    public byte[]? MergerSignature21 { get; protected set; }
 
     [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
-    public byte[]? MergerSignature22 { get; private set; }
+    public byte[]? MergerSignature22 { get; protected set; }
 
     #endregion
 
