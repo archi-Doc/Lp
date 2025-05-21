@@ -47,15 +47,18 @@ public partial class LinkLinkage : Linkage
 
     #endregion
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "LinkerPublicKey")]
-    [Link(Type = ChainType.Unordered, TargetMember = "Credit1")]
     protected LinkLinkage()
         : base()
     {
     }
 
+    [Link(Name = "CreditLink", Type = ChainType.Unordered, AddValue = false)]
     public Credit Credit1 => this.LinkProof1.Value.Credit;
 
+    // [Link(UnsafeTargetChain = "CreditLinkChain", AddValue = false)]
+    public Credit Credit2 => this.LinkProof2.Value.Credit;
+
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     public SignaturePublicKey LinkerPublicKey => this.LinkProof1.LinkerPublicKey;
 
     public LinkProof LinkProof1 => (LinkProof)this.BaseProof1;
