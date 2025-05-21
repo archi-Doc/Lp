@@ -171,10 +171,9 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     public virtual string ToString(IConversionOptions? conversionOptions)
         => $"Proof:";
 
-    bool ISignable.SetSignature(int signer, byte[] signature)
+    public virtual bool SetSignature(int signatureIndex, byte[] signature)
     {
-        if (signer != 0 ||
-            signature.Length != CryptoSign.SignatureSize)
+        if (signatureIndex != 0)
         {
             return false;
         }
@@ -183,11 +182,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         return true;
     }
 
-    /// <summary>
-    /// Prepares the proof for signing by setting the verification and expiration times.
-    /// </summary>
-    /// <param name="validMics">The valid microseconds.</param>
-    internal void PrepareSignInternal(long validMics)
+    public virtual bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
     {
         this.SignedMics = Mics.GetCorrected();
         validMics = Math.Max(validMics, this.MaxValidMics);
@@ -200,5 +195,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         {
             this.ExpirationMics = mics;
         }
+
+        return true;
     }
 }

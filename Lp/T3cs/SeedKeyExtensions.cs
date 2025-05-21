@@ -44,26 +44,10 @@ public static class SeedKeyExtensions
         writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
-            if (proof is ProofWithPublicKey proofAndPublicKey)
+            var publicKey = seedKey.GetSignaturePublicKey();
+            if (!proof.PrepareForSigning(ref publicKey, validMics))
             {
-                proofAndPublicKey.PrepareSignInternal(seedKey, validMics);
-            }
-            else if (proof is ProofWithSigner proofWithSigner)
-            {
-                proofWithSigner.PrepareSignInternal(seedKey, validMics);
-            }
-            else if (proof is LinkableProof linkageProof)
-            {
-                linkageProof.PrepareSignInternal(seedKey, validMics);
-            }
-            else
-            {
-                if (!proof.GetSignatureKey().Equals(seedKey.GetSignaturePublicKey()))
-                {
-                    return false;
-                }
-
-                proof.PrepareSignInternal(validMics);
+                return false;
             }
 
             TinyhandSerializer.SerializeObject<Proof>(ref writer, proof, TinyhandSerializerOptions.Signature);
@@ -72,8 +56,7 @@ public static class SeedKeyExtensions
 
             var signature = new byte[CryptoSign.SignatureSize];
             seedKey.Sign(span, signature);
-            proof.SetSignInternal(signature);
-            return true;
+            return proof.SetSignature(0, signature);
         }
         finally
         {
