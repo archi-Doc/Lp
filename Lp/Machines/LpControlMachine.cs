@@ -45,7 +45,6 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
-        this.credentials.Validate();
         this.control.Merger.UpdateState();
         this.control.RelayMerger.UpdateState();
         this.control.Linker.UpdateState();

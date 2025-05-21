@@ -16,11 +16,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<EmbryoBenchmark>();
+        DebugRun<SignaturePublicKeyBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(SignaturePublicKeyBenchmark),
             typeof(EmbryoBenchmark),
             typeof(ServiceIdBenchmark),
             typeof(KeyBenchmark),

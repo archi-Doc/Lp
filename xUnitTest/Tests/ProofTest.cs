@@ -34,14 +34,14 @@ public class ProofTest
 
         var creditIdentity = new Identity(IdentityKind.Credit, owner, [merger,]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
-        var value = new Value(owner, 2, credit!);
+        var value = new Value(owner, 2, credit!); // owner#2@credit
         var state = new MergerState();
         state.NetNode = this.testNode;
         state.Name = "Test1";
 
         var credentialProof = new CredentialProof(value, CredentialKind.Merger, state);
         ownerKey.TrySign(credentialProof, validMics).IsTrue();
-        credentialProof.ValidateAndVerify().IsFalse();
+        credentialProof.ValidateAndVerify().IsTrue();
 
         mergerKey.TrySign(credentialProof, validMics).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
@@ -52,11 +52,11 @@ public class ProofTest
         ownerKey.TrySign(linkageProof2, validMics).IsTrue();
         var linkedMics = Mics.FastCorrected;
 
-        var linkageEvidence = new LinkageEvidence(linkedMics, linkageProof, linkageProof2);
+        var linkageEvidence = new LinkableEvidence(true, linkedMics, linkageProof, linkageProof2);
         mergerKey.TrySign(linkageEvidence, 0).IsTrue();
         linkageEvidence.ValidateAndVerify().IsTrue();
 
-        var linkageEvidence2 = new LinkageEvidence(linkedMics, linkageProof, linkageProof2);
+        var linkageEvidence2 = new LinkableEvidence(false, linkedMics, linkageProof, linkageProof2);
         mergerKey.TrySign(linkageEvidence2, 0).IsTrue();
         linkageEvidence2.ValidateAndVerify().IsTrue();
 

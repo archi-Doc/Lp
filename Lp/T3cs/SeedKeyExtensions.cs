@@ -52,6 +52,10 @@ public static class SeedKeyExtensions
             {
                 proofWithSigner.PrepareSignInternal(seedKey, validMics);
             }
+            else if (proof is LinkableProof linkageProof)
+            {
+                linkageProof.PrepareSignInternal(seedKey, validMics);
+            }
             else
             {
                 if (!proof.GetSignatureKey().Equals(seedKey.GetSignaturePublicKey()))
@@ -79,7 +83,7 @@ public static class SeedKeyExtensions
 
     public static bool TrySign(this SeedKey seedKey, Evidence evidence, int mergerIndex)
     {
-        if (!evidence.Proof.TryGetCredit(out var credit))
+        if (!evidence.BaseProof.TryGetCredit(out var credit))
         {
             return false;
         }
@@ -107,9 +111,50 @@ public static class SeedKeyExtensions
         }
     }
 
+    public static bool TrySign(this SeedKey seedKey, Evidence evidence)
+    {
+        if (!evidence.BaseProof.TryGetCredit(out var credit))
+        {
+            return false;
+        }
+
+        var publicKey = seedKey.GetSignaturePublicKey();
+        var mergerIndex = credit.GetMergerIndex(ref publicKey);
+        if (mergerIndex < 0)
+        {
+            return false;
+        }
+
+        if (evidence.GetSignature(mergerIndex) is not null)
+        {
+            return true;
+        }
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
+        try
+        {
+            ((ITinyhandSerializable)evidence).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            return evidence.SetSignInternal(mergerIndex, sign);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
     public static bool TrySign(this SeedKey seedKey, Linkage linkage, long validMics)
     {
-        if (!seedKey.GetSignaturePublicKey().Equals(linkage.LinkageProof1.LinkerPublicKey))
+        if (!linkage.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
+        {
+            return false;
+        }
+
+        if (!seedKey.GetSignaturePublicKey().Equals(linkerPublicKey))
         {
             return false;
         }

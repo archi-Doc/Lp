@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Arc.Collections;
-using Lp.Services;
 using Netsphere.Crypto;
 using ValueLink.Integrality;
 
@@ -36,7 +33,7 @@ public partial class CredentialEvidence : Evidence
         public override bool Validate(CredentialEvidence.GoshujinClass goshujin, CredentialEvidence newItem, CredentialEvidence? oldItem)
         {
             if (oldItem is not null &&
-                oldItem.ProofMics >= newItem.ProofMics)
+                oldItem.Proof.SignedMics >= newItem.Proof.SignedMics)
             {
                 return false;
             }
@@ -60,42 +57,27 @@ public partial class CredentialEvidence : Evidence
     #region FieldAndProperty
 
     [Key(Evidence.ReservedKeyCount)]
-    public CredentialProof CredentialProof { get; protected set; } = default!;
+    public CredentialProof Proof { get; protected set; }
 
-    public override Proof Proof => this.CredentialProof;
+    public override Proof BaseProof => this.Proof;
 
-    public SignaturePublicKey CredentialKey => this.CredentialProof.Value.Owner;
+    public SignaturePublicKey CredentialKey => this.Proof.Value.Owner;
+
+    public bool IsAuthorized => this.Proof.Value.Point > 0;
 
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "CredentialKey")]
-    public CredentialEvidence()
-    {
-    }
-
     public CredentialEvidence(CredentialProof credentialProof)
     {
-        this.CredentialProof = credentialProof;
-    }
-
-    public static bool TryCreate(CredentialProof proof, SeedKey seedKey, [MaybeNullWhen(false)] out CredentialEvidence evidence)
-    {
-        var obj = new CredentialEvidence(proof);
-        if (!seedKey.TrySign(obj, 0))
-        {
-            evidence = default;
-            return false;
-        }
-
-        evidence = obj;
-        return true;
+        this.Proof = credentialProof;
     }
 
     protected void CredentialKeyLinkAdded()
     {
         if (this.Goshujin?.SyncAlias == true)
         {
-            Alias.Instance.TryAdd(this.CredentialProof.State.Name, this.CredentialKey);
+            Alias.Instance.TryAdd(this.Proof.State.Name, this.CredentialKey);
         }
     }
 

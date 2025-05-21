@@ -1,66 +1,91 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Policy;
-using Arc.Collections;
-using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
-[ValueLinkObject]
+#pragma warning disable SA1401 // Fields should be private
+
+[TinyhandObject(ReservedKeyCount = Linkage.ReservedKeyCount)]
+// [ValueLinkObject]
 public partial class Linkage : IValidatable
 {
-    public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
+    /// <summary>
+    /// The number of reserved keys.
+    /// </summary>
+    public const int ReservedKeyCount = 10;
 
-    private static readonly ObjectPool<LinkageEvidence> EvidencePool = new(() => LinkageEvidence.UnsafeConstructor());
+    public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
 
     #region FieldAndProperty
 
     [Key(0)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
-    public long LinkedMics { get; private set; }
+    // [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
+    public long LinkedMics { get; protected set; }
 
     [Key(1)]
-    public LinkageProof LinkageProof1 { get; private set; }
+    public Proof BaseProof1 { get; protected set; }
 
     [Key(2)]
-    public LinkageProof LinkageProof2 { get; private set; }
+    public Proof BaseProof2 { get; protected set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
 
     [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    public byte[]? MergerSignature10 { get; private set; }
+    public byte[]? MergerSignature10 { get; protected set; }
 
     [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
-    public byte[]? MergerSignature11 { get; private set; }
+    public byte[]? MergerSignature11 { get; protected set; }
 
     [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
-    public byte[]? MergerSignature12 { get; private set; }
+    public byte[]? MergerSignature12 { get; protected set; }
 
     [Key(7, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
-    public byte[]? MergerSignature20 { get; private set; }
+    public byte[]? MergerSignature20 { get; protected set; }
 
     [Key(8, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
-    public byte[]? MergerSignature21 { get; private set; }
+    public byte[]? MergerSignature21 { get; protected set; }
 
     [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
-    public byte[]? MergerSignature22 { get; private set; }
+    public byte[]? MergerSignature22 { get; protected set; }
 
     #endregion
 
-    public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out Linkage? linkage)
+    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out Linkage linkage)
+        => TryCreate(() => new Linkage(), evidence1, evidence2, out linkage);
+
+    protected static bool TryCreate<TLinkage>(Func<TLinkage> constructor, LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out TLinkage linkage)
+        where TLinkage : Linkage
     {
         linkage = default;
-        if (!evidence1.LinkageProof1.Equals(evidence2.LinkageProof1) ||
-            !evidence1.LinkageProof2.Equals(evidence2.LinkageProof2))
+        if (evidence1.IsPrimary)
+        {
+            if (evidence2.IsPrimary)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (evidence2.IsPrimary)
+            {
+                (evidence1, evidence2) = (evidence2, evidence1);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        if (!evidence1.BaseProof1.Equals(evidence2.BaseProof1) ||
+            !evidence1.BaseProof2.Equals(evidence2.BaseProof2))
         {
             return false;
         }
 
-        if (evidence1.LinkedMics != evidence2.LinkedMics)
+        if (evidence1.LinkedMicsId != evidence2.LinkedMicsId)
         {
             return false;
         }
@@ -71,8 +96,10 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        linkage = new Linkage(evidence1.LinkageProof1, evidence1.LinkageProof2);
-        linkage.LinkedMics = evidence1.LinkedMics;
+        linkage = constructor();
+        linkage.BaseProof1 = evidence1.BaseProof1;
+        linkage.BaseProof2 = evidence1.BaseProof2;
+        linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
         linkage.MergerSignature12 = evidence1.MergerSignature2;
@@ -83,16 +110,16 @@ public partial class Linkage : IValidatable
         return true;
     }
 
-    public Linkage(LinkageProof proof1, LinkageProof proof2)
+    protected Linkage()
     {
-        this.LinkageProof1 = proof1;
-        this.LinkageProof2 = proof2;
+        this.BaseProof1 = default!;
+        this.BaseProof2 = default!;
     }
 
     public bool Validate()
     {
-        if (!this.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
-            !this.LinkageProof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
+        if (!this.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
+            !this.BaseProof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
         {
             return false;
         }
@@ -112,18 +139,18 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        if (!this.LinkageProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
+        if (!this.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
         {
             return false;
         }
 
-        if (!this.LinkageProof1.ValidateAndVerify() ||
-            !this.LinkageProof2.ValidateAndVerify())
+        if (!this.BaseProof1.ValidateAndVerify() ||
+            !this.BaseProof2.ValidateAndVerify())
         {
             return false;
         }
 
-        var evidence = EvidencePool.Rent();
+        var evidence = LinkableEvidence.Pool.Rent();
         try
         {
             evidence.FromLinkage(this, true);
@@ -133,14 +160,14 @@ public partial class Linkage : IValidatable
             }
 
             evidence.FromLinkage(this, false);
-            if (!evidence.ValidateAndVerify())
+            if (!evidence.ValidateAndVerifyExceptProof())
             {
                 return false;
             }
         }
         finally
         {
-            EvidencePool.Return(evidence);
+            LinkableEvidence.Pool.Return(evidence);
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();

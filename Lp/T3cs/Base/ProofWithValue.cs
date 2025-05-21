@@ -15,6 +15,11 @@ public abstract partial class ProofWithValue : Proof
     [Key(Proof.ReservedKeyCount)]
     public Value Value { get; protected set; } = default!;
 
+    public ProofWithValue(Value value)
+    {
+        this.Value = value;
+    }
+
     public override SignaturePublicKey GetSignatureKey() => this.Value.Owner;
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)

@@ -11,7 +11,7 @@ namespace Lp.T3cs;
 public sealed partial class CredentialLinks
 {
     [Key(0)]
-    private CredentialEvidence.GoshujinClass goshujin = new();
+    private LinkLinkage.GoshujinClass goshujin = new();
 
     public CredentialLinks()
     {
@@ -21,7 +21,7 @@ public sealed partial class CredentialLinks
     {
         using (this.goshujin.LockObject.EnterScope())
         {
-            TemporaryList<CredentialEvidence> toDelete = default;
+            TemporaryList<LinkLinkage> toDelete = default;
             foreach (var evidence in this.goshujin)
             {
                 if (!evidence.Validate())
@@ -37,39 +37,39 @@ public sealed partial class CredentialLinks
         }
     }
 
-    /*public bool TryGet(SignaturePublicKey key, [MaybeNullWhen(false)] out CredentialEvidence credentialEvidence)
+    public bool TryGet(SignaturePublicKey linkerPublicKey, [MaybeNullWhen(false)] out LinkLinkage linkage)
     {
         using (this.goshujin.LockObject.EnterScope())
         {
-            credentialEvidence = this.goshujin.CredentialKeyChain.FindFirst(key);
-            return credentialEvidence is not null;
+            linkage = this.goshujin.LinkerPublicKeyChain.FindFirst(linkerPublicKey);
+            return linkage is not null;
         }
     }
 
-    public bool TryAdd(CredentialEvidence evidence)
+    public bool TryAdd(LinkLinkage linkage)
     {
-        if (evidence.ValidateAndVerify() != true)
+        if (!linkage.ValidateAndVerify())
         {
             return false;
         }
 
         using (this.goshujin.LockObject.EnterScope())
         {
-            return ((IIntegralityGoshujin)this.goshujin).IntegrateObject(CredentialEvidence.Integrality.Default, evidence) == IntegralityResult.Success;
+            return ((IIntegralityGoshujin)this.goshujin).IntegrateObject(LinkLinkage.Integrality.Default, linkage) == IntegralityResult.Success;
         }
     }
 
     public BytePool.RentMemory Differentiate(ReadOnlyMemory<byte> memory)
-        => CredentialEvidence.Integrality.Default.Differentiate(this.goshujin, memory);
+        => LinkLinkage.Integrality.Default.Differentiate(this.goshujin, memory);
 
     public Task<IntegralityResultAndCount> Integrate(IntegralityBrokerDelegate broker)
-        => CredentialEvidence.Integrality.Default.Integrate(this.goshujin, broker);
+        => LinkLinkage.Integrality.Default.Integrate(this.goshujin, broker);
 
-    public CredentialEvidence[] ToArray()
+    public LinkLinkage[] ToArray()
     {
         using (this.goshujin.LockObject.EnterScope())
         {
             return this.goshujin.ToArray();
         }
-    }*/
+    }
 }

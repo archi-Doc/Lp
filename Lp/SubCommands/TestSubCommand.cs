@@ -100,7 +100,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
                 Value.TryParse(value.ToString(), out var value2, out _);
                 this.userInterfaceService.WriteLine($"{value.Equals(value2)}");
 
-                var valueProof = ValueProof.Create(value);
+                var valueProof = new ValueProof(value);
                 owner.TrySign(valueProof, 123);
             }
         }

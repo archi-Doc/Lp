@@ -8,35 +8,39 @@ namespace Lp.T3cs;
 
 public enum ProofKey : int
 {
+    CredentialProof,
+    LinkProof,
     ValueProof,
     CreateCreditProof,
     EvolProof,
     TransferProof,
     DimensionProof,
     IdentificationProof,
-    CredentialProof,
-    LinkProof,
+
     TestLinkageProof,
+    TemplateProof,
 }
 
 /// <summary>
-/// Represents a proof object.<br/>
+/// Represents the base class of Proof.<br/>
 /// This class holds an authentication key and its proof content.
 /// </summary>
+[TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
+[TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
 [TinyhandUnion((int)ProofKey.ValueProof, typeof(ValueProof))]
 [TinyhandUnion((int)ProofKey.CreateCreditProof, typeof(CreateCreditProof))]
 [TinyhandUnion((int)ProofKey.EvolProof, typeof(EvolProof))]
 [TinyhandUnion((int)ProofKey.TransferProof, typeof(TransferProof))]
 [TinyhandUnion((int)ProofKey.DimensionProof, typeof(DimensionProof))]
 [TinyhandUnion((int)ProofKey.IdentificationProof, typeof(IdentificationProof))]
-[TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
-[TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
 [TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
+[TinyhandUnion((int)ProofKey.TemplateProof, typeof(TemplateProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-public abstract partial class Proof : IEquatable<Proof>
+public abstract partial class Proof : IEquatable<Proof>, ISignable
 {
     /// <summary>
-    /// The expiration time in microseconds to truncate to.
+    /// The number of microseconds by which the expiration time is truncated.<br/>
+    /// If the valid mics is less than or equal to this value, it will not be truncated.
     /// </summary>
     public const long TruncateExpirationMics = Mics.MicsPerDay;
 
@@ -53,8 +57,6 @@ public abstract partial class Proof : IEquatable<Proof>
     }
 
     #region FieldAndProperty
-
-    // Key(0) and Key(1) are reserved for derived classes.
 
     /// <summary>
     /// Gets or sets the signature.
@@ -78,7 +80,7 @@ public abstract partial class Proof : IEquatable<Proof>
     /// <summary>
     /// Gets the maximum valid microseconds.
     /// </summary>
-    public virtual long MaxValidMics => Mics.MicsPerDay * 1;
+    public virtual long MaxValidMics => LpConstants.DefaultProofMaxValidMics;
 
     #endregion
 
@@ -169,6 +171,18 @@ public abstract partial class Proof : IEquatable<Proof>
     public virtual string ToString(IConversionOptions? conversionOptions)
         => $"Proof:";
 
+    bool ISignable.SetSignature(int signer, byte[] signature)
+    {
+        if (signer != 0 ||
+            signature.Length != CryptoSign.SignatureSize)
+        {
+            return false;
+        }
+
+        this.Signature = signature;
+        return true;
+    }
+
     /// <summary>
     /// Prepares the proof for signing by setting the verification and expiration times.
     /// </summary>
@@ -176,16 +190,15 @@ public abstract partial class Proof : IEquatable<Proof>
     internal void PrepareSignInternal(long validMics)
     {
         this.SignedMics = Mics.GetCorrected();
-        var mics = this.SignedMics + Math.Max(validMics, this.MaxValidMics);
-        this.ExpirationMics = mics / TruncateExpirationMics * TruncateExpirationMics;
-    }
-
-    /// <summary>
-    /// Sets the signature for the proof.
-    /// </summary>
-    /// <param name="sign">The signature.</param>
-    internal void SetSignInternal(byte[] sign)
-    {
-        this.Signature = sign;
+        validMics = Math.Max(validMics, this.MaxValidMics);
+        var mics = this.SignedMics + validMics;
+        if (validMics > TruncateExpirationMics)
+        {
+            this.ExpirationMics = mics / TruncateExpirationMics * TruncateExpirationMics;
+        }
+        else
+        {
+            this.ExpirationMics = mics;
+        }
     }
 }

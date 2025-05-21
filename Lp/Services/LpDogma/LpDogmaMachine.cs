@@ -1,8 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 
 namespace Lp.Services;
 
@@ -105,13 +107,14 @@ public partial class LpDogmaMachine : Machine
         }
 
         if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
-            credentialEvidence.CredentialProof.Value.Point == credentialNode.Point)
+            credentialEvidence.Proof.Value.Point == credentialNode.Point)
         {
             // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;
         }
 
-        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(credentialNode.UpdatedMics))
+        if (!this.lpBase.Options.TestFeatures &&
+            MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(credentialNode.UpdatedMics))
         {
             return StateResult.Continue;
         }
@@ -143,11 +146,16 @@ public partial class LpDogmaMachine : Machine
                 return StateResult.Continue;
             }
 
-            if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
-                this.credentials.Nodes.TryAdd(evidence))
+            credentialEvidence = new CredentialEvidence(credentialProof);
+            if (!this.lpSeedKey.TrySign(credentialEvidence))
             {
-                _ = service.AddCredentialEvidence(evidence);
-                this.logger.TryGet()?.Log($"Added: {evidence.ToString()}");
+                return StateResult.Continue;
+            }
+
+            if (this.credentials.Nodes.TryAdd(credentialEvidence))
+            {
+                _ = service.AddCredentialEvidence(credentialEvidence);
+                this.logger.TryGet()?.Log($"Added: {credentialEvidence.ToString()}");
             }
 
             return StateResult.Continue;
@@ -168,77 +176,106 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }*/
 
-        if (!this.ValidateMergers(link.Credit1) || !this.ValidateMergers(link.Credit2) ||
-            !link.LinkerPublicKey.Validate() || !this.credentials.Nodes.TryGet(link.LinkerPublicKey, out var credentialEvidence))
+        if (!this.credentials.Nodes.CheckAuthorization(link.Credit1) ||
+            !this.credentials.Nodes.CheckAuthorization(link.Credit2) ||
+            !this.credentials.Nodes.CheckAuthorization(link.LinkerPublicKey))
         {
             return StateResult.Continue;
         }
 
-        if (MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(link.UpdatedMics))
+        if (!this.lpBase.Options.TestFeatures &&
+            MicsRange.FromPastToFastCorrected(Mics.FromMinutes(10)).IsWithin(link.UpdatedMics))
         {
             return StateResult.Continue;
         }
         else
         {
-            //linkage.UpdatedMics = Mics.FastCorrected;
-        }
-
-        SignaturePublicKey[] publicKeys = [.. link.Credit1.Mergers, .. link.Credit2.Mergers, link.LinkerPublicKey,];
-        if (publicKeys.Any(x => !x.Validate()))
-        {
-            return StateResult.Continue;
+            link.UpdatedMics = Mics.FastCorrected;
         }
 
         // Linkage x Point
-        var value1 = new Value(LpConstants.LpPublicKey, 0, link.Credit1); // @Credit1
-        var proof1 = new LinkProof(link.LinkerPublicKey, link.LinkerPublicKey); // @Credit + Linker
-
+        var value1 = new Value(LpConstants.LpPublicKey, 1, link.Credit1); // LpKey#1@Credit1
+        var proof1 = new LinkProof(value1, link.LinkerPublicKey); // @Credit + Linker
+        var value2 = new Value(LpConstants.LpPublicKey, 1, link.Credit2); // LpKey#1@Credit2
+        var proof2 = new LinkProof(value2, link.LinkerPublicKey); // @Credit + Linker
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
-        var evidence1 = new LinkEvidence(proof1); // Evidence{Proof{@Credit + Linker}/LpKey}/LpKey
-        var evidence2 = new LinkEvidence(proof2);
-        // var linkage = new Linkage(evidence1, evidence2);
+        var linkedMics = Mics.GetMicsId();
 
-        var linkerState = credentialEvidence.CredentialProof.State;
-        if (!linkerState.IsValid)
+        if (link.Credit1.MergerCount == 0 || link.Credit2.MergerCount == 0)
         {
             return StateResult.Continue;
         }
 
-        /*var netNode = linkerState.NetNode;
+        var evidence1 = new LinkableEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        evidence1 = await this.ConnectAndRunService<LinkableEvidence>(link.Credit1.Mergers[0], service => service.SignLinkableEvidence(evidence1));
+        if (evidence1 is null)
+        {
+            return StateResult.Continue;
+        }
+
+        var evidence2 = new LinkableEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        evidence2 = await this.ConnectAndRunService<LinkableEvidence>(link.Credit2.Mergers[0], service => service.SignLinkableEvidence(evidence2));
+        if (evidence2 is null)
+        {
+            return StateResult.Continue;
+        }
+
+        if (!LinkLinkage.TryCreate(evidence1, evidence2, out var linkage))
+        {
+            return StateResult.Continue;
+        }
+
+        linkage = await this.ConnectAndRunService<LinkLinkage>(link.LinkerPublicKey, service => service.SignLinkage(linkage));
+        if (linkage is not null)
+        {
+            var rr = linkage.ValidateAndVerify();
+            this.credentials.Links.TryAdd(linkage);
+        }
+
+        return StateResult.Continue;
+    }
+
+    private async Task<T?> ConnectAndRunService<T>(SignaturePublicKey publicKey, Func<LpDogmaNetService, NetTask<T?>> func)
+    {
+        if (this.CancellationToken.IsCancellationRequested ||
+            this.lpSeedKey is null)
+        {
+            return default;
+        }
+
+        if (!this.credentials.Nodes.TryGet(publicKey, out var credentialEvidence))
+        {
+            return default;
+        }
+
+        if (credentialEvidence.Proof.State.NetNode is not { } netNode)
+        {
+            return default;
+        }
+
         using (var connection = await this.netTerminal.Connect(netNode))
         {
             if (connection is null)
             {
                 this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
-                return StateResult.Continue;
+                return default;
             }
 
             var service = connection.GetService<LpDogmaNetService>();
             var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
-            var r = await service.Authenticate(auth).ResponseAsync;
+            var r = await service.Authenticate(auth);
+            this.userInterfaceService.WriteLine($"{r.Result}");
 
-            var token = CertificateToken<Value>.CreateAndSign(new Value(credentialNode.PublicKey, 1, LpConstants.LpCredit), this.lpSeedKey, connection);
-            var credentialProof = await service.CreateLinkerCredentialProof(token);
-            if (credentialProof is null ||
-                !credentialProof.ValidateAndVerify() ||
-                !credentialProof.GetSignatureKey().Equals(credentialNode.PublicKey))
+            if (r.Result != NetResult.Success)
             {
-                return StateResult.Continue;
+                return default;
             }
 
-            if (CredentialEvidence.TryCreate(credentialProof, this.lpSeedKey, out var evidence) &&
-                this.credentials.LinkerCredentials.TryAdd(evidence))
-            {
-                _ = service.AddLinkerCredentialEvidence(evidence);
-                this.logger.TryGet()?.Log($"Linker credential for {credentialNode.PublicKey.ToString()} has been created and added.");
-            }
-
-            return StateResult.Continue;
+            var t = await func(service).ResponseAsync;
+            this.userInterfaceService.WriteLine($"{t.ToString()}");
+            return t.Value;
         }
-    }*/
-
-        return StateResult.Continue;
     }
 
     private bool ValidateMergers(Credit credit)

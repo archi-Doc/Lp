@@ -25,7 +25,7 @@ public abstract partial class ProofWithSigner : Proof
     public abstract PermittedSigner PermittedSigner { get; }
 
     [Key(Proof.ReservedKeyCount + 0)]
-    public Value Value { get; protected set; } = default!;
+    public Value Value { get; protected set; }
 
     /// <summary>
     /// Gets the signer index indicating which key is used for authentication.<br/>
@@ -37,6 +37,11 @@ public abstract partial class ProofWithSigner : Proof
     public int Signer { get; private set; }
 
     #endregion
+
+    public ProofWithSigner(Value value)
+    {
+        this.Value = value;
+    }
 
     public override SignaturePublicKey GetSignatureKey()
     {
@@ -71,11 +76,16 @@ public abstract partial class ProofWithSigner : Proof
             return false;
         }
 
+        if (!this.Value.Validate())
+        {
+            return false;
+        }
+
         if (this.Signer == 0)
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Owner);
         }
-        else if (this.Signer <= LpConstants.MaxMergers)
+        else if (this.Signer > 0 && this.Signer <= LpConstants.MaxMergers)
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Merger);
         }
@@ -90,25 +100,77 @@ public abstract partial class ProofWithSigner : Proof
         this.PrepareSignInternal(validMics);
 
         var publicKey = seedKey.GetSignaturePublicKey();
+        var permittedSigner = this.PermittedSigner;
+        var mergerCount = this.Value.Credit.Mergers.Length;
         if (publicKey.Equals(this.Value.Owner))
-        {// Owner
+        {// Owner or LpKey or Mergers
             this.Signer = 0;
+            if (!permittedSigner.HasFlag(PermittedSigner.Owner))
+            {
+                if (permittedSigner.HasFlag(PermittedSigner.LpKey) &&
+                publicKey.Equals(LpConstants.LpPublicKey))
+                {// LpKey
+                    this.Signer = -1;
+                }
+                else if (permittedSigner.HasFlag(PermittedSigner.Merger))
+                {// Mergers
+                    if (mergerCount == 0)
+                    {
+                        return;
+                    }
+                    else if (publicKey.Equals(this.Value.Credit.Mergers[0]))
+                    {// Merger-0
+                        this.Signer = 1;
+                        return;
+                    }
+
+                    if (mergerCount == 1)
+                    {
+                        return;
+                    }
+                    else if (publicKey.Equals(this.Value.Credit.Mergers[1]))
+                    {// Merger-1
+                        this.Signer = 2;
+                        return;
+                    }
+
+                    if (publicKey.Equals(this.Value.Credit.Mergers[2]))
+                    {// Merger-2
+                        this.Signer = 3;
+                        return;
+                    }
+                }
+            }
         }
         else if (publicKey.Equals(LpConstants.LpPublicKey))
         {// LpKey
             this.Signer = -1;
         }
+
+        if (mergerCount == 0)
+        {
+            return;
+        }
         else if (publicKey.Equals(this.Value.Credit.Mergers[0]))
         {// Merger-0
             this.Signer = 1;
+            return;
+        }
+
+        if (mergerCount == 1)
+        {
+            return;
         }
         else if (publicKey.Equals(this.Value.Credit.Mergers[1]))
         {// Merger-1
             this.Signer = 2;
+            return;
         }
-        else if (publicKey.Equals(this.Value.Credit.Mergers[2]))
+
+        if (publicKey.Equals(this.Value.Credit.Mergers[2]))
         {// Merger-2
             this.Signer = 3;
+            return;
         }
     }
 }

@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class LinkProof : LinkageProof
+public sealed partial class LinkProof : LinkableProof
 {
     public override PermittedSigner PermittedSigner => PermittedSigner.Merger | PermittedSigner.LpKey;
 
