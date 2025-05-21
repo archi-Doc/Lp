@@ -221,15 +221,16 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        if (!Linkage.TryCreate(evidence1, evidence2, out var linkage))
+        if (!LinkLinkage.TryCreate(evidence1, evidence2, out var linkage))
         {
             return StateResult.Continue;
         }
 
-        linkage = await this.ConnectAndRunService<Linkage>(link.LinkerPublicKey, service => service.SignLinkage(linkage));
+        linkage = await this.ConnectAndRunService<LinkLinkage>(link.LinkerPublicKey, service => service.SignLinkage(linkage));
         if (linkage is not null)
         {
             var rr = linkage.ValidateAndVerify();
+            this.credentials.Links.TryAdd(linkage);
         }
 
         return StateResult.Continue;
@@ -271,9 +272,9 @@ public partial class LpDogmaMachine : Machine
                 return default;
             }
 
-            var t = await func(service);
-            this.userInterfaceService.WriteLine($"{t?.ToString()}");
-            return t;
+            var t = await func(service).ResponseAsync;
+            this.userInterfaceService.WriteLine($"{t.ToString()}");
+            return t.Value;
         }
     }
 

@@ -127,7 +127,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
     }
 
-    async NetTask<Linkage?> LpDogmaNetService.SignLinkage(Linkage linkage)
+    async NetTask<LinkLinkage?> LpDogmaNetService.SignLinkage(LinkLinkage linkage)
     {
         if (!this.IsAuthenticated)
         {

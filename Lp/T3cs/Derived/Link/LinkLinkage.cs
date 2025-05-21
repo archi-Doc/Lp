@@ -1,21 +1,59 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
+using ValueLink.Integrality;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[ValueLinkObject]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
 public partial class LinkLinkage : Linkage
 {
-    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage? linkage)
+    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage linkage)
         => TryCreate(() => new LinkLinkage(), evidence1, evidence2, out linkage);
 
-    [Link(Primary = true, Unique = true, Type = ChainType.Ordered, TargetMember = "LinkProof1")]
+    #region Integrality
+
+    public class Integrality : Integrality<LinkLinkage.GoshujinClass, LinkLinkage>
+    {
+        public static readonly Integrality Default = new()
+        {
+            MaxItems = 1_000,
+            RemoveIfItemNotFound = false,
+        };
+
+        public override bool Validate(LinkLinkage.GoshujinClass goshujin, LinkLinkage newItem, LinkLinkage? oldItem)
+        {
+            if (oldItem is not null &&
+                oldItem.LinkedMics >= newItem.LinkedMics)
+            {
+                return false;
+            }
+
+            if (!newItem.ValidateAndVerify())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /*public override int Trim(GoshujinClass goshujin, int integratedCount)
+        {
+            return base.Trim(goshujin, integratedCount);
+        }*/
+    }
+
+    #endregion
+
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "LinkerPublicKey")]
     protected LinkLinkage()
         : base()
     {
     }
+
+    public SignaturePublicKey LinkerPublicKey => this.LinkProof1.LinkerPublicKey;
 
     public LinkProof LinkProof1 => (LinkProof)this.BaseProof1;
 

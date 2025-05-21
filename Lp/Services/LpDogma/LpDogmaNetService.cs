@@ -18,7 +18,7 @@ public partial interface LpDogmaNetService : INetService
 
     NetTask<LinkableEvidence?> SignLinkableEvidence(LinkableEvidence evidence);
 
-    NetTask<Linkage?> SignLinkage(Linkage linkage);
+    NetTask<LinkLinkage?> SignLinkage(LinkLinkage linkage);
 
     // NetTask<Linkage?> CreateLink(LinkProof linkProof1, LinkProof linkProof2);
 }
