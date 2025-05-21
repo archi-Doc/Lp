@@ -48,10 +48,13 @@ public partial class LinkLinkage : Linkage
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = "LinkerPublicKey")]
+    [Link(Type = ChainType.Unordered, TargetMember = "Credit1")]
     protected LinkLinkage()
         : base()
     {
     }
+
+    public Credit Credit1 => this.LinkProof1.Value.Credit;
 
     public SignaturePublicKey LinkerPublicKey => this.LinkProof1.LinkerPublicKey;
 
