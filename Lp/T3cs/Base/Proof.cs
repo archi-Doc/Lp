@@ -36,7 +36,7 @@ public enum ProofKey : int
 [TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 [TinyhandUnion((int)ProofKey.TemplateProof, typeof(TemplateProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-public abstract partial class Proof : IEquatable<Proof>
+public abstract partial class Proof : IEquatable<Proof>, ISignable
 {
     /// <summary>
     /// The number of microseconds by which the expiration time is truncated.<br/>
@@ -171,6 +171,18 @@ public abstract partial class Proof : IEquatable<Proof>
     public virtual string ToString(IConversionOptions? conversionOptions)
         => $"Proof:";
 
+    bool ISignable.SetSignature(int signer, byte[] signature)
+    {
+        if (signer != 0 ||
+            signature.Length != CryptoSign.SignatureSize)
+        {
+            return false;
+        }
+
+        this.Signature = signature;
+        return true;
+    }
+
     /// <summary>
     /// Prepares the proof for signing by setting the verification and expiration times.
     /// </summary>
@@ -188,14 +200,5 @@ public abstract partial class Proof : IEquatable<Proof>
         {
             this.ExpirationMics = mics;
         }
-    }
-
-    /// <summary>
-    /// Sets the signature for the proof.
-    /// </summary>
-    /// <param name="sign">The signature.</param>
-    internal void SetSignInternal(byte[] sign)
-    {
-        this.Signature = sign;
     }
 }
