@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TestLinkageProof : LinkageProof
+public partial class TestLinkageProof : LinkableProof
 {
     public TestLinkageProof(Value value, SignaturePublicKey linkerPublicKey)
         : base(value, linkerPublicKey)
@@ -31,7 +31,7 @@ public partial class TestLinkageProof : LinkageProof
 /// </summary>
 // [TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 // [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
-public abstract partial class LinkageProof : Proof
+public abstract partial class LinkableProof : Proof
 {
     /// <summary>
     /// The number of reserved keys.
@@ -59,7 +59,7 @@ public abstract partial class LinkageProof : Proof
 
     #endregion
 
-    public LinkageProof(Value value, SignaturePublicKey linkerPublicKey)
+    public LinkableProof(Value value, SignaturePublicKey linkerPublicKey)
     {
         this.Value = value;
         this.LinkerPublicKey = linkerPublicKey;

@@ -52,7 +52,7 @@ public static class SeedKeyExtensions
             {
                 proofWithSigner.PrepareSignInternal(seedKey, validMics);
             }
-            else if (proof is LinkageProof linkageProof)
+            else if (proof is LinkableProof linkageProof)
             {
                 linkageProof.PrepareSignInternal(seedKey, validMics);
             }

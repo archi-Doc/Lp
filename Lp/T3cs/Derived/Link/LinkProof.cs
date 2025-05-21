@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class LinkProof : LinkageProof
+public sealed partial class LinkProof : LinkableProof
 {
     public override PermittedSigner PermittedSigner => PermittedSigner.Merger | PermittedSigner.LpKey;
 

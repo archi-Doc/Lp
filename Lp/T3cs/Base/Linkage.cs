@@ -53,10 +53,10 @@ public partial class Linkage : IValidatable
 
     #endregion
 
-    public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out Linkage? linkage)
+    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out Linkage linkage)
         => TryCreate(() => new Linkage(), evidence1, evidence2, out linkage);
 
-    protected static bool TryCreate<TLinkage>(Func<TLinkage> constructor, LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out TLinkage? linkage)
+    protected static bool TryCreate<TLinkage>(Func<TLinkage> constructor, LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out TLinkage linkage)
         where TLinkage : Linkage
     {
         linkage = default;
@@ -150,7 +150,7 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        var evidence = LinkageEvidence.Pool.Rent();
+        var evidence = LinkableEvidence.Pool.Rent();
         try
         {
             evidence.FromLinkage(this, true);
@@ -167,7 +167,7 @@ public partial class Linkage : IValidatable
         }
         finally
         {
-            LinkageEvidence.Pool.Return(evidence);
+            LinkableEvidence.Pool.Return(evidence);
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();

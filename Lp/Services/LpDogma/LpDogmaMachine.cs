@@ -201,23 +201,32 @@ public partial class LpDogmaMachine : Machine
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var linkedMics = Mics.GetMicsId();
-        var evidence1 = new LinkageEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
 
-        this.credentials.Nodes.TryGet(link.Credit1.Mergers[0], out var credentialEvidence);
-        evidence1 = await this.ConnectAndRunService<LinkageEvidence>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkageEvidence(evidence1));
-
-        var evidence2 = new LinkageEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        evidence2 = await this.ConnectAndRunService<LinkageEvidence>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkageEvidence(evidence2));
-
-        if (evidence1 is null || !evidence1.ValidateAndVerify() ||
-            evidence2 is null || !evidence2.ValidateAndVerify())
+        if (link.Credit1.MergerCount == 0 || link.Credit2.MergerCount == 0)
         {
             return StateResult.Continue;
         }
 
-        this.credentials.Nodes.TryGet(link.LinkerPublicKey, out credentialEvidence);
-        Linkage.TryCreate(evidence1, evidence2, out var linkage);
-        linkage = await this.ConnectAndRunService<Linkage>(credentialEvidence.Proof.State.NetNode, service => service.SignLinkage(linkage));
+        var evidence1 = new LinkableEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        evidence1 = await this.ConnectAndRunService<LinkableEvidence>(link.Credit1.Mergers[0], service => service.SignLinkableEvidence(evidence1));
+        if (evidence1 is null)
+        {
+            return StateResult.Continue;
+        }
+
+        var evidence2 = new LinkableEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        evidence2 = await this.ConnectAndRunService<LinkableEvidence>(link.Credit2.Mergers[0], service => service.SignLinkableEvidence(evidence2));
+        if (evidence2 is null)
+        {
+            return StateResult.Continue;
+        }
+
+        if (!Linkage.TryCreate(evidence1, evidence2, out var linkage))
+        {
+            return StateResult.Continue;
+        }
+
+        linkage = await this.ConnectAndRunService<Linkage>(link.LinkerPublicKey, service => service.SignLinkage(linkage));
         if (linkage is not null)
         {
             var rr = linkage.ValidateAndVerify();
@@ -226,10 +235,20 @@ public partial class LpDogmaMachine : Machine
         return StateResult.Continue;
     }
 
-    private async Task<T?> ConnectAndRunService<T>(NetNode netNode, Func<LpDogmaNetService, NetTask<T?>> func)
+    private async Task<T?> ConnectAndRunService<T>(SignaturePublicKey publicKey, Func<LpDogmaNetService, NetTask<T?>> func)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
+        {
+            return default;
+        }
+
+        if (!this.credentials.Nodes.TryGet(publicKey, out var credentialEvidence))
+        {
+            return default;
+        }
+
+        if (credentialEvidence.Proof.State.NetNode is not { } netNode)
         {
             return default;
         }
@@ -245,12 +264,15 @@ public partial class LpDogmaMachine : Machine
             var service = connection.GetService<LpDogmaNetService>();
             var auth = AuthenticationToken.CreateAndSign(this.lpSeedKey, connection);
             var r = await service.Authenticate(auth);
+            this.userInterfaceService.WriteLine($"{r.Result}");
+
             if (r.Result != NetResult.Success)
             {
                 return default;
             }
 
             var t = await func(service);
+            this.userInterfaceService.WriteLine($"{t?.ToString()}");
             return t;
         }
     }

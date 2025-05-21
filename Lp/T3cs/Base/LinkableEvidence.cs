@@ -6,16 +6,16 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(ReservedKeyCount = LinkageEvidence.ReservedKeyCount)]
+[TinyhandObject(ReservedKeyCount = LinkableEvidence.ReservedKeyCount)]
 // [ValueLinkObject(Integrality = false, Isolation = IsolationLevel.None)]
-public sealed partial class LinkageEvidence : Evidence
+public sealed partial class LinkableEvidence : Evidence
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
     public new const int ReservedKeyCount = Evidence.ReservedKeyCount + 4;
 
-    public static readonly ObjectPool<LinkageEvidence> Pool = new(() => LinkageEvidence.UnsafeConstructor());
+    public static readonly ObjectPool<LinkableEvidence> Pool = new(() => LinkableEvidence.UnsafeConstructor());
 
     #region FieldAndProperty
 
@@ -34,13 +34,13 @@ public sealed partial class LinkageEvidence : Evidence
 
     public override Proof BaseProof => this.IsPrimary ? this.BaseProof1 : this.BaseProof2;
 
-    public LinkageProof LinkageProof1 => (LinkageProof)this.BaseProof1;
+    public LinkableProof LinkageProof1 => (LinkableProof)this.BaseProof1;
 
-    public LinkageProof LinkageProof2 => (LinkageProof)this.BaseProof2;
+    public LinkableProof LinkageProof2 => (LinkableProof)this.BaseProof2;
 
     #endregion
 
-    public LinkageEvidence(bool isPrimary, long linkedMicsId, LinkageProof linkageProof, LinkageProof linkageProof2)
+    public LinkableEvidence(bool isPrimary, long linkedMicsId, LinkableProof linkageProof, LinkableProof linkageProof2)
     {
         this.IsPrimary = isPrimary;
         this.LinkedMicsId = linkedMicsId;

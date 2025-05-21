@@ -16,7 +16,7 @@ public partial interface LpDogmaNetService : INetService
 
     NetTask<NetResult> AddCredentialEvidence(CredentialEvidence evidence);
 
-    NetTask<LinkageEvidence?> SignLinkageEvidence(LinkageEvidence evidence);
+    NetTask<LinkableEvidence?> SignLinkableEvidence(LinkableEvidence evidence);
 
     NetTask<Linkage?> SignLinkage(Linkage linkage);
 

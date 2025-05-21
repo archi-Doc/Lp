@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 [ValueLinkObject]
 public partial class LinkLinkage : Linkage
 {
-    public static bool TryCreate(LinkageEvidence evidence1, LinkageEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage? linkage)
+    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage? linkage)
         => TryCreate(() => new LinkLinkage(), evidence1, evidence2, out linkage);
 
     [Link(Primary = true, Unique = true, Type = ChainType.Ordered, TargetMember = "LinkProof1")]
