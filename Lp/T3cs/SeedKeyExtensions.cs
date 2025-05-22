@@ -56,7 +56,7 @@ public static class SeedKeyExtensions
 
             var signature = new byte[CryptoSign.SignatureSize];
             seedKey.Sign(span, signature);
-            return proof.SetSignature(0, signature);
+            return proof.SetSignature(new(0, signature));
         }
         finally
         {

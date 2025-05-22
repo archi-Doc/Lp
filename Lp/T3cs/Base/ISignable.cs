@@ -7,13 +7,13 @@ namespace Lp.T3cs;
 
 public readonly struct SignaturePair
 {
-    public readonly int SignatureIndex;
+    public readonly int Index;
 
     public readonly byte[]? Signature;
 
-    public SignaturePair(int signatureIndex, byte[]? signature)
+    public SignaturePair(int index, byte[]? signature)
     {
-        this.SignatureIndex = signatureIndex;
+        this.Index = index;
         this.Signature = signature;
     }
 
@@ -25,5 +25,5 @@ public interface ISignable
 {
     bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics);
 
-    bool SetSignature(int signatureIndex, byte[] signature);
+    bool SetSignature(SignaturePair signaturePair);
 }

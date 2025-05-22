@@ -171,14 +171,14 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     public virtual string ToString(IConversionOptions? conversionOptions)
         => $"Proof:";
 
-    public virtual bool SetSignature(int signatureIndex, byte[] signature)
+    public virtual bool SetSignature(SignaturePair signaturePair)
     {
-        if (signatureIndex != 0)
+        if (!signaturePair.IsValid || signaturePair.Index != 0)
         {
             return false;
         }
 
-        this.Signature = signature;
+        this.Signature = signaturePair.Signature;
         return true;
     }
 
