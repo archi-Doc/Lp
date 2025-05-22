@@ -16,7 +16,7 @@ public partial record Board
     }
 
     [Key(0)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     public Identifier identifier { get; private set; }
 
     [Key(1)]

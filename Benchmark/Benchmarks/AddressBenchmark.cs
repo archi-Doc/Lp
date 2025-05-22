@@ -18,7 +18,7 @@ public partial class NetAddressToEndPoint
         this.EndPoint = endpoint.EndPoint;
     }
 
-    [Link(Type = ChainType.Unordered, AddValue = false)]
+    [Link(Type = ChainType.Unordered)]
     public NetAddress NetAddress { get; }
 
     public EndPoint? EndPoint { get; }
@@ -36,7 +36,7 @@ public partial class NetAddressToEndPoint2
         this.EndPoint = endpoint.EndPoint;
     }
 
-    [Link(Type = ChainType.Unordered, AddValue = false)]
+    [Link(Type = ChainType.Unordered)]
     public NetAddress NetAddress { get; }
 
     public EndPoint? EndPoint { get; }

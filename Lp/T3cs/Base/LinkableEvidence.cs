@@ -23,7 +23,7 @@ public sealed partial class LinkableEvidence : Evidence
     public bool IsPrimary { get; set; }
 
     [Key(Evidence.ReservedKeyCount + 1)]
-    // [Link(Primary = true, Unique = true, Type = ChainType.Ordered, AddValue = false)]
+    // [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
     public long LinkedMicsId { get; private set; }
 
     [Key(Evidence.ReservedKeyCount + 2)]

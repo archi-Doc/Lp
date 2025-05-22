@@ -26,7 +26,7 @@ public partial class Message // : IVerifiable
     #region FieldAndProperty
 
     [Key(0)]
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     public Identifier Identifier { get; private set; }
 
     [Key(1)]
