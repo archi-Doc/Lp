@@ -4,8 +4,138 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.T3cs;
+
+public sealed partial record class CryptoKey
+{
+    #region FieldAndProperty
+
+    [Key(0)]
+    private uint id; // 12 bits:checksum, 20 bits: id
+
+    [Key(1)]
+    private readonly ulong x0; // Shared with an unencrypted public key and a public key used for encryption.
+
+    [Key(2)]
+    private readonly ulong x1;
+
+    [Key(3)]
+    private readonly ulong x2;
+
+    [Key(4)]
+    private readonly ulong x3;
+
+    [Key(5)]
+    private byte[]? encrypted;
+
+    [Key(6, Level = TinyhandWriter.DefaultLevel)]
+    private byte[]? decrypted;
+
+    public bool IsEncrypted => this.encrypted is not null;
+
+    public bool IsDecrypted => this.decrypted is not null;
+
+    #endregion
+
+    public CryptoKey(ref SignaturePublicKey publicKey, uint id)
+    {
+        var b = publicKey.AsSpan();
+        this.x0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x3 = BitConverter.ToUInt64(b);
+
+        this.id = id;
+    }
+
+    public CryptoKey(SeedKey ownerSeedKey, ref EncryptionPublicKey mergerPublicKey)
+    {
+        this.id = RandomVault.Default.NextUInt32();
+        var seedKey = SeedKey.New(ownerSeedKey, additional);
+
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        seedKey.DeriveKeyMaterial(mergerPublicKey, out var material);
+        Blake3.Get256_Span(material, material);
+
+        var publicKey = seedKey.GetSignaturePublicKey();
+        var b = publicKey.AsSpan();
+        this.x0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x3 = BitConverter.ToUInt64(b);
+    }
+
+    public bool TryGetPublicKey(out SignaturePublicKey publicKey)
+    {
+        if (this.IsEncrypted)
+        {
+            if (this.decrypted is not null)
+            {
+                publicKey = new(this.decrypted);
+                return true;
+            }
+            else
+            {
+                publicKey = default;
+                return false;
+            }
+        }
+        else
+        {// Raw public key
+            publicKey = new(this.x0, this.x1, this.x2, this.x3);
+            return true;
+        }
+    }
+
+    public bool TryDecrypt(SeedKey mergerSeedKey)
+    {
+        if (!this.IsEncrypted || this.IsDecrypted)
+        {
+            return true;
+        }
+
+        var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
+
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        mergerSeedKey.DeriveKeyMaterial(publicKey, material);
+        Blake3.Get256_Span(material, material);
+
+        var checksum = XxHash3.Hash64(material);
+
+        mergerSeedKey.TryDecrypt()
+
+        this.decrypted = material.ToArray();
+        return true;
+    }
+
+    public bool TryDecrypt(SeedKey ownerSeedKey, ref EncryptionPublicKey mergerPublicKey)
+    {
+        if (!this.IsEncrypted || this.IsDecrypted)
+        {
+            return true;
+        }
+
+        var seedKey = SeedKey.New(ownerSeedKey, additional);
+        
+        var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
+        mergerSeedKey.DeriveKeyMaterial(publicKey, material);
+        Blake3.Get256_Span(material, material);
+
+        var checksum = XxHash3.Hash64(material);
+
+        this.decrypted = material.ToArray();
+        return true;
+    }
+}
 
 /*/// <summary>
 /// Represents a crypto key (Raw or Encrypted SignaturePublicKey).
