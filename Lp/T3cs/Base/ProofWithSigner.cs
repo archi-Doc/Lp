@@ -95,82 +95,56 @@ public abstract partial class ProofWithSigner : Proof
         }
     }
 
-    internal void PrepareSignInternal(SeedKey seedKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
     {
-        this.PrepareSignInternal(validMics);
-
-        var publicKey = seedKey.GetSignaturePublicKey();
         var permittedSigner = this.PermittedSigner;
         var mergerCount = this.Value.Credit.Mergers.Length;
-        if (publicKey.Equals(this.Value.Owner))
-        {// Owner or LpKey or Mergers
+
+        if (permittedSigner.HasFlag(PermittedSigner.Owner) &&
+            this.Value.Owner.Equals(ref publicKey))
+        {// Owner
             this.Signer = 0;
-            if (!permittedSigner.HasFlag(PermittedSigner.Owner))
-            {
-                if (permittedSigner.HasFlag(PermittedSigner.LpKey) &&
-                publicKey.Equals(LpConstants.LpPublicKey))
-                {// LpKey
-                    this.Signer = -1;
-                }
-                else if (permittedSigner.HasFlag(PermittedSigner.Merger))
-                {// Mergers
-                    if (mergerCount == 0)
-                    {
-                        return;
-                    }
-                    else if (publicKey.Equals(this.Value.Credit.Mergers[0]))
-                    {// Merger-0
-                        this.Signer = 1;
-                        return;
-                    }
-
-                    if (mergerCount == 1)
-                    {
-                        return;
-                    }
-                    else if (publicKey.Equals(this.Value.Credit.Mergers[1]))
-                    {// Merger-1
-                        this.Signer = 2;
-                        return;
-                    }
-
-                    if (publicKey.Equals(this.Value.Credit.Mergers[2]))
-                    {// Merger-2
-                        this.Signer = 3;
-                        return;
-                    }
-                }
-            }
+            goto Success;
         }
-        else if (publicKey.Equals(LpConstants.LpPublicKey))
+
+        if (permittedSigner.HasFlag(PermittedSigner.LpKey) &&
+                LpConstants.LpPublicKey.Equals(ref publicKey))
         {// LpKey
             this.Signer = -1;
+            goto Success;
         }
 
-        if (mergerCount == 0)
-        {
-            return;
-        }
-        else if (publicKey.Equals(this.Value.Credit.Mergers[0]))
-        {// Merger-0
-            this.Signer = 1;
-            return;
+        if (permittedSigner.HasFlag(PermittedSigner.Merger))
+        {// Mergers
+            if (mergerCount == 0)
+            {
+                return false;
+            }
+            else if (this.Value.Credit.Mergers[0].Equals(ref publicKey))
+            {// Merger-0
+                this.Signer = 1;
+                goto Success;
+            }
+
+            if (mergerCount == 1)
+            {
+                return false;
+            }
+            else if (this.Value.Credit.Mergers[1].Equals(ref publicKey))
+            {// Merger-1
+                this.Signer = 2;
+                goto Success;
+            }
+
+            if (this.Value.Credit.Mergers[2].Equals(ref publicKey))
+            {// Merger-2
+                this.Signer = 3;
+                goto Success;
+            }
         }
 
-        if (mergerCount == 1)
-        {
-            return;
-        }
-        else if (publicKey.Equals(this.Value.Credit.Mergers[1]))
-        {// Merger-1
-            this.Signer = 2;
-            return;
-        }
-
-        if (publicKey.Equals(this.Value.Credit.Mergers[2]))
-        {// Merger-2
-            this.Signer = 3;
-            return;
-        }
+Success:
+        base.PrepareForSigning(ref publicKey, validMics);
+        return true;
     }
 }

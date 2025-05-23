@@ -52,10 +52,10 @@ public partial class LinkLinkage : Linkage
     {
     }
 
-    [Link(Name = "CreditLink", Type = ChainType.Unordered, AddValue = false)]
+    [Link(Name = "CreditLink", Type = ChainType.Unordered)]
     public Credit Credit1 => this.LinkProof1.Value.Credit;
 
-    // [Link(UnsafeTargetChain = "CreditLinkChain", AddValue = false)]
+    // [Link(UnsafeTargetChain = "CreditLinkChain")]
     public Credit Credit2 => this.LinkProof2.Value.Credit;
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
