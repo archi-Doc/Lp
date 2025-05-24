@@ -10,9 +10,8 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1310 // Field names should not contain underscore
 
-public sealed partial record class CryptoKey
+public sealed partial record class CryptoKey : IEquatable<CryptoKey>
 {
-    private const ulong RawDataLimit = 999_999_999;
     private const uint SubId_HashMask = 0x3FFU; // 10 bits
     private const uint SubId_IdMask = ~SubId_HashMask; // 32 bits
 
@@ -88,7 +87,7 @@ public sealed partial record class CryptoKey
     }
 
     public unsafe CryptoKey(SeedKey originalSeedKey, ref EncryptionPublicKey mergerPublicKey, bool subId = false)
-    {// Encrypted
+    {// Encrypt
         if (subId)
         {
             this.subId = GenerateSubId();
@@ -151,7 +150,6 @@ public sealed partial record class CryptoKey
         }
 
         var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
-
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
         mergerSeedKey.DeriveKeyMaterial(publicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
         MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), this.encryptionSalt); // Salt
@@ -167,36 +165,100 @@ public sealed partial record class CryptoKey
         }
 
         if ((uint)XxHash3Slim.Hash64(plaintext) != this.originalHash)
-        {
-            return false; // Original public key hash does not match.
+        {// Original public key hash does not match.
+            return false;
         }
 
         this.decrypted = plaintext.ToArray();
         return true;
     }
 
-    public bool TryDecrypt(SeedKey ownerSeedKey, ref EncryptionPublicKey mergerPublicKey)
+    public unsafe bool TryDecrypt(SeedKey originalSeedKey, ref EncryptionPublicKey mergerPublicKey)
     {
         if (!this.IsEncrypted || this.IsDecrypted)
         {
             return true;
         }
 
-        /*var seedKey = SeedKey.New(ownerSeedKey, additional);
+        var salt = this.encryptionSalt;
+        var temporalKey = SeedKey.New(originalSeedKey, new ReadOnlySpan<byte>(&salt, sizeof(uint)));
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
+        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), salt); // Salt
+        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
 
-        var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
-        mergerSeedKey.DeriveKeyMaterial(publicKey, material);
-        Blake3.Get256_Span(material, material);
+        Span<byte> plaintext = stackalloc byte[SeedKeyHelper.PublicKeySize];
+        var result = Aegis128L.TryDecrypt(plaintext, this.encrypted, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
+        material.Clear();
 
-        var checksum = XxHash3.Hash64(material);
+        if (!result)
+        {
+            return false;
+        }
 
-        this.decrypted = material.ToArray();*/
+        if ((uint)XxHash3Slim.Hash64(plaintext) != this.originalHash)
+        {// Original public key hash does not match.
+            return false;
+        }
+
+        this.decrypted = plaintext.ToArray();
         return true;
     }
 
     public bool ValidateSubId()
         => this.subId == 0 ? true : ValidateSubId(this.subId);
+
+    public void ClearDecrypted()
+    {
+        if (this.decrypted is not null)
+        {
+            this.decrypted.AsSpan().Clear();
+            this.decrypted = null;
+        }
+    }
+
+    public override int GetHashCode()
+        => (int)this.x0;
+
+    public bool Equals(CryptoKey? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (this.x0 != other.x0 ||
+            this.x1 != other.x1 ||
+            this.x2 != other.x2 ||
+            this.x3 != other.x3)
+        {
+            return false;
+        }
+
+        if (this.encrypted is null)
+        {
+            if (other.encrypted is null)
+            {
+                return this.subId == other.subId;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (other.encrypted is null)
+            {
+                return false;
+            }
+
+            return this.subId == other.subId &&
+                this.encryptionSalt == other.encryptionSalt &&
+                this.originalHash == other.originalHash &&
+                this.encrypted.AsSpan().SequenceEqual(other.encrypted.AsSpan());
+        }
+    }
 }
 
 /*/// <summary>

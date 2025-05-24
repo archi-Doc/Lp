@@ -13,8 +13,9 @@ public class CryptoKeyTest
     {
         var originalKey = SeedKey.NewSignature();
         var mergerKey = SeedKey.NewEncryption();
-
         var originalPublicKey = originalKey.GetSignaturePublicKey();
+        var mergerPublicKey = mergerKey.GetEncryptionPublicKey();
+
         var cryptoKey = new CryptoKey(ref originalPublicKey, false);
         cryptoKey.SubId.Is(0u);
         cryptoKey.ValidateSubId().IsTrue();
@@ -34,6 +35,11 @@ public class CryptoKeyTest
         cryptoKey.ValidateSubId().IsTrue();
         cryptoKey.TryGetPublicKey(out publicKey).IsFalse();
         cryptoKey.TryDecrypt(mergerKey).IsTrue();
+        cryptoKey.TryGetPublicKey(out publicKey).IsTrue();
+        publicKey.Is(originalPublicKey);
+
+        cryptoKey.ClearDecrypted();
+        cryptoKey.TryDecrypt(originalKey, ref mergerPublicKey).IsTrue();
         cryptoKey.TryGetPublicKey(out publicKey).IsTrue();
         publicKey.Is(originalPublicKey);
     }
