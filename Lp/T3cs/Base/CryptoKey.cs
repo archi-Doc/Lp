@@ -1,46 +1,77 @@
 // Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using Netsphere.Crypto;
 using Tinyhand.IO;
+using Tinyhand.Tree;
 
 namespace Lp.T3cs;
 
+#pragma warning disable SA1310 // Field names should not contain underscore
+
 public sealed partial record class CryptoKey
 {
+    private const ulong RawDataLimit = 999_999_999;
+    private const uint SubId_HashMask = 0x3FFU; // 10 bits
+    private const uint SubId_IdMask = ~SubId_HashMask; // 32 bits
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe uint GenerateSubId()
+    {
+        var id = RandomVault.Default.NextUInt32() & SubId_IdMask;
+        ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
+        return id | ((uint)XxHash3Slim.Hash64(bytes) & SubId_HashMask);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe bool ValidateSubId(uint subId)
+    {
+        var id = subId & SubId_IdMask;
+        ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
+        var hash = (uint)XxHash3Slim.Hash64(bytes);
+        return (subId & SubId_HashMask) == (hash & SubId_HashMask);
+    }
+
     #region FieldAndProperty
 
     [Key(0)]
-    private uint id; // 12 bits:checksum, 20 bits: id
-
-    [Key(1)]
     private readonly ulong x0; // Shared with an unencrypted public key and a public key used for encryption.
 
-    [Key(2)]
+    [Key(1)]
     private readonly ulong x1;
 
-    [Key(3)]
+    [Key(2)]
     private readonly ulong x2;
 
-    [Key(4)]
+    [Key(3)]
     private readonly ulong x3;
 
-    [Key(5)]
+    [Key(4)]
     private byte[]? encrypted;
 
-    [Key(6, Level = TinyhandWriter.DefaultLevel)]
+    [Key(5, Level = TinyhandWriter.DefaultLevel)]
     private byte[]? decrypted;
+
+    [Key(6)]
+    private uint subId;
+
+    [Key(7)]
+    private uint encryptionSalt;
+
+    [Key(8)]
+    private uint originalHash;
 
     public bool IsEncrypted => this.encrypted is not null;
 
     public bool IsDecrypted => this.decrypted is not null;
 
+    public uint SubId => this.subId;
+
     #endregion
 
-    public CryptoKey(ref SignaturePublicKey publicKey, uint id)
-    {
+    public CryptoKey(ref SignaturePublicKey publicKey, bool subId = false)
+    {// Raw
         var b = publicKey.AsSpan();
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
@@ -50,20 +81,37 @@ public sealed partial record class CryptoKey
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
 
-        this.id = id;
+        if (subId)
+        {
+            this.subId = GenerateSubId();
+        }
     }
 
-    public CryptoKey(SeedKey ownerSeedKey, ref EncryptionPublicKey mergerPublicKey)
-    {
-        this.id = RandomVault.Default.NextUInt32();
-        var seedKey = SeedKey.New(ownerSeedKey, additional);
+    public unsafe CryptoKey(SeedKey originalSeedKey, ref EncryptionPublicKey mergerPublicKey, bool subId = false)
+    {// Encrypted
+        if (subId)
+        {
+            this.subId = GenerateSubId();
+        }
 
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
-        seedKey.DeriveKeyMaterial(mergerPublicKey, out var material);
-        Blake3.Get256_Span(material, material);
+        var originalPublicKeySpan = originalSeedKey.GetSignaturePublicKey().AsSpan();
+        var salt = RandomVault.Default.NextUInt32();
+        this.encryptionSalt = salt;
+        this.originalHash = (uint)XxHash3Slim.Hash64(originalPublicKeySpan);
 
-        var publicKey = seedKey.GetSignaturePublicKey();
-        var b = publicKey.AsSpan();
+        var temporalKey = SeedKey.New(originalSeedKey, new ReadOnlySpan<byte>(&salt, sizeof(uint)));
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
+        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), salt); // Salt
+        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
+
+        byte[] ciphertext = new byte[originalPublicKeySpan.Length];
+        Aegis128L.Encrypt(ciphertext, originalPublicKeySpan, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
+        material.Clear();
+
+        this.encrypted = ciphertext;
+
+        var b = temporalKey.GetEncryptionPublicKeySpan();
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x1 = BitConverter.ToUInt64(b);
@@ -104,15 +152,26 @@ public sealed partial record class CryptoKey
 
         var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
 
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
-        mergerSeedKey.DeriveKeyMaterial(publicKey, material);
-        Blake3.Get256_Span(material, material);
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
+        mergerSeedKey.DeriveKeyMaterial(publicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), this.encryptionSalt); // Salt
+        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
 
-        var checksum = XxHash3.Hash64(material);
+        Span<byte> plaintext = stackalloc byte[SeedKeyHelper.PublicKeySize];
+        var result = Aegis128L.TryDecrypt(plaintext, this.encrypted, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
+        material.Clear();
 
-        mergerSeedKey.TryDecrypt()
+        if (!result)
+        {
+            return false;
+        }
 
-        this.decrypted = material.ToArray();
+        if ((uint)XxHash3Slim.Hash64(plaintext) != this.originalHash)
+        {
+            return false; // Original public key hash does not match.
+        }
+
+        this.decrypted = plaintext.ToArray();
         return true;
     }
 
@@ -123,8 +182,8 @@ public sealed partial record class CryptoKey
             return true;
         }
 
-        var seedKey = SeedKey.New(ownerSeedKey, additional);
-        
+        /*var seedKey = SeedKey.New(ownerSeedKey, additional);
+
         var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
         Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
         mergerSeedKey.DeriveKeyMaterial(publicKey, material);
@@ -132,9 +191,12 @@ public sealed partial record class CryptoKey
 
         var checksum = XxHash3.Hash64(material);
 
-        this.decrypted = material.ToArray();
+        this.decrypted = material.ToArray();*/
         return true;
     }
+
+    public bool ValidateSubId()
+        => this.subId == 0 ? true : ValidateSubId(this.subId);
 }
 
 /*/// <summary>
