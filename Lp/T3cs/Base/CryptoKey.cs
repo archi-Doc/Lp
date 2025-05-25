@@ -1,5 +1,6 @@
 // Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Netsphere.Crypto;
@@ -9,10 +10,68 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1310 // Field names should not contain underscore
 
-public sealed partial record class CryptoKey : IEquatable<CryptoKey>
-{
+public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringConvertible<CryptoKey>
+{// (!raw), (1234!raw), (:encrypted), (1234:encrypted)
+    public const int EncryptedDataSize = 32 + 32 + sizeof(uint) + sizeof(uint); // PublicKey, Encrypted, EncryptionSalt, OriginalHash
+    public const int SubIdMaxLength = 10;
+
+    public static readonly int EncryptedStringLength = Base64.Url.GetEncodedLength(EncryptedDataSize);
+    public static readonly int Max
+
     private const uint SubId_HashMask = 0x3FFU; // 10 bits
     private const uint SubId_IdMask = ~SubId_HashMask; // 32 bits
+
+    #region IStringConvertible
+
+    public static int MaxStringLength => 3 + SubIdMaxLength + EncryptedStringLength;
+
+    public int GetStringLength()
+    {
+        var length = 3;
+        if (this.IsEncrypted)
+        {
+            length += EncryptedStringLength;
+        }
+        else
+        {
+            length += SeedKeyHelper.RawPublicKeyLengthInBase64;
+        }
+
+        return length;
+    }
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, out int read, IConversionOptions? conversionOptions = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = null)
+    {
+        if (this.IsEncrypted)
+        {
+            if (this.subId == 0)
+            {// (:encrypted)
+
+            }
+            else
+            {// (id:encrypted)
+
+            }
+        }
+        else
+        {
+            if (this.subId == 0)
+            {// (!raw)
+
+            }
+            else
+            {// (id!raw)
+
+            }
+        }
+    }
+
+    #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe uint GenerateSubId()
