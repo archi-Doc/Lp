@@ -16,14 +16,13 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     public const int SubIdMaxLength = 10;
 
     public static readonly int EncryptedStringLength = Base64.Url.GetEncodedLength(EncryptedDataSize);
-    public static readonly int Max
 
     private const uint SubId_HashMask = 0x3FFU; // 10 bits
     private const uint SubId_IdMask = ~SubId_HashMask; // 32 bits
 
     #region IStringConvertible
 
-    public static int MaxStringLength => 3 + SubIdMaxLength + EncryptedStringLength;
+    public static int MaxStringLength => 3 + BaseHelper.UInt32MaxDecimalChars + EncryptedStringLength; // (id:encrypted)
 
     public int GetStringLength()
     {
@@ -37,6 +36,11 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
             length += SeedKeyHelper.RawPublicKeyLengthInBase64;
         }
 
+        if (this.subId != 0)
+        {
+            length += BaseHelper.CountDecimalChars(this.subId);
+        }
+
         return length;
     }
 
@@ -47,28 +51,58 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
 
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = null)
     {
-        if (this.IsEncrypted)
+        if (destination.Length < this.GetStringLength())
         {
-            if (this.subId == 0)
-            {// (:encrypted)
+            written = 0;
+            return false;
+        }
 
-            }
-            else
-            {// (id:encrypted)
+        int w;
+        var span = destination;
+        span[0] = SeedKeyHelper.PublicKeyOpenBracket;
+        span = span.Slice(1);
 
+        if (this.subId != 0)
+        {// (id:encrypted), (id!raw)
+            if (!this.subId.TryFormat(span, out w))
+            {
+                written = 0;
+                return false;
             }
+
+            span = span.Slice(w);
+        }
+
+        if (this.IsEncrypted)
+        {// (:encrypted), (id:encrypted)
+            span[0] = SeedKeyHelper.PublicKeySeparator;
+            span = span.Slice(1);
+
+            Span<byte> encrypted = stackalloc byte[EncryptedDataSize];
+            this.GetEncryptedSpan(encrypted);
+            Base64.Url.FromByteArrayToSpan(encrypted, span, out w);
+            span = span.Slice(w);
         }
         else
-        {
-            if (this.subId == 0)
-            {// (!raw)
+        {// (!raw), (id!raw)
+            span[0] = SeedKeyHelper.PublicKeySeparator2;
+            span = span.Slice(1);
 
+            var publicKey = new SignaturePublicKey(this.x0, this.x1, this.x2, this.x3);
+            if (!publicKey.TryFormatWithoutBracket(span, out w, conversionOptions))
+            {
+                written = 0;
+                return false;
             }
-            else
-            {// (id!raw)
 
-            }
+            span = span.Slice(w);
         }
+
+        span[0] = SeedKeyHelper.PublicKeyCloseBracket;
+        span = span.Slice(1);
+
+        written = destination.Length - span.Length;
+        return true;
     }
 
     #endregion
@@ -316,6 +350,31 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
                 this.originalHash == other.originalHash &&
                 this.encrypted.AsSpan().SequenceEqual(other.encrypted.AsSpan());
         }
+    }
+
+    private void GetEncryptedSpan(Span<byte> span)
+    {
+        if (span.Length != EncryptedDataSize ||
+            this.encrypted?.Length != 32)
+        {
+            throw new InvalidOperationException();
+        }
+
+        MemoryMarshal.Write(span, this.x0);
+        span = span.Slice(sizeof(ulong));
+        MemoryMarshal.Write(span, this.x1);
+        span = span.Slice(sizeof(ulong));
+        MemoryMarshal.Write(span, this.x2);
+        span = span.Slice(sizeof(ulong));
+        MemoryMarshal.Write(span, this.x3);
+        span = span.Slice(sizeof(ulong));
+
+        this.encrypted.AsSpan().CopyTo(span);
+        span = span.Slice(32);
+        MemoryMarshal.Write(span, this.encryptionSalt);
+        span = span.Slice(sizeof(uint));
+        MemoryMarshal.Write(span, this.originalHash);
+        span = span.Slice(sizeof(uint));
     }
 }
 
