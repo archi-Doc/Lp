@@ -36,17 +36,101 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
             length += SeedKeyHelper.RawPublicKeyLengthInBase64;
         }
 
-        if (this.subId != 0)
+        if (this.subKey != 0)
         {
-            length += BaseHelper.CountDecimalChars(this.subId);
+            length += BaseHelper.CountDecimalChars(this.subKey);
         }
 
         return length;
     }
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, out int read, IConversionOptions? conversionOptions = null)
-    {
-        throw new NotImplementedException();
+    {// (:encrypted), (!raw), (id:encrypted), (id!raw)
+        uint subKey = 0;
+        @object = null;
+        if (source.Length < 3 || source.Length > MaxStringLength)
+        {
+            goto Failure;
+        }
+
+        if (source[0] != SeedKeyHelper.PublicKeyOpenBracket)
+        {
+            goto Failure;
+        }
+
+        var last = source.IndexOf(SeedKeyHelper.PublicKeyCloseBracket);
+        if (last < 0)
+        {
+            goto Failure;
+        }
+
+        source = source.Slice(1, last - 2);
+        read = last;
+
+        // :encrypted, !raw, id:encrypted, id!raw
+        if (source[0] == SeedKeyHelper.PublicKeySeparator)
+        {// :encrypted
+            return TryParseEncrypted(subKey, source.Slice(1), out @object, conversionOptions);
+        }
+        else if (source[0] == SeedKeyHelper.PublicKeySeparator2)
+        {// !raw
+            return TryParseRaw(subKey, source.Slice(1), out @object, conversionOptions);
+        }
+
+        var encryptedIndex = source.IndexOf(SeedKeyHelper.PublicKeySeparator);
+        if (encryptedIndex > 0)
+        {// id:encrypted
+            if (!uint.TryParse(source.Slice(0, encryptedIndex), out subKey))
+            {
+                return false;
+            }
+
+            source = source.Slice(encryptedIndex + 1);
+            return TryParseEncrypted(subKey, source, out @object, conversionOptions);
+        }
+
+        var rawIndex = source.IndexOf(SeedKeyHelper.PublicKeySeparator2);
+        if (rawIndex > 0)
+        {// id:raw
+            if (!uint.TryParse(source.Slice(0, encryptedIndex), out subKey))
+            {
+                return false;
+            }
+
+            source = source.Slice(encryptedIndex + 1);
+            return TryParseRaw(subKey, source, out @object, conversionOptions);
+        }
+
+Failure:
+        read = 0;
+        return false;
+
+        bool TryParseEncrypted(uint subKey, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, IConversionOptions? conversionOptions)
+        {
+            Span<byte> destination = stackalloc byte[EncryptedDataSize];
+            if (!Base64.Url.FromStringToSpan(source, destination, out var w) ||
+                w != EncryptedDataSize)
+            {
+                @object = null;
+                return false;
+            }
+
+            @object = new CryptoKey(subKey, destination);
+            return true;
+        }
+
+        bool TryParseRaw(uint subKey, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, IConversionOptions? conversionOptions)
+        {
+            if (!SignaturePublicKey.TryParse(source, out var publicKey, out _, conversionOptions))
+            {
+                @object = null;
+                return false;
+            }
+
+            @object = new CryptoKey(ref publicKey, false);
+            @object.subKey = subKey;
+            return true;
+        }
     }
 
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = null)
@@ -62,9 +146,9 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         span[0] = SeedKeyHelper.PublicKeyOpenBracket;
         span = span.Slice(1);
 
-        if (this.subId != 0)
+        if (this.subKey != 0)
         {// (id:encrypted), (id!raw)
-            if (!this.subId.TryFormat(span, out w))
+            if (!this.subKey.TryFormat(span, out w))
             {
                 written = 0;
                 return false;
@@ -79,7 +163,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
             span = span.Slice(1);
 
             Span<byte> encrypted = stackalloc byte[EncryptedDataSize];
-            this.GetEncryptedSpan(encrypted);
+            this.WriteEncryptedSpan(encrypted);
             Base64.Url.FromByteArrayToSpan(encrypted, span, out w);
             span = span.Slice(w);
         }
@@ -145,7 +229,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     private byte[]? decrypted;
 
     [Key(6)]
-    private uint subId;
+    private uint subKey;
 
     [Key(7)]
     private uint encryptionSalt;
@@ -157,7 +241,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
 
     public bool IsDecrypted => this.decrypted is not null;
 
-    public uint SubId => this.subId;
+    public uint SubId => this.subKey;
 
     #endregion
 
@@ -174,7 +258,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
 
         if (subId)
         {
-            this.subId = GenerateSubId();
+            this.subKey = GenerateSubId();
         }
     }
 
@@ -182,7 +266,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     {// Encrypt
         if (subId)
         {
-            this.subId = GenerateSubId();
+            this.subKey = GenerateSubId();
         }
 
         var originalPublicKeySpan = originalSeedKey.GetSignaturePublicKey().AsSpan();
@@ -210,6 +294,31 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         this.x2 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
+    }
+
+    private CryptoKey(uint subKey, ReadOnlySpan<byte> span)
+    {
+        if (span.Length != EncryptedDataSize)
+        {
+            throw new InvalidOperationException();
+        }
+
+        this.subKey = subKey;
+        this.x0 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x1 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x2 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x3 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+
+        this.encrypted = span.Slice(0, 32).ToArray();
+        span = span.Slice(32);
+        this.encryptionSalt = MemoryMarshal.Read<uint>(span);
+        span = span.Slice(sizeof(uint));
+        this.originalHash = MemoryMarshal.Read<uint>(span);
+        span = span.Slice(sizeof(uint));
     }
 
     public bool TryGetPublicKey(out SignaturePublicKey publicKey)
@@ -298,7 +407,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     }
 
     public bool ValidateSubId()
-        => this.subId == 0 ? true : ValidateSubId(this.subId);
+        => this.subKey == 0 ? true : ValidateSubId(this.subKey);
 
     public void ClearDecrypted()
     {
@@ -331,7 +440,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         {
             if (other.encrypted is null)
             {
-                return this.subId == other.subId;
+                return this.subKey == other.subKey;
             }
             else
             {
@@ -345,14 +454,14 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
                 return false;
             }
 
-            return this.subId == other.subId &&
+            return this.subKey == other.subKey &&
                 this.encryptionSalt == other.encryptionSalt &&
                 this.originalHash == other.originalHash &&
                 this.encrypted.AsSpan().SequenceEqual(other.encrypted.AsSpan());
         }
     }
 
-    private void GetEncryptedSpan(Span<byte> span)
+    private void WriteEncryptedSpan(Span<byte> span)
     {
         if (span.Length != EncryptedDataSize ||
             this.encrypted?.Length != 32)
