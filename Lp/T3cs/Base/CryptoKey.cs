@@ -64,8 +64,8 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
             goto Failure;
         }
 
-        source = source.Slice(1, last - 2);
-        read = last;
+        source = source.Slice(1, last - 1);
+        read = last + 1;
 
         // :encrypted, !raw, id:encrypted, id!raw
         if (source[0] == SeedKeyHelper.PublicKeySeparator)
@@ -80,7 +80,8 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         var encryptedIndex = source.IndexOf(SeedKeyHelper.PublicKeySeparator);
         if (encryptedIndex > 0)
         {// id:encrypted
-            if (!uint.TryParse(source.Slice(0, encryptedIndex), out subKey))
+            if (!uint.TryParse(source.Slice(0, encryptedIndex), out subKey) ||
+                !ValidateSubKey(subKey))
             {
                 return false;
             }
@@ -92,12 +93,13 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         var rawIndex = source.IndexOf(SeedKeyHelper.PublicKeySeparator2);
         if (rawIndex > 0)
         {// id:raw
-            if (!uint.TryParse(source.Slice(0, encryptedIndex), out subKey))
+            if (!uint.TryParse(source.Slice(0, rawIndex), out subKey) ||
+                !ValidateSubKey(subKey))
             {
                 return false;
             }
 
-            source = source.Slice(encryptedIndex + 1);
+            source = source.Slice(rawIndex + 1);
             return TryParseRaw(subKey, source, out @object, conversionOptions);
         }
 
@@ -192,7 +194,7 @@ Failure:
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe uint GenerateSubId()
+    private static unsafe uint GenerateSubKey()
     {
         var id = RandomVault.Default.NextUInt32() & SubId_IdMask;
         ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
@@ -200,7 +202,7 @@ Failure:
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe bool ValidateSubId(uint subId)
+    private static unsafe bool ValidateSubKey(uint subId)
     {
         var id = subId & SubId_IdMask;
         ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
@@ -241,7 +243,7 @@ Failure:
 
     public bool IsDecrypted => this.decrypted is not null;
 
-    public uint SubId => this.subKey;
+    public uint SubKey => this.subKey;
 
     #endregion
 
@@ -258,7 +260,7 @@ Failure:
 
         if (subId)
         {
-            this.subKey = GenerateSubId();
+            this.subKey = GenerateSubKey();
         }
     }
 
@@ -266,7 +268,7 @@ Failure:
     {// Encrypt
         if (subId)
         {
-            this.subKey = GenerateSubId();
+            this.subKey = GenerateSubKey();
         }
 
         var originalPublicKeySpan = originalSeedKey.GetSignaturePublicKey().AsSpan();
@@ -406,8 +408,8 @@ Failure:
         return true;
     }
 
-    public bool ValidateSubId()
-        => this.subKey == 0 ? true : ValidateSubId(this.subKey);
+    public bool ValidateSubKey()
+        => this.subKey == 0 ? true : ValidateSubKey(this.subKey);
 
     public void ClearDecrypted()
     {
@@ -460,6 +462,10 @@ Failure:
                 this.encrypted.AsSpan().SequenceEqual(other.encrypted.AsSpan());
         }
     }
+
+    public override string ToString() => this.ConvertToString();
+
+    public string ToString(IConversionOptions? conversionOptions) => this.ConvertToString(conversionOptions);
 
     private void WriteEncryptedSpan(Span<byte> span)
     {

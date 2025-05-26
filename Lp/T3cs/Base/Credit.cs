@@ -320,6 +320,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         }
     }
 
-    public override string ToString()
-        => this.ConvertToString();
+    public override string ToString() => this.ConvertToString();
+
+    public string ToString(IConversionOptions? conversionOptions) => this.ConvertToString(conversionOptions);
 }
