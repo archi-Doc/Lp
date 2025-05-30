@@ -9,13 +9,13 @@ namespace Lp.T3cs;
 public readonly partial struct Contract : IEquatable<Contract>
 {
     [Key(0)]
-    public Proof Proof { get; init; }
+    public readonly Proof Proof;
 
     [Key(1)]
-    public Point Partial { get; init; }
+    public readonly Point Partial;
 
     [Key(2)]
-    public Point Total { get; init; }
+    public readonly Point Total;
 
     public Contract(LinkableProof proof, Point partial, Point total)
     {

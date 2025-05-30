@@ -7,14 +7,14 @@ using Tinyhand.IO;
 namespace Lp.T3cs;
 
 [TinyhandObject(ReservedKeyCount = LinkableEvidence.ReservedKeyCount)]
-public sealed partial class LinkableEvidence2 : Evidence
+public sealed partial class ContractableEvidence : Evidence
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
     public new const int ReservedKeyCount = Evidence.ReservedKeyCount + 4;
 
-    public static readonly ObjectPool<LinkableEvidence2> Pool = new(() => LinkableEvidence2.UnsafeConstructor());
+    public static readonly ObjectPool<ContractableEvidence> Pool = new(() => ContractableEvidence.UnsafeConstructor());
 
     #region FieldAndProperty
 
@@ -38,12 +38,20 @@ public sealed partial class LinkableEvidence2 : Evidence
 
     #endregion
 
-    public LinkableEvidence2(bool isPrimary, long linkedMicsId, Contract contract1, Contract contract2)
+    public ContractableEvidence(bool isPrimary, long linkedMicsId, Contract contract1, Contract contract2)
     {
         this.IsPrimary = isPrimary;
         this.LinkedMicsId = linkedMicsId;
         this.Contract1 = contract1;
         this.Contract2 = contract2;
+    }
+
+    public ContractableEvidence(bool isPrimary, long linkedMicsId, LinkableProof proof1, LinkableProof proof2)
+    {
+        this.IsPrimary = isPrimary;
+        this.LinkedMicsId = linkedMicsId;
+        this.Contract1 = new(proof1);
+        this.Contract1 = new(proof1)
     }
 
     public (Proof? Proof, int MergerIndex) GetMergerIndex(ref SignaturePublicKey publicKey)
