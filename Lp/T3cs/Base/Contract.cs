@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
@@ -27,6 +27,39 @@ public readonly partial struct Contract : IEquatable<Contract>
     public Contract(LinkableProof proof)
     {
         this.Proof = proof;
+    }
+
+    static void ITinyhandSerializable<Contract>.Serialize(ref TinyhandWriter writer, scoped ref Contract v, TinyhandSerializerOptions options)
+    {
+        if (options.IsSignatureMode)
+        {
+            // v.GetIdentifier(writer.Level); // Cannot use a thread static buffer.
+            var w = TinyhandWriter.CreateFromBytePool();
+            try
+            {
+                TinyhandSerializer.SerializeObject(ref w, v.Proof, options);
+                w.Write(v.Partial);
+                w.Write(v.Total);
+
+                var rentMemory = w.FlushAndGetRentMemory();
+                Span<byte> span = stackalloc byte[Identifier.Length];
+                Blake3.Get256_Span(rentMemory.Span, span);
+                rentMemory.Return();
+                writer.WriteSpan(span);
+            }
+            finally
+            {
+                w.Dispose();
+            }
+        }
+        else
+        {
+            writer.WriteArrayHeader(3);
+
+            TinyhandSerializer.SerializeObject(ref writer, v.Proof, options);
+            writer.Write(v.Partial);
+            writer.Write(v.Total);
+        }
     }
 
     public bool Equals(Contract other)

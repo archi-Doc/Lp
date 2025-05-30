@@ -14,7 +14,7 @@ public sealed partial class ContractableEvidence : Evidence
     /// </summary>
     public new const int ReservedKeyCount = Evidence.ReservedKeyCount + 4;
 
-    public static readonly ObjectPool<ContractableEvidence> Pool = new(() => ContractableEvidence.UnsafeConstructor());
+    public static readonly ObjectPool<ContractableEvidence> Pool = new(() => new());
 
     #region FieldAndProperty
 
@@ -51,7 +51,11 @@ public sealed partial class ContractableEvidence : Evidence
         this.IsPrimary = isPrimary;
         this.LinkedMicsId = linkedMicsId;
         this.Contract1 = new(proof1);
-        this.Contract1 = new(proof1)
+        this.Contract2 = new(proof2);
+    }
+
+    private ContractableEvidence()
+    {
     }
 
     public (Proof? Proof, int MergerIndex) GetMergerIndex(ref SignaturePublicKey publicKey)
@@ -68,7 +72,7 @@ public sealed partial class ContractableEvidence : Evidence
         return default;
     }
 
-    internal void FromLinkage(Linkage linkage, bool isPrimary)
+    internal void FromLinkage(Linkage2 linkage, bool isPrimary)
     {
         this.LinkedMicsId = linkage.LinkedMics;
         this.Contract1 = new((LinkableProof)linkage.BaseProof1);//

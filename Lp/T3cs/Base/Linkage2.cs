@@ -8,7 +8,6 @@ namespace Lp.T3cs;
 #pragma warning disable SA1401 // Fields should be private
 
 [TinyhandObject(ReservedKeyCount = Linkage2.ReservedKeyCount)]
-// [ValueLinkObject]
 public partial class Linkage2 : IValidatable
 {
     /// <summary>
@@ -21,7 +20,6 @@ public partial class Linkage2 : IValidatable
     #region FieldAndProperty
 
     [Key(0)]
-    // [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
     public long LinkedMics { get; protected set; }
 
     [Key(1)]
@@ -97,8 +95,8 @@ public partial class Linkage2 : IValidatable
         }
 
         linkage = constructor();
-        linkage.BaseProof1 = evidence1.Contract1.Proof;
-        linkage.BaseProof2 = evidence1.BaseProof2;
+        linkage.BaseProof1 = evidence1.Contract1.Proof;//
+        linkage.BaseProof2 = evidence1.Contract2.Proof;
         linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
@@ -150,7 +148,7 @@ public partial class Linkage2 : IValidatable
             return false;
         }
 
-        var evidence = LinkableEvidence.Pool.Rent();
+        var evidence = ContractableEvidence.Pool.Rent();
         try
         {
             evidence.FromLinkage(this, true);
@@ -167,7 +165,7 @@ public partial class Linkage2 : IValidatable
         }
         finally
         {
-            LinkableEvidence.Pool.Return(evidence);
+            ContractableEvidence.Pool.Return(evidence);
         }
 
         var writer = TinyhandWriter.CreateFromBytePool();

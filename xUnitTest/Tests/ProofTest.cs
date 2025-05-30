@@ -60,7 +60,7 @@ public class ProofTest
         mergerKey.TrySign(linkageEvidence2, 0).IsTrue();
         linkageEvidence2.ValidateAndVerify().IsTrue();
 
-        Linkage.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
+        Linkage2.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
         linkerKey.TrySign(linkage!, validMics).IsTrue();
 
         linkage!.ValidateAndVerify().IsTrue();
