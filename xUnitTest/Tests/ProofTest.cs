@@ -52,11 +52,11 @@ public class ProofTest
         ownerKey.TrySign(linkageProof2, validMics).IsTrue();
         var linkedMics = Mics.FastCorrected;
 
-        var linkageEvidence = new LinkableEvidence(true, linkedMics, linkageProof, linkageProof2);
+        var linkageEvidence = new ContractableEvidence(true, linkedMics, linkageProof, linkageProof2);
         mergerKey.TrySign(linkageEvidence, 0).IsTrue();
         linkageEvidence.ValidateAndVerify().IsTrue();
 
-        var linkageEvidence2 = new LinkableEvidence(false, linkedMics, linkageProof, linkageProof2);
+        var linkageEvidence2 = new ContractableEvidence(false, linkedMics, linkageProof, linkageProof2);
         mergerKey.TrySign(linkageEvidence2, 0).IsTrue();
         linkageEvidence2.ValidateAndVerify().IsTrue();
 

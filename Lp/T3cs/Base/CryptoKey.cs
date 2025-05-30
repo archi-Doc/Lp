@@ -1,46 +1,254 @@
 // Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-public sealed partial record class CryptoKey
-{
+#pragma warning disable SA1310 // Field names should not contain underscore
+
+public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringConvertible<CryptoKey>
+{// (!raw), (1234!raw), (:encrypted), (1234:encrypted)
+    public const int EncryptedDataSize = 32 + 32 + sizeof(uint) + sizeof(uint); // PublicKey, Encrypted, EncryptionSalt, OriginalHash
+    public const int SubIdMaxLength = 10;
+
+    public static readonly int EncryptedStringLength = Base64.Url.GetEncodedLength(EncryptedDataSize);
+
+    private const uint SubId_HashMask = 0x3FFU; // 10 bits
+    private const uint SubId_IdMask = ~SubId_HashMask; // 32 bits
+
+    #region IStringConvertible
+
+    public static int MaxStringLength => 3 + BaseHelper.UInt32MaxDecimalChars + EncryptedStringLength; // (id:encrypted)
+
+    public int GetStringLength()
+    {
+        var length = 3;
+        if (this.IsEncrypted)
+        {
+            length += EncryptedStringLength;
+        }
+        else
+        {
+            length += SeedKeyHelper.RawPublicKeyLengthInBase64;
+        }
+
+        if (this.subKey != 0)
+        {
+            length += BaseHelper.CountDecimalChars(this.subKey);
+        }
+
+        return length;
+    }
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, out int read, IConversionOptions? conversionOptions = null)
+    {// (:encrypted), (!raw), (id:encrypted), (id!raw)
+        uint subKey = 0;
+        @object = null;
+        if (source.Length < 3 || source.Length > MaxStringLength)
+        {
+            goto Failure;
+        }
+
+        if (source[0] != SeedKeyHelper.PublicKeyOpenBracket)
+        {
+            goto Failure;
+        }
+
+        var last = source.IndexOf(SeedKeyHelper.PublicKeyCloseBracket);
+        if (last < 0)
+        {
+            goto Failure;
+        }
+
+        source = source.Slice(1, last - 1);
+        read = last + 1;
+
+        // :encrypted, !raw, id:encrypted, id!raw
+        if (source[0] == SeedKeyHelper.PublicKeySeparator)
+        {// :encrypted
+            return TryParseEncrypted(subKey, source.Slice(1), out @object, conversionOptions);
+        }
+        else if (source[0] == SeedKeyHelper.PublicKeySeparator2)
+        {// !raw
+            return TryParseRaw(subKey, source.Slice(1), out @object, conversionOptions);
+        }
+
+        var encryptedIndex = source.IndexOf(SeedKeyHelper.PublicKeySeparator);
+        if (encryptedIndex > 0)
+        {// id:encrypted
+            if (!uint.TryParse(source.Slice(0, encryptedIndex), out subKey) ||
+                !ValidateSubKey(subKey))
+            {
+                return false;
+            }
+
+            source = source.Slice(encryptedIndex + 1);
+            return TryParseEncrypted(subKey, source, out @object, conversionOptions);
+        }
+
+        var rawIndex = source.IndexOf(SeedKeyHelper.PublicKeySeparator2);
+        if (rawIndex > 0)
+        {// id:raw
+            if (!uint.TryParse(source.Slice(0, rawIndex), out subKey) ||
+                !ValidateSubKey(subKey))
+            {
+                return false;
+            }
+
+            source = source.Slice(rawIndex + 1);
+            return TryParseRaw(subKey, source, out @object, conversionOptions);
+        }
+
+Failure:
+        read = 0;
+        return false;
+
+        bool TryParseEncrypted(uint subKey, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, IConversionOptions? conversionOptions)
+        {
+            Span<byte> destination = stackalloc byte[EncryptedDataSize];
+            if (!Base64.Url.FromStringToSpan(source, destination, out var w) ||
+                w != EncryptedDataSize)
+            {
+                @object = null;
+                return false;
+            }
+
+            @object = new CryptoKey(subKey, destination);
+            return true;
+        }
+
+        bool TryParseRaw(uint subKey, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, IConversionOptions? conversionOptions)
+        {
+            if (!SignaturePublicKey.TryParse(source, out var publicKey, out _, conversionOptions))
+            {
+                @object = null;
+                return false;
+            }
+
+            @object = new CryptoKey(ref publicKey, false);
+            @object.subKey = subKey;
+            return true;
+        }
+    }
+
+    public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = null)
+    {
+        if (destination.Length < this.GetStringLength())
+        {
+            written = 0;
+            return false;
+        }
+
+        int w;
+        var span = destination;
+        span[0] = SeedKeyHelper.PublicKeyOpenBracket;
+        span = span.Slice(1);
+
+        if (this.subKey != 0)
+        {// (id:encrypted), (id!raw)
+            if (!this.subKey.TryFormat(span, out w))
+            {
+                written = 0;
+                return false;
+            }
+
+            span = span.Slice(w);
+        }
+
+        if (this.IsEncrypted)
+        {// (:encrypted), (id:encrypted)
+            span[0] = SeedKeyHelper.PublicKeySeparator;
+            span = span.Slice(1);
+
+            Span<byte> encrypted = stackalloc byte[EncryptedDataSize];
+            this.WriteEncryptedSpan(encrypted);
+            Base64.Url.FromByteArrayToSpan(encrypted, span, out w);
+            span = span.Slice(w);
+        }
+        else
+        {// (!raw), (id!raw)
+            span[0] = SeedKeyHelper.PublicKeySeparator2;
+            span = span.Slice(1);
+
+            var publicKey = new SignaturePublicKey(this.x0, this.x1, this.x2, this.x3);
+            if (!publicKey.TryFormatWithoutBracket(span, out w, conversionOptions))
+            {
+                written = 0;
+                return false;
+            }
+
+            span = span.Slice(w);
+        }
+
+        span[0] = SeedKeyHelper.PublicKeyCloseBracket;
+        span = span.Slice(1);
+
+        written = destination.Length - span.Length;
+        return true;
+    }
+
+    #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe uint GenerateSubKey()
+    {
+        var id = RandomVault.Default.NextUInt32() & SubId_IdMask;
+        ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
+        return id | ((uint)XxHash3Slim.Hash64(bytes) & SubId_HashMask);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe bool ValidateSubKey(uint subId)
+    {
+        var id = subId & SubId_IdMask;
+        ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
+        var hash = (uint)XxHash3Slim.Hash64(bytes);
+        return (subId & SubId_HashMask) == (hash & SubId_HashMask);
+    }
+
     #region FieldAndProperty
 
     [Key(0)]
-    private uint id; // 12 bits:checksum, 20 bits: id
-
-    [Key(1)]
     private readonly ulong x0; // Shared with an unencrypted public key and a public key used for encryption.
 
-    [Key(2)]
+    [Key(1)]
     private readonly ulong x1;
 
-    [Key(3)]
+    [Key(2)]
     private readonly ulong x2;
 
-    [Key(4)]
+    [Key(3)]
     private readonly ulong x3;
 
-    [Key(5)]
+    [Key(4)]
     private byte[]? encrypted;
 
-    [Key(6, Level = TinyhandWriter.DefaultLevel)]
+    [Key(5, Level = TinyhandWriter.DefaultLevel)]
     private byte[]? decrypted;
+
+    [Key(6)]
+    private uint subKey;
+
+    [Key(7)]
+    private uint encryptionSalt;
+
+    [Key(8)]
+    private uint originalHash;
 
     public bool IsEncrypted => this.encrypted is not null;
 
     public bool IsDecrypted => this.decrypted is not null;
 
+    public uint SubKey => this.subKey;
+
     #endregion
 
-    public CryptoKey(ref SignaturePublicKey publicKey, uint id)
-    {
+    public CryptoKey(ref SignaturePublicKey publicKey, bool subId = false)
+    {// Raw
         var b = publicKey.AsSpan();
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
@@ -50,20 +258,37 @@ public sealed partial record class CryptoKey
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
 
-        this.id = id;
+        if (subId)
+        {
+            this.subKey = GenerateSubKey();
+        }
     }
 
-    public CryptoKey(SeedKey ownerSeedKey, ref EncryptionPublicKey mergerPublicKey)
-    {
-        this.id = RandomVault.Default.NextUInt32();
-        var seedKey = SeedKey.New(ownerSeedKey, additional);
+    public unsafe CryptoKey(SeedKey originalSeedKey, ref EncryptionPublicKey mergerPublicKey, bool subId = false)
+    {// Encrypt
+        if (subId)
+        {
+            this.subKey = GenerateSubKey();
+        }
 
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
-        seedKey.DeriveKeyMaterial(mergerPublicKey, out var material);
-        Blake3.Get256_Span(material, material);
+        var originalPublicKeySpan = originalSeedKey.GetSignaturePublicKey().AsSpan();
+        var salt = RandomVault.Default.NextUInt32();
+        this.encryptionSalt = salt;
+        this.originalHash = (uint)XxHash3Slim.Hash64(originalPublicKeySpan);
 
-        var publicKey = seedKey.GetSignaturePublicKey();
-        var b = publicKey.AsSpan();
+        var temporalKey = SeedKey.New(originalSeedKey, new ReadOnlySpan<byte>(&salt, sizeof(uint)));
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
+        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), salt); // Salt
+        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
+
+        byte[] ciphertext = new byte[originalPublicKeySpan.Length];
+        Aegis128L.Encrypt(ciphertext, originalPublicKeySpan, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
+        material.Clear();
+
+        this.encrypted = ciphertext;
+
+        var b = temporalKey.GetEncryptionPublicKeySpan();
         this.x0 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x1 = BitConverter.ToUInt64(b);
@@ -71,6 +296,31 @@ public sealed partial record class CryptoKey
         this.x2 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
+    }
+
+    private CryptoKey(uint subKey, ReadOnlySpan<byte> span)
+    {
+        if (span.Length != EncryptedDataSize)
+        {
+            throw new InvalidOperationException();
+        }
+
+        this.subKey = subKey;
+        this.x0 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x1 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x2 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+        this.x3 = MemoryMarshal.Read<ulong>(span);
+        span = span.Slice(sizeof(ulong));
+
+        this.encrypted = span.Slice(0, 32).ToArray();
+        span = span.Slice(32);
+        this.encryptionSalt = MemoryMarshal.Read<uint>(span);
+        span = span.Slice(sizeof(uint));
+        this.originalHash = MemoryMarshal.Read<uint>(span);
+        span = span.Slice(sizeof(uint));
     }
 
     public bool TryGetPublicKey(out SignaturePublicKey publicKey)
@@ -103,37 +353,143 @@ public sealed partial record class CryptoKey
         }
 
         var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
+        mergerSeedKey.DeriveKeyMaterial(publicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), this.encryptionSalt); // Salt
+        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
 
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
-        mergerSeedKey.DeriveKeyMaterial(publicKey, material);
-        Blake3.Get256_Span(material, material);
+        Span<byte> plaintext = stackalloc byte[SeedKeyHelper.PublicKeySize];
+        var result = Aegis128L.TryDecrypt(plaintext, this.encrypted, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
+        material.Clear();
 
-        var checksum = XxHash3.Hash64(material);
+        if (!result)
+        {
+            return false;
+        }
 
-        mergerSeedKey.TryDecrypt()
+        if ((uint)XxHash3Slim.Hash64(plaintext) != this.originalHash)
+        {// Original public key hash does not match.
+            return false;
+        }
 
-        this.decrypted = material.ToArray();
+        this.decrypted = plaintext.ToArray();
         return true;
     }
 
-    public bool TryDecrypt(SeedKey ownerSeedKey, ref EncryptionPublicKey mergerPublicKey)
+    public unsafe bool TryDecrypt(SeedKey originalSeedKey, ref EncryptionPublicKey mergerPublicKey)
     {
         if (!this.IsEncrypted || this.IsDecrypted)
         {
             return true;
         }
 
-        var seedKey = SeedKey.New(ownerSeedKey, additional);
-        
-        var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize];
-        mergerSeedKey.DeriveKeyMaterial(publicKey, material);
-        Blake3.Get256_Span(material, material);
+        var salt = this.encryptionSalt;
+        var temporalKey = SeedKey.New(originalSeedKey, new ReadOnlySpan<byte>(&salt, sizeof(uint)));
+        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
+        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), salt); // Salt
+        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
 
-        var checksum = XxHash3.Hash64(material);
+        Span<byte> plaintext = stackalloc byte[SeedKeyHelper.PublicKeySize];
+        var result = Aegis128L.TryDecrypt(plaintext, this.encrypted, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
+        material.Clear();
 
-        this.decrypted = material.ToArray();
+        if (!result)
+        {
+            return false;
+        }
+
+        if ((uint)XxHash3Slim.Hash64(plaintext) != this.originalHash)
+        {// Original public key hash does not match.
+            return false;
+        }
+
+        this.decrypted = plaintext.ToArray();
         return true;
+    }
+
+    public bool ValidateSubKey()
+        => this.subKey == 0 ? true : ValidateSubKey(this.subKey);
+
+    public void ClearDecrypted()
+    {
+        if (this.decrypted is not null)
+        {
+            this.decrypted.AsSpan().Clear();
+            this.decrypted = null;
+        }
+    }
+
+    public override int GetHashCode()
+        => (int)this.x0;
+
+    public bool Equals(CryptoKey? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (this.x0 != other.x0 ||
+            this.x1 != other.x1 ||
+            this.x2 != other.x2 ||
+            this.x3 != other.x3)
+        {
+            return false;
+        }
+
+        if (this.encrypted is null)
+        {
+            if (other.encrypted is null)
+            {
+                return this.subKey == other.subKey;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (other.encrypted is null)
+            {
+                return false;
+            }
+
+            return this.subKey == other.subKey &&
+                this.encryptionSalt == other.encryptionSalt &&
+                this.originalHash == other.originalHash &&
+                this.encrypted.AsSpan().SequenceEqual(other.encrypted.AsSpan());
+        }
+    }
+
+    public override string ToString() => this.ConvertToString();
+
+    public string ToString(IConversionOptions? conversionOptions) => this.ConvertToString(conversionOptions);
+
+    private void WriteEncryptedSpan(Span<byte> span)
+    {
+        if (span.Length != EncryptedDataSize ||
+            this.encrypted?.Length != 32)
+        {
+            throw new InvalidOperationException();
+        }
+
+        MemoryMarshal.Write(span, this.x0);
+        span = span.Slice(sizeof(ulong));
+        MemoryMarshal.Write(span, this.x1);
+        span = span.Slice(sizeof(ulong));
+        MemoryMarshal.Write(span, this.x2);
+        span = span.Slice(sizeof(ulong));
+        MemoryMarshal.Write(span, this.x3);
+        span = span.Slice(sizeof(ulong));
+
+        this.encrypted.AsSpan().CopyTo(span);
+        span = span.Slice(32);
+        MemoryMarshal.Write(span, this.encryptionSalt);
+        span = span.Slice(sizeof(uint));
+        MemoryMarshal.Write(span, this.originalHash);
+        span = span.Slice(sizeof(uint));
     }
 }
 
