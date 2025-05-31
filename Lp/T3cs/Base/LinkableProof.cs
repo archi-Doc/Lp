@@ -21,6 +21,20 @@ public partial class TestLinkageProof : LinkableProof
     }
 }
 
+public sealed class InvalidProof : LinkableProof
+{
+    public static readonly InvalidProof Instance = new();
+
+    private InvalidProof()
+        : base(default!, default)
+    {
+    }
+
+    public override PermittedSigner PermittedSigner => default;
+
+    public override bool Validate() => false;
+}
+
 public abstract partial class LinkableProof : ProofWithSigner
 {
     /// <summary>

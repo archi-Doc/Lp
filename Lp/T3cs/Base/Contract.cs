@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
@@ -19,18 +21,23 @@ public readonly partial struct Contract : IEquatable<Contract>
     [Key(2)]
     public readonly Point Total;
 
-    public LinkableProof Proof => (LinkableProof)this.proof;
+    public LinkableProof Proof => this.proofOrIdentifier is LinkableProof proof ? proof : InvalidProof.Instance;
 
     public Contract(LinkableProof proof, Point partial, Point total)
     {
-        this.proof = proof;
+        this.proofOrIdentifier = proof;
         this.Partial = partial;
         this.Total = total;
     }
 
     public Contract(LinkableProof proof)
     {
-        this.proof = proof;
+        this.proofOrIdentifier = proof;
+    }
+
+    private Contract(byte[] identifier)
+    {
+        this.proofOrIdentifier = identifier;
     }
 
     static void ITinyhandSerializable<Contract>.Serialize(ref TinyhandWriter writer, scoped ref Contract v, TinyhandSerializerOptions options)
@@ -46,34 +53,141 @@ public readonly partial struct Contract : IEquatable<Contract>
         {
             writer.WriteArrayHeader(3);
 
-            TinyhandSerializer.SerializeObject(ref writer, v.proof, options);
+            if (v.proofOrIdentifier is byte[] identifier)
+            {
+                writer.Write(identifier);
+            }
+            else if (v.proofOrIdentifier is Proof proof)
+            {
+                TinyhandSerializer.SerializeObject(ref writer, proof, options);
+            }
+            else
+            {
+                writer.WriteNil();
+            }
+
             writer.Write(v.Partial);
             writer.Write(v.Total);
         }
     }
 
-    public void GetHash(Span<byte> span32)
+    static unsafe void ITinyhandSerializable<Contract>.Deserialize(ref TinyhandReader reader, scoped ref Contract v, TinyhandSerializerOptions options)
     {
-        var writer = TinyhandWriter.CreateFromBytePool();
+        var numberOfData = reader.ReadArrayHeader();
+        options.Security.DepthStep(ref reader);
         try
         {
-            TinyhandSerializer.SerializeObject(ref writer, this.proof, TinyhandSerializerOptions.Signature);
-            writer.Write(this.Partial);
-            writer.Write(this.Total);
+            if (numberOfData-- > 0 && !reader.TryReadNil())
+            {
+                var c = reader.NextCode;
+                if (c == (byte)MessagePackCode.Bin8 || c == (byte)MessagePackCode.Bin16 || c == (byte)MessagePackCode.Bin32)
+                {
+                    var identifier = reader.ReadBytesToArray();
+                    fixed (object* ptr = &v.proofOrIdentifier)
+                    {
+                        *ptr = identifier;
+                    }
+                }
+                else
+                {
+                    var proof = TinyhandSerializer.DeserializeObject<Proof>(ref reader, options);
+                    fixed (object* ptr = &v.proofOrIdentifier)
+                    {
+                        *ptr = proof;
+                    }
+                }
+            }
 
-            var rentMemory = writer.FlushAndGetRentMemory();
-            Blake3.Get256_Span(rentMemory.Span, span32);
-            rentMemory.Return();
-            writer.WriteSpan(span32);
+            if (numberOfData-- > 0 && !reader.TryReadNil())
+            {
+                long vd;
+                vd = reader.ReadInt64();
+                fixed (long* ptr = &v.Partial)
+                {
+                    *ptr = vd;
+                }
+            }
+
+            if (numberOfData-- > 0 && !reader.TryReadNil())
+            {
+                long vd;
+                vd = reader.ReadInt64();
+                fixed (long* ptr = &v.Total)
+                {
+                    *ptr = vd;
+                }
+            }
+
+            while (numberOfData-- > 0)
+            {
+                reader.Skip();
+            }
         }
         finally
         {
-            writer.Dispose();
+            reader.Depth--;
+        }
+    }
+
+    public Contract RemoveProof()
+    {
+        var identifier = new byte[Identifier.Length];
+        this.GetHash(identifier);
+        return new(identifier);
+    }
+
+    public void GetHash(Span<byte> span32)
+    {
+        if (this.proofOrIdentifier is byte[] identifier)
+        {
+            identifier.AsSpan().CopyTo(span32);
+        }
+        else if (this.proofOrIdentifier is Proof proof)
+        {
+            var writer = TinyhandWriter.CreateFromBytePool();
+            try
+            {
+                TinyhandSerializer.SerializeObject(ref writer, proof, TinyhandSerializerOptions.Signature);
+                writer.Write(this.Partial);
+                writer.Write(this.Total);
+
+                var rentMemory = writer.FlushAndGetRentMemory();
+                Blake3.Get256_Span(rentMemory.Span, span32);
+                rentMemory.Return();
+                writer.WriteSpan(span32);
+            }
+            finally
+            {
+                writer.Dispose();
+            }
+        }
+        else
+        {
+            span32.Clear();
         }
     }
 
     public bool Equals(Contract other)
-        => this.Proof.Equals(other.Proof) && this.Partial == other.Partial && this.Total == other.Total;
+    {
+        if (this.Partial != other.Partial ||
+            this.Total != other.Total)
+        {
+            return false;
+        }
+
+        if (this.proofOrIdentifier is Proof proof1 && other.proofOrIdentifier is Proof proof2)
+        {
+            return proof1.Equals(proof2);
+        }
+        else if (this.proofOrIdentifier is byte[] identifier1 && other.proofOrIdentifier is byte[] identifier2)
+        {
+            return identifier1.AsSpan().SequenceEqual(identifier2.AsSpan());
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
 
 /*[ValueLinkObject]
