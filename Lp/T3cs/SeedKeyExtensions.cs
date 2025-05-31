@@ -130,6 +130,42 @@ public static class SeedKeyExtensions
         }
     }
 
+    public static bool TrySign(this SeedKey seedKey, ContractableEvidence evidence)
+    {
+        if (!evidence.BaseProof.TryGetCredit(out var credit))
+        {
+            return false;
+        }
+
+        var publicKey = seedKey.GetSignaturePublicKey();
+        var mergerIndex = credit.GetMergerIndex(ref publicKey);
+        if (mergerIndex < 0)
+        {
+            return false;
+        }
+
+        if (evidence.GetSignature(mergerIndex) is not null)
+        {
+            return true;
+        }
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel + mergerIndex;
+        try
+        {
+            ((ITinyhandSerializable)evidence).Serialize(ref writer, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var sign = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, sign);
+            return evidence.SetSignInternal(mergerIndex, sign);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
     public static bool TrySign(this SeedKey seedKey, Linkage linkage, long validMics)
     {
         if (!linkage.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
@@ -147,6 +183,37 @@ public static class SeedKeyExtensions
         try
         {
             TinyhandSerializer.SerializeObject<Linkage>(ref writer, linkage, TinyhandSerializerOptions.Signature);
+            Span<byte> hash = stackalloc byte[Blake3.Size];
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+
+            var signature = new byte[CryptoSign.SignatureSize];
+            seedKey.Sign(span, signature);
+            linkage.SetSignInternal(signature);
+            return true;
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    public static bool TrySign(this SeedKey seedKey, Linkage2 linkage, long validMics)
+    {
+        if (!linkage.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey))
+        {
+            return false;
+        }
+
+        if (!seedKey.GetSignaturePublicKey().Equals(linkerPublicKey))
+        {
+            return false;
+        }
+
+        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
+        writer.Level = Linkage.SignatureLevel - 1;
+        try
+        {
+            TinyhandSerializer.SerializeObject<Linkage2>(ref writer, linkage, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[Blake3.Size];
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
