@@ -66,7 +66,7 @@ public class ProofTest
         linkage!.ValidateAndVerify().IsTrue();
 
         var bin = TinyhandSerializer.Serialize(linkage);
-        var linkage2 = TinyhandSerializer.Deserialize<Linkage>(bin);
+        var linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
         linkage2!.ValidateAndVerify().IsTrue();
         bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
     }
