@@ -11,7 +11,7 @@ namespace Lp.T3cs;
 public readonly partial struct Contract : IEquatable<Contract>
 {
     [Key(0)]
-    private readonly Proof proof;
+    private readonly object proofOrIdentifier;
 
     [Key(1)]
     public readonly Point Partial;
