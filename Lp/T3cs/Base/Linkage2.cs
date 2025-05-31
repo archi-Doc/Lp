@@ -23,10 +23,10 @@ public partial class Linkage2 : IValidatable
     public long LinkedMics { get; protected set; }
 
     [Key(1)]
-    public Proof BaseProof1 { get; protected set; }
+    public Contract Contract1 { get; protected set; }
 
     [Key(2)]
-    public Proof BaseProof2 { get; protected set; }
+    public Contract Contract2 { get; protected set; }
 
     [Key(3, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
@@ -48,6 +48,10 @@ public partial class Linkage2 : IValidatable
 
     [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature22 { get; protected set; }
+
+    public LinkableProof Proof1 => this.Contract1.Proof;
+
+    public LinkableProof Proof2 => this.Contract2.Proof;
 
     #endregion
 
@@ -95,8 +99,8 @@ public partial class Linkage2 : IValidatable
         }
 
         linkage = constructor();
-        linkage.BaseProof1 = evidence1.Contract1.Proof;//
-        linkage.BaseProof2 = evidence1.Contract2.Proof;
+        linkage.Contract1 = evidence1.Contract1;
+        linkage.Contract2 = evidence1.Contract2;
         linkage.LinkedMics = evidence1.LinkedMicsId;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
@@ -110,14 +114,14 @@ public partial class Linkage2 : IValidatable
 
     protected Linkage2()
     {
-        this.BaseProof1 = default!;
-        this.BaseProof2 = default!;
+        this.Contract1 = default!;
+        this.Contract2 = default!;
     }
 
     public bool Validate()
     {
-        if (!this.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
-            !this.BaseProof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
+        if (!this.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
+            !this.Proof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
         {
             return false;
         }
@@ -137,13 +141,13 @@ public partial class Linkage2 : IValidatable
             return false;
         }
 
-        if (!this.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
+        if (!this.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey))
         {
             return false;
         }
 
-        if (!this.BaseProof1.ValidateAndVerify() ||
-            !this.BaseProof2.ValidateAndVerify())
+        if (!this.Proof1.ValidateAndVerify() ||
+            !this.Proof2.ValidateAndVerify())
         {
             return false;
         }

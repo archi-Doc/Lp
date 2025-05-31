@@ -75,8 +75,8 @@ public sealed partial class ContractableEvidence : Evidence
     internal void FromLinkage(Linkage2 linkage, bool isPrimary)
     {
         this.LinkedMicsId = linkage.LinkedMics;
-        this.Contract1 = new((LinkableProof)linkage.BaseProof1);//
-        this.Contract2 = new((LinkableProof)linkage.BaseProof2);//
+        this.Contract1 = linkage.Contract1;
+        this.Contract2 = linkage.Contract2;
         if (isPrimary)
         {
             this.MergerSignature0 = linkage.MergerSignature10;
