@@ -8,8 +8,8 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1401 // Fields should be private
 
-[TinyhandObject(ReservedKeyCount = Linkage2.ReservedKeyCount)]
-public partial class Linkage2 : IValidatable
+[TinyhandObject(ReservedKeyCount = Linkage.ReservedKeyCount)]
+public partial class Linkage : IValidatable
 {
     /// <summary>
     /// The number of reserved keys.
@@ -50,17 +50,17 @@ public partial class Linkage2 : IValidatable
     [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature22 { get; protected set; }
 
-    public LinkableProof Proof1 => this.Contract1.Proof;
+    public ContractableProof Proof1 => this.Contract1.Proof;
 
-    public LinkableProof Proof2 => this.Contract2.Proof;
+    public ContractableProof Proof2 => this.Contract2.Proof;
 
     #endregion
 
-    public static bool TryCreate(ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out Linkage2 linkage)
-        => TryCreate(() => new Linkage2(), evidence1, evidence2, out linkage);
+    public static bool TryCreate(ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out Linkage linkage)
+        => TryCreate(() => new Linkage(), evidence1, evidence2, out linkage);
 
     protected static bool TryCreate<TLinkage>(Func<TLinkage> constructor, ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out TLinkage linkage)
-        where TLinkage : Linkage2
+        where TLinkage : Linkage
     {
         linkage = default;
         if (evidence1.IsPrimary)
@@ -113,7 +113,7 @@ public partial class Linkage2 : IValidatable
         return true;
     }
 
-    protected Linkage2()
+    protected Linkage()
     {
         this.Contract1 = default!;
         this.Contract2 = default!;

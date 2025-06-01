@@ -2,12 +2,11 @@
 
 using Lp.Services;
 using SimpleCommandLine;
-using static Lp.Subcommands.KeyCommand.NewMasterKeySubcommand;
 
 namespace Lp.Subcommands.KeyCommand;
 
 [SimpleCommand("new-master-key")]
-public class NewMasterKeySubcommand : ISimpleCommand<Options>
+public class NewMasterKeySubcommand : ISimpleCommand<NewMasterKeySubcommand.Options>
 {
     public record Options
     {

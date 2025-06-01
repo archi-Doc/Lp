@@ -110,7 +110,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
     }
 
-    async NetTask<LinkableEvidence?> LpDogmaNetService.SignLinkableEvidence(LinkableEvidence evidence)
+    async NetTask<ContractableEvidence?> LpDogmaNetService.SignContractableEvidence(ContractableEvidence evidence)
     {
         if (!this.IsAuthenticated)
         {

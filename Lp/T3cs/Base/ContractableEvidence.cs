@@ -6,7 +6,7 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(ReservedKeyCount = LinkableEvidence.ReservedKeyCount)]
+[TinyhandObject(ReservedKeyCount = ContractableEvidence.ReservedKeyCount)]
 public sealed partial class ContractableEvidence : Evidence
 {
     /// <summary>
@@ -59,9 +59,9 @@ public sealed partial class ContractableEvidence : Evidence
         }
     }
 
-    public LinkableProof LinkageProof1 => (LinkableProof)this.Contract1.Proof;
+    public ContractableProof LinkageProof1 => (ContractableProof)this.Contract1.Proof;
 
-    public LinkableProof LinkageProof2 => (LinkableProof)this.Contract2.Proof;
+    public ContractableProof LinkageProof2 => (ContractableProof)this.Contract2.Proof;
 
     #endregion
 
@@ -73,7 +73,7 @@ public sealed partial class ContractableEvidence : Evidence
         this.Contract2 = contract2;
     }
 
-    public ContractableEvidence(bool isPrimary, long linkedMicsId, LinkableProof proof1, LinkableProof proof2)
+    public ContractableEvidence(bool isPrimary, long linkedMicsId, ContractableProof proof1, ContractableProof proof2)
     {
         this.IsPrimary = isPrimary;
         this.LinkedMicsId = linkedMicsId;
@@ -99,7 +99,7 @@ public sealed partial class ContractableEvidence : Evidence
         return default;
     }
 
-    internal void FromLinkage(Linkage2 linkage, bool isPrimary)
+    internal void FromLinkage(Linkage linkage, bool isPrimary)
     {
         this.LinkedMicsId = linkage.LinkedMics;
         this.Contract1 = linkage.Contract1;

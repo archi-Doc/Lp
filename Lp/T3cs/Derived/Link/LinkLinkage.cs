@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
-public partial class LinkLinkage : Linkage2
+public partial class LinkLinkage : Linkage
 {
     public static bool TryCreate(ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage linkage)
         => TryCreate(() => new LinkLinkage(), evidence1, evidence2, out linkage);

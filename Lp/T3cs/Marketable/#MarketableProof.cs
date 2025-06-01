@@ -10,13 +10,13 @@ public enum MarketableProofKey : int
 }
 
 [TinyhandUnion((int)MarketableProofKey.ExchangeProof, typeof(ExchangeProof))]
-[TinyhandObject(ReservedKeyCount = LinkableProof.ReservedKeyCount)]
-public abstract partial class MarketableProof : LinkableProof
+[TinyhandObject(ReservedKeyCount = ContractableProof.ReservedKeyCount)]
+public abstract partial class MarketableProof : ContractableProof
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public new const int ReservedKeyCount = LinkableProof.ReservedKeyCount;
+    public new const int ReservedKeyCount = ContractableProof.ReservedKeyCount;
 
     public MarketableProof(Value value, SignaturePublicKey linkerPublicKey)
         : base(value, linkerPublicKey)
