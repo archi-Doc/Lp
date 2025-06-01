@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Tinyhand.IO;
@@ -9,6 +8,11 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
+/// <summary>
+/// This class stores contracts exchanged between Mergers.<br/>
+/// One purpose is to retain information associated with a Proof,<br/>
+/// and the other is to remove the Proof itself while retaining only the identifier of the authentication information.
+/// </summary>
 [TinyhandObject]
 public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSerializable<Contract>
 {

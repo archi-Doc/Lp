@@ -23,7 +23,8 @@ public enum ProofKey : int
 
 /// <summary>
 /// Represents the base class of Proof.<br/>
-/// This class holds an authentication key and its proof content.
+/// This class holds an authentication key and its proof content.<br/>
+/// To centralize serialization, add the derived Proof classes to ProofKey and apply the TinyhandUnion attribute to this class.
 /// </summary>
 [TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
 [TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
