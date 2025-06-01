@@ -69,5 +69,31 @@ public class ProofTest
         var linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
         linkage2!.ValidateAndVerify().IsTrue();
         bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
+
+        linkage.Remove(ref owner);
+
+        linkage!.ValidateAndVerify().IsTrue();
+
+        bin = TinyhandSerializer.Serialize(linkage);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        linkage2!.ValidateAndVerify().IsTrue();
+        bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
+
+        linkage.Remove(ref linker);
+
+        linkage!.ValidateAndVerify().IsTrue();
+
+        bin = TinyhandSerializer.Serialize(linkage);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        linkage2!.ValidateAndVerify().IsTrue();
+        bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
+
+        linkage.Remove(ref linker);
+
+        linkage!.ValidateAndVerify().IsFalse();
+
+        bin = TinyhandSerializer.Serialize(linkage);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
     }
 }

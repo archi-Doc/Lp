@@ -129,6 +129,11 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
 
     public Contract RemoveProof()
     {
+        if (this.proofOrIdentifier is byte[])
+        {
+            return this;
+        }
+
         var identifier = new byte[Identifier.Length];
         this.GetHash(identifier);
         return new(identifier);

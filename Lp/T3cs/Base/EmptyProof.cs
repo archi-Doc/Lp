@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
+
 namespace Lp.T3cs;
 
 public sealed class EmptyProof : LinkableProof
@@ -13,5 +16,23 @@ public sealed class EmptyProof : LinkableProof
 
     public override PermittedSigner PermittedSigner => default;
 
-    public override bool Validate() => false;
+    public override bool Validate() => true;
+
+    public override bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
+    {
+        linkerPublicKey = default;
+        return false;
+    }
+
+    public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
+    {
+        credit = default;
+        return false;
+    }
+
+    public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
+    {
+        value = default;
+        return false;
+    }
 }

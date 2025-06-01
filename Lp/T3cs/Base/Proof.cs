@@ -117,7 +117,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// </summary>
     /// <param name="linkerPublicKey"> When this method returns, contains the linker public key if available; otherwise, <c>null</c>.</param>
     /// <returns><c>true</c> if the linker public key is available; otherwise, <c>false</c>.</returns>
-    public virtual bool TryGetLinkerPublicKey([MaybeNullWhen(false)] out SignaturePublicKey linkerPublicKey)
+    public virtual bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
     {
         linkerPublicKey = default;
         return false;

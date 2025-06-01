@@ -41,7 +41,7 @@ public abstract partial class LinkableProof : ProofWithSigner
         this.LinkerPublicKey = linkerPublicKey;
     }
 
-    public override bool TryGetLinkerPublicKey([MaybeNullWhen(false)] out SignaturePublicKey linkerPublicKey)
+    public override bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
     {
         linkerPublicKey = this.LinkerPublicKey;
         return true;
