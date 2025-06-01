@@ -191,7 +191,6 @@ public partial class LpDogmaMachine : Machine
             link.UpdatedMics = Mics.FastCorrected;
         }
 
-        // Linkage x Point
         var value1 = new Value(LpConstants.LpPublicKey, 1, link.Credit1); // LpKey#1@Credit1
         var proof1 = new LinkProof(value1, link.LinkerPublicKey); // @Credit + Linker
         var value2 = new Value(LpConstants.LpPublicKey, 1, link.Credit2); // LpKey#1@Credit2
