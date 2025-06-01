@@ -10,8 +10,10 @@ namespace Lp.T3cs;
 #pragma warning disable SA1202 // Elements should be ordered by access
 
 [TinyhandObject]
-public readonly partial struct Contract : IEquatable<Contract>
+public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSerializable<Contract>
 {
+    #region FieldAndProperty
+
     [Key(0)]
     private readonly object proofOrIdentifier;
 
@@ -21,7 +23,9 @@ public readonly partial struct Contract : IEquatable<Contract>
     [Key(2)]
     public readonly Point Total;
 
-    public LinkableProof Proof => this.proofOrIdentifier is LinkableProof proof ? proof : InvalidProof.Instance;
+    public LinkableProof Proof => this.proofOrIdentifier is LinkableProof proof ? proof : EmptyProof.Instance;
+
+    #endregion
 
     public Contract(LinkableProof proof, Point partial, Point total)
     {
@@ -81,20 +85,14 @@ public readonly partial struct Contract : IEquatable<Contract>
             {
                 var c = reader.NextCode;
                 if (c == (byte)MessagePackCode.Bin8 || c == (byte)MessagePackCode.Bin16 || c == (byte)MessagePackCode.Bin32)
-                {
+                {// byte[] Identifier
                     var identifier = reader.ReadBytesToArray();
-                    fixed (object* ptr = &v.proofOrIdentifier)
-                    {
-                        *ptr = identifier;
-                    }
+                    Unsafe.AsRef(in v.proofOrIdentifier) = identifier;
                 }
                 else
-                {
-                    var proof = TinyhandSerializer.DeserializeObject<Proof>(ref reader, options);
-                    fixed (object* ptr = &v.proofOrIdentifier)
-                    {
-                        *ptr = proof;
-                    }
+                {// Proof
+                    var proof = TinyhandSerializer.DeserializeAndReconstructObject<Proof>(ref reader, options);
+                    Unsafe.AsRef(in v.proofOrIdentifier) = proof;
                 }
             }
 
