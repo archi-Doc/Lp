@@ -27,6 +27,8 @@ public class ProofTest
 
         var ownerKey = SeedKey.NewSignature();
         var owner = ownerKey.GetSignaturePublicKey();
+        var ownerKey2 = SeedKey.NewSignature();
+        var owner2 = ownerKey2.GetSignaturePublicKey();
         var mergerKey = SeedKey.NewSignature();
         var merger = mergerKey.GetSignaturePublicKey();
         var linkerKey = SeedKey.NewSignature();
@@ -34,7 +36,8 @@ public class ProofTest
 
         var creditIdentity = new Identity(IdentityKind.Credit, owner, [merger,]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
-        var value = new Value(owner, 2, credit!); // owner#2@credit
+        var value = new Value(owner, 1, credit!); // owner2#2@credit
+        var value2 = new Value(owner2, 2, credit!); // owner2#2@credit
         var state = new MergerState();
         state.NetNode = this.testNode;
         state.Name = "Test1";
@@ -48,8 +51,10 @@ public class ProofTest
 
         var linkageProof = new TestLinkageProof(value, linker);
         ownerKey.TrySign(linkageProof, validMics).IsTrue();
-        var linkageProof2 = new TestLinkageProof(value, linker);
-        ownerKey.TrySign(linkageProof2, validMics).IsTrue();
+        linkageProof.ValidateAndVerify().IsTrue();
+        var linkageProof2 = new TestLinkageProof(value2, linker);
+        ownerKey2.TrySign(linkageProof2, validMics).IsTrue();
+        linkageProof2.ValidateAndVerify().IsTrue();
         var linkedMics = Mics.FastCorrected;
 
         var linkageEvidence = new ContractableEvidence(true, linkedMics, linkageProof, linkageProof2);
@@ -68,6 +73,23 @@ public class ProofTest
         var bin = TinyhandSerializer.Serialize(linkage);
         var linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
         linkage2!.ValidateAndVerify().IsTrue();
+        bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
+
+        linkage.StripProof(ref owner);
+
+        linkage!.ValidateAndVerify().IsTrue();
+
+        bin = TinyhandSerializer.Serialize(linkage);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        linkage2!.ValidateAndVerify().IsTrue();
+        bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
+
+        linkage.StripProof(ref owner2);
+
+        linkage!.ValidateAndVerify().IsFalse();
+
+        bin = TinyhandSerializer.Serialize(linkage);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
         bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
     }
 }

@@ -30,7 +30,34 @@ public sealed partial class ContractableEvidence : Evidence
     [Key(Evidence.ReservedKeyCount + 3)]
     public Contract Contract2 { get; private set; }
 
-    public override Proof BaseProof => this.IsPrimary ? this.Contract1.Proof : this.Contract2.Proof;
+    public override Proof BaseProof
+    {
+        get
+        {
+            if (this.IsPrimary)
+            {
+                if (this.Contract1.HasProof)
+                {
+                    return this.Contract1.Proof;
+                }
+                else
+                {
+                    return this.Contract2.Proof;
+                }
+            }
+            else
+            {
+                if (this.Contract2.HasProof)
+                {
+                    return this.Contract2.Proof;
+                }
+                else
+                {
+                    return this.Contract1.Proof;
+                }
+            }
+        }
+    }
 
     public LinkableProof LinkageProof1 => (LinkableProof)this.Contract1.Proof;
 

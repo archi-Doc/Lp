@@ -6,9 +6,9 @@ namespace Lp.T3cs;
 
 [ValueLinkObject]
 [TinyhandObject]
-public partial class MarketableLinkage : Linkage
+public partial class MarketableLinkage : Linkage2
 {
-    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out MarketableLinkage linkage)
+    public static bool TryCreate(ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out MarketableLinkage linkage)
         => TryCreate(() => new(), evidence1, evidence2, out linkage);
 
     [Link(Primary = true, Unique = true, Type = ChainType.Ordered, TargetMember = nameof(LinkedMics))]
@@ -16,7 +16,7 @@ public partial class MarketableLinkage : Linkage
     {
     }
 
-    public MarketableProof LinkableProof1 => (MarketableProof)this.BaseProof1;
+    public MarketableProof LinkableProof1 => (MarketableProof)this.Proof1;
 
-    public MarketableProof LinkableProof2 => (MarketableProof)this.BaseProof2;
+    public MarketableProof LinkableProof2 => (MarketableProof)this.Proof2;
 }

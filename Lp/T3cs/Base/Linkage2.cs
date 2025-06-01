@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
 using Tinyhand.IO;
 
 namespace Lp.T3cs;
@@ -118,36 +119,24 @@ public partial class Linkage2 : IValidatable
         this.Contract2 = default!;
     }
 
-    public bool Validate()
+    public void StripProof(ref SignaturePublicKey owner)
     {
-        if (!this.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey) ||
-            !this.Proof2.TryGetLinkerPublicKey(out var linkerPublicKey2))
+        if (this.Proof1.TryGetValue(out var value1) && !value1.Owner.Equals(owner))
         {
-            return false;
+            this.Contract1 = this.Contract1.StripProof();
         }
 
-        if (!linkerPublicKey.Equals(linkerPublicKey2))
+        if (this.Proof2.TryGetValue(out var value2) && !value2.Owner.Equals(owner))
         {
-            return false;
+            this.Contract2 = this.Contract2.StripProof();
         }
-
-        return true;
     }
+
+    public bool Validate() => this.Validate(out _);
 
     public bool ValidateAndVerify()
     {
-        if (!this.Validate())
-        {
-            return false;
-        }
-
-        if (!this.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey))
-        {
-            return false;
-        }
-
-        if (!this.Proof1.ValidateAndVerify() ||
-            !this.Proof2.ValidateAndVerify())
+        if (!this.Validate(out var linkerPublicKey))
         {
             return false;
         }
@@ -195,5 +184,44 @@ public partial class Linkage2 : IValidatable
     internal void SetSignInternal(byte[] sign)
     {
         this.linkerSignature = sign;
+    }
+
+    private bool Validate(out SignaturePublicKey linkerPublicKey)
+    {
+        if (!this.Proof1.Validate() || !this.Proof2.Validate())
+        {
+            linkerPublicKey = default;
+            return false;
+        }
+
+        var p1 = this.Proof1.TryGetLinkerPublicKey(out var publicKey);
+        var p2 = this.Proof2.TryGetLinkerPublicKey(out var publicKey2);
+        if (p1)
+        {
+            if (p2)
+            {
+                if (publicKey.Equals(publicKey2))
+                {
+                    linkerPublicKey = publicKey;
+                    return true;
+                }
+            }
+            else
+            {
+                linkerPublicKey = publicKey;
+                return true;
+            }
+        }
+        else
+        {
+            if (p2)
+            {
+                linkerPublicKey = publicKey2;
+                return true;
+            }
+        }
+
+        linkerPublicKey = default;
+        return false;
     }
 }
