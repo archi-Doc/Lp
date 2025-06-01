@@ -166,37 +166,6 @@ public static class SeedKeyExtensions
         }
     }
 
-    public static bool TrySign(this SeedKey seedKey, Linkage linkage, long validMics)
-    {
-        if (!linkage.BaseProof1.TryGetLinkerPublicKey(out var linkerPublicKey))
-        {
-            return false;
-        }
-
-        if (!seedKey.GetSignaturePublicKey().Equals(linkerPublicKey))
-        {
-            return false;
-        }
-
-        var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
-        writer.Level = Linkage.SignatureLevel - 1;
-        try
-        {
-            TinyhandSerializer.SerializeObject<Linkage>(ref writer, linkage, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[Blake3.Size];
-            writer.FlushAndGetReadOnlySpan(out var span, out _);
-
-            var signature = new byte[CryptoSign.SignatureSize];
-            seedKey.Sign(span, signature);
-            linkage.SetSignInternal(signature);
-            return true;
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
     public static bool TrySign(this SeedKey seedKey, Linkage2 linkage, long validMics)
     {
         if (!linkage.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey))
@@ -210,7 +179,7 @@ public static class SeedKeyExtensions
         }
 
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
-        writer.Level = Linkage.SignatureLevel - 1;
+        writer.Level = Linkage2.SignatureLevel - 1;
         try
         {
             TinyhandSerializer.SerializeObject<Linkage2>(ref writer, linkage, TinyhandSerializerOptions.Signature);

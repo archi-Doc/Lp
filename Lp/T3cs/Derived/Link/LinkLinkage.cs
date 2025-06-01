@@ -8,9 +8,9 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Integrality = true)]
-public partial class LinkLinkage : Linkage
+public partial class LinkLinkage : Linkage2
 {
-    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage linkage)
+    public static bool TryCreate(ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out LinkLinkage linkage)
         => TryCreate(() => new LinkLinkage(), evidence1, evidence2, out linkage);
 
     #region Integrality
@@ -61,9 +61,9 @@ public partial class LinkLinkage : Linkage
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     public SignaturePublicKey LinkerPublicKey => this.LinkProof1.LinkerPublicKey;
 
-    public LinkProof LinkProof1 => (LinkProof)this.BaseProof1;
+    public LinkProof LinkProof1 => (LinkProof)this.Proof1;
 
-    public LinkProof LinkProof2 => (LinkProof)this.BaseProof2;
+    public LinkProof LinkProof2 => (LinkProof)this.Proof2;
 }
 
 /*[TinyhandObject]
