@@ -143,6 +143,8 @@ public abstract partial class ProofWithSigner : Proof
             }
         }
 
+        return false;
+
 Success:
         base.PrepareForSigning(ref publicKey, validMics);
         return true;

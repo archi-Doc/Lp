@@ -119,17 +119,16 @@ public partial class Linkage2 : IValidatable
         this.Contract2 = default!;
     }
 
-    public void Remove(ref SignaturePublicKey owner)
+    public void StripProof(ref SignaturePublicKey owner)
     {
         if (this.Proof1.TryGetValue(out var value1) && !value1.Owner.Equals(owner))
         {
-            this.Contract1 = this.Contract1.RemoveProof();
-            return;
+            this.Contract1 = this.Contract1.StripProof();
         }
 
         if (this.Proof2.TryGetValue(out var value2) && !value2.Owner.Equals(owner))
         {
-            this.Contract2 = this.Contract2.RemoveProof();
+            this.Contract2 = this.Contract2.StripProof();
         }
     }
 

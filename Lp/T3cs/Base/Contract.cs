@@ -25,6 +25,8 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
 
     public LinkableProof Proof => this.proofOrIdentifier is LinkableProof proof ? proof : EmptyProof.Instance;
 
+    public bool HasProof => this.proofOrIdentifier is LinkableProof;
+
     #endregion
 
     public Contract(LinkableProof proof, Point partial, Point total)
@@ -48,10 +50,17 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     {
         if (options.IsSignatureMode)
         {
-            // v.GetIdentifier(writer.Level); // Cannot use a thread static buffer.
-            Span<byte> span = stackalloc byte[Identifier.Length];
-            v.GetHash(span);
-            writer.WriteSpan(span);
+            if (v.proofOrIdentifier is byte[] identifier)
+            {
+                writer.WriteSpan(identifier);
+            }
+            else
+            {
+                // v.GetIdentifier(writer.Level); // Cannot use a thread static buffer.
+                Span<byte> span = stackalloc byte[Identifier.Length];
+                v.GetHash(span);
+                writer.WriteSpan(span);
+            }
         }
         else
         {
@@ -127,10 +136,10 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
         }
     }
 
-    public Contract RemoveProof()
+    public Contract StripProof()
     {
-        if (this.proofOrIdentifier is byte[])
-        {
+        if (!this.HasProof)
+        {// Identifier
             return this;
         }
 
@@ -157,7 +166,6 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
                 var rentMemory = writer.FlushAndGetRentMemory();
                 Blake3.Get256_Span(rentMemory.Span, span32);
                 rentMemory.Return();
-                writer.WriteSpan(span32);
             }
             finally
             {
