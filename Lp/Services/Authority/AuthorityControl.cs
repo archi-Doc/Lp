@@ -1,10 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Lp.Services;
 using Netsphere.Crypto;
 
-namespace Lp.T3cs;
+namespace Lp.Services;
 
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.

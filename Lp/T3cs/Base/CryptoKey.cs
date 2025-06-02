@@ -10,6 +10,7 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1310 // Field names should not contain underscore
 
+[TinyhandObject]
 public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringConvertible<CryptoKey>
 {// (!raw), (1234!raw), (:encrypted), (1234:encrypted)
     public const int EncryptedDataSize = 32 + 32 + sizeof(uint) + sizeof(uint); // PublicKey, Encrypted, EncryptionSalt, OriginalHash
@@ -44,7 +45,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         return length;
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, out int read, IConversionOptions? conversionOptions = null)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey @object, out int read, IConversionOptions? conversionOptions = null)
     {// (:encrypted), (!raw), (id:encrypted), (id!raw)
         uint subKey = 0;
         @object = null;
