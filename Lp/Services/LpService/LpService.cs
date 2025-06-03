@@ -39,8 +39,18 @@ public class LpService
         [MemberNotNullWhen(true, nameof(SeedKey), nameof(Credit))]
         public bool IsSuccess => this.Code == ParseResultCode.Success && this.SeedKey is not null && this.Credit is not null;
 
-        public bool IsFailure => !this.IsSuccess;
+        // public bool IsFailure => !this.IsSuccess;
     }
+
+    #region FieldAndProperty
+
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly AuthorityControl authorityControl;
+    private readonly VaultControl vaultControl;
+    private readonly Credentials credentials;
+    private readonly IConversionOptions conversionOptions;
+
+    #endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LpService"/> class.
@@ -48,12 +58,47 @@ public class LpService
     /// <param name="userInterfaceService">The user interface service.</param>
     /// <param name="authorityControl">The authority control.</param>
     /// <param name="vaultControl">The vault control.</param>
-    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, VaultControl vaultControl)
+    /// <param name="credentials"> The credentials.</param>
+    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, VaultControl vaultControl, Credentials credentials)
     {
         this.userInterfaceService = userInterfaceService;
         this.authorityControl = authorityControl;
         this.vaultControl = vaultControl;
+        this.credentials = credentials;
         this.conversionOptions = Alias.Instance;
+    }
+
+    public ConnectionAndService<TService> ConnectAndAuthenticate<TService>(CredentialEvidence credentialEvidence, SeedKey seedKey, CancellationToken cancellationToken)
+        where TService : INetService
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        if (credentialEvidence.Proof.State.NetNode is not { } netNode)
+        {
+            return default;
+        }
+
+        using (var connection = await this.netTerminal.Connect(netNode))
+        {
+            if (connection is null)
+            {
+                this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
+                return default;
+            }
+
+            var service = connection.GetService<TService>();
+            var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
+            var r = await service.Authenticate(auth);
+        }
+    }
+
+    public CredentialEvidence? ResolveMerger(Credit credit)
+    {
+        this.credentials.Nodes.TryGet(credit.Mergers[0], out var credentialEvidence);
+        return credentialEvidence;
     }
 
     /// <summary>
@@ -163,9 +208,4 @@ public class LpService
         logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPrivateKey);
         return default;
     }
-
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityControl authorityControl;
-    private readonly VaultControl vaultControl;
-    private readonly IConversionOptions conversionOptions;
 }

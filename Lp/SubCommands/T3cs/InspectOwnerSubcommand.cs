@@ -17,11 +17,20 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
     public async Task RunAsync(InspectOwnerOptions option, string[] args)
     {
         var r = await this.lpService.ParseSeedKeyAndCredit(option.Source);
-        if (r.IsFailure)
+        if (!r.IsSuccess)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(r.Code));
             return;
         }
+
+        var credential = this.lpService.ResolveMerger(r.Credit);
+        if (credential is null)
+        {
+            this.userInterfaceService.WriteLine("Credential not found.");
+            return;
+        }
+
+        //credential.Proof.State.NetNode
     }
 
     private readonly IUserInterfaceService userInterfaceService;

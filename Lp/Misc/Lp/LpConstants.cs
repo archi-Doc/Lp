@@ -38,6 +38,8 @@ public static class LpConstants
 
     public static readonly SignaturePublicKey TestPublicKey;
     public static readonly SeedKey TestSeedKey;
+    public static readonly Identity TestIdentity;
+    public static readonly Identifier TestIdentifier;
 
     static LpConstants()
     {
@@ -51,6 +53,9 @@ public static class LpConstants
         SeedKey.TryParse(TestSecretKeyString, out TestSeedKey!);
         TestPublicKey = TestSeedKey.GetSignaturePublicKey();
         Alias.Instance.Add(TestKeyAlias, TestPublicKey);
+        TestIdentity = new(IdentityKind.Credit, TestPublicKey, [TestPublicKey]);
+        TestIdentifier = TestIdentity.GetIdentifier();
+        Alias.Instance.Add(TestAlias, TestIdentifier);
     }
 
 #pragma warning disable CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
