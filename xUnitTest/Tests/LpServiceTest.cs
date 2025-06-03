@@ -62,7 +62,7 @@ public class LpServiceTest
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Point.Is(111);
         r.Credit!.Identifier.Equals(LpConstants.LpIdentifier).IsTrue();
-        r.Credit!.Mergers.SequenceEqual([LpConstants.LpPublicKey]).IsTrue();
+        r.Credit!.Mergers.SequenceEqual([LpConstants.LpKey]).IsTrue();
 
         st = $"{TestAuthorityName}#222@Lp/LpKey";
         r = await lpService.ParseSeedKeyAndCredit(default, st);
@@ -70,6 +70,6 @@ public class LpServiceTest
         this.authority.GetSeedKey(LpConstants.LpCredit).Equals(r.SeedKey).IsTrue();
         r.Point.Is(222);
         r.Credit!.Identifier.Equals(LpConstants.LpIdentifier).IsTrue();
-        r.Credit!.Mergers.SequenceEqual([LpConstants.LpPublicKey]).IsTrue();
+        r.Credit!.Mergers.SequenceEqual([LpConstants.LpKey]).IsTrue();
     }
 }
