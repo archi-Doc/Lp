@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -26,6 +27,7 @@ public static class LpConstants
 
     public static readonly SignaturePublicKey LpPublicKey;
     public static readonly Identity LpIdentity;
+    public static readonly Identifier LpIdentifier;
     public static readonly Credit LpCredit;
 
     static LpConstants()
@@ -33,10 +35,14 @@ public static class LpConstants
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
         Alias.Instance.Add(LpKeyAlias, LpPublicKey);
         LpIdentity = new(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
-        Alias.Instance.Add(LpAlias, LpIdentity.GetIdentifier());
+        LpIdentifier = LpIdentity.GetIdentifier();
+        Alias.Instance.Add(LpAlias, LpIdentifier);
         Credit.TryCreate(LpIdentity, out LpCredit!);
     }
 
+#pragma warning disable CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
+    [ModuleInitializer]
+#pragma warning restore CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
     public static void Initialize()
     {
     }

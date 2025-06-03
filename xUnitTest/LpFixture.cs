@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp;
-using Lp.Data;
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace xUnitTest.Lp;
