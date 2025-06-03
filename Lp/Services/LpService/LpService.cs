@@ -68,8 +68,8 @@ public class LpService
         this.conversionOptions = Alias.Instance;
     }
 
-    public ConnectionAndService<TService> ConnectAndAuthenticate<TService>(CredentialEvidence credentialEvidence, SeedKey seedKey, CancellationToken cancellationToken)
-        where TService : INetService
+    public async Task<ConnectionAndService<TService>> ConnectAndAuthenticate<TService>(CredentialEvidence credentialEvidence, SeedKey seedKey, CancellationToken cancellationToken)
+        where TService : INetServiceAuthentication
     {
         if (cancellationToken.IsCancellationRequested)
         {
