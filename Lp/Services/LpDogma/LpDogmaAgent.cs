@@ -39,7 +39,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         }*/
 
         var serverConnection = TransmissionContext.Current.ServerConnection;
-        if (token.PublicKey.Equals(LpConstants.LpKey) &&
+        if (token.PublicKey.Equals(LpConstants.LpPublicKey) &&
             token.ValidateAndVerify(serverConnection))
         {
             serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10);

@@ -191,9 +191,9 @@ public partial class LpDogmaMachine : Machine
             link.UpdatedMics = Mics.FastCorrected;
         }
 
-        var value1 = new Value(LpConstants.LpKey, 1, link.Credit1); // LpKey#1@Credit1
+        var value1 = new Value(LpConstants.LpPublicKey, 1, link.Credit1); // LpKey#1@Credit1
         var proof1 = new LinkProof(value1, link.LinkerPublicKey); // @Credit + Linker
-        var value2 = new Value(LpConstants.LpKey, 1, link.Credit2); // LpKey#1@Credit2
+        var value2 = new Value(LpConstants.LpPublicKey, 1, link.Credit2); // LpKey#1@Credit2
         var proof2 = new LinkProof(value2, link.LinkerPublicKey); // @Credit + Linker
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);

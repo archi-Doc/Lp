@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.T3cs;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.T3cs;
@@ -17,11 +18,33 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
     public async Task RunAsync(InspectOwnerOptions option, string[] args)
     {
         var r = await this.lpService.ParseSeedKeyAndCredit(option.Source);
-        if (r.IsFailure)
+        if (!r.IsSuccess)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(r.Code));
             return;
         }
+
+        var credential = this.lpService.ResolveMerger(r.Credit);
+        if (credential is null)
+        {
+            this.userInterfaceService.WriteLine(Hashed.LpService.CredentialNotFound);
+            return;
+        }
+
+        this.userInterfaceService.WriteLine($"{this.GetType().Name}");
+        this.userInterfaceService.WriteLine($"Credit:{r.Credit}");
+        this.userInterfaceService.WriteLine($"{credential.Proof.State}");
+
+        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(credential, r.SeedKey, default))
+        {
+            if (connectionAndService.IsFailure)
+            {
+                this.userInterfaceService.WriteLine(HashedString.FromEnum(connectionAndService.Result));
+                return;
+            }
+        }
+
+        //credential.Proof.State.NetNode
     }
 
     private readonly IUserInterfaceService userInterfaceService;

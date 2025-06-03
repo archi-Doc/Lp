@@ -42,34 +42,34 @@ public class LpServiceTest
         var identifier = identity.GetIdentifier();
 
         var st = $"{seedKey.UnsafeToString()}@{identifier}/{mergerPublicKey}";
-        var r = await lpService.ParseSeedKeyAndCredit(default, st);
+        var r = await lpService.ParseSeedKeyAndCredit(st);
         r.IsSuccess.IsTrue();
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Credit!.Identifier.Equals(identifier).IsTrue();
         r.Credit!.Mergers.SequenceEqual([mergerPublicKey]).IsTrue();
 
         st = $"{seedKey.UnsafeToString()}#999@{identifier}/{mergerPublicKey}";
-        r = await lpService.ParseSeedKeyAndCredit(default, st);
+        r = await lpService.ParseSeedKeyAndCredit(st);
         r.IsSuccess.IsTrue();
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Point.Is(999);
         r.Credit!.Identifier.Equals(identifier).IsTrue();
         r.Credit!.Mergers.SequenceEqual([mergerPublicKey]).IsTrue();
 
-        st = $"{seedKey.UnsafeToString()}#111@Lp/LpKey";
-        r = await lpService.ParseSeedKeyAndCredit(default, st);
+        st = $"{seedKey.UnsafeToString()}#111@{LpConstants.LpAlias}/{LpConstants.LpKeyAlias}";
+        r = await lpService.ParseSeedKeyAndCredit(st);
         r.IsSuccess.IsTrue();
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Point.Is(111);
         r.Credit!.Identifier.Equals(LpConstants.LpIdentifier).IsTrue();
-        r.Credit!.Mergers.SequenceEqual([LpConstants.LpKey]).IsTrue();
+        r.Credit!.Mergers.SequenceEqual([LpConstants.LpPublicKey]).IsTrue();
 
-        st = $"{TestAuthorityName}#222@Lp/LpKey";
-        r = await lpService.ParseSeedKeyAndCredit(default, st);
+        st = $"{TestAuthorityName}#222@{LpConstants.LpAlias}/{LpConstants.LpKeyAlias}";
+        r = await lpService.ParseSeedKeyAndCredit(st);
         r.IsSuccess.IsTrue();
         this.authority.GetSeedKey(LpConstants.LpCredit).Equals(r.SeedKey).IsTrue();
         r.Point.Is(222);
         r.Credit!.Identifier.Equals(LpConstants.LpIdentifier).IsTrue();
-        r.Credit!.Mergers.SequenceEqual([LpConstants.LpKey]).IsTrue();
+        r.Credit!.Mergers.SequenceEqual([LpConstants.LpPublicKey]).IsTrue();
     }
 }
