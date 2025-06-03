@@ -39,6 +39,29 @@ Error=
   NoOwnAddress = "Own IP address is not determined"
   NoOnlineNode = "No online nodes. Please check your internet connection or add a node to connect (add-net-node)"
 
+NetResult=
+  Success = "Connection successful",
+  Completed = "Connection completed",
+  UnknownError = "An unknown error occurred",
+  Timeout = "Connection timed out",
+  Canceled = "Connection was canceled",
+  Closed = "Connection was closed",
+  Refused = "Connection was refused by the remote host",
+  InvalidData = "Invalid data was encountered",
+  InvalidOperation = "The operation was invalid",
+  InvalidEndpoint = "The specified endpoint is invalid",
+  InvalidRelay = "Relay server is invalid",
+  SerializationFailed = "Failed to serialize the data",
+  DeserializationFailed = "Failed to deserialize the data",
+  BlockSizeLimit = "The data block exceeds the allowed size",
+  StreamLengthLimit = "The stream exceeds the allowed length",
+  NoNetwork = "No network is available",
+  NoNetService = "The network service is not running",
+  NoTransmission = "Transmission is not available",
+  NotReceived = "The expected data was not received",
+  NotAuthenticated = "Authentication failed",
+  NotFound = "The target resource or endpoint was not found"
+
 Vault=
   AlreadyExists = "{0} already exists"
   NoVault = "{0} does not exist"
@@ -119,3 +142,6 @@ ParseResultCode=
   InvalidSeedKey="Failed to parse SeedKey"
   InvalidCredit="Failed to parse SeedKey"
   InvalidAuthority="Authority not found"
+
+LpService=
+  CredentialNotFound="No Credential corresponding to the Credit was found"

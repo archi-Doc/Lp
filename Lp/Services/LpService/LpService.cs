@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Diagnostics.CodeAnalysis;
-using Arc;
 using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -28,6 +26,10 @@ public class LpService
     /// </summary>
     public readonly record struct ParseResult(ParseResultCode Code, SeedKey? SeedKey, Point Point, Credit? Credit)
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ParseResult"/> struct with the specified result code.
+        /// </summary>
+        /// <param name="code">The result code indicating the outcome of the parsing operation.</param>
         public ParseResult(ParseResultCode code)
             : this(code, null, default, null)
         {
@@ -36,15 +38,26 @@ public class LpService
         /// <summary>
         /// Gets a value indicating whether the parsing was successful.
         /// </summary>
+        /// <remarks>
+        /// Returns <c>true</c> if <see cref="Code"/> is <see cref="ParseResultCode.Success"/>, and both <see cref="SeedKey"/> and <see cref="Credit"/> are not <c>null</c>.
+        /// </remarks>
         [MemberNotNullWhen(true, nameof(SeedKey), nameof(Credit))]
         public bool IsSuccess => this.Code == ParseResultCode.Success && this.SeedKey is not null && this.Credit is not null;
 
-        // public bool IsFailure => !this.IsSuccess;
+        /// <summary>
+        /// Gets a value indicating whether the parsing failed.
+        /// </summary>
+        /// <remarks>
+        /// Returns <c>true</c> if <see cref="Code"/> is not <see cref="ParseResultCode.Success"/>, or either <see cref="SeedKey"/> or <see cref="Credit"/> is <c>null</c>.
+        /// </remarks>
+        [MemberNotNullWhen(false, nameof(SeedKey), nameof(Credit))]
+        public bool IsFailure => this.Code != ParseResultCode.Success || this.SeedKey is null || this.Credit is null;
     }
 
     #region FieldAndProperty
 
     private readonly IUserInterfaceService userInterfaceService;
+    private readonly NetTerminal netTerminal;
     private readonly AuthorityControl authorityControl;
     private readonly VaultControl vaultControl;
     private readonly Credentials credentials;
@@ -56,15 +69,18 @@ public class LpService
     /// Initializes a new instance of the <see cref="LpService"/> class.
     /// </summary>
     /// <param name="userInterfaceService">The user interface service.</param>
+    /// <param name="netTerminal">The net terminal.</param>
     /// <param name="authorityControl">The authority control.</param>
     /// <param name="vaultControl">The vault control.</param>
     /// <param name="credentials"> The credentials.</param>
-    public LpService(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, VaultControl vaultControl, Credentials credentials)
+    public LpService(IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl, Credentials credentials)
     {
         this.userInterfaceService = userInterfaceService;
+        this.netTerminal = netTerminal;
         this.authorityControl = authorityControl;
         this.vaultControl = vaultControl;
         this.credentials = credentials;
+
         this.conversionOptions = Alias.Instance;
     }
 
@@ -73,12 +89,12 @@ public class LpService
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            return default;
+            return new(NetResult.Canceled);
         }
 
         if (credentialEvidence.Proof.State.NetNode is not { } netNode)
         {
-            return default;
+            return new(NetResult.NoNetwork);
         }
 
         using (var connection = await this.netTerminal.Connect(netNode))
@@ -86,12 +102,18 @@ public class LpService
             if (connection is null)
             {
                 this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
-                return default;
+                return new(NetResult.NoNetwork);
             }
 
             var service = connection.GetService<TService>();
-            var auth = AuthenticationToken.CreateAndSign(seedKey, connection);
-            var r = await service.Authenticate(auth);
+            var authenticationToken = AuthenticationToken.CreateAndSign(seedKey, connection);
+            var r = await service.Authenticate(authenticationToken);
+            if (r != NetResult.Success)
+            {
+                return new(r);
+            }
+
+            return new(connection, service);
         }
     }
 

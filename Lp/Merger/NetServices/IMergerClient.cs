@@ -1,9 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerClient : INetService
+public partial interface IMergerClient : INetServiceAuthentication
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -28,6 +30,8 @@ public partial interface IMergerClient : INetService
 [NetServiceObject]
 internal class MergerClientAgent : IMergerClient
 {
+    private readonly Merger merger;
+
     public MergerClientAgent(Merger merger)
     {
         this.merger = merger;
@@ -63,5 +67,14 @@ internal class MergerClientAgent : IMergerClient
         return this.merger.CreateCredit(param);
     }
 
-    private Merger merger;
+    public async NetTask<NetResult> Authenticate(AuthenticationToken token)
+    {
+        var serverConnection = TransmissionContext.Current.ServerConnection;
+        if (!token.ValidateAndVerify(serverConnection))
+        {
+            return NetResult.NotAuthenticated;
+        }
+
+        return NetResult.Success;
+    }
 }

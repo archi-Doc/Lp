@@ -19,7 +19,7 @@ public class LpDogmaGetInformationSubcommand : ISimpleCommandAsync<ConnectNetNod
     {
         using (var connectionAndService = await LpDogmaHelper.TryConnect(this.logger, this.authorityControl, this.netTerminal, options.NetNode))
         {
-            if (connectionAndService.IsInvalid)
+            if (connectionAndService.IsFailure)
             {
                 return;
             }

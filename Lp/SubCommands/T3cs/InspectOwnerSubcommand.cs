@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.T3cs;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.T3cs;
@@ -26,8 +27,21 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
         var credential = this.lpService.ResolveMerger(r.Credit);
         if (credential is null)
         {
-            this.userInterfaceService.WriteLine("Credential not found.");
+            this.userInterfaceService.WriteLine(Hashed.LpService.CredentialNotFound);
             return;
+        }
+
+        this.userInterfaceService.WriteLine($"{this.GetType().Name}");
+        this.userInterfaceService.WriteLine($"Credit:{r.Credit}");
+        this.userInterfaceService.WriteLine($"{credential.Proof.State}");
+
+        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(credential, r.SeedKey, default))
+        {
+            if (connectionAndService.IsFailure)
+            {
+                this.userInterfaceService.WriteLine(HashedString.FromEnum(connectionAndService.Result));
+                return;
+            }
         }
 
         //credential.Proof.State.NetNode
