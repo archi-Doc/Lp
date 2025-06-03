@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.T3cs;
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.MergerClient;

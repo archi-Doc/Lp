@@ -2,9 +2,6 @@
 
 namespace Lp.Services;
 
-public enum AuthorityLifecycle
+public static class AuthorityHelper
 {
-    Application,
-    Duration,
-    Counter,
 }

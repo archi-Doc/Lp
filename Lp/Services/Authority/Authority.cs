@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using Lp.Services;
+using Lp.T3cs;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 
-namespace Lp.T3cs;
+namespace Lp.Services;
 
 [TinyhandObject]
 public sealed partial class Authority

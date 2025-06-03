@@ -10,6 +10,7 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1310 // Field names should not contain underscore
 
+[TinyhandObject]
 public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringConvertible<CryptoKey>
 {// (!raw), (1234!raw), (:encrypted), (1234:encrypted)
     public const int EncryptedDataSize = 32 + 32 + sizeof(uint) + sizeof(uint); // PublicKey, Encrypted, EncryptionSalt, OriginalHash
@@ -17,8 +18,8 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
 
     public static readonly int EncryptedStringLength = Base64.Url.GetEncodedLength(EncryptedDataSize);
 
-    private const uint SubId_HashMask = 0x3FFU; // 10 bits
-    private const uint SubId_IdMask = ~SubId_HashMask; // 32 bits
+    private const uint SubKey_HashMask = 0x3FFU; // 10 bits
+    private const uint SubKey_IdMask = ~SubKey_HashMask; // 32 bits
 
     #region IStringConvertible
 
@@ -44,7 +45,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         return length;
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, out int read, IConversionOptions? conversionOptions = null)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey @object, out int read, IConversionOptions? conversionOptions = null)
     {// (:encrypted), (!raw), (id:encrypted), (id!raw)
         uint subKey = 0;
         @object = null;
@@ -196,18 +197,18 @@ Failure:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe uint GenerateSubKey()
     {
-        var id = RandomVault.Default.NextUInt32() & SubId_IdMask;
+        var id = RandomVault.Default.NextUInt32() & SubKey_IdMask;
         ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
-        return id | ((uint)XxHash3Slim.Hash64(bytes) & SubId_HashMask);
+        return id | ((uint)XxHash3Slim.Hash64(bytes) & SubKey_HashMask);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe bool ValidateSubKey(uint subId)
     {
-        var id = subId & SubId_IdMask;
+        var id = subId & SubKey_IdMask;
         ReadOnlySpan<byte> bytes = new ReadOnlySpan<byte>(&id, sizeof(uint));
         var hash = (uint)XxHash3Slim.Hash64(bytes);
-        return (subId & SubId_HashMask) == (hash & SubId_HashMask);
+        return (subId & SubKey_HashMask) == (hash & SubKey_HashMask);
     }
 
     #region FieldAndProperty

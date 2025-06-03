@@ -191,10 +191,9 @@ public partial class LpDogmaMachine : Machine
             link.UpdatedMics = Mics.FastCorrected;
         }
 
-        // Linkage x Point
-        var value1 = new Value(LpConstants.LpPublicKey, 1, link.Credit1); // LpKey#1@Credit1
+        var value1 = new Value(LpConstants.LpKey, 1, link.Credit1); // LpKey#1@Credit1
         var proof1 = new LinkProof(value1, link.LinkerPublicKey); // @Credit + Linker
-        var value2 = new Value(LpConstants.LpPublicKey, 1, link.Credit2); // LpKey#1@Credit2
+        var value2 = new Value(LpConstants.LpKey, 1, link.Credit2); // LpKey#1@Credit2
         var proof2 = new LinkProof(value2, link.LinkerPublicKey); // @Credit + Linker
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
@@ -205,15 +204,15 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        var evidence1 = new LinkableEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        evidence1 = await this.ConnectAndRunService<LinkableEvidence>(link.Credit1.Mergers[0], service => service.SignLinkableEvidence(evidence1));
+        var evidence1 = new ContractableEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        evidence1 = await this.ConnectAndRunService<ContractableEvidence>(link.Credit1.Mergers[0], service => service.SignContractableEvidence(evidence1));
         if (evidence1 is null)
         {
             return StateResult.Continue;
         }
 
-        var evidence2 = new LinkableEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
-        evidence2 = await this.ConnectAndRunService<LinkableEvidence>(link.Credit2.Mergers[0], service => service.SignLinkableEvidence(evidence2));
+        var evidence2 = new ContractableEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        evidence2 = await this.ConnectAndRunService<ContractableEvidence>(link.Credit2.Mergers[0], service => service.SignContractableEvidence(evidence2));
         if (evidence2 is null)
         {
             return StateResult.Continue;

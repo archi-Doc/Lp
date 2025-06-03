@@ -1,27 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
-public partial class TestLinkageProof : LinkableProof
-{
-    public TestLinkageProof(Value value, SignaturePublicKey linkerPublicKey)
-        : base(value, linkerPublicKey)
-    {
-    }
-
-    public override PermittedSigner PermittedSigner => PermittedSigner.Owner;
-
-    public override bool Validate()
-    {
-        return true;
-    }
-}
-
-public abstract partial class LinkableProof : ProofWithSigner
+public abstract partial class ContractableProof : ProofWithSigner
 {
     /// <summary>
     /// The number of reserved keys.
@@ -35,7 +18,7 @@ public abstract partial class LinkableProof : ProofWithSigner
 
     #endregion
 
-    public LinkableProof(Value value, SignaturePublicKey linkerPublicKey)
+    public ContractableProof(Value value, SignaturePublicKey linkerPublicKey)
         : base(value)
     {
         this.LinkerPublicKey = linkerPublicKey;

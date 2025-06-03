@@ -2,9 +2,7 @@
 
 namespace Lp.Services;
 
-public enum AuthorityLifecycle
+public enum AuthorityResult
 {
-    Application,
-    Duration,
-    Counter,
+    Success,
 }

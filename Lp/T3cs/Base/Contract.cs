@@ -27,20 +27,20 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     [Key(2)]
     public readonly Point Total;
 
-    public LinkableProof Proof => this.proofOrIdentifier is LinkableProof proof ? proof : EmptyProof.Instance;
+    public ContractableProof Proof => this.proofOrIdentifier is ContractableProof proof ? proof : EmptyProof.Instance;
 
-    public bool HasProof => this.proofOrIdentifier is LinkableProof;
+    public bool HasProof => this.proofOrIdentifier is ContractableProof;
 
     #endregion
 
-    public Contract(LinkableProof proof, Point partial, Point total)
+    public Contract(ContractableProof proof, Point partial, Point total)
     {
         this.proofOrIdentifier = proof;
         this.Partial = partial;
         this.Total = total;
     }
 
-    public Contract(LinkableProof proof)
+    public Contract(ContractableProof proof)
     {
         this.proofOrIdentifier = proof;
     }

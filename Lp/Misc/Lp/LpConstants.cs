@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -19,24 +20,29 @@ public static class LpConstants
 
     public const long DefaultProofMaxValidMics = Mics.MicsPerDay * 30;
 
-    public const string LpAlias = "Lp";
+    public const string LpAlias = "LpId";
     public const string LpKeyAlias = "LpKey";
     public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";
     public const long LpExpirationMics = Mics.MicsPerDay * 1;
 
-    public static readonly SignaturePublicKey LpPublicKey;
+    public static readonly SignaturePublicKey LpKey;
     public static readonly Identity LpIdentity;
+    public static readonly Identifier LpIdentifier;
     public static readonly Credit LpCredit;
 
     static LpConstants()
     {
-        SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
-        Alias.Instance.Add(LpKeyAlias, LpPublicKey);
-        LpIdentity = new(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
-        Alias.Instance.Add(LpAlias, LpIdentity.GetIdentifier());
+        SignaturePublicKey.TryParse(LpPublicKeyString, out LpKey, out _);
+        Alias.Instance.Add(LpKeyAlias, LpKey);
+        LpIdentity = new(IdentityKind.Credit, LpKey, [LpKey]);
+        LpIdentifier = LpIdentity.GetIdentifier();
+        Alias.Instance.Add(LpAlias, LpIdentifier);
         Credit.TryCreate(LpIdentity, out LpCredit!);
     }
 
+#pragma warning disable CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
+    [ModuleInitializer]
+#pragma warning restore CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
     public static void Initialize()
     {
     }

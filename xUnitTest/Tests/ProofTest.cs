@@ -65,13 +65,13 @@ public class ProofTest
         mergerKey.TrySign(linkageEvidence2, 0).IsTrue();
         linkageEvidence2.ValidateAndVerify().IsTrue();
 
-        Linkage2.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
+        Linkage.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
         linkerKey.TrySign(linkage!, validMics).IsTrue();
 
         linkage!.ValidateAndVerify().IsTrue();
 
         var bin = TinyhandSerializer.Serialize(linkage);
-        var linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        var linkage2 = TinyhandSerializer.Deserialize<Linkage>(bin);
         linkage2!.ValidateAndVerify().IsTrue();
         bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
 
@@ -80,7 +80,7 @@ public class ProofTest
         linkage!.ValidateAndVerify().IsTrue();
 
         bin = TinyhandSerializer.Serialize(linkage);
-        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage>(bin);
         linkage2!.ValidateAndVerify().IsTrue();
         bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
 
@@ -89,7 +89,7 @@ public class ProofTest
         linkage!.ValidateAndVerify().IsFalse();
 
         bin = TinyhandSerializer.Serialize(linkage);
-        linkage2 = TinyhandSerializer.Deserialize<Linkage2>(bin);
+        linkage2 = TinyhandSerializer.Deserialize<Linkage>(bin);
         bin.SequenceEqual(TinyhandSerializer.Serialize(linkage2)).IsTrue();
     }
 }

@@ -6,7 +6,7 @@ namespace Lp.T3cs;
 
 [ValueLinkObject]
 [TinyhandObject]
-public partial class MarketableLinkage : Linkage2
+public partial class MarketableLinkage : Linkage
 {
     public static bool TryCreate(ContractableEvidence evidence1, ContractableEvidence evidence2, [MaybeNullWhen(false)] out MarketableLinkage linkage)
         => TryCreate(() => new(), evidence1, evidence2, out linkage);

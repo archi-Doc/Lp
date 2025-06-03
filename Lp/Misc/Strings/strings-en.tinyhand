@@ -113,3 +113,9 @@ Linker=
 Dogma=
   NoLpKey="Lp key not found"
   KeyConfirmed = "Lp key confirmed"
+
+ParseResultCode=
+  InvalidFormat=""
+  InvalidSeedKey="Failed to parse SeedKey"
+  InvalidCredit="Failed to parse SeedKey"
+  InvalidAuthority="Authority not found"

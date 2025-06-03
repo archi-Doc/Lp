@@ -39,7 +39,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         }*/
 
         var serverConnection = TransmissionContext.Current.ServerConnection;
-        if (token.PublicKey.Equals(LpConstants.LpPublicKey) &&
+        if (token.PublicKey.Equals(LpConstants.LpKey) &&
             token.ValidateAndVerify(serverConnection))
         {
             serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10);
@@ -110,7 +110,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
     }
 
-    async NetTask<LinkableEvidence?> LpDogmaNetService.SignLinkableEvidence(LinkableEvidence evidence)
+    async NetTask<ContractableEvidence?> LpDogmaNetService.SignContractableEvidence(ContractableEvidence evidence)
     {
         if (!this.IsAuthenticated)
         {

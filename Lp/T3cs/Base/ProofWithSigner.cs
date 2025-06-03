@@ -31,7 +31,7 @@ public abstract partial class ProofWithSigner : Proof
     /// Gets the signer index indicating which key is used for authentication.<br/>
     /// If <c>0</c>, the target <see cref="Value.Owner"/> is used.<br/>
     /// If between <c>1</c> and <c>Value.Credit.MergerCount</c>, a merger key is used.<br/>
-    /// Otherwise, the <see cref="LpConstants.LpPublicKey"/> is used.
+    /// Otherwise, the <see cref="LpConstants.LpKey"/> is used.
     /// </summary>
     [Key(Proof.ReservedKeyCount + 1)]
     public int Signer { get; private set; }
@@ -54,7 +54,7 @@ public abstract partial class ProofWithSigner : Proof
             return this.Value.Credit.Mergers[this.Signer - 1];
         }
 
-        return LpConstants.LpPublicKey;
+        return LpConstants.LpKey;
     }
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
@@ -108,7 +108,7 @@ public abstract partial class ProofWithSigner : Proof
         }
 
         if (permittedSigner.HasFlag(PermittedSigner.LpKey) &&
-                LpConstants.LpPublicKey.Equals(ref publicKey))
+                LpConstants.LpKey.Equals(ref publicKey))
         {// LpKey
             this.Signer = -1;
             goto Success;

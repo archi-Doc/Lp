@@ -1,10 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Lp.Services;
 using Netsphere.Crypto;
 
-namespace Lp.T3cs;
+namespace Lp.Services;
 
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.
@@ -46,7 +45,7 @@ public class AuthorityControl
         }
 
         var publicKey = authority.GetSignaturePublicKey();
-        if (!publicKey.Equals(LpConstants.LpPublicKey))
+        if (!publicKey.Equals(LpConstants.LpKey))
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.KeyMismatch);
             return default;

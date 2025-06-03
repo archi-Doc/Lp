@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public sealed class EmptyProof : LinkableProof
+public sealed class EmptyProof : ContractableProof
 {
     public static readonly EmptyProof Instance = new();
 

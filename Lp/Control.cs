@@ -118,6 +118,7 @@ public class Control
                 Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
                 Lp.Subcommands.KeyCommand.Subcommand.Configure(context);
+                Lp.Subcommands.T3cs.Subcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>

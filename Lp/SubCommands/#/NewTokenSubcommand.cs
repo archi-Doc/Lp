@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.T3cs;
-using Netsphere;
+using Lp.Services;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 
