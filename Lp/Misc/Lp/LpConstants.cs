@@ -6,6 +6,8 @@ using Netsphere.Crypto;
 
 namespace Lp;
 
+#pragma warning disable SA1203 // Constants should appear before fields
+
 public static class LpConstants
 {
     public const char PointSymbol = '#';
@@ -25,19 +27,30 @@ public static class LpConstants
     public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";
     public const long LpExpirationMics = Mics.MicsPerDay * 1;
 
-    public static readonly SignaturePublicKey LpKey;
+    public static readonly SignaturePublicKey LpPublicKey;
     public static readonly Identity LpIdentity;
     public static readonly Identifier LpIdentifier;
     public static readonly Credit LpCredit;
 
+    public const string TestAlias = "TestId";
+    public const string TestKeyAlias = "TestKey";
+    public const string TestSecretKeyString = "!!!DejdC4mUaFFIn4OMN56ySzI_fs3K3sixDUxu4AghL3PUudfx!!!(s!1Vh2JRGJJt7B-Q0wMN-s0P5zfq8hH47L1yXFk8LseVDiPCjp))";
+
+    public static readonly SignaturePublicKey TestPublicKey;
+    public static readonly SeedKey TestSeedKey;
+
     static LpConstants()
     {
-        SignaturePublicKey.TryParse(LpPublicKeyString, out LpKey, out _);
-        Alias.Instance.Add(LpKeyAlias, LpKey);
-        LpIdentity = new(IdentityKind.Credit, LpKey, [LpKey]);
+        SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
+        Alias.Instance.Add(LpKeyAlias, LpPublicKey);
+        LpIdentity = new(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
         LpIdentifier = LpIdentity.GetIdentifier();
         Alias.Instance.Add(LpAlias, LpIdentifier);
         Credit.TryCreate(LpIdentity, out LpCredit!);
+
+        SeedKey.TryParse(TestSecretKeyString, out TestSeedKey!);
+        TestPublicKey = TestSeedKey.GetSignaturePublicKey();
+        Alias.Instance.Add(TestKeyAlias, TestPublicKey);
     }
 
 #pragma warning disable CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
