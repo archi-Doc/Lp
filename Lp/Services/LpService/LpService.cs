@@ -21,7 +21,6 @@ public class LpService
         InvalidSeedKey,
         InvalidCredit,
         InvalidAuthority,
-        Failure,
     }
 
     /// <summary>
@@ -39,6 +38,8 @@ public class LpService
         /// </summary>
         [MemberNotNullWhen(true, nameof(SeedKey), nameof(Credit))]
         public bool IsSuccess => this.Code == ParseResultCode.Success && this.SeedKey is not null && this.Credit is not null;
+
+        public bool IsFailure => !this.IsSuccess;
     }
 
     /// <summary>
@@ -58,10 +59,9 @@ public class LpService
     /// <summary>
     /// Parses a seed key and credit from the given source string.
     /// </summary>
-    /// <param name="logger">The logger instance.</param>
     /// <param name="source">The source string to parse.</param>
     /// <returns>A <see cref="ParseResult"/> containing the parsed data.</returns>
-    public async Task<ParseResult> ParseSeedKeyAndCredit(ILogger? logger, string source)
+    public async Task<ParseResult> ParseSeedKeyAndCredit(string source)
     {
         int read = default;
         SeedKey? seedKey;

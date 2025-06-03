@@ -7,17 +7,24 @@ namespace Lp.Subcommands.T3cs;
 [SimpleCommand("inspect-owner")]
 public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
 {
-    public InspectOwnerSubcommand(ILogger<InspectOwnerOptions> logger, LpService lpService)
+    public InspectOwnerSubcommand(IUserInterfaceService userInterfaceService, ILogger<InspectOwnerOptions> logger, LpService lpService)
     {
+        this.userInterfaceService = userInterfaceService;
         this.logger = logger;
         this.lpService = lpService;
     }
 
     public async Task RunAsync(InspectOwnerOptions option, string[] args)
     {
-        var r = await this.lpService.ParseSeedKeyAndCredit(this.logger, option.Source);
+        var r = await this.lpService.ParseSeedKeyAndCredit(option.Source);
+        if (r.IsFailure)
+        {
+            this.userInterfaceService.WriteLine(HashedString.FromEnum(r.Code));
+            return;
+        }
     }
 
+    private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
     private readonly LpService lpService;
 }
