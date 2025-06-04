@@ -31,7 +31,7 @@ public partial interface IMergerClient : INetServiceWithOwner
 internal class MergerClientAgent : IMergerClient
 {
     private readonly Merger merger;
-    private SignaturePublicKey clientPublicKey;
+    private OwnerToken? ownerToken;
 
     public MergerClientAgent(Merger merger)
     {
@@ -76,7 +76,7 @@ internal class MergerClientAgent : IMergerClient
             return NetResult.NotAuthenticated;
         }
 
-        this.clientPublicKey = token.PublicKey;
+        this.ownerToken = token;
         return NetResult.Success;
     }
 }

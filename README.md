@@ -15,3 +15,5 @@ Lp is an alternative security.
 
 Every linkage has its positive and negative aspects.
 
+Lp is EBM and GUV.
+

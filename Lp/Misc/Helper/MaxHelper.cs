@@ -1,34 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Lp.T3cs;
-using Netsphere.Crypto;
 
-namespace Lp.Misc;
+namespace Lp;
 
-public static class MaxHelper
+#pragma warning disable SA1311 // Static readonly fields should begin with upper-case letter
+
+/*public static class MaxHelperExtensions
 {
-    public const byte UInt8 = 0xBD;
-    public const sbyte Int8 = unchecked((sbyte)0xBD);
-    public const ushort UInt16 = 0xBDBD;
-    public const short Int16 = unchecked((short)0xBDBD);
-    public const uint UInt32 = 0xBDBDBDBD;
-    public const int Int32 = unchecked((int)0xBDBDBDBD);
-    public const ulong UInt64 = 0xBDBDBDBDBDBDBDBD;
-    public const long Int64 = unchecked((long)0xBDBDBDBDBDBDBDBD);
+    private static readonly Credit credit;
 
-    public static readonly SignaturePublicKey SignaturePublicKey;
-    public static readonly byte[] Signature;
-    public static readonly Identifier Identifier;
-    public static readonly SignaturePublicKey[] Merger;
-    public static readonly Credit Credit;
-
-    static MaxHelper()
+    static MaxHelperExtensions()
     {
-        SignaturePublicKey = new SignaturePublicKey(UInt64, UInt64, UInt64, UInt64);
-        Signature = new byte[CryptoSign.SignatureSize];
-        Signature.AsSpan().Fill(UInt8);
-        Identifier = new Identifier(UInt64, UInt64, UInt64, UInt64);
-        Merger = [SignaturePublicKey, SignaturePublicKey, SignaturePublicKey,];
-        Credit = new Credit(Identifier, Merger);
+        credit = new Credit(MaxHelper.Identifier, MaxHelper.Merger);
     }
-}
+
+    extension(MaxHelper)
+    {
+        public Credit Credit => credit;
+    }
+}*/
