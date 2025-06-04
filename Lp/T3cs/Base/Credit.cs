@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Lp.Misc;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -15,9 +16,8 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public static readonly int MaxBinarySize;
 
     static Credit()
-    {//
-        var credit = new Credit(LpConstants.LpIdentifier, [LpConstants.LpPublicKey, LpConstants.LpPublicKey, LpConstants.LpPublicKey,]);
-        var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(credit);
+    {
+        var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(MaxHelper.Credit);
         MaxBinarySize = rentMemory.Length;
         rentMemory.Return();
     }

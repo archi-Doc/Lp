@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Arc.Crypto;
+using Lp.Misc;
 using Netsphere.Crypto;
 using Netsphere.Misc;
 using Tinyhand.IO;
@@ -17,6 +18,7 @@ namespace Lp.T3cs;
 public sealed partial class OwnerToken : ISignAndVerify, IEquatable<OwnerToken>, IStringConvertible<OwnerToken>
 {
     private const char Identifier = 'O';
+    private static int maxStringLength;
 
     public static OwnerToken CreateAndSign(SeedKey seedKey, Connection connection, Credit? credit)
     {
@@ -27,20 +29,19 @@ public sealed partial class OwnerToken : ISignAndVerify, IEquatable<OwnerToken>,
     }
 
     private OwnerToken()
-    {//
+    {
         var token = OwnerToken.UnsafeConstructor();
-        token.PublicKey = LpConstants.LpPublicKey;
-        token.Signature = new byte[CryptoSign.SignatureSize];
-        RandomVault.Default.NextBytes(token.Signature);
-        token.SignedMics = RandomVault.Default.NextInt63();
-        token.Salt = RandomVault.Default.NextUInt64();
-        token.Credit = new Credit(LpConstants.LpIdentifier, [LpConstants.LpPublicKey, LpConstants.LpPublicKey, LpConstants.LpPublicKey,]);
+        token.PublicKey = MaxHelper.SignaturePublicKey;
+        token.Signature = MaxHelper.Signature;
+        token.SignedMics = MaxHelper.Int64;
+        token.Salt = MaxHelper.UInt64;
+        token.Credit = MaxHelper.Credit;
         var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(token);
-        var a = Base64.Url.GetEncodedLength(rentMemory.Length);
+        maxStringLength = Base64.Url.GetEncodedLength(rentMemory.Length) + 10;
         rentMemory.Return();
     }
 
-    public static int MaxStringLength => 400;
+    public static int MaxStringLength => maxStringLength;
 
     #region FieldAndProperty
 
