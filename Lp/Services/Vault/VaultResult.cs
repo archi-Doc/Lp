@@ -10,7 +10,5 @@ public enum VaultResult
     KindMismatch,
     PasswordRequired,
     PasswordMismatch,
-    InvalidData,
-    DecryptionFailure,
     DeserializationFailure,
 }

@@ -323,23 +323,10 @@ public sealed partial class Vault
 
             // Object instance
             vault = item.Object as Vault;
-            if (password is null)
-            {
-                if (vault is null)
-                {
-                    result = VaultResult.PasswordRequired;
-                    return false;
-                }
-                else
-                {
-                    result = VaultResult.Success;
-                    return true;
-                }
-            }
-
             if (vault is not null)
             {
-                if (vault.PasswordEquals(password))
+                if (password is null ||
+                    vault.PasswordEquals(password))
                 {
                     result = VaultResult.Success;
                     return true;
@@ -360,9 +347,10 @@ public sealed partial class Vault
             }
 
             // Decrypt
+            password ??= string.Empty;
             if (!PasswordEncryption.TryDecrypt(item.ByteArray, password, out var plaintext))
             {// Decryption failed
-                result = VaultResult.DecryptionFailure;
+                result = VaultResult.PasswordMismatch;
                 vault = default;
                 return false;
             }

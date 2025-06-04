@@ -37,6 +37,7 @@ public class AuthorityControl
     public async Task<Authority?> GetLpAuthority(ILogger? logger)
     {
         var name = LpConstants.LpKeyAlias;
+
         var authority = await this.GetAuthority(name).ConfigureAwait(false);
         if (authority is null)
         {
@@ -54,6 +55,19 @@ public class AuthorityControl
         return authority;
     }
 
+    /// <summary>
+    /// Retrieves an <see cref="Authority"/> instance by name, optionally using a password.
+    /// </summary>
+    /// <param name="name">The name of the authority to retrieve.</param>
+    /// <param name="password">
+    /// If a password is non-null, the Authority is returned only if the password is correct.<br/>
+    /// If null is specified for the password, the method will return the Authority directly if it is available.<br/>
+    /// If the Authority is encrypted, it will attempt to decrypt it using an empty string as the password.<br/>
+    /// If decryption fails, the user will be prompted to enter a password.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{TResult}"/> representing the asynchronous operation. The result contains the <see cref="Authority"/> if found and accessible; otherwise, <c>null</c>.
+    /// </returns>
     public async Task<Authority?> GetAuthority(string name, string? password = null)
     {
         var vaultName = GetVaultName(name);
@@ -71,8 +85,7 @@ public class AuthorityControl
             if (this.vaultControl.Root.TryGetVault(vaultName, null, out vault, out var result))
             {
                 authority = Authority.GetFromVault(vault);
-                if (authority is null ||
-                    authority.IsExpired())
+                if (authority is null || authority.IsExpired)
                 {
                     vault = null;
                 }
