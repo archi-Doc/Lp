@@ -84,8 +84,8 @@ public class LpService
         this.conversionOptions = Alias.Instance;
     }
 
-    public async Task<ConnectionAndService<TService>> ConnectAndAuthenticate<TService>(CredentialEvidence credentialEvidence, SeedKey seedKey, CancellationToken cancellationToken)
-        where TService : INetServiceAuthentication
+    public async Task<ConnectionAndService<TService>> ConnectAndAuthenticate<TService>(CredentialEvidence credentialEvidence, SeedKey seedKey, Credit? credit, CancellationToken cancellationToken)
+        where TService : INetServiceWithOwner
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -106,8 +106,9 @@ public class LpService
             }
 
             var service = connection.GetService<TService>();
-            var authenticationToken = AuthenticationToken.CreateAndSign(seedKey, connection);
-            var r = await service.Authenticate(authenticationToken);
+            // var authenticationToken = AuthenticationToken.CreateAndSign(seedKey, connection);
+            var ownerToken = OwnerToken.CreateAndSign(seedKey, connection, credit);
+            var r = await service.Authenticate(ownerToken);
             if (r != NetResult.Success)
             {
                 return new(r);

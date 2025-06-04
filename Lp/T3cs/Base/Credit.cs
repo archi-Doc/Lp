@@ -12,6 +12,15 @@ namespace Lp.T3cs;
 public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringConvertible<Credit>
 {
     public static readonly Credit Default = Credit.UnsafeConstructor();
+    public static readonly int MaxBinarySize;
+
+    static Credit()
+    {//
+        var credit = new Credit(LpConstants.LpIdentifier, [LpConstants.LpPublicKey, LpConstants.LpPublicKey, LpConstants.LpPublicKey,]);
+        var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(credit);
+        MaxBinarySize = rentMemory.Length;
+        rentMemory.Return();
+    }
 
     #region FieldAndProperty
 
