@@ -129,11 +129,10 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Get LpData
-        var g = this.creditDataCrystal.Data;
         // var identifier = param.Proof.PublicKey.ToIdentifier();
 
         FullCredit? creditData;
-        using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.GetOrCreate))
+        using (var w = this.creditData.TryLock(Credit.Default, ValueLink.TryLockMode.GetOrCreate))
         {
             if (w is null)
             {
