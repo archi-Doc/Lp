@@ -304,7 +304,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public override int GetHashCode()
     {
         // MaxMergersCode
-        if (this.MergerCount == 1)
+        /*if (this.MergerCount == 1)
         {
             return HashCode.Combine(this.Identifier, this.Mergers[0]);
         }
@@ -319,7 +319,9 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         else
         {
             return HashCode.Combine(this.Identifier);
-        }
+        }*/
+
+        return (int)this.Identifier.Id0;
     }
 
     public override string ToString() => this.ConvertToString();

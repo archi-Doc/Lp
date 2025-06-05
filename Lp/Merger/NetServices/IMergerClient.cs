@@ -76,6 +76,14 @@ internal class MergerClientAgent : IMergerClient
             return NetResult.NotAuthenticated;
         }
 
+        if (token.Credit is null)
+        {
+            return NetResult.InvalidData;
+        }
+
+        var credit = this.merger.GetCredit(token.Credit);
+        var data = await credit.Borrowers.Get();
+        data.TryGet(token.PublicKey);
         this.ownerToken = token;
         return NetResult.Success;
     }

@@ -200,6 +200,16 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
+    public FullCredit? GetCredit(Credit credit)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        return this.creditData.TryGet(credit);
+    }
+
     protected void InitializeLogger()
     {
         this.modestLogger.SetLogger(this.logger);
