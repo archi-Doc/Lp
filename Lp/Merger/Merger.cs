@@ -154,7 +154,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return new(T3csResult.UnknownError);
         }
 
-        var borrowers = await creditData.Borrowers.Get();
+        var borrowers = await creditData.Owners.Get();
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
         {
             if (w2 is null)
@@ -210,6 +210,23 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         return this.creditData.TryGet(credit);
     }
 
+    public async ValueTask<OwnerData?> FindOwnerData(OwnerToken token)
+    {
+        if (!this.Initialized ||
+            token is null ||
+            token.Credit is null)
+        {
+            return null;
+        }
+
+        if (this.creditData.TryGet(token.Credit) is not { } creditData)
+        {
+            return null;
+        }
+
+        var owners = await creditData.Owners.Get().ConfigureAwait(false);
+        return owners.TryGet(token.PublicKey);
+    }
     protected void InitializeLogger()
     {
         this.modestLogger.SetLogger(this.logger);

@@ -20,5 +20,5 @@ public partial record FullCredit
     public CreditInformation CreditInformation { get; protected set; } = CreditInformation.UnsafeConstructor();
 
     [Key(2)]
-    public StorageData<Borrower.GoshujinClass> Borrowers { get; protected set; } = new();
+    public StorageData<OwnerData.GoshujinClass> Owners { get; protected set; } = new();
 }

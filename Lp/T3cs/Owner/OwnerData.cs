@@ -5,16 +5,16 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 /// <summary>
-/// The isolation level of the Borrower class is RepeatableRead.<br/>
+/// The isolation level of the OwnerData class is RepeatableRead.<br/>
 /// Call TryLock() when making changes.
 /// For changes to Evidences, TryLock() is unnecessary since the instance remains the same.<br/>
 /// Instead, acquire a lock with lock (this.Evidence.SyncObject).
 /// </summary>
 [TinyhandObject(Structual = false)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead, Restricted = true)]
-public sealed partial record Borrower // : ITinyhandCustomJournal
+public sealed partial record OwnerData // : ITinyhandCustomJournal
 {
-    public Borrower()
+    public OwnerData()
     {
     }
 
