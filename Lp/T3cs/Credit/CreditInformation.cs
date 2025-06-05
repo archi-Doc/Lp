@@ -5,9 +5,7 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial class CreditInformation
 {
-    public static readonly CreditInformation Default = new();
-
-    public CreditInformation()
+    public CreditInformation(string creditName, CreditColor creditColor)
     {
     }
 
@@ -18,5 +16,5 @@ public sealed partial class CreditInformation
     public string CreditName { get; private set; } = string.Empty;
 
     [Key(1)]
-    public CreditColor CreditPolicy { get; private set; } = CreditColor.Default;
+    public CreditColor CreditColor { get; private set; } = new();
 }
