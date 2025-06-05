@@ -212,9 +212,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public async ValueTask<OwnerData?> FindOwnerData(OwnerToken token)
     {
-        if (!this.Initialized ||
-            token is null ||
-            token.Credit is null)
+        if (!this.Initialized || token.Credit is null)
         {
             return null;
         }
@@ -227,6 +225,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         var owners = await creditData.Owners.Get().ConfigureAwait(false);
         return owners.TryGet(token.PublicKey);
     }
+
     protected void InitializeLogger()
     {
         this.modestLogger.SetLogger(this.logger);

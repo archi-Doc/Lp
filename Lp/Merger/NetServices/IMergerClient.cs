@@ -32,6 +32,7 @@ internal class MergerClientAgent : IMergerClient
 {
     private readonly Merger merger;
     private OwnerToken? ownerToken;
+    private OwnerData? ownerData;
 
     public MergerClientAgent(Merger merger)
     {
@@ -88,6 +89,8 @@ internal class MergerClientAgent : IMergerClient
         }
 
         this.ownerToken = token;
+        this.ownerData = ownerData;
+
         return NetResult.Success;
     }
 }
