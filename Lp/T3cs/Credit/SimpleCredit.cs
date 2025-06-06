@@ -25,8 +25,8 @@ public partial record SimpleCredit : ICredit
     public Credit Credit { get; protected set; } = Credit.UnsafeConstructor();
 
     [Key(2)]
-    public CreditInformation CreditInformation { get; protected set; } = T3cs.CreditInformation.Default;
+    public CreditInformation CreditInformation { get; protected set; } = CreditInformation.UnsafeConstructor();
 
     [Key(3)]
-    public StorageData<Borrower.GoshujinClass> Borrowers { get; protected set; } = new();
+    public StorageData<OwnerData.GoshujinClass> Owners { get; protected set; } = new();
 }

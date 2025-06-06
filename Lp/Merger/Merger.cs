@@ -148,13 +148,13 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         var mergerPublicKey = SeedKey.New(KeyOrientation.Signature).GetSignaturePublicKey();
-        var creditIdentity = new Identity(IdentityKind.Credit, param.Proof.PublicKey, [mergerPublicKey]);
+        var creditIdentity = new CreditIdentity(IdentityKind.Credit, param.Proof.PublicKey, [mergerPublicKey]);
         if (!Credit.TryCreate(creditIdentity, out var credit))
         {
             return new(T3csResult.UnknownError);
         }
 
-        var borrowers = await creditData.Borrowers.Get();
+        var borrowers = await creditData.Owners.Get();
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
         {
             if (w2 is null)
@@ -198,6 +198,32 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             this.State.IsActive = true;
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
         }
+    }
+
+    public FullCredit? GetCredit(Credit credit)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        return this.creditData.TryGet(credit);
+    }
+
+    public async ValueTask<OwnerData?> FindOwnerData(OwnerToken token)
+    {
+        if (!this.Initialized || token.Credit is null)
+        {
+            return null;
+        }
+
+        if (this.creditData.TryGet(token.Credit) is not { } creditData)
+        {
+            return null;
+        }
+
+        var owners = await creditData.Owners.Get().ConfigureAwait(false);
+        return owners.TryGet(token.PublicKey);
     }
 
     protected void InitializeLogger()

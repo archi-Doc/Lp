@@ -3,7 +3,7 @@
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial record BoardIdentity : Identity
+public partial class BoardIdentity : Identity
 {
     [Key(4)]
     [MaxLength(64)]

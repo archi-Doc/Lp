@@ -30,8 +30,6 @@ public enum CreditRule
 [TinyhandObject]
 public sealed partial record CreditColor
 {
-    public static readonly CreditColor Default = new();
-
     public static CreditColor NewBoard()
     {
         return new()
@@ -51,25 +49,25 @@ public sealed partial record CreditColor
     #region FieldAndProperty
 
     [Key(0)]
-    public CreditOpenness Openness { get; private set; }
+    public CreditOpenness Openness { get; init; }
 
     [Key(1)]
-    public CreditEvol Evol { get; private set; }
+    public CreditEvol Evol { get; init; }
 
     [Key(2)]
-    public CreditRule Rule { get; private set; }
+    public CreditRule Rule { get; init; }
 
     [Key(3)]
-    public int MaxOwners { get; private set; }
+    public int MaxOwners { get; init; }
 
     [Key(4)]
-    public int CutoffPoint { get; private set; }
+    public int CutoffPoint { get; init; }
 
     [Key(5)]
-    public OwnerFee? OwnerFee { get; private set; }
+    public OwnerFee? OwnerFee { get; init; }
 
     [Key(6)]
-    public OrderFee? OrderFee { get; private set; }
+    public OrderFee? OrderFee { get; init; }
 
     #endregion
 }

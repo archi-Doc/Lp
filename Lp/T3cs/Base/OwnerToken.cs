@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Crypto;
+using Lp;
 using Netsphere.Crypto;
 using Netsphere.Misc;
 using Tinyhand.IO;
@@ -17,9 +19,23 @@ public sealed partial class OwnerToken : ISignAndVerify, IEquatable<OwnerToken>,
 {
     private const char Identifier = 'O';
 
-    public static OwnerToken CreateAndSign(SeedKey seedKey, Connection connection)
+    static OwnerToken()
+    {
+        var token = OwnerToken.UnsafeConstructor();
+        token.PublicKey = MaxHelper.SignaturePublicKey;
+        token.Signature = MaxHelper.Signature;
+        token.SignedMics = MaxHelper.Int64;
+        token.Salt = MaxHelper.UInt64;
+        token.Credit = Credit.Max;
+        var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(token);
+        MaxStringLength = Base64.Url.GetEncodedLength(rentMemory.Length) + 10;
+        rentMemory.Return();
+    }
+
+    public static OwnerToken CreateAndSign(SeedKey seedKey, Connection connection, Credit? credit)
     {
         var token = new OwnerToken();
+        token.Credit = credit;
         NetHelper.Sign(seedKey, token, connection);
         return token;
     }
@@ -28,7 +44,7 @@ public sealed partial class OwnerToken : ISignAndVerify, IEquatable<OwnerToken>,
     {
     }
 
-    public static int MaxStringLength => 256;
+    public static int MaxStringLength { get; }
 
     #region FieldAndProperty
 

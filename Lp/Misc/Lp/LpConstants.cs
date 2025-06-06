@@ -45,7 +45,7 @@ public static class LpConstants
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
         Alias.Instance.Add(LpKeyAlias, LpPublicKey);
-        LpIdentity = new(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
+        LpIdentity = new CreditIdentity(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
         LpIdentifier = LpIdentity.GetIdentifier();
         Alias.Instance.Add(LpAlias, LpIdentifier);
         Credit.TryCreate(LpIdentity, out LpCredit!);
@@ -53,7 +53,7 @@ public static class LpConstants
         SeedKey.TryParse(TestSecretKeyString, out TestSeedKey!);
         TestPublicKey = TestSeedKey.GetSignaturePublicKey();
         Alias.Instance.Add(TestKeyAlias, TestPublicKey);
-        TestIdentity = new(IdentityKind.Credit, TestPublicKey, [TestPublicKey]);
+        TestIdentity = new CreditIdentity(IdentityKind.Credit, TestPublicKey, [TestPublicKey]);
         TestIdentifier = TestIdentity.GetIdentifier();
         Alias.Instance.Add(TestAlias, TestIdentifier);
     }

@@ -13,7 +13,7 @@ public sealed partial class Authority
     public const string Name = "Authority";
     private const int MinimumSeedLength = 32;
 
-    public static Authority? GetFromVault(Vault vault)
+    internal static Authority? GetFromVault(Vault vault)
     {
         if (vault.TryGetObject<Authority>(Name, out var authority, out _))
         {
@@ -99,15 +99,18 @@ public sealed partial class Authority
         }
     }
 
-    public bool IsExpired()
+    public bool IsExpired
     {
-        if (this.Lifecycle == AuthorityLifecycle.Duration)
+        get
         {
-            return this.ExpirationMics < Mics.FastUtcNow;
-        }
-        else
-        {
-            return false;
+            if (this.Lifecycle == AuthorityLifecycle.Duration)
+            {
+                return this.ExpirationMics < Mics.FastUtcNow;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 

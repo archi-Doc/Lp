@@ -6,10 +6,10 @@ namespace Lp.T3cs;
 
 public enum MarketableProofKey : int
 {
-    ExchangeProof,
+    EvolProof,
 }
 
-[TinyhandUnion((int)MarketableProofKey.ExchangeProof, typeof(ExchangeProof))]
+[TinyhandUnion((int)MarketableProofKey.EvolProof, typeof(EvolProof))]
 [TinyhandObject(ReservedKeyCount = ContractableProof.ReservedKeyCount)]
 public abstract partial class MarketableProof : ContractableProof
 {

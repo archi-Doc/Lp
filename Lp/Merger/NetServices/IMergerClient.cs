@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerClient : INetServiceAuthentication
+public partial interface IMergerClient : INetServiceWithOwner
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -31,7 +31,8 @@ public partial interface IMergerClient : INetServiceAuthentication
 internal class MergerClientAgent : IMergerClient
 {
     private readonly Merger merger;
-    private SignaturePublicKey clientPublicKey;
+    private OwnerToken? ownerToken;
+    private OwnerData? ownerData;
 
     public MergerClientAgent(Merger merger)
     {
@@ -68,7 +69,7 @@ internal class MergerClientAgent : IMergerClient
         return this.merger.CreateCredit(param);
     }
 
-    public async NetTask<NetResult> Authenticate(AuthenticationToken token)
+    public async NetTask<NetResult> Authenticate(OwnerToken token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (!token.ValidateAndVerify(serverConnection))
@@ -76,7 +77,20 @@ internal class MergerClientAgent : IMergerClient
             return NetResult.NotAuthenticated;
         }
 
-        this.clientPublicKey = token.PublicKey;
+        if (token.Credit is null)
+        {
+            return NetResult.InvalidData;
+        }
+
+        var ownerData = await this.merger.FindOwnerData(token);
+        if (ownerData is null)
+        {
+            return NetResult.NotFound;
+        }
+
+        this.ownerToken = token;
+        this.ownerData = ownerData;
+
         return NetResult.Success;
     }
 }
