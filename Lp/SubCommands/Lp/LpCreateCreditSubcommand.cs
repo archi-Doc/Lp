@@ -1,21 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using SimpleCommandLine;
 
-namespace Lp.Subcommands.T3cs;
+namespace Lp.Subcommands;
 
-[SimpleCommand("inspect-owner")]
-public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
-{
-    public InspectOwnerSubcommand(IUserInterfaceService userInterfaceService, ILogger<InspectOwnerOptions> logger, LpService lpService)
+[SimpleCommand("lp-create-credit", Alias = "lpcc")]
+public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOptions>
+{// lpcc A#Point@Identifier/Mergers: LpPublicKey#0@LpIdentifier/LpPublicKey -> A#InitialPoint@Identifier/Mergers
+    public LpCreateCreditSubcommand(IUserInterfaceService userInterfaceService, ILogger<LpCreateCreditOptions> logger, LpService lpService)
     {
         this.userInterfaceService = userInterfaceService;
         this.logger = logger;
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(InspectOwnerOptions option, string[] args)
+    public async Task RunAsync(LpCreateCreditOptions option, string[] args)
     {
         var r = await this.lpService.ParseAuthorityAndCredit(option.Source);
         if (!r.IsSuccess)
@@ -24,18 +25,21 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
             return;
         }
 
-        var credential = this.lpService.ResolveMerger(r.Credit);
-        if (credential is null)
+        var publicKey = r.SeedKey.GetSignaturePublicKey();
+        var creditIdentity = new CreditIdentity(default, publicKey, r.Credit.Mergers);
+        if (!creditIdentity.Validate())
         {
-            this.userInterfaceService.WriteLine(Hashed.LpService.CredentialNotFound);
             return;
         }
 
+        var targetCredit = new Credit(creditIdentity.GetIdentifier(), creditIdentity.Mergers);
+        var targetValue = new Value(creditIdentity.Originator, r.Point, targetCredit);
+
         this.userInterfaceService.WriteLine($"{this.GetType().Name}");
         this.userInterfaceService.WriteLine($"Credit:{r.Credit}");
-        this.userInterfaceService.WriteLine($"{credential.Proof.State}");
+        this.userInterfaceService.WriteLine($"Target value:{targetValue}");
 
-        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(credential, r.SeedKey, r.Credit, default))
+        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(r.Credit, r.SeedKey, default))
         {
             if (connectionAndService.IsFailure)
             {
@@ -43,8 +47,6 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
                 return;
             }
         }
-
-        //credential.Proof.State.NetNode
     }
 
     private readonly IUserInterfaceService userInterfaceService;
@@ -52,7 +54,7 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
     private readonly LpService lpService;
 }
 
-public record InspectOwnerOptions
+public record LpCreateCreditOptions
 {
     [SimpleOption("Source", Description = "Authority@Identifier/Mergers", Required = true)]
     public string Source { get; init; } = string.Empty;

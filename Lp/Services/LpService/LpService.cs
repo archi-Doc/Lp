@@ -84,6 +84,18 @@ public class LpService
         this.conversionOptions = Alias.Instance;
     }
 
+    public Task<ConnectionAndService<TService>> ConnectAndAuthenticate<TService>(Credit credit, SeedKey seedKey, CancellationToken cancellationToken)
+        where TService : INetServiceWithOwner
+    {
+        var credential = this.ResolveMerger(credit);
+        if (credential is null)
+        {
+            return Task.FromResult<ConnectionAndService<TService>>(new(NetResult.NotFound));
+        }
+
+        return this.ConnectAndAuthenticate<TService>(credential, seedKey, credit, cancellationToken);
+    }
+
     public async Task<ConnectionAndService<TService>> ConnectAndAuthenticate<TService>(CredentialEvidence credentialEvidence, SeedKey seedKey, Credit? credit, CancellationToken cancellationToken)
         where TService : INetServiceWithOwner
     {
@@ -129,7 +141,7 @@ public class LpService
     /// </summary>
     /// <param name="source">The source string to parse.</param>
     /// <returns>A <see cref="ParseResult"/> containing the parsed data.</returns>
-    public async Task<ParseResult> ParseSeedKeyAndCredit(string source)
+    public async Task<ParseResult> ParseAuthorityAndCredit(string source)
     {
         int read = default;
         SeedKey? seedKey;

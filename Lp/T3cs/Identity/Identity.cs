@@ -46,11 +46,6 @@ public abstract partial record class Identity : IValidatable
 
     public virtual bool Validate()
     {
-        if (!this.SourceIdentifier.IsValid)
-        {
-            return false;
-        }
-
         if (!this.Originator.Validate())
         {
             return false;
