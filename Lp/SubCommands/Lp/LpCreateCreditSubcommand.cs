@@ -18,6 +18,12 @@ public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOption
 
     public async Task RunAsync(LpCreateCreditOptions option, string[] args)
     {
+        var lpSeedKey = await this.lpService.AuthorityControl.GetLpSeedKey(this.logger);
+        if (lpSeedKey is null)
+        {
+            return;
+        }
+
         var r = await this.lpService.ParseAuthorityAndCredit(option.Source);
         if (!r.IsSuccess)
         {
@@ -26,18 +32,21 @@ public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOption
         }
 
         var publicKey = r.SeedKey.GetSignaturePublicKey();
-        var creditIdentity = new CreditIdentity(default, publicKey, r.Credit.Mergers);
-        if (!creditIdentity.Validate())
-        {
-            return;
-        }
 
-        var targetCredit = new Credit(creditIdentity.GetIdentifier(), creditIdentity.Mergers);
-        var targetValue = new Value(creditIdentity.Originator, r.Point, targetCredit);
+        // LpPublicKey#0@LpIdentifier/LpPublicKey -> A#InitialPoint@Identifier/Mergers
+        var value = new Value(LpConstants.LpPublicKey, 0, LpConstants.LpCredit);
+        var targetIdentity = new CreditIdentity(default, publicKey, r.Credit.Mergers);
+        var targetCredit = new Credit(targetIdentity.GetIdentifier(), targetIdentity.Mergers);
+        var targetValue = new Value(targetIdentity.Originator, r.Point, targetCredit);
 
         this.userInterfaceService.WriteLine($"{this.GetType().Name}");
         this.userInterfaceService.WriteLine($"Credit:{r.Credit}");
         this.userInterfaceService.WriteLine($"Target value:{targetValue}");
+
+        var evolProof = new EvolProof(value, default, targetValue, targetIdentity);
+        lpSeedKey.TrySign(evolProof, Mics.FromDays(1));
+        var bin = TinyhandSerializer.Serialize(evolProof);
+        var b = evolProof.ValidateAndVerify();
 
         using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(r.Credit, r.SeedKey, default))
         {

@@ -7,9 +7,11 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public partial class EvolProof : MarketableProof
 {
-    public EvolProof(Value value, SignaturePublicKey linkerPublicKey)
+    public EvolProof(Value value, SignaturePublicKey linkerPublicKey, Value targetValue, Identity? targetIdentity)
         : base(value, linkerPublicKey)
     {
+        this.TargetValue = targetValue;
+        this.TargetIdentity = targetIdentity;
     }
 
     public override PermittedSigner PermittedSigner => PermittedSigner.Owner;

@@ -56,11 +56,15 @@ public class LpService
 
     #region FieldAndProperty
 
+    public VaultControl VaultControl { get; init; }
+
+    public AuthorityControl AuthorityControl { get; init; }
+
+    public NetTerminal NetTerminal { get; init; }
+
+    public Credentials Credentials { get; init; }
+
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly NetTerminal netTerminal;
-    private readonly AuthorityControl authorityControl;
-    private readonly VaultControl vaultControl;
-    private readonly Credentials credentials;
     private readonly IConversionOptions conversionOptions;
 
     #endregion
@@ -76,10 +80,10 @@ public class LpService
     public LpService(IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl, Credentials credentials)
     {
         this.userInterfaceService = userInterfaceService;
-        this.netTerminal = netTerminal;
-        this.authorityControl = authorityControl;
-        this.vaultControl = vaultControl;
-        this.credentials = credentials;
+        this.NetTerminal = netTerminal;
+        this.AuthorityControl = authorityControl;
+        this.VaultControl = vaultControl;
+        this.Credentials = credentials;
 
         this.conversionOptions = Alias.Instance;
     }
@@ -109,7 +113,7 @@ public class LpService
             return new(NetResult.NoNetwork);
         }
 
-        using (var connection = await this.netTerminal.Connect(netNode))
+        using (var connection = await this.NetTerminal.Connect(netNode))
         {
             if (connection is null)
             {
@@ -132,7 +136,7 @@ public class LpService
 
     public CredentialEvidence? ResolveMerger(Credit credit)
     {
-        this.credentials.Nodes.TryGet(credit.Mergers[0], out var credentialEvidence);
+        this.Credentials.Nodes.TryGet(credit.Mergers[0], out var credentialEvidence);
         return credentialEvidence;
     }
 
@@ -173,7 +177,7 @@ public class LpService
             }
 
             var authorityName = memory.Slice(0, index).ToString();
-            var authority = await this.authorityControl.GetAuthority(authorityName).ConfigureAwait(false);
+            var authority = await this.AuthorityControl.GetAuthority(authorityName).ConfigureAwait(false);
             if (authority is null)
             {
                 return new(ParseResultCode.InvalidAuthority);
@@ -223,13 +227,13 @@ public class LpService
         SeedKey? seedKey;
 
         // Authority
-        if (await this.authorityControl.GetAuthority(code).ConfigureAwait(false) is { } auth)
+        if (await this.AuthorityControl.GetAuthority(code).ConfigureAwait(false) is { } auth)
         {// Success
             return auth.GetSeedKey();
         }
 
         // Vault
-        if (this.vaultControl.Root.TryGetObject<SeedKey>(code, out seedKey, out var result))
+        if (this.VaultControl.Root.TryGetObject<SeedKey>(code, out seedKey, out var result))
         {// Success
             return seedKey;
         }
