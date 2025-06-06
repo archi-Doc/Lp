@@ -44,8 +44,12 @@ public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOption
         this.userInterfaceService.WriteLine($"Target value:{targetValue}");
 
         var evolProof = new EvolProof(value, default, targetValue, targetIdentity);
-        lpSeedKey.TrySign(evolProof, Mics.FromDays(1));
-        var bin = TinyhandSerializer.Serialize(evolProof);
+        if (!lpSeedKey.TrySignAndValidate(evolProof, Mics.FromSeconds(10)))
+        {
+            return;
+        }
+
+        var bin = TinyhandSerializer.Serialize(evolProof);//
         var b = evolProof.ValidateAndVerify();
 
         using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(r.Credit, r.SeedKey, default))

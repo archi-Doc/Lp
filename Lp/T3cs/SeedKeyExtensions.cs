@@ -38,6 +38,16 @@ public static class SeedKeyExtensions
         }
     }
 
+    public static bool TrySignAndValidate(this SeedKey seedKey, Proof proof, long validMics)
+    {
+        if (!TrySign(seedKey, proof, validMics))
+        {
+            return false;
+        }
+
+        return proof.ValidateAndVerify();
+    }
+
     public static bool TrySign(this SeedKey seedKey, Evidence evidence, int mergerIndex)
     {
         if (!evidence.BaseProof.TryGetCredit(out var credit))

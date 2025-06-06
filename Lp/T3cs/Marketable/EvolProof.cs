@@ -16,9 +16,6 @@ public partial class EvolProof : MarketableProof
 
     public override PermittedSigner PermittedSigner => PermittedSigner.Owner;
 
-    // [Key(MarketableProof.ReservedKeyCount)]
-    // public Point TargetPoint { get; private set; }
-
     [Key(MarketableProof.ReservedKeyCount + 0)]
     public Value TargetValue { get; protected set; } = Value.UnsafeConstructor();
 
