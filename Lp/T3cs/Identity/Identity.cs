@@ -5,11 +5,19 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+public enum IdentityKey : int
+{
+    CreditIdentity,
+    BoardIdentity,
+}
+
 /// <summary>
 /// Represents a credit identity.
 /// </summary>
+// [TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
+// [TinyhandUnion((int)IdentityKey.BoardIdentity, typeof(BoardIdentity))]
 [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
-public partial record Identity : IValidatable
+public  partial class Identity : IValidatable
 {
     /// <summary>
     /// The number of reserved keys.
@@ -32,6 +40,10 @@ public partial record Identity : IValidatable
     public required partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     #endregion
+
+    public Identity()
+    {
+    }
 
     [SetsRequiredMembers]
     public Identity(IdentityKind identityKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
