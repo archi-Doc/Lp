@@ -28,13 +28,13 @@ public abstract partial class ProofWithSigner : Proof
     public Value Value { get; protected set; }
 
     /// <summary>
-    /// Gets the signer index indicating which key is used for authentication.<br/>
+    /// Gets or sets the signer index indicating which key is used for authentication.<br/>
     /// If <c>0</c>, the target <see cref="Value.Owner"/> is used.<br/>
     /// If between <c>1</c> and <c>Value.Credit.MergerCount</c>, a merger key is used.<br/>
     /// Otherwise, the <see cref="LpConstants.LpPublicKey"/> is used.
     /// </summary>
     [Key(Proof.ReservedKeyCount + 1)]
-    public int Signer { get; private set; }
+    public int Signer { get; protected set; }
 
     #endregion
 

@@ -14,7 +14,7 @@ public abstract partial class ContractableProof : ProofWithSigner
     #region FieldAndProperty
 
     [Key(ProofWithSigner.ReservedKeyCount + 0)]
-    public SignaturePublicKey LinkerPublicKey { get; private set; }
+    public SignaturePublicKey LinkerPublicKey { get; protected set; }
 
     #endregion
 
