@@ -16,41 +16,35 @@ public enum IdentityKey : int
 /// </summary>
 [TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
 [TinyhandUnion((int)IdentityKey.BoardIdentity, typeof(BoardIdentity))]
-// [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
+[TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
 public abstract partial record class Identity : IValidatable
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public const int ReservedKeyCount = 4;
+    public const int ReservedKeyCount = 3;
 
     #region FieldAndProperty
 
-    [Key(0)]
-    public IdentityKind Kind { get; init; }
+    // [Key(0)]
+    // public IdentityKind Kind { get; init; }
 
-    [Key(1)]
+    [Key(0)]
     public Identifier SourceIdentifier { get; init; }
 
-    [Key(2)]
+    [Key(1)]
     public SignaturePublicKey Originator { get; init; }
-
-    [Key(3)]
-    [MaxLength(LpConstants.MaxMergers)]
-    public partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     #endregion
 
-    [SetsRequiredMembers]
-    public Identity(IdentityKind identityKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
+    // [SetsRequiredMembers]
+    public Identity(Identifier sourceIdentifier, SignaturePublicKey originator)
     {
-        this.SourceIdentifier = default;
+        this.SourceIdentifier = sourceIdentifier;
         this.Originator = originator;
-        this.Mergers = mergers;
-        this.Kind = identityKind;
     }
 
-    public bool Validate()
+    public virtual bool Validate()
     {
         if (!this.SourceIdentifier.IsValid)
         {
@@ -62,7 +56,7 @@ public abstract partial record class Identity : IValidatable
             return false;
         }
 
-        if (this.Mergers.Length == 0 ||
+        /*if (this.Mergers.Length == 0 ||
             this.Mergers.Length > LpConstants.MaxMergers)
         {
             return false;
@@ -74,7 +68,7 @@ public abstract partial record class Identity : IValidatable
             {
                 return false;
             }
-        }
+        }*/
 
         return true;
     }

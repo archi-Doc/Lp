@@ -38,7 +38,7 @@ public class LpServiceTest
         var publicKey = seedKey.GetSignaturePublicKey();
         var mergerSeedKey = SeedKey.NewSignature();
         var mergerPublicKey = mergerSeedKey.GetSignaturePublicKey();
-        var identity = new CreditIdentity(IdentityKind.Credit, publicKey, [mergerPublicKey]);
+        var identity = new CreditIdentity(default, publicKey, [mergerPublicKey]);
         var identifier = identity.GetIdentifier();
 
         var st = $"{seedKey.UnsafeToString()}@{identifier}/{mergerPublicKey}";

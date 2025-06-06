@@ -28,7 +28,7 @@ public static class LpConstants
     public const long LpExpirationMics = Mics.MicsPerDay * 1;
 
     public static readonly SignaturePublicKey LpPublicKey;
-    public static readonly Identity LpIdentity;
+    public static readonly CreditIdentity LpIdentity;
     public static readonly Identifier LpIdentifier;
     public static readonly Credit LpCredit;
 
@@ -38,14 +38,14 @@ public static class LpConstants
 
     public static readonly SignaturePublicKey TestPublicKey;
     public static readonly SeedKey TestSeedKey;
-    public static readonly Identity TestIdentity;
+    public static readonly CreditIdentity TestIdentity;
     public static readonly Identifier TestIdentifier;
 
     static LpConstants()
     {
         SignaturePublicKey.TryParse(LpPublicKeyString, out LpPublicKey, out _);
         Alias.Instance.Add(LpKeyAlias, LpPublicKey);
-        LpIdentity = new CreditIdentity(IdentityKind.Credit, LpPublicKey, [LpPublicKey]);
+        LpIdentity = new CreditIdentity(default, LpPublicKey, [LpPublicKey]);
         LpIdentifier = LpIdentity.GetIdentifier();
         Alias.Instance.Add(LpAlias, LpIdentifier);
         Credit.TryCreate(LpIdentity, out LpCredit!);
@@ -53,7 +53,7 @@ public static class LpConstants
         SeedKey.TryParse(TestSecretKeyString, out TestSeedKey!);
         TestPublicKey = TestSeedKey.GetSignaturePublicKey();
         Alias.Instance.Add(TestKeyAlias, TestPublicKey);
-        TestIdentity = new CreditIdentity(IdentityKind.Credit, TestPublicKey, [TestPublicKey]);
+        TestIdentity = new CreditIdentity(default, TestPublicKey, [TestPublicKey]);
         TestIdentifier = TestIdentity.GetIdentifier();
         Alias.Instance.Add(TestAlias, TestIdentifier);
     }

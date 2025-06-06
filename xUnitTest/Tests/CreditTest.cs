@@ -13,7 +13,7 @@ public class CreditTest
     {
         var seedKey = SeedKey.NewSignature();
         var publicKey = seedKey.GetSignaturePublicKey();
-        var creditIdentity = new CreditIdentity(IdentityKind.Credit, publicKey, [publicKey]);
+        var creditIdentity = new CreditIdentity(default, publicKey, [publicKey]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
 
         var st = credit!.ToString();
