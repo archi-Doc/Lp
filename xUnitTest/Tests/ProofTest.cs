@@ -34,7 +34,7 @@ public class ProofTest
         var linkerKey = SeedKey.NewSignature();
         var linker = linkerKey.GetSignaturePublicKey();
 
-        var creditIdentity = new Identity(IdentityKind.Credit, owner, [merger,]);
+        var creditIdentity = new CreditIdentity(IdentityKind.Credit, owner, [merger,]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
         var value = new Value(owner, 1, credit!); // owner2#2@credit
         var value2 = new Value(owner2, 2, credit!); // owner2#2@credit

@@ -14,10 +14,10 @@ public enum IdentityKey : int
 /// <summary>
 /// Represents a credit identity.
 /// </summary>
-// [TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
-// [TinyhandUnion((int)IdentityKey.BoardIdentity, typeof(BoardIdentity))]
-[TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
-public  partial class Identity : IValidatable
+[TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
+[TinyhandUnion((int)IdentityKey.BoardIdentity, typeof(BoardIdentity))]
+// [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
+public abstract partial record class Identity : IValidatable
 {
     /// <summary>
     /// The number of reserved keys.
@@ -27,23 +27,19 @@ public  partial class Identity : IValidatable
     #region FieldAndProperty
 
     [Key(0)]
-    public required IdentityKind Kind { get; init; }
+    public IdentityKind Kind { get; init; }
 
     [Key(1)]
-    public required Identifier SourceIdentifier { get; init; }
+    public Identifier SourceIdentifier { get; init; }
 
     [Key(2)]
-    public required SignaturePublicKey Originator { get; init; }
+    public SignaturePublicKey Originator { get; init; }
 
     [Key(3)]
     [MaxLength(LpConstants.MaxMergers)]
-    public required partial SignaturePublicKey[] Mergers { get; init; } = [];
+    public partial SignaturePublicKey[] Mergers { get; init; } = [];
 
     #endregion
-
-    public Identity()
-    {
-    }
 
     [SetsRequiredMembers]
     public Identity(IdentityKind identityKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)

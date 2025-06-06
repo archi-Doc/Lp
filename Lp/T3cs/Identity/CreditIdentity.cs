@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class CreditIdentity : Identity
+public partial record class CreditIdentity : Identity
 {
     [SetsRequiredMembers]
     public CreditIdentity(IdentityKind identityKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
