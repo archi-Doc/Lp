@@ -8,14 +8,14 @@ namespace Lp.T3cs;
 public enum IdentityKey : int
 {
     CreditIdentity,
-    BoardIdentity,
+    MessageIdentity,
 }
 
 /// <summary>
 /// Represents a credit identity.
 /// </summary>
 [TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
-[TinyhandUnion((int)IdentityKey.BoardIdentity, typeof(BoardIdentity))]
+[TinyhandUnion((int)IdentityKey.MessageIdentity, typeof(MessageIdentity))]
 [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
 public abstract partial record class Identity : IValidatable
 {
