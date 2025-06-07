@@ -108,7 +108,6 @@ public class Control
 
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
 
-
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
