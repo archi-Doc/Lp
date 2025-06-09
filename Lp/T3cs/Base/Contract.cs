@@ -204,19 +204,3 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
         }
     }
 }
-
-/*[ValueLinkObject]
-public partial class ContractedLinkage : Linkage
-{
-    public static bool TryCreate(LinkableEvidence evidence1, LinkableEvidence evidence2, [MaybeNullWhen(false)] out MarketableLinkage linkage)
-        => TryCreate(() => new(), evidence1, evidence2, out linkage);
-
-    [Link(Primary = true, Unique = true, Type = ChainType.Ordered, TargetMember = nameof(LinkedMics))]
-    protected ContractedLinkage()
-    {
-    }
-
-    public MarketableProof LinkableProof1 => (MarketableProof)this.BaseProof1;
-
-    public MarketableProof LinkableProof2 => (MarketableProof)this.BaseProof2;
-}*/
