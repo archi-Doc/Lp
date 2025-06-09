@@ -4,6 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+/*
 public enum MarketableProofKey : int
 {
     EvolProof,
@@ -22,4 +23,4 @@ public abstract partial class MarketableProof : ContractableProof
         : base(value, linkerPublicKey)
     {
     }
-}
+}*/

@@ -5,10 +5,10 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class EvolProof : MarketableProof
+public partial class EvolProof : ContractableProofWithSigner
 {
-    public EvolProof(Value value, SignaturePublicKey linkerPublicKey, Value targetValue, Identity? targetIdentity)
-        : base(value, linkerPublicKey)
+    public EvolProof(SignaturePublicKey linkerPublicKey, Value value, Value targetValue, Identity? targetIdentity)
+        : base(linkerPublicKey, value)
     {
         this.TargetValue = targetValue;
         this.TargetIdentity = targetIdentity;
@@ -16,9 +16,9 @@ public partial class EvolProof : MarketableProof
 
     public override PermittedSigner PermittedSigner => PermittedSigner.Owner;
 
-    [Key(MarketableProof.ReservedKeyCount + 0)]
+    [Key(ContractableProofWithSigner.ReservedKeyCount + 0)]
     public Value TargetValue { get; protected set; } = Value.UnsafeConstructor();
 
-    [Key(MarketableProof.ReservedKeyCount + 1)]
+    [Key(ContractableProofWithSigner.ReservedKeyCount + 1)]
     public Identity? TargetIdentity { get; protected set; }
 }

@@ -16,7 +16,7 @@ public partial class MarketableLinkage : Linkage
     {
     }
 
-    public MarketableProof LinkableProof1 => (MarketableProof)this.Proof1;
+    public ContractableProof LinkableProof1 => (ContractableProof)this.Proof1;
 
-    public MarketableProof LinkableProof2 => (MarketableProof)this.Proof2;
+    public ContractableProof LinkableProof2 => (ContractableProof)this.Proof2;
 }

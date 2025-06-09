@@ -5,12 +5,12 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public sealed class EmptyProof : ContractableProof
+public sealed class EmptyProof : ContractableProofWithSigner
 {
     public static readonly EmptyProof Instance = new();
 
     private EmptyProof()
-        : base(default!, default)
+        : base(default, default!)
     {
     }
 
