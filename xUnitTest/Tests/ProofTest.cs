@@ -34,7 +34,7 @@ public class ProofTest
         var linkerKey = SeedKey.NewSignature();
         var linker = linkerKey.GetSignaturePublicKey();
 
-        var creditIdentity = new Identity(IdentityKind.Credit, owner, [merger,]);
+        var creditIdentity = new CreditIdentity(default, owner, [merger,]);
         Credit.TryCreate(creditIdentity, out var credit).IsTrue();
         var value = new Value(owner, 1, credit!); // owner2#2@credit
         var value2 = new Value(owner2, 2, credit!); // owner2#2@credit
@@ -49,10 +49,10 @@ public class ProofTest
         mergerKey.TrySign(credentialProof, validMics).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
 
-        var linkageProof = new TestLinkageProof(value, linker);
+        var linkageProof = new TestLinkageProof(linker, value);
         ownerKey.TrySign(linkageProof, validMics).IsTrue();
         linkageProof.ValidateAndVerify().IsTrue();
-        var linkageProof2 = new TestLinkageProof(value2, linker);
+        var linkageProof2 = new TestLinkageProof(linker, value2);
         ownerKey2.TrySign(linkageProof2, validMics).IsTrue();
         linkageProof2.ValidateAndVerify().IsTrue();
         var linkedMics = Mics.FastCorrected;

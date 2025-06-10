@@ -4,17 +4,18 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public abstract partial class ProofWithPublicKey : Proof
+public abstract partial class ContractableProofWithPublicKey : ContractableProof
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 1;
+    public new const int ReservedKeyCount = ContractableProof.ReservedKeyCount + 1;
 
-    [Key(Proof.ReservedKeyCount)]
+    [Key(ContractableProof.ReservedKeyCount)]
     public SignaturePublicKey PublicKey { get; protected set; }
 
-    public ProofWithPublicKey(SignaturePublicKey publicKey)
+    public ContractableProofWithPublicKey(SignaturePublicKey linkerPublicKey, SignaturePublicKey publicKey)
+        : base(linkerPublicKey)
     {
         this.PublicKey = publicKey;
     }

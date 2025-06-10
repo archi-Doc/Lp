@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Playground;
 
 [NetServiceInterface]
-public interface ITestService : INetService, INetServiceAgreement
+public interface ITestService : INetService, INetServiceWithUpdateAgreement
 {
     Task<string?> DoubleString(string input);
 
@@ -25,7 +25,7 @@ internal class TestServiceImpl : ITestService
         return data;
     }
 
-    async NetTask<NetResult> INetServiceAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    async NetTask<NetResult> INetServiceWithUpdateAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
         var transmissionContext = TransmissionContext.Current;
         if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))

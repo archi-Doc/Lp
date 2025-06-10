@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -8,76 +7,58 @@ namespace Lp.T3cs;
 public enum IdentityKey : int
 {
     CreditIdentity,
-    BoardIdentity,
+    MessageIdentity,
 }
 
 /// <summary>
-/// Represents a credit identity.
+/// Represents an abstract base class for identities, providing common properties and validation logic.
 /// </summary>
-// [TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
-// [TinyhandUnion((int)IdentityKey.BoardIdentity, typeof(BoardIdentity))]
+[TinyhandUnion((int)IdentityKey.CreditIdentity, typeof(CreditIdentity))]
+[TinyhandUnion((int)IdentityKey.MessageIdentity, typeof(MessageIdentity))]
 [TinyhandObject(ReservedKeyCount = ReservedKeyCount)]
-public  partial class Identity : IValidatable
+public abstract partial record class Identity : IValidatable
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public const int ReservedKeyCount = 4;
+    public const int ReservedKeyCount = 3;
 
     #region FieldAndProperty
 
+    /// <summary>
+    /// Gets the identifier of the source.
+    /// </summary>
     [Key(0)]
-    public required IdentityKind Kind { get; init; }
+    public Identifier SourceIdentifier { get; init; }
 
+    /// <summary>
+    /// Gets the public key of the originator.
+    /// </summary>
     [Key(1)]
-    public required Identifier SourceIdentifier { get; init; }
-
-    [Key(2)]
-    public required SignaturePublicKey Originator { get; init; }
-
-    [Key(3)]
-    [MaxLength(LpConstants.MaxMergers)]
-    public required partial SignaturePublicKey[] Mergers { get; init; } = [];
+    public SignaturePublicKey Originator { get; init; }
 
     #endregion
 
-    public Identity()
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Identity"/> class.
+    /// </summary>
+    /// <param name="sourceIdentifier">The identifier of the source.</param>
+    /// <param name="originator">The public key of the originator.</param>
+    public Identity(Identifier sourceIdentifier, SignaturePublicKey originator)
     {
-    }
-
-    [SetsRequiredMembers]
-    public Identity(IdentityKind identityKind, SignaturePublicKey originator, SignaturePublicKey[] mergers)
-    {
-        this.SourceIdentifier = default;
+        this.SourceIdentifier = sourceIdentifier;
         this.Originator = originator;
-        this.Mergers = mergers;
-        this.Kind = identityKind;
     }
 
-    public bool Validate()
+    /// <summary>
+    /// Validates the identity.
+    /// </summary>
+    /// <returns><c>true</c> if the identity is valid; otherwise, <c>false</c>.</returns>
+    public virtual bool Validate()
     {
-        if (!this.SourceIdentifier.IsValid)
-        {
-            return false;
-        }
-
         if (!this.Originator.Validate())
         {
             return false;
-        }
-
-        if (this.Mergers.Length == 0 ||
-            this.Mergers.Length > LpConstants.MaxMergers)
-        {
-            return false;
-        }
-
-        foreach (var x in this.Mergers)
-        {
-            if (!x.Validate())
-            {
-                return false;
-            }
         }
 
         return true;

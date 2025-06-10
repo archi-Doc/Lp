@@ -38,18 +38,18 @@ public class LpServiceTest
         var publicKey = seedKey.GetSignaturePublicKey();
         var mergerSeedKey = SeedKey.NewSignature();
         var mergerPublicKey = mergerSeedKey.GetSignaturePublicKey();
-        var identity = new Identity(IdentityKind.Credit, publicKey, [mergerPublicKey]);
+        var identity = new CreditIdentity(default, publicKey, [mergerPublicKey]);
         var identifier = identity.GetIdentifier();
 
         var st = $"{seedKey.UnsafeToString()}@{identifier}/{mergerPublicKey}";
-        var r = await lpService.ParseSeedKeyAndCredit(st);
+        var r = await lpService.ParseAuthorityAndCredit(st);
         r.IsSuccess.IsTrue();
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Credit!.Identifier.Equals(identifier).IsTrue();
         r.Credit!.Mergers.SequenceEqual([mergerPublicKey]).IsTrue();
 
         st = $"{seedKey.UnsafeToString()}#999@{identifier}/{mergerPublicKey}";
-        r = await lpService.ParseSeedKeyAndCredit(st);
+        r = await lpService.ParseAuthorityAndCredit(st);
         r.IsSuccess.IsTrue();
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Point.Is(999);
@@ -57,7 +57,7 @@ public class LpServiceTest
         r.Credit!.Mergers.SequenceEqual([mergerPublicKey]).IsTrue();
 
         st = $"{seedKey.UnsafeToString()}#111@{LpConstants.LpAlias}/{LpConstants.LpKeyAlias}";
-        r = await lpService.ParseSeedKeyAndCredit(st);
+        r = await lpService.ParseAuthorityAndCredit(st);
         r.IsSuccess.IsTrue();
         seedKey.Equals(r.SeedKey).IsTrue();
         r.Point.Is(111);
@@ -65,7 +65,7 @@ public class LpServiceTest
         r.Credit!.Mergers.SequenceEqual([LpConstants.LpPublicKey]).IsTrue();
 
         st = $"{TestAuthorityName}#222@{LpConstants.LpAlias}/{LpConstants.LpKeyAlias}";
-        r = await lpService.ParseSeedKeyAndCredit(st);
+        r = await lpService.ParseAuthorityAndCredit(st);
         r.IsSuccess.IsTrue();
         this.authority.GetSeedKey(LpConstants.LpCredit).Equals(r.SeedKey).IsTrue();
         r.Point.Is(222);

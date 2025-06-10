@@ -17,7 +17,7 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
 
     public async Task RunAsync(InspectOwnerOptions option, string[] args)
     {
-        var r = await this.lpService.ParseSeedKeyAndCredit(option.Source);
+        var r = await this.lpService.ParseAuthorityAndCredit(option.Source);
         if (!r.IsSuccess)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(r.Code));

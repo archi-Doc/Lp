@@ -13,18 +13,18 @@ namespace Lp.T3cs;
 /// if it is between 1 and MergerCount, a Merger is used;<br/>
 /// otherwise, LpKey is used.
 /// </summary>
-public abstract partial class ProofWithSigner : Proof
+public abstract partial class ContractableProofWithSigner : ContractableProof
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 2;
+    public new const int ReservedKeyCount = ContractableProof.ReservedKeyCount + 2;
 
     #region FieldAndProperty
 
     public abstract PermittedSigner PermittedSigner { get; }
 
-    [Key(Proof.ReservedKeyCount + 0)]
+    [Key(ContractableProof.ReservedKeyCount + 0)]
     public Value Value { get; protected set; }
 
     /// <summary>
@@ -33,12 +33,13 @@ public abstract partial class ProofWithSigner : Proof
     /// If between <c>1</c> and <c>Value.Credit.MergerCount</c>, a merger key is used.<br/>
     /// Otherwise, the <see cref="LpConstants.LpPublicKey"/> is used.
     /// </summary>
-    [Key(Proof.ReservedKeyCount + 1)]
+    [Key(ContractableProof.ReservedKeyCount + 1)]
     public int Signer { get; protected set; }
 
     #endregion
 
-    public ProofWithSigner(Value value)
+    public ContractableProofWithSigner(SignaturePublicKey linkerPublicKey, Value value)
+        : base(linkerPublicKey)
     {
         this.Value = value;
     }

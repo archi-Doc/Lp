@@ -91,7 +91,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         // if (await this.authorityControl.GetAuthority("lp") is { } authority)
         {
             var owner = SeedKey.NewSignature();
-            var creditIdentity = new CreditIdentity(IdentityKind.Credit, owner.GetSignaturePublicKey(), [SeedKey.NewSignature().GetSignaturePublicKey()]);
+            var creditIdentity = new CreditIdentity(default, owner.GetSignaturePublicKey(), [SeedKey.NewSignature().GetSignaturePublicKey()]);
             if (Credit.TryCreate(creditIdentity, out var credit) &&
                 Value.TryCreate(owner.GetSignaturePublicKey(), 111, credit, out var value))
             {

@@ -102,7 +102,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         return false;
     }
 
-    /// <summary>
+    /*/// <summary>
     /// Tries to get the value associated with the proof.
     /// </summary>
     /// <param name="value">The value associated with the proof, if available.</param>
@@ -111,17 +111,11 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     {
         value = default;
         return false;
-    }
+    }*/
 
-    /// <summary>
-    /// Tries to get the linker public key associated with the proof.
-    /// </summary>
-    /// <param name="linkerPublicKey"> When this method returns, contains the linker public key if available; otherwise, <c>null</c>.</param>
-    /// <returns><c>true</c> if the linker public key is available; otherwise, <c>false</c>.</returns>
-    public virtual bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
+    public virtual Point Account(ref SignaturePublicKey targetPublicKey)
     {
-        linkerPublicKey = default;
-        return false;
+        return default;
     }
 
     /// <summary>

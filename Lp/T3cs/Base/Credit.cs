@@ -28,7 +28,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     #endregion
 
-    public static bool TryCreate(Identity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
+    public static bool TryCreate(CreditIdentity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
     {
         var obj = new Credit(creditIdentity.GetIdentifier(), creditIdentity.Mergers);
 
@@ -220,7 +220,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
             return false;
         }
 
-        var count = this.Mergers.Length;
+        var count = this.Mergers.Length; // MaxMergersCode
         if (count == 1)
         {
             return this.Mergers[0].Validate();
@@ -239,7 +239,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public int GetMergerIndex(ref SignaturePublicKey publicKey)
     {
-        var count = this.Mergers.Length;
+        var count = this.Mergers.Length; // MaxMergersCode
         if (count == 0)
         {
             return -1;
