@@ -102,7 +102,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         return false;
     }
 
-    /// <summary>
+    /*/// <summary>
     /// Tries to get the value associated with the proof.
     /// </summary>
     /// <param name="value">The value associated with the proof, if available.</param>
@@ -111,7 +111,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     {
         value = default;
         return false;
-    }
+    }*/
 
     public virtual Point Account(ref SignaturePublicKey targetPublicKey)
     {

@@ -18,6 +18,8 @@ public sealed class EmptyProof : ContractableProofWithSigner
 
     public override bool Validate() => true;
 
+    public override SignaturePublicKey GetSignatureKey() => default;
+
     public override bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
     {
         linkerPublicKey = default;
@@ -30,9 +32,9 @@ public sealed class EmptyProof : ContractableProofWithSigner
         return false;
     }
 
-    public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
+    /*public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
     {
         value = default;
         return false;
-    }
+    }*/
 }

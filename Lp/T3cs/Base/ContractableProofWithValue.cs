@@ -29,11 +29,11 @@ public abstract partial class ContractableProofWithValue : ContractableProof
         return true;
     }
 
-    public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
+    /*public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
     {
         value = this.Value;
         return true;
-    }
+    }*/
 
     public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
     {

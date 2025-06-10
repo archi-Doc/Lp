@@ -7,7 +7,7 @@ public enum MergeableProofKey : int
     TransferProof,
 }
 
-[TinyhandUnion((int)MergeableProofKey.TransferProof, typeof(TransferProof))]
+// [TinyhandUnion((int)MergeableProofKey.TransferProof, typeof(TransferProof))]
 [TinyhandObject(ReservedKeyCount = MergeableProof.ReservedKeyCount)]
 // [ValueLinkObject]
 public abstract partial class MergeableProof : ProofWithSigner
@@ -22,6 +22,4 @@ public abstract partial class MergeableProof : ProofWithSigner
         : base(value)
     {
     }
-
-    public abstract long Difference { get; }
 }
