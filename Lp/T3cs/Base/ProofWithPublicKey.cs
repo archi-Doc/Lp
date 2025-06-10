@@ -14,6 +14,11 @@ public abstract partial class ProofWithPublicKey : Proof
     [Key(Proof.ReservedKeyCount)]
     public SignaturePublicKey PublicKey { get; protected set; }
 
+    public ProofWithPublicKey(SignaturePublicKey publicKey)
+    {
+        this.PublicKey = publicKey;
+    }
+
     public override SignaturePublicKey GetSignatureKey() => this.PublicKey;
 
     public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)

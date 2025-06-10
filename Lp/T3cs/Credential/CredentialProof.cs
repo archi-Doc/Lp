@@ -7,7 +7,7 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [ValueLinkObject(Integrality = true, Isolation = IsolationLevel.Serializable)]
-public sealed partial class CredentialProof : ProofWithSigner
+public sealed partial class CredentialProof : ProofWithPublicKey
 {
     #region Integrality
 
@@ -51,19 +51,14 @@ public sealed partial class CredentialProof : ProofWithSigner
     [Key(ProofWithSigner.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
 
-    public override PermittedSigner PermittedSigner => PermittedSigner.Owner | PermittedSigner.Merger | PermittedSigner.LpKey;
-
     public override long MaxValidMics => Mics.MicsPerDay * 1;
-
-    public SignaturePublicKey PublicKey => this.GetSignatureKey();
 
     #endregion
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, TargetMember = nameof(PublicKey))]
-    public CredentialProof(Value value, CredentialKind kind, CredentialState state)
-        : base(value)
+    public CredentialProof(SignaturePublicKey publicKey, CredentialKind kind, CredentialState state)
+        : base(publicKey)
     {
-        this.Value = value;
         this.Kind = kind;
         this.State = state;
     }
