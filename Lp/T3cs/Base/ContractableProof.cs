@@ -23,7 +23,12 @@ public abstract partial class ContractableProof : Proof
         this.LinkerPublicKey = linkerPublicKey;
     }
 
-    public override bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
+    /// <summary>
+    /// Tries to get the linker public key associated with the proof.
+    /// </summary>
+    /// <param name="linkerPublicKey"> When this method returns, contains the linker public key if available; otherwise, <c>null</c>.</param>
+    /// <returns><c>true</c> if the linker public key is available; otherwise, <c>false</c>.</returns>
+    public virtual bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
     {
         linkerPublicKey = this.LinkerPublicKey;
         return true;

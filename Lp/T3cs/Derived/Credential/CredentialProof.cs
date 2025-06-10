@@ -5,17 +5,7 @@ namespace Lp.T3cs;
 [TinyhandObject]
 public sealed partial class CredentialProof : ProofWithSigner
 {
-    public CredentialProof(Value value, CredentialKind kind, CredentialState state)
-        : base(value)
-    {
-        this.Value = value;
-        this.Kind = kind;
-        this.State = state;
-    }
-
     #region FieldAndProperty
-
-    public override PermittedSigner PermittedSigner => PermittedSigner.Owner | PermittedSigner.Merger | PermittedSigner.LpKey;
 
     [Key(ProofWithSigner.ReservedKeyCount + 0)]
     public CredentialKind Kind { get; private set; }
@@ -23,9 +13,19 @@ public sealed partial class CredentialProof : ProofWithSigner
     [Key(ProofWithSigner.ReservedKeyCount + 1)]
     public CredentialState State { get; private set; }
 
+    public override PermittedSigner PermittedSigner => PermittedSigner.Owner | PermittedSigner.Merger | PermittedSigner.LpKey;
+
     public override long MaxValidMics => Mics.MicsPerDay * 1;
 
     #endregion
+
+    public CredentialProof(Value value, CredentialKind kind, CredentialState state)
+        : base(value)
+    {
+        this.Value = value;
+        this.Kind = kind;
+        this.State = state;
+    }
 
     public override bool Validate()
     {
