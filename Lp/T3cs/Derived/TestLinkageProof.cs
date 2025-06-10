@@ -5,10 +5,10 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TestLinkageProof : ContractableProof
+public partial class TestLinkageProof : ContractableProofWithSigner
 {
-    public TestLinkageProof(Value value, SignaturePublicKey linkerPublicKey)
-        : base(value, linkerPublicKey)
+    public TestLinkageProof(SignaturePublicKey linkerPublicKey, Value value)
+        : base(linkerPublicKey, value)
     {
     }
 

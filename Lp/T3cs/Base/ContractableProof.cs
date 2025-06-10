@@ -4,27 +4,33 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public abstract partial class ContractableProof : ProofWithSigner
+public abstract partial class ContractableProof : Proof
 {
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public new const int ReservedKeyCount = ProofWithSigner.ReservedKeyCount + 1;
+    public new const int ReservedKeyCount = Proof.ReservedKeyCount + 1;
 
     #region FieldAndProperty
 
-    [Key(ProofWithSigner.ReservedKeyCount + 0)]
+    [Key(Proof.ReservedKeyCount + 0)]
     public SignaturePublicKey LinkerPublicKey { get; protected set; }
 
     #endregion
 
-    public ContractableProof(Value value, SignaturePublicKey linkerPublicKey)
-        : base(value)
+    public ContractableProof(SignaturePublicKey linkerPublicKey)
     {
         this.LinkerPublicKey = linkerPublicKey;
     }
 
-    public override bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
+    //public abstract SignaturePublicKey GetSignatureKey();
+
+    /// <summary>
+    /// Tries to get the linker public key associated with the proof.
+    /// </summary>
+    /// <param name="linkerPublicKey"> When this method returns, contains the linker public key if available; otherwise, <c>null</c>.</param>
+    /// <returns><c>true</c> if the linker public key is available; otherwise, <c>false</c>.</returns>
+    public virtual bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
     {
         linkerPublicKey = this.LinkerPublicKey;
         return true;

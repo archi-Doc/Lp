@@ -5,18 +5,20 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public sealed class EmptyProof : ContractableProof
+public sealed class EmptyProof : ContractableProofWithSigner
 {
     public static readonly EmptyProof Instance = new();
 
     private EmptyProof()
-        : base(default!, default)
+        : base(default, default!)
     {
     }
 
     public override PermittedSigner PermittedSigner => default;
 
     public override bool Validate() => true;
+
+    public override SignaturePublicKey GetSignatureKey() => default;
 
     public override bool TryGetLinkerPublicKey(out SignaturePublicKey linkerPublicKey)
     {
@@ -30,9 +32,9 @@ public sealed class EmptyProof : ContractableProof
         return false;
     }
 
-    public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
+    /*public override bool TryGetValue([MaybeNullWhen(false)] out Value value)
     {
         value = default;
         return false;
-    }
+    }*/
 }

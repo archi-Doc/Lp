@@ -5,12 +5,12 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public sealed partial class LinkProof : ContractableProof
+public sealed partial class LinkProof : ContractableProofWithSigner
 {
     public override PermittedSigner PermittedSigner => PermittedSigner.Merger | PermittedSigner.LpKey;
 
-    public LinkProof(Value value, SignaturePublicKey linkerPublicKey)
-        : base(value, linkerPublicKey)
+    public LinkProof(SignaturePublicKey linkerPublicKey, Value value)
+        : base(linkerPublicKey, value)
     {
     }
 }

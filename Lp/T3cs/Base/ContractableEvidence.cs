@@ -59,9 +59,9 @@ public sealed partial class ContractableEvidence : Evidence
         }
     }
 
-    public ContractableProof LinkageProof1 => (ContractableProof)this.Contract1.Proof;
+    public ContractableProof Proof1 => (ContractableProof)this.Contract1.Proof;
 
-    public ContractableProof LinkageProof2 => (ContractableProof)this.Contract2.Proof;
+    public ContractableProof Proof2 => (ContractableProof)this.Contract2.Proof;
 
     #endregion
 

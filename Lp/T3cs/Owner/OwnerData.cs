@@ -26,7 +26,7 @@ public sealed partial record OwnerData // : ITinyhandCustomJournal
     public MergeableEvidence.GoshujinClass Evidences { get; private set; } = new();
 
     [Key(2)]
-    public MarketableLinkage.GoshujinClass Linkages { get; private set; } = new();
+    public MergeableLinkage.GoshujinClass Linkages { get; private set; } = new();
 
     /*
     void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)

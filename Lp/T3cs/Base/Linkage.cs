@@ -121,12 +121,12 @@ public partial class Linkage : IValidatable
 
     public void StripProof(ref SignaturePublicKey owner)
     {
-        if (this.Proof1.TryGetValue(out var value1) && !value1.Owner.Equals(owner))
+        if (!this.Proof1.GetSignatureKey().Equals(owner))
         {
             this.Contract1 = this.Contract1.StripProof();
         }
 
-        if (this.Proof2.TryGetValue(out var value2) && !value2.Owner.Equals(owner))
+        if (!this.Proof2.GetSignatureKey().Equals(owner))
         {
             this.Contract2 = this.Contract2.StripProof();
         }

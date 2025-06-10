@@ -192,9 +192,9 @@ public partial class LpDogmaMachine : Machine
         }
 
         var value1 = new Value(LpConstants.LpPublicKey, 1, link.Credit1); // LpKey#1@Credit1
-        var proof1 = new LinkProof(value1, link.LinkerPublicKey); // @Credit + Linker
+        var proof1 = new LinkProof(link.LinkerPublicKey, value1); // @Credit + Linker
         var value2 = new Value(LpConstants.LpPublicKey, 1, link.Credit2); // LpKey#1@Credit2
-        var proof2 = new LinkProof(value2, link.LinkerPublicKey); // @Credit + Linker
+        var proof2 = new LinkProof(link.LinkerPublicKey, value2); // @Credit + Linker
         this.lpSeedKey.TrySign(proof1, LpConstants.LpExpirationMics); // Proof{@Credit + Linker}/LpKey
         this.lpSeedKey.TrySign(proof2, LpConstants.LpExpirationMics);
         var linkedMics = Mics.GetMicsId();

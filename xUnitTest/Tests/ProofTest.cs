@@ -49,10 +49,10 @@ public class ProofTest
         mergerKey.TrySign(credentialProof, validMics).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
 
-        var linkageProof = new TestLinkageProof(value, linker);
+        var linkageProof = new TestLinkageProof(linker, value);
         ownerKey.TrySign(linkageProof, validMics).IsTrue();
         linkageProof.ValidateAndVerify().IsTrue();
-        var linkageProof2 = new TestLinkageProof(value2, linker);
+        var linkageProof2 = new TestLinkageProof(linker, value2);
         ownerKey2.TrySign(linkageProof2, validMics).IsTrue();
         linkageProof2.ValidateAndVerify().IsTrue();
         var linkedMics = Mics.FastCorrected;

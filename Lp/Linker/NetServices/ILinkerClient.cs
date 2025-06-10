@@ -7,7 +7,7 @@ namespace Lp.T3cs;
 [NetServiceInterface]
 public partial interface ILinkerClient : INetService
 {
-    NetTask<T3csResultAndValue<MarketableLinkage>> Evol(EvolProof evolProof);
+    NetTask<T3csResultAndValue<MergeableLinkage>> Evol(EvolProof evolProof);
 }
 
 [NetServiceObject]
@@ -20,7 +20,7 @@ internal class LinkerClientAgent : ILinkerClient
         this.merger = merger;
     }
 
-    NetTask<T3csResultAndValue<MarketableLinkage>> ILinkerClient.Evol(EvolProof evolProof)
+    NetTask<T3csResultAndValue<MergeableLinkage>> ILinkerClient.Evol(EvolProof evolProof)
     {
         throw new NotImplementedException();
     }
