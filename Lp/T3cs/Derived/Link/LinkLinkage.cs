@@ -53,17 +53,17 @@ public partial class LinkLinkage : Linkage
     }
 
     [Link(Name = "CreditLink", Type = ChainType.Unordered)]
-    public Credit Credit1 => this.LinkProof1.Value.Credit;
+    public Credit Credit1 => this.Proof1.Value.Credit;
 
     // [Link(UnsafeTargetChain = "CreditLinkChain")]
-    public Credit Credit2 => this.LinkProof2.Value.Credit;
+    public Credit Credit2 => this.Proof2.Value.Credit;
 
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
-    public SignaturePublicKey LinkerPublicKey => this.LinkProof1.LinkerPublicKey;
+    public SignaturePublicKey LinkerPublicKey => this.Proof1.LinkerPublicKey;
 
-    public LinkProof LinkProof1 => (LinkProof)this.Proof1;
+    public new LinkProof Proof1 => (LinkProof)base.Proof1;
 
-    public LinkProof LinkProof2 => (LinkProof)this.Proof2;
+    public new LinkProof Proof2 => (LinkProof)base.Proof2;
 }
 
 /*[TinyhandObject]
