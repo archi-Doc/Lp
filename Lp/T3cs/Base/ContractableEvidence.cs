@@ -12,7 +12,7 @@ public sealed partial class ContractableEvidence : Evidence
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public new const int ReservedKeyCount = Evidence.ReservedKeyCount + 4;
+    public new const int ReservedKeyCount = Evidence.ReservedKeyCount + 6;
 
     public static readonly ObjectPool<ContractableEvidence> Pool = new(() => new());
 
@@ -22,13 +22,16 @@ public sealed partial class ContractableEvidence : Evidence
     public bool IsPrimary { get; set; }
 
     [Key(Evidence.ReservedKeyCount + 1)]
-    public long LinkedMicsId { get; private set; }
-
-    [Key(Evidence.ReservedKeyCount + 2)]
     public Contract Contract1 { get; private set; }
 
-    [Key(Evidence.ReservedKeyCount + 3)]
+    [Key(Evidence.ReservedKeyCount + 2)]
     public Contract Contract2 { get; private set; }
+
+    [Key(Evidence.ReservedKeyCount + 3)]
+    public long LinkedMicsId { get; private set; }
+
+    [Key(Evidence.ReservedKeyCount + 4)]
+    public long ExpirationMics { get; private set; }
 
     public override Proof BaseProof
     {
@@ -65,20 +68,18 @@ public sealed partial class ContractableEvidence : Evidence
 
     #endregion
 
-    public ContractableEvidence(bool isPrimary, long linkedMicsId, Contract contract1, Contract contract2)
+    public ContractableEvidence(bool isPrimary, Contract contract1, Contract contract2, long linkedMicsId, long expirationMics)
     {
         this.IsPrimary = isPrimary;
-        this.LinkedMicsId = linkedMicsId;
         this.Contract1 = contract1;
         this.Contract2 = contract2;
+        this.LinkedMicsId = linkedMicsId;
+        this.ExpirationMics = expirationMics;
     }
 
-    public ContractableEvidence(bool isPrimary, long linkedMicsId, ContractableProof proof1, ContractableProof proof2)
+    public ContractableEvidence(bool isPrimary, ContractableProof proof1, ContractableProof proof2, long linkedMicsId, long expirationMics)
+        : this(isPrimary, new Contract(proof1), new Contract(proof2), linkedMicsId, expirationMics)
     {
-        this.IsPrimary = isPrimary;
-        this.LinkedMicsId = linkedMicsId;
-        this.Contract1 = new(proof1);
-        this.Contract2 = new(proof2);
     }
 
     private ContractableEvidence()
@@ -101,9 +102,6 @@ public sealed partial class ContractableEvidence : Evidence
 
     internal void FromLinkage(Linkage linkage, bool isPrimary)
     {
-        this.LinkedMicsId = linkage.LinkedMics;
-        this.Contract1 = linkage.Contract1;
-        this.Contract2 = linkage.Contract2;
         if (isPrimary)
         {
             this.MergerSignature0 = linkage.MergerSignature10;
@@ -116,5 +114,10 @@ public sealed partial class ContractableEvidence : Evidence
             this.MergerSignature1 = linkage.MergerSignature21;
             this.MergerSignature2 = linkage.MergerSignature22;
         }
+
+        this.Contract1 = linkage.Contract1;
+        this.Contract2 = linkage.Contract2;
+        this.LinkedMicsId = linkage.LinkedMics;
+        this.ExpirationMics = linkage.ExpirationMics;
     }
 }

@@ -61,7 +61,7 @@ public partial class CredentialEvidence : Evidence
 
     public override Proof BaseProof => this.Proof;
 
-    public SignaturePublicKey CredentialKey => this.Proof.Value.Owner;
+    public SignaturePublicKey CredentialKey => this.Proof.GetSignatureKey();
 
     public bool IsAuthorized => this.Proof.Value.Point > 0;
 

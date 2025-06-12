@@ -204,14 +204,14 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        var evidence1 = new ContractableEvidence(true, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        var evidence1 = new ContractableEvidence(true, proof1, proof2, linkedMics, LpConstants.LpExpirationMics); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         evidence1 = await this.ConnectAndRunService<ContractableEvidence>(link.Credit1.Mergers[0], service => service.SignContractableEvidence(evidence1));
         if (evidence1 is null)
         {
             return StateResult.Continue;
         }
 
-        var evidence2 = new ContractableEvidence(false, linkedMics, proof1, proof2); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
+        var evidence2 = new ContractableEvidence(false, proof1, proof2, linkedMics, LpConstants.LpExpirationMics); // Evidence{Proof{@Credit + Linker}/LpKey}/Merger
         evidence2 = await this.ConnectAndRunService<ContractableEvidence>(link.Credit2.Mergers[0], service => service.SignContractableEvidence(evidence2));
         if (evidence2 is null)
         {
