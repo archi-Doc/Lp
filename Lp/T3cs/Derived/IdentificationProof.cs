@@ -12,9 +12,9 @@ public partial class IdentificationProof : ProofWithPublicKey
     [Key(ProofWithPublicKey.ReservedKeyCount)]
     public string Name { get; private set; } = string.Empty;
 
-    public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
-        if (!base.Validate())
+        if (!base.Validate(validationOptions))
         {
             return false;
         }

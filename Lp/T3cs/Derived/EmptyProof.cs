@@ -16,7 +16,7 @@ public sealed class EmptyProof : ContractableProofWithSigner
 
     public override PermittedSigner PermittedSigner => default;
 
-    public override bool Validate() => true;
+    public override bool Validate(ValidationOptions validationOptions) => true;
 
     public override SignaturePublicKey GetSignatureKey() => default;
 

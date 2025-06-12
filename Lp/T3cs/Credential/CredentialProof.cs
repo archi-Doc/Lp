@@ -66,9 +66,9 @@ public sealed partial class CredentialProof : ProofWithPublicKey
         this.State = state;
     }
 
-    public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
-        if (!base.Validate())
+        if (!base.Validate(validationOptions))
         {
             return false;
         }

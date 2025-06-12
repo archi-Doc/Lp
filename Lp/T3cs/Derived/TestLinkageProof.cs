@@ -14,7 +14,7 @@ public partial class TestLinkageProof : ContractableProofWithSigner
 
     public override PermittedSigner PermittedSigner => PermittedSigner.Owner;
 
-    public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
         return true;
     }

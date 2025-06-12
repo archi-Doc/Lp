@@ -17,9 +17,9 @@ public partial class DimensionProof : ProofWithPublicKey
 
     // public Value Value { get; private set; } = new();
 
-    public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
-        if (!base.Validate())
+        if (!base.Validate(validationOptions))
         {
             return false;
         }
