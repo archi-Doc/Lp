@@ -19,7 +19,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     #region FieldAndProperty
 
     [Key(0)]
-    private readonly object proofOrIdentifier;
+    private readonly object? proofOrIdentifier;
 
     [Key(1)]
     public readonly Point Partial;
@@ -197,6 +197,10 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
         else if (this.proofOrIdentifier is byte[] identifier1 && other.proofOrIdentifier is byte[] identifier2)
         {
             return identifier1.AsSpan().SequenceEqual(identifier2.AsSpan());
+        }
+        else if (this.proofOrIdentifier is null && other.proofOrIdentifier is null)
+        {
+            return true;
         }
         else
         {

@@ -14,40 +14,43 @@ public partial class Linkage : IValidatable
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public const int ReservedKeyCount = 10;
+    public const int ReservedKeyCount = 11;
 
     public const int SignatureLevel = TinyhandWriter.DefaultSignatureLevel + 10;
 
     #region FieldAndProperty
 
     [Key(0)]
-    public long LinkedMics { get; protected set; }
-
-    [Key(1)]
     public Contract Contract1 { get; protected set; }
 
-    [Key(2)]
+    [Key(1)]
     public Contract Contract2 { get; protected set; }
 
-    [Key(3, Level = SignatureLevel + 1)]
+    [Key(2)]
+    public long LinkedMics { get; protected set; }
+
+    [Key(3)]
+    public long ExpirationMics { get; protected set; }
+
+    [Key(4, Level = SignatureLevel + 1)]
     private byte[]? linkerSignature;
 
-    [Key(4, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature10 { get; protected set; }
 
-    [Key(5, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
+    [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
     public byte[]? MergerSignature11 { get; protected set; }
 
-    [Key(6, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
+    [Key(7, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature12 { get; protected set; }
 
-    [Key(7, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
+    [Key(8, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[]? MergerSignature20 { get; protected set; }
 
-    [Key(8, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
+    [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 2)]
     public byte[]? MergerSignature21 { get; protected set; }
 
-    [Key(9, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
+    [Key(10, Level = TinyhandWriter.DefaultSignatureLevel + 3)]
     public byte[]? MergerSignature22 { get; protected set; }
 
     public ContractableProof Proof1 => this.Contract1.Proof;
@@ -93,6 +96,11 @@ public partial class Linkage : IValidatable
             return false;
         }
 
+        if (evidence1.ExpirationMics != evidence2.ExpirationMics)
+        {
+            return false;
+        }
+
         if (!evidence1.ValidateAndVerify() ||
             !evidence2.ValidateAndVerify())
         {
@@ -103,6 +111,7 @@ public partial class Linkage : IValidatable
         linkage.Contract1 = evidence1.Contract1;
         linkage.Contract2 = evidence1.Contract2;
         linkage.LinkedMics = evidence1.LinkedMicsId;
+        linkage.ExpirationMics = evidence1.ExpirationMics;
         linkage.MergerSignature10 = evidence1.MergerSignature0;
         linkage.MergerSignature11 = evidence1.MergerSignature1;
         linkage.MergerSignature12 = evidence1.MergerSignature2;
