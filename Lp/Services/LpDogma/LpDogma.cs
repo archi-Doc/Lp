@@ -14,6 +14,15 @@ public partial record class LpDogma
     public const string Filename = "LpDogma";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
+    public partial record class CreditLink(
+        Value Value1,
+        Value Value2,
+        SignaturePublicKey LinkerPublicKey)
+    {
+        public long UpdatedMics { get; set; }
+    }
+
+    [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class Credential(
         SignaturePublicKey PublicKey,
         NetNode NetNode,
@@ -31,6 +40,9 @@ public partial record class LpDogma
     {
         public long UpdatedMics { get; set; }
     }
+
+    [KeyAsName]
+    public CreditLink[] CreditNet0 { get; set; } = [];
 
     [KeyAsName]
     public Credential[] Mergers { get; set; } = [];

@@ -38,7 +38,7 @@ public partial class CredentialEvidence : Evidence
                 return false;
             }
 
-            if (!newItem.ValidateAndVerify())
+            if (!newItem.ValidateAndVerify(default))
             {
                 return false;
             }
@@ -63,7 +63,7 @@ public partial class CredentialEvidence : Evidence
 
     public SignaturePublicKey CredentialKey => this.Proof.GetSignatureKey();
 
-    public bool IsAuthorized => this.Proof.Value.Point > 0;
+    // public bool IsAuthorized => this.Proof.Value.Point > 0;
 
     #endregion
 

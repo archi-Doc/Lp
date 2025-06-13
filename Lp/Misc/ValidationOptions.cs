@@ -5,5 +5,6 @@ namespace Lp;
 [Flags]
 public enum ValidationOptions : int
 {
-    IgnoreExpiration,
+    Default = 0,
+    IgnoreExpiration = 1,
 }

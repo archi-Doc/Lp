@@ -64,7 +64,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return info;
     }
 
-    async NetTask<CredentialProof?> LpDogmaNetService.CreateCredentialProof(Value value, CredentialKind kind)
+    /*async NetTask<CredentialProof?> LpDogmaNetService.CreateCredentialProof(Value value, CredentialKind kind)
     {
         if (!this.IsAuthenticated)
         {
@@ -98,7 +98,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
 
         return default;
-    }
+    }*/
 
     async NetTask<NetResult> LpDogmaNetService.AddCredentialEvidence(CredentialEvidence evidence)
     {

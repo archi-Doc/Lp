@@ -1,11 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace Lp.T3cs;
 
 [TinyhandObject]
 public partial class IdentificationProof : ProofWithPublicKey
 {
-    public IdentificationProof()
+    public IdentificationProof(SignaturePublicKey publicKey)
+        : base(publicKey)
     {
     }
 

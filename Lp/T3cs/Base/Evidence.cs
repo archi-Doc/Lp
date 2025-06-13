@@ -9,7 +9,7 @@ namespace Lp.T3cs;
 /// </summary>
 [TinyhandUnion(0, typeof(CredentialEvidence))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
-public abstract partial class Evidence : IValidatable
+public abstract partial class Evidence
 {
     /// <summary>
     /// The number of reserved keys.
@@ -31,9 +31,10 @@ public abstract partial class Evidence : IValidatable
 
     #endregion
 
-    public virtual bool Validate() => this.BaseProof.Validate();
+    public virtual bool Validate(ValidationOptions validationOptions)
+        => this.BaseProof.Validate(validationOptions);
 
-    public virtual bool ValidateAndVerify(int mergerIndex = LpConstants.MaxMergers)
+    public virtual bool ValidateAndVerify(ValidationOptions validationOptions = default, int mergerIndex = LpConstants.MaxMergers)
     {
         if (!this.BaseProof.TryGetCredit(out var credit) ||
             !this.BaseProof.ValidateAndVerify())
@@ -41,12 +42,12 @@ public abstract partial class Evidence : IValidatable
             return false;
         }
 
-        return this.ValidateAndVerifyExceptProof(mergerIndex);
+        return this.ValidateAndVerifyExceptProof(validationOptions, mergerIndex);
     }
 
-    public bool ValidateAndVerifyExceptProof(int mergerIndex = LpConstants.MaxMergers)
+    public bool ValidateAndVerifyExceptProof(ValidationOptions validationOptions, int mergerIndex = LpConstants.MaxMergers)
     {
-        if (!this.Validate())
+        if (!this.Validate(validationOptions))
         {
             return false;
         }

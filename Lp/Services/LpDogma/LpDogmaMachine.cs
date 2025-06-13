@@ -104,10 +104,11 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
+        return StateResult.Continue;
+
+        /*if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
             credentialEvidence.Proof.Value.Point == credentialNode.Point)
         {
-            // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;
         }
 
@@ -157,7 +158,7 @@ public partial class LpDogmaMachine : Machine
             }
 
             return StateResult.Continue;
-        }
+        }*/
     }
 
     private async Task<StateResult> ProcessLink(LpDogma.Link link)
