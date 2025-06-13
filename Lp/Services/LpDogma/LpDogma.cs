@@ -42,7 +42,7 @@ public partial record class LpDogma
     }
 
     [KeyAsName]
-    public CreditLink[] CreditNet0 { get; set; } = [];
+    public CreditLink[] CreditNet { get; set; } = [];
 
     [KeyAsName]
     public Credential[] Mergers { get; set; } = [];
