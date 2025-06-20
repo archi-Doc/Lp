@@ -43,8 +43,6 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
                 return;
             }
         }
-
-        //credential.Proof.State.NetNode
     }
 
     private readonly IUserInterfaceService userInterfaceService;

@@ -49,7 +49,6 @@ public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOption
             return;
         }
 
-        var bin = TinyhandSerializer.Serialize(evolProof);//
         var b = evolProof.ValidateAndVerify();
 
         using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(r.Credit, r.SeedKey, default))
