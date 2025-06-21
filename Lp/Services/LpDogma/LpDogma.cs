@@ -14,6 +14,14 @@ public partial record class LpDogma
     public const string Filename = "LpDogma";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
+    public partial record class MergerProof(
+        SignaturePublicKey MergerPublicKey,
+        bool Validity)
+    {
+        public long UpdatedMics { get; set; }
+    }
+
+    [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class CreditLink(
         Value Value1,
         Value Value2,
@@ -40,6 +48,9 @@ public partial record class LpDogma
     {
         public long UpdatedMics { get; set; }
     }
+
+    [KeyAsName]
+    public MergerProof[] MergerNet { get; set; } = [];
 
     [KeyAsName]
     public CreditLink[] CreditNet { get; set; } = [];
