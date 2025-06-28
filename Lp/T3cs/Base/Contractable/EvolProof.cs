@@ -9,20 +9,20 @@ namespace Lp.T3cs;
 public partial class EvolProof : ContractableProof
 {
     [Key(ContractableProof.ReservedKeyCount + 0)]
-    public Value SourceValue { get; protected set; } = default!;
+    public Value SourceValue { get; protected set; }
 
     [Key(ContractableProof.ReservedKeyCount + 1)]
-    public Value TargetValue { get; protected set; } = Value.UnsafeConstructor();
+    public Value DestinationValue { get; protected set; }
 
     [Key(ContractableProof.ReservedKeyCount + 2)]
-    public Identity? TargetIdentity { get; protected set; }
+    public Identity? DestinationIdentity { get; protected set; }
 
-    public EvolProof(SignaturePublicKey linkerPublicKey, Value sourceValue, Value targetValue, Identity? targetIdentity)
+    public EvolProof(SignaturePublicKey linkerPublicKey, Value sourceValue, Value destinationValue, Identity? destinationIdentity)
         : base(linkerPublicKey)
     {
         this.SourceValue = sourceValue;
-        this.TargetValue = targetValue;
-        this.TargetIdentity = targetIdentity;
+        this.DestinationValue = destinationValue;
+        this.DestinationIdentity = destinationIdentity;
     }
 
     public override SignaturePublicKey GetSignatureKey() => this.SourceValue.Owner;
