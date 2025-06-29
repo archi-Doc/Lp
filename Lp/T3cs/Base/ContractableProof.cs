@@ -23,8 +23,6 @@ public abstract partial class ContractableProof : Proof
         this.LinkerPublicKey = linkerPublicKey;
     }
 
-    //public abstract SignaturePublicKey GetSignatureKey();
-
     /// <summary>
     /// Tries to get the linker public key associated with the proof.
     /// </summary>

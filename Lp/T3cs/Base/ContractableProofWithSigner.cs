@@ -70,9 +70,9 @@ public abstract partial class ContractableProofWithSigner : ContractableProof
         return true;
     }*/
 
-    public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
-        if (!base.Validate())
+        if (!base.Validate(validationOptions))
         {
             return false;
         }

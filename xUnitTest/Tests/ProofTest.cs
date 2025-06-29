@@ -42,7 +42,7 @@ public class ProofTest
         state.NetNode = this.testNode;
         state.Name = "Test1";
 
-        var credentialProof = new CredentialProof(value, CredentialKind.Merger, state);
+        var credentialProof = new CredentialProof(owner, CredentialKind.Merger, state);
         ownerKey.TrySign(credentialProof, validMics).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
 
@@ -56,12 +56,13 @@ public class ProofTest
         ownerKey2.TrySign(linkageProof2, validMics).IsTrue();
         linkageProof2.ValidateAndVerify().IsTrue();
         var linkedMics = Mics.FastCorrected;
+        var expirationMics = Mics.FastCorrected + Mics.FromSeconds(10);
 
-        var linkageEvidence = new ContractableEvidence(true, linkedMics, linkageProof, linkageProof2);
+        var linkageEvidence = new ContractableEvidence(true, linkageProof, linkageProof2, linkedMics, expirationMics);
         mergerKey.TrySign(linkageEvidence, 0).IsTrue();
         linkageEvidence.ValidateAndVerify().IsTrue();
 
-        var linkageEvidence2 = new ContractableEvidence(false, linkedMics, linkageProof, linkageProof2);
+        var linkageEvidence2 = new ContractableEvidence(false, linkageProof, linkageProof2, linkedMics, expirationMics);
         mergerKey.TrySign(linkageEvidence2, 0).IsTrue();
         linkageEvidence2.ValidateAndVerify().IsTrue();
 

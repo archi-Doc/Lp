@@ -66,9 +66,9 @@ public sealed partial class CredentialProof : ProofWithPublicKey
         this.State = state;
     }
 
-    public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
-        if (!base.Validate())
+        if (!base.Validate(validationOptions))
         {
             return false;
         }
@@ -83,6 +83,6 @@ public sealed partial class CredentialProof : ProofWithPublicKey
 
     public override string ToString() => this.ToString(default);
 
-    public override string ToString(IConversionOptions? conversionOptions)
-        => $"CredentialProof:{this.Kind} {this.SignedMics.MicsToDateTimeString()} {this.Value.ToString(conversionOptions)}, {this.State.ToString(conversionOptions)}";
+    /*public override string ToString(IConversionOptions? conversionOptions)
+        => $"CredentialProof:{this.Kind} {this.SignedMics.MicsToDateTimeString()} {this.Value.ToString(conversionOptions)}, {this.State.ToString(conversionOptions)}";*/
 }

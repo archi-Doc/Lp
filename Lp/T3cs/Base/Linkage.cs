@@ -9,7 +9,7 @@ namespace Lp.T3cs;
 #pragma warning disable SA1401 // Fields should be private
 
 [TinyhandObject(ReservedKeyCount = Linkage.ReservedKeyCount)]
-public partial class Linkage : IValidatable
+public partial class Linkage
 {
     /// <summary>
     /// The number of reserved keys.
@@ -101,8 +101,8 @@ public partial class Linkage : IValidatable
             return false;
         }
 
-        if (!evidence1.ValidateAndVerify() ||
-            !evidence2.ValidateAndVerify())
+        if (!evidence1.ValidateAndVerify(ValidationOptions.Default) ||
+            !evidence2.ValidateAndVerify(ValidationOptions.Default))
         {
             return false;
         }
@@ -141,11 +141,12 @@ public partial class Linkage : IValidatable
         }
     }
 
-    public bool Validate() => this.Validate(out _);
+    public bool Validate(ValidationOptions validationOptions = default)
+        => this.Validate(validationOptions, out _);
 
-    public bool ValidateAndVerify()
+    public bool ValidateAndVerify(ValidationOptions validationOptions = default)
     {
-        if (!this.Validate(out var linkerPublicKey))
+        if (!this.Validate(validationOptions, out var linkerPublicKey))
         {
             return false;
         }
@@ -154,13 +155,13 @@ public partial class Linkage : IValidatable
         try
         {
             evidence.FromLinkage(this, true);
-            if (!evidence.ValidateAndVerifyExceptProof())
+            if (!evidence.ValidateAndVerifyExceptProof(validationOptions))
             {
                 return false;
             }
 
             evidence.FromLinkage(this, false);
-            if (!evidence.ValidateAndVerifyExceptProof())
+            if (!evidence.ValidateAndVerifyExceptProof(validationOptions))
             {
                 return false;
             }
@@ -195,9 +196,9 @@ public partial class Linkage : IValidatable
         this.linkerSignature = sign;
     }
 
-    private bool Validate(out SignaturePublicKey linkerPublicKey)
+    private bool Validate(ValidationOptions validationOptions, out SignaturePublicKey linkerPublicKey)
     {
-        if (!this.Proof1.Validate() || !this.Proof2.Validate())
+        if (!this.Proof1.Validate(validationOptions) || !this.Proof2.Validate(validationOptions))
         {
             linkerPublicKey = default;
             return false;

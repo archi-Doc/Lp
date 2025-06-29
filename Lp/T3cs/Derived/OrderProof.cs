@@ -13,7 +13,8 @@ public partial class OrderProof : ProofWithPublicKey
         LimitRatio,
     }
 
-    public OrderProof()
+    public OrderProof(SignaturePublicKey publicKey)
+        : base(publicKey)
     {
     }
 

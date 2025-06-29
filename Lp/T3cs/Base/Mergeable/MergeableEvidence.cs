@@ -36,7 +36,7 @@ public partial class MergeableEvidence : Evidence
                 return false;
             }
 
-            if (!newItem.ValidateAndVerify())
+            if (!newItem.ValidateAndVerify(default))
             {
                 return false;
             }

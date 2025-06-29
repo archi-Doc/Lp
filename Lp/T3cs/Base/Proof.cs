@@ -121,8 +121,9 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// <summary>
     /// Validates the proof.
     /// </summary>
+    /// <param name="validationOptions">The validation options to apply during validation.</param>
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>
-    public virtual bool Validate()
+    public virtual bool Validate(ValidationOptions validationOptions)
     {
         if (this.SignedMics == 0 || this.ExpirationMics == 0)
         {
@@ -135,7 +136,8 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
             return false;
         }
 
-        if (!MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
+        if (!validationOptions.HasFlag(ValidationOptions.IgnoreExpiration) &&
+            !MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
         {
             return false;
         }

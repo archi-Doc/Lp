@@ -9,7 +9,8 @@ public sealed partial class CryptoTransferProof : ProofWithPublicKey
 {
     private const int OriginalKeyLevel = 1_000;
 
-    public CryptoTransferProof()
+    public CryptoTransferProof(SignaturePublicKey publicKey)
+        : base(publicKey)
     {
     }
 

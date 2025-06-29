@@ -14,7 +14,7 @@ public static class CryptoHelper
     /// <returns><see langword="true" />: Success.</returns>
     public static bool ValidateAndVerify(this Proof proof)
     {
-        if (!proof.Validate())
+        if (!proof.Validate(default))
         {
             return false;
         }
