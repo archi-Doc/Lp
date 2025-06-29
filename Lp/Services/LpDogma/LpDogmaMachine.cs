@@ -104,6 +104,14 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
+        // Evol: LpKey#1@LpCredit -> Merger1#100@Credit1
+        var sourceValue = new Value(LpConstants.LpPublicKey, 1, LpConstants.LpCredit); // LpKey#1@LpCredit
+        var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
+        SignaturePublicKey linkerPublicKey = default;
+        var proof1 = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
+        var evidence = new ContractableEvidence()
+        var linkage = new Marketable
+
         return StateResult.Continue;
 
         /*if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
