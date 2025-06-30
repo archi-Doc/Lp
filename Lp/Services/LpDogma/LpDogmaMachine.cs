@@ -109,8 +109,8 @@ public partial class LpDogmaMachine : Machine
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
         SignaturePublicKey linkerPublicKey = default;
         var proof1 = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
-        var evidence = new ContractableEvidence()
-        var linkage = new Marketable
+        //var evidence = new ContractableEvidence()
+        //var linkage = new Marketable
 
         return StateResult.Continue;
 

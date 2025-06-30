@@ -39,7 +39,7 @@ public sealed partial class ContractableEvidence : Evidence
         {
             if (this.IsPrimary)
             {
-                if (this.Contract1.HasProof)
+                if (this.Contract1.IsProof)
                 {
                     return this.Contract1.Proof;
                 }
@@ -50,7 +50,7 @@ public sealed partial class ContractableEvidence : Evidence
             }
             else
             {
-                if (this.Contract2.HasProof)
+                if (this.Contract2.IsProof)
                 {
                     return this.Contract2.Proof;
                 }
