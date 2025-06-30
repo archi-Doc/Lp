@@ -28,7 +28,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     [Key(2)]
     public readonly Point Total;
 
-    public ContractableProof Proof => this.proofOrIdentifier is ContractableProof proof ? proof : EmptyProof.Instance;
+    public ContractableProof Proof => this.proofOrIdentifier is ContractableProof proof ? proof : EmptyProof.Instance;//
 
     public bool IsEmpty => this.proofOrIdentifier is null;
 
