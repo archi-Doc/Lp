@@ -14,9 +14,9 @@ public partial record class LpDogma
     public const string Filename = "LpDogma";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
-    public partial record class MergerProof(
-        SignaturePublicKey MergerPublicKey,
-        bool Validity)
+    public partial record class PriorityValue(
+        Point LpPoint,
+        Value Credit)
     {
         public long UpdatedMics { get; set; }
     }
@@ -49,18 +49,13 @@ public partial record class LpDogma
         public long UpdatedMics { get; set; }
     }
 
-    [KeyAsName]
-    public MergerProof[] MergerNet { get; set; } = [];
+    public PriorityValue[] PriorityValues { get; set; } = [];
 
-    [KeyAsName]
     public CreditLink[] CreditNet { get; set; } = [];
 
-    [KeyAsName]
     public Credential[] Mergers { get; set; } = [];
 
-    [KeyAsName]
     public Credential[] Linkers { get; set; } = [];
 
-    [KeyAsName]
     public Link[] Links { get; set; } = [];
 }

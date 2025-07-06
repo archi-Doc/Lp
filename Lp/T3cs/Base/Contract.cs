@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Tinyhand.IO;
@@ -9,7 +10,7 @@ namespace Lp.T3cs;
 #pragma warning disable SA1202 // Elements should be ordered by access
 
 /// <summary>
-/// This class stores contracts exchanged between Mergers.<br/>
+/// This class stores contracts between Mergers.<br/>
 /// One purpose is to retain information associated with a Proof,<br/>
 /// and the other is to remove the Proof itself while retaining only the identifier of the authentication information.
 /// </summary>
@@ -19,7 +20,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     #region FieldAndProperty
 
     [Key(0)]
-    private readonly object? proofOrIdentifier;
+    private readonly object? proofOrIdentifier; // null or ContractableProof or byte[32]
 
     [Key(1)]
     public readonly Point Partial;
@@ -27,9 +28,13 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     [Key(2)]
     public readonly Point Total;
 
-    public ContractableProof Proof => this.proofOrIdentifier is ContractableProof proof ? proof : EmptyProof.Instance;
+    public ContractableProof Proof => this.proofOrIdentifier is ContractableProof proof ? proof : EmptyProof.Instance;//
 
-    public bool HasProof => this.proofOrIdentifier is ContractableProof;
+    public bool IsEmpty => this.proofOrIdentifier is null;
+
+    public bool IsProof => this.proofOrIdentifier is ContractableProof;
+
+    public bool IsIdentifier => this.proofOrIdentifier is byte[];
 
     #endregion
 
@@ -45,25 +50,27 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
         this.proofOrIdentifier = proof;
     }
 
-    private Contract(byte[] identifier)
+    private Contract(byte[] identifier, Point partial, Point total)
     {
         this.proofOrIdentifier = identifier;
+        this.Partial = partial;
+        this.Total = total;
     }
 
     static void ITinyhandSerializable<Contract>.Serialize(ref TinyhandWriter writer, scoped ref Contract v, TinyhandSerializerOptions options)
     {
         if (options.IsSignatureMode)
         {
-            if (v.proofOrIdentifier is byte[] identifier)
-            {
-                writer.WriteSpan(identifier);
-            }
-            else
+            if (v.proofOrIdentifier is ContractableProof proof)
             {
                 // v.GetIdentifier(writer.Level); // Cannot use a thread static buffer.
                 Span<byte> span = stackalloc byte[Identifier.Length];
                 v.GetHash(span);
                 writer.WriteSpan(span);
+            }
+            else if (v.proofOrIdentifier is byte[] identifier)
+            {
+                writer.WriteSpan(identifier);
             }
         }
         else
@@ -140,16 +147,28 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
         }
     }
 
+    public bool TryGetProof([MaybeNullWhen(false)] out ContractableProof proof)
+    {
+        if (this.proofOrIdentifier is ContractableProof p)
+        {
+            proof = p;
+            return true;
+        }
+
+        proof = default;
+        return false;
+    }
+
     public Contract StripProof()
     {
-        if (!this.HasProof)
-        {// Identifier
+        if (!this.IsProof)
+        {// Identifier or null
             return this;
         }
 
         var identifier = new byte[Identifier.Length];
         this.GetHash(identifier);
-        return new(identifier);
+        return new(identifier, this.Partial, this.Total);
     }
 
     public void GetHash(Span<byte> span32)
@@ -190,7 +209,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
             return false;
         }
 
-        if (this.proofOrIdentifier is Proof proof1 && other.proofOrIdentifier is Proof proof2)
+        if (this.proofOrIdentifier is ContractableProof proof1 && other.proofOrIdentifier is ContractableProof proof2)
         {
             return proof1.Equals(proof2);
         }

@@ -33,4 +33,23 @@ public abstract partial class ContractableProof : Proof
         linkerPublicKey = this.LinkerPublicKey;
         return true;
     }
+
+    /// <summary>
+    /// Determines whether the specified <see cref="Proof"/> is equal to the current <see cref="Proof"/>.
+    /// </summary>
+    /// <param name="other">The proof to compare with the current proof.</param>
+    /// <returns><c>true</c> if the specified proof is equal to the current proof; otherwise, <c>false</c>.</returns>
+    public bool Equals(ContractableProof? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.SignedMics == other.SignedMics &&
+            this.ExpirationMics == other.ExpirationMics &&
+            this.Signature.SequenceEqual(other.Signature) &&
+            this.GetSignatureKey().Equals(other.GetSignatureKey()) &&
+            this.LinkerPublicKey.Equals(other.LinkerPublicKey);
+    }
 }

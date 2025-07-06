@@ -66,6 +66,15 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
+        foreach (var x in this.lpDogma.PriorityValues)
+        {
+            var result = await this.Process(x);
+            if (result == StateResult.Terminate)
+            {
+                return StateResult.Terminate;
+            }
+        }
+
         foreach (var x in this.lpDogma.Mergers)
         {
             var result = await this.ProcessCredential(x, CredentialKind.Merger);
@@ -96,7 +105,7 @@ public partial class LpDogmaMachine : Machine
         return StateResult.Continue;
     }
 
-    private async Task<StateResult> ProcessCredential(LpDogma.Credential credentialNode, CredentialKind credentialKind)
+    private async Task<StateResult> Process(LpDogma.PriorityValue priorityValue)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -105,12 +114,24 @@ public partial class LpDogmaMachine : Machine
         }
 
         // Evol: LpKey#1@LpCredit -> Merger1#100@Credit1
-        var sourceValue = new Value(LpConstants.LpPublicKey, 1, LpConstants.LpCredit); // LpKey#1@LpCredit
+        var sourceValue = new Value(LpConstants.LpPublicKey, priorityValue.LpPoint, LpConstants.LpCredit); // LpKey#1@LpCredit
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
         SignaturePublicKey linkerPublicKey = default;
-        var proof1 = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
-        var evidence = new ContractableEvidence()
-        var linkage = new Marketable
+        var proof = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
+        this.lpSeedKey.TrySign(proof, Mics.FromSeconds(19));
+        // var evidence = ContractableEvidence
+        //var linkage = new Marketable
+
+        return StateResult.Continue;
+    }
+
+    private async Task<StateResult> ProcessCredential(LpDogma.Credential credentialNode, CredentialKind credentialKind)
+    {
+        if (this.CancellationToken.IsCancellationRequested ||
+            this.lpSeedKey is null)
+        {
+            return StateResult.Terminate;
+        }
 
         return StateResult.Continue;
 

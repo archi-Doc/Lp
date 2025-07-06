@@ -14,11 +14,12 @@ public static class LpConstants
     public const int MaxPointLength = 19; // 1_000_000_000_000_000_000
     public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const Point MinPoint = 0; // -MaxPoint;
-
     public const char CreditSymbol = '@';
     public const char MergerSymbol = '/';
     public const char MergerSeparatorSymbol = '+';
     public const int MaxMergers = 3; // MaxMergersCode
+    public const char SeparatorSymbol = ' ';
+    public const int MaxUrlLength = 500;
 
     public const long DefaultProofMaxValidMics = Mics.MicsPerDay * 30;
 
@@ -26,6 +27,7 @@ public static class LpConstants
     public const string LpKeyAlias = "LpKey";
     public const string LpPublicKeyString = "(s:ki0czJKQj1yy1YEtzJErP2CVYj-LbuvnIwCwlfYtLT3Ri5U7)";
     public const long LpExpirationMics = Mics.MicsPerDay * 1;
+    public const string DomainKeyAlias = "DomainKey";
 
     public static readonly SignaturePublicKey LpPublicKey;
     public static readonly CreditIdentity LpIdentity;
