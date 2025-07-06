@@ -14,11 +14,12 @@ public static class LpConstants
     public const int MaxPointLength = 19; // 1_000_000_000_000_000_000
     public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const Point MinPoint = 0; // -MaxPoint;
-
     public const char CreditSymbol = '@';
     public const char MergerSymbol = '/';
     public const char MergerSeparatorSymbol = '+';
     public const int MaxMergers = 3; // MaxMergersCode
+    public const char SeparatorSymbol = ' ';
+    public const int MaxUrlLength = 500;
 
     public const long DefaultProofMaxValidMics = Mics.MicsPerDay * 30;
 

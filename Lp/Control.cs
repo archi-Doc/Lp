@@ -52,6 +52,8 @@ public class Control
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
+                context.AddSingleton<DomainControl>();
+
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
                 context.AddSingleton<RelayMerger>();
@@ -401,7 +403,7 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
         this.UnitLogger = unitLogger;
         this.logger = logger;
@@ -412,6 +414,7 @@ public class Control
         this.Crystalizer = crystalizer;
         this.VaultControl = vault;
         this.AuthorityControl = authorityControl;
+        this.DomainControl = domainControl;
         this.LpBase.Settings = settings;
         this.Merger = merger;
         this.RelayMerger = relayMerger;
@@ -464,6 +467,8 @@ public class Control
     public VaultControl VaultControl { get; }
 
     public AuthorityControl AuthorityControl { get; }
+
+    public DomainControl DomainControl { get; }
 
     private readonly ILogger logger;
     private readonly SimpleParser subcommandParser;

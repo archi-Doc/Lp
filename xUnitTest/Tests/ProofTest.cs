@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc;
 using Lp;
 using Lp.T3cs;
 using Netsphere;
@@ -17,6 +18,20 @@ public class ProofTest
     {
         NetNode.TryParse("12.34.56.78:4567[1111:2222:3333:4444:5555:6666:7777:8888]:5678(e:hRp62w_fsJ9YeLVyyrXnPPilxUOKGePvaYsqJtE8GJenll5C)", out var node, out _);
         this.testNode = node!;
+    }
+
+    [Fact]
+    public void TestDomain()
+    {
+        var domain = new CreditDomain(LpConstants.LpCredit, this.testNode, string.Empty);
+        var st = domain.ConvertToString();
+        CreditDomain.TryParse(st, out var domain2, out var read).IsTrue();
+        domain2!.Equals(domain).IsTrue();
+
+        domain = new CreditDomain(LpConstants.LpCredit, this.testNode, "test");
+        st = domain.ConvertToString();
+        CreditDomain.TryParse(st, out domain2, out read).IsTrue();
+        domain2!.Equals(domain).IsTrue();
     }
 
     [Fact]
