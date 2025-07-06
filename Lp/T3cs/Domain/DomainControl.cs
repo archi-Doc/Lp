@@ -8,6 +8,8 @@ public partial record class DomainControl
 
     private readonly ILogger logger;
 
+    public CreditDomain PrimaryDomain { get; }
+
     #endregion
 
     public DomainControl(ILogger<DomainControl> logger, LpBase lpBase)
@@ -15,10 +17,17 @@ public partial record class DomainControl
         this.logger = logger;
 
         var domainOption = lpBase.Options.Domain;
-        if (!string.IsNullOrEmpty(domainOption) &&
-            !CreditDomain.TryParse(lpBase.Options.Domain, out var domain, out _))
+        if (!string.IsNullOrEmpty(domainOption))
         {
-
+            if (CreditDomain.TryParse(lpBase.Options.Domain, out var domain, out _))
+            {
+                this.PrimaryDomain = domain;
+            }
+            else
+            {
+            }
         }
+
+        this.PrimaryDomain ??= new(Credit.Default, new(), string.Empty);
     }
 }

@@ -30,7 +30,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
         this.Url = url;
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CreditDomain? @object, out int read, IConversionOptions? conversionOptions = null)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CreditDomain @object, out int read, IConversionOptions? conversionOptions = null)
     {
         @object = default;
         read = 0;
@@ -73,32 +73,6 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
         // return this.Credit.GetStringLength() + 1 + this.NetNode.GetStringLength() + urlLength;
     }
 
-    public static bool TryAppend(ref Span<char> destination, ref int written, char c)
-    {
-        if (destination.Length == 0)
-        {
-            return false;
-        }
-
-        written += 1;
-        destination[0] = LpConstants.SeparatorSymbol;
-        destination = destination.Slice(1);
-        return true;
-    }
-
-    public static bool TryAppend(ref Span<char> destination, ref int written, ReadOnlySpan<char> span)
-    {
-        if (destination.Length < span.Length)
-        {
-            return false;
-        }
-
-        span.CopyTo(destination);
-        destination = destination.Slice(span.Length);
-        written += span.Length;
-        return true;
-    }
-
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = null)
     {
         if (!this.Credit.TryFormat(destination, out written, conversionOptions))
@@ -107,7 +81,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
         }
 
         destination = destination.Slice(written);
-        if (!TryAppend(ref destination, ref written, LpConstants.SeparatorSymbol))
+        if (!BaseHelper.TryAppend(ref destination, ref written, LpConstants.SeparatorSymbol))
         {
             return false;
         }
@@ -126,12 +100,12 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
         }
         else
         {
-            if (!TryAppend(ref destination, ref written, LpConstants.SeparatorSymbol))
+            if (!BaseHelper.TryAppend(ref destination, ref written, LpConstants.SeparatorSymbol))
             {
                 return false;
             }
 
-            if (!TryAppend(ref destination, ref written, this.Url.AsSpan()))
+            if (!BaseHelper.TryAppend(ref destination, ref written, this.Url.AsSpan()))
             {
                 return false;
             }

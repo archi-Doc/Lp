@@ -4,10 +4,10 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial record class DomainOption(
         [property: Key(0)] Credit DomainCredit,
         [property: Key(1)] NetNode NetNode,
         [property: Key(2)] string? Url)
 {
-}
+}*/
