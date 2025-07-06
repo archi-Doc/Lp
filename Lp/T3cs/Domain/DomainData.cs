@@ -1,0 +1,32 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+namespace Lp.T3cs;
+
+[TinyhandObject]
+public partial record class DomainData
+{
+    public const string Filename = "DomainData";
+
+    #region FieldAndProperty
+
+    [Key(0)]
+    public Credit Credit { get; private set; } = Credit.UnsafeConstructor();
+
+    [Key(1)]
+    public NodeProof.GoshujinClass Nodes { get; private set; } = new();
+
+    [Key(2)]
+    public CreditEvols.GoshujinClass CreditEvols { get; private set; } = new();
+
+    [Key(3)]
+    public byte[] DomainSignature { get; private set; } = [];
+
+    [Key(4)]
+    public byte[] DomainEvols { get; private set; } = [];
+
+    #endregion
+
+    public DomainData()
+    {
+    }
+}

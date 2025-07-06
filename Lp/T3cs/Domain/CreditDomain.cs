@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -20,6 +21,9 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
     public partial string Url { get; init; } = string.Empty;
 
     public static int MaxStringLength => Credit.MaxStringLength + 1 + NetNode.MaxStringLength + 1 + LpConstants.MaxUrlLength;
+
+    private SeedKey? seedKey;
+    private DomainData? domainData;
 
     #endregion
 
@@ -68,9 +72,9 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
 
     public int GetStringLength()
     {
-        return -1;
-        // var urlLength = string.IsNullOrEmpty(this.Url) ? 0 : 1 + this.Url.Length;
-        // return this.Credit.GetStringLength() + 1 + this.NetNode.GetStringLength() + urlLength;
+        // return -1;
+        var urlLength = string.IsNullOrEmpty(this.Url) ? 0 : 1 + this.Url.Length;
+        return this.Credit.GetStringLength() + 1 + this.NetNode.GetStringLength() + urlLength;
     }
 
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = null)
@@ -112,5 +116,18 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
 
             return true;
         }
+    }
+
+    public bool Initialize(SeedKey seedKey, DomainData domainData)
+    {
+        if (!this.Credit.PrimaryMerger.Equals(seedKey.GetSignaturePublicKey()))
+        {
+            return false;
+        }
+
+        this.seedKey = seedKey;//
+        this.domainData = domainData;
+
+        return true;
     }
 }

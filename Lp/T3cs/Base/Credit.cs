@@ -26,6 +26,8 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public int MergerCount => this.Mergers.Length;
 
+    public SignaturePublicKey PrimaryMerger => this.Mergers.Length > 0 ? this.Mergers[0] : default;
+
     #endregion
 
     public static bool TryCreate(CreditIdentity creditIdentity, [MaybeNullWhen(false)] out Credit credit)

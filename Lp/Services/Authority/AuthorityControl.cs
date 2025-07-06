@@ -55,6 +55,12 @@ public class AuthorityControl
         return authority;
     }
 
+    public async Task<SeedKey?> GetSeedKey(string name)
+    {
+        var authority = await this.GetAuthority(name).ConfigureAwait(false);
+        return authority?.GetSeedKey();
+    }
+
     /// <summary>
     /// Retrieves an <see cref="Authority"/> instance by name, optionally using a password.
     /// </summary>

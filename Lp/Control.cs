@@ -241,6 +241,12 @@ public class Control
                         NumberOfFileHistories = 0,
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
+
+                    context.AddCrystal<DomainData>(new CrystalConfiguration() with
+                    {
+                        NumberOfFileHistories = 2,
+                        FileConfiguration = new GlobalFileConfiguration(DomainData.Filename),
+                    });
                 }));
         }
 
@@ -350,6 +356,7 @@ public class Control
                 control.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
+                await control.DomainControl.Prepare();
                 await control.PrepareMaster(this.Context);
                 await control.PrepareMerger(this.Context);
                 await control.PrepareRelay(this.Context);
