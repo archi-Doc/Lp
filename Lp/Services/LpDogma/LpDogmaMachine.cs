@@ -119,8 +119,6 @@ public partial class LpDogmaMachine : Machine
         SignaturePublicKey linkerPublicKey = default;
         var proof = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
         this.lpSeedKey.TrySign(proof, Mics.FromSeconds(19));
-        // var evidence = ContractableEvidence
-        //var linkage = new Marketable
 
         return StateResult.Continue;
     }

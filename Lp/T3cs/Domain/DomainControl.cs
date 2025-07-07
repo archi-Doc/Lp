@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Net;
 using Lp.Services;
 
 namespace Lp.T3cs;
@@ -9,6 +10,7 @@ public partial record class DomainControl
     #region FieldAndProperty
 
     private readonly ILogger logger;
+    private readonly NetControl netControl;
     private readonly AuthorityControl authorityControl;
     private readonly DomainData domainData;
 
@@ -16,7 +18,7 @@ public partial record class DomainControl
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, AuthorityControl authorityControl, DomainData domainData)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainData domainData)
     {
         this.logger = logger;
 
@@ -34,19 +36,27 @@ public partial record class DomainControl
         }
 
         this.PrimaryDomain ??= new(Credit.Default, new(), string.Empty);
+        this.netControl = netControl;
         this.authorityControl = authorityControl;
         this.domainData = domainData;
     }
 
     public async Task Prepare()
-    {//
+    {
         var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
-        seedKey = await this.authorityControl.GetLpSeedKey(this.logger).ConfigureAwait(false);
         if (seedKey is null)
         {
             return;
         }
 
-        this.PrimaryDomain.Initialize(seedKey, this.domainData);
+        if (this.PrimaryDomain.Initialize(seedKey, this.domainData))
+        {
+            this.netControl.Services.Register<IDomainService, DomainServiceAgent>();
+
+            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.Credit.ConvertToString());
+        }
+        else
+        {
+        }
     }
 }

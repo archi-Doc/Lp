@@ -1,12 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography.X509Certificates;
+using Lp.Net;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial record class CreditDomain : IStringConvertible<CreditDomain>
+public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDomainService
 {
     #region FieldAndProperty
 
@@ -125,9 +127,69 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
             return false;
         }
 
-        this.seedKey = seedKey;//
+        this.seedKey = seedKey;
         this.domainData = domainData;
-
         return true;
+    }
+
+    async NetTask<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
+    {
+        return NetResult.Success;
+    }
+
+    async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
+    {
+        if (this.domainData is null)
+        {
+            return NetResult.NoNetService;
+        }
+
+        if (!nodeProof.ValidateAndVerify())
+        {
+            return NetResult.InvalidData;
+        }
+
+        using (this.domainData.Nodes.LockObject.EnterScope())
+        {
+            if (this.domainData.Nodes.PublicKeyChain.TryGetValue(nodeProof.PublicKey, out var proof))
+            {// Found
+                if (proof.SignedMics >= nodeProof.SignedMics)
+                {// Existing proof is newer or equal
+                    return NetResult.Success;
+                }
+            }
+
+            this.domainData.Nodes.Add(nodeProof);
+
+            while (this.domainData.Nodes.Count > DomainData.MaxNodeCount)
+            {// Remove the oldest NodeProofs if the count exceeds the maximum.
+                if (this.domainData.Nodes.SignedMicsChain.First is { } node)
+                {
+                    node.Goshujin = default;
+                }
+            }
+        }
+
+        return NetResult.Success;
+    }
+
+    async NetTask<NetResultValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
+    {
+        if (this.domainData is null)
+        {
+            return new(NetResult.NoNetService);
+        }
+
+        using (this.domainData.Nodes.LockObject.EnterScope())
+        {
+            if (this.domainData.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))
+            {
+                return new(NetResult.Success, nodeProof.NetNode);
+            }
+            else
+            {
+                return new(NetResult.NotFound);
+            }
+        }
     }
 }

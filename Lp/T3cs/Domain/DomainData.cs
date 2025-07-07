@@ -6,6 +6,7 @@ namespace Lp.T3cs;
 public partial record class DomainData
 {
     public const string Filename = "DomainData";
+    public const int MaxNodeCount = 1_000; // Maximum number of nodes in the domain data.
 
     #region FieldAndProperty
 
