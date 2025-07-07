@@ -29,6 +29,7 @@ public partial record class DomainControl
             }
             else
             {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domainOption);
             }
         }
 
@@ -38,7 +39,7 @@ public partial record class DomainControl
     }
 
     public async Task Prepare()
-    {
+    {//
         var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
         seedKey = await this.authorityControl.GetLpSeedKey(this.logger).ConfigureAwait(false);
         if (seedKey is null)

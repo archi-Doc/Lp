@@ -145,3 +145,6 @@ ParseResultCode=
 
 LpService=
   CredentialNotFound="No Credential corresponding to the Credit was found"
+
+Domain=
+  ParseError="The specified domain format is invalid: {0}"
