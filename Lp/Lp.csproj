@@ -40,8 +40,8 @@
     <PackageReference Include="Arc.Collections" Version="1.25.2" />
     <PackageReference Include="Arc.Threading" Version="0.30.2" />
     <PackageReference Include="CrystalData" Version="0.30.0" />
-    <PackageReference Include="Netsphere" Version="0.33.2" />
-    <PackageReference Include="Netsphere.Shared" Version="0.33.2" />
+    <PackageReference Include="Netsphere" Version="0.33.3" />
+    <PackageReference Include="Netsphere.Shared" Version="0.33.3" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

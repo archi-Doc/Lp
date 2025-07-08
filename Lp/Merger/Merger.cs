@@ -32,13 +32,15 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     protected NetBase netBase;
     protected LpBase lpBase;
     protected NetStats netStats;
+    protected DomainControl domainControl;
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
     protected SeedKey seedKey = SeedKey.Invalid;
+    protected long lastRegisteredMics;
 
     #endregion
 
-    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats)
+    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context)
     {
         this.logger = unitLogger.GetLogger<Merger>();
@@ -46,6 +48,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.netBase = netBase;
         this.lpBase = lpBase;
         this.netStats = netStats;
+        this.domainControl = domainControl;
     }
 
     public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
@@ -169,7 +172,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public SeedKey SeedKey => this.seedKey;
 
-    public void UpdateState()
+    public async Task UpdateState()
     {
         if (!this.Initialized)
         {
@@ -197,6 +200,22 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {
             this.State.IsActive = true;
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
+        }
+
+        if (this.State.IsActive)
+        {
+            if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
+            {
+                this.lastRegisteredMics = Mics.FastCorrected;
+
+                var nodeProof = new NodeProof(this.PublicKey, this.State.NetNode);
+                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
+                var result = await this.domainControl.RegisterNode(nodeProof).ConfigureAwait(false);
+                if (result == NetResult.Success)
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registered, this.State.NetNode.ToString());
+                }
+            }
         }
     }
 

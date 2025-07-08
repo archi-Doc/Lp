@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography.X509Certificates;
 using Lp.Net;
 using Netsphere.Crypto;
 
@@ -36,6 +35,8 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
         this.Url = url;
     }
 
+    #region IStringConvertible
+
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CreditDomain @object, out int read, IConversionOptions? conversionOptions = null)
     {
         @object = default;
@@ -56,7 +57,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
             return false;
         }
 
-        if (!NetNode.TryParse(source[s.Current], out var netNode, out _, conversionOptions))
+        if (!NetNode.TryParseWithAlternative(source[s.Current], out var netNode, out _, conversionOptions))
         {
             return false;
         }
@@ -120,6 +121,8 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
         }
     }
 
+    #endregion
+
     public bool Initialize(SeedKey seedKey, DomainData domainData)
     {
         if (!this.Credit.PrimaryMerger.Equals(seedKey.GetSignaturePublicKey()))
@@ -127,8 +130,10 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
             return false;
         }
 
+        domainData.SetCredit(this.Credit);
         this.seedKey = seedKey;
         this.domainData = domainData;
+
         return true;
     }
 
@@ -151,11 +156,15 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
 
         using (this.domainData.Nodes.LockObject.EnterScope())
         {
-            if (this.domainData.Nodes.PublicKeyChain.TryGetValue(nodeProof.PublicKey, out var proof))
+            if (this.domainData.Nodes.PublicKeyChain.FindFirst(nodeProof.PublicKey) is { } first)
             {// Found
-                if (proof.SignedMics >= nodeProof.SignedMics)
+                if (first.SignedMics >= nodeProof.SignedMics)
                 {// Existing proof is newer or equal
                     return NetResult.Success;
+                }
+                else
+                {
+                    first.Goshujin = default; // Remove the existing proof.
                 }
             }
 
@@ -173,22 +182,26 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
         return NetResult.Success;
     }
 
-    async NetTask<NetResultValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
+    //async NetTask<NetResultValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
+    async NetTask<NetNode?> IDomainService.GetNode(SignaturePublicKey publicKey)
     {
         if (this.domainData is null)
         {
-            return new(NetResult.NoNetService);
+            //return new(NetResult.NoNetService);
+            return default;
         }
 
         using (this.domainData.Nodes.LockObject.EnterScope())
         {
             if (this.domainData.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))
             {
-                return new(NetResult.Success, nodeProof.NetNode);
+                //return new(NetResult.Success, nodeProof.NetNode);
+                return nodeProof.NetNode;
             }
             else
             {
-                return new(NetResult.NotFound);
+                //return new(NetResult.NotFound);
+                return default;
             }
         }
     }

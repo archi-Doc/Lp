@@ -37,7 +37,7 @@ public partial class LpControlMachine : Machine
     }
 
     [StateMethod(0)]
-    protected StateResult Initial(StateParameter parameter)
+    protected async Task<StateResult> Update(StateParameter parameter)
     {
         var result = this.ProcessLifespan();
         if (result != StateResult.Continue)
@@ -45,8 +45,8 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
-        this.control.Merger.UpdateState();
-        this.control.RelayMerger.UpdateState();
+        await this.control.Merger.UpdateState();
+        await this.control.RelayMerger.UpdateState();
         this.control.Linker.UpdateState();
 
         return StateResult.Continue;

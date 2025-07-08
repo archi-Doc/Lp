@@ -30,4 +30,21 @@ public partial record class DomainData
     public DomainData()
     {
     }
+
+    public void SetCredit(Credit credit)
+    {
+        if (!credit.Equals(this.Credit))
+        {
+            this.Credit = credit;
+            this.Clear();
+        }
+    }
+
+    public void Clear()
+    {
+        this.Nodes.Clear();
+        this.CreditEvols.Clear();
+        this.DomainSignature = [];
+        this.DomainEvols = [];
+    }
 }

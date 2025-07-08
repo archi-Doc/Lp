@@ -2,6 +2,7 @@
 
 using Lp.Net;
 using Lp.Services;
+using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -57,6 +58,28 @@ public partial record class DomainControl
         }
         else
         {
+        }
+    }
+
+    public async Task<NetResult> RegisterNode(NodeProof nodeProof)
+    {
+        var domainNode = this.PrimaryDomain.NetNode;
+        if (!domainNode.Validate())
+        {
+            //return NetResult.NoNetwork;
+        }
+
+        using (var connection = await this.netControl.NetTerminal.Connect(domainNode).ConfigureAwait(false))
+        {
+            if (connection is null)
+            {
+                return NetResult.NoNetwork;
+            }
+
+            var service = connection.GetService<IDomainService>();
+            var result = await service.RegisterNode(nodeProof);
+            var result2 = await service.GetNode(nodeProof.PublicKey);
+            return result;
         }
     }
 }

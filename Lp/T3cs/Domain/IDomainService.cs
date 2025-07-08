@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Collections;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -11,7 +10,8 @@ public interface IDomainService : INetServiceWithOwner
 {
     NetTask<NetResult> RegisterNode(NodeProof nodeProof);
 
-    NetTask<NetResultValue<NetNode>> GetNode(SignaturePublicKey publicKey);
+    //NetTask<NetResultValue<NetNode>> GetNode(SignaturePublicKey publicKey);
+    NetTask<NetNode?> GetNode(SignaturePublicKey publicKey);
 }
 
 [NetServiceObject]
@@ -48,6 +48,7 @@ internal class DomainServiceAgent : IDomainService
     public NetTask<NetResult> RegisterNode(NodeProof nodeProof)
         => this.domainService.RegisterNode(nodeProof);
 
-    public NetTask<NetResultValue<NetNode>> GetNode(SignaturePublicKey publicKey)
+    //public NetTask<NetResultValue<NetNode>> GetNode(SignaturePublicKey publicKey)
+    public NetTask<NetNode?> GetNode(SignaturePublicKey publicKey)
         => this.domainService.GetNode(publicKey);
 }
