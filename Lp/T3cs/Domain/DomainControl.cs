@@ -2,7 +2,6 @@
 
 using Lp.Net;
 using Lp.Services;
-using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -23,20 +22,20 @@ public partial record class DomainControl
     {
         this.logger = logger;
 
-        var domainOption = lpBase.Options.Domain;
-        if (!string.IsNullOrEmpty(domainOption))
+        var domain = lpBase.Options.Domain;
+        if (!string.IsNullOrEmpty(domain))
         {
-            if (CreditDomain.TryParse(lpBase.Options.Domain, out var domain, out _))
+            if (DomainOption.TryParse(lpBase.Options.Domain, out var domainOption, out _))
             {
-                this.PrimaryDomain = domain;
+                this.PrimaryDomain = new(domainOption);
             }
             else
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domainOption);
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
             }
         }
 
-        this.PrimaryDomain ??= new(Credit.Default, new(), string.Empty);
+        this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
         this.netControl = netControl;
         this.authorityControl = authorityControl;
         this.domainServer = domainData;
@@ -54,7 +53,7 @@ public partial record class DomainControl
         {
             this.netControl.Services.Register<IDomainService, DomainServiceAgent>();
 
-            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.Credit.ConvertToString());
+            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString());
         }
         else
         {
@@ -63,7 +62,7 @@ public partial record class DomainControl
 
     public async Task<NetResult> RegisterNode(NodeProof nodeProof)
     {
-        using (var connection = await this.netControl.NetTerminal.Connect(this.PrimaryDomain.NetNode).ConfigureAwait(false))
+        using (var connection = await this.netControl.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
         {
             if (connection is null)
             {
