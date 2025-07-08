@@ -182,26 +182,24 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
         return NetResult.Success;
     }
 
-    //async NetTask<NetResultValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
-    async NetTask<NetNode?> IDomainService.GetNode(SignaturePublicKey publicKey)
+    async NetTask<NetResultAndValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
     {
+        return new(NetResult.InvalidRelay, new NetNode());
+
         if (this.domainData is null)
         {
-            //return new(NetResult.NoNetService);
-            return default;
+            return new(NetResult.NoNetService);
         }
 
         using (this.domainData.Nodes.LockObject.EnterScope())
         {
             if (this.domainData.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))
             {
-                //return new(NetResult.Success, nodeProof.NetNode);
-                return nodeProof.NetNode;
+                return new(NetResult.Success, nodeProof.NetNode);
             }
             else
             {
-                //return new(NetResult.NotFound);
-                return default;
+                return new(NetResult.NotFound);
             }
         }
     }
