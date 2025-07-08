@@ -6,9 +6,9 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial record class DomainService : IDomainService
+public partial record class DomainServer : IDomainService
 {
-    public const string Filename = "DomainService";
+    public const string Filename = "DomainServer";
     public const int MaxNodeCount = 1_000; // Maximum number of nodes in the domain data.
 
     #region FieldAndProperty
@@ -30,7 +30,7 @@ public partial record class DomainService : IDomainService
 
     #endregion
 
-    public DomainService()
+    public DomainServer()
     {
     }
 
@@ -53,11 +53,28 @@ public partial record class DomainService : IDomainService
 
     async NetTask<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
     {
+        var serverConnection = TransmissionContext.Current.ServerConnection;
+        if (!token.ValidateAndVerify(serverConnection))
+        {
+            return NetResult.NotAuthenticated;
+        }
+
+        if (token.Credit is null)
+        {
+            return NetResult.InvalidData;
+        }
+
         return NetResult.Success;
     }
 
     async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
     {
+        if (!nodeProof.NetNode.Validate() ||
+            !nodeProof.NetNode.Address.IsValidIpv4AndIpv6)
+        {
+            //return NetResult.NoNetwork;
+        }
+
         if (!nodeProof.ValidateAndVerify())
         {
             return NetResult.InvalidData;
@@ -79,7 +96,7 @@ public partial record class DomainService : IDomainService
 
             this.Nodes.Add(nodeProof);
 
-            while (this.Nodes.Count > DomainService.MaxNodeCount)
+            while (this.Nodes.Count > DomainServer.MaxNodeCount)
             {// Remove the oldest NodeProofs if the count exceeds the maximum.
                 if (this.Nodes.SignedMicsChain.First is { } node)
                 {

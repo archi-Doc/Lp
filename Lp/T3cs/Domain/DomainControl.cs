@@ -13,13 +13,13 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly AuthorityControl authorityControl;
-    public readonly DomainService domainService;
+    public readonly DomainServer domainServer;
 
     public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainService domainData)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainServer domainData)
     {
         this.logger = logger;
 
@@ -39,7 +39,7 @@ public partial record class DomainControl
         this.PrimaryDomain ??= new(Credit.Default, new(), string.Empty);
         this.netControl = netControl;
         this.authorityControl = authorityControl;
-        this.domainService = domainData;
+        this.domainServer = domainData;
     }
 
     public async Task Prepare()
@@ -50,7 +50,7 @@ public partial record class DomainControl
             return;
         }
 
-        if (this.PrimaryDomain.Initialize(seedKey, this.domainService))
+        if (this.PrimaryDomain.Initialize(seedKey, this.domainServer))
         {
             this.netControl.Services.Register<IDomainService, DomainServiceAgent>();
 
@@ -63,13 +63,7 @@ public partial record class DomainControl
 
     public async Task<NetResult> RegisterNode(NodeProof nodeProof)
     {
-        var domainNode = this.PrimaryDomain.NetNode;
-        if (!domainNode.Validate())
-        {
-            //return NetResult.NoNetwork;
-        }
-
-        using (var connection = await this.netControl.NetTerminal.Connect(domainNode).ConfigureAwait(false))
+        using (var connection = await this.netControl.NetTerminal.Connect(this.PrimaryDomain.NetNode).ConfigureAwait(false))
         {
             if (connection is null)
             {

@@ -24,7 +24,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
     public static int MaxStringLength => Credit.MaxStringLength + 1 + NetNode.MaxStringLength + 1 + LpConstants.MaxUrlLength;
 
     private SeedKey? seedKey;
-    private DomainService? domainData;
+    private DomainServer? domainData;
 
     #endregion
 
@@ -123,7 +123,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>
 
     #endregion
 
-    public bool Initialize(SeedKey seedKey, DomainService domainData)
+    public bool Initialize(SeedKey seedKey, DomainServer domainData)
     {
         if (!this.Credit.PrimaryMerger.Equals(seedKey.GetSignaturePublicKey()))
         {

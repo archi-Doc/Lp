@@ -12,29 +12,11 @@ internal class DomainServiceAgent : IDomainService
 
     public DomainServiceAgent(DomainControl domainControl)
     {
-        this.domainService = domainControl.domainService;
+        this.domainService = domainControl.domainServer;
     }
 
-    public async NetTask<NetResult> Authenticate(OwnerToken token)
-    {
-        if (this.domainService is null)
-        {
-            return NetResult.NoNetService;
-        }
-
-        var serverConnection = TransmissionContext.Current.ServerConnection;
-        if (!token.ValidateAndVerify(serverConnection))
-        {
-            return NetResult.NotAuthenticated;
-        }
-
-        if (token.Credit is null)
-        {
-            return NetResult.InvalidData;
-        }
-
-        return NetResult.Success;
-    }
+    public NetTask<NetResult> Authenticate(OwnerToken token)
+        => this.domainService.Authenticate(token);
 
     public NetTask<NetResult> RegisterNode(NodeProof nodeProof)
         => this.domainService.RegisterNode(nodeProof);
