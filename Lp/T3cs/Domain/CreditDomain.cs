@@ -7,7 +7,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDomainService
+public partial record class CreditDomain : IStringConvertible<CreditDomain>
 {
     #region FieldAndProperty
 
@@ -24,7 +24,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
     public static int MaxStringLength => Credit.MaxStringLength + 1 + NetNode.MaxStringLength + 1 + LpConstants.MaxUrlLength;
 
     private SeedKey? seedKey;
-    private DomainData? domainData;
+    private DomainService? domainData;
 
     #endregion
 
@@ -123,7 +123,7 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
 
     #endregion
 
-    public bool Initialize(SeedKey seedKey, DomainData domainData)
+    public bool Initialize(SeedKey seedKey, DomainService domainData)
     {
         if (!this.Credit.PrimaryMerger.Equals(seedKey.GetSignaturePublicKey()))
         {
@@ -135,72 +135,5 @@ public partial record class CreditDomain : IStringConvertible<CreditDomain>, IDo
         this.domainData = domainData;
 
         return true;
-    }
-
-    async NetTask<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
-    {
-        return NetResult.Success;
-    }
-
-    async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
-    {
-        if (this.domainData is null)
-        {
-            return NetResult.NoNetService;
-        }
-
-        if (!nodeProof.ValidateAndVerify())
-        {
-            return NetResult.InvalidData;
-        }
-
-        using (this.domainData.Nodes.LockObject.EnterScope())
-        {
-            if (this.domainData.Nodes.PublicKeyChain.FindFirst(nodeProof.PublicKey) is { } first)
-            {// Found
-                if (first.SignedMics >= nodeProof.SignedMics)
-                {// Existing proof is newer or equal
-                    return NetResult.Success;
-                }
-                else
-                {
-                    first.Goshujin = default; // Remove the existing proof.
-                }
-            }
-
-            this.domainData.Nodes.Add(nodeProof);
-
-            while (this.domainData.Nodes.Count > DomainData.MaxNodeCount)
-            {// Remove the oldest NodeProofs if the count exceeds the maximum.
-                if (this.domainData.Nodes.SignedMicsChain.First is { } node)
-                {
-                    node.Goshujin = default;
-                }
-            }
-        }
-
-        return NetResult.Success;
-    }
-
-    async NetTask<NetResultAndValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
-    {
-        return new(NetResult.InvalidRelay, new NetNode());
-
-        if (this.domainData is null)
-        {
-            return new(NetResult.NoNetService);
-        }
-
-        using (this.domainData.Nodes.LockObject.EnterScope())
-        {
-            if (this.domainData.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))
-            {
-                return new(NetResult.Success, nodeProof.NetNode);
-            }
-            else
-            {
-                return new(NetResult.NotFound);
-            }
-        }
     }
 }

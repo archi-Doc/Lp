@@ -13,13 +13,13 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly AuthorityControl authorityControl;
-    private readonly DomainData domainData;
+    public readonly DomainService domainService;
 
     public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainData domainData)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainService domainData)
     {
         this.logger = logger;
 
@@ -39,7 +39,7 @@ public partial record class DomainControl
         this.PrimaryDomain ??= new(Credit.Default, new(), string.Empty);
         this.netControl = netControl;
         this.authorityControl = authorityControl;
-        this.domainData = domainData;
+        this.domainService = domainData;
     }
 
     public async Task Prepare()
@@ -50,7 +50,7 @@ public partial record class DomainControl
             return;
         }
 
-        if (this.PrimaryDomain.Initialize(seedKey, this.domainData))
+        if (this.PrimaryDomain.Initialize(seedKey, this.domainService))
         {
             this.netControl.Services.Register<IDomainService, DomainServiceAgent>();
 
