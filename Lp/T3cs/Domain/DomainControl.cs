@@ -78,7 +78,6 @@ public partial record class DomainControl
 
             var service = connection.GetService<IDomainService>();
             var result = await service.RegisterNode(nodeProof);
-            var result2 = await service.GetNode(nodeProof.PublicKey);
             return result;
         }
     }
