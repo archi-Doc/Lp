@@ -14,27 +14,10 @@ public partial record class CreditDomain
     [Key(0)]
     public DomainOption DomainOption { get; init; }
 
-    private SeedKey? seedKey;
-    private DomainServer? domainData;
-
     #endregion
 
     public CreditDomain(DomainOption domainOption)
     {
         this.DomainOption = domainOption;
-    }
-
-    public bool Initialize(SeedKey seedKey, DomainServer domainData)
-    {
-        if (!this.DomainOption.Credit.PrimaryMerger.Equals(seedKey.GetSignaturePublicKey()))
-        {
-            return false;
-        }
-
-        domainData.SetCredit(this.DomainOption.Credit);
-        this.seedKey = seedKey;
-        this.domainData = domainData;
-
-        return true;
     }
 }

@@ -67,7 +67,7 @@ public class Control
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
-                context.AddTransient<DomainServiceAgent>();
+                context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();

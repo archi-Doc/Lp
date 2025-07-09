@@ -6,6 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
+[NetServiceObject]
 public partial record class DomainServer : IDomainService
 {
     public const string Filename = "DomainServer";
@@ -28,10 +29,30 @@ public partial record class DomainServer : IDomainService
     [Key(4)]
     public byte[] DomainEvols { get; private set; } = [];
 
+    public bool IsActive => this.seedKey is not null;
+
+    private SeedKey? seedKey;
+    private SignaturePublicKey publicKey;
+
     #endregion
 
     public DomainServer()
     {
+    }
+
+    public bool Initialize(Credit credit, SeedKey seedKey)
+    {
+        var publicKey = seedKey.GetSignaturePublicKey();
+        if (!credit.PrimaryMerger.Equals(ref publicKey))
+        {
+            return false;
+        }
+
+        this.SetCredit(credit);
+        this.seedKey = seedKey;
+        this.publicKey = publicKey;
+
+        return true;
     }
 
     public void SetCredit(Credit credit)
@@ -53,6 +74,11 @@ public partial record class DomainServer : IDomainService
 
     async NetTask<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
     {
+        if (!this.IsActive)
+        {
+            return NetResult.NoNetService;
+        }
+
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (!token.ValidateAndVerify(serverConnection))
         {
@@ -69,6 +95,11 @@ public partial record class DomainServer : IDomainService
 
     async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
     {
+        if (!this.IsActive)
+        {
+            return NetResult.NoNetService;
+        }
+
         if (!nodeProof.NetNode.Validate() ||
             !nodeProof.NetNode.Address.IsValidIpv4AndIpv6)
         {
@@ -110,6 +141,11 @@ public partial record class DomainServer : IDomainService
 
     async Task<NetResultAndValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
     {
+        if (!this.IsActive)
+        {
+            return new(NetResult.NoNetService);
+        }
+
         using (this.Nodes.LockObject.EnterScope())
         {
             if (this.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))

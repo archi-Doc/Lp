@@ -5,14 +5,14 @@ using Netsphere.Crypto;
 
 namespace Lp.Net;
 
-[NetServiceObject]
+/*[NetServiceObject]
 internal class DomainServiceAgent : IDomainService
 {
-    private readonly IDomainService domainService; // Underlying service implementation (CreditDomain)
+    private readonly IDomainService domainService; // Underlying service implementation (DomainServer)
 
     public DomainServiceAgent(DomainControl domainControl)
     {
-        this.domainService = domainControl.domainServer;
+        this.domainService = domainControl.DomainServer;
     }
 
     public NetTask<NetResult> Authenticate(OwnerToken token)
@@ -23,4 +23,4 @@ internal class DomainServiceAgent : IDomainService
 
     public Task<NetResultAndValue<NetNode>> GetNode(SignaturePublicKey publicKey)
         => this.domainService.GetNode(publicKey);
-}
+}*/

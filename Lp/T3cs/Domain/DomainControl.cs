@@ -12,13 +12,14 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetControl netControl;
     private readonly AuthorityControl authorityControl;
-    public readonly DomainServer domainServer;
+
+    public DomainServer DomainServer { get; }
 
     public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainServer domainData)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainServer domainServer)
     {
         this.logger = logger;
 
@@ -38,7 +39,7 @@ public partial record class DomainControl
         this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
         this.netControl = netControl;
         this.authorityControl = authorityControl;
-        this.domainServer = domainData;
+        this.DomainServer = domainServer;
     }
 
     public async Task Prepare()
@@ -49,14 +50,11 @@ public partial record class DomainControl
             return;
         }
 
-        if (this.PrimaryDomain.Initialize(seedKey, this.domainServer))
+        if (this.DomainServer.Initialize(this.PrimaryDomain.DomainOption.Credit, seedKey))
         {
-            this.netControl.Services.Register<IDomainService, DomainServiceAgent>();
+            this.netControl.Services.Register<IDomainService, DomainServer>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString());
-        }
-        else
-        {
         }
     }
 
