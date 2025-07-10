@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Lp.Net;
 using Netsphere.Crypto;
 
@@ -29,8 +31,10 @@ public partial record class DomainServer : IDomainService
     [Key(4)]
     public byte[] DomainEvols { get; private set; } = [];
 
-    public bool IsActive => this.seedKey is not null;
+    [MemberNotNullWhen(true, nameof(creditDomain), nameof(seedKey))]
+    public bool IsActive => this.creditDomain is not null && this.seedKey is not null;
 
+    private CreditDomain? creditDomain;
     private SeedKey? seedKey;
     private SignaturePublicKey publicKey;
 
@@ -40,28 +44,25 @@ public partial record class DomainServer : IDomainService
     {
     }
 
-    public bool Initialize(Credit credit, SeedKey seedKey)
+    public bool Initialize(CreditDomain creditDomain, SeedKey seedKey)
     {
         var publicKey = seedKey.GetSignaturePublicKey();
-        if (!credit.PrimaryMerger.Equals(ref publicKey))
+        if (!creditDomain.DomainOption.Credit.PrimaryMerger.Equals(ref publicKey))
         {
             return false;
         }
 
-        this.SetCredit(credit);
+        if (!creditDomain.DomainOption.Credit.Equals(this.Credit))
+        {
+            this.Credit = creditDomain.DomainOption.Credit;
+            this.Clear();
+        }
+
+        this.creditDomain = creditDomain;
         this.seedKey = seedKey;
         this.publicKey = publicKey;
 
         return true;
-    }
-
-    public void SetCredit(Credit credit)
-    {
-        if (!credit.Equals(this.Credit))
-        {
-            this.Credit = credit;
-            this.Clear();
-        }
     }
 
     public void Clear()
@@ -111,8 +112,8 @@ public partial record class DomainServer : IDomainService
             return NetResult.InvalidData;
         }
 
-        if (true)
-        {// Check whether the PublicKey is registered in Evols.
+        if (this.creditDomain.TryGetNetNode(nodeProof.PublicKey, out _))
+        {// Check whether the PublicKey is registered in CreditDomain.
             nodeProof.IsAuthorized = true;
         }
         else
@@ -124,7 +125,7 @@ public partial record class DomainServer : IDomainService
         {
             if (this.Nodes.PublicKeyChain.FindFirst(nodeProof.PublicKey) is { } first)
             {// Found
-                if (first.SignedMics >= nodeProof.SignedMics)
+                if (first.PriorityMics >= nodeProof.PriorityMics)
                 {// Existing proof is newer or equal
                     return NetResult.Success;
                 }

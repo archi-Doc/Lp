@@ -51,7 +51,7 @@ public partial record class DomainControl
             return;
         }
 
-        if (this.DomainServer.Initialize(this.PrimaryDomain.DomainOption.Credit, seedKey))
+        if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
         {
             this.netControl.Services.Register<IDomainService, DomainServer>();
 
