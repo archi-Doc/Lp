@@ -149,4 +149,4 @@ LpService=
 
 Domain=
   ParseError="The specified domain format is invalid: {0}"
-  ServiceEnabled="Domain service has been activated: {0}"
+  ServiceEnabled="DomainService has been activated: {0}"

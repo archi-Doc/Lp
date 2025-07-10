@@ -2,6 +2,7 @@
 
 using Lp.Net;
 using Lp.Services;
+using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
@@ -54,7 +55,7 @@ public partial record class DomainControl
         {
             this.netControl.Services.Register<IDomainService, DomainServer>();
 
-            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString());
+            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
         }
     }
 

@@ -64,8 +64,6 @@ public class RelayMerger : Merger
         this.seedKey = mergerSeedKey;
         this.PublicKey = this.seedKey.GetSignaturePublicKey();
 
-        this.InitializeLogger();
-
         this.Initialized = true;
     }
 

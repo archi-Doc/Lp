@@ -43,6 +43,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger = unitLogger.GetLogger<Linker>();
         this.modestLogger = new(this.logger);
+        this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;
         this.lpBase = lpBase;
         this.netStats = netStats;

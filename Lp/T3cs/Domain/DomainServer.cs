@@ -103,12 +103,21 @@ public partial record class DomainServer : IDomainService
         if (!nodeProof.NetNode.Validate() ||
             !nodeProof.NetNode.Address.IsValidIpv4AndIpv6)
         {
-            //return NetResult.NoNetwork;
+            return NetResult.InvalidData;
         }
 
         if (!nodeProof.ValidateAndVerify())
         {
             return NetResult.InvalidData;
+        }
+
+        if (true)
+        {// Check whether the PublicKey is registered in Evols.
+            nodeProof.IsAuthorized = true;
+        }
+        else
+        {
+            nodeProof.IsAuthorized = false;
         }
 
         using (this.Nodes.LockObject.EnterScope())
@@ -129,7 +138,7 @@ public partial record class DomainServer : IDomainService
 
             while (this.Nodes.Count > DomainServer.MaxNodeCount)
             {// Remove the oldest NodeProofs if the count exceeds the maximum.
-                if (this.Nodes.SignedMicsChain.First is { } node)
+                if (this.Nodes.PriorityMicsChain.First is { } node)
                 {
                     node.Goshujin = default;
                 }

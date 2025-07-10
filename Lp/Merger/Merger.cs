@@ -45,6 +45,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger = unitLogger.GetLogger<Merger>();
         this.modestLogger = new(this.logger);
+        this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;
         this.lpBase = lpBase;
         this.netStats = netStats;
@@ -77,8 +78,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.creditData = this.creditDataCrystal.Data;
         this.seedKey = seedKey;
         this.PublicKey = this.seedKey.GetSignaturePublicKey();
-
-        this.InitializeLogger();
 
         this.Initialized = true;
     }
@@ -202,7 +201,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
         }
 
-        if (this.State.IsActive)
+        if (this.State.IsActive && this.State.NetNode.Address.IsValidIpv4AndIpv6)
         {
             if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
             {
@@ -243,11 +242,5 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         var owners = await creditData.Owners.Get().ConfigureAwait(false);
         return owners.TryGet(token.PublicKey);
-    }
-
-    protected void InitializeLogger()
-    {
-        this.modestLogger.SetLogger(this.logger);
-        this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
     }
 }
