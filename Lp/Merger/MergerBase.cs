@@ -14,12 +14,11 @@ public abstract partial class MergerBase : UnitBase
 {
     #region FieldAndProperty
 
-    [MemberNotNullWhen(true, nameof(Configuration))]
     public abstract bool Initialized { get; protected set; }
 
-    public abstract MergerConfigurationBase? Configuration { get; protected set; }
+    public abstract string GetName();
 
-    public abstract CredentialState State { get; protected set; }
+    public abstract CredentialState GetState();
 
     public SignaturePublicKey PublicKey { get; protected set; }
 
@@ -34,10 +33,10 @@ public abstract partial class MergerBase : UnitBase
 
     #endregion
 
-    public MergerBase(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+    public MergerBase(Type logSource, UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context)
     {
-        this.logger = unitLogger.GetLogger<Merger>();
+        this.logger = unitLogger.GetLogger(logSource);
         this.modestLogger = new(this.logger);
         this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;
@@ -54,9 +53,10 @@ public abstract partial class MergerBase : UnitBase
         }
 
         // Check net node
-        this.State.NetNode = this.netStats.OwnNetNode;
-        this.State.Name = this.Configuration.Name;
-        if (this.State.NetNode is null)
+        var state = this.GetState();
+        state.NetNode = this.netStats.OwnNetNode;
+        state.Name = this.GetName();
+        if (state.NetNode is null)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
             return;
@@ -70,19 +70,19 @@ public abstract partial class MergerBase : UnitBase
         }
 
         // Active
-        if (!this.State.IsActive)
+        if (!state.IsActive)
         {
-            this.State.IsActive = true;
+            state.IsActive = true;
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
         }
 
-        if (this.State.IsActive && this.State.NetNode.Address.IsValidIpv4AndIpv6)
+        if (state.IsActive &&state.NetNode.Address.IsValidIpv4AndIpv6)
         {
             if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
             {
                 this.lastRegisteredMics = Mics.FastCorrected;
 
-                var nodeProof = new NodeProof(this.PublicKey, this.State.NetNode);
+                var nodeProof = new NodeProof(this.PublicKey, state.NetNode);
                 this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
                 var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
 

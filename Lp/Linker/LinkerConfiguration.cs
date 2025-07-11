@@ -8,15 +8,11 @@ using Netsphere.Crypto;
 namespace Lp;
 
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
-public partial record LinkerConfiguration
+public partial record LinkerConfiguration : MergerConfigurationBase
 {
     public const string Filename = "LinkerConfiguration.tinyhand";
 
     public LinkerConfiguration()
     {
     }
-
-    [KeyAsName]
-    [MaxLength(Alias.MaxAliasLength)]
-    public partial string Name { get; set; } = string.Empty;
 }
