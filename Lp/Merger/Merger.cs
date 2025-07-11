@@ -70,9 +70,9 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
                 new GlobalDirectoryConfiguration("Merger/Storage")),
         });
 
-        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        if (string.IsNullOrEmpty(this.Configuration.Name))
         {
-            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
+            this.Configuration.Name = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
         }
 
         this.creditData = this.creditDataCrystal.Data;
@@ -99,7 +99,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Configuration.MergerName}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -180,7 +180,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // Check net node
         this.State.NetNode = this.netStats.OwnNetNode;
-        this.State.Name = this.Configuration.MergerName;
+        this.State.Name = this.Configuration.Name;
         if (this.State.NetNode is null)
         {
             this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
@@ -209,10 +209,12 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
                 var nodeProof = new NodeProof(this.PublicKey, this.State.NetNode);
                 this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
-                var result = await this.domainControl.RegisterNode(nodeProof).ConfigureAwait(false);
+                var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
+
+                this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registration, result);
                 if (result == NetResult.Success)
                 {
-                    this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registered, this.State.NetNode.ToString());
+                    // this.logger.TryGet(LogLevel.Information)?.Log(this.State.NetNode.ToString());
                 }
             }
         }

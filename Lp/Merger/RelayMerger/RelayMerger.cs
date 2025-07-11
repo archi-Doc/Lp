@@ -45,9 +45,9 @@ public class RelayMerger : Merger
                 new GlobalDirectoryConfiguration("RelayMerger/Storage")),
         });
 
-        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        if (string.IsNullOrEmpty(this.Configuration.Name))
         {
-            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
+            this.Configuration.Name = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
         }
 
         this.creditData = this.creditDataCrystal.Data;

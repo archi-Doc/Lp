@@ -35,6 +35,7 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     private ICrystal<FullCredit.GoshujinClass>? dataCrystal;
     private FullCredit.GoshujinClass? data;
     private SeedKey seedKey = SeedKey.Invalid;
+    protected long lastRegisteredMics;
 
     #endregion
 
@@ -109,6 +110,24 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
         {
             this.State.IsActive = true;
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
+        }
+
+        if (this.State.IsActive && this.State.NetNode.Address.IsValidIpv4AndIpv6)
+        {
+            if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
+            {
+                this.lastRegisteredMics = Mics.FastCorrected;
+
+                var nodeProof = new NodeProof(this.PublicKey, this.State.NetNode);
+                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
+                var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
+
+                this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registration, result);
+                if (result == NetResult.Success)
+                {
+                    // this.logger.TryGet(LogLevel.Information)?.Log(this.State.NetNode.ToString());
+                }
+            }
         }
     }
 

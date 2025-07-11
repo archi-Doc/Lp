@@ -53,13 +53,13 @@ public partial record class DomainControl
 
         if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
         {
-            this.netControl.Services.Register<IDomainService, DomainServer>();
+            this.netControl.Services.Register<IDomainServer, DomainServer>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
         }
     }
 
-    public async Task<NetResult> RegisterNode(NodeProof nodeProof)
+    public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {
         using (var connection = await this.netControl.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
         {
@@ -68,7 +68,7 @@ public partial record class DomainControl
                 return NetResult.NoNetwork;
             }
 
-            var service = connection.GetService<IDomainService>();
+            var service = connection.GetService<IDomainServer>();
             var result = await service.RegisterNode(nodeProof);
             return result;
         }

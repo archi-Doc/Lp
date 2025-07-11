@@ -8,7 +8,14 @@ using Netsphere.Crypto;
 namespace Lp;
 
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
-public partial record MergerConfiguration
+public partial record MergerConfigurationBase
+{
+    [MaxLength(Alias.MaxAliasLength)]
+    public partial string Name { get; set; } = string.Empty;
+}
+
+[TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
+public partial record MergerConfiguration : MergerConfigurationBase
 {
     public const string MergerFilename = "MergerConfiguration";
     public const string RelayMergerFilename = "RelayMergerConfiguration";
@@ -26,12 +33,8 @@ public partial record MergerConfiguration
 
     public IMergerClient.InformationResult ToInformationResult()
     {
-        return new IMergerClient.InformationResult() with { MergerName = this.MergerName, };
+        return new IMergerClient.InformationResult() with { MergerName = this.Name, };
     }
-
-    // [DefaultValue(DefaultName)]
-    [MaxLength(Alias.MaxAliasLength)]
-    public partial string MergerName { get; set; } = string.Empty;
 
     public Type MergerType { get; set; }
 

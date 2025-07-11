@@ -27,6 +27,29 @@ public partial class EvolProof : ContractableProof
 
     public override SignaturePublicKey GetSignatureKey() => this.SourceValue.Owner;
 
+    public override bool Validate(ValidationOptions validationOptions)
+    {
+        if (!base.Validate(validationOptions))
+        {
+            return false;
+        }
+
+        if (!this.SourceValue.Validate() || !this.DestinationValue.Validate())
+        {
+            return false;
+        }
+
+        if (this.DestinationIdentity is not null)
+        {
+            var identifier = this.DestinationIdentity.GetIdentifier();
+            if (!this.DestinationValue.Credit.Identifier.Equals(ref identifier))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {
         credit = this.SourceValue.Credit;

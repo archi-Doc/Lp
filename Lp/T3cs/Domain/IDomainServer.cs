@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.Net;
 
 [NetServiceInterface]
-public interface IDomainService : INetServiceWithOwner
+public interface IDomainServer : INetServiceWithOwner
 {
     NetTask<NetResult> RegisterNode(NodeProof nodeProof);
 

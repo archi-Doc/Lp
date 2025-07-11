@@ -9,7 +9,7 @@ namespace Lp.T3cs;
 
 [TinyhandObject]
 [NetServiceObject]
-public partial record class DomainServer : IDomainService
+public partial record class DomainServer : IDomainServer
 {
     public const string Filename = "DomainServer";
     public const int MaxNodeCount = 1_000; // Maximum number of nodes in the domain data.
@@ -94,7 +94,7 @@ public partial record class DomainServer : IDomainService
         return NetResult.Success;
     }
 
-    async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
+    async NetTask<NetResult> IDomainServer.RegisterNode(NodeProof nodeProof)
     {
         if (!this.IsActive)
         {
@@ -149,7 +149,7 @@ public partial record class DomainServer : IDomainService
         return NetResult.Success;
     }
 
-    async Task<NetResultAndValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
+    async Task<NetResultAndValue<NetNode>> IDomainServer.GetNode(SignaturePublicKey publicKey)
     {
         if (!this.IsActive)
         {

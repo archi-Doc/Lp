@@ -47,7 +47,7 @@ public partial class LpControlMachine : Machine
 
         await this.control.Merger.UpdateState();
         await this.control.RelayMerger.UpdateState();
-        this.control.Linker.UpdateState();
+        await this.control.Linker.UpdateState();
 
         return StateResult.Continue;
     }
