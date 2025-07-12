@@ -14,11 +14,11 @@ public partial record class LpDogma
     public const string Filename = "LpDogma";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
-    public partial record class PriorityValue(
+    public partial record class Evol(
         Point LpPoint,
-        Value Credit)
+        Value DestinationValue)
     {
-        public long UpdatedMics { get; set; }
+        // public long UpdatedMics { get; set; }
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
@@ -49,7 +49,7 @@ public partial record class LpDogma
         public long UpdatedMics { get; set; }
     }
 
-    public PriorityValue[] PriorityValues { get; set; } = [];
+    public Evol[] Evols { get; set; } = [];
 
     public CreditLink[] CreditNet { get; set; } = [];
 

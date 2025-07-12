@@ -66,7 +66,7 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        foreach (var x in this.lpDogma.PriorityValues)
+        foreach (var x in this.lpDogma.Evols)
         {
             var result = await this.Process(x);
             if (result == StateResult.Terminate)
@@ -105,7 +105,7 @@ public partial class LpDogmaMachine : Machine
         return StateResult.Continue;
     }
 
-    private async Task<StateResult> Process(LpDogma.PriorityValue priorityValue)
+    private async Task<StateResult> Process(LpDogma.Evol evol)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -114,11 +114,11 @@ public partial class LpDogmaMachine : Machine
         }
 
         // Evol: LpKey#1@LpCredit -> Merger1#100@Credit1
-        var sourceValue = new Value(LpConstants.LpPublicKey, priorityValue.LpPoint, LpConstants.LpCredit); // LpKey#1@LpCredit
+        /*var sourceValue = new Value(LpConstants.LpPublicKey, priorityValue.LpPoint, LpConstants.LpCredit); // LpKey#1@LpCredit
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
         SignaturePublicKey linkerPublicKey = default;
         var proof = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
-        this.lpSeedKey.TrySign(proof, Mics.FromSeconds(19));
+        this.lpSeedKey.TrySign(proof, Mics.FromSeconds(19));*/
 
         return StateResult.Continue;
     }

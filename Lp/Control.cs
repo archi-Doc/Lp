@@ -42,6 +42,7 @@ public class Control
             this.Configure(context =>
             {
                 // Main services
+                context.AddSingleton<RobustConnection.Factory>();
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpService>();
