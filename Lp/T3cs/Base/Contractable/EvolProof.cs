@@ -50,6 +50,7 @@ public partial class EvolProof : ContractableProof
 
         return true;
     }
+
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {
         credit = this.SourceValue.Credit;

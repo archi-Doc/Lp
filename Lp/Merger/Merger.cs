@@ -10,7 +10,7 @@ using Netsphere.Stats;
 
 namespace Lp;
 
-public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
+public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 {
     private const string NameSuffix = "_M";
 
@@ -19,37 +19,24 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(creditDataCrystal))]
     [MemberNotNullWhen(true, nameof(creditData))]
-    public virtual bool Initialized { get; protected set; }
-
-    public SignaturePublicKey PublicKey { get; protected set; }
+    public override bool Initialized { get; protected set; }
 
     public MergerConfiguration? Configuration { get; protected set; }
 
     public MergerState State { get; protected set; } = new();
 
-    protected ILogger logger;
-    protected ModestLogger modestLogger;
-    protected NetBase netBase;
-    protected LpBase lpBase;
-    protected NetStats netStats;
-    protected DomainControl domainControl;
+    public override string GetName() => this.Configuration?.Name ?? string.Empty;
+
+    public override CredentialState GetState() => this.State;
+
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
-    protected SeedKey seedKey = SeedKey.Invalid;
-    protected long lastRegisteredMics;
 
     #endregion
 
     public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
-        : base(context)
+        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
     {
-        this.logger = unitLogger.GetLogger<Merger>();
-        this.modestLogger = new(this.logger);
-        this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
-        this.netBase = netBase;
-        this.lpBase = lpBase;
-        this.netStats = netStats;
-        this.domainControl = domainControl;
     }
 
     public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
@@ -170,55 +157,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public SeedKey SeedKey => this.seedKey;
-
-    public async Task UpdateState()
-    {
-        if (!this.Initialized)
-        {
-            return;
-        }
-
-        // Check net node
-        this.State.NetNode = this.netStats.OwnNetNode;
-        this.State.Name = this.Configuration.Name;
-        if (this.State.NetNode is null)
-        {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
-            return;
-        }
-
-        // Check node type
-        if (this.netStats.OwnNodeType != NodeType.Direct)
-        {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
-            return;
-        }
-
-        // Active
-        if (!this.State.IsActive)
-        {
-            this.State.IsActive = true;
-            this.logger.TryGet(LogLevel.Information)?.Log("Activated");
-        }
-
-        if (this.State.IsActive && this.State.NetNode.Address.IsValidIpv4AndIpv6)
-        {
-            if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
-            {
-                this.lastRegisteredMics = Mics.FastCorrected;
-
-                var nodeProof = new NodeProof(this.PublicKey, this.State.NetNode);
-                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
-                var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
-
-                this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registration, result);
-                if (result == NetResult.Success)
-                {
-                    // this.logger.TryGet(LogLevel.Information)?.Log(this.State.NetNode.ToString());
-                }
-            }
-        }
-    }
 
     public FullCredit? GetCredit(Credit credit)
     {

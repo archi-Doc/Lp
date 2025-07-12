@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -33,10 +32,10 @@ public abstract partial class MergerBase : UnitBase
 
     #endregion
 
-    public MergerBase(Type logSource, UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+    public MergerBase(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context)
     {
-        this.logger = unitLogger.GetLogger(logSource);
+        this.logger = unitLogger.GetLogger(this.GetType());
         this.modestLogger = new(this.logger);
         this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;
@@ -76,7 +75,7 @@ public abstract partial class MergerBase : UnitBase
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
         }
 
-        if (state.IsActive &&state.NetNode.Address.IsValidIpv4AndIpv6)
+        if (state.IsActive && state.NetNode.Address.IsValidIpv4AndIpv6)
         {
             if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
             {
