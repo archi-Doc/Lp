@@ -8,7 +8,7 @@ namespace Lp.Services;
 [NetServiceInterface]
 public partial interface LpDogmaNetService : INetService
 {
-    NetTask<(NetResult Result, ConnectionAgreement? Agreement)> Authenticate(AuthenticationToken token);
+    NetTask<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
 
     NetTask<LpDogmaInformation?> GetInformation();
 

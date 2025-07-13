@@ -31,7 +31,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         this.credentials = credentials;
     }
 
-    async NetTask<(NetResult Result, ConnectionAgreement? Agreement)> LpDogmaNetService.Authenticate(AuthenticationToken token)
+    async NetTask<NetResultAndValue<ConnectionAgreement?>> LpDogmaNetService.Authenticate(AuthenticationToken token)
     {
         /*if (!this.merger.State.IsActive)
         {
@@ -41,15 +41,15 @@ internal class LpDogmaAgent : LpDogmaNetService
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token.PublicKey.Equals(LpConstants.LpPublicKey) &&
             token.ValidateAndVerify(serverConnection))
-        {//
+        {
             serverConnection.Agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(10);
             this.authenticated = true;
-            return (NetResult.Success, serverConnection.Agreement);
+            return new(serverConnection.Agreement);
         }
         else
         {
             this.authenticated = false;
-            return (NetResult.NotAuthenticated, default);
+            return new(NetResult.NotAuthenticated);
         }
     }
 
