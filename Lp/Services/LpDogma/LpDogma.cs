@@ -16,9 +16,32 @@ public partial record class LpDogma
     [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class Evol(
         Point LpPoint,
-        Value DestinationValue)
+        Point DestinationPoint,
+        SignaturePublicKey Originator,
+        SignaturePublicKey Merger,
+        SignaturePublicKey Linker)
     {
         // public long UpdatedMics { get; set; }
+
+        public bool Validate()
+        {
+            if (this.LpPoint < 0 || this.LpPoint > LpConstants.MaxPoint)
+            {
+                return false;
+            }
+
+            if (this.DestinationPoint < 0 || this.DestinationPoint > LpConstants.MaxPoint)
+            {
+                return false;
+            }
+
+            if (!this.Originator.IsValid || !this.Merger.IsValid || !this.Linker.IsValid)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]

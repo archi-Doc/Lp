@@ -42,7 +42,7 @@ public partial class LpDogmaMachine : Machine
     {
         if (this.lpBase.BasalServiceCount < BasalServiceThreshold)
         {
-            return StateResult.Continue;
+            //return StateResult.Continue;
         }
 
         if (await this.authorityControl.GetLpSeedKey(null) is not { } seedKey)
@@ -112,6 +112,15 @@ public partial class LpDogmaMachine : Machine
         {
             return StateResult.Terminate;
         }
+
+        if (!evol.Validate())
+        {
+            return StateResult.Continue;
+        }
+
+        var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
+        Console.WriteLine(creditIdentity.ToString(Alias.Instance));
+        Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
 
         // Evol: LpKey#1@LpCredit -> Merger1#100@Credit1
         /*var sourceValue = new Value(LpConstants.LpPublicKey, priorityValue.LpPoint, LpConstants.LpCredit); // LpKey#1@LpCredit

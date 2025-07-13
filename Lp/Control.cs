@@ -65,6 +65,7 @@ public class Control
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerClientAgent>();
+                context.AddTransient<Lp.T3cs.MergerRemoteAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
@@ -582,6 +583,11 @@ public class Control
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
             this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+
+            if (this.LpBase.RemotePublicKey.IsValid)
+            {
+                this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            }
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))
