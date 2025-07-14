@@ -128,11 +128,11 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        // Evol: LpKey#Point1@LpCredit -> Merger1#Point2@Credit1
-        var sourceValue = new Value(LpConstants.LpPublicKey, evol.LpPoint, LpConstants.LpCredit); // LpKey#Point@LpCredit
+        // Evol: LpKey#Point1@LpCredit -> Originator#Point2@Credit1
+        var sourceValue = new Value(LpConstants.LpPublicKey, evol.LpPoint, LpConstants.LpCredit); // LpKey#Point1@LpCredi
         var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
         var credit = creditIdentity.ToCredit();
-        var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Merger1#Point2@Credit1
+        var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Originator#Point2@Credit1
         var proof = new EvolProof(evol.Linker, sourceValue, destinationValue, creditIdentity);
 
         var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
