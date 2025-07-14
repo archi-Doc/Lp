@@ -106,9 +106,31 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async Task<NetResult> CreateCredit(CreditIdentity creditIdentity)
-    {//
-        return NetResult.Success;
+    public async Task<FullCredit?> GetOrCreateCredit(CreditIdentity creditIdentity)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        var credit = creditIdentity.ToCredit();
+        var fullCredit = this.creditData.TryGet(credit);
+        if (fullCredit is not null)
+        {
+            return fullCredit;
+        }
+
+        using (var w = this.creditData.TryLock(credit, ValueLink.TryLockMode.GetOrCreate))
+        {
+            if (w is null)
+            {
+                return default;
+            }
+
+            fullCredit = w.Commit();
+        }
+
+        return fullCredit;
     }
 
     public async NetTask<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)

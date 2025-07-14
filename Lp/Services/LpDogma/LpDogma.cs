@@ -44,7 +44,7 @@ public partial record class LpDogma
         }
     }
 
-    [TinyhandObject(ImplicitKeyAsName = true)]
+    /*[TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class CreditLink(
         Value Value1,
         Value Value2,
@@ -70,15 +70,15 @@ public partial record class LpDogma
         Point Point)
     {
         public long UpdatedMics { get; set; }
-    }
+    }*/
 
     public Evol[] Evols { get; set; } = [];
 
-    public CreditLink[] CreditNet { get; set; } = [];
+    /*public CreditLink[] CreditNet { get; set; } = [];
 
     public Credential[] Mergers { get; set; } = [];
 
     public Credential[] Linkers { get; set; } = [];
 
-    public Link[] Links { get; set; } = [];
+    public Link[] Links { get; set; } = [];*/
 }

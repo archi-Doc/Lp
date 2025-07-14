@@ -17,6 +17,12 @@ public partial record class CreditIdentity : Identity
         this.Mergers = mergers;
     }
 
+    public Credit ToCredit()
+    {
+        var credit = new Credit(this.GetIdentifier(), this.Mergers);
+        return credit;
+    }
+
     public override bool Validate()
     {
         if (!base.Validate())

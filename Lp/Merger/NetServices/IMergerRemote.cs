@@ -40,13 +40,14 @@ internal class MergerRemoteAgent : IMergerRemote
         return new((ConnectionAgreement?)default);
     }
 
-    Task<NetResult> IMergerRemote.CreateCredit(CreditIdentity creditIdentity)
+    async Task<NetResult> IMergerRemote.CreateCredit(CreditIdentity creditIdentity)
     {
         if (!this.authenticated)
         {
-            return Task.FromResult(NetResult.NotAuthenticated);
+            return NetResult.NotAuthenticated;
         }
 
-        return this.merger.CreateCredit(creditIdentity);
+        var fullCredit = await this.merger.GetOrCreateCredit(creditIdentity);
+        return fullCredit is not null ? NetResult.Success : NetResult.InvalidData;
     }
 }
