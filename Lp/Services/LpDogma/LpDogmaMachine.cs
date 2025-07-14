@@ -19,9 +19,10 @@ public partial class LpDogmaMachine : Machine
     private readonly AuthorityControl authorityControl;
     private readonly LpDogma lpDogma;
     private readonly Credentials credentials;
+    private readonly Merger merger;
     private SeedKey? lpSeedKey = default;
 
-    public LpDogmaMachine(IUserInterfaceService consoleSeuserInterfaceServicevice, ILogger<LpDogmaMachine> logger, LpBase lpBase, NetTerminal netTerminal, AuthorityControl authorityControl, LpDogma lpDogma, Credentials credentials)
+    public LpDogmaMachine(IUserInterfaceService consoleSeuserInterfaceServicevice, ILogger<LpDogmaMachine> logger, LpBase lpBase, NetTerminal netTerminal, AuthorityControl authorityControl, LpDogma lpDogma, Credentials credentials, Merger merger)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
         this.logger = logger;
@@ -31,6 +32,7 @@ public partial class LpDogmaMachine : Machine
         this.authorityControl = authorityControl;
         this.lpDogma = lpDogma;
         this.credentials = credentials;
+        this.merger = merger;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(3);
     }
@@ -42,7 +44,7 @@ public partial class LpDogmaMachine : Machine
     {
         if (this.lpBase.BasalServiceCount < BasalServiceThreshold)
         {
-            return StateResult.Continue;
+            //return StateResult.Continue;
         }
 
         if (await this.authorityControl.GetLpSeedKey(null) is not { } seedKey)
@@ -66,7 +68,7 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Continue;
         }
 
-        foreach (var x in this.lpDogma.PriorityValues)
+        foreach (var x in this.lpDogma.Evols)
         {
             var result = await this.Process(x);
             if (result == StateResult.Terminate)
@@ -75,7 +77,7 @@ public partial class LpDogmaMachine : Machine
             }
         }
 
-        foreach (var x in this.lpDogma.Mergers)
+        /*foreach (var x in this.lpDogma.Mergers)
         {
             var result = await this.ProcessCredential(x, CredentialKind.Merger);
             if (result == StateResult.Terminate)
@@ -100,12 +102,12 @@ public partial class LpDogmaMachine : Machine
             {
                 return StateResult.Terminate;
             }
-        }
+        }*/
 
         return StateResult.Continue;
     }
 
-    private async Task<StateResult> Process(LpDogma.PriorityValue priorityValue)
+    private async Task<StateResult> Process(LpDogma.Evol evol)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -113,19 +115,40 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        // Evol: LpKey#1@LpCredit -> Merger1#100@Credit1
-        var sourceValue = new Value(LpConstants.LpPublicKey, priorityValue.LpPoint, LpConstants.LpCredit); // LpKey#1@LpCredit
+        if (!evol.Validate())
+        {
+            return StateResult.Continue;
+        }
+
+        // Prepare LpCredit
+        var result = await this.merger.GetOrCreateCredit(LpConstants.LpIdentity);
+        if (result is null)
+        {
+            this.userInterfaceService.WriteLine($"Failed to create credit: Lp");
+            return StateResult.Continue;
+        }
+
+        // Evol: LpKey#Point1@LpCredit -> Merger1#Point2@Credit1
+        var sourceValue = new Value(LpConstants.LpPublicKey, evol.LpPoint, LpConstants.LpCredit); // LpKey#Point@LpCredit
+        var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
+        var credit = creditIdentity.ToCredit();
+        var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Merger1#Point2@Credit1
+        var proof = new EvolProof(evol.Linker, sourceValue, destinationValue, creditIdentity);
+
+        var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
+        Console.WriteLine(creditIdentity.ToString(Alias.Instance));
+        Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
+
+        /*
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
         SignaturePublicKey linkerPublicKey = default;
         var proof = new EvolProof(linkerPublicKey, sourceValue, destinationValue, default);
-        this.lpSeedKey.TrySign(proof, Mics.FromSeconds(19));
-        // var evidence = ContractableEvidence
-        //var linkage = new Marketable
+        this.lpSeedKey.TrySign(proof, Mics.FromSeconds(19));*/
 
         return StateResult.Continue;
     }
 
-    private async Task<StateResult> ProcessCredential(LpDogma.Credential credentialNode, CredentialKind credentialKind)
+    /*private async Task<StateResult> ProcessCredential(LpDogma.Credential credentialNode, CredentialKind credentialKind)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -135,7 +158,7 @@ public partial class LpDogmaMachine : Machine
 
         return StateResult.Continue;
 
-        /*if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
+        if (this.credentials.Nodes.TryGet(credentialNode.PublicKey, out var credentialEvidence) &&
             credentialEvidence.Proof.Value.Point == credentialNode.Point)
         {
             return StateResult.Continue;
@@ -187,10 +210,10 @@ public partial class LpDogmaMachine : Machine
             }
 
             return StateResult.Continue;
-        }*/
-    }
+        }
+    }*/
 
-    private async Task<StateResult> ProcessLink(LpDogma.Link link)
+    /*private async Task<StateResult> ProcessLink(LpDogma.Link link)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -198,11 +221,11 @@ public partial class LpDogmaMachine : Machine
             return StateResult.Terminate;
         }
 
-        /*if (this.credentials.LinkerCredentials.CredentialKeyChain.FindFirst(credentialNode.PublicKey) is not null)
+        if (this.credentials.LinkerCredentials.CredentialKeyChain.FindFirst(credentialNode.PublicKey) is not null)
         {
             // this.userInterfaceService.WriteLine($"{credentialNode.MergerKey.ToString()} -> valid");
             return StateResult.Continue;
-        }*/
+        }
 
         if (!this.credentials.Nodes.CheckAuthorization(link.Credit1) ||
             !this.credentials.Nodes.CheckAuthorization(link.Credit2) ||
@@ -261,7 +284,7 @@ public partial class LpDogmaMachine : Machine
         }
 
         return StateResult.Continue;
-    }
+    }*/
 
     private async Task<T?> ConnectAndRunService<T>(SignaturePublicKey publicKey, Func<LpDogmaNetService, NetTask<T?>> func)
     {

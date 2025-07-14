@@ -73,10 +73,10 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 async connection =>
                 {
                     var token = AuthenticationToken.CreateAndSign(seedKey, connection);
-                    var r = await connection.GetService<LpDogmaNetService>().Authenticate(token);
+                    var r = await connection.GetService<IMergerRemote>().Authenticate(token);
                     if (r.Result == NetResult.Success)
                     {
-                        connection.Agreement.AcceptAll(r.Agreement);
+                        connection.Agreement.AcceptAll(r.Value);
                         return true;
                     }
                     else

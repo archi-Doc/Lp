@@ -14,14 +14,37 @@ public partial record class LpDogma
     public const string Filename = "LpDogma";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
-    public partial record class PriorityValue(
+    public partial record class Evol(
         Point LpPoint,
-        Value Credit)
+        Point DestinationPoint,
+        SignaturePublicKey Originator,
+        SignaturePublicKey Merger,
+        SignaturePublicKey Linker)
     {
-        public long UpdatedMics { get; set; }
+        // public long UpdatedMics { get; set; }
+
+        public bool Validate()
+        {
+            if (this.LpPoint < 0 || this.LpPoint > LpConstants.MaxPoint)
+            {
+                return false;
+            }
+
+            if (this.DestinationPoint < 0 || this.DestinationPoint > LpConstants.MaxPoint)
+            {
+                return false;
+            }
+
+            if (!this.Originator.IsValid || !this.Merger.IsValid || !this.Linker.IsValid)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
-    [TinyhandObject(ImplicitKeyAsName = true)]
+    /*[TinyhandObject(ImplicitKeyAsName = true)]
     public partial record class CreditLink(
         Value Value1,
         Value Value2,
@@ -47,15 +70,15 @@ public partial record class LpDogma
         Point Point)
     {
         public long UpdatedMics { get; set; }
-    }
+    }*/
 
-    public PriorityValue[] PriorityValues { get; set; } = [];
+    public Evol[] Evols { get; set; } = [];
 
-    public CreditLink[] CreditNet { get; set; } = [];
+    /*public CreditLink[] CreditNet { get; set; } = [];
 
     public Credential[] Mergers { get; set; } = [];
 
     public Credential[] Linkers { get; set; } = [];
 
-    public Link[] Links { get; set; } = [];
+    public Link[] Links { get; set; } = [];*/
 }

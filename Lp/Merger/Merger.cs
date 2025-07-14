@@ -10,7 +10,7 @@ using Netsphere.Stats;
 
 namespace Lp;
 
-public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
+public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 {
     private const string NameSuffix = "_M";
 
@@ -19,33 +19,24 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(creditDataCrystal))]
     [MemberNotNullWhen(true, nameof(creditData))]
-    public virtual bool Initialized { get; protected set; }
-
-    public SignaturePublicKey PublicKey { get; protected set; }
+    public override bool Initialized { get; protected set; }
 
     public MergerConfiguration? Configuration { get; protected set; }
 
     public MergerState State { get; protected set; } = new();
 
-    protected ILogger logger;
-    protected ModestLogger modestLogger;
-    protected NetBase netBase;
-    protected LpBase lpBase;
-    protected NetStats netStats;
+    public override string GetName() => this.Configuration?.Name ?? string.Empty;
+
+    public override CredentialState GetState() => this.State;
+
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
     protected FullCredit.GoshujinClass? creditData;
-    protected SeedKey seedKey = SeedKey.Invalid;
 
     #endregion
 
-    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats)
-        : base(context)
+    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
     {
-        this.logger = unitLogger.GetLogger<Merger>();
-        this.modestLogger = new(this.logger);
-        this.netBase = netBase;
-        this.lpBase = lpBase;
-        this.netStats = netStats;
     }
 
     public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
@@ -66,16 +57,14 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
                 new GlobalDirectoryConfiguration("Merger/Storage")),
         });
 
-        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        if (string.IsNullOrEmpty(this.Configuration.Name))
         {
-            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
+            this.Configuration.Name = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
         }
 
         this.creditData = this.creditDataCrystal.Data;
         this.seedKey = seedKey;
         this.PublicKey = this.seedKey.GetSignaturePublicKey();
-
-        this.InitializeLogger();
 
         this.Initialized = true;
     }
@@ -97,7 +86,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Configuration.MergerName}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -116,6 +105,33 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     [TinyhandObject]
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
+
+    public async Task<FullCredit?> GetOrCreateCredit(CreditIdentity creditIdentity)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        var credit = creditIdentity.ToCredit();
+        var fullCredit = this.creditData.TryGet(credit);
+        if (fullCredit is not null)
+        {
+            return fullCredit;
+        }
+
+        using (var w = this.creditData.TryLock(credit, ValueLink.TryLockMode.GetOrCreate))
+        {
+            if (w is null)
+            {
+                return default;
+            }
+
+            fullCredit = w.Commit();
+        }
+
+        return fullCredit;
+    }
 
     public async NetTask<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
     {
@@ -169,37 +185,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public SeedKey SeedKey => this.seedKey;
 
-    public void UpdateState()
-    {
-        if (!this.Initialized)
-        {
-            return;
-        }
-
-        // Check net node
-        this.State.NetNode = this.netStats.OwnNetNode;
-        this.State.Name = this.Configuration.MergerName;
-        if (this.State.NetNode is null)
-        {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
-            return;
-        }
-
-        // Check node type
-        if (this.netStats.OwnNodeType != NodeType.Direct)
-        {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
-            return;
-        }
-
-        // Active
-        if (!this.State.IsActive)
-        {
-            this.State.IsActive = true;
-            this.logger.TryGet(LogLevel.Information)?.Log("Activated");
-        }
-    }
-
     public FullCredit? GetCredit(Credit credit)
     {
         if (!this.Initialized)
@@ -224,11 +209,5 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         var owners = await creditData.Owners.Get().ConfigureAwait(false);
         return owners.TryGet(token.PublicKey);
-    }
-
-    protected void InitializeLogger()
-    {
-        this.modestLogger.SetLogger(this.logger);
-        this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
     }
 }

@@ -42,6 +42,7 @@ public class Control
             this.Configure(context =>
             {
                 // Main services
+                context.AddSingleton<RobustConnection.Factory>();
                 context.AddSingleton<Control>();
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpService>();
@@ -64,9 +65,11 @@ public class Control
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerClientAgent>();
+                context.AddTransient<Lp.T3cs.MergerRemoteAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
+                context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -242,10 +245,10 @@ public class Control
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
-                    context.AddCrystal<DomainData>(new CrystalConfiguration() with
+                    context.AddCrystal<DomainServer>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 2,
-                        FileConfiguration = new GlobalFileConfiguration(DomainData.Filename),
+                        FileConfiguration = new GlobalFileConfiguration(DomainServer.Filename),
                     });
                 }));
         }
@@ -580,6 +583,11 @@ public class Control
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
             this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
             this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+
+            if (this.LpBase.RemotePublicKey.IsValid)
+            {
+                this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            }
         }
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayMergerCode))

@@ -129,6 +129,7 @@ AddStorageResult=
 
 Merger=
   NoPrivateKey = "Merger private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
+  Registration="Registration to Domain: {0}"
 
 Linker=
   NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
@@ -138,10 +139,14 @@ Dogma=
   KeyConfirmed = "Lp key confirmed"
 
 ParseResultCode=
-  InvalidFormat=""
+  InvalidFormat="Invalid format"
   InvalidSeedKey="Failed to parse SeedKey"
   InvalidCredit="Failed to parse SeedKey"
   InvalidAuthority="Authority not found"
 
 LpService=
   CredentialNotFound="No Credential corresponding to the Credit was found"
+
+Domain=
+  ParseError="The specified domain format is invalid: {0}"
+  ServiceEnabled="DomainService has been activated: {0}"

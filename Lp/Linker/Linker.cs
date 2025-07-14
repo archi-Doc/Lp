@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Netsphere.Stats;
@@ -10,7 +9,7 @@ using Netsphere.Stats;
 
 namespace Lp;
 
-public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
+public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
 {
     private const string NameSuffix = "_L";
 
@@ -19,33 +18,24 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(dataCrystal))]
     [MemberNotNullWhen(true, nameof(data))]
-    public virtual bool Initialized { get; protected set; }
-
-    public SignaturePublicKey PublicKey { get; protected set; }
+    public override bool Initialized { get; protected set; }
 
     public LinkerConfiguration? Configuration { get; protected set; }
 
     public LinkerState State { get; protected set; } = new();
 
-    private readonly ILogger logger;
-    private readonly ModestLogger modestLogger;
-    private readonly NetBase netBase;
-    private readonly LpBase lpBase;
-    private readonly NetStats netStats;
+    public override string GetName() => this.Configuration?.Name ?? string.Empty;
+
+    public override CredentialState GetState() => this.State;
+
     private ICrystal<FullCredit.GoshujinClass>? dataCrystal;
     private FullCredit.GoshujinClass? data;
-    private SeedKey seedKey = SeedKey.Invalid;
 
     #endregion
 
-    public Linker(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats, LpBase lpBase)
-        : base(context)
+    public Linker(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
     {
-        this.logger = unitLogger.GetLogger<Linker>();
-        this.modestLogger = new(this.logger);
-        this.netBase = netBase;
-        this.lpBase = lpBase;
-        this.netStats = netStats;
     }
 
     public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
@@ -79,37 +69,6 @@ public partial class Linker : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public SeedKey SeedKey => this.seedKey;
-
-    public void UpdateState()
-    {
-        if (!this.Initialized)
-        {
-            return;
-        }
-
-        // Check net node
-        this.State.NetNode = this.netStats.OwnNetNode;
-        this.State.Name = this.Configuration.Name;
-        if (this.State.NetNode is null)
-        {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
-            return;
-        }
-
-        // Check node type
-        if (this.netStats.OwnNodeType != NodeType.Direct)
-        {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
-            return;
-        }
-
-        // Active
-        if (!this.State.IsActive)
-        {
-            this.State.IsActive = true;
-            this.logger.TryGet(LogLevel.Information)?.Log("Activated");
-        }
-    }
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {

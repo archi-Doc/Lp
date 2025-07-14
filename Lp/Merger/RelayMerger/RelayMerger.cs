@@ -10,8 +10,8 @@ public class RelayMerger : Merger
 {
     private const string NameSuffix = "_RM";
 
-    public RelayMerger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats)
-        : base(context, unitLogger, netBase, lpBase, netStats)
+    public RelayMerger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
     {
         this.logger = unitLogger.GetLogger<RelayMerger>();
     }
@@ -45,9 +45,9 @@ public class RelayMerger : Merger
                 new GlobalDirectoryConfiguration("RelayMerger/Storage")),
         });
 
-        if (string.IsNullOrEmpty(this.Configuration.MergerName))
+        if (string.IsNullOrEmpty(this.Configuration.Name))
         {
-            this.Configuration.MergerName = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
+            this.Configuration.Name = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
         }
 
         this.creditData = this.creditDataCrystal.Data;
@@ -63,8 +63,6 @@ public class RelayMerger : Merger
 
         this.seedKey = mergerSeedKey;
         this.PublicKey = this.seedKey.GetSignaturePublicKey();
-
-        this.InitializeLogger();
 
         this.Initialized = true;
     }

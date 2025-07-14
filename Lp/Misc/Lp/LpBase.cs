@@ -32,7 +32,7 @@ public class LpBase
 
     public int BasalServiceCount { get; set; }
 
-    private SignaturePublicKey remotePublicKey;
+    public SignaturePublicKey RemotePublicKey { get; private set; }
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
@@ -124,25 +124,11 @@ public class LpBase
 
         if (SignaturePublicKey.TryParse(options.RemotePublicKey, out var publicKey, out _))
         {
-            this.remotePublicKey = publicKey;
+            this.RemotePublicKey = publicKey;
         }
         else if (BaseHelper.TryParseFromEnvironmentVariable<SignaturePublicKey>(NetConstants.RemotePublicKeyName, out publicKey))
         {
-            this.remotePublicKey = publicKey;
-        }
-    }
-
-    public bool TryGetRemotePublicKey(out SignaturePublicKey publicKey)
-    {
-        if (this.remotePublicKey.IsValid)
-        {
-            publicKey = this.remotePublicKey;
-            return true;
-        }
-        else
-        {
-            publicKey = default;
-            return false;
+            this.RemotePublicKey = publicKey;
         }
     }
 
@@ -152,9 +138,9 @@ public class LpBase
         logger.Log($"Data directory: {this.DataDirectory}");
         logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
 
-        if (this.TryGetRemotePublicKey(out var publicKey))
+        if (this.RemotePublicKey.IsValid)
         {
-            logger.Log($"Remote public key: {publicKey}");
+            logger.Log($"Remote public key: {this.RemotePublicKey}");
         }
 
         // logger.Log(this.Options.ToString());

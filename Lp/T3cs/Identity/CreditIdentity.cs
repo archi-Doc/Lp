@@ -17,6 +17,12 @@ public partial record class CreditIdentity : Identity
         this.Mergers = mergers;
     }
 
+    public Credit ToCredit()
+    {
+        var credit = new Credit(this.GetIdentifier(), this.Mergers);
+        return credit;
+    }
+
     public override bool Validate()
     {
         if (!base.Validate())
@@ -39,5 +45,13 @@ public partial record class CreditIdentity : Identity
         }
 
         return true;
+    }
+
+    public override string ToString()
+        => this.ToString(null);
+
+    public string ToString(IConversionOptions? options)
+    {
+        return $"CreditIdentity: {this.SourceIdentifier.ToString(options)}, Originator: {this.Originator.ToString(options)}, Mergers: [{string.Join(", ", this.Mergers.Select(x => x.ToString(options)))}]";
     }
 }
