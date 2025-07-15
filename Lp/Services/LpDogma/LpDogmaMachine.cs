@@ -144,7 +144,10 @@ public partial class LpDogmaMachine : Machine
         // Console.WriteLine(creditIdentity.ToString(Alias.Instance));
         // Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
 
-        result.FullCredit.Find(proof);
+        if (result.FullCredit.Contains(proof))
+        {
+            return StateResult.Continue;
+        }
 
         /*
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1

@@ -30,10 +30,33 @@ public partial record FullCredit
 
     public bool Contains(EvolProof proof)
     {
-        var ownerData = this.Find(proof.SourceValue.Owner);
+        var ownerData = this.GetOwnerData(proof.SourceValue.Owner);
+        if (ownerData is null)
+        {
+            return false;
+        }
+
+        if (!ownerData.Linkages.SourceKeyChain.TryGetValue(proof.SourceValue.Owner, out var linkage))
+        {
+            return false;
+        }
+
+        while (linkage is not null)
+        {
+            if (linkage.Proof1 is EvolProof proof2 &&
+                proof.ContentEquals(proof2))
+            {
+                return true;
+            }
+
+            return false;
+            //linkage = linkage.SourceKeyLink.
+        }
+
+        return false;
     }
 
-    private OwnerData? Find(SignaturePublicKey ownerPublicKey)
+    private OwnerData? GetOwnerData(SignaturePublicKey ownerPublicKey)
     {
         return this.Owners.Get().Result.TryGet(ownerPublicKey);
     }

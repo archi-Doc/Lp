@@ -66,4 +66,15 @@ public partial class EvolProof : ContractableProof
 
         return base.PrepareForSigning(ref publicKey, validMics);
     }
+
+    public bool ContentEquals(EvolProof? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.SourceValue.Equals(other.SourceValue) &&
+            this.DestinationValue.Equals(other.DestinationValue);
+    }
 }
