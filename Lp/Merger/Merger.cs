@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
 using Lp.Logging;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -106,7 +107,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async Task<FullCredit?> GetOrCreateCredit(CreditIdentity creditIdentity)
+    public async Task<(FullCredit? FullCredit, bool Created)> GetOrCreateCredit(CreditIdentity creditIdentity)
     {
         if (!this.Initialized)
         {
@@ -117,7 +118,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         var fullCredit = this.creditData.TryGet(credit);
         if (fullCredit is not null)
         {
-            return fullCredit;
+            return new(fullCredit, false);
         }
 
         using (var w = this.creditData.TryLock(credit, ValueLink.TryLockMode.GetOrCreate))
@@ -130,7 +131,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             fullCredit = w.Commit();
         }
 
-        return fullCredit;
+        return new(fullCredit, false);
     }
 
     public async NetTask<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)

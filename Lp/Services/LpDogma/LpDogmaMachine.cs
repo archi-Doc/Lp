@@ -122,7 +122,12 @@ public partial class LpDogmaMachine : Machine
 
         // Prepare LpCredit
         var result = await this.merger.GetOrCreateCredit(LpConstants.LpIdentity);
-        if (result is null)
+        if (result.Created)
+        {
+            this.userInterfaceService.WriteLine($"Credit created: Lp");
+        }
+
+        if (result.FullCredit is null)
         {
             this.userInterfaceService.WriteLine($"Failed to create credit: Lp");
             return StateResult.Continue;
@@ -135,9 +140,11 @@ public partial class LpDogmaMachine : Machine
         var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Originator#Point2@Credit1
         var proof = new EvolProof(evol.Linker, sourceValue, destinationValue, creditIdentity);
 
-        var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
-        Console.WriteLine(creditIdentity.ToString(Alias.Instance));
-        Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
+        // var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
+        // Console.WriteLine(creditIdentity.ToString(Alias.Instance));
+        // Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
+
+        result.FullCredit.Find(proof);
 
         /*
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
