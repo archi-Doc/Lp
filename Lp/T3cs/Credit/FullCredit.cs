@@ -36,21 +36,14 @@ public partial record FullCredit
             return false;
         }
 
-        if (!ownerData.Linkages.SourceKeyChain.TryGetValue(proof.SourceValue.Owner, out var linkage))
+        // ownerData.Linkages.SourceKeyChain.TryGetValue(proof.SourceValue.Owner, out var linkage)
+        foreach (var x in ownerData.Linkages.SourceKeyChain.Enumerate(proof.SourceValue.Owner))
         {
-            return false;
-        }
-
-        while (linkage is not null)
-        {
-            if (linkage.Proof1 is EvolProof proof2 &&
+            if (x.Proof1 is EvolProof proof2 &&
                 proof.ContentEquals(proof2))
             {
                 return true;
             }
-
-            return false;
-            //linkage = linkage.SourceKeyLink.
         }
 
         return false;
