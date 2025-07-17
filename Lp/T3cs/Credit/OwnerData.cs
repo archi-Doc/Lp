@@ -10,7 +10,7 @@ namespace Lp.T3cs;
 /// For changes to Evidences, TryLock() is unnecessary since the instance remains the same.<br/>
 /// Instead, acquire a lock with lock (this.Evidence.SyncObject).
 /// </summary>
-[TinyhandObject(Structual = false)]
+[TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead, Restricted = true)]
 public sealed partial record OwnerData // : ITinyhandCustomJournal
 {
