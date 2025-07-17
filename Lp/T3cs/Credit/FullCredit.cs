@@ -46,15 +46,6 @@ public partial record FullCredit
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FullCredit"/> class.<br/>
-    /// This function was added for ValueLink, but I plan to improve the code in the future.
-    /// </summary>
-    private FullCredit()
-    {
-        this.Credit = default!;
-    }
-
-    /// <summary>
     /// Determines whether the specified <see cref="EvolProof"/> is contained within the owner data of this full credit.
     /// </summary>
     /// <param name="proof">The <see cref="EvolProof"/> to check for existence.</param>
