@@ -23,6 +23,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
 using Netsphere.Relay;
 using SimpleCommandLine;
+using static Lp.Subcommands.KeyCommand.NewMasterKeySubcommand;
 
 namespace Lp;
 
@@ -33,7 +34,7 @@ public class Control
         public Builder()
             : base()
         {
-            this.Preload(context =>
+            this.PreConfigure(context =>
             {
                 this.LoadStrings();
                 this.LoadLpOptions(context);
@@ -128,58 +129,56 @@ public class Control
                 Lp.Subcommands.T3cs.Subcommand.Configure(context);
             });
 
-            this.SetupOptions<FileLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
-                var logfile = "Logs/Log.txt";
-                options.Path = Path.Combine(context.DataDirectory, logfile);
-                options.MaxLogCapacity = 20;
-            });
-
-            this.SetupOptions<Lp.Logging.NetsphereLoggerOptions>((context, options) =>
-            {// NetsphereLoggerOptions, LogLowLevelNet
-                var logfile = "Logs/Net.txt";
-                options.Path = Path.Combine(context.DataDirectory, logfile);
-                options.MaxLogCapacity = 100;
-                options.Formatter.TimestampFormat = "mm:ss.ffffff K";
-                options.ClearLogsAtStartup = true;
-                options.MaxQueue = 100_000;
-            });
-
-            this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
-            {// ConsoleLoggerOptions
-                if (context.TryGetOptions<LpOptions>(out var lpOptions))
+            this.PostConfigure(context =>
+            {
+                // FileLoggerOptions
+                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
                 {
-                    options.Formatter.EnableColor = lpOptions.ColorConsole;
-                }
-                else
+                    Path = Path.Combine(context.DataDirectory, "Logs/Log.txt"),
+                    MaxLogCapacity = 20,
+                });
+
+                // NetsphereLoggerOptions
+                var netsphereLoggerOptions = context.GetOptions<Lp.Logging.NetsphereLoggerOptions>();
+                context.SetOptions(netsphereLoggerOptions with
                 {
-                    options.Formatter.EnableColor = true;
-                }
-            });
+                    Path = Path.Combine(context.DataDirectory, "Logs/Net.txt"),
+                    MaxLogCapacity = 100,
+                    Formatter = netsphereLoggerOptions.Formatter with { TimestampFormat = "mm:ss.ffffff K", },
+                    ClearLogsAtStartup = true,
+                    MaxQueue = 100_000,
+                });
 
-            this.SetupOptions<LpBase>((context, lpBase) =>
-            {// LpBase
-                context.GetOptions<LpOptions>(out var options);
-                lpBase.Initialize(context.DataDirectory, options, true, "merger");
-            });
+                // ConsoleLoggerOptions
+                var lpOptions = context.GetOptions<LpOptions>();
+                var consoleLoggerOptions = context.GetOptions<ConsoleLoggerOptions>();
+                context.SetOptions(consoleLoggerOptions with
+                {
+                    FormatterOptions = consoleLoggerOptions.FormatterOptions with
+                    {
+                        EnableColor = lpOptions.ColorConsole,
+                    },
+                });
 
-            this.SetupOptions<NetBase>((context, netBase) =>
-            {// NetBase
-                context.GetOptions<LpOptions>(out var options);
-                netBase.SetOptions(options.ToNetOptions());
+                var netOptions = context.GetOptions<NetOptions>();
 
+                var lpBase = context.ServiceProvider.GetRequiredService<LpBase>();
+                lpBase.Initialize(context.DataDirectory, lpOptions, true, "merger");
+
+                var netBase = context.ServiceProvider.GetRequiredService<NetBase>();
+                netBase.SetOptions(lpOptions.ToNetOptions());
                 netBase.AllowUnsafeConnection = true; // betacode
                 netBase.NetOptions.EnableServer = true; // betacode
                 netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
-            });
 
-            this.SetupOptions<CrystalizerOptions>((context, options) =>
-            {// CrystalizerOptions
-                options.DefaultSaveFormat = SaveFormat.Utf8;
-                options.DefaultSavePolicy = SavePolicy.Periodic;
-                options.DefaultSaveInterval = TimeSpan.FromMinutes(10);
-                options.GlobalDirectory = new LocalDirectoryConfiguration(context.DataDirectory);
-                options.EnableFilerLogger = false;
+                context.SetOptions(context.GetOptions<CrystalizerOptions>() with
+                {
+                    DefaultSaveFormat = SaveFormat.Utf8,
+                    DefaultSavePolicy = SavePolicy.Periodic,
+                    DefaultSaveInterval = TimeSpan.FromMinutes(10),
+                    GlobalDirectory = new LocalDirectoryConfiguration(context.DataDirectory),
+                    EnableFilerLogger = false,
+                });
             });
 
             var crystalControlBuilder = CrystalBuilder();
@@ -191,12 +190,10 @@ public class Control
 
         private static void ConfigureRelay(IUnitConfigurationContext context)
         {
-            if (context.TryGetOptions<LpOptions>(out var options))
-            {
-                if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey, out _))
-                {// CertificateRelayControl
-                    context.AddSingleton<IRelayControl, CertificateRelayControl>();
-                }
+            var options = context.GetOptions<LpOptions>();
+            if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey, out _))
+            {// CertificateRelayControl
+                context.AddSingleton<IRelayControl, CertificateRelayControl>();
             }
         }
 
@@ -266,12 +263,12 @@ public class Control
             }
         }
 
-        private void LoadLpOptions(IUnitPreloadContext context)
+        private void LoadLpOptions(IUnitPreConfigurationContext context)
         {
             var args = context.Arguments.RawArguments;
             LpOptions? options = null;
 
-            if (context.Arguments.TryGetOption("loadoptions", out var optionFile))
+            if (context.Arguments.TryGetOptionValue("loadoptions", out var optionFile))
             {// 1st: Option file
                 if (!string.IsNullOrEmpty(optionFile))
                 {
@@ -651,7 +648,7 @@ public class Control
 
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));
 
-        await this.Crystalizer.SaveAllAndTerminate();
+        await this.Crystalizer.StoreAndRip();
     }
 
     public async Task StartAsync(UnitContext context)

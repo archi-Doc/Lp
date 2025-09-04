@@ -47,7 +47,7 @@ internal class MergerRemoteAgent : IMergerRemote
             return NetResult.NotAuthenticated;
         }
 
-        var fullCredit = await this.merger.GetOrCreateCredit(creditIdentity);
-        return fullCredit is not null ? NetResult.Success : NetResult.InvalidData;
+        var result = await this.merger.GetOrCreateCredit(creditIdentity);
+        return result.FullCredit is not null ? NetResult.Success : NetResult.InvalidData;
     }
 }

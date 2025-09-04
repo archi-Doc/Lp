@@ -122,22 +122,32 @@ public partial class LpDogmaMachine : Machine
 
         // Prepare LpCredit
         var result = await this.merger.GetOrCreateCredit(LpConstants.LpIdentity);
-        if (result is null)
+        if (result.Created)
+        {
+            this.userInterfaceService.WriteLine($"Credit created: Lp");
+        }
+
+        if (result.FullCredit is null)
         {
             this.userInterfaceService.WriteLine($"Failed to create credit: Lp");
             return StateResult.Continue;
         }
 
-        // Evol: LpKey#Point1@LpCredit -> Merger1#Point2@Credit1
-        var sourceValue = new Value(LpConstants.LpPublicKey, evol.LpPoint, LpConstants.LpCredit); // LpKey#Point@LpCredit
+        // Evol: LpKey#Point1@LpCredit -> Originator#Point2@Credit1
+        var sourceValue = new Value(LpConstants.LpPublicKey, evol.LpPoint, LpConstants.LpCredit); // LpKey#Point1@LpCredi
         var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
         var credit = creditIdentity.ToCredit();
-        var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Merger1#Point2@Credit1
+        var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Originator#Point2@Credit1
         var proof = new EvolProof(evol.Linker, sourceValue, destinationValue, creditIdentity);
 
-        var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
-        Console.WriteLine(creditIdentity.ToString(Alias.Instance));
-        Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
+        // var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
+        // Console.WriteLine(creditIdentity.ToString(Alias.Instance));
+        // Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
+
+        if (result.FullCredit.Contains(proof))
+        {
+            return StateResult.Continue;
+        }
 
         /*
         var destinationValue = new Value(LpConstants.LpPublicKey, 100, LpConstants.LpCredit); // Merger1#100@Credit1
