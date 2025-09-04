@@ -11,7 +11,7 @@ namespace Lp.T3cs;
 /// This class needs to be thread-safe.
 /// </summary>
 [TinyhandObject(Structual = true)]
-[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
+[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]//
 public partial record FullCredit
 {
     #region FieldAndProperty
@@ -36,7 +36,7 @@ public partial record FullCredit
     /// Thread-safety: Immutable instance.
     /// </summary>
     [Key(2)]
-    public StorageData<OwnerData.GoshujinClass> Owners { get; private set; } = new();
+    public StoragePoint<OwnerData.GoshujinClass> Owners { get; private set; } = new();
 
     #endregion
 

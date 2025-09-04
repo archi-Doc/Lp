@@ -121,7 +121,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return new(fullCredit, false);
         }
 
-        using (var w = this.creditData.TryLock(credit, ValueLink.TryLockMode.GetOrCreate))
+        using (var w = this.creditData.TryLock(credit, AcquisitionMode.GetOrCreate))
         {
             if (w is null)
             {
@@ -149,7 +149,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         // var identifier = param.Proof.PublicKey.ToIdentifier();
 
         FullCredit? creditData;
-        using (var w = this.creditData.TryLock(Credit.Default, ValueLink.TryLockMode.GetOrCreate))
+        using (var w = this.creditData.TryLock(Credit.Default, AcquisitionMode.GetOrCreate))
         {
             if (w is null)
             {
@@ -172,7 +172,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         }
 
         var borrowers = await creditData.Owners.Get();
-        using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
+        using (var w2 = borrowers.TryLock(param.Proof.PublicKey, AcquisitionMode.Create))
         {
             if (w2 is null)
             {
