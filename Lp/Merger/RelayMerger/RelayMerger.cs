@@ -74,7 +74,7 @@ public class RelayMerger : Merger
             return default;
         }
 
-        await this.creditDataCrystal.Save();
+        await this.creditDataCrystal.Store();
         return this.relayStatusData.TryGet(relayCredit);
     }
 }

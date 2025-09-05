@@ -77,7 +77,13 @@ public partial record FullCredit
     /// <param name="ownerPublicKey">The public key of the owner.</param>
     /// <returns>The <see cref="OwnerData"/> if found; otherwise, <c>null</c>.</returns>
     private OwnerData? GetOwnerData(SignaturePublicKey ownerPublicKey)
-    {
-        return this.Owners.Get().Result.TryGet(ownerPublicKey);
+    {//
+        var ownerData = this.Owners.TryGet().Result;
+        if (ownerData is null)
+        {
+            return default;
+        }
+
+        return ownerData.TryGet(ownerPublicKey);
     }
 }

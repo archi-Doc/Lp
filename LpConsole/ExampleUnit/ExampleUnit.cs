@@ -17,7 +17,7 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
     public static void Configure(IUnitConfigurationContext context)
     {
         context.AddSingleton<ExampleUnit>();
-        context.CreateInstance<ExampleUnit>();
+        context.RegisterInstanceCreation<ExampleUnit>();
         context.AddSubcommand(typeof(ExampleSubcommand));
     }
 

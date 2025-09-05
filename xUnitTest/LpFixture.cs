@@ -16,7 +16,7 @@ public class LpFixture : IDisposable
     public LpFixture()
     {
         var builder = new Control.Builder()
-            .Preload(context =>
+            .PreConfigure(context =>
             {
             })
             .Configure(context =>

@@ -171,7 +171,12 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return new(T3csResult.UnknownError);
         }
 
-        var borrowers = await creditData.Owners.Get();
+        var borrowers = await creditData.Owners.TryGet();
+        if (borrowers is null)
+        {
+            return new(T3csResult.NoData);
+        }
+
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, AcquisitionMode.Create))
         {
             if (w2 is null)
@@ -208,7 +213,12 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return null;
         }
 
-        var owners = await creditData.Owners.Get().ConfigureAwait(false);
+        var owners = await creditData.Owners.TryGet().ConfigureAwait(false);
+        if (owners is null)
+        {
+            return null;
+        }
+
         return owners.TryGet(token.PublicKey);
     }
 }

@@ -53,22 +53,36 @@ public class Program
              {// Register the services provided by the server.
                  context.AddNetService<ITestService, TestServiceImpl>();
              })
-            .SetupOptions<FileLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
-                var logfile = "Logs/Debug.txt";
-                options.Path = Path.Combine(context.DataDirectory, logfile);
-                options.MaxLogCapacity = 1;
-                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
-                options.ClearLogsAtStartup = true;
-                options.MaxQueue = 100_000;
-            })
-            .SetupOptions<NetOptions>((context, options) =>
-            {// NetsphereOptions
-                options.NodeName = "test";
-                options.EnablePing = true;
-                options.EnableServer = true;
-                options.EnableAlternative = true;
-            });
+             .PostConfigure(context =>
+             {
+                 {// FileLoggerOptions
+                     var logfile = "Logs/Debug.txt";
+                     var options = context.GetOptions<FileLoggerOptions>();
+                     options = options with
+                     {
+                         Path = Path.Combine(context.DataDirectory, logfile),
+                         MaxLogCapacity = 1,
+                         Formatter = options.Formatter with { TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K", },
+                         ClearLogsAtStartup = true,
+                         MaxQueue = 100_000,
+                     };
+
+                     context.SetOptions(options);
+                 }
+
+                 {// NetOptions
+                     var options = context.GetOptions<NetOptions>();
+                     options = options with
+                     {
+                         NodeName = "test",
+                         EnablePing = true,
+                         EnableServer = true,
+                         EnableAlternative = true,
+                     };
+
+                     context.SetOptions(options);
+                 }
+             });
 
         // Netsphere
         var unit = builder.Build();

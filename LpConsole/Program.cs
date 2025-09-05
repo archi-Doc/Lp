@@ -35,7 +35,7 @@ public class Program
         };
 
         var builder = new Control.Builder()
-            .Preload(context =>
+            .PreConfigure(context =>
             {
             })
             .Configure(context =>
