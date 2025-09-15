@@ -23,7 +23,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
 using Netsphere.Relay;
 using SimpleCommandLine;
-using static Lp.Subcommands.KeyCommand.NewMasterKeySubcommand;
 
 namespace Lp;
 
@@ -174,8 +173,7 @@ public class Control
                 context.SetOptions(context.GetOptions<CrystalizerOptions>() with
                 {
                     DefaultSaveFormat = SaveFormat.Utf8,
-                    DefaultSavePolicy = SavePolicy.Periodic,
-                    DefaultSaveInterval = TimeSpan.FromMinutes(10),
+                    SaveInterval = TimeSpan.FromMinutes(10),
                     GlobalDirectory = new LocalDirectoryConfiguration(context.DataDirectory),
                     EnableFilerLogger = false,
                 });
@@ -200,7 +198,7 @@ public class Control
         private static CrystalControl.Builder CrystalBuilder()
         {
             return new CrystalControl.Builder()
-                .ConfigureCrystal((Action<ICrystalUnitContext>)(context =>
+                .ConfigureCrystal(context =>
                 {
                     context.AddCrystal<LpSettings>(new()
                     {
@@ -247,7 +245,7 @@ public class Control
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainServer.Filename),
                     });
-                }));
+                });
         }
 
         private void LoadStrings()
@@ -335,7 +333,7 @@ public class Control
                 ((StorageKeyVault)this.Context.ServiceProvider.GetRequiredService<IStorageKey>()).VaultControl = vaultControl;
 
                 // Load
-                var result = await crystalizer.PrepareAndLoadAll();
+                var result = await crystalizer.PrepareAndLoad();
                 if (result != CrystalResult.Success)
                 {
                     throw new PanicException();
