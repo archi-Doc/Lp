@@ -7,10 +7,10 @@ namespace LpConsole.Example;
 [SimpleCommand("example")]
 public class ExampleSubcommand : ISimpleCommandAsync
 {
-    public ExampleSubcommand(ILogger<ExampleSubcommand> logger, Control control)
+    public ExampleSubcommand(ILogger<ExampleSubcommand> logger, LpUnit lpUnit)
     {
         this.logger = logger;
-        this.Control = control;
+        this.LpUnit = lpUnit;
     }
 
     public async Task RunAsync(string[] args)
@@ -18,7 +18,7 @@ public class ExampleSubcommand : ISimpleCommandAsync
         this.logger.TryGet()?.Log(ExampleHashed.ExampleUnit.Command);
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger<ExampleSubcommand> logger;
 }

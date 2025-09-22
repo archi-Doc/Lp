@@ -7,12 +7,12 @@ namespace Lp.Subcommands;
 [SimpleCommand("inspect")]
 public class InspectSubcommand : ISimpleCommand
 {
-    private readonly Control control;
+    private readonly LpUnit lpUnit;
     private readonly IUserInterfaceService userInterfaceService;
 
-    public InspectSubcommand(Control control, IUserInterfaceService userInterfaceService)
+    public InspectSubcommand(LpUnit lpUnit, IUserInterfaceService userInterfaceService)
     {
-        this.control = control;
+        this.lpUnit = lpUnit;
         this.userInterfaceService = userInterfaceService;
     }
 
@@ -30,16 +30,16 @@ public class InspectSubcommand : ISimpleCommand
 
     private void InspectNet()
     {
-        var options = this.control.LpBase.Options;
-        this.userInterfaceService.WriteLine($"NodeName:{this.control.LpBase.NodeName}, Alternative:{options.EnableAlternative}, Test:{options.TestFeatures}");
+        var options = this.lpUnit.LpBase.Options;
+        this.userInterfaceService.WriteLine($"NodeName:{this.lpUnit.LpBase.NodeName}, Alternative:{options.EnableAlternative}, Test:{options.TestFeatures}");
 
-        var netStats = this.control.NetUnit.NetStats;
+        var netStats = this.lpUnit.NetUnit.NetStats;
         this.userInterfaceService.WriteLine($"Own NetNode ({netStats.GetOwnNodeType().ToString()}): {netStats.GetOwnNetNode().ToString()}");
     }
 
     private void InspectMerger()
     {
-        var merger = this.control.Merger;
+        var merger = this.lpUnit.Merger;
         this.userInterfaceService.WriteLine($"Merger public key: {merger.PublicKey}");
     }
 }

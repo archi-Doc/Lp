@@ -8,15 +8,15 @@ namespace Lp.Subcommands;
 [SimpleCommand("clear")]
 public class FlagSubcommandClear : ISimpleCommand
 {
-    public FlagSubcommandClear(ILogger<FlagSubcommandClear> logger, Control control)
+    public FlagSubcommandClear(ILogger<FlagSubcommandClear> logger, LpUnit lpUnit)
     {
         this.logger = logger;
-        this.Control = control;
+        this.LpUnit = lpUnit;
     }
 
     public void Run(string[] args)
     {
-        var ope = VisceralClass.TryGet(this.Control.LpBase.Settings.Flags);
+        var ope = VisceralClass.TryGet(this.LpUnit.LpBase.Settings.Flags);
         if (ope == null)
         {
             return;
@@ -42,7 +42,7 @@ public class FlagSubcommandClear : ISimpleCommand
         }
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger<FlagSubcommandClear> logger;
 }

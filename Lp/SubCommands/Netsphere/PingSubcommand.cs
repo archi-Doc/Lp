@@ -9,9 +9,9 @@ namespace Lp.Subcommands;
 [SimpleCommand("ping")]
 public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 {
-    public PingSubcommand(ILogger<PingSubcommand> logger, Control control)
+    public PingSubcommand(ILogger<PingSubcommand> logger, LpUnit lpUnit)
     {
-        this.Control = control;
+        this.LpUnit = lpUnit;
         this.logger = logger;
     }
 
@@ -24,7 +24,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
         for (var n = 0; n < options.Count; n++)
         {
-            if (this.Control.Core.IsTerminated)
+            if (this.LpUnit.Core.IsTerminated)
             {
                 break;
             }
@@ -33,7 +33,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
             if (n < options.Count - 1)
             {
-                this.Control.Core.Sleep(TimeSpan.FromSeconds(options.Interval), TimeSpan.FromSeconds(0.1));
+                this.LpUnit.Core.Sleep(TimeSpan.FromSeconds(options.Interval), TimeSpan.FromSeconds(0.1));
             }
         }
     }
@@ -42,7 +42,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     {
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
-        var packetTerminal = this.Control.NetUnit.NetTerminal.PacketTerminal;
+        var packetTerminal = this.LpUnit.NetUnit.NetTerminal.PacketTerminal;
 
         var sw = Stopwatch.StartNew();
         var p = new PingPacket("test56789");
@@ -56,7 +56,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
             if (result.Value.SourceEndpoint.EndPoint is { } endpoint)
             {
-                this.Control.NetUnit.NetStats.ReportEndpoint(endpoint);
+                this.LpUnit.NetUnit.NetStats.ReportEndpoint(endpoint);
             }
         }
         else
@@ -65,7 +65,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         }
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger logger;
 }

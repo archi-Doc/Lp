@@ -26,9 +26,11 @@ using SimpleCommandLine;
 
 namespace Lp;
 
-public class Control
+public class LpUnit
 {
-    public class Builder : UnitBuilder<Unit>
+    #region Builder
+
+    public class Builder : UnitBuilder<Product>
     {
         public Builder()
             : base()
@@ -43,7 +45,7 @@ public class Control
             {
                 // Main services
                 context.AddSingleton<RobustConnection.Factory>();
-                context.AddSingleton<Control>();
+                context.AddSingleton<LpUnit>();
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
@@ -186,6 +188,8 @@ public class Control
             this.AddBuilder(new Lp.Logging.LpLogger.Builder());
         }
 
+        #endregion
+
         private static void ConfigureRelay(IUnitConfigurationContext context)
         {
             var options = context.GetOptions<LpOptions>();
@@ -312,9 +316,11 @@ public class Control
         }
     }
 
-    public class Unit : UnitProduct
+    #region Product
+
+    public class Product : UnitProduct
     {
-        public Unit(UnitContext context)
+        public Product(UnitContext context)
             : base(context)
         {
             TinyhandSerializer.ServiceProvider = context.ServiceProvider;
@@ -345,24 +351,24 @@ public class Control
                 return;
             }
 
-            var control = this.Context.ServiceProvider.GetRequiredService<Control>();
+            var lpUnit = this.Context.ServiceProvider.GetRequiredService<LpUnit>();
             try
             {
                 LpConstants.Initialize();
 
                 // Start
-                control.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+                lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
-                await control.DomainControl.Prepare();
-                await control.PrepareMaster(this.Context);
-                await control.PrepareMerger(this.Context);
-                await control.PrepareRelay(this.Context);
-                await control.PrepareLinker(this.Context);
-                await control.PreparePeer(this.Context);
+                await lpUnit.DomainControl.Prepare();
+                await lpUnit.PrepareMaster(this.Context);
+                await lpUnit.PrepareMerger(this.Context);
+                await lpUnit.PrepareRelay(this.Context);
+                await lpUnit.PrepareLinker(this.Context);
+                await lpUnit.PreparePeer(this.Context);
 
                 // Vault -> NodeKey
-                await control.LoadKeyVault_NodeKey();
+                await lpUnit.LoadKeyVault_NodeKey();
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -372,43 +378,45 @@ public class Control
             }
             catch
             {
-                control.Terminate(true);
+                lpUnit.Terminate(true);
                 return;
             }
 
             try
             {// Load
-                await control.LoadAsync(this.Context);
+                await lpUnit.LoadAsync(this.Context);
             }
             catch
             {
-                await control.AbortAsync();
-                control.Terminate(true);
+                await lpUnit.AbortAsync();
+                lpUnit.Terminate(true);
                 return;
             }
 
             try
             {// Start, Main loop
-                await control.StartAsync(this.Context);
+                await lpUnit.StartAsync(this.Context);
 
-                await control.MainAsync();
+                await lpUnit.MainAsync();
 
                 this.Context.SendStop(new());
-                await control.TerminateAsync(this.Context);
-                await control.SaveAsync(this.Context);
-                control.Terminate(false);
+                await lpUnit.TerminateAsync(this.Context);
+                await lpUnit.SaveAsync(this.Context);
+                lpUnit.Terminate(false);
             }
             catch
             {
-                await control.TerminateAsync(this.Context);
-                await control.SaveAsync(this.Context);
-                control.Terminate(true);
+                await lpUnit.TerminateAsync(this.Context);
+                await lpUnit.SaveAsync(this.Context);
+                lpUnit.Terminate(true);
                 return;
             }
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    #endregion
+
+    public LpUnit(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
         this.UnitLogger = unitLogger;
         this.logger = logger;

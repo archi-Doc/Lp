@@ -10,10 +10,10 @@ public partial class CommandGroup
     [SimpleCommand("execute-command-group")]
     public class ExecuteCommandGroup : ISimpleCommandAsync<ExecuteOptions>
     {
-        public ExecuteCommandGroup(ILogger<ExecuteCommandGroup> logger, IUserInterfaceService userInterfaceService, Control control, VaultControl vaultControl)
+        public ExecuteCommandGroup(ILogger<ExecuteCommandGroup> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, VaultControl vaultControl)
         {
             this.userInterfaceService = userInterfaceService;
-            this.control = control;
+            this.lpUnit = lpUnit;
             this.vaultControl = vaultControl;
             this.logger = logger;
         }
@@ -46,12 +46,12 @@ public partial class CommandGroup
                 }
 
                 // this.userInterfaceService.WriteLine($">> {x}");
-                // this.control.Subcommand(x);
+                // this.lpUnit.Subcommand(x);
             }
         }
 
         private readonly IUserInterfaceService userInterfaceService;
-        private readonly Control control;
+        private readonly LpUnit lpUnit;
         private readonly VaultControl vaultControl;
         private readonly ILogger logger;
     }

@@ -8,15 +8,15 @@ namespace Lp.Subcommands;
 [SimpleCommand("ls")]
 public class FlagSubcommandLs : ISimpleCommand
 {
-    public FlagSubcommandLs(ILogger<FlagSubcommandLs> logger, Control control)
+    public FlagSubcommandLs(ILogger<FlagSubcommandLs> logger, LpUnit lpUnit)
     {
         this.logger = logger;
-        this.Control = control;
+        this.LpUnit = lpUnit;
     }
 
     public void Run(string[] args)
     {
-        var ope = VisceralClass.TryGet(this.Control.LpBase.Settings.Flags);
+        var ope = VisceralClass.TryGet(this.LpUnit.LpBase.Settings.Flags);
         if (ope == null)
         {
             return;
@@ -51,7 +51,7 @@ public class FlagSubcommandLs : ISimpleCommand
         }
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger<FlagSubcommandLs> logger;
 }

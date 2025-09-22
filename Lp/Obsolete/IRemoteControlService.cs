@@ -16,17 +16,17 @@ public interface IRemoteControlService : INetService
 internal class RemoteControlServiceImpl : IRemoteControlService
 {// Netsphere.Runner -> Container
     // This class is unsafe.
-    public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, Control control)
+    public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, LpUnit lpUnit)
     {
         this.logger = logger;
-        this.control = control;
+        this.lpUnit = lpUnit;
     }
 
     public async NetTask Authenticate(AuthenticationToken token)
     {// NetTask<NetResult> is recommended.
         if (TransmissionContext.Current.ServerConnection.DestinationEndpoint.IsPrivateOrLocalLoopbackAddress() &&
             TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
-            token.PublicKey.Equals(this.control.LpBase.RemotePublicKey))
+            token.PublicKey.Equals(this.lpUnit.LpBase.RemotePublicKey))
         {
             this.token = token;
             TransmissionContext.Current.Result = NetResult.Success;
@@ -50,7 +50,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
             _ = Task.Run(async () =>
             {
                 await Task.Delay(1000);
-                _ = this.control.TryTerminate(true);
+                _ = this.lpUnit.TryTerminate(true);
             });
 
             return NetResult.Success;
@@ -60,7 +60,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
     }
 
     private ILogger<RemoteControlServiceImpl> logger;
-    private Control control;
+    private LpUnit lpUnit;
     private AuthenticationToken? token;
 }
 */

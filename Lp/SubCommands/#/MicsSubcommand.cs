@@ -8,10 +8,10 @@ namespace Lp.Subcommands;
 [SimpleCommand("mics", Description = "Shows mics(microseconds) status")]
 public class MicsSubcommand : ISimpleCommand
 {
-    public MicsSubcommand(ILogger<MicsSubcommand> logger, Control control)
+    public MicsSubcommand(ILogger<MicsSubcommand> logger, LpUnit lpUnit)
     {
         this.logger = logger;
-        this.Control = control;
+        this.LpUnit = lpUnit;
     }
 
     public void Run(string[] args)
@@ -38,7 +38,7 @@ public class MicsSubcommand : ISimpleCommand
         }
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger<MicsSubcommand> logger;
 }
