@@ -29,7 +29,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new NetControl.Builder()
+        var builder = new NetUnit.Builder()
             .Configure(context =>
             {
                 context.AddSingleton<IRelayControl, CertificateRelayControl>();

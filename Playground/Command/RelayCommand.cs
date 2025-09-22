@@ -18,20 +18,20 @@ public class RelayCommand : ISimpleCommandAsync
 {
     public static bool BreakpointFlag { get; set; } = false;
 
-    public RelayCommand(ILogger<RelayCommand> logger, NetControl netControl, IRelayControl relayControl)
+    public RelayCommand(ILogger<RelayCommand> logger, NetUnit netUnit, IRelayControl relayControl)
     {
         this.logger = logger;
-        this.netControl = netControl;
+        this.netUnit = netUnit;
         this.relayControl = relayControl;
     }
 
     public async Task RunAsync(string[] args)
     {
-        this.netControl.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
-        this.netControl.Responders.Register(Netsphere.Responder.TestBlockResponder.Instance);
+        this.netUnit.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
+        this.netUnit.Responders.Register(Netsphere.Responder.TestBlockResponder.Instance);
 
         var sw = Stopwatch.StartNew();
-        var netTerminal = this.netControl.NetTerminal;
+        var netTerminal = this.netUnit.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
         var seedKey = SeedKey.NewSignature();
@@ -142,7 +142,7 @@ public class RelayCommand : ISimpleCommandAsync
         Console.WriteLine(await netTerminal.OutgoingCircuit.UnsafeDetailedToString());
     }
 
-    private readonly NetControl netControl;
+    private readonly NetUnit netUnit;
     private readonly ILogger logger;
     private readonly IRelayControl relayControl;
 }

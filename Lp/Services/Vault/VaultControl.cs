@@ -6,10 +6,10 @@ namespace Lp.Services;
 
 public partial class VaultControl
 {
-    public const string Filename = "Vault" + Crystalizer.BinaryExtension;
+    public const string Filename = "Vault" + CrystalControl.BinaryExtension;
 
-    public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalizerOptions options)
-    {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
+    public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalOptions options)
+    {// Vault cannot use CrystalControl due to its dependency on IStorageKey.
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpBase = lpBase;

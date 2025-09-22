@@ -170,7 +170,7 @@ public class Control
                 netBase.NetOptions.EnableServer = true; // betacode
                 netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
 
-                context.SetOptions(context.GetOptions<CrystalizerOptions>() with
+                context.SetOptions(context.GetOptions<CrystalOptions>() with
                 {
                     DefaultSaveFormat = SaveFormat.Utf8,
                     SaveInterval = TimeSpan.FromMinutes(10),
@@ -181,7 +181,7 @@ public class Control
 
             var crystalControlBuilder = CrystalBuilder();
 
-            this.AddBuilder(new NetControl.Builder());
+            this.AddBuilder(new NetUnit.Builder());
             this.AddBuilder(crystalControlBuilder);
             this.AddBuilder(new Lp.Logging.LpLogger.Builder());
         }
@@ -195,9 +195,9 @@ public class Control
             }
         }
 
-        private static CrystalControl.Builder CrystalBuilder()
+        private static CrystalUnit.Builder CrystalBuilder()
         {
-            return new CrystalControl.Builder()
+            return new CrystalUnit.Builder()
                 .ConfigureCrystal(context =>
                 {
                     context.AddCrystal<LpSettings>(new()
@@ -312,7 +312,7 @@ public class Control
         }
     }
 
-    public class Unit : BuiltUnit
+    public class Unit : UnitProduct
     {
         public Unit(UnitContext context)
             : base(context)
@@ -324,8 +324,8 @@ public class Control
         {
             try
             {
-                // Crystalizer
-                var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+                // CrystalControl
+                var crystalControl = this.Context.ServiceProvider.GetRequiredService<CrystalControl>();
 
                 // Vault
                 var vaultControl = this.Context.ServiceProvider.GetRequiredService<VaultControl>();
@@ -333,7 +333,7 @@ public class Control
                 ((StorageKeyVault)this.Context.ServiceProvider.GetRequiredService<IStorageKey>()).VaultControl = vaultControl;
 
                 // Load
-                var result = await crystalizer.PrepareAndLoad();
+                var result = await crystalControl.PrepareAndLoad();
                 if (result != CrystalResult.Success)
                 {
                     throw new PanicException();
@@ -408,15 +408,15 @@ public class Control
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public Control(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<Control> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
         this.UnitLogger = unitLogger;
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
-        this.NetControl = netsphere;
-        this.Crystalizer = crystalizer;
+        this.NetUnit = netsphere;
+        this.CrystalControl = crystalControl;
         this.VaultControl = vault;
         this.AuthorityControl = authorityControl;
         this.DomainControl = domainControl;
@@ -429,7 +429,7 @@ public class Control
         if (this.LpBase.Options.TestFeatures)
         {
             // NetAddress.SkipValidation = true;
-            this.NetControl.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
+            this.NetUnit.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
         }
 
         this.Core = core;
@@ -459,7 +459,7 @@ public class Control
 
     public BigMachine BigMachine { get; }
 
-    public NetControl NetControl { get; }
+    public NetUnit NetUnit { get; }
 
     public Merger Merger { get; }
 
@@ -467,7 +467,7 @@ public class Control
 
     public Linker Linker { get; }
 
-    public Crystalizer Crystalizer { get; }
+    public CrystalControl CrystalControl { get; }
 
     public VaultControl VaultControl { get; }
 
@@ -481,7 +481,7 @@ public class Control
 
     public async Task PreparePeer(UnitContext context)
     {
-        this.NetControl.Services.Register<IBasalService, BasalServiceAgent>();
+        this.NetUnit.Services.Register<IBasalService, BasalServiceAgent>();
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
@@ -563,7 +563,7 @@ public class Control
 
     public async Task PrepareMerger(UnitContext context)
     {
-        var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
+        var crystalControl = context.ServiceProvider.GetRequiredService<CrystalControl>();
 
         var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
@@ -575,13 +575,13 @@ public class Control
                 this.VaultControl.Root.AddObject(code, seedKey);
             }
 
-            context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalizer, seedKey);
-            this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
-            this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalControl, seedKey);
+            this.NetUnit.Services.Register<IMergerClient, MergerClientAgent>();
+            this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
 
             if (this.LpBase.RemotePublicKey.IsValid)
             {
-                this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+                this.NetUnit.Services.Register<IMergerRemote, MergerRemoteAgent>();
             }
         }
 
@@ -598,15 +598,15 @@ public class Control
                 }
             }
 
-            context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalizer, seedKey);
-            this.NetControl.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
-            this.NetControl.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalControl, seedKey);
+            this.NetUnit.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
+            this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
         }
     }
 
     public async Task PrepareLinker(UnitContext context)
     {
-        var crystalizer = context.ServiceProvider.GetRequiredService<Crystalizer>();
+        var crystalControl = context.ServiceProvider.GetRequiredService<CrystalControl>();
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
         {// LinkerCode is valid
             var privault = this.LpBase.Options.LinkerCode;
@@ -620,9 +620,9 @@ public class Control
                 }
             }
 
-            context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalizer, privateKey);
-            // this.NetControl.Services.Register<IMergerClient, MergerClientAgent>();
-            // this.NetControl.Services.Register<IMergerRemote, MergerRemoteAgent>();
+            context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalControl, privateKey);
+            // this.NetUnit.Services.Register<IMergerClient, MergerClientAgent>();
+            // this.NetUnit.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
     }
 
@@ -633,7 +633,7 @@ public class Control
 
     public async Task AbortAsync()
     {
-        // await this.Crystalizer.SaveAllAndTerminate();
+        // await this.CrystalControl.SaveAllAndTerminate();
     }
 
     public async Task SaveAsync(UnitContext context)
@@ -641,12 +641,12 @@ public class Control
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetControl.NetBase.NodeSeedKey);
+        this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));
 
-        await this.Crystalizer.StoreAndRip();
+        await this.CrystalControl.StoreAndRip();
     }
 
     public async Task StartAsync(UnitContext context)
@@ -829,7 +829,7 @@ public class Control
 
     private async Task LoadKeyVault_NodeKey()
     {
-        if (this.NetControl.NetBase.IsValidNodeKey)
+        if (this.NetUnit.NetBase.IsValidNodeKey)
         {
             return;
         }
@@ -844,7 +844,7 @@ public class Control
             return;
         }
 
-        if (!this.NetControl.NetBase.SetNodeSeedKey(key))
+        if (!this.NetUnit.NetBase.SetNodeSeedKey(key))
         {
             await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
             return;

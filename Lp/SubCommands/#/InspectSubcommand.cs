@@ -33,7 +33,7 @@ public class InspectSubcommand : ISimpleCommand
         var options = this.control.LpBase.Options;
         this.userInterfaceService.WriteLine($"NodeName:{this.control.LpBase.NodeName}, Alternative:{options.EnableAlternative}, Test:{options.TestFeatures}");
 
-        var netStats = this.control.NetControl.NetStats;
+        var netStats = this.control.NetUnit.NetStats;
         this.userInterfaceService.WriteLine($"Own NetNode ({netStats.GetOwnNodeType().ToString()}): {netStats.GetOwnNetNode().ToString()}");
     }
 

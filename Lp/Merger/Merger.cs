@@ -40,16 +40,16 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
+    public virtual void Initialize(CrystalControl crystalControl, SeedKey seedKey)
     {
-        this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
+        this.Configuration = crystalControl.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 0, // 3
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
+        this.creditDataCrystal = crystalControl.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,

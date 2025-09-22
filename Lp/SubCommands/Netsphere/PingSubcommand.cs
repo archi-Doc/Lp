@@ -42,7 +42,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     {
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
-        var packetTerminal = this.Control.NetControl.NetTerminal.PacketTerminal;
+        var packetTerminal = this.Control.NetUnit.NetTerminal.PacketTerminal;
 
         var sw = Stopwatch.StartNew();
         var p = new PingPacket("test56789");
@@ -56,7 +56,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
             if (result.Value.SourceEndpoint.EndPoint is { } endpoint)
             {
-                this.Control.NetControl.NetStats.ReportEndpoint(endpoint);
+                this.Control.NetUnit.NetStats.ReportEndpoint(endpoint);
             }
         }
         else
