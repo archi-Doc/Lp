@@ -15,17 +15,17 @@ namespace Playground;
 [SimpleCommand("basic")]
 public class BasicCommand : ISimpleCommandAsync
 {
-    public BasicCommand(ILogger<BasicCommand> logger, NetControl netControl, IRelayControl relayControl)
+    public BasicCommand(ILogger<BasicCommand> logger, NetUnit netUnit, IRelayControl relayControl)
     {
         this.logger = logger;
-        this.netControl = netControl;
+        this.netUnit = netUnit;
         this.relayControl = relayControl;
     }
 
     public async Task RunAsync(string[] args)
     {
         var sw = Stopwatch.StartNew();
-        var netTerminal = this.netControl.NetTerminal;
+        var netTerminal = this.netUnit.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
         var netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress);
@@ -63,7 +63,7 @@ public class BasicCommand : ISimpleCommandAsync
         }
     }
 
-    private readonly NetControl netControl;
+    private readonly NetUnit netUnit;
     private readonly ILogger logger;
     private readonly IRelayControl relayControl;
 }

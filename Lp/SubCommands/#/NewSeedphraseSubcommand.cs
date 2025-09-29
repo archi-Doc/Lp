@@ -7,11 +7,11 @@ namespace Lp.Subcommands;
 [SimpleCommand("new-seedphrase")]
 public class NewSeedphraseSubcommand : ISimpleCommandAsync
 {
-    public NewSeedphraseSubcommand(ILogger<NewSeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control)
+    public NewSeedphraseSubcommand(ILogger<NewSeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.control = control;
+        this.lpUnit = lpUnit;
     }
 
     public async Task RunAsync(string[] args)
@@ -27,5 +27,5 @@ public class NewSeedphraseSubcommand : ISimpleCommandAsync
 
     private readonly ILogger logger;
     private IUserInterfaceService userInterfaceService;
-    private Control control;
+    private LpUnit lpUnit;
 }

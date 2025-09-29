@@ -20,7 +20,7 @@ public partial class NodeControlMachine : Machine
 
     private readonly ILogger logger;
     private readonly ModestLogger modestLogger;
-    private readonly NetControl netControl;
+    private readonly NetUnit netUnit;
     private readonly NetBase netBase;
     private readonly NetStats netStats;
     private readonly NodeControl nodeControl;
@@ -31,14 +31,14 @@ public partial class NodeControlMachine : Machine
 
     #endregion
 
-    public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetControl netControl, NodeControl nodeControl, LpBase lpBase, Credentials credentials)
+    public NodeControlMachine(ILogger<NodeControlMachine> logger, NetBase netBase, NetUnit netUnit, NodeControl nodeControl, LpBase lpBase, Credentials credentials)
         : base()
     {
         this.logger = logger;
         this.modestLogger = new(logger);
         this.netBase = netBase;
-        this.netControl = netControl;
-        this.netStats = this.netControl.NetStats;
+        this.netUnit = netUnit;
+        this.netStats = this.netUnit.NetStats;
         this.nodeControl = nodeControl;
         this.lpBase = lpBase;
         this.credentials = credentials;
@@ -49,7 +49,7 @@ public partial class NodeControlMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> ConsumeLifelineNode(StateParameter parameter)
     {
-        if (!this.netControl.NetTerminal.IsActive)
+        if (!this.netUnit.NetTerminal.IsActive)
         {
             return StateResult.Continue;
         }
@@ -95,7 +95,7 @@ public partial class NodeControlMachine : Machine
     [StateMethod(1)]
     protected async Task<StateResult> MaintainNode(StateParameter parameter)
     {
-        if (!this.netControl.NetTerminal.IsActive)
+        if (!this.netUnit.NetTerminal.IsActive)
         {// Not active
             return StateResult.Continue;
         }
@@ -271,7 +271,7 @@ public partial class NodeControlMachine : Machine
     private async Task<IPEndPoint?> PingNetNode(NetNode netNode, bool ipv6)
     {
         var endpointResolution = ipv6 ? EndpointResolution.Ipv6 : EndpointResolution.Ipv4;
-        var r = await this.netControl.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new(), 0, this.CancellationToken, endpointResolution);
+        var r = await this.netUnit.NetTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(netNode.Address, new(), 0, this.CancellationToken, endpointResolution);
 
         if (r.Result == NetResult.Success && r.Value is { } value)
         {// Success
@@ -319,7 +319,7 @@ public partial class NodeControlMachine : Machine
 
         _ = await this.PingActiveNode(netNode);
 
-        using (var connection = await this.netControl.NetTerminal.Connect(netNode))
+        using (var connection = await this.netUnit.NetTerminal.Connect(netNode))
         {
             if (connection is null)
             {
@@ -351,7 +351,7 @@ public partial class NodeControlMachine : Machine
 
             _ = await this.PingIpv4AndIpv6(restorationNode, false);
 
-            using (var connection = await this.netControl.NetTerminal.Connect(restorationNode))
+            using (var connection = await this.netUnit.NetTerminal.Connect(restorationNode))
             {
                 if (connection is not null)
                 {

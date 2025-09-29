@@ -5,10 +5,10 @@ namespace Lp.Machines;
 [MachineObject(UseServiceProvider = true)]
 public partial class RelayPeerMachine : Machine
 {// Control: context.AddSingleton<Machines.RelayPeerMachine>(), Control.RunMachines()
-    public RelayPeerMachine(ILogger<RelayPeerMachine> logger, NetControl netControl)
+    public RelayPeerMachine(ILogger<RelayPeerMachine> logger, NetUnit netUnit)
     {
         this.logger = logger;
-        this.netControl = netControl;
+        this.netUnit = netUnit;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -21,5 +21,5 @@ public partial class RelayPeerMachine : Machine
     }
 
     private readonly ILogger logger;
-    private readonly NetControl netControl;
+    private readonly NetUnit netUnit;
 }

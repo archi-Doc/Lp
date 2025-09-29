@@ -17,11 +17,11 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
     public static void Configure(IUnitConfigurationContext context)
     {
         context.AddSingleton<ExampleUnit>();
-        context.CreateInstance<ExampleUnit>();
+        context.RegisterInstanceCreation<ExampleUnit>();
         context.AddSubcommand(typeof(ExampleSubcommand));
     }
 
-    public class Builder : UnitBuilder<Unit>
+    public class Builder : UnitBuilder<Product>
     {// Builder class for customizing dependencies.
         public Builder()
             : base()
@@ -30,11 +30,11 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public class Unit : BuiltUnit
+    public class Product : UnitProduct
     {// Unit class for customizing behaviors.
         public record Param();
 
-        public Unit(UnitContext context)
+        public Product(UnitContext context)
             : base(context)
         {
         }

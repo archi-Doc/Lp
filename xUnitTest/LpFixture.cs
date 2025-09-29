@@ -15,8 +15,8 @@ public class LpFixture : IDisposable
 {
     public LpFixture()
     {
-        var builder = new Control.Builder()
-            .Preload(context =>
+        var builder = new LpUnit.Builder()
+            .PreConfigure(context =>
             {
             })
             .Configure(context =>
@@ -36,15 +36,15 @@ public class LpFixture : IDisposable
             });
         // .ConfigureBuilder(new LpConsole.Example.ExampleUnit.Builder()); // Alternative
 
-        this.unit = builder.Build();
+        this.product = builder.Build();
     }
 
     public void Dispose()
     {
-        this.unit.Context.SendTerminateAsync(new()).Wait();
+        this.product.Context.SendTerminateAsync(new()).Wait();
     }
 
-    public IServiceProvider ServiceProvider => this.unit.Context.ServiceProvider;
+    public IServiceProvider ServiceProvider => this.product.Context.ServiceProvider;
 
-    private Control.Unit unit;
+    private LpUnit.Product product;
 }

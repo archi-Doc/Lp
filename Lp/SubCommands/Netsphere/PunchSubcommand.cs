@@ -11,10 +11,10 @@ namespace Lp.Subcommands;
 [SimpleCommand("punch")]
 public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 {
-    public PunchSubcommand(ILogger<PunchSubcommand> logger, NetControl netControl)
+    public PunchSubcommand(ILogger<PunchSubcommand> logger, NetUnit netUnit)
     {
         this.logger = logger;
-        this.netControl = netControl;
+        this.netUnit = netUnit;
     }
 
     public async Task RunAsync(PunchOptions options, string[] args)
@@ -24,7 +24,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             return;
         }
 
-        /*using (var connection = await this.netControl.NetTerminal.Connect(node))
+        /*using (var connection = await this.netUnit.NetTerminal.Connect(node))
         {
             if (connection == null)
             {
@@ -34,26 +34,26 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         }*/
 
         NetAddress.TryParse(options.RelayNode, out var relayAddress);
-        this.netControl.NetTerminal.TryCreateEndpoint(ref relayAddress, EndpointResolution.PreferIpv6, out var relayEndpoint);
-        if (!this.netControl.NetStats.TryGetOwnNetNode(out var ownNode))
+        this.netUnit.NetTerminal.TryCreateEndpoint(ref relayAddress, EndpointResolution.PreferIpv6, out var relayEndpoint);
+        if (!this.netUnit.NetStats.TryGetOwnNetNode(out var ownNode))
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoOwnAddress);
             return;
         }
 
         var ownAddress = ownNode.Address;
-        if (!this.netControl.NetTerminal.TryCreateEndpoint(ref ownAddress, EndpointResolution.PreferIpv6, out var ownEndpoint))
+        if (!this.netUnit.NetTerminal.TryCreateEndpoint(ref ownAddress, EndpointResolution.PreferIpv6, out var ownEndpoint))
         {
             return;
         }
 
-        var packetTerminal = this.netControl.NetTerminal.PacketTerminal;
+        var packetTerminal = this.netUnit.NetTerminal.PacketTerminal;
         var p = new PunchPacket(relayEndpoint, ownEndpoint);
         var result = await packetTerminal.SendAndReceive<PunchPacket, PunchPacketResponse>(node.Address, p);
         Console.WriteLine(result);
     }
 
-    private readonly NetControl netControl;
+    private readonly NetUnit netUnit;
     private readonly ILogger logger;
 }
 

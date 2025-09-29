@@ -11,7 +11,7 @@ public partial record class DomainControl
     #region FieldAndProperty
 
     private readonly ILogger logger;
-    private readonly NetControl netControl;
+    private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
 
     public DomainServer DomainServer { get; }
@@ -20,7 +20,7 @@ public partial record class DomainControl
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetControl netControl, AuthorityControl authorityControl, DomainServer domainServer)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainServer domainServer)
     {
         this.logger = logger;
 
@@ -38,7 +38,7 @@ public partial record class DomainControl
         }
 
         this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
-        this.netControl = netControl;
+        this.netUnit = netUnit;
         this.authorityControl = authorityControl;
         this.DomainServer = domainServer;
     }
@@ -53,7 +53,7 @@ public partial record class DomainControl
 
         if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
         {
-            this.netControl.Services.Register<IDomainServer, DomainServer>();
+            this.netUnit.Services.Register<IDomainServer, DomainServer>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
         }
@@ -61,7 +61,7 @@ public partial record class DomainControl
 
     public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {
-        using (var connection = await this.netControl.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
+        using (var connection = await this.netUnit.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
         {
             if (connection is null)
             {

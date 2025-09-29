@@ -8,11 +8,11 @@ namespace Lp.Subcommands;
 [SimpleCommand("get-node-information")]
 public class GetNodeInformationSubcommand : ISimpleCommandAsync
 {
-    public GetNodeInformationSubcommand(ILogger<GetNodeInformationSubcommand> logger, IUserInterfaceService userInterfaceService, NetControl netControl)
+    public GetNodeInformationSubcommand(ILogger<GetNodeInformationSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.netControl = netControl;
+        this.netTerminal = netTerminal;
     }
 
     public async Task RunAsync(string[] args)
@@ -27,7 +27,7 @@ public class GetNodeInformationSubcommand : ISimpleCommandAsync
             return;
         }
 
-        using (var connection = await this.netControl.NetTerminal.Connect(node))
+        using (var connection = await this.netTerminal.Connect(node))
         {
             if (connection == null)
             {
@@ -41,7 +41,7 @@ public class GetNodeInformationSubcommand : ISimpleCommandAsync
         }
     }
 
-    private readonly NetControl netControl;
+    private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
 }

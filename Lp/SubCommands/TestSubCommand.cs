@@ -16,11 +16,11 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, AuthorityControl authorityControl, LpBoardService lpBoardService)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.control = control;
+        this.lpUnit = lpUnit;
         this.authorityControl = authorityControl;
         this.lpBoardService = lpBoardService;
     }
@@ -107,7 +107,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     }
 
     private readonly ILogger logger;
-    private readonly Control control;
+    private readonly LpUnit lpUnit;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly AuthorityControl authorityControl;
     private readonly LpBoardService lpBoardService;

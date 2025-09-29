@@ -8,20 +8,20 @@ namespace Lp.Subcommands;
 [SimpleCommand("options")]
 public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>
 {
-    public ExportSubcommandOptions(ILogger<ExportSubcommandOptions> logger, IUserInterfaceService userInterfaceService, Control control)
+    public ExportSubcommandOptions(ILogger<ExportSubcommandOptions> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.Control = control;
+        this.LpUnit = lpUnit;
     }
 
     public async Task RunAsync(ExportSubcommandOptionsOptions options, string[] args)
     {
         try
         {
-            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LpBase.Options with { OptionsPath = string.Empty, });
+            var utf = TinyhandSerializer.SerializeToUtf8(this.LpUnit.LpBase.Options with { OptionsPath = string.Empty, });
 
-            var path = this.Control.LpBase.CombineDataPathAndPrepareDirectory(options.Output, LpOptions.DefaultOptionsName);
+            var path = this.LpUnit.LpBase.CombineDataPathAndPrepareDirectory(options.Output, LpOptions.DefaultOptionsName);
             if (File.Exists(path) &&
                 await this.userInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmOverwrite, path) != true)
             {
@@ -36,7 +36,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
         }
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger<ExportSubcommandOptions> logger;
     private IUserInterfaceService userInterfaceService;

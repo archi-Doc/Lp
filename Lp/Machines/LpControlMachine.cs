@@ -14,17 +14,17 @@ public partial class LpControlMachine : Machine
     #region FieldAndProperty
 
     private readonly ILogger logger;
-    private readonly Control control;
+    private readonly LpUnit lpUnit;
     private readonly LpOptions options;
     private readonly Credentials credentials;
     private long lifespan;
 
     #endregion
 
-    public LpControlMachine(ILogger<LpControlMachine> logger, Control control, LpOptions options, Credentials credentials)
+    public LpControlMachine(ILogger<LpControlMachine> logger, LpUnit lpUnit, LpOptions options, Credentials credentials)
     {
         this.logger = logger;
-        this.control = control;
+        this.lpUnit = lpUnit;
         this.options = options;
         this.credentials = credentials;
         this.DefaultTimeout = TimeSpan.FromSeconds(IntervalInSeconds);
@@ -45,9 +45,9 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
-        await this.control.Merger.UpdateState();
-        await this.control.RelayMerger.UpdateState();
-        await this.control.Linker.UpdateState();
+        await this.lpUnit.Merger.UpdateState();
+        await this.lpUnit.RelayMerger.UpdateState();
+        await this.lpUnit.Linker.UpdateState();
 
         return StateResult.Continue;
     }
@@ -60,7 +60,7 @@ public partial class LpControlMachine : Machine
             if (this.lifespan <= 0)
             {
                 this.logger.TryGet(LogLevel.Warning)?.Log($"Lp is terminating because the specified time has elapsed.");
-                _ = this.control.TryTerminate(true);
+                _ = this.lpUnit.TryTerminate(true);
                 return StateResult.Terminate;
             }
             else if (this.lifespan % DisplayIntervalInSeconds == 0)

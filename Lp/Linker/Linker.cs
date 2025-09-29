@@ -38,16 +38,16 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
+    public virtual void Initialize(CrystalControl crystalControl, SeedKey seedKey)
     {
-        this.Configuration = crystalizer.CreateCrystal<LinkerConfiguration>(new()
+        this.Configuration = crystalControl.CreateCrystal<LinkerConfiguration>(new()
         {
             NumberOfFileHistories = 0,
             FileConfiguration = new GlobalFileConfiguration(LinkerConfiguration.Filename),
             RequiredForLoading = true,
         }).Data;
 
-        this.dataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
+        this.dataCrystal = crystalControl.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,

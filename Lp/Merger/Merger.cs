@@ -40,16 +40,16 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    public virtual void Initialize(Crystalizer crystalizer, SeedKey seedKey)
+    public virtual void Initialize(CrystalControl crystalControl, SeedKey seedKey)
     {
-        this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
+        this.Configuration = crystalControl.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 0, // 3
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.MergerFilename),
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
+        this.creditDataCrystal = crystalControl.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
@@ -171,7 +171,12 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return new(T3csResult.UnknownError);
         }
 
-        var borrowers = await creditData.Owners.Get();
+        var borrowers = await creditData.Owners.TryGet();
+        if (borrowers is null)
+        {
+            return new(T3csResult.NoData);
+        }
+
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, AcquisitionMode.Create))
         {
             if (w2 is null)
@@ -208,7 +213,12 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return null;
         }
 
-        var owners = await creditData.Owners.Get().ConfigureAwait(false);
+        var owners = await creditData.Owners.TryGet().ConfigureAwait(false);
+        if (owners is null)
+        {
+            return null;
+        }
+
         return owners.TryGet(token.PublicKey);
     }
 }

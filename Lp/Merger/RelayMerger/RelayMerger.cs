@@ -27,16 +27,16 @@ public class RelayMerger : Merger
 
     #endregion
 
-    public override void Initialize(Crystalizer crystalizer, SeedKey mergerSeedKey)
+    public override void Initialize(CrystalControl crystalControl, SeedKey mergerSeedKey)
     {
-        this.Configuration = crystalizer.CreateCrystal<MergerConfiguration>(new()
+        this.Configuration = crystalControl.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 0,
             FileConfiguration = new GlobalFileConfiguration(MergerConfiguration.RelayMergerFilename),
             RequiredForLoading = true,
         }).Data;
 
-        this.creditDataCrystal = crystalizer.CreateCrystal<FullCredit.GoshujinClass>(new()
+        this.creditDataCrystal = crystalControl.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
@@ -52,7 +52,7 @@ public class RelayMerger : Merger
 
         this.creditData = this.creditDataCrystal.Data;
 
-        this.relayStatusCrystal = crystalizer.CreateCrystal<RelayStatus.GoshujinClass>(new()
+        this.relayStatusCrystal = crystalControl.CreateCrystal<RelayStatus.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 0,
@@ -74,7 +74,7 @@ public class RelayMerger : Merger
             return default;
         }
 
-        await this.creditDataCrystal.Save();
+        await this.creditDataCrystal.StoreData();
         return this.relayStatusData.TryGet(relayCredit);
     }
 }

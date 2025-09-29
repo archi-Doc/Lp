@@ -39,7 +39,7 @@ public class LpLogger
 
                 // Resolver
                 context.ClearLoggerResolver();
-                context.AddLoggerResolver(NetControl.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
+                context.AddLoggerResolver(NetUnit.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
                 context.AddLoggerResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)
@@ -54,7 +54,7 @@ public class LpLogger
                     }
                     else if (context.LogLevel == LogLevel.Information)
                     {
-                        if (context.LogSourceType == typeof(Crystalizer))
+                        if (context.LogSourceType == typeof(CrystalControl))
                         {
                             context.SetOutput<FileLogger<FileLoggerOptions>>();
                             return;

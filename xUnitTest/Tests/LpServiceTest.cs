@@ -9,7 +9,6 @@ using Netsphere;
 using Netsphere.Crypto;
 using Xunit;
 using xUnitTest.Lp;
-using static SimpleCommandLine.SimpleParser;
 
 namespace xUnitTest;
 

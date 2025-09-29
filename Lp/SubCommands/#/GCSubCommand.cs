@@ -7,10 +7,10 @@ namespace Lp.Subcommands;
 [SimpleCommand("gc")]
 public class GCSubcommand : ISimpleCommand
 {
-    public GCSubcommand(ILogger<GCSubcommand> logger, Control control)
+    public GCSubcommand(ILogger<GCSubcommand> logger, LpUnit lpUnit)
     {
         this.logger = logger;
-        this.Control = control;
+        this.LpUnit = lpUnit;
     }
 
     public void Run(string[] args)
@@ -19,7 +19,7 @@ public class GCSubcommand : ISimpleCommand
         GC.Collect();
     }
 
-    public Control Control { get; set; }
+    public LpUnit LpUnit { get; set; }
 
     private ILogger<GCSubcommand> logger;
 }

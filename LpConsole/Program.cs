@@ -23,10 +23,10 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            var control = unit?.Context.ServiceProvider.GetService<Control>();
-            if (control != null)
+            var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
+            if (lpUnit != null)
             {
-                control.TryTerminate().Wait();
+                lpUnit.TryTerminate().Wait();
             }
             else
             {
@@ -34,8 +34,8 @@ public class Program
             }
         };
 
-        var builder = new Control.Builder()
-            .Preload(context =>
+        var builder = new LpUnit.Builder()
+            .PreConfigure(context =>
             {
             })
             .Configure(context =>
@@ -69,5 +69,5 @@ public class Program
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 
-    private static Control.Unit? unit;
+    private static LpUnit.Product? unit;
 }
