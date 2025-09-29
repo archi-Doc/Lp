@@ -4,7 +4,7 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1401
 
-[TinyhandObject(Structual = true)]
+[TinyhandObject(Structural = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record RelayStatus
 {

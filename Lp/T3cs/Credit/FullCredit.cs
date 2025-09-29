@@ -10,7 +10,7 @@ namespace Lp.T3cs;
 /// Represents a full credit entity, including its credit, information, and associated owners.<br/>
 /// This class needs to be thread-safe.
 /// </summary>
-[TinyhandObject(Structual = true)]
+[TinyhandObject(Structural = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]//
 public partial record FullCredit
 {
