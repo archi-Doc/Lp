@@ -6,7 +6,20 @@ using ValueLink;
 namespace Lp.Content;
 
 [TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
+[ValueLinkObject]
+public partial class BoardPoint : StoragePoint<Board>
+{
+    [Key(1)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
+    public Identifier identifier { get; private set; }
+
+    public BoardPoint()
+    {
+    }
+}
+
+[TinyhandObject]
+[ValueLinkObject]
 public partial record Board
 {
     public const int MaxMessages = 1_000;
