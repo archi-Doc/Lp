@@ -53,7 +53,7 @@ public partial record class DomainControl
 
         if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
         {
-            this.netUnit.Services.Register<IDomainServer, DomainServer>();
+            this.netUnit.Services.Register<IDomainServer, DomainServerAgent>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
         }
