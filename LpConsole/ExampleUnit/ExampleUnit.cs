@@ -40,6 +40,12 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
+    #region FieldAndProperty
+
+    private readonly ILogger logger;
+
+    #endregion
+
     public ExampleUnit(UnitContext context, ILogger<ExampleUnit> logger)
         : base(context)
     {
@@ -75,6 +81,4 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger.TryGet()?.Log("Example unit terminated");
     }
-
-    private ILogger<ExampleUnit> logger;
 }
