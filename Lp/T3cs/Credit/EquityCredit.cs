@@ -8,13 +8,13 @@ namespace Lp.T3cs;
 
 [TinyhandObject(Structural = true)]
 [ValueLinkObject(Isolation = IsolationLevel.ReadCommitted)]
-public partial class OwnerCreditPoint : StoragePoint<OwnerCredit>
+public partial class EquityCreditPoint : StoragePoint<EquityCredit>
 {
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     [Key(1)]
     public Credit Credit { get; private set; }
 
-    public OwnerCreditPoint(Credit credit)
+    public EquityCreditPoint(Credit credit)
         : base()
     {
         this.Credit = credit;
@@ -26,12 +26,12 @@ public partial class OwnerCreditPoint : StoragePoint<OwnerCredit>
 /// This class needs to be thread-safe.
 /// </summary>
 [TinyhandObject(Structural = true)]
-public partial record OwnerCredit
+public partial record EquityCredit
 {
     #region FieldAndProperty
 
     /// <summary>
-    /// Gets the credit associated with this full credit.<br/>
+    /// Gets the credit associated with this equity credit.<br/>
     /// Thread-safety: Immutable.
     /// </summary>
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
@@ -50,7 +50,7 @@ public partial record OwnerCredit
 
     #endregion
 
-    public OwnerCredit(Credit credit)
+    public EquityCredit(Credit credit)
     {
         this.Credit = credit;
     }
