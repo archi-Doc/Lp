@@ -53,7 +53,7 @@ public partial record class DomainControl
 
         if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
         {
-            this.netUnit.Services.Register<IDomainServer, DomainServerAgent>();
+            this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
         }
@@ -68,7 +68,7 @@ public partial record class DomainControl
                 return NetResult.NoNetwork;
             }
 
-            var service = connection.GetService<IDomainServer>();
+            var service = connection.GetService<IDomainService>();
             var result = await service.RegisterNode(nodeProof);
             return result;
         }
