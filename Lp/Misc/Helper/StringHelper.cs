@@ -11,6 +11,16 @@ namespace Lp;
 
 public static class StringHelper
 {
+    public static string UnwrapQuote(this string input)
+    {
+        if (input.Length >= 2 && input[0] == '\'' && input[^1] == '\'')
+        {
+            return input.Substring(1, input.Length - 2);
+        }
+
+        return input;
+    }
+
     public static string ToMergerString(this SignaturePublicKey[] mergers, IConversionOptions? conversionOptions)
     {
         Span<char> buffer = stackalloc char[Credit.MaxStringLength];
