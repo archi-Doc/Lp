@@ -29,7 +29,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        Console.WriteLine(LpConstants.LpPublicKey.ToString());
         Console.WriteLine(LpConstants.LpCredit.ToString());
+        var serializerOptions = TinyhandSerializerOptions.ConvertToString with { Compose = TinyhandComposeOption.Simple };
+        Console.WriteLine(TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, serializerOptions));
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");
