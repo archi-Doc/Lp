@@ -31,7 +31,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         try
         {//
-            var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].UnwrapQuote());
+            var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotes());
         }
         catch
         {
