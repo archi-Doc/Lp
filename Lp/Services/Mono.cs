@@ -14,6 +14,6 @@ public sealed partial class Mono
     {
     }
 
-    [KeyAsName]
+    [MemberNameAsKey]
     public MonoData<int, string> TestData { get; private set; } = new(1_000);
 }

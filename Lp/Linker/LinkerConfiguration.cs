@@ -7,7 +7,7 @@ using Netsphere.Crypto;
 
 namespace Lp;
 
-[TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true, EnumAsString = true)]
 public partial record LinkerConfiguration : MergerConfigurationBase
 {
     public const string Filename = "LinkerConfiguration.tinyhand";

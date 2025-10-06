@@ -6,7 +6,7 @@ using SimpleCommandLine;
 
 namespace Lp.Data;
 
-[TinyhandObject(ImplicitKeyAsName = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true)]
 public partial record LpOptions
 {
     public const string DefaultOptionsName = "Options.tinyhand";
