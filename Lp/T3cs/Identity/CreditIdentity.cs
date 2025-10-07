@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(AllowAlternateKey = true)]
+[TinyhandObject(AddAlternateKey = true)]
 public partial record class CreditIdentity : Identity
 {
     [Key(Identity.ReservedKeyCount + 0)]
