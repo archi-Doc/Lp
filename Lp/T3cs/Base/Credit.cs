@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
+using static Lp.Hashed;
 
 namespace Lp.T3cs;
 
@@ -14,6 +15,18 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public static readonly Credit Default = Credit.UnsafeConstructor();
     public static readonly Credit Max = new Credit(MaxHelper.Identifier, MaxHelper.Merger);
     public static readonly int MaxBinarySize;
+
+    public static bool TryCreate(Identifier identifier, SignaturePublicKey[] mergers, [MaybeNullWhen(false)] out Credit credit)
+    {
+        if (mergers.Length == 0 || mergers.Length > LpConstants.MaxMergers)
+        {
+            credit = default;
+            return false;
+        }
+
+        credit = new(identifier, mergers);
+        return true;
+    }
 
     #region FieldAndProperty
 
@@ -32,6 +45,12 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
 
     public static bool TryCreate(CreditIdentity creditIdentity, [MaybeNullWhen(false)] out Credit credit)
     {
+        if (!creditIdentity.Validate())
+        {
+            credit = default;
+            return false;
+        }
+
         var obj = new Credit(creditIdentity.GetIdentifier(), creditIdentity.Mergers);
 
         if (obj.Validate())

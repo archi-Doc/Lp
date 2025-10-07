@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+[TinyhandObject(AddAlternateKey = true)]
 public partial class EvolProof : ContractableProof
 {
     [Key(ContractableProof.ReservedKeyCount + 0)]
