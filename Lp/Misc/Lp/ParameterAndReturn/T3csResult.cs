@@ -7,7 +7,7 @@ public enum T3csResult
     UnknownError,
     Success,
     NotAuthenticated,
-    InvalidProof,
+    InvalidData,
     NoData,
     AlreadyExists,
 }

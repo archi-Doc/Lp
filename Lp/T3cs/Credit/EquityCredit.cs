@@ -34,9 +34,8 @@ public partial record EquityCredit
     /// Gets the credit associated with this equity credit.<br/>
     /// Thread-safety: Immutable.
     /// </summary>
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     [Key(0)]
-    public Credit Credit { get; private set; }
+    public Credit Credit { get; private set; } = Credit.UnsafeConstructor();
 
     /// <summary>
     /// Gets the credit information for this full credit.
@@ -50,7 +49,11 @@ public partial record EquityCredit
 
     #endregion
 
-    public EquityCredit(Credit credit)
+    public EquityCredit()
+    {
+    }
+
+    public void Initialize(Credit credit)
     {
         this.Credit = credit;
     }

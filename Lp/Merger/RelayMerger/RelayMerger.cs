@@ -29,6 +29,8 @@ public class RelayMerger : Merger
 
     public override void Initialize(CrystalControl crystalControl, SeedKey mergerSeedKey)
     {
+        var mergerStorage = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("RelayMerger/Storage"));
+
         this.Configuration = crystalControl.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 0,
@@ -41,8 +43,15 @@ public class RelayMerger : Merger
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
             FileConfiguration = new GlobalFileConfiguration("RelayMerger/Credits"),
-            StorageConfiguration = new SimpleStorageConfiguration(
-                new GlobalDirectoryConfiguration("RelayMerger/Storage")),
+            StorageConfiguration = mergerStorage,
+        });
+
+        this.equityCreditCrystal = crystalControl.CreateCrystal<EquityCreditPoint.GoshujinClass>(new()
+        {
+            SaveFormat = SaveFormat.Binary,
+            NumberOfFileHistories = 3,
+            FileConfiguration = new GlobalFileConfiguration("RelayMerger/EquityCredits"),
+            StorageConfiguration = mergerStorage,
         });
 
         if (string.IsNullOrEmpty(this.Configuration.Name))
@@ -51,6 +60,7 @@ public class RelayMerger : Merger
         }
 
         this.creditData = this.creditDataCrystal.Data;
+        this.equityCreditPoints = this.equityCreditCrystal.Data;
 
         this.relayStatusCrystal = crystalControl.CreateCrystal<RelayStatus.GoshujinClass>(new()
         {
