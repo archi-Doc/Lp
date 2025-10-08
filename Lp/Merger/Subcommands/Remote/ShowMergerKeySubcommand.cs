@@ -9,6 +9,10 @@ namespace Lp.Subcommands.MergerRemote;
 [SimpleCommand("show-merger-key")]
 public class ShowMergerKeySubcommand : ISimpleCommandAsync
 {
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly NestedCommand nestedcommand;
+
     public ShowMergerKeySubcommand(ILogger<ShowMergerKeySubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand)
     {
         this.logger = logger;
@@ -27,8 +31,4 @@ public class ShowMergerKeySubcommand : ISimpleCommandAsync
         var r = await service.GetMergerKey();
         this.logger.TryGet()?.Log($"{r.ToString()}");
     }
-
-    private readonly ILogger logger;
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly NestedCommand nestedcommand;
 }
