@@ -26,6 +26,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
+        var st = TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, TinyhandSerializerOptions.ConvertToSimpoleString);
         CreditIdentity? creditIdentity = default;
         try
         {
