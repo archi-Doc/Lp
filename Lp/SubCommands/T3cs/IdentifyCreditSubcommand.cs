@@ -26,7 +26,6 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        var st = TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, TinyhandSerializerOptions.ConvertToSimpoleString);
         CreditIdentity? creditIdentity = default;
         try
         {
@@ -41,12 +40,12 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        this.userInterfaceService.WriteLine(creditIdentity.ToString());
+        this.userInterfaceService.WriteLine($"CreditIdentity: {creditIdentity.ToString()}");
 
         var credit = creditIdentity.ToCredit();
         if (credit is not null)
         {
-            this.userInterfaceService.WriteLine(credit.ToString());
+            this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
         }
     }
 }
