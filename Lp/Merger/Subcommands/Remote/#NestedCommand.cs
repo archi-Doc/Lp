@@ -75,7 +75,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 {
                     var token = AuthenticationToken.CreateAndSign(seedKey, connection);
                     var r = await connection.GetService<IMergerRemote>().Authenticate(token);
-                    if (r.Result == NetResult.Success)
+                    if (r.IsSuccess)
                     {
                         connection.Agreement.AcceptAll(r.Value);
                         return true;
