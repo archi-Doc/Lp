@@ -158,14 +158,14 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         var credit = creditIdentity.ToCredit();
         if (credit is null)
         {
-            return T3csResult.NoData;
+            return T3csResult.InvalidData;
         }
 
         using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.Create).ConfigureAwait(false))
         {
             if (dataScope.IsValid)
             {
-                dataScope.Data.Initialize(credit);
+                dataScope.Data.Initialize(credit, creditIdentity);
                 return T3csResult.Success;
             }
             else

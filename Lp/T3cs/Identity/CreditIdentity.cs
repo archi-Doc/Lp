@@ -7,9 +7,13 @@ namespace Lp.T3cs;
 [TinyhandObject(AddAlternateKey = true)]
 public partial record class CreditIdentity : Identity
 {
+    #region FieldAndProperty
+
     [Key(Identity.ReservedKeyCount + 0)]
     [MaxLength(LpConstants.MaxMergers)]
     public partial SignaturePublicKey[] Mergers { get; init; } = [];
+
+    #endregion
 
     public CreditIdentity(Identifier sourceIdentifier, SignaturePublicKey originator, SignaturePublicKey[] mergers)
         : base(sourceIdentifier, originator)

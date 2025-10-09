@@ -38,11 +38,11 @@ public partial record EquityCredit
     public Credit Credit { get; private set; } = Credit.UnsafeConstructor();
 
     /// <summary>
-    /// Gets the credit information for this full credit.
-    /// Thread-safety: Immutable instance.
+    /// Gets the credit identity.
+    /// Thread-safety: Immutable.
     /// </summary>
     [Key(1)]
-    public CreditInformation CreditInformation { get; private set; } = CreditInformation.UnsafeConstructor();
+    public CreditIdentity CreditIdentity { get; private set; } = CreditIdentity.UnsafeConstructor();
 
     [Key(2)]
     public StoragePoint<OwnerData.GoshujinClass> Owners { get; private set; } = new();
@@ -53,9 +53,10 @@ public partial record EquityCredit
     {
     }
 
-    public void Initialize(Credit credit)
+    public void Initialize(Credit credit, CreditIdentity creditIdentity)
     {
         this.Credit = credit;
+        this.CreditIdentity = creditIdentity;
     }
 
     /// <summary>
