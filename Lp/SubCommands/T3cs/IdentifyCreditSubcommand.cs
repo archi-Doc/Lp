@@ -12,7 +12,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
     private readonly ILogger logger;
     private readonly LpService lpService;
 
-    public IdentifyCreditSubcommand(IUserInterfaceService userInterfaceService, ILogger<InspectOwnerOptions> logger, LpService lpService)
+    public IdentifyCreditSubcommand(IUserInterfaceService userInterfaceService, ILogger<IdentifyCreditSubcommand> logger, LpService lpService)
     {
         this.userInterfaceService = userInterfaceService;
         this.logger = logger;

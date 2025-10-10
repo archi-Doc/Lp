@@ -168,7 +168,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     public override string ToString() => this.ToString(default);
 
     public virtual string ToString(IConversionOptions? conversionOptions)
-        => $"Proof:";
+        => "abstract";
 
     public virtual bool SetSignature(SignaturePair signaturePair)
     {

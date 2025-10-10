@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Text;
 
 namespace Lp.Services;
 
@@ -27,12 +28,50 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
         public override string? ReadLine()
         {
+            StringBuilder? sb = default;
+
+Loop:
             if (this.queue.TryDequeue(out var line))
             {
-                return line;
+                if (line is not null &&
+                    line.EndsWith('\\'))
+                {
+                    sb ??= new();
+                    sb.Append(line[0..^1]);
+                    sb.Append(" \n");
+                    goto Loop;
+                }
+
+                if (sb is null)
+                {
+                    return line;
+                }
+                else
+                {
+                    sb.Append(line);
+                    return sb.ToString();
+                }
             }
 
-            return this.original.ReadLine();
+            var st = this.original.ReadLine();
+            if (st is not null &&
+                st.EndsWith('\\'))
+            {
+                sb ??= new();
+                sb.Append(st[0..^1]);
+                sb.Append(" \n");
+                goto Loop;
+            }
+
+            if (sb is null)
+            {
+                return st;
+            }
+            else
+            {
+                sb.Append(st);
+                return sb.ToString();
+            }
         }
     }
 

@@ -8,5 +8,6 @@ public static class Subcommand
     {
         context.AddSubcommand(typeof(IdentifyCreditSubcommand));
         context.AddSubcommand(typeof(InspectOwnerSubcommand));
+        context.AddSubcommand(typeof(SignEvolProofSubcommand));
     }
 }

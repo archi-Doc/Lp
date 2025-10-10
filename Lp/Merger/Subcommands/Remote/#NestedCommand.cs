@@ -36,6 +36,12 @@ public class NestedCommand : NestedCommand<NestedCommand>
 [SimpleCommand("merger-remote")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly NestedCommand nestedcommand;
+    private readonly LpService lpService;
+    private readonly RobustConnection.Factory robustConnectionFactory;
+
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
@@ -98,11 +104,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         await this.nestedcommand.MainAsync();
     }
 
-    private readonly ILogger logger;
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly NestedCommand nestedcommand;
-    private readonly LpService lpService;
-    private readonly RobustConnection.Factory robustConnectionFactory;
+
 }
 
 public record CommandOptions
