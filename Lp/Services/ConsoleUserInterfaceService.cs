@@ -29,16 +29,13 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         public override string? ReadLine()
         {
             StringBuilder? sb = default;
+            int tripleQuotesCount = 0;
 
 Loop:
             if (this.queue.TryDequeue(out var line))
             {
-                if (line is not null &&
-                    line.EndsWith('\\'))
+                if (ProcessLine(line))
                 {
-                    sb ??= new();
-                    sb.Append(line[0..^1]);
-                    sb.Append(" \n");
                     goto Loop;
                 }
 
@@ -54,12 +51,8 @@ Loop:
             }
 
             var st = this.original.ReadLine();
-            if (st is not null &&
-                st.EndsWith('\\'))
+            if (ProcessLine(st))
             {
-                sb ??= new();
-                sb.Append(st[0..^1]);
-                sb.Append(" \n");
                 goto Loop;
             }
 
@@ -71,6 +64,44 @@ Loop:
             {
                 sb.Append(st);
                 return sb.ToString();
+            }
+
+            bool ProcessLine(string? content)
+            {
+                if (content is not null)
+                {
+                    tripleQuotesCount += CheckTripleQuotes(content);
+                    if (content.EndsWith('\\'))
+                    {
+                        sb ??= new();
+                        sb.Append(content[0..^1]);
+                        sb.Append(' ');
+                        return true;
+                    }
+                    else if ((tripleQuotesCount & 1) != 0)
+                    {
+                        sb ??= new();
+                        sb.Append(content);
+                        sb.Append('\n');
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static int CheckTripleQuotes(ReadOnlySpan<char> text)
+            {
+                int count = 0;
+                int index = 0;
+                var span = text;
+                while ((index = span.IndexOf("\"\"\"", StringComparison.Ordinal)) != -1)
+                {
+                    count++;
+                    span = span.Slice(index + 3);
+                }
+
+                return count;
             }
         }
     }
