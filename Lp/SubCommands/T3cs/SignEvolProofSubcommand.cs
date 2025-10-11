@@ -28,7 +28,7 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
             return;
         }
 
-        Proof? proof = default;
+        EvolProof? proof = default;
         try
         {
             proof = TinyhandSerializer.DeserializeFromString<EvolProof>(SimpleParserHelper.TrimQuotesAndBracket(options.Proof));
@@ -42,8 +42,13 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
             return;
         }
 
+        if (!seedKey.TrySign(proof, Mics.FromDays(1)))
+        {
+            return;
+        }
+
         this.userInterfaceService.WriteLine($"Proof: {proof.ToString()}");
-        var st = TinyhandSerializer.SerializeToString((EvolProof)proof);
+        var st = TinyhandSerializer.SerializeToString(proof);
 
         /*var credit = creditIdentity.ToCredit();
         if (credit is not null)
