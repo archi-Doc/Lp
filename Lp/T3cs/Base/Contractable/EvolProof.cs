@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
+using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
@@ -14,7 +15,7 @@ public partial class EvolProof : ContractableProof
     [Key(ContractableProof.ReservedKeyCount + 1)]
     public Value DestinationValue { get; protected set; }
 
-    [Key(ContractableProof.ReservedKeyCount + 2)]
+    [Key(ContractableProof.ReservedKeyCount + 2, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public Identity? DestinationIdentity { get; protected set; }
 
     public EvolProof(SignaturePublicKey linkerPublicKey, Value sourceValue, Value destinationValue, Identity? destinationIdentity)
