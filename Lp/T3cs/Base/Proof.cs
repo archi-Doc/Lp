@@ -8,6 +8,7 @@ namespace Lp.T3cs;
 
 public enum ProofKey : int
 {
+    EvolProof2,
     CredentialProof,
     LinkProof,
     ValueProof,
@@ -27,6 +28,7 @@ public enum ProofKey : int
 /// This class holds an authentication key and its proof content.<br/>
 /// To centralize serialization, add the derived Proof classes to ProofKey and apply the TinyhandUnion attribute to this class.
 /// </summary>
+[TinyhandUnion((int)ProofKey.EvolProof2, typeof(EvolProof2))]
 [TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
 [TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
 [TinyhandUnion((int)ProofKey.ValueProof, typeof(ValueProof))]
