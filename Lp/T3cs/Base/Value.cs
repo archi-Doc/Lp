@@ -5,6 +5,13 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+public static class PointExtensions
+{
+    extension(Point point)
+    {
+    }
+}
+
 /// <summary>
 /// Represents a value (Owner#Point@Originator/Mergers).
 /// </summary>

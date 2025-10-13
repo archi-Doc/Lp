@@ -69,17 +69,20 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     [Key(0, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; protected set; } = [];
 
+    [Key(1)]
+    public int SignedId { get; protected set; }
+
     /// <summary>
     /// Gets or sets the signed time in microseconds.
     /// </summary>
-    [Key(1)]
+    [Key(2)]
     // [Link(Primary = true, Type = ChainType.Ordered)]
     public long SignedMics { get; protected set; }
 
     /// <summary>
     /// Gets or sets the expiration time in microseconds.
     /// </summary>
-    [Key(2)]
+    [Key(3)]
     public long ExpirationMics { get; protected set; }
 
     /// <summary>

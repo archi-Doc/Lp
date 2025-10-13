@@ -129,6 +129,11 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         }
 
         var credit = creditIdentity.ToCredit();
+        if (credit is null)
+        {
+            return default;
+        }
+
         var fullCredit = this.creditData.TryGet(credit);
         if (fullCredit is not null)
         {

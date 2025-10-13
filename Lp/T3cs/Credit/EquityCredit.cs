@@ -59,7 +59,7 @@ public partial record EquityCredit
         this.CreditIdentity = creditIdentity;
     }
 
-    /// <summary>
+    /* /// <summary>
     /// Determines whether the specified <see cref="EvolProof"/> is contained within the owner data of this full credit.
     /// </summary>
     /// <param name="proof">The <see cref="EvolProof"/> to check for existence.</param>
@@ -91,7 +91,7 @@ public partial record EquityCredit
     /// <param name="ownerPublicKey">The public key of the owner.</param>
     /// <returns>The <see cref="OwnerData"/> if found; otherwise, <c>null</c>.</returns>
     private OwnerData? GetOwnerData(SignaturePublicKey ownerPublicKey)
-    {//
+    {
         var ownerData = this.Owners.TryGet().Result;
         if (ownerData is null)
         {
@@ -99,5 +99,5 @@ public partial record EquityCredit
         }
 
         return ownerData.TryGet(ownerPublicKey);
-    }
+    }*/
 }

@@ -30,7 +30,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
         try
-        {//
+        {
             var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotesAndBracket());
         }
         catch

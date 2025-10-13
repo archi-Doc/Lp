@@ -44,7 +44,7 @@ public partial class LpDogmaMachine : Machine
     {
         if (this.lpBase.BasalServiceCount < BasalServiceThreshold)
         {
-            //return StateResult.Continue;
+            // return StateResult.Continue;
         }
 
         if (await this.authorityControl.GetLpSeedKey(null) is not { } seedKey)
@@ -137,6 +137,12 @@ public partial class LpDogmaMachine : Machine
         var sourceValue = new Value(LpConstants.LpPublicKey, evol.LpPoint, LpConstants.LpCredit); // LpKey#Point1@LpCredi
         var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
         var credit = creditIdentity.ToCredit();
+        if (credit is null)
+        {
+            this.userInterfaceService.WriteLine($"Failed to create credit: Lp");
+            return StateResult.Continue;
+        }
+
         var destinationValue = new Value(evol.Merger, evol.DestinationPoint, credit); // Originator#Point2@Credit1
         var proof = new EvolProof(evol.Linker, sourceValue, destinationValue, creditIdentity);
 
