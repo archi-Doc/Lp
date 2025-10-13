@@ -73,7 +73,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// Gets or sets the signed time in microseconds.
     /// </summary>
     [Key(1)]
-    [Link(Primary = true, Type = ChainType.Ordered)]
+    // [Link(Primary = true, Type = ChainType.Ordered)]
     public long SignedMics { get; protected set; }
 
     /// <summary>
