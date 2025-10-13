@@ -43,6 +43,8 @@ public enum ProofKey : int
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Proof : IEquatable<Proof>, ISignable
 {
+    public const int ReusableSignId = -1;
+
     /// <summary>
     /// The number of microseconds by which the expiration time is truncated.<br/>
     /// If the valid mics is less than or equal to this value, it will not be truncated.
@@ -70,7 +72,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     public byte[] Signature { get; protected set; } = [];
 
     [Key(1)]
-    public int SignedId { get; protected set; }
+    public int SignId { get; protected set; }
 
     /// <summary>
     /// Gets or sets the signed time in microseconds.
