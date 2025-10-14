@@ -19,7 +19,7 @@ public enum PermittedSigner
     Merger = 1 << 1,
 
     /// <summary>
-    /// The LP key is permitted to sign.
+    /// The Lp key is permitted to sign.
     /// </summary>
     LpKey = 1 << 2,
 }

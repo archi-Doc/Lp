@@ -6,7 +6,7 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(AddAlternateKey = true)]
+/*[TinyhandObject(AddAlternateKey = true)]
 public sealed partial class EvolProof2 : Proof, IEquatable<EvolProof2>
 {
     /// <summary>
@@ -120,4 +120,4 @@ public sealed partial class EvolProof2 : Proof, IEquatable<EvolProof2>
         return this.SourceValue.Equals(other.SourceValue) &&
             this.DestinationValue.Equals(other.DestinationValue);
     }
-}
+}*/

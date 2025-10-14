@@ -52,4 +52,8 @@
     <PackageReference Include="ValueLink" Version="0.104.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="T3cs\Base\Mergeable\" />
+  </ItemGroup>
+
 </Project>
