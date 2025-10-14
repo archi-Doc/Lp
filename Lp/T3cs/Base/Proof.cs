@@ -51,12 +51,12 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// </summary>
     public const long TruncateExpirationMics = Mics.MicsPerDay;
 
-    public const int TruncateExpirationSeconds = 3600 * 24;
+    public const int TruncateExpirationSeconds = Seconds.SecondsPerDay;
 
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
-    public const int ReservedKeyCount = 4;
+    public const int ReservedKeyCount = 5;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Proof"/> class.
@@ -73,6 +73,11 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     [Key(0, Level = TinyhandWriter.DefaultSignatureLevel + 1)]
     public byte[] Signature { get; protected set; } = [];
 
+    /// <summary>
+    /// Gets or sets the identifier of the signature used for this proof.<br/>
+    /// <see cref="ReusableSignId"/>: Reusable sign id.<br/>
+    /// Other: Unique (not reusable) sign id.
+    /// </summary>
     [Key(1)]
     public int SignId { get; protected set; }
 
@@ -80,7 +85,6 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// Gets or sets the signed time in microseconds.
     /// </summary>
     [Key(2)]
-    // [Link(Primary = true, Type = ChainType.Ordered)]
     public long SignedMics { get; protected set; }
 
     /// <summary>

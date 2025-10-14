@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 /// Immutable evidence object (authentication within merger).
 /// </summary>
 [TinyhandUnion(0, typeof(CredentialEvidence))]
-[TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
+[TinyhandObject(ReservedKeyCount = Evidence.ReservedKeyCount)]
 public abstract partial class Evidence
 {
     /// <summary>
