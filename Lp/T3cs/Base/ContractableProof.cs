@@ -46,8 +46,9 @@ public abstract partial class ContractableProof : Proof
             return false;
         }
 
-        return this.SignedMics == other.SignedMics &&
-            this.ExpirationMics == other.ExpirationMics &&
+        return this.SignId == other.SignId &&
+            this.SignedMics == other.SignedMics &&
+            this.ValiditySeconds == other.ValiditySeconds &&
             this.Signature.SequenceEqual(other.Signature) &&
             this.GetSignatureKey().Equals(other.GetSignatureKey()) &&
             this.LinkerPublicKey.Equals(other.LinkerPublicKey);
