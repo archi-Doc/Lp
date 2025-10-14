@@ -166,6 +166,12 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return T3csResult.InvalidData;
         }
 
+        if (credit.Mergers.Length != 1 ||
+            !credit.Mergers[0].Equals(this.PublicKey))
+        {
+            return T3csResult.NotSupported;
+        }
+
         using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.Create).ConfigureAwait(false))
         {
             if (dataScope.IsValid)

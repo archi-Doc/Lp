@@ -141,7 +141,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>
     public virtual bool Validate(ValidationOptions validationOptions)
     {
-        if (this.SignedMics == 0 || this.ValiditySeconds == 0)
+        if (this.ValiditySeconds == 0)
         {
             return false;
         }
@@ -151,10 +151,18 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
             return false;
         }
 
-        if (!validationOptions.HasFlag(ValidationOptions.IgnoreExpiration) &&
-            !MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
+        if (!validationOptions.HasFlag(ValidationOptions.PreSign))
         {
-            return false;
+            if (this.SignedMics == 0)
+            {
+                return false;
+            }
+
+            if (!validationOptions.HasFlag(ValidationOptions.IgnoreExpiration) &&
+            !MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -196,6 +204,14 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
 
     public virtual bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
+        if (this.SignId != Proof.ReusableSignId)
+        {
+            while (this.SignId == 0)
+            {
+                this.SignId = RandomVault.Default.NextInt32();
+            }
+        }
+
         this.SignedMics = Mics.GetCorrected();
         this.ValiditySeconds = Math.Max(validitySeconds, this.MaxValiditySeconds);
 

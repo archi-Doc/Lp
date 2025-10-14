@@ -40,7 +40,8 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        this.userInterfaceService.WriteLine($"CreditIdentity: {creditIdentity.ToString()}");
+        var st = TinyhandSerializer.SerializeToString(creditIdentity, TinyhandSerializerOptions.ConvertToSimpoleString);
+        this.userInterfaceService.WriteLine($"CreditIdentity: {st}"); // creditIdentity.ToString()
 
         var credit = creditIdentity.ToCredit();
         if (credit is not null)

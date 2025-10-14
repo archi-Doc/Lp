@@ -42,13 +42,19 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
             return;
         }
 
+        if (!proof.Validate(ValidationOptions.PreSign))
+        {
+            return;
+        }
+
         if (!seedKey.TrySign(proof, Seconds.FromDays(1)))
         {
             return;
         }
 
-        this.userInterfaceService.WriteLine($"Proof: {proof.ToString()}");
+        // this.userInterfaceService.WriteLine($"Proof: {proof.ToString()}");
         var st = TinyhandSerializer.SerializeToString(proof);
+        // this.userInterfaceService.WriteLine(st);
 
         /*var credit = creditIdentity.ToCredit();
         if (credit is not null)
