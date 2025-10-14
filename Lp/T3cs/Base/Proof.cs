@@ -51,6 +51,8 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// </summary>
     public const long TruncateExpirationMics = Mics.MicsPerDay;
 
+    public const int TruncateExpirationSeconds = 3600 * 24;
+
     /// <summary>
     /// The number of reserved keys.
     /// </summary>
@@ -82,15 +84,17 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     public long SignedMics { get; protected set; }
 
     /// <summary>
-    /// Gets or sets the expiration time in microseconds.
+    /// Gets or sets the validity period of the proof in seconds.
     /// </summary>
     [Key(3)]
-    public long ExpirationMics { get; protected set; }
+    public int ValiditySeconds { get; protected set; }
+
+    public long ExpirationMics => this.SignedMics + ((long)this.ValiditySeconds * Mics.MicsPerSecond);
 
     /// <summary>
     /// Gets the maximum valid microseconds.
     /// </summary>
-    public virtual long MaxValidMics => LpConstants.DefaultProofMaxValidMics;
+    public virtual int MaxValiditySeconds => LpConstants.DefaultProofMaxValiditySeconds;
 
     #endregion
 
@@ -134,13 +138,12 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>
     public virtual bool Validate(ValidationOptions validationOptions)
     {
-        if (this.SignedMics == 0 || this.ExpirationMics == 0)
+        if (this.SignedMics == 0 || this.ValiditySeconds == 0)
         {
             return false;
         }
 
-        var period = this.ExpirationMics - this.SignedMics;
-        if (period < 0 || period > this.MaxValidMics)
+        if (this.ValiditySeconds > this.MaxValiditySeconds)
         {
             return false;
         }
@@ -167,7 +170,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         }
 
         return this.SignedMics == other.SignedMics &&
-            this.ExpirationMics == other.ExpirationMics &&
+            this.ValiditySeconds == other.ValiditySeconds &&
             this.Signature.SequenceEqual(other.Signature) &&
             this.GetSignatureKey().Equals(other.GetSignatureKey());
     }
@@ -188,19 +191,10 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         return true;
     }
 
-    public virtual bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public virtual bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         this.SignedMics = Mics.GetCorrected();
-        validMics = Math.Max(validMics, this.MaxValidMics);
-        var mics = this.SignedMics + validMics;
-        if (validMics > TruncateExpirationMics)
-        {
-            this.ExpirationMics = mics / TruncateExpirationMics * TruncateExpirationMics;
-        }
-        else
-        {
-            this.ExpirationMics = mics;
-        }
+        this.ValiditySeconds = Math.Max(validitySeconds, this.MaxValiditySeconds);
 
         return true;
     }

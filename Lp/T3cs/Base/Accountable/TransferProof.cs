@@ -48,14 +48,14 @@ public partial class TransferProof2 : Proof
         return true;
     }
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         if (!this.GetSignatureKey().Equals(ref publicKey))
         {
             return false;
         }
 
-        return base.PrepareForSigning(ref publicKey, validMics);
+        return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 }
 

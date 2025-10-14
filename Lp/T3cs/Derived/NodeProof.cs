@@ -10,6 +10,8 @@ public partial class NodeProof : ProofWithPublicKey
 {
     public static readonly long DefaultValidMics = Mics.FromDays(10);
 
+    public static readonly int DefaultValiditySeconds = Seconds.FromDays(10);
+
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = nameof(PublicKey))]
     public NodeProof(SignaturePublicKey publicKey, NetNode netNode)
         : base(publicKey)

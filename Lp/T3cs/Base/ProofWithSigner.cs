@@ -95,7 +95,7 @@ public abstract partial class ProofWithSigner : Proof
         }
     }
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         var permittedSigner = this.PermittedSigner;
         var mergerCount = this.Value.Credit.Mergers.Length;
@@ -146,7 +146,7 @@ public abstract partial class ProofWithSigner : Proof
         return false;
 
 Success:
-        base.PrepareForSigning(ref publicKey, validMics);
+        base.PrepareForSigning(ref publicKey, validitySeconds);
         return true;
     }
 }

@@ -62,7 +62,7 @@ public sealed partial class EvolProof2 : Proof, IEquatable<EvolProof2>
         }
 
         return this.SignedMics == other.SignedMics &&
-            this.ExpirationMics == other.ExpirationMics &&
+            this.ValiditySeconds == other.ValiditySeconds &&
             this.Signature.SequenceEqual(other.Signature) &&
             this.GetSignatureKey().Equals(other.GetSignatureKey()) &&
             this.LinkerPublicKey.Equals(other.LinkerPublicKey);
@@ -100,14 +100,14 @@ public sealed partial class EvolProof2 : Proof, IEquatable<EvolProof2>
         return true;
     }
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         if (!this.SourceValue.Owner.Equals(ref publicKey))
         {
             return false;
         }
 
-        return base.PrepareForSigning(ref publicKey, validMics);
+        return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 
     public bool ContentEquals(EvolProof2? other)

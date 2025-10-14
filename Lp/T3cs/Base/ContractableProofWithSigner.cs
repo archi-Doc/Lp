@@ -96,7 +96,7 @@ public abstract partial class ContractableProofWithSigner : ContractableProof
         }
     }
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         var permittedSigner = this.PermittedSigner;
         var mergerCount = this.Value.Credit.Mergers.Length;
@@ -147,7 +147,7 @@ public abstract partial class ContractableProofWithSigner : ContractableProof
         return false;
 
 Success:
-        base.PrepareForSigning(ref publicKey, validMics);
+        base.PrepareForSigning(ref publicKey, validitySeconds);
         return true;
     }
 }

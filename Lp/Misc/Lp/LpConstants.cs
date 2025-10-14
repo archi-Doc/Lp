@@ -21,7 +21,7 @@ public static class LpConstants
     public const char SeparatorSymbol = ' ';
     public const int MaxUrlLength = 500;
 
-    public const long DefaultProofMaxValidMics = Mics.MicsPerDay * 30;
+    public const int DefaultProofMaxValiditySeconds = 3600 * 24 * 30;
 
     public const string LpAlias = "LpId";
     public const string LpKeyAlias = "LpKey";

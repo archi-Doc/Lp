@@ -23,7 +23,7 @@ public readonly struct SignaturePair
 
 public interface ISignable
 {
-    bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics);
+    bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds);
 
     bool SetSignature(SignaturePair signaturePair);
 }

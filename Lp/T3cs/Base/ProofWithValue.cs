@@ -34,13 +34,13 @@ public abstract partial class ProofWithValue : Proof
         return true;
     }*/
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         if (!this.Value.Owner.Equals(ref publicKey))
         {
             return false;
         }
 
-        return base.PrepareForSigning(ref publicKey, validMics);
+        return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 }

@@ -42,7 +42,7 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
             return;
         }
 
-        if (!seedKey.TrySign(proof, Mics.FromDays(1)))
+        if (!seedKey.TrySign(proof, Seconds.FromDays(1)))
         {
             return;
         }

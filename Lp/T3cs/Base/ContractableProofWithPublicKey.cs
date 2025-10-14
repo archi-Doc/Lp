@@ -22,9 +22,9 @@ public abstract partial class ContractableProofWithPublicKey : ContractableProof
 
     public override SignaturePublicKey GetSignatureKey() => this.PublicKey;
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
-        base.PrepareForSigning(ref publicKey, validMics);
+        base.PrepareForSigning(ref publicKey, validitySeconds);
         this.PublicKey = publicKey;
         return true;
     }

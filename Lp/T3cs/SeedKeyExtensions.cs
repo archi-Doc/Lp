@@ -7,9 +7,9 @@ namespace Lp.T3cs;
 
 public static class SeedKeyExtensions
 {
-    public static bool TrySign(this SeedKey seedKey, Proof proof, long validMics)
+    public static bool TrySign(this SeedKey seedKey, Proof proof, int validitySeconds)
     {
-        if (validMics > proof.MaxValidMics)
+        if (validitySeconds > proof.MaxValiditySeconds)
         {
             return false;
         }
@@ -19,7 +19,7 @@ public static class SeedKeyExtensions
         try
         {
             var publicKey = seedKey.GetSignaturePublicKey();
-            if (!proof.PrepareForSigning(ref publicKey, validMics))
+            if (!proof.PrepareForSigning(ref publicKey, validitySeconds))
             {
                 return false;
             }
@@ -38,9 +38,9 @@ public static class SeedKeyExtensions
         }
     }
 
-    public static bool TrySignAndValidate(this SeedKey seedKey, Proof proof, long validMics)
+    public static bool TrySignAndValidate(this SeedKey seedKey, Proof proof, int validitySeconds)
     {
-        if (!TrySign(seedKey, proof, validMics))
+        if (!TrySign(seedKey, proof, validitySeconds))
         {
             return false;
         }

@@ -82,7 +82,7 @@ public abstract partial class MergerBase : UnitBase
                 this.lastRegisteredMics = Mics.FastCorrected;
 
                 var nodeProof = new NodeProof(this.PublicKey, state.NetNode);
-                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
+                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValiditySeconds);
                 var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
 
                 this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registration, result);

@@ -58,14 +58,14 @@ public partial class EvolProof : ContractableProof
         return true;
     }
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         if (!this.SourceValue.Owner.Equals(ref publicKey))
         {
             return false;
         }
 
-        return base.PrepareForSigning(ref publicKey, validMics);
+        return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 
     public bool ContentEquals(EvolProof? other)
