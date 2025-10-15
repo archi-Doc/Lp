@@ -82,7 +82,7 @@ Loop:
                     {
                         sb ??= new();
                         sb.Append(content);
-                        sb.Append('\n');
+                        sb.Append(Environment.NewLine);
                         return true;
                     }
                 }

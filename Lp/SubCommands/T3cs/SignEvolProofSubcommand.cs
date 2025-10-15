@@ -2,6 +2,7 @@
 
 using Lp.T3cs;
 using SimpleCommandLine;
+using static System.Net.Mime.MediaTypeNames;
 using static Lp.Subcommands.KeyCommand.NewMasterKeySubcommand;
 
 namespace Lp.Subcommands.T3cs;
@@ -54,7 +55,7 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
 
         // this.userInterfaceService.WriteLine($"Proof: {proof.ToString()}");
         var st = TinyhandSerializer.SerializeToString(proof);
-        // this.userInterfaceService.WriteLine(st);
+        this.userInterfaceService.WriteLine(st.Replace("\n", "\r\n"));
 
         /*var credit = creditIdentity.ToCredit();
         if (credit is not null)
