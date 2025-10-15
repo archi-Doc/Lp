@@ -55,7 +55,9 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
 
         // this.userInterfaceService.WriteLine($"Proof: {proof.ToString()}");
         var st = TinyhandSerializer.SerializeToString(proof);
-        this.userInterfaceService.WriteLine(st.Replace("\n", "\r\n"));
+
+        this.userInterfaceService.WriteLine();
+        this.userInterfaceService.WriteLine(st);
 
         /*var credit = creditIdentity.ToCredit();
         if (credit is not null)

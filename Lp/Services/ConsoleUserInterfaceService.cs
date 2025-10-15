@@ -119,6 +119,11 @@ Loop:
     {
         try
         {
+            if (Environment.NewLine == "\r\n" && message is not null)
+            {
+                message = Arc.BaseHelper.ConvertLfToCrLf(message);
+            }
+
             Console.Write(message);
         }
         catch
@@ -130,6 +135,11 @@ Loop:
     {
         try
         {
+            if (Environment.NewLine == "\r\n" && message is not null)
+            {
+                message = Arc.BaseHelper.ConvertLfToCrLf(message);
+            }
+
             Console.WriteLine(message);
         }
         catch
