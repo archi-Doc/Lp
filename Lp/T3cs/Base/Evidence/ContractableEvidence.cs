@@ -6,7 +6,7 @@ using Tinyhand.IO;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(ReservedKeyCount = ContractableEvidence.ReservedKeyCount)]
+[TinyhandObject(ReservedKeyCount = ContractableEvidence.ReservedKeyCount, AddAlternateKey = true)]
 public sealed partial class ContractableEvidence : Evidence
 {
     /// <summary>
