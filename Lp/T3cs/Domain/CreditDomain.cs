@@ -12,14 +12,14 @@ public partial record class CreditDomain
     #region FieldAndProperty
 
     [Key(0)]
-    public DomainOption DomainOption { get; init; }
+    public DomainIdentifier DomainOption { get; init; }
 
     [Key(1)]
     public Dictionary<SignaturePublicKey, NetNode> Nodes { get; private set; } = new();
 
     #endregion
 
-    public CreditDomain(DomainOption domainOption)
+    public CreditDomain(DomainIdentifier domainOption)
     {
         this.DomainOption = domainOption;
     }

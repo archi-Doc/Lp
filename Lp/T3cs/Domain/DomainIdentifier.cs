@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial record class DomainOption : IStringConvertible<DomainOption>
+public partial record class DomainIdentifier : IStringConvertible<DomainIdentifier>
 {
     #region FieldAndProperty
 
@@ -23,7 +23,7 @@ public partial record class DomainOption : IStringConvertible<DomainOption>
 
     #endregion
 
-    public DomainOption(Credit credit, NetNode netNode, string url)
+    public DomainIdentifier(Credit credit, NetNode netNode, string url)
     {
         this.Credit = credit;
         this.NetNode = netNode;
@@ -32,7 +32,7 @@ public partial record class DomainOption : IStringConvertible<DomainOption>
 
     #region IStringConvertible
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DomainOption @object, out int read, IConversionOptions? conversionOptions = null)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DomainIdentifier @object, out int read, IConversionOptions? conversionOptions = null)
     {
         @object = default;
         read = 0;

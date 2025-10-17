@@ -4,6 +4,7 @@ using Lp;
 using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
+using Tinyhand;
 using Xunit;
 
 namespace xUnitTest;

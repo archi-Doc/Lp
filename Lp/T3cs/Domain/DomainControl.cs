@@ -27,7 +27,7 @@ public partial record class DomainControl
         var domain = lpBase.Options.Domain;
         if (!string.IsNullOrEmpty(domain))
         {
-            if (DomainOption.TryParse(lpBase.Options.Domain, out var domainOption, out _))
+            if (DomainIdentifier.TryParse(lpBase.Options.Domain, out var domainOption, out _))
             {
                 this.PrimaryDomain = new(domainOption);
             }
