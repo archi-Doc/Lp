@@ -5,14 +5,14 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial class TemplateProof : ProofWithPublicKey
+public partial class PeerProof : ProofWithPublicKey
 {// Don't forget to add the TinyhandUnion attribute to the Proof class.
-    public TemplateProof(SignaturePublicKey publicKey)
+    public PeerProof(SignaturePublicKey publicKey)
         : base(publicKey)
     {
     }
 
-    /* public override int MaxValiditySeconds => Seconds.FromDays(1);
+    public override int MaxValiditySeconds => Seconds.FromDays(1);
 
     public override bool Validate(ValidationOptions validationOptions)
     {
@@ -22,5 +22,5 @@ public partial class TemplateProof : ProofWithPublicKey
         }
 
         return true;
-    }*/
+    }
 }

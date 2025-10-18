@@ -1,14 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
-using Netsphere.Crypto;
 
 namespace Lp.Net;
 
-/*[NetServiceInterface]
-public interface IDomainService : INetServiceWithOwner
-{
-    NetTask<NetResult> RegisterNode(NodeProof nodeProof);
+[TinyhandObject]
+public readonly partial record struct DomainOverview(
+    [property: Key(0)] int NumberOfPeers,
+    [property: Key(1)] PeerProof? peerProof);
 
-    Task<NetResultAndValue<NetNode>> GetNode(SignaturePublicKey publicKey);
-}*/
+[NetServiceInterface]
+public interface IDomainService : INetService
+{
+    Task<NetResultAndValue<DomainOverview>> GetOverview(long domainIdentifier);
+}

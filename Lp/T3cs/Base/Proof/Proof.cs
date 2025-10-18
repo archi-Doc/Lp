@@ -17,6 +17,7 @@ public enum ProofKey : int
     DimensionProof,
     IdentificationProof,
     NodeProof,
+    PeerProof,
 
     TestLinkageProof,
     TemplateProof,
@@ -37,6 +38,7 @@ public enum ProofKey : int
 [TinyhandUnion((int)ProofKey.DimensionProof, typeof(DimensionProof))]
 [TinyhandUnion((int)ProofKey.IdentificationProof, typeof(IdentificationProof))]
 [TinyhandUnion((int)ProofKey.NodeProof, typeof(NodeProof))]
+[TinyhandUnion((int)ProofKey.PeerProof, typeof(PeerProof))]
 [TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 [TinyhandUnion((int)ProofKey.TemplateProof, typeof(TemplateProof))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]

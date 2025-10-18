@@ -6,7 +6,8 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public partial record class DomainControl
+[NetServiceObject]
+public partial record class DomainControl : IDomainService
 {
     #region FieldAndProperty
 
@@ -52,15 +53,17 @@ public partial record class DomainControl
         }
 
         this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
-        /*if ()
-        {
-            this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
+        this.netUnit.Services.Register<IDomainService, DomainControl>();
 
-            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
-        }*/
+        // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
-    public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
+    async Task<NetResultAndValue<DomainOverview>> IDomainService.GetOverview(long domainIdentifier)
+    {
+        return default;
+    }
+
+    /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {
         using (var connection = await this.netUnit.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
         {
@@ -73,5 +76,5 @@ public partial record class DomainControl
             var result = await service.RegisterNode(nodeProof);
             return result;
         }
-    }
+    }*/
 }
