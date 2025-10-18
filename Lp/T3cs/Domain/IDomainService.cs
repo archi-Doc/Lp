@@ -5,10 +5,10 @@ using Netsphere.Crypto;
 
 namespace Lp.Net;
 
-[NetServiceInterface]
+/*[NetServiceInterface]
 public interface IDomainService : INetServiceWithOwner
 {
     NetTask<NetResult> RegisterNode(NodeProof nodeProof);
 
     Task<NetResultAndValue<NetNode>> GetNode(SignaturePublicKey publicKey);
-}
+}*/

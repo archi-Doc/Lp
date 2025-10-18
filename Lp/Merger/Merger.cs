@@ -20,6 +20,8 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     [MemberNotNullWhen(true, nameof(Configuration))]
     [MemberNotNullWhen(true, nameof(creditDataCrystal))]
     [MemberNotNullWhen(true, nameof(creditData))]
+    [MemberNotNullWhen(true, nameof(equityCreditCrystal))]
+    [MemberNotNullWhen(true, nameof(equityCreditPoints))]
     public override bool Initialized { get; protected set; }
 
     public MergerConfiguration? Configuration { get; protected set; }
@@ -31,7 +33,9 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     public override CredentialState GetState() => this.State;
 
     protected ICrystal<FullCredit.GoshujinClass>? creditDataCrystal;
+    protected ICrystal<EquityCreditPoint.GoshujinClass>? equityCreditCrystal;
     protected FullCredit.GoshujinClass? creditData;
+    protected EquityCreditPoint.GoshujinClass? equityCreditPoints;
 
     #endregion
 
@@ -42,6 +46,8 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 
     public virtual void Initialize(CrystalControl crystalControl, SeedKey seedKey)
     {
+        var mergerStorage = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Merger/Storage"));
+
         this.Configuration = crystalControl.CreateCrystal<MergerConfiguration>(new()
         {
             NumberOfFileHistories = 0, // 3
@@ -54,8 +60,15 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             SaveFormat = SaveFormat.Binary,
             NumberOfFileHistories = 3,
             FileConfiguration = new GlobalFileConfiguration("Merger/Credits"),
-            StorageConfiguration = new SimpleStorageConfiguration(
-                new GlobalDirectoryConfiguration("Merger/Storage")),
+            StorageConfiguration = mergerStorage,
+        });
+
+        this.equityCreditCrystal = crystalControl.CreateCrystal<EquityCreditPoint.GoshujinClass>(new()
+        {
+            SaveFormat = SaveFormat.Binary,
+            NumberOfFileHistories = 3,
+            FileConfiguration = new GlobalFileConfiguration("Merger/EquityCredits"),
+            StorageConfiguration = mergerStorage,
         });
 
         if (string.IsNullOrEmpty(this.Configuration.Name))
@@ -64,6 +77,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         }
 
         this.creditData = this.creditDataCrystal.Data;
+        this.equityCreditPoints = this.equityCreditCrystal.Data;
         this.seedKey = seedKey;
         this.PublicKey = this.seedKey.GetSignaturePublicKey();
 
@@ -87,7 +101,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}/{this.Configuration.MaxCredits}");
+        this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}+{this.equityCreditCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
     async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
@@ -115,6 +129,11 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         }
 
         var credit = creditIdentity.ToCredit();
+        if (credit is null)
+        {
+            return default;
+        }
+
         var fullCredit = this.creditData.TryGet(credit);
         if (fullCredit is not null)
         {
@@ -134,6 +153,39 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         return new(fullCredit, false);
     }
 
+    public async Task<T3csResult> CreateCredit(CreditIdentity creditIdentity)
+    {
+        if (!this.Initialized)
+        {
+            return T3csResult.UnknownError;
+        }
+
+        var credit = creditIdentity.ToCredit();
+        if (credit is null)
+        {
+            return T3csResult.InvalidData;
+        }
+
+        if (credit.Mergers.Length != 1 ||
+            !credit.Mergers[0].Equals(this.PublicKey))
+        {
+            return T3csResult.NotSupported;
+        }
+
+        using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.Create).ConfigureAwait(false))
+        {
+            if (dataScope.IsValid)
+            {
+                dataScope.Data.Initialize(credit, creditIdentity);
+                return T3csResult.Success;
+            }
+            else
+            {
+                return T3csResult.AlreadyExists;
+            }
+        }
+    }
+
     public async NetTask<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
     {
         if (!this.Initialized)
@@ -142,7 +194,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         }
         else if (!param.Proof.ValidateAndVerify())
         {
-            return new(T3csResult.InvalidProof);
+            return new(T3csResult.InvalidData);
         }
 
         // Get LpData

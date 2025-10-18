@@ -7,14 +7,14 @@ using Netsphere.Crypto;
 
 namespace Lp;
 
-[TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true, EnumAsString = true)]
 public partial record MergerConfigurationBase
 {
     [MaxLength(Alias.MaxAliasLength)]
     public partial string Name { get; set; } = string.Empty;
 }
 
-[TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true, EnumAsString = true)]
 public partial record MergerConfiguration : MergerConfigurationBase
 {
     public const string MergerFilename = "MergerConfiguration";

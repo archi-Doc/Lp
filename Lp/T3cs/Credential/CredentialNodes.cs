@@ -116,6 +116,6 @@ public sealed partial class CredentialNodes
             return false;
         }
 
-        return true; //return credentialEvidence.IsAuthorized;
+        return true; // return credentialEvidence.IsAuthorized;
     }
 }

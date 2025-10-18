@@ -18,6 +18,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
         var group = context.GetCommandGroup(t);
         // group.AddCommand(typeof(LpNewCredentialSubcommand));
         group.AddCommand(typeof(ShowMergerKeySubcommand));
+        group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
     public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
@@ -35,6 +36,12 @@ public class NestedCommand : NestedCommand<NestedCommand>
 [SimpleCommand("merger-remote")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly NestedCommand nestedcommand;
+    private readonly LpService lpService;
+    private readonly RobustConnection.Factory robustConnectionFactory;
+
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
@@ -74,7 +81,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 {
                     var token = AuthenticationToken.CreateAndSign(seedKey, connection);
                     var r = await connection.GetService<IMergerRemote>().Authenticate(token);
-                    if (r.Result == NetResult.Success)
+                    if (r.IsSuccess)
                     {
                         connection.Agreement.AcceptAll(r.Value);
                         return true;
@@ -96,12 +103,6 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
         await this.nestedcommand.MainAsync();
     }
-
-    private readonly ILogger logger;
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly NestedCommand nestedcommand;
-    private readonly LpService lpService;
-    private readonly RobustConnection.Factory robustConnectionFactory;
 }
 
 public record CommandOptions

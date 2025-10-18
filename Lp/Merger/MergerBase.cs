@@ -75,14 +75,14 @@ public abstract partial class MergerBase : UnitBase
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
         }
 
-        if (state.IsActive && state.NetNode.Address.IsValidIpv4AndIpv6)
+        /*if (state.IsActive && state.NetNode.Address.IsValidIpv4AndIpv6)
         {
             if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
             {
                 this.lastRegisteredMics = Mics.FastCorrected;
 
                 var nodeProof = new NodeProof(this.PublicKey, state.NetNode);
-                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValidMics);
+                this.seedKey.TrySign(nodeProof, NodeProof.DefaultValiditySeconds);
                 var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
 
                 this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registration, result);
@@ -91,6 +91,6 @@ public abstract partial class MergerBase : UnitBase
                     // this.logger.TryGet(LogLevel.Information)?.Log(this.State.NetNode.ToString());
                 }
             }
-        }
+        }*/
     }
 }

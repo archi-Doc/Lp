@@ -44,7 +44,7 @@ public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOption
         this.userInterfaceService.WriteLine($"Target value:{targetValue}");
 
         var evolProof = new EvolProof(default, value, targetValue, targetIdentity);
-        if (!lpSeedKey.TrySignAndValidate(evolProof, Mics.FromSeconds(10)))
+        if (!lpSeedKey.TrySignAndValidate(evolProof, 10))
         {
             return;
         }

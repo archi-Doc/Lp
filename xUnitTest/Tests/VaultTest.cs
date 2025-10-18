@@ -8,7 +8,7 @@ using Xunit;
 
 namespace xUnitTest.Lp;
 
-[TinyhandObject(ImplicitKeyAsName = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true)]
 public partial record VaultTestRecord(int Id, string Name);
 
 [Collection(LpFixtureCollection.Name)]

@@ -29,7 +29,17 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        try
+        {
+            var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotesAndBracket());
+        }
+        catch
+        {
+        }
+
+        Console.WriteLine(LpConstants.LpPublicKey.ToString());
         Console.WriteLine(LpConstants.LpCredit.ToString());
+        Console.WriteLine(TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, TinyhandSerializerOptions.ConvertToSimpoleString));
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");

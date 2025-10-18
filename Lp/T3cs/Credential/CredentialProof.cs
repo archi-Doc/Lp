@@ -54,7 +54,7 @@ public sealed partial class CredentialProof : ProofWithPublicKey
     [Key(ProofWithSigner.ReservedKeyCount + 2)]
     public Credit UnderlyingCredit { get; private set; } = Credit.UnsafeConstructor();
 
-    public override long MaxValidMics => Mics.MicsPerDay * 1;
+    public override int MaxValiditySeconds => 3600 * 24 * 1;
 
     #endregion
 

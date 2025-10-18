@@ -11,7 +11,7 @@ namespace Lp.T3cs;
 /// This class needs to be thread-safe.
 /// </summary>
 [TinyhandObject(Structural = true)]
-[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]//
+[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record FullCredit
 {
     #region FieldAndProperty
@@ -77,7 +77,7 @@ public partial record FullCredit
     /// <param name="ownerPublicKey">The public key of the owner.</param>
     /// <returns>The <see cref="OwnerData"/> if found; otherwise, <c>null</c>.</returns>
     private OwnerData? GetOwnerData(SignaturePublicKey ownerPublicKey)
-    {//
+    {
         var ownerData = this.Owners.TryGet().Result;
         if (ownerData is null)
         {

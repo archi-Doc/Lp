@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Text;
 
 namespace Lp.Services;
 
@@ -27,12 +28,81 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
         public override string? ReadLine()
         {
+            StringBuilder? sb = default;
+            int tripleQuotesCount = 0;
+
+Loop:
             if (this.queue.TryDequeue(out var line))
             {
-                return line;
+                if (ProcessLine(line))
+                {
+                    goto Loop;
+                }
+
+                if (sb is null)
+                {
+                    return line;
+                }
+                else
+                {
+                    sb.Append(line);
+                    return sb.ToString();
+                }
             }
 
-            return this.original.ReadLine();
+            var st = this.original.ReadLine();
+            if (ProcessLine(st))
+            {
+                goto Loop;
+            }
+
+            if (sb is null)
+            {
+                return st;
+            }
+            else
+            {
+                sb.Append(st);
+                return sb.ToString();
+            }
+
+            bool ProcessLine(string? content)
+            {
+                if (content is not null)
+                {
+                    tripleQuotesCount += CheckTripleQuotes(content);
+                    if (content.EndsWith('\\'))
+                    {
+                        sb ??= new();
+                        sb.Append(content[0..^1]);
+                        sb.Append(' ');
+                        return true;
+                    }
+                    else if ((tripleQuotesCount & 1) != 0)
+                    {
+                        sb ??= new();
+                        sb.Append(content);
+                        sb.Append(Environment.NewLine);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static int CheckTripleQuotes(ReadOnlySpan<char> text)
+            {
+                int count = 0;
+                int index = 0;
+                var span = text;
+                while ((index = span.IndexOf("\"\"\"", StringComparison.Ordinal)) != -1)
+                {
+                    count++;
+                    span = span.Slice(index + 3);
+                }
+
+                return count;
+            }
         }
     }
 
@@ -49,6 +119,11 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         try
         {
+            if (Environment.NewLine == "\r\n" && message is not null)
+            {
+                message = Arc.BaseHelper.ConvertLfToCrLf(message);
+            }
+
             Console.Write(message);
         }
         catch
@@ -60,6 +135,11 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         try
         {
+            if (Environment.NewLine == "\r\n" && message is not null)
+            {
+                message = Arc.BaseHelper.ConvertLfToCrLf(message);
+            }
+
             Console.WriteLine(message);
         }
         catch

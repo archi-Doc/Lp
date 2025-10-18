@@ -2,7 +2,7 @@
 
 namespace Lp.Data;
 
-[TinyhandObject(ImplicitKeyAsName = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true)]
 public partial record LpSettings
 {
     public const string Filename = "Settings.tinyhand";

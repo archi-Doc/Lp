@@ -62,7 +62,7 @@ public sealed partial class MergerProof : Proof
     public override SignaturePublicKey GetSignatureKey()
         => this.UseLpKey ? LpConstants.LpPublicKey : this.MergerKey;
 
-    public override long MaxValidMics => Mics.MicsPerDay * 1;
+    public override int MaxValiditySeconds => 3600 * 24 * 1;
 
     #endregion
 
@@ -81,7 +81,7 @@ public sealed partial class MergerProof : Proof
         this.Validity = validity;
     }
 
-    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, long validMics)
+    public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
         if (this.UseLpKey)
         {
@@ -98,7 +98,7 @@ public sealed partial class MergerProof : Proof
             }
         }
 
-        return base.PrepareForSigning(ref publicKey, validMics);
+        return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 
     public override bool Validate(ValidationOptions validationOptions)

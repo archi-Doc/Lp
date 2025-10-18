@@ -35,6 +35,7 @@ public class InspectSubcommand : ISimpleCommand
 
         var netStats = this.lpUnit.NetUnit.NetStats;
         this.userInterfaceService.WriteLine($"Own NetNode ({netStats.GetOwnNodeType().ToString()}): {netStats.GetOwnNetNode().ToString()}");
+        this.userInterfaceService.WriteLine($"Remote key: {this.lpUnit.LpBase.RemotePublicKey.ToString()}");
     }
 
     private void InspectMerger()

@@ -23,14 +23,14 @@ public class ProofTest
     [Fact]
     public void TestDomain()
     {
-        var domain = new DomainOption(LpConstants.LpCredit, this.testNode, string.Empty);
+        var domain = new DomainIdentifier(LpConstants.LpCredit, this.testNode, string.Empty);
         var st = domain.ConvertToString();
-        DomainOption.TryParse(st, out var domain2, out var read).IsTrue();
+        DomainIdentifier.TryParse(st, out var domain2, out var read).IsTrue();
         domain2!.Equals(domain).IsTrue();
 
-        domain = new DomainOption(LpConstants.LpCredit, this.testNode, "test");
+        domain = new DomainIdentifier(LpConstants.LpCredit, this.testNode, "test");
         st = domain.ConvertToString();
-        DomainOption.TryParse(st, out domain2, out read).IsTrue();
+        DomainIdentifier.TryParse(st, out domain2, out read).IsTrue();
         domain2!.Equals(domain).IsTrue();
     }
 
@@ -38,7 +38,7 @@ public class ProofTest
     public void Test1()
     {
         Mics.UpdateFastCorrected();
-        var validMics = Mics.FromDays(1);
+        var validitySeconds = Seconds.FromDays(1);
 
         var ownerKey = SeedKey.NewSignature();
         var owner = ownerKey.GetSignaturePublicKey();
@@ -58,17 +58,17 @@ public class ProofTest
         state.Name = "Test1";
 
         var credentialProof = new CredentialProof(owner, CredentialKind.Merger, state);
-        ownerKey.TrySign(credentialProof, validMics).IsTrue();
+        ownerKey.TrySign(credentialProof, validitySeconds).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
 
-        mergerKey.TrySign(credentialProof, validMics).IsTrue();
+        mergerKey.TrySign(credentialProof, validitySeconds).IsTrue();
         credentialProof.ValidateAndVerify().IsTrue();
 
         var linkageProof = new TestLinkageProof(linker, value);
-        ownerKey.TrySign(linkageProof, validMics).IsTrue();
+        ownerKey.TrySign(linkageProof, validitySeconds).IsTrue();
         linkageProof.ValidateAndVerify().IsTrue();
         var linkageProof2 = new TestLinkageProof(linker, value2);
-        ownerKey2.TrySign(linkageProof2, validMics).IsTrue();
+        ownerKey2.TrySign(linkageProof2, validitySeconds).IsTrue();
         linkageProof2.ValidateAndVerify().IsTrue();
         var linkedMics = Mics.FastCorrected;
         var expirationMics = Mics.FastCorrected + Mics.FromSeconds(10);
@@ -82,7 +82,7 @@ public class ProofTest
         linkageEvidence2.ValidateAndVerify().IsTrue();
 
         Linkage.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
-        linkerKey.TrySign(linkage!, validMics).IsTrue();
+        linkerKey.TrySign(linkage!, validitySeconds).IsTrue();
 
         linkage!.ValidateAndVerify().IsTrue();
 

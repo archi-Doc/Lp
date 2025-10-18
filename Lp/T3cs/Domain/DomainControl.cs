@@ -27,7 +27,7 @@ public partial record class DomainControl
         var domain = lpBase.Options.Domain;
         if (!string.IsNullOrEmpty(domain))
         {
-            if (DomainOption.TryParse(lpBase.Options.Domain, out var domainOption, out _))
+            if (DomainIdentifier.TryParse(lpBase.Options.Domain, out var domainOption, out _))
             {
                 this.PrimaryDomain = new(domainOption);
             }
@@ -51,12 +51,13 @@ public partial record class DomainControl
             return;
         }
 
-        if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
+        this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
+        /*if ()
         {
-            this.netUnit.Services.Register<IDomainServer, DomainServerAgent>();
+            this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
-        }
+        }*/
     }
 
     public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
@@ -68,7 +69,7 @@ public partial record class DomainControl
                 return NetResult.NoNetwork;
             }
 
-            var service = connection.GetService<IDomainServer>();
+            var service = connection.GetService<IDomainService>();
             var result = await service.RegisterNode(nodeProof);
             return result;
         }

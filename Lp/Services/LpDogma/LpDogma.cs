@@ -8,12 +8,12 @@ namespace Lp.Services;
 /// <summary>
 /// LpDogma defines the initial provisional state of the Lp network.
 /// </summary>
-[TinyhandObject(ImplicitKeyAsName = true)]
+[TinyhandObject(ImplicitMemberNameAsKey = true)]
 public partial record class LpDogma
 {
     public const string Filename = "LpDogma";
 
-    [TinyhandObject(ImplicitKeyAsName = true)]
+    [TinyhandObject(ImplicitMemberNameAsKey = true)]
     public partial record class Evol(
         Point LpPoint,
         Point DestinationPoint,
@@ -44,7 +44,7 @@ public partial record class LpDogma
         }
     }
 
-    /*[TinyhandObject(ImplicitKeyAsName = true)]
+    /*[TinyhandObject(ImplicitMemberNameAsKey = true)]
     public partial record class CreditLink(
         Value Value1,
         Value Value2,
@@ -53,7 +53,7 @@ public partial record class LpDogma
         public long UpdatedMics { get; set; }
     }
 
-    [TinyhandObject(ImplicitKeyAsName = true)]
+    [TinyhandObject(ImplicitMemberNameAsKey = true)]
     public partial record class Credential(
         SignaturePublicKey PublicKey,
         NetNode NetNode,
@@ -62,7 +62,7 @@ public partial record class LpDogma
         public long UpdatedMics { get; set; }
     }
 
-    [TinyhandObject(ImplicitKeyAsName = true)]
+    [TinyhandObject(ImplicitMemberNameAsKey = true)]
     public partial record class Link(
         SignaturePublicKey LinkerPublicKey,
         Credit Credit1,

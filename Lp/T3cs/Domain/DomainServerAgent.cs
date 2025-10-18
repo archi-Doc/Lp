@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.Net;
 
-[NetServiceObject]
+/*[NetServiceObject]
 internal class DomainServiceAgent : IDomainService
 {
     private readonly DomainServer domainServer; // Underlying service implementation (DomainServer)
@@ -17,7 +17,7 @@ internal class DomainServiceAgent : IDomainService
 
     async NetTask<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
     {
-        if (!this.IsActive)
+        if (!this.domainServer.IsActive)
         {
             return NetResult.NoNetService;
         }
@@ -38,7 +38,7 @@ internal class DomainServiceAgent : IDomainService
 
     async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
     {
-        if (!this.IsActive)
+        if (!this.domainServer.IsActive)
         {
             return NetResult.NoNetService;
         }
@@ -54,7 +54,7 @@ internal class DomainServiceAgent : IDomainService
             return NetResult.InvalidData;
         }
 
-        if (this.creditDomain.TryGetNetNode(nodeProof.PublicKey, out _))
+        if (this.domainServer.CreditDomain.TryGetNetNode(nodeProof.PublicKey, out _))
         {// Check whether the PublicKey is registered in CreditDomain.
             nodeProof.IsAuthorized = true;
         }
@@ -63,9 +63,9 @@ internal class DomainServiceAgent : IDomainService
             nodeProof.IsAuthorized = false;
         }
 
-        using (this.Nodes.LockObject.EnterScope())
+        using (this.domainServer.Nodes.LockObject.EnterScope())
         {
-            if (this.Nodes.PublicKeyChain.FindFirst(nodeProof.PublicKey) is { } first)
+            if (this.domainServer.Nodes.PublicKeyChain.FindFirst(nodeProof.PublicKey) is { } first)
             {// Found
                 if (first.PriorityMics >= nodeProof.PriorityMics)
                 {// Existing proof is newer or equal
@@ -77,11 +77,11 @@ internal class DomainServiceAgent : IDomainService
                 }
             }
 
-            this.Nodes.Add(nodeProof);
+            this.domainServer.Nodes.Add(nodeProof);
 
-            while (this.Nodes.Count > DomainServer.MaxNodeCount)
+            while (this.domainServer.Nodes.Count > DomainServer.MaxNodeCount)
             {// Remove the oldest NodeProofs if the count exceeds the maximum.
-                if (this.Nodes.PriorityMicsChain.First is { } node)
+                if (this.domainServer.Nodes.PriorityMicsChain.First is { } node)
                 {
                     node.Goshujin = default;
                 }
@@ -93,14 +93,14 @@ internal class DomainServiceAgent : IDomainService
 
     async Task<NetResultAndValue<NetNode>> IDomainService.GetNode(SignaturePublicKey publicKey)
     {
-        if (!this.IsActive)
+        if (!this.domainServer.IsActive)
         {
             return new(NetResult.NoNetService);
         }
 
-        using (this.Nodes.LockObject.EnterScope())
+        using (this.domainServer.Nodes.LockObject.EnterScope())
         {
-            if (this.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))
+            if (this.domainServer.Nodes.PublicKeyChain.TryGetValue(publicKey, out var nodeProof))
             {
                 return new(NetResult.Success, nodeProof.NetNode);
             }
@@ -110,4 +110,4 @@ internal class DomainServiceAgent : IDomainService
             }
         }
     }
-}
+}*/

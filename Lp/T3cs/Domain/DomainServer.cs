@@ -8,7 +8,6 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-[NetServiceObject]
 public partial record class DomainServer
 {
     public const string Filename = "DomainServer";
@@ -31,10 +30,12 @@ public partial record class DomainServer
     [Key(4)]
     public byte[] DomainEvols { get; private set; } = [];
 
-    [MemberNotNullWhen(true, nameof(creditDomain), nameof(seedKey))]
-    public bool IsActive => this.creditDomain is not null && this.seedKey is not null;
+    [MemberNotNullWhen(true, nameof(CreditDomain), nameof(seedKey))]
+    public bool IsActive => this.CreditDomain is not null && this.seedKey is not null;
 
-    private CreditDomain? creditDomain;
+    [IgnoreMember]
+    public CreditDomain? CreditDomain { get; private set; }
+
     private SeedKey? seedKey;
     private SignaturePublicKey publicKey;
 
@@ -58,7 +59,7 @@ public partial record class DomainServer
             this.Clear();
         }
 
-        this.creditDomain = creditDomain;
+        this.CreditDomain = creditDomain;
         this.seedKey = seedKey;
         this.publicKey = publicKey;
 

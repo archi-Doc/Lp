@@ -4,6 +4,7 @@ using Lp;
 using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
+using Tinyhand;
 using Xunit;
 
 namespace xUnitTest;
@@ -16,7 +17,7 @@ public class CreditNetTest
         var seedKey = SeedKey.NewSignature();
         var publicKey = seedKey.GetSignaturePublicKey();
         var mergerProof = new MergerProof(publicKey);
-        var validMics = Mics.FromMinutes(1);
+        var validMics = Seconds.FromMinutes(1);
 
         seedKey.TrySign(mergerProof, validMics).IsTrue();
         mergerProof.ValidateAndVerify().IsTrue();

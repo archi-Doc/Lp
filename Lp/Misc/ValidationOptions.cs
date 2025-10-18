@@ -7,4 +7,5 @@ public enum ValidationOptions : int
 {
     Default = 0,
     IgnoreExpiration = 1,
+    PreSign = 2,
 }

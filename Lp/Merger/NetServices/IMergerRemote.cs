@@ -10,7 +10,9 @@ public partial interface IMergerRemote : INetService
 {
     Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
 
-    Task<NetResult> CreateCredit(CreditIdentity creditIdentity);
+    Task<T3csResult> CreateCredit(CreditIdentity creditIdentity);
+
+    Task<SignaturePublicKey> GetMergerKey();
 }
 
 [NetServiceObject]
@@ -40,14 +42,23 @@ internal class MergerRemoteAgent : IMergerRemote
         return new((ConnectionAgreement?)default);
     }
 
-    async Task<NetResult> IMergerRemote.CreateCredit(CreditIdentity creditIdentity)
+    Task<T3csResult> IMergerRemote.CreateCredit(CreditIdentity creditIdentity)
     {
         if (!this.authenticated)
         {
-            return NetResult.NotAuthenticated;
+            return Task.FromResult(T3csResult.NotAuthenticated);
         }
 
-        var result = await this.merger.GetOrCreateCredit(creditIdentity);
-        return result.FullCredit is not null ? NetResult.Success : NetResult.InvalidData;
+        return this.merger.CreateCredit(creditIdentity);
+    }
+
+    async Task<SignaturePublicKey> IMergerRemote.GetMergerKey()
+    {
+        if (!this.authenticated)
+        {
+            return default;
+        }
+
+        return this.merger.PublicKey;
     }
 }
