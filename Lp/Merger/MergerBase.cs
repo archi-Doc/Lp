@@ -75,7 +75,7 @@ public abstract partial class MergerBase : UnitBase
             this.logger.TryGet(LogLevel.Information)?.Log("Activated");
         }
 
-        if (state.IsActive && state.NetNode.Address.IsValidIpv4AndIpv6)
+        /*if (state.IsActive && state.NetNode.Address.IsValidIpv4AndIpv6)
         {
             if (!MicsRange.FromPastToFastCorrected(Mics.FromDays(1)).IsWithin(this.lastRegisteredMics))
             {
@@ -91,6 +91,6 @@ public abstract partial class MergerBase : UnitBase
                     // this.logger.TryGet(LogLevel.Information)?.Log(this.State.NetNode.ToString());
                 }
             }
-        }
+        }*/
     }
 }

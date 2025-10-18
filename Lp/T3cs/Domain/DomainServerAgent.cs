@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.Net;
 
-[NetServiceObject]
+/*[NetServiceObject]
 internal class DomainServiceAgent : IDomainService
 {
     private readonly DomainServer domainServer; // Underlying service implementation (DomainServer)
@@ -110,4 +110,4 @@ internal class DomainServiceAgent : IDomainService
             }
         }
     }
-}
+}*/

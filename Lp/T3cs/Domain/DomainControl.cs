@@ -51,12 +51,13 @@ public partial record class DomainControl
             return;
         }
 
-        if (this.DomainServer.Initialize(this.PrimaryDomain, seedKey))
+        this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
+        /*if ()
         {
             this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
             this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
-        }
+        }*/
     }
 
     public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
