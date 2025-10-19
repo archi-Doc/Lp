@@ -48,14 +48,14 @@ public partial record class DomainServer
     public bool Initialize(CreditDomain creditDomain, SeedKey seedKey)
     {
         var publicKey = seedKey.GetSignaturePublicKey();
-        if (!creditDomain.DomainOption.Credit.PrimaryMerger.Equals(ref publicKey))
+        if (!creditDomain.DomainIdentifier.Credit.PrimaryMerger.Equals(ref publicKey))
         {
             return false;
         }
 
-        if (!creditDomain.DomainOption.Credit.Equals(this.Credit))
+        if (!creditDomain.DomainIdentifier.Credit.Equals(this.Credit))
         {
-            this.Credit = creditDomain.DomainOption.Credit;
+            this.Credit = creditDomain.DomainIdentifier.Credit;
             this.Clear();
         }
 

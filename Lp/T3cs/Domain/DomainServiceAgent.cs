@@ -5,6 +5,22 @@ using Netsphere.Crypto;
 
 namespace Lp.Net;
 
+[NetServiceObject]
+internal class DomainServiceAgent : IDomainService
+{
+    private readonly DomainControl domainControl;
+
+    public DomainServiceAgent(DomainControl domainControl)
+    {
+        this.domainControl = domainControl;
+    }
+
+    Task<NetResultAndValue<DomainOverview>> IDomainService.GetOverview(long domainIdentifier)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 /*[NetServiceObject]
 internal class DomainServiceAgent : IDomainService
 {

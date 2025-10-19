@@ -6,14 +6,14 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceObject]
-public partial record class DomainControl : IDomainService
+public partial record class DomainControl
 {
     #region FieldAndProperty
 
     private readonly ILogger logger;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
+
 
     public DomainServer DomainServer { get; }
 
@@ -53,14 +53,9 @@ public partial record class DomainControl : IDomainService
         }
 
         this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
-        this.netUnit.Services.Register<IDomainService, DomainControl>();
+        this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
-    }
-
-    async Task<NetResultAndValue<DomainOverview>> IDomainService.GetOverview(long domainIdentifier)
-    {
-        return default;
     }
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
