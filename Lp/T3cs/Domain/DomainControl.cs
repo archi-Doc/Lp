@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using Lp.Net;
 using Lp.Services;
 using Netsphere.Crypto;
@@ -13,7 +14,7 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
-
+    private readonly ConcurrentDictionary<ulong, DomainServiceClass> domainServiceDictionary = new();
 
     public DomainServer DomainServer { get; }
 
@@ -56,6 +57,16 @@ public partial record class DomainControl
         this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
+    }
+
+    internal DomainServiceClass? GetDomainServiceClass(ulong domainHash)
+    {
+        if (this.domainServiceDictionary.TryGetValue(domainHash, out var domainServiceClass))
+        {
+            return domainServiceClass;
+        }
+
+        return null;
     }
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
