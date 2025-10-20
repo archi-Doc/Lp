@@ -10,6 +10,7 @@ public partial class PeerProof : ProofWithPublicKey
 {
     private const int MaxRandom = 100;
 
+    [TinyhandObject(External = true)]
     public partial class GoshujinClass
     {
         public PeerProof? GetRandomInternal()

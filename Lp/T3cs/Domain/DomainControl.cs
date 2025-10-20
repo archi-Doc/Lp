@@ -14,7 +14,7 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
-    private readonly ConcurrentDictionary<ulong, DomainServiceClass> domainServiceDictionary = new();
+    private readonly ConcurrentDictionary<ulong, DomainData> domainServiceDictionary = new();
 
     public DomainServer DomainServer { get; }
 
@@ -59,7 +59,7 @@ public partial record class DomainControl
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
-    internal DomainServiceClass? GetDomainService(ulong domainHash)
+    internal DomainData? GetDomainService(ulong domainHash)
     {
         if (this.domainServiceDictionary.TryGetValue(domainHash, out var domainServiceClass))
         {
@@ -69,23 +69,14 @@ public partial record class DomainControl
         return null;
     }
 
-    internal DomainServiceClass AddDomainService(Credit domainCredit, DomainServiceClass.Kind kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomainService(Credit domainCredit, DomainData.Role kind, SeedKey? domainSeedKey)
     {
-        if (kind == DomainServiceClass.Kind.Root)
-        {
-            if (domainSeedKey?.GetSignaturePublicKey().Equals(domainCredit.PrimaryMerger) != true)
-            {
-                kind = DomainServiceClass.Kind.User;
-                domainSeedKey = default;
-            }
-        }
-
         var domainHash = domainCredit.GetXxHash3();
         var serviceClass = this.domainServiceDictionary.AddOrUpdate(
             domainHash,
             hash =>
             {//
-                var serviceClass = new DomainServiceClass(domainCredit);
+                var serviceClass = new DomainData(domainCredit);
                 serviceClass.Update(kind, domainSeedKey);
                 return serviceClass;
             },
@@ -98,9 +89,9 @@ public partial record class DomainControl
         return serviceClass;
     }
 
-    internal bool TryRemoveDomainService(long domainHash)
+    internal bool TryRemoveDomainService(ulong domainHash)
     {
-        return this.domainServiceDictionary.TryRemove(domainHash, _);
+        return this.domainServiceDictionary.TryRemove(domainHash, out _);
     }
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
