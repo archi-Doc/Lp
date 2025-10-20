@@ -69,8 +69,17 @@ public partial record class DomainControl
         return null;
     }
 
-    internal DomainServiceClass AddDomainServiceClass(Credit domainCredit, SeedKey? domainSeedKey)
+    internal DomainServiceClass AddDomainServiceClass(Credit domainCredit, DomainServiceClass.Kind kind, SeedKey? domainSeedKey)
     {
+        if (kind == DomainServiceClass.Kind.Root)
+        {
+            if (domainSeedKey?.GetSignaturePublicKey().Equals(domainCredit.PrimaryMerger) != true)
+            {
+                kind = DomainServiceClass.Kind.External;
+                domainSeedKey = default;
+            }
+        }
+
         var domainHash = domainCredit.GetXxHash3();
         var serviceClass = this.domainServiceDictionary.AddOrUpdate(
             domainHash,

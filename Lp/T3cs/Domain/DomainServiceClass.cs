@@ -16,12 +16,14 @@ internal class DomainServiceClass
     }
 
     private readonly Credit domainCredit;
-    private SeedKey? domainSeedKey;
+    private readonly SeedKey? domainSeedKey;
+    private Kind ;
     private PeerProof.GoshujinClass peerProofs = new();
 
-    public DomainServiceClass(Credit domainCredit)
+    public DomainServiceClass(Credit domainCredit, Kind kind, SeedKey? domainSeedKey)
     {
         this.domainCredit = domainCredit;
+        this.kin
     }
 
     public DomainOverview GetOverview()
