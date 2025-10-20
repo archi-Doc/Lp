@@ -20,12 +20,12 @@ internal partial class DomainData
         User,
 
         /// <summary>
-        /// Located directly under the Root; shares and distributes peer information within the domain.
+        /// Located directly under the Root; shares and distributes domain information.
         /// </summary>
         Peer,
 
         /// <summary>
-        /// Serves as the foundation of trust for the domain and manages and distributes peer information.
+        /// Serves as the foundation of trust for the domain and manages and distributes domain information.
         /// </summary>
         Root,
     }

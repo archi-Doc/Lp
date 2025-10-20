@@ -7,7 +7,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial record class DomainServer
 {
     public const string Filename = "DomainServer";
@@ -73,4 +73,4 @@ public partial record class DomainServer
         this.DomainSignature = [];
         this.DomainEvols = [];
     }
-}
+}*/

@@ -16,13 +16,13 @@ public partial record class DomainControl
     private readonly AuthorityControl authorityControl;
     private readonly ConcurrentDictionary<ulong, DomainData> domainServiceDictionary = new();
 
-    public DomainServer DomainServer { get; }
+    // public DomainServer DomainServer { get; }
 
     public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainServer domainServer)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
     {
         this.logger = logger;
 
@@ -42,7 +42,7 @@ public partial record class DomainControl
         this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
         this.netUnit = netUnit;
         this.authorityControl = authorityControl;
-        this.DomainServer = domainServer;
+        // this.DomainServer = domainServer;
     }
 
     public async Task Prepare()
@@ -53,7 +53,7 @@ public partial record class DomainControl
             return;
         }
 
-        this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
+        // this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
         this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
