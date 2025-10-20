@@ -12,18 +12,23 @@ internal class DomainServiceClass
     {
         Root,
         Leaf,
-        External,
+        User,
     }
 
     private readonly Credit domainCredit;
-    private readonly SeedKey? domainSeedKey;
-    private Kind ;
+    private Kind domainServiceKind;
+    private SeedKey? domainSeedKey;
     private PeerProof.GoshujinClass peerProofs = new();
 
-    public DomainServiceClass(Credit domainCredit, Kind kind, SeedKey? domainSeedKey)
+    public DomainServiceClass(Credit domainCredit)
     {
         this.domainCredit = domainCredit;
-        this.kin
+    }
+
+    public void Update(Kind kind, SeedKey? domainSeedKey)
+    {//
+        this.domainServiceKind = kind;
+        this.domainSeedKey = domainSeedKey;
     }
 
     public DomainOverview GetOverview()

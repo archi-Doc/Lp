@@ -59,7 +59,7 @@ public partial record class DomainControl
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
-    internal DomainServiceClass? GetDomainServiceClass(ulong domainHash)
+    internal DomainServiceClass? GetDomainService(ulong domainHash)
     {
         if (this.domainServiceDictionary.TryGetValue(domainHash, out var domainServiceClass))
         {
@@ -69,13 +69,13 @@ public partial record class DomainControl
         return null;
     }
 
-    internal DomainServiceClass AddDomainServiceClass(Credit domainCredit, DomainServiceClass.Kind kind, SeedKey? domainSeedKey)
+    internal DomainServiceClass AddDomainService(Credit domainCredit, DomainServiceClass.Kind kind, SeedKey? domainSeedKey)
     {
         if (kind == DomainServiceClass.Kind.Root)
         {
             if (domainSeedKey?.GetSignaturePublicKey().Equals(domainCredit.PrimaryMerger) != true)
             {
-                kind = DomainServiceClass.Kind.External;
+                kind = DomainServiceClass.Kind.User;
                 domainSeedKey = default;
             }
         }
@@ -83,10 +83,24 @@ public partial record class DomainControl
         var domainHash = domainCredit.GetXxHash3();
         var serviceClass = this.domainServiceDictionary.AddOrUpdate(
             domainHash,
-            hash => { return new(default); },
-            (hash, original) => original);
+            hash =>
+            {//
+                var serviceClass = new DomainServiceClass(domainCredit);
+                serviceClass.Update(kind, domainSeedKey);
+                return serviceClass;
+            },
+            (hash, original) =>
+            {
+                original.Update(kind, domainSeedKey);
+                return original;
+            });
 
         return serviceClass;
+    }
+
+    internal bool TryRemoveDomainService(long domainHash)
+    {
+        return this.domainServiceDictionary.TryRemove(domainHash, _);
     }
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
