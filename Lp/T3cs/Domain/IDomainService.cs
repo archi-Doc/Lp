@@ -12,5 +12,5 @@ public readonly partial record struct DomainOverview(
 [NetServiceInterface]
 public interface IDomainService : INetService
 {
-    Task<NetResultAndValue<DomainOverview>> GetOverview(long domainIdentifier);
+    Task<NetResultAndValue<DomainOverview>> GetOverview(ulong domainHash);
 }

@@ -69,6 +69,17 @@ public partial record class DomainControl
         return null;
     }
 
+    internal DomainServiceClass AddDomainServiceClass(Credit domainCredit, SeedKey? domainSeedKey)
+    {
+        var domainHash = domainCredit.GetXxHash3();
+        var serviceClass = this.domainServiceDictionary.AddOrUpdate(
+            domainHash,
+            hash => { return new(default); },
+            (hash, original) => original);
+
+        return serviceClass;
+    }
+
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {
         using (var connection = await this.netUnit.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))

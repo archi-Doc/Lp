@@ -56,6 +56,7 @@ public class LpUnit
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<DomainControl>();
+                context.AddSingleton<DomainServiceAgent>();
 
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();

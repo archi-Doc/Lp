@@ -15,9 +15,15 @@ internal class DomainServiceAgent : IDomainService
         this.domainControl = domainControl;
     }
 
-    Task<NetResultAndValue<DomainOverview>> IDomainService.GetOverview(long domainIdentifier)
+    Task<NetResultAndValue<DomainOverview>> IDomainService.GetOverview(ulong domainHash)
     {
-        throw new NotImplementedException();
+        var domainService = this.domainControl.GetDomainServiceClass(domainHash);
+        if (domainService is null)
+        {
+            return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
+        }
+
+        return Task.FromResult<NetResultAndValue<DomainOverview>>(new(domainService.GetOverview()));
     }
 }
 
