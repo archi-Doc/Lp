@@ -14,7 +14,7 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
-    private readonly ConcurrentDictionary<ulong, DomainData> domainServiceDictionary = new();
+    private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
 
     // public DomainServer DomainServer { get; }
 
@@ -61,7 +61,7 @@ public partial record class DomainControl
 
     internal DomainData? GetDomainService(ulong domainHash)
     {
-        if (this.domainServiceDictionary.TryGetValue(domainHash, out var domainServiceClass))
+        if (this.domainDataDictionary.TryGetValue(domainHash, out var domainServiceClass))
         {
             return domainServiceClass;
         }
@@ -72,7 +72,7 @@ public partial record class DomainControl
     internal DomainData AddDomainService(Credit domainCredit, DomainData.Role kind, SeedKey? domainSeedKey)
     {
         var domainHash = domainCredit.GetXxHash3();
-        var serviceClass = this.domainServiceDictionary.AddOrUpdate(
+        var serviceClass = this.domainDataDictionary.AddOrUpdate(
             domainHash,
             hash =>
             {//
@@ -89,9 +89,18 @@ public partial record class DomainControl
         return serviceClass;
     }
 
-    internal bool TryRemoveDomainService(ulong domainHash)
+    internal bool TryRemoveDomainService(ulong domainHash, DomainData.Role role)
     {
-        return this.domainServiceDictionary.TryRemove(domainHash, out _);
+        if (role != DomainData.Role.Root &&
+            this.domainDataDictionary.TryGetValue(domainHash, out var domainData))
+        {
+            if (domainData.DomainRole == role)
+            {
+                return this.domainDataDictionary.TryRemove(new(domainHash, domainData));
+            }
+        }
+
+        return false;
     }
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)

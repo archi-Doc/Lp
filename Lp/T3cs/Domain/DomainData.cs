@@ -39,6 +39,8 @@ internal partial class DomainData
     private Role domainRole;
     private SeedKey? domainSeedKey;
 
+    public Role DomainRole => this.domainRole;
+
     public DomainData(Credit domainCredit)
     {
         this.domainCredit = domainCredit;
