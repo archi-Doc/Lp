@@ -18,7 +18,7 @@ public partial record class DomainControl
 
     // public DomainServer DomainServer { get; }
 
-    public CreditDomain PrimaryDomain { get; }
+    // public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
@@ -31,7 +31,7 @@ public partial record class DomainControl
         {
             if (DomainIdentifier.TryParse(lpBase.Options.Domain, out var domainOption, out _))
             {
-                this.PrimaryDomain = new(domainOption);
+                // this.PrimaryDomain = new(domainOption);
             }
             else
             {
@@ -39,7 +39,7 @@ public partial record class DomainControl
             }
         }
 
-        this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
+        // this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
         this.netUnit = netUnit;
         this.authorityControl = authorityControl;
         // this.DomainServer = domainServer;

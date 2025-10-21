@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial record class CreditDomain
 {
     #region FieldAndProperty
@@ -26,4 +26,4 @@ public partial record class CreditDomain
 
     public bool TryGetNetNode(SignaturePublicKey publicKey, [MaybeNullWhen(false)] out NetNode netNode)
         => this.Nodes.TryGetValue(publicKey, out netNode);
-}
+}*/
