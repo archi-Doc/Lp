@@ -400,13 +400,9 @@ public class LpUnit
 
                 await lpUnit.MainAsync();
 
-                Console.WriteLine("1");
                 this.Context.SendStop(new());
-                Console.WriteLine("2");
                 await lpUnit.TerminateAsync(this.Context);
-                Console.WriteLine("3");
                 await lpUnit.SaveAsync(this.Context);
-                Console.WriteLine("7");
                 lpUnit.Terminate(false);
             }
             catch
@@ -654,14 +650,11 @@ public class LpUnit
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        Console.WriteLine("4");
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        Console.WriteLine("5");
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));
 
-        Console.WriteLine("6");
         await this.CrystalControl.StoreAndRip();
     }
 
