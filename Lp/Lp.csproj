@@ -41,9 +41,9 @@
     <PackageReference Include="Arc.Crypto" Version="1.41.4" />
     <PackageReference Include="Arc.Threading" Version="0.35.0" />
     <PackageReference Include="BigMachines" Version="0.49.1" />
-    <PackageReference Include="CrystalData" Version="0.36.2" />
-    <PackageReference Include="Netsphere" Version="0.40.7" />
-    <PackageReference Include="Netsphere.Shared" Version="0.40.7" />
+    <PackageReference Include="CrystalData" Version="0.36.3" />
+    <PackageReference Include="Netsphere" Version="0.40.8" />
+    <PackageReference Include="Netsphere.Shared" Version="0.40.8" />
     <PackageReference Include="SimpleCommandLine" Version="0.28.3" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
