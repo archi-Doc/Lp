@@ -56,6 +56,7 @@ public class LpUnit
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<DomainControl>();
+                context.AddSingleton<DomainServiceAgent>();
 
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
@@ -71,7 +72,7 @@ public class LpUnit
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
-                context.AddSingleton<DomainServer>();
+                // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -244,11 +245,11 @@ public class LpUnit
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
-                    context.AddCrystal<DomainServer>(new CrystalConfiguration() with
+                    /*context.AddCrystal<DomainServer>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainServer.Filename),
-                    });
+                    });*/
                 });
         }
 

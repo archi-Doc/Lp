@@ -5,6 +5,28 @@ using Netsphere.Crypto;
 
 namespace Lp.Net;
 
+[NetServiceObject]
+internal class DomainServiceAgent : IDomainService
+{
+    private readonly DomainControl domainControl;
+
+    public DomainServiceAgent(DomainControl domainControl)
+    {
+        this.domainControl = domainControl;
+    }
+
+    Task<NetResultAndValue<DomainOverview>> IDomainService.GetOverview(ulong domainHash)
+    {
+        var domainService = this.domainControl.GetDomainService(domainHash);
+        if (domainService is null)
+        {
+            return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
+        }
+
+        return Task.FromResult<NetResultAndValue<DomainOverview>>(new(domainService.GetOverview()));
+    }
+}
+
 /*[NetServiceObject]
 internal class DomainServiceAgent : IDomainService
 {

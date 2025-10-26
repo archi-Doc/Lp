@@ -12,11 +12,11 @@ public partial class TemplateProof : ProofWithPublicKey
     {
     }
 
-    // public override long MaxValidMics => Mics.MicsPerDay * 1;
+    /* public override int MaxValiditySeconds => Seconds.FromDays(1);
 
-    /*public override bool Validate()
+    public override bool Validate(ValidationOptions validationOptions)
     {
-        if (!base.Validate())
+        if (!base.Validate(validationOptions))
         {
             return false;
         }

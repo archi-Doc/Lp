@@ -6,13 +6,13 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial record class CreditDomain
 {
     #region FieldAndProperty
 
     [Key(0)]
-    public DomainIdentifier DomainOption { get; init; }
+    public DomainIdentifier DomainIdentifier { get; init; }
 
     [Key(1)]
     public Dictionary<SignaturePublicKey, NetNode> Nodes { get; private set; } = new();
@@ -21,9 +21,9 @@ public partial record class CreditDomain
 
     public CreditDomain(DomainIdentifier domainOption)
     {
-        this.DomainOption = domainOption;
+        this.DomainIdentifier = domainOption;
     }
 
     public bool TryGetNetNode(SignaturePublicKey publicKey, [MaybeNullWhen(false)] out NetNode netNode)
         => this.Nodes.TryGetValue(publicKey, out netNode);
-}
+}*/

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using Lp.Net;
 using Lp.Services;
 using Netsphere.Crypto;
@@ -13,14 +14,15 @@ public partial record class DomainControl
     private readonly ILogger logger;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
+    private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
 
-    public DomainServer DomainServer { get; }
+    // public DomainServer DomainServer { get; }
 
-    public CreditDomain PrimaryDomain { get; }
+    // public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainServer domainServer)
+    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
     {
         this.logger = logger;
 
@@ -29,7 +31,7 @@ public partial record class DomainControl
         {
             if (DomainIdentifier.TryParse(lpBase.Options.Domain, out var domainOption, out _))
             {
-                this.PrimaryDomain = new(domainOption);
+                // this.PrimaryDomain = new(domainOption);
             }
             else
             {
@@ -37,10 +39,10 @@ public partial record class DomainControl
             }
         }
 
-        this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
+        // this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
         this.netUnit = netUnit;
         this.authorityControl = authorityControl;
-        this.DomainServer = domainServer;
+        // this.DomainServer = domainServer;
     }
 
     public async Task Prepare()
@@ -51,16 +53,57 @@ public partial record class DomainControl
             return;
         }
 
-        this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
-        /*if ()
-        {
-            this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
+        // this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
+        this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
 
-            this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
-        }*/
+        // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
-    public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
+    internal DomainData? GetDomainService(ulong domainHash)
+    {
+        if (this.domainDataDictionary.TryGetValue(domainHash, out var domainServiceClass))
+        {
+            return domainServiceClass;
+        }
+
+        return null;
+    }
+
+    internal DomainData AddDomainService(Credit domainCredit, DomainData.Role kind, SeedKey? domainSeedKey)
+    {
+        var domainHash = domainCredit.GetXxHash3();
+        var serviceClass = this.domainDataDictionary.AddOrUpdate(
+            domainHash,
+            hash =>
+            {//
+                var serviceClass = new DomainData(domainCredit);
+                serviceClass.Update(kind, domainSeedKey);
+                return serviceClass;
+            },
+            (hash, original) =>
+            {
+                original.Update(kind, domainSeedKey);
+                return original;
+            });
+
+        return serviceClass;
+    }
+
+    internal bool TryRemoveDomainService(ulong domainHash, DomainData.Role role)
+    {
+        if (role != DomainData.Role.Root &&
+            this.domainDataDictionary.TryGetValue(domainHash, out var domainData))
+        {
+            if (domainData.DomainRole == role)
+            {
+                return this.domainDataDictionary.TryRemove(new(domainHash, domainData));
+            }
+        }
+
+        return false;
+    }
+
+    /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {
         using (var connection = await this.netUnit.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
         {
@@ -73,5 +116,5 @@ public partial record class DomainControl
             var result = await service.RegisterNode(nodeProof);
             return result;
         }
-    }
+    }*/
 }
