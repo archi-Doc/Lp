@@ -71,8 +71,8 @@ public partial record LpOptions
     [SimpleOption("MasterKey", Description = "Master key for merger and linker", ReadFromEnvironment = true)]
     public string MasterKey { get; set; } = string.Empty;
 
-    [SimpleOption("CreditPeer", Description = "Private key or vault name for Relay peer", ReadFromEnvironment = true)]
-    public string CreditPeer { get; set; } = string.Empty; //authority@Credit
+    [SimpleOption("CreditPeer", Description = "Specify the Credit peer in the CodeAndCredit format (Code@Credit)", ReadFromEnvironment = true)]
+    public string CreditPeer { get; set; } = string.Empty;
 
     [SimpleOption("RelayPeerPrivault", Description = "Private key or vault name for Relay peer", ReadFromEnvironment = true)]
     public string RelayPeerPrivault { get; set; } = "RelayPeer";

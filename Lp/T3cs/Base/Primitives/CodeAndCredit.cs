@@ -7,11 +7,13 @@ using static Lp.Hashed;
 namespace Lp.T3cs;
 
 /// <summary>
-/// Represents
+/// Represents Code (Vault/Authority/Private key) and Credit.
 /// </summary>
 [TinyhandObject]
-public sealed partial class CodeAndCredit : IValidatable, IEquatable<CodeAndCredit>, IStringConvertible<Credit>
+public sealed partial class CodeAndCredit : IValidatable, IEquatable<CodeAndCredit>, IStringConvertible<CodeAndCredit>
 {
+    public static readonly int MaxCodeLength = SeedKeyHelper.MaxPrivateKeyLengthInBase64;
+
     #region FieldAndProperty
 
     [Key(0)]
@@ -24,157 +26,59 @@ public sealed partial class CodeAndCredit : IValidatable, IEquatable<CodeAndCred
 
     #region IStringConvertible
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out Credit instance, out int read, IConversionOptions? conversionOptions = default)
-    {// @Originator/Merger1+Merger2
-        instance = default;
-        read = 0;
-        var span = source.Trim();
-
-        if (span.Length < 1 || span[0] != LpConstants.CreditSymbol)
-        {// @
-            return false;
-        }
-
-        var initialLength = span.Length;
-        span = span.Slice(1);
-        if (!Identifier.TryParse(span, out var identifier, out var originatorRead, conversionOptions))
-        {// Identifier
-            return false;
-        }
-
-        span = span.Slice(originatorRead);
-
-        if (span.Length == 0 || span[0] != LpConstants.MergerSymbol)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CodeAndCredit instance, out int read, IConversionOptions? conversionOptions = default)
+    {// Code@Credit
+        var idx = source.IndexOf(LpConstants.CreditSymbol);
+        if (idx < 0)
         {
+            instance = default;
+            read = 0;
             return false;
         }
 
-        span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var merger1, out read, conversionOptions))
+        var codeSpan = source.Slice(0, idx);
+        source = source.Slice(idx);
+        if (Credit.TryParse(source, out var credit, out var r, conversionOptions))
         {
-            return false;
-        }
-
-        // MaxMergersCode
-        span = span.Slice(read);
-        if (span.Length == 0)
-        {// Single merger
-            instance = new Credit(identifier, [merger1,]);
-            read = initialLength - span.Length;
+            instance = new CodeAndCredit(codeSpan.ToString(), credit);
+            read = idx + r;
             return true;
         }
-
-        if (span[0] != LpConstants.MergerSeparatorSymbol)
+        else
         {
+            instance = default;
+            read = 0;
             return false;
         }
-
-        span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var merger2, out read, conversionOptions))
-        {
-            return false;
-        }
-
-        span = span.Slice(read);
-        if (span.Length == 0)
-        {// Two merger2
-            instance = new Credit(identifier, [merger1, merger2,]);
-            read = initialLength - span.Length;
-            return true;
-        }
-
-        if (span[0] != LpConstants.MergerSeparatorSymbol)
-        {
-            return false;
-        }
-
-        span = span.Slice(1);
-        if (!SignaturePublicKey.TryParse(span, out var merger3, out read, conversionOptions))
-        {
-            return false;
-        }
-
-        span = span.Slice(read);
-        if (span.Length == 0)
-        {// Three Mergers
-            instance = new Credit(identifier, [merger1, merger2, merger3,]);
-            read = initialLength - span.Length;
-            return true;
-        }
-
-        return false;
     }
 
-    public static int MaxStringLength => (1 + SignaturePublicKey.MaxStringLength) * (2 + LpConstants.MaxMergers); // @Originator/Merger1+Merger2
+    public static int MaxStringLength => MaxCodeLength + Credit.MaxStringLength;
 
     public int GetStringLength()
     {
-        var length = 1 + this.Identifier.GetStringLength(); // + 1 + this.Standard.GetStringLength(); // @Originator:Standard/Merger1+Merger2
-        foreach (var x in this.Mergers)
-        {
-            length += 1 + x.GetStringLength();
-        }
-
-        return length;
+        return this.Code.Length + this.Credit.GetStringLength();
     }
 
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
     {
+        var span = destination;
         written = 0;
         var length = this.GetStringLength();
-        if (destination.Length < length)
+        if (span.Length < length)
         {
             return false;
         }
 
-        var span = destination;
-        span[0] = LpConstants.CreditSymbol;
-        span = span.Slice(1);
-        written += 1;
+        this.Code.AsSpan().CopyTo(span);
+        span = span.Slice(this.Code.Length);
 
-        if (!this.Identifier.TryFormat(span, out var w, conversionOptions))
+        if (!this.Credit.TryFormat(span, out var w, conversionOptions))
         {
+            written = 0;
             return false;
         }
 
-        span = span.Slice(w);
-        written += w;
-
-        /*span[0] = StandardSymbol;
-        span = span.Slice(1);
-        if (!this.Standard.TryFormat(span, out w))
-        {
-            return false;
-        }
-
-        span = span.Slice(w);*/
-
-        var isFirst = true;
-        foreach (var x in this.Mergers)
-        {
-            if (isFirst)
-            {
-                isFirst = false;
-                span[0] = LpConstants.MergerSymbol;
-                span = span.Slice(1);
-                written += 1;
-            }
-            else
-            {
-                span[0] = LpConstants.MergerSeparatorSymbol;
-                span = span.Slice(1);
-                written += 1;
-            }
-
-            if (!x.TryFormat(span, out w, conversionOptions))
-            {
-                return false;
-            }
-
-            span = span.Slice(w);
-            written += w;
-        }
-
+        written = this.Code.Length + w;
         return true;
     }
 
@@ -188,7 +92,8 @@ public sealed partial class CodeAndCredit : IValidatable, IEquatable<CodeAndCred
 
     public bool Validate()
     {
-        return this.Credit.Validate();
+        return this.Code.Length <= MaxCodeLength &&
+            this.Credit.Validate();
     }
 
     public bool Equals(CodeAndCredit? other)

@@ -9,7 +9,6 @@ namespace Lp.Net;
 [TinyhandObject]
 internal partial class DomainData
 {
-
     [Key(0)]
     private Credit domainCredit;
 
