@@ -519,6 +519,18 @@ public class LpUnit
                 }
             }
         }
+
+        if (!string.IsNullOrEmpty(this.LpBase.Options.CreditPeer))
+        {// Credit peer
+            if (!CodeAndCredit.TryParse(this.LpBase.Options.CreditPeer, out var codeAndCredit, out _))
+            {
+                await this.UserInterfaceService.Notify(LogLevel.Fatal, Hashed.Peer.ParseFailure, this.LpBase.Options.CreditPeer);
+            }
+            else
+            {
+                var seedKey = await this.lpService.LoadSeedKey(this.logger, codeAndCredit.Code);
+            }
+        }
     }
 
     public async Task PrepareRelay(UnitContext context)
