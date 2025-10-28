@@ -22,7 +22,7 @@ public class SetCreditPeerSubcommand : ISimpleCommandAsync
     {
         if (args.Length > 0 && args[0] is string codeAndCredit)
         {
-            this.bigMachine.PeerMachine.GetOrCreate(codeAndCredit);
+            this.bigMachine.PeerMachine.CreateAlways(codeAndCredit);
         }
     }
 }
