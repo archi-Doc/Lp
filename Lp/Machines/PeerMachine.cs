@@ -12,7 +12,7 @@ public partial class DomainMachine : Machine
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly NetUnit netUnit;
-    private PeerIdentifier? peerIdentifier;
+    private DomainIdentifier? domainIdentifier;
     private SeedKey? seedKey;
 
     public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit)
@@ -29,19 +29,19 @@ public partial class DomainMachine : Machine
     {
         if (createParam is string codeAndCredit)
         {
-            PeerIdentifier? peerIdentifier = default;
+            DomainIdentifier? domainIdentifier = default;
             try
             {
-                peerIdentifier = TinyhandSerializer.DeserializeFromString<PeerIdentifier>(codeAndCredit);
+                domainIdentifier = TinyhandSerializer.DeserializeFromString<DomainIdentifier>(codeAndCredit);
             }
             catch
             {
             }
 
-            if (peerIdentifier is not null &&
-                peerIdentifier.Validate())
+            if (domainIdentifier is not null &&
+                domainIdentifier.Validate())
             {
-                this.peerIdentifier = peerIdentifier;
+                this.domainIdentifier = domainIdentifier;
             }
             else
             {
@@ -53,19 +53,19 @@ public partial class DomainMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        if (this.peerIdentifier is null)
+        if (this.domainIdentifier is null)
         {
             return StateResult.Terminate;
         }
 
-        this.seedKey = await this.lpService.LoadSeedKey(this.logger, this.peerIdentifier.Code);
+        this.seedKey = await this.lpService.LoadSeedKey(this.logger, this.domainIdentifier.Code);
         if (this.seedKey is null)
         {
             // this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Peer.CodeFailure, this.codeAndCredit);
             return StateResult.Terminate;
         }
 
-        this.logger.TryGet(LogLevel.Information)?.Log(this.peerIdentifier.ToString());
+        this.logger.TryGet(LogLevel.Information)?.Log(this.domainIdentifier.ToString());
 
         this.ChangeState(State.Check);
         return StateResult.Continue;

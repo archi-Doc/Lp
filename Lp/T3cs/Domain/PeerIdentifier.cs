@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject]
-public partial record class PeerIdentifier
+public partial record class DomainIdentifier
 {
     #region FieldAndProperty
 
@@ -26,7 +26,7 @@ public partial record class PeerIdentifier
 
     #endregion
 
-    public PeerIdentifier(string code, Credit credit, NetNode netNode, string url)
+    public DomainIdentifier(string code, Credit credit, NetNode netNode, string url)
     {
         this.Code = code;
         this.Credit = credit;
