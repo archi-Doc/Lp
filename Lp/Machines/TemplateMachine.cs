@@ -6,6 +6,12 @@ namespace Lp.Machines;
 // [TinyhandObject(UseServiceProvider = true)]
 public partial class TemplateMachine : Machine
 {// Control: context.AddSingleton<Machines.RelayPeerMachine>();
+    #region FieldAndProperty
+
+    private readonly IUserInterfaceService userInterfaceService;
+
+    #endregion
+
     public TemplateMachine(IUserInterfaceService consoleSeuserInterfaceServicevice)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
@@ -21,6 +27,4 @@ public partial class TemplateMachine : Machine
 
         return StateResult.Continue;
     }
-
-    private readonly IUserInterfaceService userInterfaceService;
 }
