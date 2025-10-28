@@ -20,9 +20,7 @@ public class SetCreditPeerSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        if (args.Length > 0 && args[0] is string codeAndCredit)
-        {
-            this.bigMachine.PeerMachine.CreateAlways(codeAndCredit);
-        }
+        var codeAndCredit = string.Join(' ', args);
+        this.bigMachine.PeerMachine.CreateAlways(codeAndCredit);
     }
 }

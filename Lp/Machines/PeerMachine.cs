@@ -6,16 +6,16 @@ using Netsphere.Crypto;
 namespace Lp.Machines;
 
 [MachineObject(UseServiceProvider = true)]
-public partial class PeerMachine : Machine
+public partial class DomainMachine : Machine
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly NetUnit netUnit;
-    private string codeAndCredit = string.Empty;
+    private PeerIdentifier? peerIdentifier;
     private SeedKey? seedKey;
 
-    public PeerMachine(ILogger<PeerMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit)
+    public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -29,35 +29,43 @@ public partial class PeerMachine : Machine
     {
         if (createParam is string codeAndCredit)
         {
+            PeerIdentifier? peerIdentifier = default;
             try
             {
-                var peerIdentifier = TinyhandSerializer.DeserializeFromString<PeerIdentifier>(codeAndCredit);
+                peerIdentifier = TinyhandSerializer.DeserializeFromString<PeerIdentifier>(codeAndCredit);
             }
             catch
             {
             }
 
-            this.codeAndCredit = codeAndCredit;
+            if (peerIdentifier is not null &&
+                peerIdentifier.Validate())
+            {
+                this.peerIdentifier = peerIdentifier;
+            }
+            else
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Peer.ParseFailure, codeAndCredit);
+            }
         }
     }
 
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        if (!CodeAndCredit.TryParse(this.codeAndCredit, out var codeAndCredit, out _))
+        if (this.peerIdentifier is null)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Peer.ParseFailure, this.codeAndCredit);
             return StateResult.Terminate;
         }
 
-        this.seedKey = await this.lpService.LoadSeedKey(this.logger, codeAndCredit.Code);
+        this.seedKey = await this.lpService.LoadSeedKey(this.logger, this.peerIdentifier.Code);
         if (this.seedKey is null)
         {
             // this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Peer.CodeFailure, this.codeAndCredit);
             return StateResult.Terminate;
         }
 
-        this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Peer.Confirmation, this.codeAndCredit);
+        this.logger.TryGet(LogLevel.Information)?.Log(this.peerIdentifier.ToString());
 
         this.ChangeState(State.Check);
         return StateResult.Continue;

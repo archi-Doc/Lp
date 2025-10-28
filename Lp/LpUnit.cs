@@ -84,7 +84,7 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
-                context.AddTransient<Machines.PeerMachine>();
+                context.AddTransient<Machines.DomainMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
                 context.AddSingleton<Services.LpDogmaMachine>();
@@ -440,7 +440,7 @@ public class LpUnit
 
         if (this.LpBase.Options.TestFeatures)
         {
-            // NetAddress.SkipValidation = true;
+            NetAddress.SkipValidation = true;
             this.NetUnit.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
         }
 

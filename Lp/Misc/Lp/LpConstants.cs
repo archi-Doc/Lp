@@ -20,6 +20,7 @@ public static class LpConstants
     public const int MaxMergers = 3; // MaxMergersCode
     public const char SeparatorSymbol = ' ';
     public const int MaxUrlLength = 500;
+    public const int MaxCodeLength = 106; // SeedKeyHelper.MaxPrivateKeyLengthInBase64
 
     public const int DefaultProofMaxValiditySeconds = 3600 * 24 * 30;
 
