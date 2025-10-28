@@ -1,14 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using Arc.Threading;
-using Lp.Data;
 using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
-using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;

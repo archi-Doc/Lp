@@ -117,6 +117,8 @@ public class LpUnit
 
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
 
+                context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
+
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 

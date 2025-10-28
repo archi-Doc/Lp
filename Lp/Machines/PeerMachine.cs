@@ -51,10 +51,11 @@ public partial class PeerMachine : Machine
 
         this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Peer.Confirmation, this.codeAndCredit);
 
+        this.ChangeState(State.Check);
         return StateResult.Continue;
     }
 
-    [StateMethod(0)]
+    [StateMethod]
     protected async Task<StateResult> Check(StateParameter parameter)
     {
         return StateResult.Continue;
