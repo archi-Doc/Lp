@@ -26,6 +26,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         try
         {
+            var nn = Alternative.NetNode;
+            var st = TinyhandSerializer.SerializeToString(nn);
             var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotesAndBracket());
         }
         catch

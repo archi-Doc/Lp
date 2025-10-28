@@ -29,6 +29,14 @@ public partial class PeerMachine : Machine
     {
         if (createParam is string codeAndCredit)
         {
+            try
+            {
+                var peerIdentifier = TinyhandSerializer.DeserializeFromString<PeerIdentifier>(codeAndCredit);
+            }
+            catch
+            {
+            }
+
             this.codeAndCredit = codeAndCredit;
         }
     }
