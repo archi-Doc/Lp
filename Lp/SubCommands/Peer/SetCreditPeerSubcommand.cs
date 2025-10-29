@@ -20,7 +20,7 @@ public class SetCreditPeerSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var codeAndCredit = string.Join(' ', args);
+        var codeAndCredit = args.JoinWithSpace();
         this.bigMachine.DomainMachine.CreateAlways(codeAndCredit);
     }
 }

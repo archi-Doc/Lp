@@ -44,7 +44,7 @@
     <PackageReference Include="CrystalData" Version="0.36.4" />
     <PackageReference Include="Netsphere" Version="0.40.8" />
     <PackageReference Include="Netsphere.Shared" Version="0.40.8" />
-    <PackageReference Include="SimpleCommandLine" Version="0.28.3" />
+    <PackageReference Include="SimpleCommandLine" Version="0.29.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
