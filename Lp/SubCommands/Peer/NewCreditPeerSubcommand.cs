@@ -4,14 +4,14 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("set-credit-peer")]
-public class SetCreditPeerSubcommand : ISimpleCommandAsync
+[SimpleCommand("new-credit-peer")]
+public class NewCreditPeerSubcommand : ISimpleCommandAsync
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly BigMachine bigMachine;
 
-    public SetCreditPeerSubcommand(ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService, BigMachine bigMachine)
+    public NewCreditPeerSubcommand(ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService, BigMachine bigMachine)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;

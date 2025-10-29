@@ -76,4 +76,12 @@ public partial class DomainMachine : Machine
     {
         return StateResult.Continue;
     }
+
+    [CommandMethod(WithLock = false)]
+    protected CommandResult Show()
+    {
+        this.logger.TryGet(LogLevel.Information)?.Log(this.domainIdentifier.ToString());
+
+        return CommandResult.Success;
+    }
 }
