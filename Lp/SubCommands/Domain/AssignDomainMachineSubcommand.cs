@@ -4,14 +4,14 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("show-credit-peer")]
-public class ShowCreditPeerSubcommand : ISimpleCommandAsync
-{// DomainMachine: CreditPeer, RelayPeer, ContentPeer, 
+[SimpleCommand("assign-domain-machine")]
+public class AssignDomainMachineSubcommand : ISimpleCommandAsync
+{// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly BigMachine bigMachine;
 
-    public ShowCreditPeerSubcommand(ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService, BigMachine bigMachine)
+    public AssignDomainMachineSubcommand(ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService, BigMachine bigMachine)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -20,9 +20,7 @@ public class ShowCreditPeerSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        if (this.bigMachine.DomainMachine.Get() is { } interfaceInstance)
-        {
-            await interfaceInstance.Command.Show();
-        }
+        var codeAndCredit = args.JoinWithSpace();
+        this.bigMachine.DomainMachine.CreateAlways(codeAndCredit);
     }
 }

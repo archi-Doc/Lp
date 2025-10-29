@@ -3,7 +3,7 @@
 using Lp.T3cs;
 using Netsphere.Crypto;
 
-namespace Lp.Machines;
+namespace Lp.T3cs.Domain;
 
 [MachineObject(UseServiceProvider = true)]
 public partial class DomainMachine : Machine
