@@ -2,7 +2,7 @@
 
 namespace Lp.T3cs.Domain;
 
-public enum DomainMachineKind
+public enum DomainMachineKind : byte
 {
     Invalid,
     CreditMerger,

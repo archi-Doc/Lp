@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.T3cs.Domain;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
@@ -21,6 +22,6 @@ public class AssignDomainMachineSubcommand : ISimpleCommandAsync
     public async Task RunAsync(string[] args)
     {
         var codeAndCredit = args.JoinWithSpace();
-        this.bigMachine.DomainMachine.CreateAlways(codeAndCredit);
+        this.bigMachine.DomainMachine.TryCreate((byte)DomainMachineKind.CreditPeer, codeAndCredit);
     }
 }

@@ -5,8 +5,8 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs.Domain;
 
-[MachineObject(UseServiceProvider = true)]
-public partial class DomainMachine : Machine
+[MachineObject(UseServiceProvider = true, Control = MachineControlKind.Unordered)]
+public partial class DomainMachine : Machine<byte>
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
@@ -80,7 +80,10 @@ public partial class DomainMachine : Machine
     [CommandMethod(WithLock = false)]
     protected CommandResult Show()
     {
-        this.logger.TryGet(LogLevel.Information)?.Log(this.domainIdentifier.ToString());
+        if (this.domainIdentifier is { } domainIdentifier)
+        {
+            this.logger.TryGet(LogLevel.Information)?.Log(domainIdentifier.ToString());
+        }
 
         return CommandResult.Success;
     }

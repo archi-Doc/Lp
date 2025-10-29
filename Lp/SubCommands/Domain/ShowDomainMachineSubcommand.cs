@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.T3cs.Domain;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
@@ -20,7 +21,8 @@ public class ShowDomainMachineSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        if (this.bigMachine.DomainMachine.Get() is { } machineInterface)
+        var kind = DomainMachineKind.CreditPeer;
+        if (this.bigMachine.DomainMachine.TryGet((byte)kind) is { } machineInterface)
         {
             await machineInterface.Command.Show();
         }
