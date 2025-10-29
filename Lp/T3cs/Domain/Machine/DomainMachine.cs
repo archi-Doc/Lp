@@ -5,8 +5,8 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs.Domain;
 
-[MachineObject(UseServiceProvider = true, Control = MachineControlKind.Unordered)]
-public partial class DomainMachine : Machine<byte>
+[MachineObject(UseServiceProvider = true)]
+public partial class DomainMachine : Machine<DomainMachineKind>
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;

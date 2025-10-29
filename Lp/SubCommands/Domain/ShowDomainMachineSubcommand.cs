@@ -22,7 +22,7 @@ public class ShowDomainMachineSubcommand : ISimpleCommandAsync
     public async Task RunAsync(string[] args)
     {
         var kind = DomainMachineKind.CreditPeer;
-        if (this.bigMachine.DomainMachine.TryGet((byte)kind) is { } machineInterface)
+        if (this.bigMachine.DomainMachine.TryGet(kind, out var machineInterface))
         {
             await machineInterface.Command.Show();
         }

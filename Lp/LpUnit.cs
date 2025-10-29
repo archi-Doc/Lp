@@ -527,7 +527,7 @@ public class LpUnit
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.CreditPeer))
         {// Credit peer
-            this.BigMachine.DomainMachine.GetOrCreate((byte)DomainMachineKind.CreditPeer, this.LpBase.Options.CreditPeer);
+            this.BigMachine.DomainMachine.GetOrCreate(DomainMachineKind.CreditPeer, this.LpBase.Options.CreditPeer);
         }
     }
 

@@ -22,6 +22,6 @@ public class AssignDomainMachineSubcommand : ISimpleCommandAsync
     public async Task RunAsync(string[] args)
     {
         var codeAndCredit = args.JoinWithSpace();
-        this.bigMachine.DomainMachine.TryCreate((byte)DomainMachineKind.CreditPeer, codeAndCredit);
+        this.bigMachine.DomainMachine.GetOrCreate(DomainMachineKind.CreditPeer, codeAndCredit);
     }
 }
