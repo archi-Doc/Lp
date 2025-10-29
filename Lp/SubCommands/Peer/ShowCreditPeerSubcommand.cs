@@ -20,7 +20,9 @@ public class ShowCreditPeerSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var codeAndCredit = args.JoinWithSpace();
-        await this.bigMachine.DomainMachine.GetOrCreate().Command.Show();
+        if (this.bigMachine.DomainMachine.Get() is { } interfaceInstance)
+        {
+            await interfaceInstance.Command.Show();
+        }
     }
 }
