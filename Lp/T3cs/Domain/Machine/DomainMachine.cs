@@ -27,12 +27,12 @@ public partial class DomainMachine : Machine<DomainMachineKind>
 
     protected override void OnCreate(object? createParam)
     {
-        if (createParam is string codeAndCredit)
+        if (createParam is string domainIdentifierString)
         {
             DomainIdentifier? domainIdentifier = default;
             try
             {
-                domainIdentifier = TinyhandSerializer.DeserializeFromString<DomainIdentifier>(codeAndCredit);
+                domainIdentifier = TinyhandSerializer.DeserializeFromString<DomainIdentifier>(domainIdentifierString);
             }
             catch
             {
@@ -45,7 +45,7 @@ public partial class DomainMachine : Machine<DomainMachineKind>
             }
             else
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Peer.ParseFailure, codeAndCredit);
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Peer.ParseFailure, domainIdentifierString);
             }
         }
     }

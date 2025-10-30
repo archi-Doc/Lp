@@ -8,32 +8,32 @@ public static class DomainMachineHelper
 
     public static bool TryParseDomainMachineKind(ReadOnlySpan<char> source, out DomainMachineKind kind)
     {
-        if (source.Equals("CreditMerger", IgnoreCase) || source.Equals("cm", IgnoreCase))
+        if (source.Equals("CreditMerger", IgnoreCase))
         {
             kind = DomainMachineKind.CreditMerger;
             return true;
         }
-        else if (source.Equals("CreditPeer", IgnoreCase) || source.Equals("cp", IgnoreCase))
+        else if (source.Equals("CreditPeer", IgnoreCase))
         {
             kind = DomainMachineKind.CreditPeer;
             return true;
         }
-        else if (source.Equals("RelayMerger", IgnoreCase) || source.Equals("rm", IgnoreCase))
+        else if (source.Equals("RelayMerger", IgnoreCase))
         {
             kind = DomainMachineKind.RelayMerger;
             return true;
         }
-        else if (source.Equals("RelayPeer", IgnoreCase) || source.Equals("rp", IgnoreCase))
+        else if (source.Equals("RelayPeer", IgnoreCase))
         {
             kind = DomainMachineKind.RelayPeer;
             return true;
         }
-        else if (source.Equals("DataMerger", IgnoreCase) || source.Equals("dm", IgnoreCase))
+        else if (source.Equals("DataMerger", IgnoreCase))
         {
             kind = DomainMachineKind.DataMerger;
             return true;
         }
-        else if (source.Equals("DataPeer", IgnoreCase) || source.Equals("dp", IgnoreCase))
+        else if (source.Equals("DataPeer", IgnoreCase))
         {
             kind = DomainMachineKind.DataPeer;
             return true;
