@@ -67,7 +67,9 @@ public partial class DomainMachine : Machine<DomainMachineKind>
         }
 
         this.isMerger = this.seedKey.GetSignaturePublicKey().Equals(this.domainIdentifier.Credit.PrimaryMerger);
+        // Console.SetCursorPosition(0, Console.CursorTop - 1);
         this.Show();
+        // Console.WriteLine(LpConstants.InputString);
 
         this.ChangeState(State.Connect);
         return StateResult.Continue;

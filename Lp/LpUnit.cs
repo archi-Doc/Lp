@@ -778,7 +778,7 @@ public class LpUnit
                         }
                         else
                         {
-                            this.UserInterfaceService.Write("> ");
+                            this.UserInterfaceService.Write(LpConstants.InputString);
                             continue;
                         }
                     }
@@ -787,7 +787,7 @@ public class LpUnit
                         try
                         {
                             this.Subcommand(command);
-                            this.UserInterfaceService.Write("> ");
+                            this.UserInterfaceService.Write(LpConstants.InputString);
                             continue;
                         }
                         catch (Exception e)
@@ -813,7 +813,7 @@ public class LpUnit
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
                         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
-                        this.UserInterfaceService.Write("> ");
+                        this.UserInterfaceService.Write(LpConstants.InputString);
                     }
                     else
                     {

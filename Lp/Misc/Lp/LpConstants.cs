@@ -10,6 +10,7 @@ namespace Lp;
 
 public static class LpConstants
 {
+    public const string InputString = "> ";
     public const char PointSymbol = '#';
     public const int MaxPointLength = 19; // 1_000_000_000_000_000_000
     public const Point MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
