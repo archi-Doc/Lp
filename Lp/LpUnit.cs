@@ -50,8 +50,9 @@ public class LpUnit
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
-                context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
-                context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
+                context.AddSingleton<ConsoleUserInterfaceService>();
+                context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
+                context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.AddSingleton<VaultControl>();
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
