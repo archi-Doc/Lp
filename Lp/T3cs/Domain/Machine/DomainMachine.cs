@@ -16,7 +16,7 @@ public partial class DomainMachine : Machine<DomainMachineKind>
     private SeedKey? seedKey;
     private bool isMerger;
 
-    public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit)
+    public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit, IConsoleService con)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -67,9 +67,7 @@ public partial class DomainMachine : Machine<DomainMachineKind>
         }
 
         this.isMerger = this.seedKey.GetSignaturePublicKey().Equals(this.domainIdentifier.Credit.PrimaryMerger);
-        // Console.SetCursorPosition(0, Console.CursorTop - 1);
         this.Show();
-        // Console.WriteLine(LpConstants.InputString);
 
         this.ChangeState(State.Connect);
         return StateResult.Continue;

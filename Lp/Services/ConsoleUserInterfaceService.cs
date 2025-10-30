@@ -140,7 +140,17 @@ Loop:
                 message = Arc.BaseHelper.ConvertLfToCrLf(message);
             }
 
-            Console.WriteLine(message);
+            if (this.CurrentMode == Mode.Input &&
+                Console.CursorTop > 0)
+            {
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                Console.WriteLine(message);
+                Console.WriteLine(LpConstants.InputString);
+            }
+            else
+            {
+                Console.WriteLine(message);
+            }
         }
         catch
         {
