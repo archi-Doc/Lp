@@ -61,12 +61,12 @@ public class LpLogger
                         }
                     }
 
-                    if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))
+                    /*if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))
                     {// Machines
                         context.SetOutput<BackgroundAndFileLogger>();
                         context.SetFilter<MachineLogFilter>();
                         return;
-                    }
+                    }*/
 
                     /*if (context.LogSourceType == typeof(ClientTerminal))
                     {// ClientTerminal

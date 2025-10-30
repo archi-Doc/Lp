@@ -14,6 +14,7 @@ public partial class DomainMachine : Machine<DomainMachineKind>
     private readonly NetUnit netUnit;
     private DomainIdentifier? domainIdentifier;
     private SeedKey? seedKey;
+    private bool isMerger;
 
     public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit)
     {
@@ -65,15 +66,35 @@ public partial class DomainMachine : Machine<DomainMachineKind>
             return StateResult.Terminate;
         }
 
-        this.logger.TryGet(LogLevel.Information)?.Log(this.domainIdentifier.ToString());
+        this.isMerger = this.seedKey.GetSignaturePublicKey().Equals(this.domainIdentifier.Credit.PrimaryMerger);
+        this.Show();
 
-        this.ChangeState(State.Check);
+        this.ChangeState(State.Connect);
         return StateResult.Continue;
     }
 
     [StateMethod]
-    protected async Task<StateResult> Check(StateParameter parameter)
+    protected async Task<StateResult> Connect(StateParameter parameter)
     {
+        if (this.domainIdentifier is null)
+        {
+            return StateResult.Terminate;
+        }
+
+        var netNode = this.domainIdentifier.NetNode;
+        netNode = Alternative.NetNode;
+        using (var connection = await this.netUnit.NetTerminal.Connect(netNode))
+        {
+            if (connection is null)
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, this.domainIdentifier.NetNode.ToString());
+                return StateResult.Terminate;
+            }
+
+            this.logger.TryGet(LogLevel.Information)?.Log("Connected");
+            return StateResult.Terminate;
+        }
+
         return StateResult.Continue;
     }
 
@@ -82,9 +103,19 @@ public partial class DomainMachine : Machine<DomainMachineKind>
     {
         if (this.domainIdentifier is { } domainIdentifier)
         {
-            this.logger.TryGet(LogLevel.Information)?.Log(domainIdentifier.ToString());
+            this.logger.TryGet(LogLevel.Information)?.Log(this.GetInformation());
         }
 
         return CommandResult.Success;
+    }
+
+    private string GetInformation()
+    {
+        if (this.domainIdentifier is not { } domainIdentifier)
+        {
+            return string.Empty;
+        }
+
+        return $"{(this.isMerger ? "Merger" : "Peer")}: {domainIdentifier.ToString()}";
     }
 }
