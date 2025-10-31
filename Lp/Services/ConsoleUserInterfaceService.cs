@@ -5,6 +5,28 @@ using System.Text;
 
 namespace Lp.Services;
 
+internal class LineBuffer
+{
+    private const int BufferSize = 1024;
+    private readonly char[] buffer = new char[BufferSize];
+
+    public LineBuffer()
+    {
+    }
+
+    public string? ReadLine()
+    {
+        try
+        {
+            return Console.ReadLine();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}
+
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
     private readonly UnitCore core;
@@ -165,14 +187,17 @@ Loop:
 
     public override string? ReadLine()
     {
-        try
+        var inputBuffer = new LineBuffer();
+        return inputBuffer.ReadLine();
+
+        /*try
         {
             return Console.ReadLine();
         }
         catch
         {
             return null;
-        }
+        }*/
     }
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
