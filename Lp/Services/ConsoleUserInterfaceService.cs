@@ -8,17 +8,56 @@ namespace Lp.Services;
 internal class LineBuffer
 {
     private const int BufferSize = 1024;
+
+    private readonly Lock LockObject = new();
     private readonly char[] buffer = new char[BufferSize];
+    private int position;
 
     public LineBuffer()
     {
+    }
+
+    public void Flush()
+    {
+        string text;
+        using (this.LockObject.EnterScope())
+        {
+            if (this.position == 0)
+            {
+                return;
+            }
+
+            text = new string(this.buffer, 0, this.position);
+        }
+        Console.WriteLine(text);
     }
 
     public string? ReadLine()
     {
         try
         {
-            return Console.ReadLine();
+            ConsoleKeyInfo key;
+            while ((key = Console.ReadKey(intercept: true)).Key != ConsoleKey.Enter)
+            {
+                if (key.Key == ConsoleKey.Backspace)
+                {
+                    if (this.position > 0)
+                    {
+                        this.position--;
+                        Console.Write("\b \b");
+                    }
+                }
+                else
+                {
+                    this.buffer[this.position++] = key.KeyChar;
+                    Console.Write(key.KeyChar);
+                }
+            }
+
+            var result = new string(this.buffer, 0, this.position);
+            this.position = 0;
+            Console.WriteLine();
+            return result;
         }
         catch
         {
@@ -32,6 +71,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     private readonly UnitCore core;
     private readonly ILogger logger;
     private readonly ConsoleTextReader consoleTextReader;
+    private readonly LineBuffer lineBuffer = new();
 
     private class ConsoleTextReader : TextReader
     {
@@ -187,8 +227,7 @@ Loop:
 
     public override string? ReadLine()
     {
-        var inputBuffer = new LineBuffer();
-        return inputBuffer.ReadLine();
+        return this.lineBuffer.ReadLine();
 
         /*try
         {
