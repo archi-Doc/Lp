@@ -5,34 +5,49 @@ using System.Text;
 
 namespace Lp.Services;
 
-internal class LineBuffer
+public class ConsoleBuffer
 {
-    private const int BufferSize = 1024;
+    private const int BufferSize = 1_024;
 
-    private readonly Lock LockObject = new();
+    private readonly Lock lockObject = new();
     private readonly char[] buffer = new char[BufferSize];
-    private int position;
+    private int promptLength;
+    private int textLength;
 
-    public LineBuffer()
+    public ConsoleBuffer()
     {
     }
 
-    public void Flush()
+    public void Flush(string? prompt = default)
     {
-        string text;
-        using (this.LockObject.EnterScope())
+        string? text = default;
+        using (this.lockObject.EnterScope())
         {
-            if (this.position == 0)
+            if (this.textLength > 0)
             {
-                return;
+                text = new string(this.buffer, this.promptLength, this.textLength);
             }
 
-            text = new string(this.buffer, 0, this.position);
+            if (prompt?.Length > 0)
+            {
+                prompt.AsSpan(0, Math.Max(prompt.Length, BufferSize)).CopyTo(this.buffer);
+                this.promptLength = prompt.Length;
+                this.textLength = 0;
+            }
         }
-        Console.WriteLine(text);
+
+        /*if (text is not null)
+        {
+            Console.WriteLine(text);
+        }*/
+
+        if (prompt?.Length > 0)
+        {
+            Console.Write(prompt);
+        }
     }
 
-    public string? ReadLine()
+    public string? ReadLine(ReadOnlySpan<char> prompt = default)
     {
         try
         {
@@ -41,21 +56,21 @@ internal class LineBuffer
             {
                 if (key.Key == ConsoleKey.Backspace)
                 {
-                    if (this.position > 0)
+                    if (this.textLength > 0)
                     {
-                        this.position--;
+                        this.textLength--;
                         Console.Write("\b \b");
                     }
                 }
                 else
                 {
-                    this.buffer[this.position++] = key.KeyChar;
+                    this.buffer[this.textLength++] = key.KeyChar;
                     Console.Write(key.KeyChar);
                 }
             }
 
-            var result = new string(this.buffer, 0, this.position);
-            this.position = 0;
+            var result = new string(this.buffer, 0, this.textLength);
+            this.textLength = 0;
             Console.WriteLine();
             return result;
         }
@@ -71,7 +86,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     private readonly UnitCore core;
     private readonly ILogger logger;
     private readonly ConsoleTextReader consoleTextReader;
-    private readonly LineBuffer lineBuffer = new();
+    private readonly ConsoleBuffer consoleBuffer = new();
 
     private class ConsoleTextReader : TextReader
     {
@@ -227,7 +242,7 @@ Loop:
 
     public override string? ReadLine()
     {
-        return this.lineBuffer.ReadLine();
+        return this.consoleBuffer.ReadLine();
 
         /*try
         {
