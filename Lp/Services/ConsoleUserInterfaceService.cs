@@ -242,16 +242,16 @@ Loop:
 
     public override string? ReadLine()
     {
-        return this.consoleBuffer.ReadLine();
+        // return this.consoleBuffer.ReadLine();
 
-        /*try
+        try
         {
             return Console.ReadLine();
         }
         catch
         {
             return null;
-        }*/
+        }
     }
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
