@@ -221,7 +221,7 @@ Loop:
             //if (Console.CursorTop > 0 && Console.CursorLeft > 0)
             if (this.CurrentMode == Mode.Console && Console.CursorTop > 0 && Console.CursorLeft == 2)
             {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                Console.SetCursorPosition(0, Console.CursorTop);
                 Console.WriteLine(message);
                 Console.Write(LpConstants.InputString);
             }
