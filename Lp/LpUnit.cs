@@ -759,7 +759,7 @@ public class LpUnit
                 try
                 {
                     command = await Task.Run(() =>
-                    {
+                    {//
                         return this.UserInterfaceService.ReadLine()?.Trim();
                     }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
                 }
