@@ -59,7 +59,7 @@ public class NestedCommand<TCommand>
             {
                 command = await Task.Run(() =>
                 {
-                    return this.userInterfaceService.ReadLine()?.Trim();
+                    return this.userInterfaceService.ReadLine().Text?.Trim();
                 }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
             }
             catch

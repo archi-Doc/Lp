@@ -240,17 +240,17 @@ Loop:
         this.consoleTextReader.Enqueue(message);
     }
 
-    public override string? ReadLine()
+    public override InputResult ReadLine(string? prompt)
     {
         // return this.consoleBuffer.ReadLine();
 
         try
-        {
-            return Console.ReadLine();
+        {//
+            return new(Console.ReadLine());
         }
         catch
         {
-            return null;
+            return default;
         }
     }
 
