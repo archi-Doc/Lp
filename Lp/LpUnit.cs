@@ -18,6 +18,7 @@ using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
 using Lp.T3cs;
+using Lp.T3cs.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
@@ -49,8 +50,9 @@ public class LpUnit
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
-                context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
-                context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
+                context.AddSingleton<ConsoleUserInterfaceService>();
+                context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
+                context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.AddSingleton<VaultControl>();
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
@@ -84,6 +86,7 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
+                context.AddTransient<T3cs.Domain.DomainMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
                 context.AddSingleton<Services.LpDogmaMachine>();
@@ -115,6 +118,9 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowCredentialsCommand));
 
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
+
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.AssignDomainMachineSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.ShowDomainMachineSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
@@ -437,7 +443,7 @@ public class LpUnit
 
         if (this.LpBase.Options.TestFeatures)
         {
-            // NetAddress.SkipValidation = true;
+            NetAddress.SkipValidation = true;
             this.NetUnit.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
         }
 
@@ -518,6 +524,11 @@ public class LpUnit
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
             }
+        }
+
+        if (!string.IsNullOrEmpty(this.LpBase.Options.CreditPeer))
+        {// Credit peer
+            this.BigMachine.DomainMachine.GetOrCreate(DomainMachineKind.CreditPeer, this.LpBase.Options.CreditPeer);
         }
     }
 
@@ -748,8 +759,8 @@ public class LpUnit
                 try
                 {
                     command = await Task.Run(() =>
-                    {
-                        return this.UserInterfaceService.ReadLine()?.Trim();
+                    {//
+                        return this.UserInterfaceService.ReadLine().Text?.Trim();
                     }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
                 }
                 catch
@@ -768,7 +779,7 @@ public class LpUnit
                         }
                         else
                         {
-                            this.UserInterfaceService.Write("> ");
+                            this.UserInterfaceService.Write(LpConstants.InputString);
                             continue;
                         }
                     }
@@ -777,7 +788,7 @@ public class LpUnit
                         try
                         {
                             this.Subcommand(command);
-                            this.UserInterfaceService.Write("> ");
+                            this.UserInterfaceService.Write(LpConstants.InputString);
                             continue;
                         }
                         catch (Exception e)
@@ -803,7 +814,7 @@ public class LpUnit
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
                         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
-                        this.UserInterfaceService.Write("> ");
+                        this.UserInterfaceService.Write(LpConstants.InputString);
                     }
                     else
                     {

@@ -6,7 +6,10 @@ namespace Lp.Subcommands;
 
 [SimpleCommand("template-subcommand")]
 public class TemplateSubcommand : ISimpleCommandAsync
-{// Control -> context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
+{// Control -> context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+
     public TemplateSubcommand(ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
@@ -20,7 +23,4 @@ public class TemplateSubcommand : ISimpleCommandAsync
         // var node = this.netStats.GetMyNetNode();
         // this.userInterfaceService.WriteLine(node.ToString());
     }
-
-    private readonly ILogger logger;
-    private readonly IUserInterfaceService userInterfaceService;
 }

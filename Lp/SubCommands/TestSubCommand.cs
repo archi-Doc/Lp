@@ -1,14 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using Arc.Threading;
-using Lp.Data;
 using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
-using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
@@ -31,6 +26,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         try
         {
+            var nn = Alternative.NetNode;
+            var st = TinyhandSerializer.SerializeToString(nn);
+            var mx = SeedKeyHelper.MaxPrivateKeyLengthInBase64;
             var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotesAndBracket());
         }
         catch
@@ -55,7 +53,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         microSleep.Dispose();
 
-        await this.TestLinkageKey();
+        // await this.TestLinkageKey();
+
+        _ = Task.Run(() =>
+        {
+            Thread.Sleep(1_000);
+            this.userInterfaceService.WriteLine("ABC");
+        });
     }
 
     private async Task TestLinkageKey()

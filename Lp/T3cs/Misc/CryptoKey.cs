@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Arc.Collections;
 using Netsphere.Crypto;
 using Tinyhand.IO;
 

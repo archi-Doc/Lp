@@ -9,35 +9,34 @@ namespace Lp.Net;
 [TinyhandObject]
 internal partial class DomainData
 {
-
     [Key(0)]
     private Credit domainCredit;
 
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
 
-    private Role domainRole;
+    private DomainRole role;
     private SeedKey? domainSeedKey;
 
-    public Role DomainRole => this.domainRole;
+    public DomainRole Role => this.role;
 
     public DomainData(Credit domainCredit)
     {
         this.domainCredit = domainCredit;
     }
 
-    public void Update(Role domainRole, SeedKey? domainSeedKey)
+    public void Update(DomainRole domainRole, SeedKey? domainSeedKey)
     {//
-        if (domainRole == Role.Root)
+        if (domainRole == DomainRole.Root)
         {
             if (domainSeedKey?.GetSignaturePublicKey().Equals(this.domainCredit.PrimaryMerger) != true)
             {
-                domainRole = Role.User;
+                domainRole = DomainRole.User;
                 domainSeedKey = default;
             }
         }
 
-        this.domainRole = domainRole;
+        this.role = domainRole;
         this.domainSeedKey = domainSeedKey;
     }
 

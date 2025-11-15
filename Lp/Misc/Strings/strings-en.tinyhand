@@ -131,6 +131,11 @@ Merger=
   NoPrivateKey = "Merger private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
   Registration="Registration to Domain: {0}"
 
+Peer=
+  ParseFailure="Could not parse DomainIdentifier '{0}'"
+  CodeFailure="Could not retrieve the Vault or Authority, or convert to a SeedKey"
+  Confirmation="DomainIdentifier comfirmed '{0}'"
+
 Linker=
   NoPrivateKey = "Linker private key could not be loaded from the environment variable or Vault ('{0}'). It will be newly created and saved in the Vault"
 

@@ -5,11 +5,88 @@ using System.Text;
 
 namespace Lp.Services;
 
+public class ConsoleBuffer
+{
+    private const int BufferSize = 1_024;
+
+    private readonly Lock lockObject = new();
+    private readonly char[] buffer = new char[BufferSize];
+    private int promptLength;
+    private int textLength;
+
+    public ConsoleBuffer()
+    {
+    }
+
+    public void Flush(string? prompt = default)
+    {
+        string? text = default;
+        using (this.lockObject.EnterScope())
+        {
+            if (this.textLength > 0)
+            {
+                text = new string(this.buffer, this.promptLength, this.textLength);
+            }
+
+            if (prompt?.Length > 0)
+            {
+                prompt.AsSpan(0, Math.Max(prompt.Length, BufferSize)).CopyTo(this.buffer);
+                this.promptLength = prompt.Length;
+                this.textLength = 0;
+            }
+        }
+
+        /*if (text is not null)
+        {
+            Console.WriteLine(text);
+        }*/
+
+        if (prompt?.Length > 0)
+        {
+            Console.Write(prompt);
+        }
+    }
+
+    public string? ReadLine(ReadOnlySpan<char> prompt = default)
+    {
+        try
+        {
+            ConsoleKeyInfo key;
+            while ((key = Console.ReadKey(intercept: true)).Key != ConsoleKey.Enter)
+            {
+                if (key.Key == ConsoleKey.Backspace)
+                {
+                    if (this.textLength > 0)
+                    {
+                        this.textLength--;
+                        Console.Write("\b \b");
+                    }
+                }
+                else
+                {
+                    this.buffer[this.textLength++] = key.KeyChar;
+                    Console.Write(key.KeyChar);
+                }
+            }
+
+            var result = new string(this.buffer, 0, this.textLength);
+            this.textLength = 0;
+            Console.WriteLine();
+            return result;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}
+
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
     private readonly UnitCore core;
     private readonly ILogger logger;
     private readonly ConsoleTextReader consoleTextReader;
+    private readonly ConsoleBuffer consoleBuffer = new();
 
     private class ConsoleTextReader : TextReader
     {
@@ -140,7 +217,18 @@ Loop:
                 message = Arc.BaseHelper.ConvertLfToCrLf(message);
             }
 
-            Console.WriteLine(message);
+            // Console.WriteLine($"{this.CurrentMode} : {message}");
+            //if (Console.CursorTop > 0 && Console.CursorLeft > 0)
+            if (this.CurrentMode == Mode.Console && Console.CursorTop > 0 && Console.CursorLeft == 2)
+            {
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.WriteLine(message);
+                Console.Write(LpConstants.InputString);
+            }
+            else
+            {
+                Console.WriteLine(message);
+            }
         }
         catch
         {
@@ -152,15 +240,17 @@ Loop:
         this.consoleTextReader.Enqueue(message);
     }
 
-    public override string? ReadLine()
+    public override InputResult ReadLine(string? prompt)
     {
+        // return this.consoleBuffer.ReadLine();
+
         try
-        {
-            return Console.ReadLine();
+        {//
+            return new(Console.ReadLine());
         }
         catch
         {
-            return null;
+            return default;
         }
     }
 

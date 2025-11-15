@@ -23,14 +23,14 @@ public class ProofTest
     [Fact]
     public void TestDomain()
     {
-        var domain = new DomainIdentifier(LpConstants.LpCredit, this.testNode, string.Empty);
+        var domain = new DomainIdentifierObsolete(LpConstants.LpCredit, this.testNode, string.Empty);
         var st = domain.ConvertToString();
-        DomainIdentifier.TryParse(st, out var domain2, out var read).IsTrue();
+        DomainIdentifierObsolete.TryParse(st, out var domain2, out var read).IsTrue();
         domain2!.Equals(domain).IsTrue();
 
-        domain = new DomainIdentifier(LpConstants.LpCredit, this.testNode, "test");
+        domain = new DomainIdentifierObsolete(LpConstants.LpCredit, this.testNode, "test");
         st = domain.ConvertToString();
-        DomainIdentifier.TryParse(st, out domain2, out read).IsTrue();
+        DomainIdentifierObsolete.TryParse(st, out domain2, out read).IsTrue();
         domain2!.Equals(domain).IsTrue();
     }
 

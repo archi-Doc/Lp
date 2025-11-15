@@ -29,7 +29,7 @@ public partial record class DomainControl
         var domain = lpBase.Options.Domain;
         if (!string.IsNullOrEmpty(domain))
         {
-            if (DomainIdentifier.TryParse(lpBase.Options.Domain, out var domainOption, out _))
+            if (DomainIdentifierObsolete.TryParse(lpBase.Options.Domain, out var domainOption, out _))
             {
                 // this.PrimaryDomain = new(domainOption);
             }
@@ -69,7 +69,7 @@ public partial record class DomainControl
         return null;
     }
 
-    internal DomainData AddDomainService(Credit domainCredit, DomainData.Role kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomainService(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
     {
         var domainHash = domainCredit.GetXxHash3();
         var serviceClass = this.domainDataDictionary.AddOrUpdate(
@@ -89,12 +89,12 @@ public partial record class DomainControl
         return serviceClass;
     }
 
-    internal bool TryRemoveDomainService(ulong domainHash, DomainData.Role role)
+    internal bool TryRemoveDomainService(ulong domainHash, DomainRole role)
     {
-        if (role != DomainData.Role.Root &&
+        if (role != DomainRole.Root &&
             this.domainDataDictionary.TryGetValue(domainHash, out var domainData))
         {
-            if (domainData.DomainRole == role)
+            if (domainData.Role == role)
             {
                 return this.domainDataDictionary.TryRemove(new(domainHash, domainData));
             }
