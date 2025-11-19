@@ -17,7 +17,7 @@ public abstract class IUserInterfaceService : IConsoleService
 
     public abstract void EnqueueInput(string? message = null);
 
-    public abstract InputResult ReadLine(string? prompt = null);
+    public abstract Task<InputResult> ReadLine(string? prompt = null, CancellationToken cancellationToken = default(CancellationToken));
 
     public abstract ConsoleKeyInfo ReadKey(bool intercept);
 

@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Text;
+using System.Threading;
 
 namespace Lp.Services;
 
@@ -240,17 +241,28 @@ Loop:
         this.consoleTextReader.Enqueue(message);
     }
 
-    public override InputResult ReadLine(string? prompt)
+    public override async Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
     {
-        // return this.consoleBuffer.ReadLine();
-
         try
-        {//
-            return new(Console.ReadLine());
+        {
+            if (prompt is not null)
+            {
+                await Console.Out.WriteAsync(prompt).ConfigureAwait(false);
+            }
+
+            try
+            {
+                var text = await Console.In.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                return new(text ?? string.Empty);
+            }
+            catch (OperationCanceledException)
+            {
+                return new(InputResultKind.Canceled);
+            }
         }
         catch
         {
-            return default;
+            return new(InputResultKind.Terminated);
         }
     }
 

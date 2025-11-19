@@ -758,9 +758,10 @@ public class LpUnit
                 string? command = null;
                 try
                 {
-                    command = await Task.Run(() =>
+                    command = await Task.Run<string?>(async () =>
                     {//
-                        return this.UserInterfaceService.ReadLine().Text?.Trim();
+                        var st = await this.UserInterfaceService.ReadLine();
+                        return st.Text?.Trim();
                     }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
                 }
                 catch
