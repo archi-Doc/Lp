@@ -39,6 +39,11 @@ public class LpUnit
         {
             this.PreConfigure(context =>
             {
+                var simpleConsole = SimpleConsole.GetOrCreate();
+                simpleConsole.Configuration = new SimpleConsoleConfiguration()
+                {
+                };
+
                 this.LoadStrings();
                 this.LoadLpOptions(context);
             });
