@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/ConsoleTest/ConsoleTest.csproj" />
+  </Folder>
+  <Project Path="Benchmark/Benchmark.csproj" />
+  <Project Path="Lp/Lp.csproj" />
+  <Project Path="LpConsole/LpConsole.csproj" />
+  <Project Path="Playground/Playground.csproj" />
+  <Project Path="xUnitTest/xUnitTest.csproj" />
+</Solution>
