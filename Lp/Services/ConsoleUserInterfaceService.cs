@@ -43,44 +43,13 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         => this.logger.TryGet(level)?.Log(message);
 
     public override Task<string?> RequestPassword(string? description)
-    {
-        // return this.RequestPasswordInternal(description);
-        return this.TaskRunAndWaitAsync(() => this.RequestPasswordInternal(description));
-
-        /*try
-        {
-            return await Task.Run(() => this.RequestPasswordInternal(description)).WaitAsync(ThreadCore.Root.CancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            this.consoleService.WriteLine();
-            return null;
-        }*/
-    }
+        => this.RequestPasswordInternal(description);
 
     public override Task<string?> RequestString(bool enterToExit, string? description)
-        => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(enterToExit, description));
+        => this.RequestStringInternal(enterToExit, description);
 
     public override Task<bool?> RequestYesOrNo(string? description)
-        => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
-
-    private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
-    {
-        var previous = this.ChangeMode(Mode.Input);
-        try
-        {
-            return await Task.Run(func).WaitAsync(this.core.CancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            this.WriteLine();
-            return default;
-        }
-        finally
-        {
-            this.ChangeMode(previous);
-        }
-    }
+        => this.RequestYesOrNoInternal(description);
 
     private async Task<string?> RequestPasswordInternal(string? description)
     {

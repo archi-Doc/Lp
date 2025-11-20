@@ -30,7 +30,6 @@ public class LpLogger
             this.Configure(context =>
             {
                 // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogger)
-                context.AddSingleton<BackgroundAndFileLogger>();
                 context.AddSingleton<ConsoleAndFileLogger>();
 
                 // Filters
