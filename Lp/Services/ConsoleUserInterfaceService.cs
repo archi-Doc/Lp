@@ -11,6 +11,11 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     private readonly SimpleConsole simpleConsole;
     private readonly IConsoleService consoleService;
 
+    private readonly SimpleConsoleOptions passwordOptions = new()
+    {
+
+    };
+
     public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
     {
         this.core = core;
@@ -42,8 +47,17 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public override Task<string?> RequestPassword(string? description)
-        => this.RequestPasswordInternal(description);
+    public override async Task<string?> RequestPassword(string? description)
+    {
+        //this.simpleConsole.UnderlyingTextWriter.Write(description);
+        var options = this.passwordOptions with
+        {
+            Prompt = description ?? string.Empty,
+        };
+
+        var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+        return result.Text;
+    }
 
     public override Task<string?> RequestString(bool enterToExit, string? description)
         => this.RequestStringInternal(enterToExit, description);

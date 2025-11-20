@@ -1,8 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+global using Arc;
 global using Arc.Threading;
 global using Arc.Unit;
 global using Lp;
+
 using Lp.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
@@ -13,11 +15,11 @@ public class Program
 {
     public static async Task Main()
     {
-        AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+        AppCloseHandler.Set(() =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
             ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
-        };
+        });
 
         Console.CancelKeyPress += (s, e) =>
         {// Ctrl+C pressed
