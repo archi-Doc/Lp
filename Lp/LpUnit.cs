@@ -39,11 +39,8 @@ public class LpUnit
         {
             this.PreConfigure(context =>
             {
+                // SimpleConsole
                 var simpleConsole = SimpleConsole.GetOrCreate();
-                simpleConsole.Configuration = new SimpleConsoleConfiguration()
-                {
-                    MultilineIdentifier = LpConstants.MultilineIndeitifierString,
-                };
 
                 this.LoadStrings();
                 this.LoadLpOptions(context);
@@ -437,6 +434,7 @@ public class LpUnit
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.simpleConsole = simpleConsole;
+        this.simpleConsole.Core = core;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetUnit = netsphere;
@@ -756,10 +754,15 @@ public class LpUnit
     private async Task MainAsync()
     {
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
+        var options = new SimpleConsoleOptions()
+        {
+            Prompt = LpConstants.PromptString,
+            MultilinePrompt = LpConstants.MultilinePromptString,
+        };
 
         while (!this.Core.IsTerminated)
         {
-            var inputResult = await this.simpleConsole.ReadLine(LpConstants.PromptString, LpConstants.MultilinePromptString);
+            var inputResult = await this.simpleConsole.ReadLine(options);
             if (inputResult.Kind == InputResultKind.Terminated)
             {
                 return;

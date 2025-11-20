@@ -30,8 +30,8 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         //this.consoleTextReader.Enqueue(message);
     }
 
-    public override Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
-        => this.simpleConsole.ReadLine(prompt, default, cancellationToken);
+    public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
+        => this.simpleConsole.ReadLine(default, cancellationToken);
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
         => this.consoleService.ReadKey(intercept);
