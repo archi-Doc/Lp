@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
 using Netsphere.Relay;
 using SimpleCommandLine;
+using SimplePrompt;
 
 namespace Lp;
 
@@ -50,6 +51,7 @@ public class LpUnit
                 context.AddSingleton<LpBase>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
+                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
                 context.AddSingleton<ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());

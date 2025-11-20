@@ -1,291 +1,43 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Text;
+using SimplePrompt;
 
 namespace Lp.Services;
-
-public class ConsoleBuffer
-{
-    private const int BufferSize = 1_024;
-
-    private readonly Lock lockObject = new();
-    private readonly char[] buffer = new char[BufferSize];
-    private int promptLength;
-    private int textLength;
-
-    public ConsoleBuffer()
-    {
-    }
-
-    public void Flush(string? prompt = default)
-    {
-        string? text = default;
-        using (this.lockObject.EnterScope())
-        {
-            if (this.textLength > 0)
-            {
-                text = new string(this.buffer, this.promptLength, this.textLength);
-            }
-
-            if (prompt?.Length > 0)
-            {
-                prompt.AsSpan(0, Math.Max(prompt.Length, BufferSize)).CopyTo(this.buffer);
-                this.promptLength = prompt.Length;
-                this.textLength = 0;
-            }
-        }
-
-        if (prompt?.Length > 0)
-        {
-            Console.Write(prompt);
-        }
-    }
-
-    public string? ReadLine(ReadOnlySpan<char> prompt = default)
-    {
-        try
-        {
-            ConsoleKeyInfo key;
-            while ((key = Console.ReadKey(intercept: true)).Key != ConsoleKey.Enter)
-            {
-                if (key.Key == ConsoleKey.Backspace)
-                {
-                    if (this.textLength > 0)
-                    {
-                        this.textLength--;
-                        Console.Write("\b \b");
-                    }
-                }
-                else
-                {
-                    this.buffer[this.textLength++] = key.KeyChar;
-                    Console.Write(key.KeyChar);
-                }
-            }
-
-            var result = new string(this.buffer, 0, this.textLength);
-            this.textLength = 0;
-            Console.WriteLine();
-            return result;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-}
 
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
     private readonly UnitCore core;
     private readonly ILogger logger;
-    private readonly ConsoleTextReader consoleTextReader;
-    private readonly ConsoleBuffer consoleBuffer = new();
+    private readonly SimpleConsole simpleConsole;
+    private readonly IConsoleService consoleService;
 
-    private class ConsoleTextReader : TextReader
-    {
-        private readonly TextReader original;
-        private readonly ConcurrentQueue<string?> queue = new();
-
-        public ConsoleTextReader(TextReader original)
-        {
-            this.original = original;
-        }
-
-        public void Enqueue(string? line)
-        {
-            this.queue.Enqueue(line);
-        }
-
-        public override string? ReadLine()
-        {
-            StringBuilder? sb = default;
-            int tripleQuotesCount = 0;
-
-Loop:
-            if (this.queue.TryDequeue(out var line))
-            {
-                if (ProcessLine(line))
-                {
-                    goto Loop;
-                }
-
-                if (sb is null)
-                {
-                    return line;
-                }
-                else
-                {
-                    sb.Append(line);
-                    return sb.ToString();
-                }
-            }
-
-            var st = this.original.ReadLine();
-            if (ProcessLine(st))
-            {
-                goto Loop;
-            }
-
-            if (sb is null)
-            {
-                return st;
-            }
-            else
-            {
-                sb.Append(st);
-                return sb.ToString();
-            }
-
-            bool ProcessLine(string? content)
-            {
-                if (content is not null)
-                {
-                    tripleQuotesCount += CheckTripleQuotes(content);
-                    if (content.EndsWith('\\'))
-                    {
-                        sb ??= new();
-                        sb.Append(content[0..^1]);
-                        sb.Append(' ');
-                        return true;
-                    }
-                    else if ((tripleQuotesCount & 1) != 0)
-                    {
-                        sb ??= new();
-                        sb.Append(content);
-                        sb.Append(Environment.NewLine);
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            static int CheckTripleQuotes(ReadOnlySpan<char> text)
-            {
-                int count = 0;
-                int index = 0;
-                var span = text;
-                while ((index = span.IndexOf("\"\"\"", StringComparison.Ordinal)) != -1)
-                {
-                    count++;
-                    span = span.Slice(index + 3);
-                }
-
-                return count;
-            }
-        }
-    }
-
-    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger)
+    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
     {
         this.core = core;
         this.logger = logger;
-        this.consoleTextReader = new ConsoleTextReader(Console.In);
-
-        Console.SetIn(this.consoleTextReader);
+        this.simpleConsole = simpleConsole;
+        this.consoleService = simpleConsole;
     }
 
     public override void Write(string? message = null)
-    {
-        try
-        {
-            if (Environment.NewLine == "\r\n" && message is not null)
-            {
-                message = Arc.BaseHelper.ConvertLfToCrLf(message);
-            }
-
-            Console.Write(message);
-        }
-        catch
-        {
-        }
-    }
+        => this.consoleService.Write(message);
 
     public override void WriteLine(string? message = null)
-    {
-        try
-        {
-            if (Environment.NewLine == "\r\n" && message is not null)
-            {
-                message = Arc.BaseHelper.ConvertLfToCrLf(message);
-            }
-
-            // Console.WriteLine($"{this.CurrentMode} : {message}");
-            // if (Console.CursorTop > 0 && Console.CursorLeft > 0)
-            if (this.CurrentMode == Mode.Console && Console.CursorTop > 0 && Console.CursorLeft == 2)
-            {
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.WriteLine(message);
-                Console.Write(LpConstants.InputString);
-            }
-            else
-            {
-                Console.WriteLine(message);
-            }
-        }
-        catch
-        {
-        }
-    }
+        => this.consoleService.WriteLine(message);
 
     public override void EnqueueInput(string? message = null)
     {
-        this.consoleTextReader.Enqueue(message);
+        //this.consoleTextReader.Enqueue(message);
     }
 
-    public override async Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (prompt is not null)
-            {
-                await Console.Out.WriteAsync(prompt).ConfigureAwait(false);
-            }
-
-            try
-            {
-                var text = await Console.In.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-                return new(text ?? string.Empty);
-            }
-            catch (OperationCanceledException)
-            {
-                return new(InputResultKind.Canceled);
-            }
-        }
-        catch
-        {
-            return new(InputResultKind.Terminated);
-        }
-    }
+    public override Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
+        => this.simpleConsole.ReadLine(prompt, default, cancellationToken);
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
-    {
-        try
-        {
-            return Console.ReadKey(intercept);
-        }
-        catch
-        {
-            return default;
-        }
-    }
+        => this.consoleService.ReadKey(intercept);
 
     public override bool KeyAvailable
-    {
-        get
-        {
-            try
-            {
-                return Console.KeyAvailable;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-    }
+        => this.consoleService.KeyAvailable;
 
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
@@ -311,26 +63,6 @@ Loop:
 
     public override Task<bool?> RequestYesOrNo(string? description)
         => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
-
-    private static async Task<ConsoleKeyInfo> ReadKeyAsync(CancellationToken cancellationToken)
-    {
-        while (true)
-        {
-            try
-            {
-                if (Console.KeyAvailable)
-                {
-                    return Console.ReadKey(intercept: true);
-                }
-
-                await Task.Delay(1000, cancellationToken);
-            }
-            catch
-            {
-                return default;
-            }
-        }
-    }
 
     private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
     {
