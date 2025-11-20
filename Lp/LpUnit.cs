@@ -42,6 +42,7 @@ public class LpUnit
                 var simpleConsole = SimpleConsole.GetOrCreate();
                 simpleConsole.Configuration = new SimpleConsoleConfiguration()
                 {
+                    MultilineIdentifier = LpConstants.MultilineIndeitifierString,
                 };
 
                 this.LoadStrings();
@@ -758,9 +759,10 @@ public class LpUnit
 
         while (!this.Core.IsTerminated)
         {
-            var inputResult = await this.simpleConsole.ReadLine(LpConstants.PromptString);
+            var inputResult = await this.simpleConsole.ReadLine(LpConstants.PromptString, LpConstants.MultilinePromptString);
             if (inputResult.Kind == InputResultKind.Terminated)
             {
+                return;
             }
             else if (inputResult.Kind == InputResultKind.Canceled)
             {
