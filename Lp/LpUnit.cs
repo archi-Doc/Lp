@@ -430,11 +430,12 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
         this.UnitLogger = unitLogger;
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
+        this.simpleConsole = simpleConsole;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetUnit = netsphere;
@@ -499,6 +500,7 @@ public class LpUnit
 
     private readonly ILogger logger;
     private readonly SimpleParser subcommandParser;
+    private readonly SimpleConsole simpleConsole;
     private readonly LpService lpService;
 
     public async Task PreparePeer(UnitContext context)
@@ -757,88 +759,41 @@ public class LpUnit
 
     private async Task MainAsync()
     {
+        var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
+
         while (!this.Core.IsTerminated)
         {
-            var currentMode = this.UserInterfaceService.CurrentMode;
-            if (currentMode == IUserInterfaceService.Mode.Console)
-            {// Console mode
-                string? command = null;
+            var inputResult = await this.simpleConsole.ReadLine(LpConstants.PromptString);
+            if (inputResult.Kind == InputResultKind.Terminated)
+            {
+            }
+            else if (inputResult.Kind == InputResultKind.Canceled)
+            {
+                continue;
+            }
+
+            if (string.Equals(inputResult.Text, "exit", defaultComparison))
+            {// Exit
+                if (await this.TryTerminate(true))
+                {// Terminate
+                    return;
+                }
+            }
+            else
+            {// Subcommand
                 try
                 {
-                    command = await Task.Run<string?>(async () =>
-                    {//
-                        var st = await this.UserInterfaceService.ReadLine();
-                        return st.Text?.Trim();
-                    }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
+                    this.Subcommand(inputResult.Text);
+                    this.UserInterfaceService.Write(LpConstants.PromptString);
+                    continue;
                 }
-                catch
+                catch (Exception e)
                 {
-                }
-
-                // var command = this.UserInterfaceService.ReadLine()?.Trim();
-                if (!string.IsNullOrEmpty(command))
-                {
-                    if (string.Compare(command, "exit", true) == 0)
-                    {// Exit
-                        if (this.TryTerminate(true).Result == true)
-                        { // To view mode
-                            this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
-                            return;
-                        }
-                        else
-                        {
-                            this.UserInterfaceService.Write(LpConstants.InputString);
-                            continue;
-                        }
-                    }
-                    else
-                    {// Subcommand
-                        try
-                        {
-                            this.Subcommand(command);
-                            this.UserInterfaceService.Write(LpConstants.InputString);
-                            continue;
-                        }
-                        catch (Exception e)
-                        {
-                            this.UserInterfaceService.WriteLine(e.ToString());
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    this.UserInterfaceService.WriteLine();
-                }
-
-                // To view mode
-                this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
-            }
-            else if (currentMode == IUserInterfaceService.Mode.View)
-            {// View mode
-                if (this.UserInterfaceService.KeyAvailable)
-                {
-                    var keyInfo = this.UserInterfaceService.ReadKey(true);
-                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
-                    { // To console mode
-                        this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
-                        this.UserInterfaceService.Write(LpConstants.InputString);
-                    }
-                    else
-                    {
-                        while (this.UserInterfaceService.KeyAvailable)
-                        {
-                            this.UserInterfaceService.ReadKey(true);
-                        }
-                    }
+                    this.UserInterfaceService.WriteLine(e.ToString());
+                    break;
                 }
             }
-
-            this.Core.Sleep(100, 100);
         }
-
-        // To view mode
-        this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
     }
 
     private void RunMachines()
