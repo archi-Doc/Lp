@@ -708,11 +708,6 @@ public class LpUnit
             return true;
         }
 
-        if (this.UserInterfaceService.IsInputMode)
-        {// Input mode
-            return false;
-        }
-
         if (!this.LpBase.Options.ConfirmExit)
         {// No confirmation
             this.Core.Terminate(); // this.Terminate(false);
