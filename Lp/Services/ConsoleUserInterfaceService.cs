@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using System.Text;
-using System.Threading;
 
 namespace Lp.Services;
 
@@ -36,11 +35,6 @@ public class ConsoleBuffer
                 this.textLength = 0;
             }
         }
-
-        /*if (text is not null)
-        {
-            Console.WriteLine(text);
-        }*/
 
         if (prompt?.Length > 0)
         {
@@ -219,7 +213,7 @@ Loop:
             }
 
             // Console.WriteLine($"{this.CurrentMode} : {message}");
-            //if (Console.CursorTop > 0 && Console.CursorLeft > 0)
+            // if (Console.CursorTop > 0 && Console.CursorLeft > 0)
             if (this.CurrentMode == Mode.Console && Console.CursorTop > 0 && Console.CursorLeft == 2)
             {
                 Console.SetCursorPosition(0, Console.CursorTop);
