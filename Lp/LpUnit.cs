@@ -754,7 +754,7 @@ public class LpUnit
     private async Task MainAsync()
     {
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
-        var options = new SimpleConsoleOptions()
+        var options = new ReadLineOptions()
         {
             Prompt = LpConstants.PromptString,
             MultilinePrompt = LpConstants.MultilinePromptString,
@@ -784,7 +784,6 @@ public class LpUnit
                 try
                 {
                     this.Subcommand(inputResult.Text);
-                    this.UserInterfaceService.Write(LpConstants.PromptString);
                     continue;
                 }
                 catch (Exception e)
