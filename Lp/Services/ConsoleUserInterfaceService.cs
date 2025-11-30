@@ -26,7 +26,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         CancelOnEscape = true,
         TextInputHook = text =>
         {
-            var st = result.Text.CleanupInput().ToLower();
+            var st = text.CleanupInput().ToLower();
             if (st == "y" || st == "yes" || st == "n" || st == "no")
             {
                 return text;
