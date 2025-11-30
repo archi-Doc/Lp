@@ -6,10 +6,41 @@ namespace Lp.Services;
 
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
+    private const string YesOrNoSuffix = "[Y/n] ";
     private readonly UnitCore core;
     private readonly ILogger logger;
     private readonly SimpleConsole simpleConsole;
     private readonly IConsoleService consoleService;
+
+    private readonly ReadLineOptions passwordOptions = new()
+    {
+        MaxInputLength = 100,
+        MaskingCharacter = '*',
+        MultilineIdentifier = default,
+    };
+
+    private readonly ReadLineOptions yesOrNoOptions = new()
+    {
+        MaxInputLength = 3,
+        MultilineIdentifier = default,
+        CancelOnEscape = true,
+        TextInputHook = text =>
+        {
+            var st = result.Text.CleanupInput().ToLower();
+            if (st == "y" || st == "yes" || st == "n" || st == "no")
+            {
+                return text;
+            }
+
+            return null;
+        },
+    };
+
+    private readonly ReadLineOptions stringOptions = new()
+    {
+        MultilineIdentifier = default,
+        CancelOnEscape = true,
+    };
 
     public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
     {
@@ -30,8 +61,8 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         //this.consoleTextReader.Enqueue(message);
     }
 
-    public override Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
-        => this.simpleConsole.ReadLine(prompt, default, cancellationToken);
+    public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
+        => this.simpleConsole.ReadLine(default, cancellationToken);
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
         => this.consoleService.ReadKey(intercept);
@@ -42,47 +73,70 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public override Task<string?> RequestPassword(string? description)
+    public override async Task<string?> RequestPassword(string? description)
     {
-        // return this.RequestPasswordInternal(description);
-        return this.TaskRunAndWaitAsync(() => this.RequestPasswordInternal(description));
+        var options = this.passwordOptions with
+        {
+            Prompt = description ?? string.Empty,
+        };
 
-        /*try
+        var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+        return result.Text;
+    }
+
+    public override async Task<string?> RequestString(bool cancelOnEscape, string? description)
+    {
+        var options = this.stringOptions with
         {
-            return await Task.Run(() => this.RequestPasswordInternal(description)).WaitAsync(ThreadCore.Root.CancellationToken).ConfigureAwait(false);
+            Prompt = description ?? string.Empty,
+            CancelOnEscape = cancelOnEscape,
+        };
+
+        var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+        if (result.IsSuccess)
+        {
+            return result.Text;
         }
-        catch
+        else
         {
-            this.consoleService.WriteLine();
             return null;
-        }*/
+        }
     }
 
-    public override Task<string?> RequestString(bool enterToExit, string? description)
-        => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(enterToExit, description));
-
-    public override Task<bool?> RequestYesOrNo(string? description)
-        => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
-
-    private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
+    public override async Task<bool?> RequestYesOrNo(string? description)
     {
-        var previous = this.ChangeMode(Mode.Input);
-        try
+        var options = this.yesOrNoOptions with
         {
-            return await Task.Run(func).WaitAsync(this.core.CancellationToken).ConfigureAwait(false);
-        }
-        catch
+            Prompt = description == null ? YesOrNoSuffix : $"{description} {YesOrNoSuffix}",
+        };
+
+        while (true)
         {
-            this.WriteLine();
-            return default;
-        }
-        finally
-        {
-            this.ChangeMode(previous);
+            var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+            if (result.Kind == InputResultKind.Terminated ||
+                result.Kind == InputResultKind.Canceled)
+            {// Ctrl+C
+                // this.WriteLine();
+                return null; // throw new PanicException();
+            }
+
+            var text = result.Text.CleanupInput().ToLower();
+            if (text == "y" || text == "yes")
+            {
+                return true;
+            }
+            else if (text == "n" || text == "no")
+            {
+                return false;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 
-    private async Task<string?> RequestPasswordInternal(string? description)
+    /*private async Task<string?> RequestPasswordInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -193,5 +247,5 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
                 this.WriteLine("[Y/n]");
             }
         }
-    }
+    }*/
 }

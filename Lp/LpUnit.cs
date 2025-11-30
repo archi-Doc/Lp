@@ -39,10 +39,8 @@ public class LpUnit
         {
             this.PreConfigure(context =>
             {
+                // SimpleConsole
                 var simpleConsole = SimpleConsole.GetOrCreate();
-                simpleConsole.Configuration = new SimpleConsoleConfiguration()
-                {
-                };
 
                 this.LoadStrings();
                 this.LoadLpOptions(context);
@@ -436,6 +434,7 @@ public class LpUnit
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.simpleConsole = simpleConsole;
+        this.simpleConsole.Core = core;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetUnit = netsphere;
@@ -708,11 +707,6 @@ public class LpUnit
             return true;
         }
 
-        if (this.UserInterfaceService.IsInputMode)
-        {// Input mode
-            return false;
-        }
-
         if (!this.LpBase.Options.ConfirmExit)
         {// No confirmation
             this.Core.Terminate(); // this.Terminate(false);
@@ -760,12 +754,18 @@ public class LpUnit
     private async Task MainAsync()
     {
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
+        var options = new ReadLineOptions()
+        {
+            Prompt = LpConstants.PromptString,
+            MultilinePrompt = LpConstants.MultilinePromptString,
+        };
 
         while (!this.Core.IsTerminated)
         {
-            var inputResult = await this.simpleConsole.ReadLine(LpConstants.PromptString);
+            var inputResult = await this.simpleConsole.ReadLine(options);
             if (inputResult.Kind == InputResultKind.Terminated)
             {
+                return;
             }
             else if (inputResult.Kind == InputResultKind.Canceled)
             {
@@ -784,7 +784,6 @@ public class LpUnit
                 try
                 {
                     this.Subcommand(inputResult.Text);
-                    this.UserInterfaceService.Write(LpConstants.PromptString);
                     continue;
                 }
                 catch (Exception e)

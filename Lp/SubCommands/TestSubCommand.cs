@@ -24,6 +24,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        var path = await this.userInterfaceService.RequestString(true, Hashed.Storage.EnterPath);
+        this.userInterfaceService.WriteLine(path);
+
         try
         {
             var nn = Alternative.NetNode;

@@ -12,11 +12,9 @@ internal class ConsoleAndFileLogger : ILogOutput
     }
 
     public void Output(LogEvent logEvent)
-    {// Fatai or Error or !InputMode -> Console and File, Others -> File
-        if (logEvent.LogLevel == LogLevel.Fatal ||
-            logEvent.LogLevel == LogLevel.Error ||
-            !this.userInterfaceService.IsInputMode)
-        {
+    {
+        if (logEvent.LogLevel >= LogLevel.Information)
+        {// Fatal, Error, Warning, Information
             this.consoleLogger.Output(logEvent);
         }
 
