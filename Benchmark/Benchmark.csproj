@@ -14,13 +14,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arc.Collections" Version="1.28.2" />
+    <PackageReference Include="Arc.Collections" Version="1.28.3" />
     <PackageReference Include="Arc.Crypto" Version="1.42.0" />
     <PackageReference Include="Netsphere" Version="0.41.0" />
     <PackageReference Include="Tinyhand" Version="0.132.1" />
     <PackageReference Include="ValueLink" Version="0.105.1" />
     
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.6" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
