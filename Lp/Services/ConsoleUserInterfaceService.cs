@@ -23,6 +23,17 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         MaxInputLength = 3,
         MultilineIdentifier = default,
+        CancelOnEscape = true,
+        TextInputHook = text =>
+        {
+            var st = result.Text.CleanupInput().ToLower();
+            if (st == "y" || st == "yes" || st == "n" || st == "no")
+            {
+                return text;
+            }
+
+            return null;
+        },
     };
 
     private readonly ReadLineOptions stringOptions = new()
@@ -93,12 +104,12 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     }
 
     public override async Task<bool?> RequestYesOrNo(string? description)
-    {//
+    {
         var options = this.yesOrNoOptions with
         {
+            Prompt = description == null ? YesOrNoSuffix : $"{description} {YesOrNoSuffix}",
         };
 
-        this.simpleConsole.WriteLine($"{description} {YesOrNoSuffix}" ?? YesOrNoSuffix);
         while (true)
         {
             var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
@@ -120,7 +131,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
             }
             else
             {
-                this.WriteLine(YesOrNoSuffix);
+                return null;
             }
         }
     }
