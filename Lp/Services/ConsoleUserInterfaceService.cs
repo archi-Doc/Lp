@@ -81,7 +81,14 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         };
 
         var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
-        return result.Text;
+        if (result.IsSuccess)
+        {
+            return result.Text;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public override async Task<string?> RequestString(bool cancelOnEscape, string? description)

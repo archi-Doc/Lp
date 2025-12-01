@@ -434,7 +434,6 @@ public class LpUnit
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.simpleConsole = simpleConsole;
-        this.simpleConsole.Core = core;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetUnit = netsphere;
