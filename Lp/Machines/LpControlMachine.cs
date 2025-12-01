@@ -2,6 +2,7 @@
 
 using Lp.Data;
 using Lp.T3cs;
+using SimplePrompt;
 
 namespace Lp.Machines;
 
@@ -45,7 +46,7 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
-        Console.WriteLine("Lp");
+        SimpleConsole.GetOrCreate().UnderlyingTextWriter.WriteLine("Lp");
 
         await this.lpUnit.Merger.UpdateState();
         await this.lpUnit.RelayMerger.UpdateState();
