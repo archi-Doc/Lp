@@ -36,6 +36,9 @@ public class Program
             }
         };
 
+        await Task.Delay(10000);//
+        Console.WriteLine($"{Console.CursorLeft}, {Console.CursorTop}");
+
         var builder = new LpUnit.Builder()
             .PreConfigure(context =>
             {
