@@ -45,6 +45,8 @@ public partial class LpControlMachine : Machine
             return result;
         }
 
+        Console.WriteLine("Lp");
+
         await this.lpUnit.Merger.UpdateState();
         await this.lpUnit.RelayMerger.UpdateState();
         await this.lpUnit.Linker.UpdateState();
