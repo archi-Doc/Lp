@@ -14,6 +14,7 @@ global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
 using Lp.Data;
+using Lp.Logging;
 using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
@@ -52,6 +53,8 @@ public class LpUnit
                 context.AddSingleton<RobustConnection.Factory>();
                 context.AddSingleton<LpUnit>();
                 context.AddSingleton<LpBase>();
+                context.AddSingleton<LpOptions>();
+                context.AddSingleton<NetsphereLoggerOptions>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
