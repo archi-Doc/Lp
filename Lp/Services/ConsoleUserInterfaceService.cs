@@ -16,13 +16,13 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         MaxInputLength = 100,
         MaskingCharacter = '*',
-        MultilineIdentifier = default,
+        MultilineDelimiter = default,
     };
 
     private readonly ReadLineOptions yesOrNoOptions = new()
     {
         MaxInputLength = 3,
-        MultilineIdentifier = default,
+        MultilineDelimiter = default,
         CancelOnEscape = true,
         TextInputHook = text =>
         {
@@ -38,7 +38,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     private readonly ReadLineOptions stringOptions = new()
     {
-        MultilineIdentifier = default,
+        MultilineDelimiter = default,
         CancelOnEscape = true,
     };
 
