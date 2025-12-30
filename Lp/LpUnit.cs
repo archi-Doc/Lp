@@ -774,7 +774,7 @@ public class LpUnit
 
             if (string.Equals(inputResult.Text, "exit", defaultComparison))
             {// Exit
-                if (await this.TryTerminate(true))
+                if (await this.TryTerminate(false))
                 {// Terminate
                     return;
                 }
