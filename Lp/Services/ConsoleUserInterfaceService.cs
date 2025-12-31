@@ -57,9 +57,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         => this.consoleService.WriteLine(message);
 
     public override void EnqueueInput(string? message = null)
-    {
-        //this.consoleTextReader.Enqueue(message);
-    }
+        => this.simpleConsole.EnqueueInput(message);
 
     public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
         => this.simpleConsole.ReadLine(default, cancellationToken);
