@@ -42,6 +42,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         Console.WriteLine(LpConstants.LpCredit.ToString());
         Console.WriteLine(TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, TinyhandSerializerOptions.ConvertToSimpoleString));
 
+        var v1 = new Value(LpConstants.LpPublicKey, 111, LpConstants.LpCredit);
+        Console.WriteLine(v1.ToString());
+        Console.WriteLine(v1.Serialize().Length);
+
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");
 
