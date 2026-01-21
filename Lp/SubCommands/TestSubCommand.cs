@@ -50,6 +50,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var bin = mergedEvidence.Serialize();
         var mergedEvidence2 = TinyhandSerializer.Deserialize<MergedEvidence>(bin);
         Console.WriteLine(mergedEvidence.Serialize().Length);
+        Console.WriteLine(mergedEvidence2!.ValidateAndVerify());
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");
