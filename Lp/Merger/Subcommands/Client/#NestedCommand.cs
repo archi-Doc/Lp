@@ -2,6 +2,7 @@
 
 using Lp.Services;
 using SimpleCommandLine;
+using SimplePrompt;
 
 namespace Lp.Subcommands.MergerClient;
 
@@ -18,12 +19,15 @@ public class NestedCommand
         group.AddCommand(typeof(CreateCreditCommand));
     }
 
-    public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
-        : base(context, core, userInterfaceService)
+    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
+        : base(context, core, simpleConsole)
     {
+        this.ReadLineOptions = new ReadLineOptions
+        {
+            Prompt = "merger-client>> ",
+            MultilinePrompt = LpConstants.MultilinePromptString,
+        };
     }
-
-    public override string Prefix => "merger-client >> ";
 
     public RobustConnection? RobustConnection { get; set; }
 
