@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerRemote : INetService
+public partial interface IMergerAdministration : INetService
 {
     Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
 
@@ -16,7 +16,7 @@ public partial interface IMergerRemote : INetService
 }
 
 [NetServiceObject]
-internal class MergerRemoteAgent : IMergerRemote
+internal class MergerRemoteAgent : IMergerAdministration
 {
     private readonly LpBase lpBase;
     private readonly Merger merger;
@@ -28,7 +28,7 @@ internal class MergerRemoteAgent : IMergerRemote
         this.merger = merger;
     }
 
-    async Task<NetResultAndValue<ConnectionAgreement?>> IMergerRemote.Authenticate(AuthenticationToken token)
+    async Task<NetResultAndValue<ConnectionAgreement?>> IMergerAdministration.Authenticate(AuthenticationToken token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (!token.ValidateAndVerify(serverConnection) ||
@@ -42,7 +42,7 @@ internal class MergerRemoteAgent : IMergerRemote
         return new((ConnectionAgreement?)default);
     }
 
-    Task<T3csResult> IMergerRemote.CreateCredit(CreditIdentity creditIdentity)
+    Task<T3csResult> IMergerAdministration.CreateCredit(CreditIdentity creditIdentity)
     {
         if (!this.authenticated)
         {
@@ -52,7 +52,7 @@ internal class MergerRemoteAgent : IMergerRemote
         return this.merger.CreateCredit(creditIdentity);
     }
 
-    async Task<SignaturePublicKey> IMergerRemote.GetMergerKey()
+    async Task<SignaturePublicKey> IMergerAdministration.GetMergerKey()
     {
         if (!this.authenticated)
         {

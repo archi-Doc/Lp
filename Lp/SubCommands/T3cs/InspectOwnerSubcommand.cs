@@ -35,7 +35,7 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
         this.userInterfaceService.WriteLine($"Credit:{r.Credit}");
         this.userInterfaceService.WriteLine($"{credential.Proof.State}");
 
-        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(credential, r.SeedKey, r.Credit, default))
+        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerService>(credential, r.SeedKey, r.Credit, default))
         {
             if (connectionAndService.IsFailure)
             {

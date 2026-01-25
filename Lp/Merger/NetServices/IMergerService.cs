@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerClient : INetServiceWithOwner
+public partial interface IMergerService : INetServiceWithOwner
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -28,18 +28,18 @@ public partial interface IMergerClient : INetServiceWithOwner
 }
 
 [NetServiceObject]
-internal class MergerClientAgent : IMergerClient
+internal class MergerServiceAgent : IMergerService
 {
     private readonly Merger merger;
     private OwnerToken? ownerToken;
     private OwnerData? ownerData;
 
-    public MergerClientAgent(Merger merger)
+    public MergerServiceAgent(Merger merger)
     {
         this.merger = merger;
     }
 
-    public async NetTask<IMergerClient.InformationResult?> GetInformation()
+    public async NetTask<IMergerService.InformationResult?> GetInformation()
     {
         if (!this.merger.Initialized)
         {

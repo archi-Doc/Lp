@@ -80,7 +80,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 async connection =>
                 {
                     var token = AuthenticationToken.CreateAndSign(seedKey, connection);
-                    var r = await connection.GetService<IMergerRemote>().Authenticate(token);
+                    var r = await connection.GetService<IMergerAdministration>().Authenticate(token);
                     if (r.IsSuccess)
                     {
                         connection.Agreement.AcceptAll(r.Value);

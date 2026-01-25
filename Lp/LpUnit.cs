@@ -77,7 +77,7 @@ public class LpUnit
                 // RPC / Services
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<Lp.T3cs.MergerClientAgent>();
+                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
                 context.AddTransient<Lp.T3cs.MergerRemoteAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
@@ -607,12 +607,12 @@ public class LpUnit
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalControl, seedKey);
-            this.NetUnit.Services.Register<IMergerClient, MergerClientAgent>();
+            this.NetUnit.Services.Register<IMergerService, MergerServiceAgent>();
             this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
 
             if (this.LpBase.RemotePublicKey.IsValid)
             {
-                this.NetUnit.Services.Register<IMergerRemote, MergerRemoteAgent>();
+                this.NetUnit.Services.Register<IMergerAdministration, MergerRemoteAgent>();
             }
         }
 

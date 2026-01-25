@@ -43,7 +43,7 @@ public class CreateCreditSubcommand : ISimpleCommandAsync
 
         this.userInterfaceService.WriteLine($"CreditIdentity: {creditIdentity.ToString()}");
 
-        var service = connection.GetService<IMergerRemote>();
+        var service = connection.GetService<IMergerAdministration>();
         var r = await service.CreateCredit(creditIdentity);
         this.logger.TryGet()?.Log($"{r.ToString()}");
     }

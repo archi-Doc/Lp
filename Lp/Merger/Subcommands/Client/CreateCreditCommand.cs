@@ -32,7 +32,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
             return;
         }
 
-        var service = connection.GetService<IMergerClient>();
+        var service = connection.GetService<IMergerService>();
 
         var proof = new CreateCreditProof(default);
         authority.GetSeedKey().TrySign(proof, Seconds.FromDays(1));

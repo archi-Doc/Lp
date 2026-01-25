@@ -35,7 +35,7 @@ public class InfoCommand : ISimpleCommandAsync
             return;
         }
 
-        var service = connection.GetService<IMergerClient>();
+        var service = connection.GetService<IMergerService>();
 
         var response = await service.GetInformation().ResponseAsync;
         if (response.IsSuccess && response.Value is { } informationResult)

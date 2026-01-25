@@ -42,7 +42,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var seedKey = SeedKey.New(KeyOrientation.Signature);
         var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);
         Credit.TryCreate(creditIdentity2, out var testCredit);
-        var requestMergeProof = new RequestMergeProof(testCredit, seedKey.GetSignaturePublicKey());
+        var requestMergeProof = new RequestMergeProof(testCredit!, seedKey.GetSignaturePublicKey());
         seedKey.TrySign(requestMergeProof, 100);
         var mergedEvidence = new MergedEvidence(requestMergeProof, 100);
         seedKey.TrySign(mergedEvidence);
