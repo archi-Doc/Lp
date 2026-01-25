@@ -78,7 +78,7 @@ public class LpUnit
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
                 context.AddTransient<Lp.T3cs.MergerServiceAgent>();
-                context.AddTransient<Lp.T3cs.MergerRemoteAgent>();
+                context.AddTransient<Lp.T3cs.MergerAdministrationAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
@@ -612,7 +612,7 @@ public class LpUnit
 
             if (this.LpBase.RemotePublicKey.IsValid)
             {
-                this.NetUnit.Services.Register<IMergerAdministration, MergerRemoteAgent>();
+                this.NetUnit.Services.Register<IMergerAdministration, MergerAdministrationAgent>();
             }
         }
 

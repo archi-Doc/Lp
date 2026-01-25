@@ -16,49 +16,51 @@ public partial interface IMergerAdministration : INetService
 }
 
 [NetServiceObject]
-internal class MergerRemoteAgent : IMergerAdministration
+public class MergerAdministrationAgent : IMergerAdministration
 {
-    private readonly LpBase lpBase;
-    private readonly Merger merger;
-    private bool authenticated;
+    public LpBase LpBase { get; }
 
-    public MergerRemoteAgent(LpBase lpBase, Merger merger)
+    public Merger Merger { get; }
+
+    public bool IsAuthenticated { get; private set; }
+
+    public MergerAdministrationAgent(LpBase lpBase, Merger merger)
     {
-        this.lpBase = lpBase;
-        this.merger = merger;
+        this.LpBase = lpBase;
+        this.Merger = merger;
     }
 
     async Task<NetResultAndValue<ConnectionAgreement?>> IMergerAdministration.Authenticate(AuthenticationToken token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (!token.ValidateAndVerify(serverConnection) ||
-            !token.PublicKey.Equals(this.lpBase.RemotePublicKey))
+            !token.PublicKey.Equals(this.LpBase.RemotePublicKey))
         {
             return new(NetResult.NotAuthenticated);
         }
 
-        this.authenticated = true;
+        this.IsAuthenticated = true;
 
         return new((ConnectionAgreement?)default);
     }
 
     Task<T3csResult> IMergerAdministration.CreateCredit(CreditIdentity creditIdentity)
     {
-        if (!this.authenticated)
+        if (!this.IsAuthenticated)
         {
             return Task.FromResult(T3csResult.NotAuthenticated);
         }
 
-        return this.merger.CreateCredit(creditIdentity);
+        return this.Merger.CreateCredit(creditIdentity);
     }
 
     async Task<SignaturePublicKey> IMergerAdministration.GetMergerKey()
     {
-        if (!this.authenticated)
+        if (!this.IsAuthenticated)
         {
             return default;
         }
 
-        return this.merger.PublicKey;
+        return this.Merger.PublicKey;
     }
 }
