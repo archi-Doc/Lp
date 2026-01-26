@@ -5,7 +5,7 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.T3cs;
 
-[SimpleCommand("identify-credit")]
+[SimpleCommand("identify-credit", Description = "Create a Credit from CreditIdentity")]
 public class IdentifyCreditSubcommand : ISimpleCommandAsync
 {
     private readonly IUserInterfaceService userInterfaceService;
@@ -23,6 +23,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
     {
         if (args.Length == 0)
         {
+            ShowErrorMessage();
             return;
         }
 
@@ -37,6 +38,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
 
         if (creditIdentity is null)
         {
+            ShowErrorMessage();
             return;
         }
 
@@ -47,6 +49,12 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
         if (credit is not null)
         {
             this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
+        }
+
+        void ShowErrorMessage()
+        {
+            this.userInterfaceService.WriteLine(Hashed.Subcommands.InvalidCreditIdentity);
+            this.userInterfaceService.WriteLine($"{HashedString.Get(Hashed.Subcommands.Example)} {LpConstants.LpIdentity.ToString()}");
         }
     }
 }

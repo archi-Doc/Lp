@@ -99,6 +99,8 @@ CommandGroup=
   Set = "Command group '{0}' is successfully set"
 
 Subcommands=
+  Example="Example:"
+  InvalidCreditIdentity="Invalid CreditIdentity format"
   DevStage = "This feature is in the dev stage"
   GC=
     Start = "GC.Collect"
