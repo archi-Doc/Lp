@@ -37,7 +37,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         Console.WriteLine(LpConstants.LpPublicKey.ToString());
         Console.WriteLine(LpConstants.LpCredit.ToString());
-        Console.WriteLine(TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, TinyhandSerializerOptions.ConvertToSimpoleString));
+        Console.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
 
         var seedKey = SeedKey.New(KeyOrientation.Signature);
         var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);

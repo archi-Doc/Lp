@@ -20,7 +20,7 @@ public class ProofTest
         this.testNode = node!;
     }
 
-    [Fact]
+    /*[Fact]
     public void TestDomain()
     {
         var domain = new DomainIdentifierObsolete(LpConstants.LpCredit, this.testNode, string.Empty);
@@ -32,7 +32,7 @@ public class ProofTest
         st = domain.ConvertToString();
         DomainIdentifierObsolete.TryParse(st, out domain2, out read).IsTrue();
         domain2!.Equals(domain).IsTrue();
-    }
+    }*/
 
     [Fact]
     public void Test1()

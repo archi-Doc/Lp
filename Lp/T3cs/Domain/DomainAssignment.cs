@@ -2,15 +2,18 @@
 
 namespace Lp.T3cs;
 
-[TinyhandObject(AddAlternateKey = true)]
-public partial record class DomainNode
+[TinyhandObject(AddAlternateKey = true, EnumAsString = true)]
+public partial record class DomainAssignment
 {
     #region FieldAndProperty
 
     [Key(0)]
-    public Credit Credit { get; init; } = Credit.UnsafeConstructor();
+    public DomainRole Role { get; init; }
 
     [Key(1)]
+    public Credit Credit { get; init; } = Credit.UnsafeConstructor();
+
+    [Key(2)]
     public NetNode NetNode { get; init; } = new();
 
     // [Key(2)]
@@ -19,8 +22,9 @@ public partial record class DomainNode
 
     #endregion
 
-    public DomainNode(Credit credit, NetNode netNode)
+    public DomainAssignment(DomainRole role, Credit credit, NetNode netNode)
     {
+        this.Role = role;
         this.Credit = credit;
         this.NetNode = netNode;
     }

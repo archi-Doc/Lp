@@ -42,7 +42,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        var st = TinyhandSerializer.SerializeToString(creditIdentity, TinyhandSerializerOptions.ConvertToSimpoleString);
+        var st = StringHelper.SerializeToString(creditIdentity);
         this.userInterfaceService.WriteLine($"CreditIdentity: {st}"); // creditIdentity.ToString()
 
         var credit = creditIdentity.ToCredit();

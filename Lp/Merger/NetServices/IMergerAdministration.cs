@@ -13,6 +13,8 @@ public partial interface IMergerAdministration : INetService
     Task<T3csResult> CreateCredit(CreditIdentity creditIdentity);
 
     Task<SignaturePublicKey> GetMergerKey();
+
+    Task<T3csResult> AssignDomain(DomainAssignment domainAssignment);
 }
 
 [NetServiceObject]
@@ -62,5 +64,15 @@ public class MergerAdministrationAgent : IMergerAdministration
         }
 
         return this.Merger.PublicKey;
+    }
+
+    Task<T3csResult> IMergerAdministration.AssignDomain(DomainAssignment domainAssignment)
+    {
+        if (!this.IsAuthenticated)
+        {
+            return Task.FromResult(T3csResult.NotAuthenticated);
+        }
+
+        return Task.FromResult(T3csResult.Success);
     }
 }

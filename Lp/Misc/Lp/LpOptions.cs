@@ -32,8 +32,8 @@ public partial record LpOptions
     // [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
     // public string RemotePublicKeyBase64 { get; init; } = string.Empty;
 
-    [SimpleOption("Domain", Description = "Credit domain", ReadFromEnvironment = true)]
-    public string Domain { get; init; } = string.Empty;
+    [SimpleOption("DomainAssignment", Description = "Domain assignment", ReadFromEnvironment = true)]
+    public string DomainAssignment { get; init; } = string.Empty;
 
     [SimpleOption("NodeName", Description = "Node name", ReadFromEnvironment = true)]
     public string NodeName { get; init; } = string.Empty;
