@@ -39,7 +39,7 @@ public partial record class DomainControl
             else
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
-                var da = new DomainAssignment(DomainRole.Root, LpConstants.LpCredit, Alternative.NetNode);//
+                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
                 this.userInterfaceService.WriteLine(StringHelper.SerializeToString(da));
             }
         }

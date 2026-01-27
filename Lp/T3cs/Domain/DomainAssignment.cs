@@ -8,7 +8,8 @@ public partial record class DomainAssignment
     #region FieldAndProperty
 
     [Key(0)]
-    public DomainRole Role { get; init; }
+    // public DomainRole Role { get; init; }
+    public string Code { get; init; } = string.Empty;
 
     [Key(1)]
     public Credit Credit { get; init; } = Credit.UnsafeConstructor();
@@ -22,9 +23,9 @@ public partial record class DomainAssignment
 
     #endregion
 
-    public DomainAssignment(DomainRole role, Credit credit, NetNode netNode)
+    public DomainAssignment(string code, Credit credit, NetNode netNode)
     {
-        this.Role = role;
+        this.Code = code;
         this.Credit = credit;
         this.NetNode = netNode;
     }
