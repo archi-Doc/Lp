@@ -25,10 +25,10 @@ public class ShowDomainMachineSubcommand : ISimpleCommandAsync<ShowDomainMachine
             return;
         }
 
-        if (this.bigMachine.DomainMachine.TryGet(kind, out var machineInterface))
+        /*if (this.bigMachine.DomainMachine.TryGet(kind, out var machineInterface))
         {
             await machineInterface.Command.Show();
-        }
+        }*/
     }
 }
 

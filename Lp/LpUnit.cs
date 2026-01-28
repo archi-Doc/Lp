@@ -14,6 +14,7 @@ global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
 using Lp.Data;
+using Lp.Logging;
 using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
@@ -52,6 +53,8 @@ public class LpUnit
                 context.AddSingleton<RobustConnection.Factory>();
                 context.AddSingleton<LpUnit>();
                 context.AddSingleton<LpBase>();
+                context.AddSingleton<LpOptions>();
+                context.AddSingleton<NetsphereLoggerOptions>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
@@ -74,8 +77,8 @@ public class LpUnit
                 // RPC / Services
                 context.AddSingleton<NetServices.RemoteBenchControl>();
                 context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<Lp.T3cs.MergerClientAgent>();
-                context.AddTransient<Lp.T3cs.MergerRemoteAgent>();
+                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
+                context.AddTransient<Lp.T3cs.MergerAdministrationAgent>();
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
@@ -91,7 +94,7 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
-                context.AddTransient<T3cs.Domain.DomainMachine>();
+                // context.AddTransient<T3cs.Domain.DomainMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
                 context.AddSingleton<Services.LpDogmaMachine>();
@@ -256,11 +259,11 @@ public class LpUnit
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
-                    /*context.AddCrystal<DomainServer>(new CrystalConfiguration() with
+                    context.AddCrystal<DomainData>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 2,
-                        FileConfiguration = new GlobalFileConfiguration(DomainServer.Filename),
-                    });*/
+                        FileConfiguration = new GlobalFileConfiguration(DomainData.Filename),
+                    });
                 });
         }
 
@@ -536,7 +539,7 @@ public class LpUnit
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.CreditPeer))
         {// Credit peer
-            this.BigMachine.DomainMachine.GetOrCreate(DomainMachineKind.CreditPeer, this.LpBase.Options.CreditPeer);
+            // this.BigMachine.DomainMachine.GetOrCreate(DomainMachineKind.CreditPeer, this.LpBase.Options.CreditPeer);
         }
     }
 
@@ -604,12 +607,12 @@ public class LpUnit
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalControl, seedKey);
-            this.NetUnit.Services.Register<IMergerClient, MergerClientAgent>();
+            this.NetUnit.Services.Register<IMergerService, MergerServiceAgent>();
             this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
 
             if (this.LpBase.RemotePublicKey.IsValid)
             {
-                this.NetUnit.Services.Register<IMergerRemote, MergerRemoteAgent>();
+                this.NetUnit.Services.Register<IMergerAdministration, MergerAdministrationAgent>();
             }
         }
 
@@ -666,15 +669,19 @@ public class LpUnit
 
     public async Task SaveAsync(UnitContext context)
     {
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0"); //
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1"); //
         await context.SendSaveAsync(new(this.LpBase.DataDirectory));
 
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2"); //
         await this.CrystalControl.StoreAndRip();
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3"); //
     }
 
     public async Task StartAsync(UnitContext context)
@@ -774,7 +781,7 @@ public class LpUnit
 
             if (string.Equals(inputResult.Text, "exit", defaultComparison))
             {// Exit
-                if (await this.TryTerminate(true))
+                if (await this.TryTerminate(false))
                 {// Terminate
                     return;
                 }

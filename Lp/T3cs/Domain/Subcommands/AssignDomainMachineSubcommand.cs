@@ -25,7 +25,7 @@ public class AssignDomainMachineSubcommand : ISimpleCommandAsync<AssignDomainMac
             return;
         }
 
-        this.bigMachine.DomainMachine.CreateAlways(DomainMachineKind.CreditPeer, options.DomainIdentifier);
+        // this.bigMachine.DomainMachine.CreateAlways(DomainMachineKind.CreditPeer, options.DomainIdentifier);
     }
 }
 

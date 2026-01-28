@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Lp.Net;
+namespace Lp.T3cs;
 
 /// <summary>
 /// Represents the role within a domain.

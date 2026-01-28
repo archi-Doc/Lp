@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [NetServiceObject]
-internal class RelayMergerServiceAgent : MergerClientAgent, IRelayMergerService
+internal class RelayMergerServiceAgent : MergerServiceAgent, IRelayMergerService
 {
     public RelayMergerServiceAgent(RelayMerger merger)
         : base(merger)

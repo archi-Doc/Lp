@@ -6,17 +6,17 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [NetServiceInterface]
-public partial interface IMergerRemote : INetService
+public partial interface IDomainRoot : INetService
 {
     Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
 
-    Task<T3csResult> CreateCredit(CreditIdentity creditIdentity);
+    Task<MergedEvidence?> RequestMergedEvidence();
 
-    Task<SignaturePublicKey> GetMergerKey();
+    Task<PeerProof?> ExchangeCertificateProof(PeerProof peerProof);
 }
 
-[NetServiceObject]
-internal class MergerRemoteAgent : IMergerRemote
+/*[NetServiceObject]
+internal class MergerRemoteAgent : IDomainRoot
 {
     private readonly LpBase lpBase;
     private readonly Merger merger;
@@ -61,4 +61,4 @@ internal class MergerRemoteAgent : IMergerRemote
 
         return this.merger.PublicKey;
     }
-}
+}*/

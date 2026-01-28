@@ -11,7 +11,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -23,9 +23,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
-
-        var path = await this.userInterfaceService.RequestString(true, Hashed.Storage.EnterPath);
-        this.userInterfaceService.WriteLine(path);
 
         try
         {
@@ -40,7 +37,20 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         Console.WriteLine(LpConstants.LpPublicKey.ToString());
         Console.WriteLine(LpConstants.LpCredit.ToString());
-        Console.WriteLine(TinyhandSerializer.SerializeToString(LpConstants.LpIdentity, TinyhandSerializerOptions.ConvertToSimpoleString));
+        Console.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
+
+        var seedKey = SeedKey.New(KeyOrientation.Signature);
+        var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);
+        Credit.TryCreate(creditIdentity2, out var testCredit);
+        var requestMergeProof = new RequestMergeProof(testCredit!, seedKey.GetSignaturePublicKey());
+        seedKey.TrySign(requestMergeProof, 100);
+        var mergedEvidence = new MergedEvidence(requestMergeProof, 100);
+        seedKey.TrySign(mergedEvidence);
+
+        var bin = mergedEvidence.Serialize();
+        var mergedEvidence2 = TinyhandSerializer.Deserialize<MergedEvidence>(bin);
+        Console.WriteLine(mergedEvidence.Serialize().Length);
+        Console.WriteLine(mergedEvidence2!.ValidateAndVerify());
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
         Console.WriteLine($"Width: {Console.WindowWidth}");

@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(AddAlternateKey = true)]
+/*[TinyhandObject(AddAlternateKey = true)]
 public partial record class DomainIdentifier
 {
     #region FieldAndProperty
@@ -40,4 +40,4 @@ public partial record class DomainIdentifier
             this.Credit.Validate() &&
             this.NetNode.Validate();
     }
-}
+}*/

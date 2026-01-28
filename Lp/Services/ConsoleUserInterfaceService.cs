@@ -16,17 +16,17 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         MaxInputLength = 100,
         MaskingCharacter = '*',
-        MultilineIdentifier = default,
+        MultilineDelimiter = default,
     };
 
     private readonly ReadLineOptions yesOrNoOptions = new()
     {
         MaxInputLength = 3,
-        MultilineIdentifier = default,
+        MultilineDelimiter = default,
         CancelOnEscape = true,
         TextInputHook = text =>
         {
-            var st = result.Text.CleanupInput().ToLower();
+            var st = text.CleanupInput().ToLower();
             if (st == "y" || st == "yes" || st == "n" || st == "no")
             {
                 return text;
@@ -38,7 +38,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     private readonly ReadLineOptions stringOptions = new()
     {
-        MultilineIdentifier = default,
+        MultilineDelimiter = default,
         CancelOnEscape = true,
     };
 
@@ -57,9 +57,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         => this.consoleService.WriteLine(message);
 
     public override void EnqueueInput(string? message = null)
-    {
-        //this.consoleTextReader.Enqueue(message);
-    }
+        => this.simpleConsole.EnqueueInput(message);
 
     public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
         => this.simpleConsole.ReadLine(default, cancellationToken);
@@ -81,7 +79,14 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         };
 
         var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
-        return result.Text;
+        if (result.IsSuccess)
+        {
+            return result.Text;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public override async Task<string?> RequestString(bool cancelOnEscape, string? description)

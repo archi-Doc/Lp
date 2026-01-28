@@ -2,6 +2,7 @@
 
 using Lp.Data;
 using Lp.T3cs;
+using SimplePrompt;
 
 namespace Lp.Machines;
 

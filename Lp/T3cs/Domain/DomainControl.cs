@@ -12,6 +12,7 @@ public partial record class DomainControl
     #region FieldAndProperty
 
     private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
     private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
@@ -22,20 +23,24 @@ public partial record class DomainControl
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
+    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
     {
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
 
-        var domain = lpBase.Options.Domain;
+        var domain = lpBase.Options.DomainAssignment;
         if (!string.IsNullOrEmpty(domain))
         {
-            if (DomainIdentifierObsolete.TryParse(lpBase.Options.Domain, out var domainOption, out _))
+            var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(domain);
+            if (domainAssignment is not null)
             {
                 // this.PrimaryDomain = new(domainOption);
             }
             else
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
+                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
+                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(da));
             }
         }
 

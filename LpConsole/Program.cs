@@ -25,12 +25,19 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
-            if (lpUnit != null)
+            try
             {
-                lpUnit.TryTerminate().Wait();
+                var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
+                if (lpUnit != null)
+                {
+                    lpUnit.TryTerminate().Wait();
+                }
+                else
+                {
+                    ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                }
             }
-            else
+            catch
             {
                 ThreadCore.Root.Terminate(); // Send a termination signal to the root.
             }

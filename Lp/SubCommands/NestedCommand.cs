@@ -1,16 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using SimpleCommandLine;
+using SimplePrompt;
 
 namespace Lp.Subcommands;
 
 public class NestedCommand<TCommand>
     where TCommand : NestedCommand<TCommand>
 {
-    public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
+    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
     {
         this.Core = core;
-        this.userInterfaceService = userInterfaceService;
+        this.simpleConsole = simpleConsole;
 
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
@@ -46,30 +47,23 @@ public class NestedCommand<TCommand>
         }
     }
 
-    public virtual string Prefix { get; set; } = ">> ";
+    public ReadLineOptions? ReadLineOptions { get; protected set; }
 
     public async Task MainAsync()
     {
+        this.ReadLineOptions ??= new ReadLineOptions
+        {
+            Prompt = ">> ",
+            MultilinePrompt = LpConstants.MultilinePromptString,
+        };
+
         while (!this.Core.IsTerminated)
         {
-            this.userInterfaceService.Write(this.Prefix);
+            var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, this.Core.CancellationToken).ConfigureAwait(false);
 
-            string? command = null;
-            try
+            if (result.IsSuccess)
             {
-                command = await Task.Run(async () =>
-                {
-                    var st = await this.userInterfaceService.ReadLine();
-                    return st.Text?.Trim();
-                }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
-            }
-            catch
-            {
-            }
-
-            if (!string.IsNullOrEmpty(command))
-            {
-                if (string.Compare(command, "exit", true) == 0)
+                if (string.Compare(result.Text, "exit", true) == 0)
                 {// Exit
                     return;
                 }
@@ -77,12 +71,27 @@ public class NestedCommand<TCommand>
                 {// NestedCommand
                     try
                     {
-                        this.Subcommand(command);
+                        if (this.SimpleParser.Parse(result.Text))
+                        {
+                            this.SimpleParser.Run();
+                        }
+                        else
+                        {
+                            if (this.SimpleParser.HelpCommand != string.Empty)
+                            {
+                                this.SimpleParser.ShowHelp();
+                            }
+                            else
+                            {
+                                this.simpleConsole.WriteLine("Invalid subcommand.");
+                            }
+                        }
+
                         continue;
                     }
                     catch (Exception e)
                     {
-                        this.userInterfaceService.WriteLine(e.ToString());
+                        this.simpleConsole.WriteLine(e.ToString());
                         break;
                     }
                 }
@@ -94,35 +103,7 @@ public class NestedCommand<TCommand>
         }
     }
 
-    public bool Subcommand(string subcommand)
-    {
-        if (!this.SimpleParser.Parse(subcommand))
-        {
-            if (this.SimpleParser.HelpCommand != string.Empty)
-            {
-                this.SimpleParser.ShowHelp();
-                return true;
-            }
-            else
-            {
-                this.userInterfaceService.WriteLine("Invalid subcommand.");
-                return false;
-            }
-        }
-
-        this.SimpleParser.Run();
-        return true;
-
-        /*if (subcommandParser.HelpCommand != string.Empty)
-        {
-            return false;
-        }
-
-        this.ConsoleService.WriteLine();
-        return true;*/
-    }
-
-    private readonly IUserInterfaceService userInterfaceService;
+    private readonly SimpleConsole simpleConsole;
     private readonly Type[] commandTypes;
     private SimpleParser? simpleParser;
 }

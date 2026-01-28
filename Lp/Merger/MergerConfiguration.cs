@@ -31,9 +31,9 @@ public partial record MergerConfiguration : MergerConfigurationBase
     {
     }
 
-    public IMergerClient.InformationResult ToInformationResult()
+    public IMergerService.InformationResult ToInformationResult()
     {
-        return new IMergerClient.InformationResult() with { MergerName = this.Name, };
+        return new IMergerService.InformationResult() with { MergerName = this.Name, };
     }
 
     public Type MergerType { get; set; }

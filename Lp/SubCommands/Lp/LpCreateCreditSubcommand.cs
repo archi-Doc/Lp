@@ -51,7 +51,7 @@ public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOption
 
         var b = evolProof.ValidateAndVerify();
 
-        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerClient>(r.Credit, r.SeedKey, default))
+        using (var connectionAndService = await this.lpService.ConnectAndAuthenticate<IMergerService>(r.Credit, r.SeedKey, default))
         {
             if (connectionAndService.IsFailure)
             {

@@ -5,6 +5,7 @@ using Lp.T3cs;
 using Netsphere;
 using Netsphere.Crypto;
 using SimpleCommandLine;
+using SimplePrompt;
 
 namespace Lp.Subcommands.MergerRemote;
 
@@ -21,19 +22,22 @@ public class NestedCommand : NestedCommand<NestedCommand>
         group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
-    public NestedCommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
-        : base(context, core, userInterfaceService)
+    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
+        : base(context, core, simpleConsole)
     {
+        this.ReadLineOptions = new ReadLineOptions
+        {
+            Prompt = "merger-admin>> ",
+            MultilinePrompt = LpConstants.MultilinePromptString,
+        };
     }
-
-    public override string Prefix => "merger-remote >> ";
 
     public RobustConnection? RobustConnection { get; set; }
 
     public SeedKey? RemoteKey { get; set; }
 }
 
-[SimpleCommand("merger-remote")]
+[SimpleCommand("merger-admin")]
 public class Command : ISimpleCommandAsync<CommandOptions>
 {
     private readonly ILogger logger;
@@ -80,7 +84,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
                 async connection =>
                 {
                     var token = AuthenticationToken.CreateAndSign(seedKey, connection);
-                    var r = await connection.GetService<IMergerRemote>().Authenticate(token);
+                    var r = await connection.GetService<IMergerAdministration>().Authenticate(token);
                     if (r.IsSuccess)
                     {
                         connection.Agreement.AcceptAll(r.Value);
@@ -99,7 +103,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         }
 
         this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
-        this.userInterfaceService.WriteLine($"Connection successful (merger-remote)");
+        this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
 
         await this.nestedcommand.MainAsync();
     }
