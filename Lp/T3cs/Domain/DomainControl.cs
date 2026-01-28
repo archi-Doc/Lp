@@ -15,6 +15,7 @@ public partial record class DomainControl
     private readonly IUserInterfaceService userInterfaceService;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
+    private readonly DomainStorage domainStorage;
     private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
 
     // public DomainServer DomainServer { get; }
@@ -23,12 +24,12 @@ public partial record class DomainControl
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
+    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainStorage domainStorage)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
 
-        var domain = lpBase.Options.DomainAssignment;
+        var domain = lpBase.Options.AssignDomain;
         if (!string.IsNullOrEmpty(domain))
         {
             var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(domain);
@@ -40,14 +41,30 @@ public partial record class DomainControl
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
                 var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
-                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(da));
+                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
             }
         }
 
         // this.PrimaryDomain ??= CreditDomain.UnsafeConstructor();
         this.netUnit = netUnit;
         this.authorityControl = authorityControl;
-        // this.DomainServer = domainServer;
+        this.domainStorage = domainStorage;
+    }
+
+    public Task<T3csResult> AssignDomain(string text)
+    {
+        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
+        if (domainAssignment is null)
+        {
+            return Task.FromResult(T3csResult.InvalidData);
+        }
+
+        return this.AssignDomain(domainAssignment);
+    }
+
+    public async Task<T3csResult> AssignDomain(DomainAssignment text)
+    {
+        return T3csResult.Success;
     }
 
     public async Task Prepare()
