@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.T3cs;
 using Netsphere.Crypto;
 
-namespace Lp.Net;
+namespace Lp.T3cs;
 
 [TinyhandObject]
-internal partial class DomainData
+public partial class DomainData
 {
     [Key(0)]
     private Credit domainCredit;
