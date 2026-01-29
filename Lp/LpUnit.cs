@@ -599,7 +599,7 @@ public class LpUnit
         var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
         {// Enable merger
-            var seedKey = await this.lpService.LoadSeedKey(this.logger, code);
+            var seedKey = await this.lpService.ParseCode(this.logger, code);
             if (seedKey is null)
             {
                 seedKey = SeedKey.New(KeyOrientation.Signature);

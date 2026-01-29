@@ -38,7 +38,7 @@ public partial class DomainData
         this.domainSeedKey = domainSeedKey;
     }
 
-    public DomainOverview GetOverview()
+    /*public DomainOverview GetOverview()
     {
         int count;
         PeerProof? peerProof;
@@ -49,5 +49,5 @@ public partial class DomainData
         }
 
         return new(count, peerProof);
-    }
+    }*/
 }

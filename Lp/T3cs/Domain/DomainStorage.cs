@@ -34,10 +34,10 @@ public partial class DomainStorage
         return false;
     }
 
-    internal DomainData AddDomainService(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomainData(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
     {
         var domainHash = domainCredit.GetXxHash3();
-        var serviceClass = this.domainDataDictionary.AddOrUpdate(
+        var domainData = this.domainDataDictionary.AddOrUpdate(
             domainHash,
             hash =>
             {//
@@ -51,6 +51,6 @@ public partial class DomainStorage
                 return original;
             });
 
-        return serviceClass;
+        return domainData;
     }
 }

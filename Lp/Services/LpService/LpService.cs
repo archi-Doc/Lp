@@ -216,13 +216,7 @@ public class LpService
         }
     }
 
-    /// <summary>
-    /// Loads a seed key based on the given code.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    /// <param name="code">The code to load the seed key for.</param>
-    /// <returns>A <see cref="SeedKey"/> if found; otherwise, null.</returns>
-    public async Task<SeedKey?> LoadSeedKey(ILogger? logger, string code)
+    public async Task<SeedKey?> ParseCode(ILogger? logger, string code)
     {
         SeedKey? seedKey;
 
