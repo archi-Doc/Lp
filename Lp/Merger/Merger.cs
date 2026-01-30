@@ -84,7 +84,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         this.Initialized = true;
     }
 
-    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
+    async Task IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         if (!this.Initialized)
         {
@@ -108,7 +108,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    async Task IUnitExecutable.Stop(UnitMessage.Stop message)
     {
     }
 

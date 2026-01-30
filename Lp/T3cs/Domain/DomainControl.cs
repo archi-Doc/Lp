@@ -7,7 +7,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-public partial class DomainControl : UnitBase, IUnitPreparable
+public partial class DomainControl
 {
     #region FieldAndProperty
 
@@ -26,8 +26,7 @@ public partial class DomainControl : UnitBase, IUnitPreparable
 
     #endregion
 
-    public DomainControl(UnitContext context, ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainStorage domainStorage)
-        : base(context)
+    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainStorage domainStorage)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -63,7 +62,24 @@ public partial class DomainControl : UnitBase, IUnitPreparable
     }
 
     public async Task Prepare()
-    {
+    {//
+        var domain = this.lpBase.Options.AssignDomain;
+        if (!string.IsNullOrEmpty(domain))
+        {
+            var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(domain);
+            if (domainAssignment is not null)
+            {
+                // this.PrimaryDomain = new(domainOption);
+                this.AssignDomain(domainAssignment).Wait();//
+            }
+            else
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
+                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
+                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
+            }
+        }
+
         var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
         if (seedKey is null)
         {
@@ -118,26 +134,6 @@ public partial class DomainControl : UnitBase, IUnitPreparable
         }
 
         return false;
-    }
-
-    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
-    {
-        var domain = lpBase.Options.AssignDomain;
-        if (!string.IsNullOrEmpty(domain))
-        {
-            var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(domain);
-            if (domainAssignment is not null)
-            {
-                // this.PrimaryDomain = new(domainOption);
-                this.AssignDomain(domainAssignment).Wait();//
-            }
-            else
-            {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
-                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
-                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
-            }
-        }
     }
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)

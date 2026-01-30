@@ -70,7 +70,7 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
 
     public SeedKey SeedKey => this.seedKey;
 
-    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
+    async Task IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         if (!this.Initialized)
         {
@@ -84,7 +84,7 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    async Task IUnitExecutable.Stop(UnitMessage.Stop message)
     {
     }
 

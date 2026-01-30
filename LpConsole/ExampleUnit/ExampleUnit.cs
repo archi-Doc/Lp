@@ -52,7 +52,7 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger = logger;
     }
 
-    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
+    async Task IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         // Load strings
         var asm = System.Reflection.Assembly.GetExecutingAssembly();
@@ -73,7 +73,7 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log("Example unit started");
     }
 
-    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    async Task IUnitExecutable.Stop(UnitMessage.Stop message)
     {
     }
 
