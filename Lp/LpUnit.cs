@@ -640,14 +640,15 @@ public class LpUnit
         var crystalControl = context.ServiceProvider.GetRequiredService<CrystalControl>();
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
         {// LinkerCode is valid
-            var privault = this.LpBase.Options.LinkerCode;
-            if (!SeedKey.TryParse(privault, out var privateKey))
+            var code = this.LpBase.Options.LinkerCode;
+            this.lpService.ParseCode();
+            if (!SeedKey.TryParse(code, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(code, out privateKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, code);
                     privateKey = SeedKey.New(KeyOrientation.Signature);
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    this.VaultControl.Root.AddObject(code, privateKey);
                 }
             }
 

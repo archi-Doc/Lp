@@ -221,9 +221,9 @@ public class LpService
         SeedKey? seedKey;
 
         // Authority
-        if (await this.AuthorityControl.GetAuthority(code).ConfigureAwait(false) is { } auth)
+        if (await this.AuthorityControl.GetAuthority(code).ConfigureAwait(false) is { } authority)
         {// Success
-            return auth.GetSeedKey();
+            return authority.GetSeedKey();
         }
 
         // Vault
