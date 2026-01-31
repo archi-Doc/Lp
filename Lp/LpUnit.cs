@@ -389,7 +389,7 @@ public class LpUnit
                 this.Context.CreateInstances();
 
                 // Prepare
-                this.Context.SendPrepare(new());
+                await this.Context.SendPrepare();
             }
             catch
             {
@@ -410,19 +410,19 @@ public class LpUnit
 
             try
             {// Start, Main loop
-                await lpUnit.StartAsync(this.Context);
+                await lpUnit.Start(this.Context);
 
                 await lpUnit.MainAsync();
 
-                this.Context.SendStop(new());
+                await this.Context.SendStop();
                 await lpUnit.TerminateAsync(this.Context);
-                await lpUnit.SaveAsync(this.Context);
+                await lpUnit.Save(this.Context);
                 lpUnit.Terminate(false);
             }
             catch
             {
                 await lpUnit.TerminateAsync(this.Context);
-                await lpUnit.SaveAsync(this.Context);
+                await lpUnit.Save(this.Context);
                 lpUnit.Terminate(true);
                 return;
             }
@@ -663,7 +663,7 @@ public class LpUnit
 
     public async Task LoadAsync(UnitContext context)
     {
-        await context.SendLoadAsync(new(this.LpBase.DataDirectory));
+        await context.SendLoad();
     }
 
     public async Task AbortAsync()
@@ -671,7 +671,7 @@ public class LpUnit
         // await this.CrystalControl.SaveAllAndTerminate();
     }
 
-    public async Task SaveAsync(UnitContext context)
+    public async Task Save(UnitContext context)
     {
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0"); //
         Directory.CreateDirectory(this.LpBase.DataDirectory);
@@ -681,16 +681,16 @@ public class LpUnit
         await this.VaultControl.SaveAsync();
 
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1"); //
-        await context.SendSaveAsync(new(this.LpBase.DataDirectory));
+        await context.SendSave();
 
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2"); //
         await this.CrystalControl.StoreAndRip();
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3"); //
     }
 
-    public async Task StartAsync(UnitContext context)
+    public async Task Start(UnitContext context)
     {
-        await context.SendStartAsync(new(this.Core));
+        await context.SendStart();
 
         this.BigMachine.Start(null);
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
@@ -850,7 +850,7 @@ public class LpUnit
 
         try
         {
-            await context.SendTerminateAsync(new());
+            await context.SendTerminate();
         }
         catch
         {
