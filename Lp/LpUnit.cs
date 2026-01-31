@@ -599,7 +599,7 @@ public class LpUnit
         var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
         {// Enable merger
-            var seedKey = await this.lpService.ParseCode(this.logger, code);
+            var seedKey = await this.lpService.GetSeedKeyFromCode(code);
             if (seedKey is null)
             {
                 seedKey = SeedKey.New(KeyOrientation.Signature);
@@ -640,9 +640,8 @@ public class LpUnit
         var crystalControl = context.ServiceProvider.GetRequiredService<CrystalControl>();
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
         {// LinkerCode is valid
-            var code = this.LpBase.Options.LinkerCode;
-            this.lpService.ParseCode();
-            if (!SeedKey.TryParse(code, out var privateKey))
+            var seedKey = await this.lpService.GetSeedKeyFromCode(this.LpBase.Options.LinkerCode).ConfigureAwait(false);
+            /*if (!SeedKey.TryParse(code, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(code, out privateKey, out _))
                 {
@@ -650,9 +649,13 @@ public class LpUnit
                     privateKey = SeedKey.New(KeyOrientation.Signature);
                     this.VaultControl.Root.AddObject(code, privateKey);
                 }
+            }*/
+
+            if (seedKey is not null)
+            {
+                context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalControl, seedKey);
             }
 
-            context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalControl, privateKey);
             // this.NetUnit.Services.Register<IMergerClient, MergerClientAgent>();
             // this.NetUnit.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }

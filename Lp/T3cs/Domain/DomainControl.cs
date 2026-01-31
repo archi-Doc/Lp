@@ -50,7 +50,7 @@ public partial class DomainControl
 
     public async Task<T3csResult> AssignDomain(DomainAssignment domainAssignment)
     {
-        var seedKey = await this.lpService.ParseCode(this.logger, domainAssignment.Code).ConfigureAwait(false);
+        var seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
         if (seedKey is null)
         {
             return T3csResult.InvalidData;

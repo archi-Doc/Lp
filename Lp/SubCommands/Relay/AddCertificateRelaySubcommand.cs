@@ -32,7 +32,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
         this.userInterfaceService.WriteLine($"Add {relayCircuit.KindText} relay");
 
         // Code
-        var seedKey = await this.lpService.ParseCode(this.logger, options.Code);
+        var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code);
         if (seedKey is null)
         {
             return;

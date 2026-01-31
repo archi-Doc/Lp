@@ -216,7 +216,7 @@ public class LpService
         }
     }
 
-    public async Task<SeedKey?> ParseCode(ILogger? logger, string code)
+    public async Task<SeedKey?> GetSeedKeyFromCode(string code)
     {
         SeedKey? seedKey;
 
@@ -238,7 +238,7 @@ public class LpService
             return seedKey;
         }
 
-        logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPrivateKey);
+        this.userInterfaceService.WriteLine(Hashed.Error.NoPrivateKey);
         return default;
     }
 }
