@@ -14,6 +14,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     private readonly ReadLineOptions passwordOptions = new()
     {
+        AllowEmptyLineInput = true,
         MaxInputLength = 100,
         MaskingCharacter = '*',
         MultilineDelimiter = default,

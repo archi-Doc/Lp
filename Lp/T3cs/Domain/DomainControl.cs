@@ -50,8 +50,7 @@ public partial class DomainControl
 
     public async Task<T3csResult> AssignDomain(DomainAssignment domainAssignment)
     {
-        var code = "AB";//
-        var seedKey = await this.lpService.ParseCode(this.logger, code).ConfigureAwait(false);
+        var seedKey = await this.lpService.ParseCode(this.logger, domainAssignment.Code).ConfigureAwait(false);
         if (seedKey is null)
         {
             return T3csResult.InvalidData;
@@ -70,7 +69,11 @@ public partial class DomainControl
             if (domainAssignment is not null)
             {
                 // this.PrimaryDomain = new(domainOption);
-                this.AssignDomain(domainAssignment).Wait();//
+                var result = await this.AssignDomain(domainAssignment).ConfigureAwait(false);
+                if (result != T3csResult.Success)
+                {
+                    throw new PanicException();
+                }
             }
             else
             {
@@ -80,11 +83,7 @@ public partial class DomainControl
             }
         }
 
-        var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
-        if (seedKey is null)
-        {
-            return;
-        }
+        // var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
 
         // this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
         this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();

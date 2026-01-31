@@ -63,7 +63,7 @@ public static class IUserInterfaceServiceExtention
             }
             else if (password == string.Empty)
             {
-                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.EmptyWarning).ConfigureAwait(false);
+                viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
                 var reply = await viewService.RequestYesOrNo(Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
                 if (reply != false)
                 {// Empty password or abort
