@@ -45,7 +45,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         => ((IConsoleService)this.simpleConsole).KeyAvailable;
 
     public override async Task Notify(LogLevel level, string message)
-        => this.logger.TryGet(level)?.Log(message);
+        => this.simpleConsole.WriteLine(message); // this.logger.TryGet(level)?.Log(message);
 
     public override Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
     {
