@@ -724,7 +724,7 @@ public class LpUnit
             return true;
         }
 
-        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
+        var result = await this.UserInterfaceService.ReadYesNo(Hashed.Dialog.ConfirmExit);
         if (result == true)
         {
             this.Core.Terminate(); // this.Terminate(false);

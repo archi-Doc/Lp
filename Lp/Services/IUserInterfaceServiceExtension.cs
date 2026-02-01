@@ -13,13 +13,13 @@ public static class IUserInterfaceServiceExtention
     public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
         => service.WriteLine(HashedString.Get(hash, obj1, obj2));
 
-    public static Task<bool?> RequestYesOrNo(this IUserInterfaceService viewService, ulong hash)
+    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash)
         => viewService.RequestYesOrNo(HashedString.Get(hash));
 
-    public static Task<bool?> RequestYesOrNo(this IUserInterfaceService viewService, ulong hash, object obj1)
+    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1)
         => viewService.RequestYesOrNo(HashedString.Get(hash, obj1));
 
-    public static Task<bool?> RequestYesOrNo(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
+    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
         => viewService.RequestYesOrNo(HashedString.Get(hash, obj1, obj2));
 
     public static Task<string?> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
@@ -64,7 +64,7 @@ public static class IUserInterfaceServiceExtention
             else if (password == string.Empty)
             {
                 viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
-                var reply = await viewService.RequestYesOrNo(Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
+                var reply = await viewService.ReadYesNo(Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
                 if (reply != false)
                 {// Empty password or abort
                     return password;

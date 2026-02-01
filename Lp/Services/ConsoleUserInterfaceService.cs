@@ -7,10 +7,9 @@ namespace Lp.Services;
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
     private const string YesOrNoSuffix = "[Y/n] ";
-    private readonly UnitCore core;
+
     private readonly ILogger logger;
     private readonly SimpleConsole simpleConsole;
-    private readonly IConsoleService consoleService;
 
     private readonly ReadLineOptions passwordOptions = new()
     {
@@ -43,19 +42,17 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         CancelOnEscape = true,
     };
 
-    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
+    public ConsoleUserInterfaceService(ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
     {
-        this.core = core;
         this.logger = logger;
         this.simpleConsole = simpleConsole;
-        this.consoleService = simpleConsole;
     }
 
     public override void Write(string? message = null)
-        => this.consoleService.Write(message);
+        => this.simpleConsole.Write(message);
 
     public override void WriteLine(string? message = null)
-        => this.consoleService.WriteLine(message);
+        => this.simpleConsole.WriteLine(message);
 
     public override void EnqueueInput(string? message = null)
         => this.simpleConsole.EnqueueInput(message);
@@ -64,10 +61,10 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         => this.simpleConsole.ReadLine(default, cancellationToken);
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
-        => this.consoleService.ReadKey(intercept);
+        => ((IConsoleService)this.simpleConsole).ReadKey(intercept);
 
     public override bool KeyAvailable
-        => this.consoleService.KeyAvailable;
+        => ((IConsoleService)this.simpleConsole).KeyAvailable;
 
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
