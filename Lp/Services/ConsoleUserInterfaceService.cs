@@ -14,6 +14,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     private readonly ReadLineOptions passwordOptions = new()
     {
         AllowEmptyLineInput = true,
+        CancelOnEscape = false,
         MaxInputLength = 100,
         MaskingCharacter = '*',
         MultilineDelimiter = default,
@@ -76,7 +77,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         return this.simpleConsole.ReadLine(options);
     }
 
-    public override async Task<bool?> ReadYesNo(string? description)
+    public override async Task<InputResultKind> ReadYesNo(string? description)
     {
         var options = ReadLineOptions.YesNo with
         {
@@ -91,21 +92,17 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
                 result.Kind == InputResultKind.Canceled)
             {// Ctrl+C
                 // this.WriteLine();
-                return null; // throw new PanicException();
+                return result.Kind; // throw new PanicException();
             }
 
-            var text = result.Text.CleanupInput().ToLower();
+            var text = result.Text.Trim().ToLowerInvariant();
             if (text == "y" || text == "yes")
             {
-                return true;
+                return InputResultKind.Success;
             }
             else if (text == "n" || text == "no")
             {
-                return false;
-            }
-            else
-            {
-                return null;
+                return InputResultKind.No;
             }
         }
     }

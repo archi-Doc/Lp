@@ -61,7 +61,7 @@ public partial class DomainControl
     }
 
     public async Task Prepare()
-    {//
+    {
         var domain = this.lpBase.Options.AssignDomain;
         if (!string.IsNullOrEmpty(domain))
         {

@@ -680,12 +680,12 @@ public class LpUnit
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1");
         await context.SendSave();
 
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2");
         await this.CrystalControl.StoreAndRip();
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3");
     }
 
     public async Task Start(UnitContext context)
@@ -725,13 +725,14 @@ public class LpUnit
         }
 
         var result = await this.UserInterfaceService.ReadYesNo(Hashed.Dialog.ConfirmExit);
-        if (result == true)
+        if (result == InputResultKind.No ||
+            result == InputResultKind.Canceled)
         {
-            this.Core.Terminate(); // this.Terminate(false);
-            return true;
+            return false;
         }
 
-        return false;
+        this.Core.Terminate(); // this.Terminate(false);
+        return true;
     }
 
     public bool Subcommand(string subcommand)

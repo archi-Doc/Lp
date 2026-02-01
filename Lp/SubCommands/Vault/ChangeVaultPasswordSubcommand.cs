@@ -35,7 +35,7 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
         }
 
-        var newPassword = await this.userInterfaceService.RequestPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
+        var newPassword = await this.userInterfaceService.ReadPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
         if (newPassword == null)
         {
             return;

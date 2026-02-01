@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using SimplePrompt;
+
 namespace Lp;
 
 public static class IUserInterfaceServiceExtention
@@ -13,13 +15,13 @@ public static class IUserInterfaceServiceExtention
     public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
         => service.WriteLine(HashedString.Get(hash, obj1, obj2));
 
-    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash)
+    public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, ulong hash)
         => viewService.ReadYesNo(HashedString.Get(hash));
 
-    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1)
+    public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1)
         => viewService.ReadYesNo(HashedString.Get(hash, obj1));
 
-    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
+    public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
         => viewService.ReadYesNo(HashedString.Get(hash, obj1, obj2));
 
     public static Task<InputResult> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
@@ -49,7 +51,7 @@ public static class IUserInterfaceServiceExtention
     public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1, object obj2)
         => viewService.Notify(level, HashedString.Get(hash, obj1, obj2));
 
-    public static async Task<string?> RequestPasswordAndConfirm(this IUserInterfaceService viewService, ulong hash, ulong hash2)
+    public static async Task<string?> ReadPasswordAndConfirm(this IUserInterfaceService viewService, ulong hash, ulong hash2)
     {
         string? password;
         string? confirm;
@@ -65,7 +67,7 @@ public static class IUserInterfaceServiceExtention
             {
                 viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
                 var reply = await viewService.ReadYesNo(Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
-                if (reply != false)
+                if (reply.IsPositive)
                 {// Empty password or abort
                     return password;
                 }
@@ -82,7 +84,7 @@ public static class IUserInterfaceServiceExtention
             }
             else if (password != confirm)
             {
-                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
+                viewService.WriteLine(Hashed.Dialog.Password.NotMatch);
             }
             else
             {
