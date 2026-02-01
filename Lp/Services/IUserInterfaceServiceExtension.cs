@@ -22,14 +22,14 @@ public static class IUserInterfaceServiceExtention
     public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
         => viewService.ReadYesNo(HashedString.Get(hash, obj1, obj2));
 
-    public static Task<string?> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
-        => viewService.RequestString(cancelOnEscape, HashedString.Get(hash));
+    public static Task<InputResult> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
+        => viewService.ReadLine(cancelOnEscape, HashedString.Get(hash));
 
-    public static Task<string?> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1)
-        => viewService.RequestString(cancelOnEscape, HashedString.Get(hash, obj1));
+    public static Task<InputResult> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1)
+        => viewService.ReadLine(cancelOnEscape, HashedString.Get(hash, obj1));
 
-    public static Task<string?> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1, object obj2)
-        => viewService.RequestString(cancelOnEscape, HashedString.Get(hash, obj1, obj2));
+    public static Task<InputResult> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1, object obj2)
+        => viewService.ReadLine(cancelOnEscape, HashedString.Get(hash, obj1, obj2));
 
     public static Task<string?> ReadPassword(this IUserInterfaceService viewService, ulong hash)
         => viewService.ReadPassword(HashedString.Get(hash));

@@ -23,7 +23,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         MaxInputLength = 3,
         MultilineDelimiter = default,
-        CancelOnEscape = true,
+        CancelOnEscape = false,
         TextInputHook = text =>
         {
             var st = text.CleanupInput().ToLower();
@@ -87,7 +87,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
-    public override async Task<string?> RequestString(bool cancelOnEscape, string? description)
+    public override Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
     {
         var options = this.stringOptions with
         {
@@ -95,15 +95,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
             CancelOnEscape = cancelOnEscape,
         };
 
-        var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
-        if (result.IsSuccess)
-        {
-            return result.Text;
-        }
-        else
-        {
-            return null;
-        }
+        return this.simpleConsole.ReadLine(options);
     }
 
     public override async Task<bool?> ReadYesNo(string? description)
@@ -111,6 +103,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         var options = this.yesOrNoOptions with
         {
             Prompt = description == null ? YesOrNoSuffix : $"{description} {YesOrNoSuffix}",
+            CancelOnEscape = true,
         };
 
         while (true)
