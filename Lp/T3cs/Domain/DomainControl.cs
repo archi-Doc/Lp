@@ -60,7 +60,7 @@ public partial class DomainControl
         return T3csResult.Success;
     }
 
-    public async Task Prepare()
+    public async Task Prepare(UnitContext unitContext)
     {
         var domain = this.lpBase.Options.AssignDomain;
         if (!string.IsNullOrEmpty(domain))

@@ -42,7 +42,7 @@ public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySu
                 break;
             }
 
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
+            this.userInterfaceService.WriteLine(Hashed.Dialog.Password.NotMatch);
         }
 
         result = await this.userInterfaceService.ReadPasswordAndConfirm(true, Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);

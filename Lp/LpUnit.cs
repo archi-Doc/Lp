@@ -375,7 +375,7 @@ public class LpUnit
                 lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
-                await lpUnit.DomainControl.Prepare();
+                await lpUnit.DomainControl.Prepare(this.Context);
                 await lpUnit.PrepareMaster(this.Context);
                 await lpUnit.PrepareMerger(this.Context);
                 await lpUnit.PrepareRelay(this.Context);
@@ -393,6 +393,7 @@ public class LpUnit
             }
             catch
             {
+                await lpUnit.Save(this.Context);
                 lpUnit.Terminate(true);
                 return;
             }
