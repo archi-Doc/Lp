@@ -19,29 +19,6 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         MultilineDelimiter = default,
     };
 
-    private readonly ReadLineOptions yesOrNoOptions = new()
-    {
-        MaxInputLength = 3,
-        MultilineDelimiter = default,
-        CancelOnEscape = false,
-        TextInputHook = text =>
-        {
-            var st = text.CleanupInput().ToLower();
-            if (st == "y" || st == "yes" || st == "n" || st == "no")
-            {
-                return text;
-            }
-
-            return null;
-        },
-    };
-
-    private readonly ReadLineOptions stringOptions = new()
-    {
-        MultilineDelimiter = default,
-        CancelOnEscape = true,
-    };
-
     public ConsoleUserInterfaceService(ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
     {
         this.logger = logger;
@@ -89,10 +66,11 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public override Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
     {
-        var options = this.stringOptions with
+        var options = new ReadLineOptions
         {
-            Prompt = description ?? string.Empty,
             CancelOnEscape = cancelOnEscape,
+            MultilineDelimiter = default,
+            Prompt = description ?? string.Empty,
         };
 
         return this.simpleConsole.ReadLine(options);
@@ -100,7 +78,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public override async Task<bool?> ReadYesNo(string? description)
     {
-        var options = this.yesOrNoOptions with
+        var options = ReadLineOptions.YesNo with
         {
             Prompt = description == null ? YesOrNoSuffix : $"{description} {YesOrNoSuffix}",
             CancelOnEscape = true,
