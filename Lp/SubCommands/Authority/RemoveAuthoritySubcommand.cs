@@ -24,7 +24,7 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
         }
         else
         {
-            if (await this.userInterfaceService.ReadYesNo(Hashed.Authority.RemoveConfirm, options.AuthorityName) != InputResultKind.Success)
+            if (await this.userInterfaceService.ReadYesNo(true, Hashed.Authority.RemoveConfirm, options.AuthorityName) != InputResultKind.Success)
             {
                 return;
             }

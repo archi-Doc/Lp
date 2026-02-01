@@ -18,9 +18,9 @@ public abstract class IUserInterfaceService : IConsoleService
 
     public abstract bool KeyAvailable { get; }
 
-    public abstract Task<InputResultKind> ReadYesNo(string? description);
+    public abstract Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description);
 
-    public abstract Task<?> ReadPassword(string? description);
+    public abstract Task<InputResult> ReadPassword(bool cancelOnEscape, string? description);
 
     public abstract Task Notify(LogLevel level, string message);
 }

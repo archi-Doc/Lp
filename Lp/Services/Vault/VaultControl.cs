@@ -77,7 +77,15 @@ public partial class VaultControl
         var password = this.lpBase.Options.VaultPass;
         if (string.IsNullOrEmpty(password))
         {
-            password = await this.userInterfaceService.ReadPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+            var result = await this.userInterfaceService.ReadPasswordAndConfirm(false, Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+            if (result.IsTerminated)
+            {
+                return;
+            }
+            else if (result.IsSuccess)
+            {
+                password = result.Text;
+            }
         }
 
         if (password == null)

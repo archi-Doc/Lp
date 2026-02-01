@@ -47,22 +47,15 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public override async Task<string?> ReadPassword(string? description)
+    public override Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
     {
         var options = this.passwordOptions with
         {
+            CancelOnEscape = cancelOnEscape,
             Prompt = description ?? string.Empty,
         };
 
-        var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
-        if (result.IsSuccess)
-        {
-            return result.Text;
-        }
-        else
-        {
-            return null;
-        }
+        return this.simpleConsole.ReadLine(options);
     }
 
     public override Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
@@ -77,12 +70,12 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         return this.simpleConsole.ReadLine(options);
     }
 
-    public override async Task<InputResultKind> ReadYesNo(string? description)
+    public override async Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description)
     {
         var options = ReadLineOptions.YesNo with
         {
+            CancelOnEscape = cancelOnEscape,
             Prompt = description == null ? YesOrNoSuffix : $"{description} {YesOrNoSuffix}",
-            CancelOnEscape = true,
         };
 
         while (true)

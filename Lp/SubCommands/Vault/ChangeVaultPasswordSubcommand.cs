@@ -19,15 +19,15 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
     {
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Vault.ChangePassword);
 
-        string? currentPassword;
+        InputResult result;
         while (true)
         {
-            currentPassword = await this.userInterfaceService.ReadPassword(Hashed.Dialog.Password.EnterCurrent);
-            if (currentPassword == null)
+            result = await this.userInterfaceService.ReadPassword(true, Hashed.Dialog.Password.EnterCurrent);
+            if (!result.IsSuccess)
             {
                 return;
             }
-            else if (this.vaultControl.Root.PasswordEquals(currentPassword))
+            else if (this.vaultControl.Root.PasswordEquals(result.Text))
             {// Correct
                 break;
             }
@@ -35,13 +35,13 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
         }
 
-        var newPassword = await this.userInterfaceService.ReadPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
-        if (newPassword == null)
+        result = await this.userInterfaceService.ReadPasswordAndConfirm(true, Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
+        if (!result.IsSuccess)
         {
             return;
         }
 
-        this.vaultControl.Root.SetPassword(newPassword);
+        this.vaultControl.Root.SetPassword(result.Text);
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 
