@@ -22,7 +22,7 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
         string? currentPassword;
         while (true)
         {
-            currentPassword = await this.userInterfaceService.RequestPassword(Hashed.Dialog.Password.EnterCurrent);
+            currentPassword = await this.userInterfaceService.ReadPassword(Hashed.Dialog.Password.EnterCurrent);
             if (currentPassword == null)
             {
                 return;

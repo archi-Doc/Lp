@@ -104,7 +104,7 @@ public class AuthorityControl
                     return default;
                 }
 
-                password = await this.userInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
+                password = await this.userInterfaceService.ReadPassword(Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
                 if (password == null)
                 {// Canceled
                     return default;

@@ -216,20 +216,14 @@ public class LpService
         }
     }
 
-    /// <summary>
-    /// Loads a seed key based on the given code.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    /// <param name="code">The code to load the seed key for.</param>
-    /// <returns>A <see cref="SeedKey"/> if found; otherwise, null.</returns>
-    public async Task<SeedKey?> LoadSeedKey(ILogger? logger, string code)
+    public async Task<SeedKey?> GetSeedKeyFromCode(string code)
     {
         SeedKey? seedKey;
 
         // Authority
-        if (await this.AuthorityControl.GetAuthority(code).ConfigureAwait(false) is { } auth)
+        if (await this.AuthorityControl.GetAuthority(code).ConfigureAwait(false) is { } authority)
         {// Success
-            return auth.GetSeedKey();
+            return authority.GetSeedKey();
         }
 
         // Vault
@@ -244,7 +238,7 @@ public class LpService
             return seedKey;
         }
 
-        logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPrivateKey);
+        this.userInterfaceService.WriteLine(Hashed.Error.NoPrivateKey);
         return default;
     }
 }

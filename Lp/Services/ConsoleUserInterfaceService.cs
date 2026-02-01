@@ -7,71 +7,46 @@ namespace Lp.Services;
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
     private const string YesOrNoSuffix = "[Y/n] ";
-    private readonly UnitCore core;
+
     private readonly ILogger logger;
     private readonly SimpleConsole simpleConsole;
-    private readonly IConsoleService consoleService;
 
     private readonly ReadLineOptions passwordOptions = new()
     {
+        AllowEmptyLineInput = true,
         MaxInputLength = 100,
         MaskingCharacter = '*',
         MultilineDelimiter = default,
     };
 
-    private readonly ReadLineOptions yesOrNoOptions = new()
+    public ConsoleUserInterfaceService(ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
     {
-        MaxInputLength = 3,
-        MultilineDelimiter = default,
-        CancelOnEscape = true,
-        TextInputHook = text =>
-        {
-            var st = text.CleanupInput().ToLower();
-            if (st == "y" || st == "yes" || st == "n" || st == "no")
-            {
-                return text;
-            }
-
-            return null;
-        },
-    };
-
-    private readonly ReadLineOptions stringOptions = new()
-    {
-        MultilineDelimiter = default,
-        CancelOnEscape = true,
-    };
-
-    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
-    {
-        this.core = core;
         this.logger = logger;
         this.simpleConsole = simpleConsole;
-        this.consoleService = simpleConsole;
     }
 
     public override void Write(string? message = null)
-        => this.consoleService.Write(message);
+        => this.simpleConsole.Write(message);
 
     public override void WriteLine(string? message = null)
-        => this.consoleService.WriteLine(message);
+        => this.simpleConsole.WriteLine(message);
 
-    public override void EnqueueInput(string? message = null)
+    public override void EnqueueLine(string? message = null)
         => this.simpleConsole.EnqueueInput(message);
 
     public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
         => this.simpleConsole.ReadLine(default, cancellationToken);
 
     public override ConsoleKeyInfo ReadKey(bool intercept)
-        => this.consoleService.ReadKey(intercept);
+        => ((IConsoleService)this.simpleConsole).ReadKey(intercept);
 
     public override bool KeyAvailable
-        => this.consoleService.KeyAvailable;
+        => ((IConsoleService)this.simpleConsole).KeyAvailable;
 
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public override async Task<string?> RequestPassword(string? description)
+    public override async Task<string?> ReadPassword(string? description)
     {
         var options = this.passwordOptions with
         {
@@ -89,30 +64,24 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
-    public override async Task<string?> RequestString(bool cancelOnEscape, string? description)
+    public override Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
     {
-        var options = this.stringOptions with
+        var options = new ReadLineOptions
         {
-            Prompt = description ?? string.Empty,
             CancelOnEscape = cancelOnEscape,
+            MultilineDelimiter = default,
+            Prompt = description ?? string.Empty,
         };
 
-        var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
-        if (result.IsSuccess)
-        {
-            return result.Text;
-        }
-        else
-        {
-            return null;
-        }
+        return this.simpleConsole.ReadLine(options);
     }
 
-    public override async Task<bool?> RequestYesOrNo(string? description)
+    public override async Task<bool?> ReadYesNo(string? description)
     {
-        var options = this.yesOrNoOptions with
+        var options = ReadLineOptions.YesNo with
         {
             Prompt = description == null ? YesOrNoSuffix : $"{description} {YesOrNoSuffix}",
+            CancelOnEscape = true,
         };
 
         while (true)

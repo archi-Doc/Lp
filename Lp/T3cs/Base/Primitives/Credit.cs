@@ -234,6 +234,9 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         this.Mergers = mergers;
     }
 
+    public ulong GetDomainHash()
+        => this.Identifier.Id1;
+
     public bool Validate()
     {
         if (this.Mergers == null)

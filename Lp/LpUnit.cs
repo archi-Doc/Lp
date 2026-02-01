@@ -259,10 +259,10 @@ public class LpUnit
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
-                    context.AddCrystal<DomainData>(new CrystalConfiguration() with
+                    context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 2,
-                        FileConfiguration = new GlobalFileConfiguration(DomainData.Filename),
+                        FileConfiguration = new GlobalFileConfiguration(DomainStorage.Filename),
                     });
                 });
         }
@@ -389,7 +389,7 @@ public class LpUnit
                 this.Context.CreateInstances();
 
                 // Prepare
-                this.Context.SendPrepare(new());
+                await this.Context.SendPrepare();
             }
             catch
             {
@@ -410,19 +410,19 @@ public class LpUnit
 
             try
             {// Start, Main loop
-                await lpUnit.StartAsync(this.Context);
+                await lpUnit.Start(this.Context);
 
                 await lpUnit.MainAsync();
 
-                this.Context.SendStop(new());
+                await this.Context.SendStop();
                 await lpUnit.TerminateAsync(this.Context);
-                await lpUnit.SaveAsync(this.Context);
+                await lpUnit.Save(this.Context);
                 lpUnit.Terminate(false);
             }
             catch
             {
                 await lpUnit.TerminateAsync(this.Context);
-                await lpUnit.SaveAsync(this.Context);
+                await lpUnit.Save(this.Context);
                 lpUnit.Terminate(true);
                 return;
             }
@@ -599,7 +599,7 @@ public class LpUnit
         var code = this.LpBase.Options.MergerCode;
         if (!string.IsNullOrEmpty(code))
         {// Enable merger
-            var seedKey = await this.lpService.LoadSeedKey(this.logger, code);
+            var seedKey = await this.lpService.GetSeedKeyFromCode(code);
             if (seedKey is null)
             {
                 seedKey = SeedKey.New(KeyOrientation.Signature);
@@ -640,18 +640,22 @@ public class LpUnit
         var crystalControl = context.ServiceProvider.GetRequiredService<CrystalControl>();
         if (!string.IsNullOrEmpty(this.LpBase.Options.LinkerCode))
         {// LinkerCode is valid
-            var privault = this.LpBase.Options.LinkerCode;
-            if (!SeedKey.TryParse(privault, out var privateKey))
+            var seedKey = await this.lpService.GetSeedKeyFromCode(this.LpBase.Options.LinkerCode).ConfigureAwait(false);
+            /*if (!SeedKey.TryParse(code, out var privateKey))
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
-                if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out privateKey, out _))
+                if (!this.VaultControl.Root.TryGetObject<SeedKey>(code, out privateKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Linker.NoPrivateKey, code);
                     privateKey = SeedKey.New(KeyOrientation.Signature);
-                    this.VaultControl.Root.AddObject(privault, privateKey);
+                    this.VaultControl.Root.AddObject(code, privateKey);
                 }
+            }*/
+
+            if (seedKey is not null)
+            {
+                context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalControl, seedKey);
             }
 
-            context.ServiceProvider.GetRequiredService<Linker>().Initialize(crystalControl, privateKey);
             // this.NetUnit.Services.Register<IMergerClient, MergerClientAgent>();
             // this.NetUnit.Services.Register<IMergerRemote, MergerRemoteAgent>();
         }
@@ -659,7 +663,7 @@ public class LpUnit
 
     public async Task LoadAsync(UnitContext context)
     {
-        await context.SendLoadAsync(new(this.LpBase.DataDirectory));
+        await context.SendLoad();
     }
 
     public async Task AbortAsync()
@@ -667,7 +671,7 @@ public class LpUnit
         // await this.CrystalControl.SaveAllAndTerminate();
     }
 
-    public async Task SaveAsync(UnitContext context)
+    public async Task Save(UnitContext context)
     {
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0"); //
         Directory.CreateDirectory(this.LpBase.DataDirectory);
@@ -677,16 +681,16 @@ public class LpUnit
         await this.VaultControl.SaveAsync();
 
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1"); //
-        await context.SendSaveAsync(new(this.LpBase.DataDirectory));
+        await context.SendSave();
 
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2"); //
         await this.CrystalControl.StoreAndRip();
         this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3"); //
     }
 
-    public async Task StartAsync(UnitContext context)
+    public async Task Start(UnitContext context)
     {
-        await context.SendStartAsync(new(this.Core));
+        await context.SendStart();
 
         this.BigMachine.Start(null);
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
@@ -720,7 +724,7 @@ public class LpUnit
             return true;
         }
 
-        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
+        var result = await this.UserInterfaceService.ReadYesNo(Hashed.Dialog.ConfirmExit);
         if (result == true)
         {
             this.Core.Terminate(); // this.Terminate(false);
@@ -846,7 +850,7 @@ public class LpUnit
 
         try
         {
-            await context.SendTerminateAsync(new());
+            await context.SendTerminate();
         }
         catch
         {

@@ -41,7 +41,7 @@ public class LpFixture : IDisposable
 
     public void Dispose()
     {
-        this.product.Context.SendTerminateAsync(new()).Wait();
+        this.product.Context.SendTerminate().Wait();
     }
 
     public IServiceProvider ServiceProvider => this.product.Context.ServiceProvider;

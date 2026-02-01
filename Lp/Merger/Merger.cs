@@ -84,7 +84,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         this.Initialized = true;
     }
 
-    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
+    async Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
     {
         if (!this.Initialized)
         {
@@ -104,15 +104,15 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}+{this.equityCreditCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
-    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
+    async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
     {
     }
 
-    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    async Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
     {
     }
 
-    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
+    async Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Terminated");
     }

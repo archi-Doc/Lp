@@ -41,7 +41,7 @@ public partial class CommandGroup
                 {
                     if (!string.IsNullOrEmpty(x))
                     {
-                        this.userInterfaceService.EnqueueInput(x);
+                        this.userInterfaceService.EnqueueLine(x);
                     }
                 }
 

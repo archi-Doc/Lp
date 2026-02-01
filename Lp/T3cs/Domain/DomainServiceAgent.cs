@@ -23,7 +23,8 @@ internal class DomainServiceAgent : IDomainService
             return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
         }
 
-        return Task.FromResult<NetResultAndValue<DomainOverview>>(new(domainService.GetOverview()));
+        // return Task.FromResult<NetResultAndValue<DomainOverview>>(new(domainService.GetOverview()));
+        return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
     }
 }
 
