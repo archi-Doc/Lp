@@ -54,7 +54,6 @@ public static class IUserInterfaceServiceExtention
     public static async Task<InputResult> ReadPasswordAndConfirm(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, ulong hash2)
     {
         InputResult result;
-
         while (true)
         {
             result = await viewService.ReadPassword(cancelOnEscape, hash).ConfigureAwait(false);
@@ -63,16 +62,20 @@ public static class IUserInterfaceServiceExtention
                 return result;
             }
             else if (result.Text == string.Empty)
-            {
+            {// Empty password
                 viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
                 var resultKind = await viewService.ReadYesNo(cancelOnEscape, Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
-                if (resultKind == InputResultKind.Success)
-                {// Empty password
+                if (resultKind.IsPositive)
+                {// Yes (Empty password)
                     return result;
                 }
-                if (reply.IsPositive)
-                {// Empty password or abort
-                    return password;
+                else if (resultKind.IsNegative)
+                {// No
+                    continue;
+                }
+                else
+                {// Canceled or Terminated
+                    return new(resultKind);
                 }
             }
             else
@@ -83,21 +86,20 @@ public static class IUserInterfaceServiceExtention
 
         while (true)
         {
-            result = await viewService.ReadPassword(cancelOnEscape, hash2).ConfigureAwait(false);
-            if (confirm == null)
-            {
-                return null;
+            var confirmResult = await viewService.ReadPassword(cancelOnEscape, hash2).ConfigureAwait(false);
+            if (!confirmResult.IsSuccess)
+            {// Canceled or Terminated
+                return confirmResult;
             }
-            else if (password != confirm)
-            {
+
+            if (result.Text != confirmResult.Text)
+            {// Does not match
                 viewService.WriteLine(Hashed.Dialog.Password.NotMatch);
             }
             else
             {
-                break;
+                return result;
             }
         }
-
-        return password;
     }
 }

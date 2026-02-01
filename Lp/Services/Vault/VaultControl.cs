@@ -130,11 +130,13 @@ public partial class VaultControl
         {
             if (password == null)
             {// Enter password
-                password = await this.userInterfaceService.ReadPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
-                if (password == null)
-                {
+                var inputResult = await this.userInterfaceService.ReadPassword(false, Hashed.Vault.EnterPassword).ConfigureAwait(false);
+                if (!inputResult.IsSuccess)
+                {// Terminated
                     throw new PanicException();
                 }
+
+                password = inputResult.Text;
             }
 
             if (PasswordEncryption.TryDecrypt(data, password, out plaintext))

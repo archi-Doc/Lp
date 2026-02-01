@@ -23,7 +23,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
 
             var path = this.LpUnit.LpBase.CombineDataPathAndPrepareDirectory(options.Output, LpOptions.DefaultOptionsName);
             if (File.Exists(path) &&
-                await this.userInterfaceService.ReadYesNo(Hashed.Dialog.ConfirmOverwrite, path) != InputResultKind.Success)
+                await this.userInterfaceService.ReadYesNo(true, Hashed.Dialog.ConfirmOverwrite, path) != InputResultKind.Success)
             {
                 return;
             }
