@@ -122,7 +122,7 @@ public partial class VaultControl
         {
             if (password == null)
             {// Enter password
-                password = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
+                password = await this.userInterfaceService.ReadPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
                 if (password == null)
                 {
                     throw new PanicException();

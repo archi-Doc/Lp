@@ -54,7 +54,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     public override void WriteLine(string? message = null)
         => this.simpleConsole.WriteLine(message);
 
-    public override void EnqueueInput(string? message = null)
+    public override void EnqueueLine(string? message = null)
         => this.simpleConsole.EnqueueInput(message);
 
     public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
@@ -69,7 +69,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public override async Task<string?> RequestPassword(string? description)
+    public override async Task<string?> ReadPassword(string? description)
     {
         var options = this.passwordOptions with
         {
@@ -106,7 +106,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
-    public override async Task<bool?> RequestYesOrNo(string? description)
+    public override async Task<bool?> ReadYesNo(string? description)
     {
         var options = this.yesOrNoOptions with
         {
