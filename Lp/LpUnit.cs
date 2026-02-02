@@ -749,7 +749,7 @@ public class LpUnit
             this.subcommandParser.ShowHelp();
             return true;
         }
-        else if (subcommand == "?")
+        else if (subcommand == "h")
         {
             this.subcommandParser.ShowCommandList();
             return true;
