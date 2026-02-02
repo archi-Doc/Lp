@@ -7,8 +7,11 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+[TinyhandObject(UseServiceProvider = true)]
 public partial class DomainControl
 {
+    public const string Filename = "DomainControl";
+
     #region FieldAndProperty
 
     private readonly ILogger logger;
@@ -17,16 +20,14 @@ public partial class DomainControl
     private readonly LpBase lpBase;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
-    private readonly DomainStorage domainStorage;
+    // private readonly DomainStorage domainStorage;
+
+    [Key(0)]
     private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
-
-    // public DomainServer DomainServer { get; }
-
-    // public CreditDomain PrimaryDomain { get; }
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainStorage domainStorage)
+    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -34,7 +35,7 @@ public partial class DomainControl
         this.lpBase = lpBase;
         this.netUnit = netUnit;
         this.authorityControl = authorityControl;
-        this.domainStorage = domainStorage;
+        // this.domainStorage = domainStorage;
     }
 
     public async Task Prepare(UnitContext unitContext)

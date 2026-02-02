@@ -259,11 +259,17 @@ public class LpUnit
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
-                    context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
+                    context.AddCrystal<DomainControl>(new CrystalConfiguration() with
+                    {
+                        NumberOfFileHistories = 2,
+                        FileConfiguration = new GlobalFileConfiguration(DomainControl.Filename),
+                    });
+
+                    /*context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainStorage.Filename),
-                    });
+                    });*/
                 });
         }
 
