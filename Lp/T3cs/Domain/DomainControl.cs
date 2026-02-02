@@ -37,29 +37,6 @@ public partial class DomainControl
         this.domainStorage = domainStorage;
     }
 
-    public Task<T3csResult> AssignDomain(string text)
-    {
-        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
-        if (domainAssignment is null)
-        {
-            return Task.FromResult(T3csResult.InvalidData);
-        }
-
-        return this.AssignDomain(domainAssignment);
-    }
-
-    public async Task<T3csResult> AssignDomain(DomainAssignment domainAssignment)
-    {
-        var seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
-        if (seedKey is null)
-        {
-            return T3csResult.InvalidData;
-        }
-
-        var domainData = this.AddDomainService(domainAssignment.Credit, DomainRole.User, seedKey);
-        return T3csResult.Success;
-    }
-
     public async Task Prepare(UnitContext unitContext)
     {
         var domain = this.lpBase.Options.AssignDomain;
@@ -91,6 +68,33 @@ public partial class DomainControl
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
+    public Task<T3csResult> AssignDomain(string text)
+    {
+        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
+        if (domainAssignment is null)
+        {
+            return Task.FromResult(T3csResult.InvalidData);
+        }
+
+        return this.AssignDomain(domainAssignment);
+    }
+
+    public async Task<T3csResult> AssignDomain(DomainAssignment domainAssignment)
+    {
+        SeedKey? seedKey = default;
+        if (!string.IsNullOrEmpty(domainAssignment.Code))
+        {
+            seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
+            if (seedKey is null)
+            {
+                return T3csResult.InvalidData;
+            }
+        }
+
+        var domainData = this.AddDomain(domainAssignment.Credit, DomainRole.User, seedKey);
+        return T3csResult.Success;
+    }
+
     internal DomainData? GetDomainService(ulong domainHash)
     {
         if (this.domainDataDictionary.TryGetValue(domainHash, out var domainServiceClass))
@@ -101,7 +105,7 @@ public partial class DomainControl
         return null;
     }
 
-    internal DomainData AddDomainService(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomain(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
     {
         var domainHash = domainCredit.GetDomainHash();
         var serviceClass = this.domainDataDictionary.AddOrUpdate(

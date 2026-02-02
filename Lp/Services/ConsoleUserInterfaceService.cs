@@ -45,14 +45,16 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
     {
         var logWriter = logger?.TryGet(logLevel);
-        if (logWriter is null)
-        {// No log
-            this.simpleConsole.WriteLine(message);
-        }
-        else
+        if (logWriter is not null)
         {
-            logWriter.Log(message);
+            if (logWriter.OutputType != typeof(EmptyLogger))
+            {
+                logWriter.Log(message);
+                return;
+            }
         }
+
+        this.simpleConsole.WriteLine(message);
     }
 
     public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
