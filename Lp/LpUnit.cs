@@ -744,8 +744,12 @@ public class LpUnit
 
     public bool Subcommand(string subcommand)
     {
-        if (subcommand == SimpleParser.HelpString ||
-            subcommand == "?")
+        if (subcommand == SimpleParser.HelpString)
+        {
+            this.subcommandParser.ShowHelp();
+            return true;
+        }
+        else if (subcommand == "?")
         {
             this.subcommandParser.ShowCommandList();
             return true;

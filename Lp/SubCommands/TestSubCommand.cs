@@ -66,13 +66,15 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         microSleep.Dispose();
 
+        Console.Out.WriteLine("add-netnode         gc                  lp-create-credit    new-seedphrase      remove-authority    show-nodecontrol-st ");
+
         // await this.TestLinkageKey();
 
-        _ = Task.Run(() =>
+        /*_ = Task.Run(() =>
         {
             Thread.Sleep(1_000);
             this.userInterfaceService.WriteLine("ABC");
-        });
+        });*/
     }
 
     private async Task TestLinkageKey()
