@@ -24,28 +24,38 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         this.simpleConsole = simpleConsole;
     }
 
-    public override void Write(string? message = null)
+    public void Write(string? message = null)
         => this.simpleConsole.Write(message);
 
-    public override void WriteLine(string? message = null)
+    public void WriteLine(string? message = null)
         => this.simpleConsole.WriteLine(message);
 
-    public override void EnqueueLine(string? message = null)
+    public void EnqueueLine(string? message = null)
         => this.simpleConsole.EnqueueInput(message);
 
-    public override Task<InputResult> ReadLine(CancellationToken cancellationToken)
+    public Task<InputResult> ReadLine(CancellationToken cancellationToken)
         => this.simpleConsole.ReadLine(default, cancellationToken);
 
-    public override ConsoleKeyInfo ReadKey(bool intercept)
+    public ConsoleKeyInfo ReadKey(bool intercept)
         => ((IConsoleService)this.simpleConsole).ReadKey(intercept);
 
-    public override bool KeyAvailable
+    public bool KeyAvailable
         => ((IConsoleService)this.simpleConsole).KeyAvailable;
 
-    public override async Task Notify(LogLevel level, string message)
-        => this.simpleConsole.WriteLine(message); // this.logger.TryGet(level)?.Log(message);
+    public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
+    {
+        var logWriter = logger?.TryGet(logLevel);
+        if (logWriter is null)
+        {// No log
+            this.simpleConsole.WriteLine(message);
+        }
+        else
+        {
+            logWriter.Log(message);
+        }
+    }
 
-    public override Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
+    public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
     {
         var options = this.passwordOptions with
         {
@@ -56,7 +66,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         return this.simpleConsole.ReadLine(options);
     }
 
-    public override Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
+    public Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
     {
         var options = new ReadLineOptions
         {
@@ -68,7 +78,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         return this.simpleConsole.ReadLine(options);
     }
 
-    public override async Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description)
+    public async Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description)
     {
         var options = ReadLineOptions.YesNo with
         {

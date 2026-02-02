@@ -517,7 +517,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.NewSignature();
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -531,7 +531,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.NewSignature();
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -624,7 +624,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.New(KeyOrientation.Signature);
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -833,7 +833,7 @@ public class LpUnit
         {// Failure
             if (!this.VaultControl.NewlyCreated)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
+                await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
             }
 
             return;
@@ -841,7 +841,7 @@ public class LpUnit
 
         if (!this.NetUnit.NetBase.SetNodeSeedKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
+            await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
             return;
         }
     }

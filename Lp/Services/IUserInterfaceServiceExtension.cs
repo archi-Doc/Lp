@@ -42,14 +42,14 @@ public static class IUserInterfaceServiceExtention
     public static Task<InputResult> ReadPassword(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1, object obj2)
         => viewService.ReadPassword(cancelOnEscape, HashedString.Get(hash, obj1, obj2));
 
-    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash)
-        => viewService.Notify(level, HashedString.Get(hash));
+    public static Task Notify(this IUserInterfaceService viewService, ILogger? logger, LogLevel level, ulong hash)
+        => viewService.Notify(logger, level, HashedString.Get(hash));
 
-    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1)
-        => viewService.Notify(level, HashedString.Get(hash, obj1));
+    public static Task Notify(this IUserInterfaceService viewService, ILogger? logger, LogLevel level, ulong hash, object obj1)
+        => viewService.Notify(logger, level, HashedString.Get(hash, obj1));
 
-    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1, object obj2)
-        => viewService.Notify(level, HashedString.Get(hash, obj1, obj2));
+    public static Task Notify(this IUserInterfaceService viewService, ILogger? logger, LogLevel level, ulong hash, object obj1, object obj2)
+        => viewService.Notify(logger, level, HashedString.Get(hash, obj1, obj2));
 
     public static async Task<InputResult> ReadPasswordAndConfirm(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, ulong hash2)
     {
