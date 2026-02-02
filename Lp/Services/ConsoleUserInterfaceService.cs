@@ -8,7 +8,6 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
     private const string YesOrNoSuffix = "[Y/n] ";
 
-    private readonly ILogger logger;
     private readonly SimpleConsole simpleConsole;
 
     private readonly ReadLineOptions passwordOptions = new()
@@ -20,9 +19,8 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         MultilineDelimiter = default,
     };
 
-    public ConsoleUserInterfaceService(ILogger<DefaultLog> logger, SimpleConsole simpleConsole)
+    public ConsoleUserInterfaceService(SimpleConsole simpleConsole)
     {
-        this.logger = logger;
         this.simpleConsole = simpleConsole;
     }
 
@@ -99,117 +97,4 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
             }
         }
     }
-
-    /*private async Task<string?> RequestPasswordInternal(string? description)
-    {
-        if (!string.IsNullOrEmpty(description))
-        {
-            this.Write(description + ": ");
-        }
-
-        ConsoleKey key;
-        var password = string.Empty;
-        try
-        {
-            Console.TreatControlCAsInput = true;
-
-            do
-            {
-                var keyInfo = Console.ReadKey(intercept: true);
-                if (keyInfo == default || ThreadCore.Root.IsTerminated)
-                {
-                    return null;
-                }
-
-                key = keyInfo.Key;
-                if (key == ConsoleKey.Backspace && password.Length > 0)
-                {
-                    this.Write("\b \b");
-                    password = password[0..^1];
-                }
-                else if (!char.IsControl(keyInfo.KeyChar))
-                {
-                    this.Write("*");
-                    password += keyInfo.KeyChar;
-                }
-                else if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0 &&
-                    (keyInfo.Key & ConsoleKey.C) != 0)
-                {// Ctrl+C
-                    this.WriteLine();
-                    return null;
-                }
-                else if (key == ConsoleKey.Escape)
-                {
-                    this.WriteLine();
-                    return null;
-                }
-            }
-            while (key != ConsoleKey.Enter);
-        }
-        finally
-        {
-            Console.TreatControlCAsInput = false;
-        }
-
-        this.WriteLine();
-        return password;
-    }
-
-    private async Task<string?> RequestStringInternal(bool enterToExit, string? description)
-    {
-        if (!string.IsNullOrEmpty(description))
-        {
-            this.Write(description + ": ");
-        }
-
-        while (true)
-        {
-            var input = Console.ReadLine();
-            if (input == null)
-            {// Ctrl+C
-                this.WriteLine();
-                return null; // throw new PanicException();
-            }
-
-            input = input.CleanupInput();
-            if (input == string.Empty && !enterToExit)
-            {
-                continue;
-            }
-
-            return input;
-        }
-    }
-
-    private async Task<bool?> RequestYesOrNoInternal(string? description)
-    {
-        if (!string.IsNullOrEmpty(description))
-        {
-            this.WriteLine(description + " [Y/n]");
-        }
-
-        while (true)
-        {
-            var input = Console.ReadLine();
-            if (input == null)
-            {// Ctrl+C
-                this.WriteLine();
-                return null; // throw new PanicException();
-            }
-
-            input = input.CleanupInput().ToLower();
-            if (input == "y" || input == "yes")
-            {
-                return true;
-            }
-            else if (input == "n" || input == "no")
-            {
-                return false;
-            }
-            else
-            {
-                this.WriteLine("[Y/n]");
-            }
-        }
-    }*/
 }
