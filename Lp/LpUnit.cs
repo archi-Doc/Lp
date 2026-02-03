@@ -61,6 +61,7 @@ public class LpUnit
                 context.AddSingleton<ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
+                context.Services.TryAddSingleton<SimpleParser>(sp => sp.GetRequiredService<LpUnit>().subcommandParser);
                 context.AddSingleton<VaultControl>();
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
@@ -127,7 +128,7 @@ public class LpUnit
 
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
 
-                context.AddSubcommand(typeof(Lp.T3cs.Domain.AssignDomainMachineSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.AddDomainSubcommand));
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.ShowDomainMachineSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);

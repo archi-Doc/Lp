@@ -43,21 +43,10 @@ public partial class DomainControl
         var domain = this.lpBase.Options.AssignDomain;
         if (!string.IsNullOrEmpty(domain))
         {
-            var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(domain);
-            if (domainAssignment is not null)
+            var result = await this.AddDomain(domain).ConfigureAwait(false);
+            if (result != T3csResult.Success)
             {
-                // this.PrimaryDomain = new(domainOption);
-                var result = await this.AssignDomain(domainAssignment).ConfigureAwait(false);
-                if (result != T3csResult.Success)
-                {
-                    throw new PanicException();
-                }
-            }
-            else
-            {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
-                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
-                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
+                throw new PanicException();
             }
         }
 
@@ -69,18 +58,30 @@ public partial class DomainControl
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
-    public Task<T3csResult> AssignDomain(string text)
+    public Task<T3csResult> AddDomain(string text, bool silent = false)
     {
-        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
-        if (domainAssignment is null)
+        if (string.IsNullOrEmpty(text))
         {
             return Task.FromResult(T3csResult.InvalidData);
         }
 
-        return this.AssignDomain(domainAssignment);
+        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
+        if (domainAssignment is null)
+        {
+            if (!silent)
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, text);
+                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
+                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
+            }
+
+            return Task.FromResult(T3csResult.InvalidData);
+        }
+
+        return this.AddDomain(domainAssignment);
     }
 
-    public async Task<T3csResult> AssignDomain(DomainAssignment domainAssignment)
+    public async Task<T3csResult> AddDomain(DomainAssignment domainAssignment)
     {
         SeedKey? seedKey = default;
         if (!string.IsNullOrEmpty(domainAssignment.Code))
@@ -92,7 +93,7 @@ public partial class DomainControl
             }
         }
 
-        var domainData = this.AddDomain(domainAssignment.Credit, DomainRole.User, seedKey);
+        var domainData = this.AddDomainInternal(domainAssignment.Credit, DomainRole.User, seedKey);
         return T3csResult.Success;
     }
 
@@ -106,7 +107,7 @@ public partial class DomainControl
         return null;
     }
 
-    internal DomainData AddDomain(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomainInternal(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
     {
         var domainHash = domainCredit.GetDomainHash();
         var serviceClass = this.domainDataDictionary.AddOrUpdate(
