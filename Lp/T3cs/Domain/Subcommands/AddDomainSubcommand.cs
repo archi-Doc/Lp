@@ -28,7 +28,7 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
 
         if (parser.TryGetOption(CommandName, OptionName, out var option))
         {
-            option.DefaultValueText = "{Default}";//
+            option.DefaultValueText = StringHelper.SerializeToString(Example.DomainAssignment);
         }
     }
 
