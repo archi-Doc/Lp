@@ -2,7 +2,6 @@
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-global using System;
 global using Arc;
 global using Arc.Crypto;
 global using Arc.Threading;
@@ -19,7 +18,6 @@ using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
 using Lp.T3cs;
-using Lp.T3cs.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;

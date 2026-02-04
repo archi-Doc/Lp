@@ -10,25 +10,23 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
     private const string CommandName = "add-domain";
     private const string OptionName = "DomainAssignment";
 
-    private readonly ILogger logger;
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly DomainControl domainControl;
-
     public record Options
     {
-        [SimpleOption(OptionName, Description = "Domain assignment", Required = true)]
+        [SimpleOption(OptionName, Description = "", Required = true)]
         public string DomainAssignment { get; init; } = string.Empty;
     }
 
-    public AddDomainSubcommand(ILogger<AddDomainSubcommand> logger, IUserInterfaceService userInterfaceService, DomainControl domainControl, SimpleParser parser)
+    // private readonly ILogger logger;
+    // private readonly IUserInterfaceService userInterfaceService;
+    private readonly DomainControl domainControl;
+
+    public AddDomainSubcommand(DomainControl domainControl, SimpleParser parser)
     {
-        this.logger = logger;
-        this.userInterfaceService = userInterfaceService;
         this.domainControl = domainControl;
 
         if (parser.TryGetOption(CommandName, OptionName, out var option))
         {
-            option.DefaultValueText = StringHelper.SerializeToString(Example.DomainAssignment);
+            option.Description = StringHelper.SerializeToString(Example.DomainAssignment);
         }
     }
 
