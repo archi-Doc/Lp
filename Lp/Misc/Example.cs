@@ -16,7 +16,7 @@ public class Example
     public const string IpAddressString = "198.51.100.42";
     public const string NetNodeSeed = "!!!UGqDfUxXyDmKGnCknfgiLZoRX2mJ1yPAWPQ1Uvz9MOMCCJWf!!!(e!eh9RSW5Xgbe4vDgdMh4IH8VGMB2jfGR6_o2Utz-UU8Oq4-Mw)";
     public const string OriginatorSeed = "!!!g0ln5DnNBBCVKtCKpvBCOchl5os70-_2CAnwRyl_iepMJv3n!!!(s!4_Kqg8G9rRqNqFTwRVtc-w1VCQUJK6s-tauAAzZpTFTaTn-E)";
-    public const string MergerSeed = "!!!g0ln5DnNBBCVKtCKpvBCOchl5os70-_2CAnwRyl_iepMJv3n!!!(s!4_Kqg8G9rRqNqFTwRVtc-w1VCQUJK6s-tauAAzZpTFTaTn-E)";
+    public const string MergerSeed = "!!!CWcnjiqmfJ91guWz37cdfSUq8ZJQjh3TPdgZa4aEnFno4_qc!!!(s!GnE_O27bHiCz3LjFQU8tOf2-evrPiLi8PPs7_1FR6Fyy8z0Q)";
 
     public static readonly IPAddress IpAddress;
     public static readonly NetNode NetNode;

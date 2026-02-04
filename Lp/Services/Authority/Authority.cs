@@ -136,5 +136,5 @@ public sealed partial class Authority
         => BitConverter.ToInt32(this.seed.AsSpan());
 
     public override string ToString()
-        => $"PublicKey: {this.GetSeedKey().GetSignaturePublicKey()}, Lifetime: {this.Lifecycle}, DurationMics: {this.DurationMics}";
+        => $"PublicKey=\"{this.GetSeedKey().GetSignaturePublicKey()}\", Lifetime={this.Lifecycle}, DurationMics={this.DurationMics}";
 }

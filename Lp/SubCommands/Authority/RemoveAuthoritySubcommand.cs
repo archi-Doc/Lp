@@ -8,6 +8,10 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("remove-authority")]
 public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
+    private readonly AuthorityControl authorityControl;
+    private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
+
     public RemoveAuthoritySubcommand(ILogger<RemoveAuthoritySubcommand> logger, AuthorityControl authorityControl, IUserInterfaceService userInterfaceService)
     {
         this.authorityControl = authorityControl;
@@ -19,7 +23,7 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
     {
         if (!this.authorityControl.Exists(options.AuthorityName))
         {// Not found
-            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, options.AuthorityName);
+            this.userInterfaceService.WriteLine(Hashed.Authority.NotFound, options.AuthorityName);
             return;
         }
         else
@@ -41,8 +45,4 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
             this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
         }
     }
-
-    private readonly AuthorityControl authorityControl;
-    private readonly ILogger logger;
-    private readonly IUserInterfaceService userInterfaceService;
 }
