@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject]
+/*[TinyhandObject]
 public partial class DomainStorage
 {
     public const string Filename = "DomainStorage";
@@ -53,4 +53,4 @@ public partial class DomainStorage
 
         return domainData;
     }
-}
+}*/

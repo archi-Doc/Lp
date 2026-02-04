@@ -127,6 +127,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
 
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.AddDomainSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.ListDomainSubcommand));
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.ShowDomainMachineSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);

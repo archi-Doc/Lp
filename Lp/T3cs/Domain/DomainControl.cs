@@ -20,10 +20,9 @@ public partial class DomainControl
     private readonly LpBase lpBase;
     private readonly NetUnit netUnit;
     private readonly AuthorityControl authorityControl;
-    // private readonly DomainStorage domainStorage;
 
     [Key(0)]
-    private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
+    private readonly ConcurrentDictionary<ulong, DomainData> domainHashToData = new();
 
     #endregion
 
@@ -35,7 +34,10 @@ public partial class DomainControl
         this.lpBase = lpBase;
         this.netUnit = netUnit;
         this.authorityControl = authorityControl;
-        // this.domainStorage = domainStorage;
+    }
+
+    public void ListDomain()
+    {
     }
 
     public async Task Prepare(UnitContext unitContext)
@@ -58,7 +60,7 @@ public partial class DomainControl
         // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
-    public Task<T3csResult> AddDomain(string text, bool silent = false)
+    public Task<T3csResult> AddDomain(string text, bool verbose = true)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -68,7 +70,7 @@ public partial class DomainControl
         var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
         if (domainAssignment is null)
         {
-            if (!silent)
+            if (!verbose)
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, text);
                 var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
@@ -78,10 +80,10 @@ public partial class DomainControl
             return Task.FromResult(T3csResult.InvalidData);
         }
 
-        return this.AddDomain(domainAssignment);
+        return this.AddDomain(domainAssignment, verbose);
     }
 
-    public async Task<T3csResult> AddDomain(DomainAssignment domainAssignment)
+    public async Task<T3csResult> AddDomain(DomainAssignment domainAssignment, bool verbose = true)
     {
         SeedKey? seedKey = default;
         if (!string.IsNullOrEmpty(domainAssignment.Code))
@@ -93,13 +95,13 @@ public partial class DomainControl
             }
         }
 
-        var domainData = this.AddDomainInternal(domainAssignment.Credit, DomainRole.User, seedKey);
+        var domainData = this.AddDomainInternal(domainAssignment, seedKey);
         return T3csResult.Success;
     }
 
     internal DomainData? GetDomainService(ulong domainHash)
     {
-        if (this.domainDataDictionary.TryGetValue(domainHash, out var domainServiceClass))
+        if (this.domainHashToData.TryGetValue(domainHash, out var domainServiceClass))
         {
             return domainServiceClass;
         }
@@ -107,20 +109,18 @@ public partial class DomainControl
         return null;
     }
 
-    internal DomainData AddDomainInternal(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomainInternal(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        var domainHash = domainCredit.GetDomainHash();
-        var serviceClass = this.domainDataDictionary.AddOrUpdate(
+        var domainHash = domainAssignment.Credit.GetDomainHash();
+        var serviceClass = this.domainHashToData.AddOrUpdate(
             domainHash,
             hash =>
             {//
-                var domainData = new DomainData(domainCredit);
-                // domainData.Update(kind, domainSeedKey);
-                return domainData;
+                return new DomainData(domainAssignment);
             },
             (hash, original) =>
             {
-                original.Update(kind, domainSeedKey);
+                original.Update(domainSeedKey);
                 return original;
             });
 
@@ -130,11 +130,11 @@ public partial class DomainControl
     internal bool TryRemoveDomainService(ulong domainHash, DomainRole role)
     {
         if (role != DomainRole.Root &&
-            this.domainDataDictionary.TryGetValue(domainHash, out var domainData))
+            this.domainHashToData.TryGetValue(domainHash, out var domainData))
         {
             if (domainData.Role == role)
             {
-                return this.domainDataDictionary.TryRemove(new(domainHash, domainData));
+                return this.domainHashToData.TryRemove(new(domainHash, domainData));
             }
         }
 

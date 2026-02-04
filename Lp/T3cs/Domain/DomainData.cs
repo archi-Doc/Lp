@@ -8,7 +8,7 @@ namespace Lp.T3cs;
 public partial class DomainData
 {
     [Key(0)]
-    private Credit domainCredit;
+    private DomainAssignment domainAssignment;
 
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
@@ -18,23 +18,13 @@ public partial class DomainData
 
     public DomainRole Role => this.role;
 
-    public DomainData(Credit domainCredit)
+    public DomainData(DomainAssignment domainAssignment)
     {
-        this.domainCredit = domainCredit;
+        this.domainAssignment = domainAssignment;
     }
 
-    public void Update(DomainRole domainRole, SeedKey? domainSeedKey)
-    {//
-        if (domainRole == DomainRole.Root)
-        {
-            if (domainSeedKey?.GetSignaturePublicKey().Equals(this.domainCredit.PrimaryMerger) != true)
-            {
-                domainRole = DomainRole.User;
-                domainSeedKey = default;
-            }
-        }
-
-        this.role = domainRole;
+    public void Update(SeedKey? domainSeedKey)
+    {
         this.domainSeedKey = domainSeedKey;
     }
 
