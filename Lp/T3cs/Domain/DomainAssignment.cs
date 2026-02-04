@@ -9,7 +9,7 @@ public partial record class DomainAssignment
 
     [Key(0)]
     // public DomainRole Role { get; init; }
-    public string Code { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     [Key(1)]
     public Credit Credit { get; init; } = Credit.UnsafeConstructor();
@@ -17,17 +17,22 @@ public partial record class DomainAssignment
     [Key(2)]
     public NetNode NetNode { get; init; } = new();
 
+    [Key(3)]
+    // public DomainRole Role { get; init; }
+    public string Code { get; init; } = string.Empty;
+
     // [Key(2)]
     // [MaxLength(LpConstants.MaxUrlLength)]
     // public partial string Url { get; init; } = string.Empty;
 
     #endregion
 
-    public DomainAssignment(string code, Credit credit, NetNode netNode)
+    public DomainAssignment(string name, Credit credit, NetNode netNode, string code)
     {
-        this.Code = code;
+        this.Name = name;
         this.Credit = credit;
         this.NetNode = netNode;
+        this.Code = code;
     }
 
     public bool Validate()
@@ -35,4 +40,7 @@ public partial record class DomainAssignment
         return this.Credit.Validate() &&
             this.NetNode.Validate();
     }
+
+    public override string ToString()
+        => StringHelper.SerializeToString(this);
 }

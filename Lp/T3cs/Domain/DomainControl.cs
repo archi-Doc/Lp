@@ -38,6 +38,11 @@ public partial class DomainControl
 
     public void ListDomain()
     {
+        var array = this.domainHashToData.Values.ToArray();
+        foreach (var x in array)
+        {
+            this.userInterfaceService.WriteLine(x.ToString());
+        }
     }
 
     public async Task Prepare(UnitContext unitContext)
@@ -73,8 +78,7 @@ public partial class DomainControl
             if (!verbose)
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, text);
-                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
-                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
+                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(Example.DomainAssignment));
             }
 
             return Task.FromResult(T3csResult.InvalidData);
@@ -140,6 +144,8 @@ public partial class DomainControl
 
         return false;
     }
+
+
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {

@@ -28,6 +28,11 @@ public partial class DomainData
         this.domainSeedKey = domainSeedKey;
     }
 
+    public override string ToString()
+    {
+        return $"{this.Role} {this.domainAssignment.ToString()}";
+    }
+
     /*public DomainOverview GetOverview()
     {
         int count;
