@@ -7,12 +7,11 @@ namespace Lp.T3cs.Domain;
 [SimpleCommand("list-domain")]
 public class ListDomainSubcommand : ISimpleCommandAsync
 {
-    private readonly IUserInterfaceService userInterfaceService;
+    // private readonly IUserInterfaceService userInterfaceService;
     private readonly DomainControl domainControl;
 
-    public ListDomainSubcommand(IUserInterfaceService userInterfaceService, DomainControl domainControl, SimpleParser parser)
+    public ListDomainSubcommand(DomainControl domainControl)
     {
-        this.userInterfaceService = userInterfaceService;
         this.domainControl = domainControl;
     }
 
