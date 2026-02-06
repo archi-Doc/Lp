@@ -36,6 +36,14 @@ public partial class DomainData
         return $"{this.Role} {this.domainAssignment?.ToString()}";
     }
 
+    internal void Initial()
+    {
+        if (this.role == DomainRole.User)
+        {
+
+        }
+    }
+
     /*public DomainOverview GetOverview()
     {
         int count;

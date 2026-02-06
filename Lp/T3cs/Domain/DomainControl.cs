@@ -19,7 +19,7 @@ public partial class DomainControl
     private readonly LpService lpService;
     private readonly LpBase lpBase;
     private readonly NetUnit netUnit;
-    private readonly AuthorityControl authorityControl;
+    private readonly BigMachine bigMachine;
 
     [Key(0)]
     private readonly ConcurrentDictionary<ulong, DomainData> domainHashToData = new();
@@ -30,14 +30,14 @@ public partial class DomainControl
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
+    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, BigMachine bigMachine)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
         this.lpBase = lpBase;
         this.netUnit = netUnit;
-        this.authorityControl = authorityControl;
+        this.bigMachine = bigMachine;
     }
 
     public void ListDomain()
@@ -124,11 +124,13 @@ public partial class DomainControl
             hash =>
             {
                 var domainData = new DomainData(domainAssignment, domainSeedKey);
+                this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return domainData;
             },
             (hash, original) =>
             {
                 original.Initialize(domainAssignment, domainSeedKey);
+                this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return original;
             });
 
@@ -136,8 +138,13 @@ public partial class DomainControl
         return serviceClass;
     }
 
-    internal bool TryRemoveDomainService(ulong domainHash)
+    internal bool TryRemoveDomain(ulong domainHash)
     {
+        if (this.bigMachine.DomainMachine.TryGet(domainHash, out var machine))
+        {
+            machine.TerminateMachine();
+        }
+
         return this.domainHashToData.TryRemove(domainHash, out _);
 
         /*if (role != DomainRole.Root &&
@@ -151,8 +158,6 @@ public partial class DomainControl
 
         return false;*/
     }
-
-
 
     /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
     {
