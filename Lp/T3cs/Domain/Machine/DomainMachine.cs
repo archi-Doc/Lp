@@ -5,14 +5,13 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs.Domain;
 
-/*[MachineObject(UseServiceProvider = true)]
-public partial class DomainMachine : Machine<DomainMachineKind>
+[MachineObject(UseServiceProvider = true)]
+public partial class DomainMachine : Machine
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly NetUnit netUnit;
-    // private DomainIdentifier? domainIdentifier;
     private SeedKey? seedKey;
     private bool isMerger;
 
@@ -118,4 +117,4 @@ public partial class DomainMachine : Machine<DomainMachineKind>
 
         return $"{(this.isMerger ? "Merger" : "Peer")}: {domainIdentifier.ToString()}";
     }
-}*/
+}

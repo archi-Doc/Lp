@@ -42,8 +42,7 @@ public partial class DomainControl
 
     public void ListDomain()
     {
-        var array = this.domainHashToData.Values.ToArray();
-        foreach (var x in array)
+        foreach (var x in this.DomainDataArray)
         {
             this.userInterfaceService.WriteLine(x.ToString());
         }
@@ -51,7 +50,7 @@ public partial class DomainControl
 
     public async Task Prepare(UnitContext unitContext)
     {
-        var domain = this.lpBase.Options.AssignDomain;
+        var domain = this.lpBase.Options.Domain;
         if (!string.IsNullOrEmpty(domain))
         {
             var result = await this.AddDomain(domain).ConfigureAwait(false);
@@ -107,7 +106,7 @@ public partial class DomainControl
         return T3csResult.Success;
     }
 
-    internal DomainData? GetDomainService(ulong domainHash)
+    internal DomainData? GetDomainData(ulong domainHash)
     {
         if (this.domainHashToData.TryGetValue(domainHash, out var domainServiceClass))
         {
@@ -123,7 +122,7 @@ public partial class DomainControl
         var serviceClass = this.domainHashToData.AddOrUpdate(
             domainHash,
             hash =>
-            {//
+            {
                 var domainData = new DomainData(domainAssignment, domainSeedKey);
                 return domainData;
             },
@@ -137,18 +136,20 @@ public partial class DomainControl
         return serviceClass;
     }
 
-    internal bool TryRemoveDomainService(ulong domainHash, DomainRole role)
+    internal bool TryRemoveDomainService(ulong domainHash)
     {
-        if (role != DomainRole.Root &&
+        return this.domainHashToData.TryRemove(domainHash, out _);
+
+        /*if (role != DomainRole.Root &&
             this.domainHashToData.TryGetValue(domainHash, out var domainData))
         {
             if (domainData.Role == role)
             {
-                return this.domainHashToData.TryRemove(new(domainHash, domainData));
+                return this.domainHashToData.TryRemove(domainHash, out _);
             }
         }
 
-        return false;
+        return false;*/
     }
 
 

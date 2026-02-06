@@ -93,7 +93,7 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
-                // context.AddTransient<T3cs.Domain.DomainMachine>();
+                context.AddSingleton<T3cs.Domain.DomainMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
                 context.AddSingleton<Services.LpDogmaMachine>();
