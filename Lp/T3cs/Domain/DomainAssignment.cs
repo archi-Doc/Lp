@@ -21,6 +21,9 @@ public partial record class DomainAssignment
     // public DomainRole Role { get; init; }
     public string Code { get; init; } = string.Empty;
 
+    public ulong GetDomainHash()
+        => this.Credit.Identifier.Id1;
+
     // [Key(2)]
     // [MaxLength(LpConstants.MaxUrlLength)]
     // public partial string Url { get; init; } = string.Empty;

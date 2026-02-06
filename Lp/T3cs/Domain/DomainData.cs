@@ -9,7 +9,7 @@ namespace Lp.T3cs;
 public partial class DomainData
 {
     [Key(0)]
-    private DomainAssignment domainAssignment;
+    public DomainAssignment DomainAssignment { get; private set; }
 
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
@@ -24,23 +24,31 @@ public partial class DomainData
         this.Initialize(domainAssignment, domainSeedKey);
     }
 
-    [MemberNotNull(nameof(domainAssignment))]
+    [MemberNotNull(nameof(DomainAssignment))]
     public void Initialize(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        this.domainAssignment = domainAssignment;
+        this.DomainAssignment = domainAssignment;
         this.domainSeedKey = domainSeedKey;
     }
 
     public override string ToString()
     {
-        return $"{this.Role} {this.domainAssignment?.ToString()}";
+        return $"{this.Role} {this.DomainAssignment?.ToString()}";
     }
 
     internal void Initial()
     {
         if (this.role == DomainRole.User)
         {
-
+            if (this.domainSeedKey is not null)
+            {
+                var originator = this.domainSeedKey.GetSignaturePublicKey();
+                var creditIdentity = new CreditIdentity(default, originator, this.DomainAssignment.Credit.Mergers);
+                if (this.DomainAssignment.Credit.Identifier.Equals(creditIdentity.GetIdentifier()))
+                {
+                    this.role = DomainRole.Root;
+                }
+            }
         }
     }
 

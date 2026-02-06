@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using Lp.Net;
 using Lp.Services;
 using Netsphere.Crypto;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Lp.T3cs;
 
@@ -118,7 +119,7 @@ public partial class DomainControl
 
     internal DomainData AddDomainInternal(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        var domainHash = domainAssignment.Credit.GetDomainHash();
+        var domainHash = domainAssignment.GetDomainHash();
         var serviceClass = this.domainHashToData.AddOrUpdate(
             domainHash,
             hash =>
@@ -136,6 +137,29 @@ public partial class DomainControl
 
         this.domainDataArray = default;
         return serviceClass;
+    }
+
+    internal bool TryRemoveDomain(string domainName)
+    {
+        var result = false;
+        foreach (var x in this.DomainDataArray)
+        {
+            if (string.Equals(x.DomainAssignment.Name, domainName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (this.TryRemoveDomain(x.DomainAssignment.GetDomainHash()))
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.Removed, domainName);
+                    result = true;
+                }
+            }
+        }
+
+        if (result)
+        {
+            this.domainDataArray = default;
+        }
+
+        return result;
     }
 
     internal bool TryRemoveDomain(ulong domainHash)
