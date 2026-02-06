@@ -57,6 +57,6 @@ public partial record class CreditIdentity : Identity
     public string ToString(IConversionOptions? options)
     {
         var mergers = string.Join(", ", this.Mergers.Select(x => $"\"{x.ToString(options)}\""));
-        return $"{{ SourceIdentifier = \"{this.SourceIdentifier.ToString(options)}\", Originator = \"{this.Originator.ToString(options)}\", Mergers={{{mergers}}}";
+        return $"{{SourceIdentifier=\"{this.SourceIdentifier.ToString(options)}\", Originator=\"{this.Originator.ToString(options)}\", Mergers={{{mergers}}}";
     }
 }

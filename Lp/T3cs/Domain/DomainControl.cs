@@ -61,12 +61,7 @@ public partial class DomainControl
             }
         }
 
-        // var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
-
-        // this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
         this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
-
-        // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
     }
 
     public Task<T3csResult> AddDomain(string text, bool verbose = true)
@@ -170,31 +165,5 @@ public partial class DomainControl
         }
 
         return this.domainHashToData.TryRemove(domainHash, out _);
-
-        /*if (role != DomainRole.Root &&
-            this.domainHashToData.TryGetValue(domainHash, out var domainData))
-        {
-            if (domainData.Role == role)
-            {
-                return this.domainHashToData.TryRemove(domainHash, out _);
-            }
-        }
-
-        return false;*/
     }
-
-    /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
-    {
-        using (var connection = await this.netUnit.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
-        {
-            if (connection is null)
-            {
-                return NetResult.NoNetwork;
-            }
-
-            var service = connection.GetService<IDomainService>();
-            var result = await service.RegisterNode(nodeProof);
-            return result;
-        }
-    }*/
 }

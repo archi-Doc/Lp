@@ -54,7 +54,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
         void ShowErrorMessage()
         {
             this.userInterfaceService.WriteLine(Hashed.Subcommands.InvalidCreditIdentity);
-            this.userInterfaceService.WriteLine($"{HashedString.Get(Hashed.Subcommands.Example)} {LpConstants.LpIdentity.ToString()}");
+            this.userInterfaceService.WriteLine($"{HashedString.Get(Hashed.Subcommands.Example)} {Example.CreditIdentity.ToString()}");
         }
     }
 }
