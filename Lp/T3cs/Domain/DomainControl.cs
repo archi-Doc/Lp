@@ -24,6 +24,10 @@ public partial class DomainControl
     [Key(0)]
     private readonly ConcurrentDictionary<ulong, DomainData> domainHashToData = new();
 
+    private DomainData[]? domainDataArray;
+
+    public DomainData[] DomainDataArray => this.domainDataArray ??= this.domainHashToData.Values.ToArray();
+
     #endregion
 
     public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl)
@@ -120,14 +124,16 @@ public partial class DomainControl
             domainHash,
             hash =>
             {//
-                return new DomainData(domainAssignment);
+                var domainData = new DomainData(domainAssignment, domainSeedKey);
+                return domainData;
             },
             (hash, original) =>
             {
-                original.Update(domainSeedKey);
+                original.Initialize(domainAssignment, domainSeedKey);
                 return original;
             });
 
+        this.domainDataArray = default;
         return serviceClass;
     }
 

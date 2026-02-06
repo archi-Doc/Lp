@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -18,19 +19,21 @@ public partial class DomainData
 
     public DomainRole Role => this.role;
 
-    public DomainData(DomainAssignment domainAssignment)
+    public DomainData(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        this.domainAssignment = domainAssignment;
+        this.Initialize(domainAssignment, domainSeedKey);
     }
 
-    public void Update(SeedKey? domainSeedKey)
+    [MemberNotNull(nameof(domainAssignment))]
+    public void Initialize(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
+        this.domainAssignment = domainAssignment;
         this.domainSeedKey = domainSeedKey;
     }
 
     public override string ToString()
     {
-        return $"{this.Role} {this.domainAssignment.ToString()}";
+        return $"{this.Role} {this.domainAssignment?.ToString()}";
     }
 
     /*public DomainOverview GetOverview()
