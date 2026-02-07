@@ -93,7 +93,7 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
-                // context.AddTransient<T3cs.Domain.DomainMachine>();
+                context.AddSingleton<T3cs.Domain.DomainMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
                 context.AddSingleton<Services.LpDogmaMachine>();
@@ -127,6 +127,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
 
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.AddDomainSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.RemoveDomainSubcommand));
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.ListDomainSubcommand));
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.ShowDomainMachineSubcommand));
 
@@ -680,7 +681,7 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault

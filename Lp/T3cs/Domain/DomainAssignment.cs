@@ -12,7 +12,7 @@ public partial record class DomainAssignment
     public string Name { get; init; } = string.Empty;
 
     [Key(1)]
-    public Credit Credit { get; init; } = Credit.UnsafeConstructor();
+    public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
 
     [Key(2)]
     public NetNode NetNode { get; init; } = new();
@@ -21,23 +21,26 @@ public partial record class DomainAssignment
     // public DomainRole Role { get; init; }
     public string Code { get; init; } = string.Empty;
 
+    public ulong GetDomainHash()
+        => this.CreditIdentity.GetIdentifier().Id1;
+
     // [Key(2)]
     // [MaxLength(LpConstants.MaxUrlLength)]
     // public partial string Url { get; init; } = string.Empty;
 
     #endregion
 
-    public DomainAssignment(string name, Credit credit, NetNode netNode, string code)
+    public DomainAssignment(string name, CreditIdentity creditIdentity, NetNode netNode, string code)
     {
         this.Name = name;
-        this.Credit = credit;
+        this.CreditIdentity = creditIdentity;
         this.NetNode = netNode;
         this.Code = code;
     }
 
     public bool Validate()
     {
-        return this.Credit.Validate() &&
+        return this.CreditIdentity.Validate() &&
             this.NetNode.Validate();
     }
 

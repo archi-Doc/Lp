@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -8,7 +9,7 @@ namespace Lp.T3cs;
 public partial class DomainData
 {
     [Key(0)]
-    private DomainAssignment domainAssignment;
+    public DomainAssignment DomainAssignment { get; private set; }
 
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
@@ -18,19 +19,36 @@ public partial class DomainData
 
     public DomainRole Role => this.role;
 
-    public DomainData(DomainAssignment domainAssignment)
+    public DomainData(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        this.domainAssignment = domainAssignment;
+        this.Initialize(domainAssignment, domainSeedKey);
     }
 
-    public void Update(SeedKey? domainSeedKey)
+    [MemberNotNull(nameof(DomainAssignment))]
+    public void Initialize(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
+        this.DomainAssignment = domainAssignment;
         this.domainSeedKey = domainSeedKey;
     }
 
     public override string ToString()
     {
-        return $"{this.Role} {this.domainAssignment.ToString()}";
+        return $"{this.Role} {this.DomainAssignment?.ToString()}";
+    }
+
+    internal void Initial()
+    {
+        if (this.role == DomainRole.User)
+        {
+            if (this.domainSeedKey is not null)
+            {
+                var originator = this.domainSeedKey.GetSignaturePublicKey();
+                if (this.DomainAssignment.CreditIdentity.Originator.Equals(ref originator))
+                {
+                    this.role = DomainRole.Root;
+                }
+            }
+        }
     }
 
     /*public DomainOverview GetOverview()
