@@ -45,6 +45,6 @@ public class Example
 
         CreditIdentity = new(default, OriginatorPublicKey, [MergerPublicKey,]);
         Credit = new Credit(CreditIdentity.GetIdentifier(), [MergerPublicKey,]);
-        DomainAssignment = new(Name, CreditIdentity, NetNode, Code);
+        DomainAssignment = new(Name, Code, CreditIdentity, NetNode);
     }
 }

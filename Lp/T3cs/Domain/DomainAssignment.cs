@@ -8,18 +8,16 @@ public partial record class DomainAssignment
     #region FieldAndProperty
 
     [Key(0)]
-    // public DomainRole Role { get; init; }
     public string Name { get; init; } = string.Empty;
 
     [Key(1)]
-    public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
+    public string Code { get; init; } = string.Empty;
 
     [Key(2)]
-    public NetNode NetNode { get; init; } = new();
+    public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
 
     [Key(3)]
-    // public DomainRole Role { get; init; }
-    public string Code { get; init; } = string.Empty;
+    public NetNode NetNode { get; init; } = new();
 
     public ulong GetDomainHash()
         => this.CreditIdentity.GetIdentifier().Id1;
@@ -30,12 +28,12 @@ public partial record class DomainAssignment
 
     #endregion
 
-    public DomainAssignment(string name, CreditIdentity creditIdentity, NetNode netNode, string code)
+    public DomainAssignment(string name, string code, CreditIdentity creditIdentity, NetNode netNode)
     {
         this.Name = name;
+        this.Code = code;
         this.CreditIdentity = creditIdentity;
         this.NetNode = netNode;
-        this.Code = code;
     }
 
     public bool Validate()
