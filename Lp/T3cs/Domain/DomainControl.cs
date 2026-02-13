@@ -74,7 +74,7 @@ public partial class DomainControl
         var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
         if (domainAssignment is null)
         {
-            if (!verbose)
+            if (verbose)
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, text);
                 this.userInterfaceService.WriteLine(StringHelper.SerializeToString(Example.DomainAssignment));
