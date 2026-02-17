@@ -2,7 +2,6 @@
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-global using System;
 global using Arc;
 global using Arc.Crypto;
 global using Arc.Threading;
@@ -19,7 +18,6 @@ using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
 using Lp.T3cs;
-using Lp.T3cs.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Crypto;
@@ -61,6 +59,7 @@ public class LpUnit
                 context.AddSingleton<ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
+                context.Services.TryAddSingleton<SimpleParser>(sp => sp.GetRequiredService<LpUnit>().subcommandParser);
                 context.AddSingleton<VaultControl>();
                 context.AddTransient<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
@@ -94,7 +93,7 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
-                // context.AddTransient<T3cs.Domain.DomainMachine>();
+                context.AddSingleton<T3cs.Domain.DomainMachine>();
                 context.AddSingleton<Machines.RelayPeerMachine>();
                 context.AddSingleton<Machines.NodeControlMachine>();
                 context.AddSingleton<Services.LpDogmaMachine>();
@@ -127,7 +126,9 @@ public class LpUnit
 
                 context.AddSubcommand(typeof(Lp.Subcommands.LpCreateCreditSubcommand));
 
-                context.AddSubcommand(typeof(Lp.T3cs.Domain.AssignDomainMachineSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.AddDomainSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.RemoveDomainSubcommand));
+                context.AddSubcommand(typeof(Lp.T3cs.Domain.ListDomainSubcommand));
                 context.AddSubcommand(typeof(Lp.T3cs.Domain.ShowDomainMachineSubcommand));
 
                 // Lp.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
@@ -259,11 +260,17 @@ public class LpUnit
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
-                    context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
+                    context.AddCrystal<DomainControl>(new CrystalConfiguration() with
+                    {
+                        NumberOfFileHistories = 2,
+                        FileConfiguration = new GlobalFileConfiguration(DomainControl.Filename),
+                    });
+
+                    /*context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
                     {
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainStorage.Filename),
-                    });
+                    });*/
                 });
         }
 
@@ -375,7 +382,7 @@ public class LpUnit
                 lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
 
                 // Prepare
-                await lpUnit.DomainControl.Prepare();
+                await lpUnit.DomainControl.Prepare(this.Context);
                 await lpUnit.PrepareMaster(this.Context);
                 await lpUnit.PrepareMerger(this.Context);
                 await lpUnit.PrepareRelay(this.Context);
@@ -393,6 +400,7 @@ public class LpUnit
             }
             catch
             {
+                await lpUnit.Save(this.Context);
                 lpUnit.Terminate(true);
                 return;
             }
@@ -516,7 +524,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.NewSignature();
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -530,7 +538,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.NewSignature();
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -623,7 +631,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.New(KeyOrientation.Signature);
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -673,19 +681,19 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1");
         await context.SendSave();
 
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2");
         await this.CrystalControl.StoreAndRip();
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3"); //
+        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3");
     }
 
     public async Task Start(UnitContext context)
@@ -724,18 +732,30 @@ public class LpUnit
             return true;
         }
 
-        var result = await this.UserInterfaceService.ReadYesNo(Hashed.Dialog.ConfirmExit);
-        if (result == true)
+        var result = await this.UserInterfaceService.ReadYesNo(false, Hashed.Dialog.ConfirmExit);
+        if (result == InputResultKind.No ||
+            result == InputResultKind.Canceled)
         {
-            this.Core.Terminate(); // this.Terminate(false);
-            return true;
+            return false;
         }
 
-        return false;
+        this.Core.Terminate(); // this.Terminate(false);
+        return true;
     }
 
     public bool Subcommand(string subcommand)
     {
+        if (subcommand == SimpleParser.HelpString)
+        {
+            this.subcommandParser.ShowHelp();
+            return true;
+        }
+        else if (subcommand == "h")
+        {
+            this.subcommandParser.ShowCommandList();
+            return true;
+        }
+
         if (!this.subcommandParser.Parse(subcommand))
         {
             if (this.subcommandParser.HelpCommand != string.Empty)
@@ -831,7 +851,7 @@ public class LpUnit
         {// Failure
             if (!this.VaultControl.NewlyCreated)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
+                await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
             }
 
             return;
@@ -839,7 +859,7 @@ public class LpUnit
 
         if (!this.NetUnit.NetBase.SetNodeSeedKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
+            await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
             return;
         }
     }

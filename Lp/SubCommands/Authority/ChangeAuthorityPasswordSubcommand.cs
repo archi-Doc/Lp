@@ -27,30 +27,31 @@ public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySu
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.ChangePassword);
 
         Authority? authority;
+        InputResult result;
         while (true)
         {
-            var currentPassword = await this.userInterfaceService.ReadPassword(Hashed.Dialog.Password.EnterCurrent);
-            if (currentPassword == null)
+            result = await this.userInterfaceService.ReadPassword(true, Hashed.Dialog.Password.EnterCurrent);
+            if (!result.IsSuccess)
             {
                 return;
             }
 
-            authority = await this.authorityControl.GetAuthority(options.AuthorityName, currentPassword);
+            authority = await this.authorityControl.GetAuthority(options.AuthorityName, result.Text);
             if (authority is not null)
             {
                 break;
             }
 
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
+            await this.userInterfaceService.Notify(this.logger, LogLevel.Warning, Hashed.Dialog.Password.NotMatch);
         }
 
-        var newPassword = await this.userInterfaceService.RequestPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
-        if (newPassword == null)
+        result = await this.userInterfaceService.ReadPasswordAndConfirm(true, Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
+        if (!result.IsSuccess)
         {
             return;
         }
 
-        authority.Vault?.SetPassword(newPassword);
+        authority.Vault?.SetPassword(result.Text);
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 

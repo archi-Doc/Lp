@@ -104,12 +104,13 @@ public class AuthorityControl
                     return default;
                 }
 
-                password = await this.userInterfaceService.ReadPassword(Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
-                if (password == null)
+                var inputResult = await this.userInterfaceService.ReadPassword(true, Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
+                if (!inputResult.IsSuccess)
                 {// Canceled
                     return default;
                 }
 
+                password = inputResult.Text;
                 this.vaultControl.Root.TryGetVault(vaultName, password, out vault, out result);
             }
         }

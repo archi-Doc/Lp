@@ -77,7 +77,15 @@ public partial class VaultControl
         var password = this.lpBase.Options.VaultPass;
         if (string.IsNullOrEmpty(password))
         {
-            password = await this.userInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+            var result = await this.userInterfaceService.ReadPasswordAndConfirm(false, Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+            if (result.IsTerminated)
+            {
+                return;
+            }
+            else if (result.IsSuccess)
+            {
+                password = result.Text;
+            }
         }
 
         if (password == null)
@@ -122,11 +130,13 @@ public partial class VaultControl
         {
             if (password == null)
             {// Enter password
-                password = await this.userInterfaceService.ReadPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
-                if (password == null)
-                {
+                var inputResult = await this.userInterfaceService.ReadPassword(false, Hashed.Vault.EnterPassword).ConfigureAwait(false);
+                if (!inputResult.IsSuccess)
+                {// Terminated
                     throw new PanicException();
                 }
+
+                password = inputResult.Text;
             }
 
             if (PasswordEncryption.TryDecrypt(data, password, out plaintext))
@@ -146,7 +156,7 @@ public partial class VaultControl
             else
             {// Failure
                 password = null;
-                await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
+                await this.userInterfaceService.Notify(default, LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
             }
         }
     }

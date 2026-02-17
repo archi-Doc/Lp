@@ -25,7 +25,8 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
         }
         else
         {
-            if (await this.userInterfaceService.ReadYesNo(Hashed.Vault.RemoveConfirm, options.Name) != true)
+            if (await this.userInterfaceService.ReadYesNo(true, Hashed.Vault.RemoveConfirm, options.Name).ConfigureAwait(false)
+                != InputResultKind.Success)
             {
                 return;
             }

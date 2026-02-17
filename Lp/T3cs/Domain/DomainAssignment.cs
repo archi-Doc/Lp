@@ -8,14 +8,19 @@ public partial record class DomainAssignment
     #region FieldAndProperty
 
     [Key(0)]
-    // public DomainRole Role { get; init; }
-    public string Code { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     [Key(1)]
-    public Credit Credit { get; init; } = Credit.UnsafeConstructor();
+    public string Code { get; init; } = string.Empty;
 
     [Key(2)]
+    public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
+
+    [Key(3)]
     public NetNode NetNode { get; init; } = new();
+
+    public ulong GetDomainHash()
+        => this.CreditIdentity.GetIdentifier().Id1;
 
     // [Key(2)]
     // [MaxLength(LpConstants.MaxUrlLength)]
@@ -23,16 +28,20 @@ public partial record class DomainAssignment
 
     #endregion
 
-    public DomainAssignment(string code, Credit credit, NetNode netNode)
+    public DomainAssignment(string name, string code, CreditIdentity creditIdentity, NetNode netNode)
     {
+        this.Name = name;
         this.Code = code;
-        this.Credit = credit;
+        this.CreditIdentity = creditIdentity;
         this.NetNode = netNode;
     }
 
     public bool Validate()
     {
-        return this.Credit.Validate() &&
+        return this.CreditIdentity.Validate() &&
             this.NetNode.Validate();
     }
+
+    public override string ToString()
+        => StringHelper.SerializeToString(this);
 }

@@ -68,11 +68,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         // await this.TestLinkageKey();
 
-        _ = Task.Run(() =>
+        /*_ = Task.Run(() =>
         {
             Thread.Sleep(1_000);
             this.userInterfaceService.WriteLine("ABC");
-        });
+        });*/
     }
 
     private async Task TestLinkageKey()

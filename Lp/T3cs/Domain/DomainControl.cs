@@ -4,11 +4,15 @@ using System.Collections.Concurrent;
 using Lp.Net;
 using Lp.Services;
 using Netsphere.Crypto;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Lp.T3cs;
 
+[TinyhandObject(UseServiceProvider = true)]
 public partial class DomainControl
 {
+    public const string Filename = "DomainControl";
+
     #region FieldAndProperty
 
     private readonly ILogger logger;
@@ -16,84 +20,91 @@ public partial class DomainControl
     private readonly LpService lpService;
     private readonly LpBase lpBase;
     private readonly NetUnit netUnit;
-    private readonly AuthorityControl authorityControl;
-    private readonly DomainStorage domainStorage;
-    private readonly ConcurrentDictionary<ulong, DomainData> domainDataDictionary = new();
+    private readonly BigMachine bigMachine;
 
-    // public DomainServer DomainServer { get; }
+    [Key(0)]
+    private readonly ConcurrentDictionary<ulong, DomainData> domainHashToData = new();
 
-    // public CreditDomain PrimaryDomain { get; }
+    private DomainData[]? domainDataArray;
+
+    public DomainData[] DomainDataArray => this.domainDataArray ??= this.domainHashToData.Values.ToArray();
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, AuthorityControl authorityControl, DomainStorage domainStorage)
+    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, BigMachine bigMachine)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
         this.lpBase = lpBase;
         this.netUnit = netUnit;
-        this.authorityControl = authorityControl;
-        this.domainStorage = domainStorage;
+        this.bigMachine = bigMachine;
     }
 
-    public Task<T3csResult> AssignDomain(string text)
+    public void ListDomain()
     {
-        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
-        if (domainAssignment is null)
+        foreach (var x in this.DomainDataArray)
+        {
+            this.userInterfaceService.WriteLine(x.ToString());
+        }
+    }
+
+    public async Task Prepare(UnitContext unitContext)
+    {
+        var domain = this.lpBase.Options.Domain;
+        if (!string.IsNullOrEmpty(domain))
+        {
+            var result = await this.AddDomain(domain).ConfigureAwait(false);
+            if (result != T3csResult.Success)
+            {
+                throw new PanicException();
+            }
+        }
+
+        this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
+    }
+
+    public Task<T3csResult> AddDomain(string text, bool verbose = true)
+    {
+        if (string.IsNullOrEmpty(text))
         {
             return Task.FromResult(T3csResult.InvalidData);
         }
 
-        return this.AssignDomain(domainAssignment);
-    }
-
-    public async Task<T3csResult> AssignDomain(DomainAssignment domainAssignment)
-    {
-        var seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
-        if (seedKey is null)
+        var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(text);
+        if (domainAssignment is null)
         {
-            return T3csResult.InvalidData;
+            if (verbose)
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, text);
+                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(Example.DomainAssignment));
+            }
+
+            return Task.FromResult(T3csResult.InvalidData);
         }
 
-        var domainData = this.AddDomainService(domainAssignment.Credit, DomainRole.User, seedKey);
+        return this.AddDomain(domainAssignment, verbose);
+    }
+
+    public async Task<T3csResult> AddDomain(DomainAssignment domainAssignment, bool verbose = true)
+    {
+        SeedKey? seedKey = default;
+        if (!string.IsNullOrEmpty(domainAssignment.Code))
+        {
+            seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
+            if (seedKey is null)
+            {
+                return T3csResult.InvalidData;
+            }
+        }
+
+        var domainData = this.AddDomainInternal(domainAssignment, seedKey);
         return T3csResult.Success;
     }
 
-    public async Task Prepare()
-    {//
-        var domain = this.lpBase.Options.AssignDomain;
-        if (!string.IsNullOrEmpty(domain))
-        {
-            var domainAssignment = StringHelper.DeserializeFromString<DomainAssignment>(domain);
-            if (domainAssignment is not null)
-            {
-                // this.PrimaryDomain = new(domainOption);
-                var result = await this.AssignDomain(domainAssignment).ConfigureAwait(false);
-                if (result != T3csResult.Success)
-                {
-                    throw new PanicException();
-                }
-            }
-            else
-            {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, domain);
-                var example = new DomainAssignment("Code", LpConstants.LpCredit, Alternative.NetNode);
-                this.userInterfaceService.WriteLine(StringHelper.SerializeToString(example));
-            }
-        }
-
-        // var seedKey = await this.authorityControl.GetSeedKey(LpConstants.DomainKeyAlias).ConfigureAwait(false);
-
-        // this.DomainServer.Initialize(this.PrimaryDomain, seedKey);
-        this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
-
-        // this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.ServiceEnabled, this.PrimaryDomain.DomainOption.Credit.ConvertToString(Alias.Instance));
-    }
-
-    internal DomainData? GetDomainService(ulong domainHash)
+    internal DomainData? GetDomainData(ulong domainHash)
     {
-        if (this.domainDataDictionary.TryGetValue(domainHash, out var domainServiceClass))
+        if (this.domainHashToData.TryGetValue(domainHash, out var domainServiceClass))
         {
             return domainServiceClass;
         }
@@ -101,52 +112,58 @@ public partial class DomainControl
         return null;
     }
 
-    internal DomainData AddDomainService(Credit domainCredit, DomainRole kind, SeedKey? domainSeedKey)
+    internal DomainData AddDomainInternal(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        var domainHash = domainCredit.GetDomainHash();
-        var serviceClass = this.domainDataDictionary.AddOrUpdate(
+        var domainHash = domainAssignment.GetDomainHash();
+        var serviceClass = this.domainHashToData.AddOrUpdate(
             domainHash,
             hash =>
-            {//
-                var domainData = new DomainData(domainCredit);
-                // domainData.Update(kind, domainSeedKey);
+            {
+                var domainData = new DomainData(domainAssignment, domainSeedKey);
+                this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return domainData;
             },
             (hash, original) =>
             {
-                original.Update(kind, domainSeedKey);
+                original.Initialize(domainAssignment, domainSeedKey);
+                this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return original;
             });
 
+        this.domainDataArray = default;
         return serviceClass;
     }
 
-    internal bool TryRemoveDomainService(ulong domainHash, DomainRole role)
+    internal bool TryRemoveDomain(string domainName)
     {
-        if (role != DomainRole.Root &&
-            this.domainDataDictionary.TryGetValue(domainHash, out var domainData))
+        var result = false;
+        foreach (var x in this.DomainDataArray)
         {
-            if (domainData.Role == role)
+            if (string.Equals(x.DomainAssignment.Name, domainName, StringComparison.InvariantCultureIgnoreCase))
             {
-                return this.domainDataDictionary.TryRemove(new(domainHash, domainData));
+                if (this.TryRemoveDomain(x.DomainAssignment.GetDomainHash()))
+                {
+                    this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.Removed, domainName);
+                    result = true;
+                }
             }
         }
 
-        return false;
+        if (result)
+        {
+            this.domainDataArray = default;
+        }
+
+        return result;
     }
 
-    /*public async Task<NetResult> RegisterNodeToDomain(NodeProof nodeProof)
+    internal bool TryRemoveDomain(ulong domainHash)
     {
-        using (var connection = await this.netUnit.NetTerminal.Connect(this.PrimaryDomain.DomainOption.NetNode).ConfigureAwait(false))
+        if (this.bigMachine.DomainMachine.TryGet(domainHash, out var machine))
         {
-            if (connection is null)
-            {
-                return NetResult.NoNetwork;
-            }
-
-            var service = connection.GetService<IDomainService>();
-            var result = await service.RegisterNode(nodeProof);
-            return result;
+            machine.TerminateMachine();
         }
-    }*/
+
+        return this.domainHashToData.TryRemove(domainHash, out _);
+    }
 }

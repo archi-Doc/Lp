@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using SimplePrompt;
+
 namespace Lp;
 
 public static class IUserInterfaceServiceExtention
@@ -13,14 +15,14 @@ public static class IUserInterfaceServiceExtention
     public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
         => service.WriteLine(HashedString.Get(hash, obj1, obj2));
 
-    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash)
-        => viewService.ReadYesNo(HashedString.Get(hash));
+    public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
+        => viewService.ReadYesNo(cancelOnEscape, HashedString.Get(hash));
 
-    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1)
-        => viewService.ReadYesNo(HashedString.Get(hash, obj1));
+    public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1)
+        => viewService.ReadYesNo(cancelOnEscape, HashedString.Get(hash, obj1));
 
-    public static Task<bool?> ReadYesNo(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
-        => viewService.ReadYesNo(HashedString.Get(hash, obj1, obj2));
+    public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1, object obj2)
+        => viewService.ReadYesNo(cancelOnEscape, HashedString.Get(hash, obj1, obj2));
 
     public static Task<InputResult> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
         => viewService.ReadLine(cancelOnEscape, HashedString.Get(hash));
@@ -31,58 +33,50 @@ public static class IUserInterfaceServiceExtention
     public static Task<InputResult> RequestString(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1, object obj2)
         => viewService.ReadLine(cancelOnEscape, HashedString.Get(hash, obj1, obj2));
 
-    public static Task<string?> ReadPassword(this IUserInterfaceService viewService, ulong hash)
-        => viewService.ReadPassword(HashedString.Get(hash));
+    public static Task<InputResult> ReadPassword(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
+        => viewService.ReadPassword(cancelOnEscape, HashedString.Get(hash));
 
-    public static Task<string?> ReadPassword(this IUserInterfaceService viewService, ulong hash, object obj1)
-        => viewService.ReadPassword(HashedString.Get(hash, obj1));
+    public static Task<InputResult> ReadPassword(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1)
+        => viewService.ReadPassword(cancelOnEscape, HashedString.Get(hash, obj1));
 
-    public static Task<string?> ReadPassword(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
-        => viewService.ReadPassword(HashedString.Get(hash, obj1, obj2));
+    public static Task<InputResult> ReadPassword(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, object obj1, object obj2)
+        => viewService.ReadPassword(cancelOnEscape, HashedString.Get(hash, obj1, obj2));
 
-    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash)
-        => viewService.Notify(level, HashedString.Get(hash));
+    public static Task Notify(this IUserInterfaceService viewService, ILogger? logger, LogLevel level, ulong hash)
+        => viewService.Notify(logger, level, HashedString.Get(hash));
 
-    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1)
-        => viewService.Notify(level, HashedString.Get(hash, obj1));
+    public static Task Notify(this IUserInterfaceService viewService, ILogger? logger, LogLevel level, ulong hash, object obj1)
+        => viewService.Notify(logger, level, HashedString.Get(hash, obj1));
 
-    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1, object obj2)
-        => viewService.Notify(level, HashedString.Get(hash, obj1, obj2));
+    public static Task Notify(this IUserInterfaceService viewService, ILogger? logger, LogLevel level, ulong hash, object obj1, object obj2)
+        => viewService.Notify(logger, level, HashedString.Get(hash, obj1, obj2));
 
-    public static async Task<string?> RequestPasswordAndConfirm(this IUserInterfaceService viewService, ulong hash, ulong hash2)
+    public static async Task<InputResult> ReadPasswordAndConfirm(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, ulong hash2)
     {
-        string? password;
-        string? confirm;
-
-        do
-        {
-            password = await viewService.ReadPassword(hash).ConfigureAwait(false);
-            if (password == null)
-            {
-                return null;
-            }
-            else if (password == string.Empty)
-            {
-                viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
-                var reply = await viewService.ReadYesNo(Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
-                if (reply != false)
-                {// Empty password or abort
-                    return password;
-                }
-            }
-        }
-        while (password == string.Empty);
-
+        InputResult result;
         while (true)
         {
-            confirm = await viewService.ReadPassword(hash2).ConfigureAwait(false);
-            if (confirm == null)
-            {
-                return null;
+            result = await viewService.ReadPassword(cancelOnEscape, hash).ConfigureAwait(false);
+            if (!result.IsSuccess)
+            {// Canceled or Terminated
+                return result;
             }
-            else if (password != confirm)
-            {
-                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
+            else if (result.Text == string.Empty)
+            {// Empty password
+                viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
+                var resultKind = await viewService.ReadYesNo(cancelOnEscape, Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
+                if (resultKind.IsPositive)
+                {// Yes (Empty password)
+                    return result;
+                }
+                else if (resultKind.IsNegative)
+                {// No
+                    continue;
+                }
+                else
+                {// Canceled or Terminated
+                    return new(resultKind);
+                }
             }
             else
             {
@@ -90,6 +84,22 @@ public static class IUserInterfaceServiceExtention
             }
         }
 
-        return password;
+        while (true)
+        {
+            var confirmResult = await viewService.ReadPassword(cancelOnEscape, hash2).ConfigureAwait(false);
+            if (!confirmResult.IsSuccess)
+            {// Canceled or Terminated
+                return confirmResult;
+            }
+
+            if (result.Text != confirmResult.Text)
+            {// Does not match
+                viewService.WriteLine(Hashed.Dialog.Password.NotMatch);
+            }
+            else
+            {
+                return result;
+            }
+        }
     }
 }
