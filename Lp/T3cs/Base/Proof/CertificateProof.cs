@@ -10,7 +10,7 @@ public partial class CertificateProof : ProofWithPublicKey
     #region FieldAndProperty
 
     [Key(ProofWithPublicKey.ReservedKeyCount)]
-    public MergedProof MergedProof { get; protected set; } = new();
+    public MergedProof MergedProof { get; protected set; } = MergedProof.UnsafeConstructor();
 
     [Key(ProofWithPublicKey.ReservedKeyCount + 1)]
     public NetNode NetNode { get; protected set; } = new();

@@ -9,6 +9,8 @@ namespace Lp.T3cs;
 public enum ProofKey : int
 {
     EvolProof,
+    MergedProof,
+    CertificateProof,
     CredentialProof,
     LinkProof,
     ValueProof,
@@ -30,11 +32,13 @@ public enum ProofKey : int
 /// To centralize serialization, add the derived Proof classes to ProofKey and apply the TinyhandUnion attribute to this class.
 /// </summary>
 // [TinyhandUnion((int)ProofKey.EvolProof2, typeof(EvolProof2))]
+[TinyhandUnion((int)ProofKey.EvolProof, typeof(EvolProof))]
+[TinyhandUnion((int)ProofKey.MergedProof, typeof(MergedProof))]
+[TinyhandUnion((int)ProofKey.CertificateProof, typeof(CertificateProof))]
 [TinyhandUnion((int)ProofKey.CredentialProof, typeof(CredentialProof))]
 [TinyhandUnion((int)ProofKey.LinkProof, typeof(LinkProof))]
 [TinyhandUnion((int)ProofKey.ValueProof, typeof(ValueProof))]
 [TinyhandUnion((int)ProofKey.CreateCreditProof, typeof(CreateCreditProof))]
-[TinyhandUnion((int)ProofKey.EvolProof, typeof(EvolProof))]
 [TinyhandUnion((int)ProofKey.TransferProof, typeof(TransferProof))]
 [TinyhandUnion((int)ProofKey.DimensionProof, typeof(DimensionProof))]
 [TinyhandUnion((int)ProofKey.IdentificationProof, typeof(IdentificationProof))]
