@@ -11,12 +11,16 @@ public partial class MergedProof : Proof
     [Key(Proof.ReservedKeyCount)]
     public Value Value { get; protected set; } = default!;
 
+    [Key(Proof.ReservedKeyCount + 1)]
+    public byte MergerIndex { get; protected set; } = default!;
+
     public MergedProof(Value value)
     {
         this.Value = value;
     }
 
-    public override SignaturePublicKey GetSignatureKey() => this.Value.Credit.PrimaryMerger;
+    public override SignaturePublicKey GetSignatureKey()
+        => this.Value.Credit.GetMerger(this.MergerIndex);
 
     public override bool TryGetCredit([MaybeNullWhen(false)] out Credit credit)
     {
@@ -32,7 +36,7 @@ public partial class MergedProof : Proof
 
     public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
-        if (!this.Value.Owner.Equals(ref publicKey))
+        if (!this.GetSignatureKey().Equals(ref publicKey))
         {
             return false;
         }
