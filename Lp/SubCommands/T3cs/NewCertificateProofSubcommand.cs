@@ -1,66 +1,61 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere.Stats;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("new-certificate-proof")]
-public class NewCertificateProofSubcommand : ISimpleCommandAsync
+public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCertificateProofSubcommand.Options>
 {
-    public record Options
+    [TinyhandObject(ImplicitMemberNameAsKey = true)]
+    public partial record Options
     {
-        [SimpleOption("Source", Description = "Authority@Identifier/Mergers", Required = true)]
-        public string Source { get; init; } = string.Empty;
+        [SimpleOption("Code", Description = "Code", Required = false)]
+        public string Code { get; init; } = string.Empty;
+
+        [SimpleOption("Credit", Description = "Credit", Required = true)]
+        public string Credit { get; init; } = string.Empty;
     }
 
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
     private readonly LpService lpService;
+    private readonly NetStats netStats;
 
-    public NewCertificateProofSubcommand(IUserInterfaceService userInterfaceService, ILogger<IdentifyCreditSubcommand> logger, LpService lpService)
+    public NewCertificateProofSubcommand(IUserInterfaceService userInterfaceService, ILogger<NewCertificateProofSubcommand> logger, LpService lpService, NetStats netStats)
     {
         this.userInterfaceService = userInterfaceService;
         this.logger = logger;
         this.lpService = lpService;
+        this.netStats = netStats;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task RunAsync(Options options, string[] args)
     {
-        if (args.Length == 0)
-        {
-            ShowErrorMessage();
+        var node = this.netStats.GetOwnNetNode();
+        if (node is null)
+        {// Failed to retrieve the IP address.
             return;
         }
 
-        CreditIdentity? creditIdentity = default;
-        try
-        {
-            creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(SimpleParserHelper.TrimQuotesAndBracket(args[0]));
-        }
-        catch
-        {
-        }
+        var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
 
-        if (creditIdentity is null)
+        if (!Credit.TryParse(options.Credit, out var credit, out _))
         {
-            ShowErrorMessage();
             return;
         }
 
-        var st = StringHelper.SerializeToString(creditIdentity);
-        this.userInterfaceService.WriteLine($"CreditIdentity: {st}"); // creditIdentity.ToString()
-
-        var credit = creditIdentity.ToCredit();
-        if (credit is not null)
+        if (seedKey is not null)
         {
-            this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
-        }
-
-        void ShowErrorMessage()
-        {
-            this.userInterfaceService.WriteLine(Hashed.Subcommands.InvalidCreditIdentity);
-            this.userInterfaceService.WriteLine($"{HashedString.Get(Hashed.Subcommands.Example)} {Example.CreditIdentity.ToString()}");
+            var publicKey = seedKey.GetSignaturePublicKey();
+            var mergerIndex = credit.GetMergerIndex(ref publicKey);
+            if (mergerIndex >= 0)
+            {
+                var mergedProof = new MergedProof(new(publicKey, 0, credit));
+                mergedProof.Sign
+            }
         }
     }
 }
