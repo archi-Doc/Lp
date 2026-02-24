@@ -36,16 +36,24 @@ public partial class MergedProof : Proof
 
     public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
     {
-        if (!this.GetSignatureKey().Equals(ref publicKey))
+        var mergerIndex = this.Value.Credit.GetMergerIndex(ref publicKey);
+        if (mergerIndex < 0)
         {
             return false;
         }
 
+        this.MergerIndex = (byte)mergerIndex;
         return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 
     public override bool Validate(ValidationOptions validationOptions)
     {
+        if (this.MergerIndex < 0 ||
+            this.MergerIndex >= LpConstants.MaxMergers)
+        {
+            return false;
+        }
+
         if (!base.Validate(validationOptions))
         {
             return false;

@@ -221,7 +221,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
         }
 
         this.SignedMics = Mics.GetCorrected();
-        this.ValiditySeconds = Math.Max(validitySeconds, this.MaxValiditySeconds);
+        this.ValiditySeconds = Math.Min(validitySeconds, this.MaxValiditySeconds);
 
         return true;
     }

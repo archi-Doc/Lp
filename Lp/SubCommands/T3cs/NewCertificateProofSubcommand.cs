@@ -36,25 +36,46 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
         var node = this.netStats.GetOwnNetNode();
         if (node is null)
         {// Failed to retrieve the IP address.
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoOwnAddress);
             return;
         }
+
+        this.userInterfaceService.WriteLine($"NetNode: {node}");
 
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
-
-        var credit = options.Credit;
-        /*if (!Credit.TryParse(options.Credit, out var credit, out _))
+        if (seedKey is null)
         {
             return;
-        }*/
+        }
 
-        if (seedKey is not null)
-        {
-            var publicKey = seedKey.GetSignaturePublicKey();
-            var mergerIndex = credit.GetMergerIndex(ref publicKey);
-            if (mergerIndex >= 0)
+        MergedProof? mergedProof = default;
+        var publicKey = seedKey.GetSignaturePublicKey();
+        var mergerIndex = options.Credit.GetMergerIndex(ref publicKey);
+        if (mergerIndex >= 0)
+        {// Since the Merger's SeedKey is specified, create a MergedProof and self-sign it.
+            mergedProof = new MergedProof(new(publicKey, 1, options.Credit));
+            if (!seedKey.TrySignAndValidate(mergedProof, 60))
             {
-                var mergedProof = new MergedProof(new(publicKey, 0, credit));
+                return;
             }
         }
+
+        if (mergedProof is null)
+        {
+            return;
+        }
+
+        this.logger.TryGet(LogLevel.Information)?.Log(StringHelper.SerializeToString(mergedProof));
+
+        var certificateProof = new CertificateProof(mergedProof, node);
+        if (!seedKey.TrySignAndValidate(certificateProof, 60))
+        {
+            return;
+        }
+
+        var st = StringHelper.SerializeToString(certificateProof);
+        this.logger.TryGet(LogLevel.Information)?.Log(st);
+        var bin = TinyhandSerializer.SerializeObject(certificateProof);
+        this.logger.TryGet(LogLevel.Information)?.Log($"{st.Length} {bin.Length}");
     }
 }
