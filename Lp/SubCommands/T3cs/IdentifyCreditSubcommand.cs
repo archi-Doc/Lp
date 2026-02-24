@@ -27,15 +27,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        CreditIdentity? creditIdentity = default;
-        try
-        {
-            creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(SimpleParserHelper.TrimQuotesAndBracket(args[0]));
-        }
-        catch
-        {
-        }
-
+        var creditIdentity = TinyhandSerializer.TryDeserializeFromString<CreditIdentity>(SimpleParserHelper.TrimQuotesAndBracket(args[0]));
         if (creditIdentity is null)
         {
             ShowErrorMessage();

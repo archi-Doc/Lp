@@ -9,14 +9,13 @@ namespace Lp.Subcommands.T3cs;
 [SimpleCommand("new-certificate-proof")]
 public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCertificateProofSubcommand.Options>
 {
-    [TinyhandObject(ImplicitMemberNameAsKey = true)]
-    public partial record Options
+    public record Options
     {
         [SimpleOption("Code", Description = "Code", Required = false)]
         public string Code { get; init; } = string.Empty;
 
         [SimpleOption("Credit", Description = "Credit", Required = true)]
-        public string Credit { get; init; } = string.Empty;
+        public Credit Credit { get; init; } = Credit.UnsafeConstructor();
     }
 
     private readonly IUserInterfaceService userInterfaceService;
@@ -42,10 +41,11 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
 
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
 
-        if (!Credit.TryParse(options.Credit, out var credit, out _))
+        var credit = options.Credit;
+        /*if (!Credit.TryParse(options.Credit, out var credit, out _))
         {
             return;
-        }
+        }*/
 
         if (seedKey is not null)
         {
@@ -54,7 +54,6 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
             if (mergerIndex >= 0)
             {
                 var mergedProof = new MergedProof(new(publicKey, 0, credit));
-                mergedProof.Sign
             }
         }
     }
