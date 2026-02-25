@@ -20,17 +20,19 @@ public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options
         [SimpleOption("Credit", Description = "Credit", Required = true)]
         public Credit Credit { get; init; } = Credit.UnsafeConstructor();
 
-        [SimpleOption("Code", Description = LpConstants.CodeDescription, Required = false)]
+        [SimpleOption("Code", Description = LpConstants.CodeDescription, Required = true)]
         public string Code { get; init; } = string.Empty;
     }
 
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
+    private readonly LpService lpService;
 
-    public TemplateSubcommand(SimpleParser simpleParser, ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService)
+    public TemplateSubcommand(SimpleParser simpleParser, ILogger<TemplateSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
+        this.lpService = lpService;
 
         if (simpleParser.TryGetOption(Name, "Credit", out var option))
         {
@@ -42,6 +44,13 @@ public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options
     {
         this.userInterfaceService.WriteLine("Template subcommand");
 
+        var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
+        if (seedKey is null)
+        {
+            return;
+        }
+
+        this.logger.TryGet()?.Log(seedKey.GetSignaturePublicKey().ToString());
         this.logger.TryGet()?.Log(options.ToString());
     }
 }
