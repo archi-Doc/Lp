@@ -34,13 +34,12 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        var st = StringHelper.SerializeToString(creditIdentity);
-        this.userInterfaceService.WriteLine($"CreditIdentity: {st}"); // creditIdentity.ToString()
-
         var credit = creditIdentity.ToCredit();
         if (credit is not null)
         {
-            this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
+            this.logger.TryGet()?.Log($"Credit was created successfully");
+            this.logger.TryGet()?.Log($"CreditIdentity: {StringHelper.SerializeToString(creditIdentity)}");
+            this.logger.TryGet()?.Log($"Credit: {credit.ToString()}");
         }
 
         void ShowErrorMessage()
