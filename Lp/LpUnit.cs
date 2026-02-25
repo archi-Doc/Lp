@@ -99,6 +99,7 @@ public class LpUnit
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
+                context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));

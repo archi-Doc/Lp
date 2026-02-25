@@ -41,6 +41,7 @@ public static class LpConstants
     public const string TestAlias = "TestId";
     public const string TestKeyAlias = "TestKey";
     public const string TestSecretKeyString = "!!!DejdC4mUaFFIn4OMN56ySzI_fs3K3sixDUxu4AghL3PUudfx!!!(s!1Vh2JRGJJt7B-Q0wMN-s0P5zfq8hH47L1yXFk8LseVDiPCjp))";
+    public const string CodeDescription = "Authority, Vault, MasterKey(Merger...),Raw key";
 
     public static readonly SignaturePublicKey TestPublicKey;
     public static readonly SeedKey TestSeedKey;
