@@ -24,11 +24,13 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         this.simpleConsole = simpleConsole;
     }
 
-    public void Write(string? message = null)
-        => this.simpleConsole.Write(message);
+    public bool EnableColor { get; set; } = true;
 
-    public void WriteLine(string? message = null)
-        => this.simpleConsole.WriteLine(message);
+    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+        => this.simpleConsole.Write(message, color);
+
+    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+        => this.simpleConsole.WriteLine(message, color);
 
     public void EnqueueLine(string? message = null)
         => this.simpleConsole.EnqueueInput(message);

@@ -27,7 +27,7 @@ public class InspectSubcommand : ISimpleCommand
 
     public void InspectVersion()
     {
-        this.userInterfaceService.WriteLine($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+        this.userInterfaceService.WriteLine($"Lp ({Arc.VersionHelper.VersionString})");
     }
 
     public void InspectNet()

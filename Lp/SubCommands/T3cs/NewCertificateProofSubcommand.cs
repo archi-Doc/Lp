@@ -34,9 +34,9 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
     public async Task RunAsync(Options options, string[] args)
     {
         var node = this.netStats.GetOwnNetNode();
-        if (node is null)
+        if (node is null || !node.Validate())
         {// Failed to retrieve the IP address.
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoOwnAddress);
+            this.userInterfaceService.WriteLine(Hashed.Error.NoOwnAddress, ConsoleColor.Red);
             return;
         }
 

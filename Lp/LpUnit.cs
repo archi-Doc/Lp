@@ -380,7 +380,7 @@ public class LpUnit
                 LpConstants.Initialize();
 
                 // Start
-                lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+                lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Arc.VersionHelper.VersionString})");
 
                 // Prepare
                 await lpUnit.DomainControl.Prepare(this.Context);

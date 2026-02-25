@@ -15,6 +15,15 @@ public static class IUserInterfaceServiceExtention
     public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
         => service.WriteLine(HashedString.Get(hash, obj1, obj2));
 
+    public static void WriteLine(this IUserInterfaceService service, ulong hash, ConsoleColor color)
+        => service.WriteLine(HashedString.Get(hash), color);
+
+    public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, ConsoleColor color)
+        => service.WriteLine(HashedString.Get(hash, obj1), color);
+
+    public static void WriteLine(this IUserInterfaceService service, ulong hash, object obj1, object obj2, ConsoleColor color)
+        => service.WriteLine(HashedString.Get(hash, obj1, obj2), color);
+
     public static Task<InputResultKind> ReadYesNo(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash)
         => viewService.ReadYesNo(cancelOnEscape, HashedString.Get(hash));
 
