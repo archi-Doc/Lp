@@ -23,15 +23,13 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
     private readonly ILogger logger;
     private readonly LpService lpService;
     private readonly NetStats netStats;
-    private readonly LpSettings lpSettings;
 
-    public NewCertificateProofSubcommand(IUserInterfaceService userInterfaceService, ILogger<NewCertificateProofSubcommand> logger, LpService lpService, NetStats netStats, LpSettings lpSettings)
+    public NewCertificateProofSubcommand(IUserInterfaceService userInterfaceService, ILogger<NewCertificateProofSubcommand> logger, LpService lpService, NetStats netStats)
     {
         this.userInterfaceService = userInterfaceService;
         this.logger = logger;
         this.lpService = lpService;
         this.netStats = netStats;
-        this.lpSettings = lpSettings;
     }
 
     public async Task RunAsync(Options options, string[] args)
@@ -39,7 +37,7 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
         var node = this.netStats.GetOwnNetNode();
         if (node is null || !node.Validate())
         {// Failed to retrieve the IP address.
-            this.userInterfaceService.WriteLine(Hashed.Error.NoOwnAddress, this.lpSettings.Color.Error);
+            this.userInterfaceService.WriteLineError(Hashed.Error.NoOwnAddress);
             return;
         }
 

@@ -43,6 +43,9 @@ public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options
     public async Task RunAsync(Options options, string[] args)
     {
         this.userInterfaceService.WriteLine("Template subcommand");
+        this.userInterfaceService.WriteLineDefault("Default");
+        this.userInterfaceService.WriteLineWarning("Warning");
+        this.userInterfaceService.WriteLineError("Error");
 
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
         if (seedKey is null)

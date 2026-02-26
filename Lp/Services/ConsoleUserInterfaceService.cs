@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Data;
 using SimplePrompt;
 
 namespace Lp.Services;
@@ -9,7 +10,6 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     private const string YesOrNoSuffix = "[Y/n] ";
 
     private readonly SimpleConsole simpleConsole;
-
     private readonly ReadLineOptions passwordOptions = new()
     {
         AllowEmptyLineInput = true,
@@ -19,9 +19,17 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         MultilineDelimiter = default,
     };
 
+    private LpSettings lpSettings;
+
     public ConsoleUserInterfaceService(SimpleConsole simpleConsole)
     {
         this.simpleConsole = simpleConsole;
+        this.lpSettings = new();
+    }
+
+    internal void Load(CrystalControl crystalControl)
+    {
+        this.lpSettings = crystalControl.GetCrystal<LpSettings>().Data;
     }
 
     public bool EnableColor { get; set; } = true;
@@ -31,6 +39,15 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.simpleConsole.WriteLine(message, color);
+
+    public void WriteLineDefault(string? message)
+        => this.WriteLine(message, this.lpSettings.Color.Default);
+
+    public void WriteLineWarning(string? message)
+        => this.WriteLine(message, this.lpSettings.Color.Warning);
+
+    public void WriteLineError(string? message)
+        => this.WriteLine(message, this.lpSettings.Color.Error);
 
     public void EnqueueLine(string? message = null)
         => this.simpleConsole.EnqueueInput(message);

@@ -353,6 +353,8 @@ public class LpUnit
         {
             try
             {
+                // This part is a bit complicated: VaultControl, ConsoleUserInterfaceService, and CrystalData end up with a circular dependency, so loading of LpSettings is deferred.
+
                 // CrystalControl
                 var crystalControl = this.Context.ServiceProvider.GetRequiredService<CrystalControl>();
 
@@ -367,6 +369,8 @@ public class LpUnit
                 {
                     throw new PanicException();
                 }
+
+                this.Context.ServiceProvider.GetRequiredService<ConsoleUserInterfaceService>().Load(crystalControl);
             }
             catch
             {
