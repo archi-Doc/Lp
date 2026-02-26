@@ -793,6 +793,7 @@ public class LpUnit
         var options = new ReadLineOptions()
         {
             Prompt = LpConstants.PromptString,
+            MultilineDelimiter = LpConstants.MultilineIndeitifierString,
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
 
