@@ -29,7 +29,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             var nn = Alternative.NetNode;
             var st = TinyhandSerializer.SerializeToString(nn);
             var mx = SeedKeyHelper.MaxPrivateKeyLengthInBase64;
-            var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotesAndBracket());
+            // var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0].TrimQuotesAndBracket());
+            var creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0]);
         }
         catch
         {

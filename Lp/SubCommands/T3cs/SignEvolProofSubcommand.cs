@@ -32,7 +32,8 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
         EvolProof? proof = default;
         try
         {
-            proof = TinyhandSerializer.DeserializeFromString<EvolProof>(SimpleParserHelper.TrimQuotesAndBracket(options.Proof));
+            //proof = TinyhandSerializer.DeserializeFromString<EvolProof>(SimpleParserHelper.TrimQuotesAndBracket(options.Proof));
+            proof = TinyhandSerializer.DeserializeFromString<EvolProof>(options.Proof);
         }
         catch
         {

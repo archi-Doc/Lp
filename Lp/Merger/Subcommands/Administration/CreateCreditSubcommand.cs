@@ -30,7 +30,8 @@ public class CreateCreditSubcommand : ISimpleCommandAsync
         CreditIdentity? creditIdentity = default;
         try
         {
-            creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(SimpleParserHelper.TrimQuotesAndBracket(args[0]));
+            //creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(SimpleParserHelper.TrimQuotesAndBracket(args[0]));
+            creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(args[0]);
         }
         catch
         {
