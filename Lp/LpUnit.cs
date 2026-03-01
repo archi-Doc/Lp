@@ -107,6 +107,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PingSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RestartRemoteContainerSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RemoteSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RemoteBenchSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RemoteDataSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PunchSubcommand));
