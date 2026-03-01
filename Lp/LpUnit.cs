@@ -17,6 +17,7 @@ using Lp.Logging;
 using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
+using Lp.Subcommands;
 using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -99,6 +100,7 @@ public class LpUnit
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
+                context.AddScoped<UserInterfaceContext>();
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));

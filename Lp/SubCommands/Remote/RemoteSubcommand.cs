@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 using SimplePrompt;
@@ -47,13 +48,15 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         public string Code { get; init; } = string.Empty;
     }
 
+    private readonly IServiceProvider serviceProvider;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly RobustConnection.Factory robustConnectionFactory;
 
-    public RemoteSubcommand(ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, RobustConnection.Factory robustConnectionFactory)
+    public RemoteSubcommand(IServiceProvider serviceProvider, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, RobustConnection.Factory robustConnectionFactory)
     {
+        this.serviceProvider = serviceProvider
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
@@ -82,6 +85,10 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
         this.userInterfaceService.WriteLine($"Node: {node.ToString()}");
         this.userInterfaceService.WriteLine($"Remote key: {seedKey.GetSignaturePublicKey()}");
+
+        using (var scope = this.serviceProvider.CreateScope())
+        {
+        }
 
         /*this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
             node,
