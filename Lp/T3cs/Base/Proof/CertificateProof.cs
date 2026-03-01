@@ -5,22 +5,25 @@ using Netsphere.Crypto;
 namespace Lp.T3cs;
 
 [TinyhandObject(AddAlternateKey = true)]
-public partial class CertificateProof : ProofWithPublicKey
+public partial class CertificateProof : Proof
 {
     #region FieldAndProperty
 
-    [Key(ProofWithPublicKey.ReservedKeyCount)]
-    public MergedProof MergedProof { get; protected set; } = new();
+    [Key(Proof.ReservedKeyCount)]
+    public MergedProof MergedProof { get; protected set; } // = MergedProof.UnsafeConstructor();
 
-    [Key(ProofWithPublicKey.ReservedKeyCount + 1)]
-    public NetNode NetNode { get; protected set; } = new();
+    [Key(Proof.ReservedKeyCount + 1)]
+    public NetNode NetNode { get; protected set; } // = new();
 
     #endregion
 
-    public CertificateProof(SignaturePublicKey publicKey)
-        : base(publicKey)
+    public CertificateProof(MergedProof mergedProof, NetNode netNode)
     {
+        this.MergedProof = mergedProof;
+        this.NetNode = netNode;
     }
+
+    public override SignaturePublicKey GetSignatureKey() => this.MergedProof.Value.Owner;
 
     public override bool Validate(ValidationOptions validationOptions)
     {

@@ -234,6 +234,9 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         this.Mergers = mergers;
     }
 
+    public SignaturePublicKey GetMerger(byte index)
+        => index >= this.Mergers.Length ? this.Mergers[0] : this.Mergers[index];
+
     public bool Validate()
     {
         if (this.Mergers == null)

@@ -17,6 +17,7 @@ using Lp.Logging;
 using Lp.Net;
 using Lp.NetServices;
 using Lp.Services;
+using Lp.Subcommands;
 using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -99,6 +100,8 @@ public class LpUnit
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
+                context.AddScoped<UserInterfaceContext>();
+                context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
@@ -106,6 +109,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PingSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RestartRemoteContainerSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.RemoteSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RemoteBenchSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.RemoteDataSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PunchSubcommand));
@@ -352,6 +356,8 @@ public class LpUnit
         {
             try
             {
+                // This part is a bit complicated: VaultControl, ConsoleUserInterfaceService, and CrystalData end up with a circular dependency, so loading of LpSettings is deferred.
+
                 // CrystalControl
                 var crystalControl = this.Context.ServiceProvider.GetRequiredService<CrystalControl>();
 
@@ -366,6 +372,8 @@ public class LpUnit
                 {
                     throw new PanicException();
                 }
+
+                this.Context.ServiceProvider.GetRequiredService<ConsoleUserInterfaceService>().Load(crystalControl);
             }
             catch
             {
@@ -379,7 +387,7 @@ public class LpUnit
                 LpConstants.Initialize();
 
                 // Start
-                lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+                lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Arc.VersionHelper.VersionString})");
 
                 // Prepare
                 await lpUnit.DomainControl.Prepare(this.Context);
@@ -788,6 +796,7 @@ public class LpUnit
         var options = new ReadLineOptions()
         {
             Prompt = LpConstants.PromptString,
+            MultilineDelimiter = LpConstants.MultilineIndeitifierString,
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
 

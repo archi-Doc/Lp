@@ -1,13 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 using SimplePrompt;
 
-namespace Lp.Subcommands.MergerRemote;
+namespace Lp.Subcommands;
 
-public class NestedCommand : NestedCommand<NestedCommand>
+/*public class NestedCommand : NestedCommand<NestedCommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
@@ -33,27 +34,36 @@ public class NestedCommand : NestedCommand<NestedCommand>
     public RobustConnection? RobustConnection { get; set; }
 
     public SeedKey? RemoteKey { get; set; }
-}
+}*/
 
-[SimpleCommand("merger-admin")]
-public class Command : ISimpleCommandAsync<CommandOptions>
+[SimpleCommand("remote")]
+public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 {
+    public record Options
+    {
+        [SimpleOption("Node", Description = "Node information", Required = true)]
+        public string Node { get; init; } = string.Empty;
+
+        [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", Required = true)]
+        public string Code { get; init; } = string.Empty;
+    }
+
+    private readonly IServiceProvider serviceProvider;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly NestedCommand nestedcommand;
     private readonly LpService lpService;
     private readonly RobustConnection.Factory robustConnectionFactory;
 
-    public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
+    public RemoteSubcommand(IServiceProvider serviceProvider, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, RobustConnection.Factory robustConnectionFactory)
     {
+        this.serviceProvider = serviceProvider
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
-        this.nestedcommand = nestedcommand;
         this.lpService = lpService;
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task RunAsync(CommandOptions options, string[] args)
+    public async Task RunAsync(Options options, string[] args)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
@@ -76,7 +86,11 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.userInterfaceService.WriteLine($"Node: {node.ToString()}");
         this.userInterfaceService.WriteLine($"Remote key: {seedKey.GetSignaturePublicKey()}");
 
-        this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
+        using (var scope = this.serviceProvider.CreateScope())
+        {
+        }
+
+        /*this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
             node,
             new(
                 async connection =>
@@ -98,23 +112,11 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         {
             this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
             return;
-        }
+        }*/
 
-        this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
+        /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
         this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
 
-        await this.nestedcommand.MainAsync();
+        await this.nestedcommand.MainAsync();*/
     }
-}
-
-public record CommandOptions
-{
-    [SimpleOption("Node", Description = "Node information", Required = true)]
-    public string Node { get; init; } = string.Empty;
-
-    [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", Required = true)]
-    public string Code { get; init; } = string.Empty;
-
-    // [SimpleOption("PrivateKey", Description = "Signature private key string")]
-    // public string PrivateKey { get; init; } = string.Empty;
 }

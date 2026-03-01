@@ -21,14 +21,16 @@ public class InspectSubcommand : ISimpleCommand
         this.InspectVersion();
         this.InspectNet();
         this.InspectMerger();
+        this.InspectRelayMerger();
+        this.InspectLinker();
     }
 
-    private void InspectVersion()
+    public void InspectVersion()
     {
-        this.userInterfaceService.WriteLine($"Lp ({Netsphere.Version.VersionHelper.VersionString})");
+        this.userInterfaceService.WriteLine($"Lp ({Arc.VersionHelper.VersionString})");
     }
 
-    private void InspectNet()
+    public void InspectNet()
     {
         var options = this.lpUnit.LpBase.Options;
         this.userInterfaceService.WriteLine($"NodeName:{this.lpUnit.LpBase.NodeName}, Alternative:{options.EnableAlternative}, Test:{options.TestFeatures}");
@@ -38,9 +40,21 @@ public class InspectSubcommand : ISimpleCommand
         this.userInterfaceService.WriteLine($"Remote key: {this.lpUnit.LpBase.RemotePublicKey.ToString()}");
     }
 
-    private void InspectMerger()
+    public void InspectMerger()
     {
         var merger = this.lpUnit.Merger;
         this.userInterfaceService.WriteLine($"Merger public key: {merger.PublicKey}");
+    }
+
+    public void InspectRelayMerger()
+    {
+        var merger = this.lpUnit.RelayMerger;
+        this.userInterfaceService.WriteLine($"RelayMerger public key: {merger.PublicKey}");
+    }
+
+    public void InspectLinker()
+    {
+        var merger = this.lpUnit.Linker;
+        this.userInterfaceService.WriteLine($"Linker public key: {merger.PublicKey}");
     }
 }

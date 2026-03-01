@@ -45,4 +45,10 @@ public interface IUserInterfaceService : IConsoleService
     /// <param name="message">The message to display.</param>
     /// <returns>A task that represents the asynchronous notification operation.</returns>
     Task Notify(ILogger? logger, LogLevel level, string message);
+
+    void WriteLineDefault(string? message);
+
+    void WriteLineWarning(string? message);
+
+    void WriteLineError(string? message);
 }

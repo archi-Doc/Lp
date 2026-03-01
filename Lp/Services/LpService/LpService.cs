@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Lp.Services;
 using Lp.T3cs;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 
 namespace Lp;
@@ -64,21 +65,15 @@ public class LpService
 
     public Credentials Credentials { get; init; }
 
+    private readonly IServiceProvider serviceProvider;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly IConversionOptions conversionOptions;
 
     #endregion
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LpService"/> class.
-    /// </summary>
-    /// <param name="userInterfaceService">The user interface service.</param>
-    /// <param name="netTerminal">The net terminal.</param>
-    /// <param name="authorityControl">The authority control.</param>
-    /// <param name="vaultControl">The vault control.</param>
-    /// <param name="credentials"> The credentials.</param>
-    public LpService(IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl, Credentials credentials)
+    public LpService(IServiceProvider serviceProvider, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl, Credentials credentials)
     {
+        this.serviceProvider = serviceProvider;
         this.userInterfaceService = userInterfaceService;
         this.NetTerminal = netTerminal;
         this.AuthorityControl = authorityControl;
@@ -219,6 +214,28 @@ public class LpService
     public async Task<SeedKey?> GetSeedKeyFromCode(string code)
     {
         SeedKey? seedKey;
+
+        if (code.Equals("Merger", StringComparison.InvariantCultureIgnoreCase))
+        {
+            if (this.serviceProvider.GetService<Merger>() is { } merger)
+            {
+                return merger.SeedKey;
+            }
+        }
+        else if (code.Equals("RelayMerger", StringComparison.InvariantCultureIgnoreCase))
+        {
+            if (this.serviceProvider.GetService<RelayMerger>() is { } relayMerger)
+            {
+                return relayMerger.SeedKey;
+            }
+        }
+        else if (code.Equals("Linker", StringComparison.InvariantCultureIgnoreCase))
+        {
+            if (this.serviceProvider.GetService<Linker>() is { } linker)
+            {
+                return linker.SeedKey;
+            }
+        }
 
         // Authority
         if (await this.AuthorityControl.GetAuthority(code).ConfigureAwait(false) is { } authority)

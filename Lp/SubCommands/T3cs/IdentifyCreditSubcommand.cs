@@ -27,28 +27,19 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
             return;
         }
 
-        CreditIdentity? creditIdentity = default;
-        try
-        {
-            creditIdentity = TinyhandSerializer.DeserializeFromString<CreditIdentity>(SimpleParserHelper.TrimQuotesAndBracket(args[0]));
-        }
-        catch
-        {
-        }
-
+        var creditIdentity = StringHelper.DeserializeFromString<CreditIdentity>(args[0]);
         if (creditIdentity is null)
         {
             ShowErrorMessage();
             return;
         }
 
-        var st = StringHelper.SerializeToString(creditIdentity);
-        this.userInterfaceService.WriteLine($"CreditIdentity: {st}"); // creditIdentity.ToString()
-
         var credit = creditIdentity.ToCredit();
         if (credit is not null)
         {
-            this.userInterfaceService.WriteLine($"Credit: {credit.ToString()}");
+            this.logger.TryGet()?.Log($"Credit was created successfully");
+            this.logger.TryGet()?.Log($"CreditIdentity: {StringHelper.SerializeToString(creditIdentity)}");
+            this.logger.TryGet()?.Log($"Credit: {credit.ToString()}");
         }
 
         void ShowErrorMessage()
