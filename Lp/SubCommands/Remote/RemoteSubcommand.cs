@@ -105,6 +105,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                 return;
             }
 
+
             while (!this.unitContext.Core.IsTerminated)
             {
                 var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
