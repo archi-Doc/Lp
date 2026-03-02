@@ -10,7 +10,7 @@ public interface ITestService : INetService, INetServiceWithUpdateAgreement
 {
     Task<string?> DoubleString(string input);
 
-    NetTask<byte[]?> Pingpong(byte[] data);
+    Task<byte[]?> Pingpong(byte[] data);
 }
 
 [NetServiceObject]
@@ -20,12 +20,12 @@ internal class TestServiceImpl : ITestService
         => input + input;
 
     // [NetServiceFilter<NullFilter>]
-    public async NetTask<byte[]?> Pingpong(byte[] data)
+    public async Task<byte[]?> Pingpong(byte[] data)
     {
         return data;
     }
 
-    async NetTask<NetResult> INetServiceWithUpdateAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
+    async Task<NetResult> INetServiceWithUpdateAgreement.UpdateAgreement(CertificateToken<ConnectionAgreement> token)
     {
         var transmissionContext = TransmissionContext.Current;
         if (!transmissionContext.ServerConnection.ValidateAndVerifyWithSalt(token))

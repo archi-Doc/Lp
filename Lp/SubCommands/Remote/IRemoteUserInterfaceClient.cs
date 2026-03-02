@@ -11,5 +11,5 @@ public interface IRemoteUserInterfaceClient : INetServiceWithConnectBidirectiona
 [NetServiceInterface]
 public interface IRemoteUserInterfaceServer : INetService
 {
-    NetTask<ulong> GetHash(byte[] data);
+    Task<ulong> GetHash(byte[] data);
 }

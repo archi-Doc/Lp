@@ -16,9 +16,8 @@ public partial class RemoteUserInterfaceClientAgent : IRemoteUserInterfaceClient
         this.lpBase = lpBase;
     }
 
-    async NetTask<NetResult> INetServiceWithConnectBidirectionally.ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    async Task<NetResult> INetServiceWithConnectBidirectionally.ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
     {
-
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token is null ||
             !token.ValidateAndVerify(serverConnection) ||

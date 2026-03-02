@@ -7,5 +7,5 @@ namespace Lp.T3cs;
 [NetServiceInterface]
 public partial interface IRelayMergerService : IMergerService
 {
-    NetTask<RelayStatus?> GetRelayStatus(Credit relayCredit);
+    Task<RelayStatus?> GetRelayStatus(Credit relayCredit);
 }

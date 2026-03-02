@@ -38,7 +38,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         authority.GetSeedKey().TrySign(proof, Seconds.FromDays(1));
         var param = new Merger.CreateCreditParams(proof);
 
-        var response2 = await service.CreateCredit(param).ResponseAsync;
+        var response2 = await service.CreateCredit(param);
         if (response2.IsSuccess && response2.Value is { } result2)
         {
             this.logger.TryGet()?.Log(result2.ToString());

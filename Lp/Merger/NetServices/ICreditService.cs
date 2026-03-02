@@ -8,5 +8,5 @@ namespace Lp.T3cs.NetService;
 /*[NetServiceInterface]
 public interface ICreditService : INetService
 {
-    public NetTask<T3csResult> Open(Credit credit);
+    public Task<T3csResult> Open(Credit credit);
 }*/

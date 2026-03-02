@@ -8,17 +8,17 @@ namespace Lp.Services;
 [NetServiceInterface]
 public partial interface LpDogmaNetService : INetService
 {
-    NetTask<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
+    Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
 
-    NetTask<LpDogmaInformation?> GetInformation();
+    Task<LpDogmaInformation?> GetInformation();
 
-    // NetTask<CredentialProof?> CreateCredentialProof(Value value, CredentialKind credentialKind);
+    // Task<CredentialProof?> CreateCredentialProof(Value value, CredentialKind credentialKind);
 
-    NetTask<NetResult> AddCredentialEvidence(CredentialEvidence evidence);
+    Task<NetResult> AddCredentialEvidence(CredentialEvidence evidence);
 
-    NetTask<ContractableEvidence?> SignContractableEvidence(ContractableEvidence evidence);
+    Task<ContractableEvidence?> SignContractableEvidence(ContractableEvidence evidence);
 
-    NetTask<LinkLinkage?> SignLinkage(LinkLinkage linkage);
+    Task<LinkLinkage?> SignLinkage(LinkLinkage linkage);
 
-    // NetTask<Linkage?> CreateLink(LinkProof linkProof1, LinkProof linkProof2);
+    // Task<Linkage?> CreateLink(LinkProof linkProof1, LinkProof linkProof2);
 }
