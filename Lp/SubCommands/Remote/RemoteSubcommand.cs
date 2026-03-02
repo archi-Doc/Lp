@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
@@ -8,11 +9,11 @@ using SimplePrompt;
 
 namespace Lp.Subcommands;
 
-/*public class NestedCommand : NestedCommand<NestedCommand>
+public class RemoteCommand : NestedCommand<RemoteCommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        var t = typeof(NestedCommand);
+        var t = typeof(RemoteCommand);
         context.TryAddSingleton(t);
 
         var group = context.GetCommandGroup(t);
@@ -21,20 +22,20 @@ namespace Lp.Subcommands;
         group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
-    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
+    public RemoteCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
         : base(context, core, simpleConsole)
     {
         this.ReadLineOptions = new ReadLineOptions
         {
-            Prompt = "merger-admin>> ",
+            Prompt = "remote>> ",
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
     }
 
     public RobustConnection? RobustConnection { get; set; }
 
-    public SeedKey? RemoteKey { get; set; }
-}*/
+    // public SeedKey? RemoteKey { get; set; }
+}
 
 [SimpleCommand("remote")]
 public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
@@ -53,14 +54,16 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly RobustConnection.Factory robustConnectionFactory;
+    private readonly RemoteCommand remoteCommand;
 
-    public RemoteSubcommand(IServiceProvider serviceProvider, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, RobustConnection.Factory robustConnectionFactory)
+    public RemoteSubcommand(IServiceProvider serviceProvider, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, RobustConnection.Factory robustConnectionFactory, RemoteCommand remoteCommand)
     {
-        this.serviceProvider = serviceProvider
+        this.serviceProvider = serviceProvider;
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
         this.robustConnectionFactory = robustConnectionFactory;
+        this.remoteCommand = remoteCommand;
     }
 
     public async Task RunAsync(Options options, string[] args)
@@ -69,12 +72,6 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         {
             return;
         }
-
-        /*var code = options.Code;
-        if (string.IsNullOrEmpty(code) && args.Length > 0)
-        {
-            code = args[0];
-        }*/
 
         // Code
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code);
@@ -86,11 +83,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         this.userInterfaceService.WriteLine($"Node: {node.ToString()}");
         this.userInterfaceService.WriteLine($"Remote key: {seedKey.GetSignaturePublicKey()}");
 
-        using (var scope = this.serviceProvider.CreateScope())
-        {
-        }
-
-        /*this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(
+        var robustConnection = this.robustConnectionFactory.Create(
             node,
             new(
                 async connection =>
@@ -108,10 +101,21 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                     }
                 }));
 
-        if (await this.nestedcommand.RobustConnection.Get() is not { } connection)
+        if (await robustConnection.Get() is not { } connection)
         {
             this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
             return;
+        }
+
+        this.remoteCommand.MainAsync
+
+        /*using (var scope = this.serviceProvider.CreateScope())
+        {
+            var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
+            if (userInterfaceContext.InitializeRemote(connection))
+            {
+
+            }
         }*/
 
         /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
