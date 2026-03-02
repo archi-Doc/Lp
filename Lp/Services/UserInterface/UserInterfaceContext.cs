@@ -4,9 +4,33 @@ namespace Lp.Services;
 
 public class UserInterfaceContext
 {
+    public bool IsInitialized { get; private set; }
+
+    public ServerConnection? Connection { get; set; }
+
     public UserInterfaceContext()
     {
     }
 
-    public ServerConnection? Connection { get; set; }
+    public bool InitializeLocal()
+    {
+        if (this.IsInitialized)
+        {
+            return false;
+        }
+
+        this.Connection = default;
+        return true;
+    }
+
+    public bool InitializeRemote(ServerConnection connection)
+    {
+        if (this.IsInitialized)
+        {
+            return false;
+        }
+
+        this.Connection = connection;
+        return true;
+    }
 }
