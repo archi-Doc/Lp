@@ -81,7 +81,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
         var readineOptions = new ReadLineOptions()
         {
-            Prompt = LpConstants.PromptString,
+            Prompt = "Remote >> ",
             MultilineDelimiter = LpConstants.MultilineIndeitifierString,
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
@@ -90,6 +90,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         {
             if (connection is null)
             {// Failed to connect
+                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
                 return;
             }
 
@@ -98,6 +99,11 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
             agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(1);
             var token = CertificateToken<ConnectionAgreement>.CreateAndSign(agreement, seedKey, connection);
             var netResult = await clientService.ConnectBidirectionally(token);
+            if (netResult != NetResult.Success)
+            {
+                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                return;
+            }
 
             while (!this.unitContext.Core.IsTerminated)
             {

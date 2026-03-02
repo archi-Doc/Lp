@@ -82,6 +82,8 @@ public class LpUnit
                 context.AddTransient<Lp.Net.BasalServiceAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
+                context.AddTransient<RelayMergerServiceAgent>();
+                context.AddTransient<RemoteUserInterfaceClientAgent>();
                 // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
@@ -471,6 +473,11 @@ public class LpUnit
         {
             NetAddress.SkipValidation = true;
             this.NetUnit.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
+        }
+
+        if (this.LpBase.RemotePublicKey.IsValid)
+        {
+            this.NetUnit.Services.Register<IRemoteUserInterfaceClient, RemoteUserInterfaceClientAgent>();
         }
 
         this.Core = core;
