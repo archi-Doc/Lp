@@ -10,8 +10,8 @@ using SimpleCommandLine;
 namespace Lp.NetServices;
 
 [NetServiceObject]
-public partial class RemoteUserInterfaceClientAgent : IRemoteUserInterfaceClient
-{// INetServiceWithUpdateAgreement
+public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetServiceObject
+{
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
     private readonly LpBase lpBase;
@@ -19,11 +19,17 @@ public partial class RemoteUserInterfaceClientAgent : IRemoteUserInterfaceClient
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceClientAgent(IServiceProvider serviceProvider, LpBase lpBase)
+    public RemoteUserInterfaceSenderAgent(IServiceProvider serviceProvider, LpBase lpBase)
     {
-        this.serviceScope = serviceProvider.CreateScope();// Release
+        this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
+    }
+
+    void INetServiceObject.OnConnectionClosed()
+    {
+        this.serviceScope.Dispose();
+        Console.WriteLine("Server IServiceScope Disposed");
     }
 
     async Task<NetResult> INetServiceWithConnectBidirectionally.ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
@@ -40,7 +46,7 @@ public partial class RemoteUserInterfaceClientAgent : IRemoteUserInterfaceClient
         return NetResult.Success;
     }
 
-    async Task<NetResult> IRemoteUserInterfaceClient.Send(string message)
+    async Task<NetResult> IRemoteUserInterfaceSender.Send(string message)
     {
         if (!this.IsAuthenticated)
         {

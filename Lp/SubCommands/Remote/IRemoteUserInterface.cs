@@ -3,13 +3,15 @@
 namespace Lp.NetServices;
 
 [NetServiceInterface]
-public interface IRemoteUserInterfaceClient : INetServiceWithConnectBidirectionally
+public interface IRemoteUserInterfaceSender : INetServiceWithConnectBidirectionally
 {// INetServiceWithUpdateAgreement
     Task<NetResult> Send(string message);
 }
 
 [NetServiceInterface]
-public interface IRemoteUserInterfaceServer : INetService
+public interface IRemoteUserInterfaceReceiver : INetService
 {
-    Task<ulong> GetHash(byte[] data);
+    Task<NetResult> WriteLine(string message, ConsoleColor color);
+
+    Task<InputResult> ReadLine();
 }

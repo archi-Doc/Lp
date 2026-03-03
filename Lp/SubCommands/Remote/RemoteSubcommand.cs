@@ -94,7 +94,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                 return;
             }
 
-            var clientService = connection.GetService<IRemoteUserInterfaceClient>();
+            var clientService = connection.GetService<IRemoteUserInterfaceSender>();
             var agreement = new ConnectionAgreement();
             agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(1);
             var token = CertificateToken<ConnectionAgreement>.CreateAndSign(agreement, seedKey, connection);
@@ -105,6 +105,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                 return;
             }
 
+            connection.PrepareBidirectionalConnection();
 
             while (!this.unitContext.Core.IsTerminated)
             {

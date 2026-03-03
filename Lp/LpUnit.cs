@@ -83,7 +83,7 @@ public class LpUnit
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<RemoteUserInterfaceClientAgent>();
+                context.AddTransient<RemoteUserInterfaceSenderAgent>();
                 // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
@@ -477,7 +477,7 @@ public class LpUnit
 
         if (this.LpBase.RemotePublicKey.IsValid)
         {
-            this.NetUnit.Services.Register<IRemoteUserInterfaceClient, RemoteUserInterfaceClientAgent>();
+            this.NetUnit.Services.Register<IRemoteUserInterfaceSender, RemoteUserInterfaceSenderAgent>();
         }
 
         this.Core = core;
