@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Lp.Services;
+using Lp.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -46,28 +47,19 @@ public partial class RemoteUserInterfaceClientAgent : IRemoteUserInterfaceClient
             return NetResult.NotAuthenticated;
         }
 
-        if (!this.Prepare())
-        {
-            return NetResult.UnknownError;
-        }
-
+        this.Prepare();
         _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
-
-        Console.WriteLine(message);
 
         return NetResult.Success;
     }
 
     [MemberNotNull(nameof(simpleParser))]
-    private bool Prepare()
+    private void Prepare()
     {
         if (this.simpleParser is not null)
         {
             return;
         }
-
-
-        this.serviceProvider.GetRequiredService<UserInterfaceContext>().InitializeRemote(TransmissionContext.Current.ServerConnection);
 
         var subcommandOptions = SimpleParserOptions.Standard with
         {
@@ -79,8 +71,9 @@ public partial class RemoteUserInterfaceClientAgent : IRemoteUserInterfaceClient
             AutoAlias = true,
         };
 
-        this.simpleParser = new SimpleParser(context.Subcommands, subcommandOptions);
+        Type[] subcommands = [typeof(InspectSubcommand),];
 
-        return true;
+        this.serviceProvider.GetRequiredService<UserInterfaceContext>().InitializeRemote(TransmissionContext.Current.ServerConnection);
+        this.simpleParser = new SimpleParser(subcommands, subcommandOptions);
     }
 }
