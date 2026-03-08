@@ -105,7 +105,10 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                 return;
             }
 
-            connection.PrepareBidirectionalConnection();
+            this.logger.TryGet()?.Log(Hashed.Success.Connect, node.ToString());
+
+            var serverConnection = connection.PrepareBidirectionalConnection();
+            serverConnection.GetContext().EnableNetService<IRemoteUserInterfaceReceiver>();
 
             while (!this.unitContext.Core.IsTerminated)
             {

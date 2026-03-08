@@ -10,7 +10,7 @@ using SimpleCommandLine;
 namespace Lp.NetServices;
 
 [NetObject]
-public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
+public partial class RemoteUserInterfaceSender : IRemoteUserInterfaceSender, INetObject
 {
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -19,7 +19,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(IServiceProvider serviceProvider, LpBase lpBase)
+    public RemoteUserInterfaceSender(IServiceProvider serviceProvider, LpBase lpBase)
     {
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
@@ -61,7 +61,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
     [MemberNotNull(nameof(simpleParser))]
     private void Prepare()
-    {
+    {//
         if (this.simpleParser is not null)
         {
             return;

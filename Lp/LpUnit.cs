@@ -57,7 +57,7 @@ public class LpUnit
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
-                context.AddSingleton<ConsoleUserInterfaceService>();
+                context.AddSingleton<ConsoleUserInterfaceService>();//
                 context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.Services.TryAddSingleton<SimpleParser>(sp => sp.GetRequiredService<LpUnit>().subcommandParser);
@@ -83,7 +83,7 @@ public class LpUnit
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<RemoteUserInterfaceSenderAgent>();
+                context.AddTransient<RemoteUserInterfaceSender>();
                 // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters

@@ -19,6 +19,7 @@ Success=
   Loaded = "Loaded: {0}"
   Deserialized = "Deserialized: {0}"
   NodeAdded = "Node added: {0}"
+  Connect="Successfully connected to '{0}'"
 
 Error=
   Load = "Could not load '{0}'";
