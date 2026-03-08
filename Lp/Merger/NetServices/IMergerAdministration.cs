@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface IMergerAdministration : INetService
 {
     Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
@@ -17,7 +17,7 @@ public partial interface IMergerAdministration : INetService
     Task<T3csResult> AssignDomain(DomainAssignment domainAssignment);
 }
 
-[NetServiceObject]
+[NetObject]
 public class MergerAdministrationAgent : IMergerAdministration
 {
     public LpBase LpBase { get; }

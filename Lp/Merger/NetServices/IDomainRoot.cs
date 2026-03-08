@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface IDomainRoot : INetService
 {
     Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);
@@ -15,7 +15,7 @@ public partial interface IDomainRoot : INetService
     Task<PeerProof?> ExchangeCertificateProof(PeerProof peerProof);
 }
 
-/*[NetServiceObject]
+/*[NetObject]
 internal class MergerRemoteAgent : IDomainRoot
 {
     private readonly LpBase lpBase;

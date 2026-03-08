@@ -2,13 +2,13 @@
 
 namespace Lp.NetServices;
 
-[NetServiceInterface]
+[NetService]
 public interface IRemoteUserInterfaceSender : INetServiceWithConnectBidirectionally
 {// INetServiceWithUpdateAgreement
     Task<NetResult> Send(string message);
 }
 
-[NetServiceInterface]
+[NetService]
 public interface IRemoteUserInterfaceReceiver : INetService
 {
     Task<NetResult> WriteLine(string message, ConsoleColor color);

@@ -4,7 +4,7 @@ using Arc.Collections;
 
 namespace Lp.Net;
 
-[NetServiceInterface]
+[NetService]
 public interface IBasalService : INetService
 {
     Task<BytePool.RentMemory> GetActiveNodes();

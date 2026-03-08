@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Lp.Services;
 
-[NetServiceInterface]
+[NetService]
 public partial interface LpDogmaNetService : INetService
 {
     Task<NetResultAndValue<ConnectionAgreement?>> Authenticate(AuthenticationToken token);

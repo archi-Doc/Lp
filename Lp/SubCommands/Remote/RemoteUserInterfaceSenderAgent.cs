@@ -9,8 +9,8 @@ using SimpleCommandLine;
 
 namespace Lp.NetServices;
 
-[NetServiceObject]
-public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetServiceObject
+[NetObject]
+public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -26,7 +26,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         this.lpBase = lpBase;
     }
 
-    void INetServiceObject.OnConnectionClosed()
+    void INetObject.OnConnectionClosed()
     {
         this.serviceScope.Dispose();
         Console.WriteLine("Server IServiceScope Disposed");

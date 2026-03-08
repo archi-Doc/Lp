@@ -5,7 +5,7 @@ using Netsphere.Crypto;
 
 namespace Playground;
 
-[NetServiceInterface]
+[NetService]
 public interface ITestService : INetService, INetServiceWithUpdateAgreement
 {
     Task<string?> DoubleString(string input);
@@ -13,7 +13,7 @@ public interface ITestService : INetService, INetServiceWithUpdateAgreement
     Task<byte[]?> Pingpong(byte[] data);
 }
 
-[NetServiceObject]
+[NetObject]
 internal class TestServiceImpl : ITestService
 {
     async Task<string?> ITestService.DoubleString(string input)

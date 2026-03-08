@@ -2,7 +2,7 @@
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface IRelayCreditService : INetService
 {
     Task<RelayStatus?> SetRelayStatus(Credit relayCredit, NetAddress address);

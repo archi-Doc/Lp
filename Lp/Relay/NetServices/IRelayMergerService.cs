@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface IRelayMergerService : IMergerService
 {
     Task<RelayStatus?> GetRelayStatus(Credit relayCredit);
