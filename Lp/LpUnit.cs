@@ -472,12 +472,12 @@ public class LpUnit
         if (this.LpBase.Options.TestFeatures)
         {
             NetAddress.SkipValidation = true;
-            this.NetUnit.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
+            this.NetUnit.Services.EnableNetService<IRemoteBenchHost>();
         }
 
         if (this.LpBase.RemotePublicKey.IsValid)
         {
-            this.NetUnit.Services.Register<IRemoteUserInterfaceSender, RemoteUserInterfaceSenderAgent>();
+            this.NetUnit.Services.EnableNetService<IRemoteUserInterfaceSender>();
         }
 
         this.Core = core;
@@ -530,7 +530,7 @@ public class LpUnit
 
     public async Task PreparePeer(UnitContext context)
     {
-        this.NetUnit.Services.Register<IBasalService, BasalServiceAgent>();
+        this.NetUnit.Services.EnableNetService<IBasalService>();
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
@@ -630,12 +630,12 @@ public class LpUnit
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalControl, seedKey);
-            this.NetUnit.Services.Register<IMergerService, MergerServiceAgent>();
-            this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            this.NetUnit.Services.EnableNetService<IMergerService>();
+            this.NetUnit.Services.EnableNetService<LpDogmaNetService>();
 
             if (this.LpBase.RemotePublicKey.IsValid)
             {
-                this.NetUnit.Services.Register<IMergerAdministration, MergerAdministrationAgent>();
+                this.NetUnit.Services.EnableNetService<IMergerAdministration>();
             }
         }
 
@@ -653,8 +653,8 @@ public class LpUnit
             }
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalControl, seedKey);
-            this.NetUnit.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
-            this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            this.NetUnit.Services.EnableNetService<IRelayMergerService>();
+            this.NetUnit.Services.EnableNetService<LpDogmaNetService>();
         }
     }
 

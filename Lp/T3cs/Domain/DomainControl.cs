@@ -61,7 +61,7 @@ public partial class DomainControl
             }
         }
 
-        this.netUnit.Services.Register<IDomainService, DomainServiceAgent>();
+        this.netUnit.Services.EnableNetService<IDomainService>();
     }
 
     public Task<T3csResult> AddDomain(string text, bool verbose = true)
