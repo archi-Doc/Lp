@@ -7,5 +7,5 @@ namespace Lp.T3cs.NetService;
 [NetServiceInterface]
 public interface IBorrowerService : INetService
 {
-    public NetTask<T3csResult> Authenticate(Credit credit, AuthenticationToken token);
+    public Task<T3csResult> Authenticate(Credit credit, AuthenticationToken token);
 }

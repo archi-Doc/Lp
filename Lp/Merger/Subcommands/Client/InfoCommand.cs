@@ -37,8 +37,8 @@ public class InfoCommand : ISimpleCommandAsync
 
         var service = connection.GetService<IMergerService>();
 
-        var response = await service.GetInformation().ResponseAsync;
-        if (response.IsSuccess && response.Value is { } informationResult)
+        var response = await service.GetInformation();
+        if (response is { } informationResult)
         {
             this.logger.TryGet()?.Log(informationResult.MergerName);
         }

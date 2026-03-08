@@ -186,7 +186,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public async NetTask<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
+    public async Task<T3csResultAndValue<Credit>> CreateCredit(CreateCreditParams param)
     {
         if (!this.Initialized)
         {

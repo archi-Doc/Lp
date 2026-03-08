@@ -31,7 +31,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         this.credentials = credentials;
     }
 
-    async NetTask<NetResultAndValue<ConnectionAgreement?>> LpDogmaNetService.Authenticate(AuthenticationToken token)
+    async Task<NetResultAndValue<ConnectionAgreement?>> LpDogmaNetService.Authenticate(AuthenticationToken token)
     {
         /*if (!this.merger.State.IsActive)
         {
@@ -53,7 +53,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
     }
 
-    async NetTask<LpDogmaInformation?> LpDogmaNetService.GetInformation()
+    async Task<LpDogmaInformation?> LpDogmaNetService.GetInformation()
     {
         if (!this.IsAuthenticated)
         {
@@ -64,7 +64,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return info;
     }
 
-    /*async NetTask<CredentialProof?> LpDogmaNetService.CreateCredentialProof(Value value, CredentialKind kind)
+    /*async Task<CredentialProof?> LpDogmaNetService.CreateCredentialProof(Value value, CredentialKind kind)
     {
         if (!this.IsAuthenticated)
         {
@@ -100,7 +100,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return default;
     }*/
 
-    async NetTask<NetResult> LpDogmaNetService.AddCredentialEvidence(CredentialEvidence evidence)
+    async Task<NetResult> LpDogmaNetService.AddCredentialEvidence(CredentialEvidence evidence)
     {
         if (!this.IsAuthenticated)
         {
@@ -110,7 +110,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         return this.credentials.Nodes.TryAdd(evidence) ? NetResult.Success : NetResult.InvalidData;
     }
 
-    async NetTask<ContractableEvidence?> LpDogmaNetService.SignContractableEvidence(ContractableEvidence evidence)
+    async Task<ContractableEvidence?> LpDogmaNetService.SignContractableEvidence(ContractableEvidence evidence)
     {
         if (!this.IsAuthenticated)
         {
@@ -127,7 +127,7 @@ internal class LpDogmaAgent : LpDogmaNetService
         }
     }
 
-    async NetTask<LinkLinkage?> LpDogmaNetService.SignLinkage(LinkLinkage linkage)
+    async Task<LinkLinkage?> LpDogmaNetService.SignLinkage(LinkLinkage linkage)
     {
         if (!this.IsAuthenticated)
         {

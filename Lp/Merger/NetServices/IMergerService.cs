@@ -7,7 +7,7 @@ namespace Lp.T3cs;
 [NetServiceInterface]
 public partial interface IMergerService : INetServiceWithOwner
 {
-    NetTask<InformationResult?> GetInformation();
+    Task<InformationResult?> GetInformation();
 
     // [TinyhandObject]
     // public partial record InformationResult([property: Key(0)] string Name);
@@ -24,7 +24,7 @@ public partial interface IMergerService : INetServiceWithOwner
         public partial string MergerName { get; set; } = string.Empty;
     }
 
-    NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);
+    Task<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);
 }
 
 [NetServiceObject]
@@ -39,7 +39,7 @@ internal class MergerServiceAgent : IMergerService
         this.merger = merger;
     }
 
-    public async NetTask<IMergerService.InformationResult?> GetInformation()
+    public async Task<IMergerService.InformationResult?> GetInformation()
     {
         if (!this.merger.Initialized)
         {
@@ -49,11 +49,11 @@ internal class MergerServiceAgent : IMergerService
         return this.merger.Configuration.ToInformationResult();
     }
 
-    public NetTask<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param)
+    public Task<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param)
     {
         if (!TransmissionContext.Current.AuthenticationTokenEquals(param.Proof.PublicKey))
         {
-            return new(new T3csResultAndValue<Credit>(T3csResult.NotAuthenticated));
+            return Task.FromResult(new T3csResultAndValue<Credit>(T3csResult.NotAuthenticated));
         }
 
         /*if (!TransmissionContext.Current.TryGetAuthenticationToken(out var token))
@@ -69,7 +69,7 @@ internal class MergerServiceAgent : IMergerService
         return this.merger.CreateCredit(param);
     }
 
-    public async NetTask<NetResult> Authenticate(OwnerToken token)
+    public async Task<NetResult> Authenticate(OwnerToken token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (!token.ValidateAndVerify(serverConnection))

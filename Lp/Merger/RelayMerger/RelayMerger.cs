@@ -77,7 +77,7 @@ public class RelayMerger : Merger
         this.Initialized = true;
     }
 
-    public async NetTask<RelayStatus?> GetRelayStatus(Credit relayCredit)
+    public async Task<RelayStatus?> GetRelayStatus(Credit relayCredit)
     {
         if (!this.Initialized)
         {

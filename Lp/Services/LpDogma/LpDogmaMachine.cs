@@ -302,7 +302,7 @@ public partial class LpDogmaMachine : Machine
         return StateResult.Continue;
     }*/
 
-    private async Task<T?> ConnectAndRunService<T>(SignaturePublicKey publicKey, Func<LpDogmaNetService, NetTask<T?>> func)
+    private async Task<T?> ConnectAndRunService<T>(SignaturePublicKey publicKey, Func<LpDogmaNetService, Task<T?>> func)
     {
         if (this.CancellationToken.IsCancellationRequested ||
             this.lpSeedKey is null)
@@ -338,9 +338,9 @@ public partial class LpDogmaMachine : Machine
                 return default;
             }
 
-            var t = await func(service).ResponseAsync;
-            this.userInterfaceService.WriteLine($"{t.ToString()}");
-            return t.Value;
+            var t = await func(service);
+            // this.userInterfaceService.WriteLine($"{t?.ToString()}");
+            return t;
         }
     }
 

@@ -4,5 +4,5 @@ namespace Lp.T3cs;
 
 public interface INetServiceWithOwner : INetService
 {
-    NetTask<NetResult> Authenticate(OwnerToken token);
+    Task<NetResult> Authenticate(OwnerToken token);
 }

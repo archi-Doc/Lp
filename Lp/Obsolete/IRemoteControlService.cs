@@ -7,9 +7,9 @@ namespace Lp.NetServices;
 [NetServiceInterface]
 public interface IRemoteControlService : INetService
 {
-    public NetTask Authenticate(AuthenticationToken token);
+    public Task Authenticate(AuthenticationToken token);
 
-    public NetTask<NetResult> Restart();
+    public Task<NetResult> Restart();
 }
 
 [NetServiceObject]
@@ -22,8 +22,8 @@ internal class RemoteControlServiceImpl : IRemoteControlService
         this.lpUnit = lpUnit;
     }
 
-    public async NetTask Authenticate(AuthenticationToken token)
-    {// NetTask<NetResult> is recommended.
+    public async Task Authenticate(AuthenticationToken token)
+    {// Task<NetResult> is recommended.
         if (TransmissionContext.Current.ServerConnection.DestinationEndpoint.IsPrivateOrLocalLoopbackAddress() &&
             TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token) &&
             token.PublicKey.Equals(this.lpUnit.LpBase.RemotePublicKey))
@@ -36,7 +36,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
         TransmissionContext.Current.Result = NetResult.NotAuthorized;
     }
 
-    public async NetTask<NetResult> Restart()
+    public async Task<NetResult> Restart()
     {
         if (this.token == null)
         {

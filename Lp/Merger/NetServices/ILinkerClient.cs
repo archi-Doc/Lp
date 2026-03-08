@@ -19,7 +19,7 @@ internal class LinkerToMergerAgent : ILinkerToMerger
         this.merger = merger;
     }
 
-    public async NetTask<NetResult> Authenticate(AuthenticationToken token)
+    public async Task<NetResult> Authenticate(AuthenticationToken token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (!token.ValidateAndVerify(serverConnection))

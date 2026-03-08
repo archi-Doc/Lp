@@ -38,7 +38,7 @@ internal class DomainServiceAgent : IDomainService
         this.domainServer = domainControl.DomainServer;
     }
 
-    async NetTask<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
+    async Task<NetResult> INetServiceWithOwner.Authenticate(OwnerToken token)
     {
         if (!this.domainServer.IsActive)
         {
@@ -59,7 +59,7 @@ internal class DomainServiceAgent : IDomainService
         return NetResult.Success;
     }
 
-    async NetTask<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
+    async Task<NetResult> IDomainService.RegisterNode(NodeProof nodeProof)
     {
         if (!this.domainServer.IsActive)
         {
