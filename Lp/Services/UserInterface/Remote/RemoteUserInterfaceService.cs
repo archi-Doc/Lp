@@ -18,19 +18,19 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
 
     public bool EnableColor { get; set; } = true;
 
-    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void Write(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.receiver.Write(message, color);
 
-    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.receiver.WriteLine(message, color);
 
-    public void WriteLineDefault(string? message)
+    public void WriteLineDefault(ReadOnlySpan<char> message)
         => this.receiver.WriteLineDefault(message);
 
-    public void WriteLineWarning(string? message)
+    public void WriteLineWarning(ReadOnlySpan<char> message)
         => this.receiver.WriteLineWarning(message);
 
-    public void WriteLineError(string? message)
+    public void WriteLineError(ReadOnlySpan<char> message)
         => this.receiver.WriteLineError(message);
 
     public void EnqueueLine(string? message = null)
