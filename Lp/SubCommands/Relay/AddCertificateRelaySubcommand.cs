@@ -62,12 +62,12 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
             var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
-                Console.WriteLine(r.Result.ToString());
+                this.userInterfaceService.WriteLine(r.Result.ToString());
                 return;
             }
             else if (r.Value.Result != RelayResult.Success)
             {
-                Console.WriteLine(r.Result.ToString());
+                this.userInterfaceService.WriteLine(r.Result.ToString());
                 return;
             }
 
@@ -77,17 +77,17 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
                 return;
             }
 
-            Console.WriteLine($"AddRelay: {result.ToString()}");
-            Console.WriteLine(relayCircuit.NumberOfRelays);
+            this.userInterfaceService.WriteLine($"AddRelay: {result.ToString()}");
+            this.userInterfaceService.WriteLine(relayCircuit.NumberOfRelays.ToString());
 
             var outerAddress = new NetAddress(r.Value.OuterRelayId, netNode.Address);
-            Console.WriteLine($"Outer address: {outerAddress.ToString()}");
+            this.userInterfaceService.WriteLine($"Outer address: {outerAddress.ToString()}");
 
             /*var outerEndpoint = new NetEndpoint(r.Value.RelayId, clientConnection.DestinationEndpoint.EndPoint);
             var packet = RelayOperatioPacket.SetOuterEndPoint(outerEndpoint);
             var result2 = await this.netTerminal.PacketTerminal.SendAndReceive<RelayOperatioPacket, RelayOperatioResponse>(NetAddress.Relay, packet, -1);
-            Console.WriteLine($"CreateOuterEndPoint: {result2.Result.ToString()}");
-            Console.WriteLine($"OuterEndPoint: {outerEndpoint.ToString()}");*/
+            this.userInterfaceService.WriteLine($"CreateOuterEndPoint: {result2.Result.ToString()}");
+            this.userInterfaceService.WriteLine($"OuterEndPoint: {outerEndpoint.ToString()}");*/
         }
     }
 

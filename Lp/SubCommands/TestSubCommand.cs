@@ -36,9 +36,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         {
         }
 
-        Console.WriteLine(LpConstants.LpPublicKey.ToString());
-        Console.WriteLine(LpConstants.LpCredit.ToString());
-        Console.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
+        this.userInterfaceService.WriteLine(LpConstants.LpPublicKey.ToString());
+        this.userInterfaceService.WriteLine(LpConstants.LpCredit.ToString());
+        this.userInterfaceService.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
 
         var seedKey = SeedKey.New(KeyOrientation.Signature);
         var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);
@@ -50,11 +50,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         var bin = mergedEvidence.Serialize();
         var mergedEvidence2 = TinyhandSerializer.Deserialize<MergedEvidence>(bin);
-        Console.WriteLine(mergedEvidence.Serialize().Length);
-        Console.WriteLine(mergedEvidence2!.ValidateAndVerify());
+        this.userInterfaceService.WriteLine(mergedEvidence.Serialize().Length.ToString());
+        this.userInterfaceService.WriteLine(mergedEvidence2!.ValidateAndVerify().ToString());
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
-        Console.WriteLine($"Width: {Console.WindowWidth}");
+        this.userInterfaceService.WriteLine($"Width: {Console.WindowWidth}");
 
         var microSleep = new Arc.Threading.MicroSleep();
         this.logger.TryGet()?.Log($"MicroSleep: {microSleep.CurrentMode.ToString()}");
