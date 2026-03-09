@@ -1,13 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.Content;
 using Lp.NetServices;
 
 namespace Lp.Services;
 
 internal class VirtualUserInterfaceService : IUserInterfaceService
 {
-    private enum State
+    public enum State
     {
         NotInitialized,
         Local,
@@ -16,18 +15,30 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
 
     #region FieldAndProperty
 
-    public bool IsInitialized { get; private set; }
+    public State CurrentState { get; private set; }
 
     public ServerConnection? Connection { get; private set; }
 
     public IRemoteUserInterfaceReceiver? receiver { get; private set; }
 
-    bool IConsoleService.KeyAvailable => this.consoleUserInterfaceService.KeyAvailable;
+    public bool IsInitialized => this.CurrentState != State.NotInitialized;
+
+    public bool IsLocal => this.CurrentState == State.Local;
+
+    public bool IsRemote => this.CurrentState == State.Remote;
+
+    bool IConsoleService.KeyAvailable => this.IsLocal ? this.consoleUserInterfaceService.KeyAvailable : false;
 
     bool IConsoleService.EnableColor
     {
-        get => this.consoleUserInterfaceService.EnableColor;
-        set => this.consoleUserInterfaceService.EnableColor = value;
+        get => this.IsLocal ? this.consoleUserInterfaceService.EnableColor : true;
+        set
+        {
+            if (this.IsLocal)
+            {
+                this.consoleUserInterfaceService.EnableColor = value;
+            }
+        }
     }
 
     private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
@@ -46,6 +57,7 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
             return false;
         }
 
+        this.CurrentState = State.Local;
         this.Connection = default;
         return true;
     }
@@ -57,13 +69,14 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
             return false;
         }
 
+        this.CurrentState = State.Remote;
         this.Connection = connection;
         return true;
     }
 
     void IUserInterfaceService.EnqueueLine(string? message)
     {
-        if (this.Connection is null)
+        if (this.IsLocal)
         {
             this.consoleUserInterfaceService.EnqueueLine(message);
         }
@@ -71,13 +84,17 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
 
     Task<InputResult> IUserInterfaceService.ReadLine(bool cancelOnEscape, string? description)
     {
-        if (this.Connection is null)
+        if (this.IsLocal)
         {
-            this.consoleUserInterfaceService.EnqueueLine(message);
+            return this.consoleUserInterfaceService.ReadLine(cancelOnEscape, description);
+        }
+        else if (this.IsRemote)
+        {
+
         }
         else
         {
-            this.Connection.Get
+            return Task.FromResult(default(InputResult));
         }
     }
 
@@ -129,5 +146,11 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
     ConsoleKeyInfo IConsoleService.ReadKey(bool intercept)
     {
         throw new NotImplementedException();
+    }
+
+    private bool TryGetReceiver([MaybeNullWhen(false)] IRemoteUserInterfaceReceiver receiver)
+    {
+        if (this.Connection is { } connection &&
+            connection.GetS)
     }
 }

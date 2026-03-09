@@ -60,9 +60,10 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
     }
 
     [MemberNotNull(nameof(simpleParser))]
-    private void Prepare()
-    {//
-        if (this.simpleParser is not null)
+    private bool Prepare()
+    {
+        if (this.simpleParser is not null ||
+            TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
         {
             return;
         }
