@@ -3,7 +3,7 @@
 namespace Lp.NetServices;
 
 [NetObject]
-public partial class RemoteUserInterfaceReceiver : IRemoteUserInterfaceReceiver, INetObject
+public class RemoteUserInterfaceReceiver : IRemoteUserInterfaceReceiver, INetObject
 {
     public RemoteUserInterfaceReceiver()
     {

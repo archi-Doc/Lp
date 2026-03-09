@@ -83,7 +83,7 @@ public class LpUnit
                 context.AddTransient<RelayMergerServiceAgent>();
                 context.AddTransient<LpDogmaAgent>();
                 context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<RemoteUserInterfaceSender>();
+                context.AddTransient<RemoteUserInterfaceSenderAgent>();
                 // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
@@ -102,7 +102,7 @@ public class LpUnit
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
-                context.AddScoped<UserInterfaceContext>();
+                context.AddScoped<VirtualUserInterfaceService>();
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
