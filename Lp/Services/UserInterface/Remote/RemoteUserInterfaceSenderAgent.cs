@@ -32,19 +32,20 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         Console.WriteLine("Server IServiceScope Disposed");
     }
 
-    async Task<NetResult> INetServiceWithConnectBidirectionally.ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    async Task<NetResultAndValue<string>> IRemoteUserInterfaceSender.ConnectBidirectionally(CertificateToken<ConnectionAgreement> token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token is null ||
             !token.ValidateAndVerify(serverConnection) ||
             !token.PublicKey.Equals(this.lpBase.RemotePublicKey))
         {
-            return NetResult.NotAuthenticated;
+            return new(NetResult.NotAuthenticated, string.Empty);
         }
 
+        serverConnection.Agreement.AcceptAll(token.Target); // Customized ConnectBidirectionally()
         this.IsAuthenticated = true;
         TransmissionContext.Current.ServerConnection.PrepareBidirectionalConnection();
-        return NetResult.Success;
+        return new(NetResult.Success, this.lpBase.NodeName);
     }
 
     async Task<NetResult> IRemoteUserInterfaceSender.Send(string message)

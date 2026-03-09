@@ -11,55 +11,54 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
     private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
     private readonly SimpleConsole simpleConsole;
-    private readonly string prefix;
+
+    public string Prefix { get; set; } = "[Remote] ";
 
     public RemoteUserInterfaceReceiverAgent(ConsoleUserInterfaceService consoleUserInterfaceService, SimpleConsole simpleConsole)
     {
         this.consoleUserInterfaceService = consoleUserInterfaceService;
         this.simpleConsole = simpleConsole;
-        this.prefix = "[Remote] ";
     }
 
-    // (Remote) Enter password: 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine()
         => this.consoleUserInterfaceService.ReadLine(default);
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description)
-        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.prefix + description);
+        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.Prefix + description);
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description)
-        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.prefix + description);
+        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.Prefix + description);
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description)
-        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.prefix + description);
+        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix + description);
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.Write(this.prefix + message, color);
+        this.consoleUserInterfaceService.Write(this.Prefix + message, color);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.WriteLine(this.prefix + message, color);
+        this.consoleUserInterfaceService.WriteLine(this.Prefix + message, color);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLineDefault(string? message)
     {
-        this.consoleUserInterfaceService.WriteLineDefault(this.prefix + message);
+        this.consoleUserInterfaceService.WriteLineDefault(this.Prefix + message);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLineError(string? message)
     {
-        this.consoleUserInterfaceService.WriteLineError(this.prefix + message);
+        this.consoleUserInterfaceService.WriteLineError(this.Prefix + message);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLineWarning(string? message)
     {
-        this.consoleUserInterfaceService.WriteLineWarning(this.prefix + message);
+        this.consoleUserInterfaceService.WriteLineWarning(this.Prefix + message);
         return Task.CompletedTask;
     }
 }
