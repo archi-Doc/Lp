@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Amazon.S3.Model;
 using Lp.Services;
 
 namespace Lp.NetServices;
@@ -28,33 +29,33 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description)
         => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix + description);
 
-    Task IRemoteUserInterfaceReceiver.Write(ReadOnlySpan<char> message, ConsoleColor color)
+    Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.Write(string.Concat(this.Prefix, message), color);
+        this.consoleUserInterfaceService.Write(this.Prefix + message, color);
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLine(ReadOnlySpan<char> message, ConsoleColor color)
+    Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.WriteLine(string.Concat(this.Prefix, message), color);
+        this.consoleUserInterfaceService.WriteLine(this.Prefix + message, color);
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLineDefault(ReadOnlySpan<char> message)
+    Task IRemoteUserInterfaceReceiver.WriteLineDefault(string? message)
     {
-        this.consoleUserInterfaceService.WriteLineDefault(string.Concat(this.Prefix, message));
+        this.consoleUserInterfaceService.WriteLineDefault(this.Prefix + message);
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLineError(ReadOnlySpan<char> message)
+    Task IRemoteUserInterfaceReceiver.WriteLineError(string? message)
     {
-        this.consoleUserInterfaceService.WriteLineError(string.Concat(this.Prefix, message));
+        this.consoleUserInterfaceService.WriteLineError(this.Prefix + message);
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLineWarning(ReadOnlySpan<char> message)
+    Task IRemoteUserInterfaceReceiver.WriteLineWarning(string? message)
     {
-        this.consoleUserInterfaceService.WriteLineWarning(string.Concat(this.Prefix, message));
+        this.consoleUserInterfaceService.WriteLineWarning(this.Prefix + message);
         return Task.CompletedTask;
     }
 }
