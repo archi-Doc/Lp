@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Drawing;
 using Lp.Services;
-using SimplePrompt;
 
 namespace Lp.NetServices;
 
@@ -10,14 +8,12 @@ namespace Lp.NetServices;
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
     private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
-    private readonly SimpleConsole simpleConsole;
 
     public string Prefix { get; set; } = "[Remote] ";
 
-    public RemoteUserInterfaceReceiverAgent(ConsoleUserInterfaceService consoleUserInterfaceService, SimpleConsole simpleConsole)
+    public RemoteUserInterfaceReceiverAgent(ConsoleUserInterfaceService consoleUserInterfaceService)
     {
         this.consoleUserInterfaceService = consoleUserInterfaceService;
-        this.simpleConsole = simpleConsole;
     }
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine()
