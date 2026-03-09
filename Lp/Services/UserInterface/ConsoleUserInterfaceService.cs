@@ -23,6 +23,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public ConsoleUserInterfaceService(SimpleConsole simpleConsole)
     {
+        Console.WriteLine("ConsoleUserInterfaceService ctor");
         this.simpleConsole = simpleConsole;
         this.lpSettings = new();
     }

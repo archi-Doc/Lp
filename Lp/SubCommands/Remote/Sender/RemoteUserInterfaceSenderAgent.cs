@@ -84,7 +84,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         Type[] subcommands = [typeof(InspectSubcommand),];
 
-        this.serviceProvider.GetRequiredService<VirtualUserInterfaceService>().InitializeRemote(clientConnection);
+        this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(clientConnection.GetService<IRemoteUserInterfaceReceiver>());
         this.simpleParser = new SimpleParser(subcommands, subcommandOptions);
     }
 }

@@ -3,7 +3,7 @@
 using Lp.NetServices;
 
 namespace Lp.Services;
-
+/*
 internal class VirtualUserInterfaceService : IUserInterfaceService
 {
     public enum State
@@ -145,4 +145,4 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
     {
         throw new NotImplementedException();
     }
-}
+}*/

@@ -56,15 +56,24 @@ public class LpUnit
                 context.AddSingleton<NetsphereLoggerOptions>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
-                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
-                context.AddSingleton<ConsoleUserInterfaceService>();//
-                context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
-                context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
 
+                // Console services
+                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
+                context.AddSingleton<ConsoleUserInterfaceService>();
+                context.Services.AddScoped<UserInterfaceServiceContext>();
                 context.Services.TryAddScoped<IUserInterfaceService>(sp =>
                 {
-                    return default;
+                    var context = sp.GetService<UserInterfaceServiceContext>();
+                    if (context?.Receiver is { } receiver)
+                    {
+                        return new RemoteUserInterfaceService(receiver);
+                    }
+                    else
+                    {
+                        return sp.GetRequiredService<ConsoleUserInterfaceService>();
+                    }
                 });
+                context.Services.TryAddScoped<IConsoleService>(sp => sp.GetRequiredService<IUserInterfaceService>());
 
                 context.Services.TryAddSingleton<SimpleParser>(sp => sp.GetRequiredService<LpUnit>().subcommandParser);
                 context.AddSingleton<VaultControl>();
@@ -108,7 +117,6 @@ public class LpUnit
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
-                context.AddScoped<VirtualUserInterfaceService>();
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
