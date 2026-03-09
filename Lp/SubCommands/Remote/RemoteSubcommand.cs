@@ -110,7 +110,9 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
             this.logger.TryGet()?.Log(Hashed.Success.Connect, node.ToString());
 
-            serverConnection.GetContext().EnableNetService<IRemoteUserInterfaceReceiver>();
+            var context = serverConnection.GetContext();
+            context.EnableNetService<IRemoteUserInterfaceReceiver>();
+            context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>()?.Prefix = $"[{resultAndValue.Value}] ";
 
             var readineOptions = new ReadLineOptions()
             {
