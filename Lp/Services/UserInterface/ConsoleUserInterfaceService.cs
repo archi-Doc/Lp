@@ -5,12 +5,13 @@ using SimplePrompt;
 
 namespace Lp.Services;
 
-internal class ConsoleUserInterfaceService : IUserInterfaceService
+public class ConsoleUserInterfaceService : IUserInterfaceService
 {
     public const string YesOrNoSuffix = "[Y/n] ";
 
     private readonly SimpleConsole simpleConsole;
-    private readonly ReadLineOptions passwordOptions = new()
+
+    public ReadLineOptions PasswordOptions { get; } = new()
     {
         AllowEmptyLineInput = true,
         CancelOnEscape = false,
@@ -78,7 +79,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
     {
-        var options = this.passwordOptions with
+        var options = this.PasswordOptions with
         {
             CancelOnEscape = cancelOnEscape,
             Prompt = description ?? string.Empty,

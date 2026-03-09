@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.NetServices;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 using SimplePrompt;
@@ -30,6 +31,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
     public RemoteSubcommand(UnitContext unitContext, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole)
     {
         this.unitContext = unitContext;
+        var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;

@@ -5,15 +5,15 @@ namespace Lp.NetServices;
 [NetService]
 public interface IRemoteUserInterfaceReceiver : INetService
 {
-    Task<NetResult> Write(string? message, ConsoleColor color);
+    Task Write(string? message, ConsoleColor color);
 
-    Task<NetResult> WriteLine(string? message, ConsoleColor color);
+    Task WriteLine(string? message, ConsoleColor color);
 
-    Task<NetResult> WriteLineDefault(string? message);
+    Task WriteLineDefault(string? message);
 
-    Task<NetResult> WriteLineWarning(string? message);
+    Task WriteLineWarning(string? message);
 
-    Task<NetResult> WriteLineError(string? message);
+    Task WriteLineError(string? message);
 
     Task<InputResult> ReadLine();
 
