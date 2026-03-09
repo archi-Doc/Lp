@@ -60,6 +60,12 @@ public class LpUnit
                 context.AddSingleton<ConsoleUserInterfaceService>();//
                 context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
                 context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
+
+                context.Services.TryAddScoped<IUserInterfaceService>(sp =>
+                {
+                    return default;
+                });
+
                 context.Services.TryAddSingleton<SimpleParser>(sp => sp.GetRequiredService<LpUnit>().subcommandParser);
                 context.AddSingleton<VaultControl>();
                 context.AddTransient<Vault>();

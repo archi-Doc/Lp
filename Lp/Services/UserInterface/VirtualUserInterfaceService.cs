@@ -17,7 +17,7 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
 
     public State CurrentState { get; private set; }
 
-    public ServerConnection? Connection { get; private set; }
+    public ClientConnection? Connection { get; private set; }
 
     public IRemoteUserInterfaceReceiver? receiver { get; private set; }
 
@@ -62,7 +62,7 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
         return true;
     }
 
-    public bool InitializeRemote(ServerConnection connection)
+    public bool InitializeRemote(ClientConnection connection)
     {
         if (this.IsInitialized)
         {
@@ -92,10 +92,8 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
         {
 
         }
-        else
-        {
-            return Task.FromResult(default(InputResult));
-        }
+
+        return Task.FromResult(default(InputResult));
     }
 
     Task<InputResultKind> IUserInterfaceService.ReadYesNo(bool cancelOnEscape, string? description)
@@ -146,11 +144,5 @@ internal class VirtualUserInterfaceService : IUserInterfaceService
     ConsoleKeyInfo IConsoleService.ReadKey(bool intercept)
     {
         throw new NotImplementedException();
-    }
-
-    private bool TryGetReceiver([MaybeNullWhen(false)] IRemoteUserInterfaceReceiver receiver)
-    {
-        if (this.Connection is { } connection &&
-            connection.GetS)
     }
 }

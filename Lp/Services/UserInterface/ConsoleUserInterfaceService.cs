@@ -7,7 +7,7 @@ namespace Lp.Services;
 
 internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    private const string YesOrNoSuffix = "[Y/n] ";
+    public const string YesOrNoSuffix = "[Y/n] ";
 
     private readonly SimpleConsole simpleConsole;
     private readonly ReadLineOptions passwordOptions = new()

@@ -53,17 +53,21 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.NotAuthenticated;
         }
 
-        this.Prepare();
+        if (TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
+        {
+            return NetResult.NotAuthenticated;
+        }
+
+        this.Prepare(clientConnection);
         _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
 
         return NetResult.Success;
     }
 
     [MemberNotNull(nameof(simpleParser))]
-    private bool Prepare()
+    private void Prepare(ClientConnection clientConnection)
     {
-        if (this.simpleParser is not null ||
-            TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
+        if (this.simpleParser is not null)
         {
             return;
         }
@@ -80,7 +84,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         Type[] subcommands = [typeof(InspectSubcommand),];
 
-        this.serviceProvider.GetRequiredService<VirtualUserInterfaceService>().InitializeRemote(TransmissionContext.Current.ServerConnection);
+        this.serviceProvider.GetRequiredService<VirtualUserInterfaceService>().InitializeRemote(clientConnection);
         this.simpleParser = new SimpleParser(subcommands, subcommandOptions);
     }
 }
