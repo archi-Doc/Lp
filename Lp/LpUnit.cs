@@ -82,6 +82,7 @@ public class LpUnit
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<DomainControl>();
                 context.AddSingleton<DomainServiceAgent>();
+                context.AddSingleton<RemoteBenchControl>();
 
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
@@ -89,16 +90,6 @@ public class LpUnit
                 context.AddSingleton<Linker>();
                 ConfigureRelay(context);
 
-                // RPC / Services
-                context.AddSingleton<NetServices.RemoteBenchControl>();
-                context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
-                context.AddTransient<Lp.T3cs.MergerAdministrationAgent>();
-                context.AddTransient<Lp.Net.BasalServiceAgent>();
-                context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<LpDogmaAgent>();
-                context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<RemoteUserInterfaceSenderAgent>();
                 // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters

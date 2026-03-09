@@ -6,9 +6,9 @@ namespace Lp.Services;
 
 public class UserInterfaceServiceContext
 {
-    public bool Initialized { get; set; }
+    public bool Initialized { get; private set; }
 
-    public IRemoteUserInterfaceReceiver? Receiver { get; set; }
+    public IRemoteUserInterfaceReceiver? Receiver { get; private set; }
 
     public UserInterfaceServiceContext()
     {
