@@ -1,12 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
+
 namespace Lp.NetServices;
 
 [NetObject]
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver, INetObject
 {
-    public RemoteUserInterfaceReceiverAgent()
+    private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
+
+    internal RemoteUserInterfaceReceiverAgent(ConsoleUserInterfaceService consoleUserInterfaceService)
     {
+        this.consoleUserInterfaceService = consoleUserInterfaceService;
     }
 
     void INetObject.OnConnectionClosed()
@@ -35,12 +40,14 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver, IN
 
     Task<NetResult> IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        throw new NotImplementedException();
+        his.consoleUserInterfaceService.Write(message, color);
+        return Task.FromResult(NetResult.Success);
     }
 
     Task<NetResult> IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
-        throw new NotImplementedException();
+        this.consoleUserInterfaceService.WriteLine(message, color);
+        return Task.FromResult(NetResult.Success);
     }
 
     Task<NetResult> IRemoteUserInterfaceReceiver.WriteLineDefault(string? message)

@@ -43,6 +43,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         }
 
         this.IsAuthenticated = true;
+        TransmissionContext.Current.ServerConnection.PrepareBidirectionalConnection();
         return NetResult.Success;
     }
 
