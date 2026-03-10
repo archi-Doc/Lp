@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.NetServices;
 
-[NetServiceInterface]
+[NetService]
 public interface IRemoteControlService : INetService
 {
     public Task Authenticate(AuthenticationToken token);
@@ -12,7 +12,7 @@ public interface IRemoteControlService : INetService
     public Task<NetResult> Restart();
 }
 
-[NetServiceObject]
+[NetObject]
 internal class RemoteControlServiceImpl : IRemoteControlService
 {// Netsphere.Runner -> Container
     // This class is unsafe.

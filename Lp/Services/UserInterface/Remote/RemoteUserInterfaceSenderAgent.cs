@@ -9,8 +9,8 @@ using SimpleCommandLine;
 
 namespace Lp.NetServices;
 
-[NetServiceObject]
-public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetServiceObject
+[NetObject]
+public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -26,24 +26,26 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         this.lpBase = lpBase;
     }
 
-    void INetServiceObject.OnConnectionClosed()
+    void INetObject.OnConnectionClosed()
     {
         this.serviceScope.Dispose();
         Console.WriteLine("Server IServiceScope Disposed");
     }
 
-    async Task<NetResult> INetServiceWithConnectBidirectionally.ConnectBidirectionally(CertificateToken<ConnectionAgreement>? token)
+    async Task<NetResultAndValue<string>> IRemoteUserInterfaceSender.ConnectBidirectionally(CertificateToken<ConnectionAgreement> token)
     {
         var serverConnection = TransmissionContext.Current.ServerConnection;
         if (token is null ||
             !token.ValidateAndVerify(serverConnection) ||
             !token.PublicKey.Equals(this.lpBase.RemotePublicKey))
         {
-            return NetResult.NotAuthenticated;
+            return new(NetResult.NotAuthenticated, string.Empty);
         }
 
+        serverConnection.Agreement.AcceptAll(token.Target); // Customized ConnectBidirectionally()
         this.IsAuthenticated = true;
-        return NetResult.Success;
+        TransmissionContext.Current.ServerConnection.PrepareBidirectionalConnection();
+        return new(NetResult.Success, this.lpBase.NodeName);
     }
 
     async Task<NetResult> IRemoteUserInterfaceSender.Send(string message)
@@ -53,14 +55,19 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.NotAuthenticated;
         }
 
-        this.Prepare();
+        if (TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
+        {
+            return NetResult.NotAuthenticated;
+        }
+
+        this.Prepare(clientConnection);
         _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
 
         return NetResult.Success;
     }
 
     [MemberNotNull(nameof(simpleParser))]
-    private void Prepare()
+    private void Prepare(ClientConnection clientConnection)
     {
         if (this.simpleParser is not null)
         {
@@ -79,7 +86,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         Type[] subcommands = [typeof(InspectSubcommand),];
 
-        this.serviceProvider.GetRequiredService<UserInterfaceContext>().InitializeRemote(TransmissionContext.Current.ServerConnection);
+        this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(clientConnection.GetService<IRemoteUserInterfaceReceiver>());
         this.simpleParser = new SimpleParser(subcommands, subcommandOptions);
     }
 }

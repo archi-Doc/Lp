@@ -9,7 +9,7 @@ public readonly partial record struct DomainOverview(
     [property: Key(0)] int NumberOfPeers,
     [property: Key(1)] PeerProof? peerProof);
 
-[NetServiceInterface]
+[NetService]
 public interface IDomainService : INetService
 {
     Task<NetResultAndValue<DomainOverview>> GetOverview(ulong domainHash);

@@ -8,7 +8,7 @@ using ValueLink.Integrality;
 
 namespace Lp.Net;
 
-[NetServiceObject]
+[NetObject]
 internal partial class BasalServiceAgent : IBasalService
 {
     public BasalServiceAgent(LpBase lpBase, NetStats netStats, Credentials credentials)

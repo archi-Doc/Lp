@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.NetServices;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
 using SimplePrompt;
@@ -30,6 +31,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
     public RemoteSubcommand(UnitContext unitContext, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole)
     {
         this.unitContext = unitContext;
+        var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
@@ -79,13 +81,6 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
             return;
         }*/
 
-        var readineOptions = new ReadLineOptions()
-        {
-            Prompt = "Remote >> ",
-            MultilineDelimiter = LpConstants.MultilineIndeitifierString,
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
-
         using (var connection = await this.netTerminal.Connect(node, Connection.ConnectMode.NoReuse).ConfigureAwait(false))
         {
             if (connection is null)
@@ -98,14 +93,36 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
             var agreement = new ConnectionAgreement();
             agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(1);
             var token = CertificateToken<ConnectionAgreement>.CreateAndSign(agreement, seedKey, connection);
-            var netResult = await clientService.ConnectBidirectionally(token);
-            if (netResult != NetResult.Success)
+
+            // // Customized ConnectBidirectionally()
+            var serverConnection = connection.PrepareBidirectionalConnection();
+            var resultAndValue = await clientService.ConnectBidirectionally(token);
+            if (resultAndValue.IsSuccessAndValid)
+            {
+                connection.Agreement.EnableBidirectionalConnection = true;
+                connection.Agreement.AcceptAll(token.Target);
+            }
+            else
             {
                 this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
                 return;
             }
 
-            connection.PrepareBidirectionalConnection();
+            this.logger.TryGet()?.Log(Hashed.Success.Connect, node.ToString());
+
+            var context = serverConnection.GetContext();
+            context.EnableNetService<IRemoteUserInterfaceReceiver>();
+            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is { } receiver)
+            {
+                receiver.Prefix = $"[{resultAndValue.Value}] ";
+            }
+
+            var readineOptions = new ReadLineOptions()
+            {
+                Prompt = $"{resultAndValue.Value} >> ",
+                MultilineDelimiter = LpConstants.MultilineIndeitifierString,
+                MultilinePrompt = LpConstants.MultilinePromptString,
+            };
 
             while (!this.unitContext.Core.IsTerminated)
             {
@@ -122,9 +139,10 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                 }
                 else
                 {
-                    netResult = await clientService.Send(result.Text).ConfigureAwait(false);
+                    var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
                     if (netResult != NetResult.Success)
                     {
+                        this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
                         break;
                     }
                 }

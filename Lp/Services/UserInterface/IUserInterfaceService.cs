@@ -46,9 +46,9 @@ public interface IUserInterfaceService : IConsoleService
     /// <returns>A task that represents the asynchronous notification operation.</returns>
     Task Notify(ILogger? logger, LogLevel level, string message);
 
-    void WriteLineDefault(string? message);
+    void WriteLineDefault(ReadOnlySpan<char> message);
 
-    void WriteLineWarning(string? message);
+    void WriteLineWarning(ReadOnlySpan<char> message);
 
-    void WriteLineError(string? message);
+    void WriteLineError(ReadOnlySpan<char> message);
 }

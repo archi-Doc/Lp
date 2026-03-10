@@ -5,12 +5,13 @@ using SimplePrompt;
 
 namespace Lp.Services;
 
-internal class ConsoleUserInterfaceService : IUserInterfaceService
+public class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    private const string YesOrNoSuffix = "[Y/n] ";
+    public const string YesOrNoSuffix = "[Y/n] ";
 
     private readonly SimpleConsole simpleConsole;
-    private readonly ReadLineOptions passwordOptions = new()
+
+    public ReadLineOptions PasswordOptions { get; } = new()
     {
         AllowEmptyLineInput = true,
         CancelOnEscape = false,
@@ -34,19 +35,19 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public bool EnableColor { get; set; } = true;
 
-    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void Write(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.simpleConsole.Write(message, color);
 
-    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.simpleConsole.WriteLine(message, color);
 
-    public void WriteLineDefault(string? message)
+    public void WriteLineDefault(ReadOnlySpan<char> message)
         => this.WriteLine(message, this.lpSettings.Color.Default);
 
-    public void WriteLineWarning(string? message)
+    public void WriteLineWarning(ReadOnlySpan<char> message)
         => this.WriteLine(message, this.lpSettings.Color.Warning);
 
-    public void WriteLineError(string? message)
+    public void WriteLineError(ReadOnlySpan<char> message)
         => this.WriteLine(message, this.lpSettings.Color.Error);
 
     public void EnqueueLine(string? message = null)
@@ -78,7 +79,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
 
     public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
     {
-        var options = this.passwordOptions with
+        var options = this.PasswordOptions with
         {
             CancelOnEscape = cancelOnEscape,
             Prompt = description ?? string.Empty,

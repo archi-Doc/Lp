@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 
 namespace Lp.Services;
 
-[NetServiceObject]
+[NetObject]
 internal class LpDogmaAgent : LpDogmaNetService
 {
     private readonly NetBase netBase;

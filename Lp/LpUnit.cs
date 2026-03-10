@@ -56,10 +56,25 @@ public class LpUnit
                 context.AddSingleton<NetsphereLoggerOptions>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
+
+                // Console services
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
                 context.AddSingleton<ConsoleUserInterfaceService>();
-                context.Services.TryAddSingleton<IConsoleService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
-                context.Services.TryAddSingleton<IUserInterfaceService>(sp => sp.GetRequiredService<ConsoleUserInterfaceService>());
+                context.Services.AddScoped<UserInterfaceServiceContext>();
+                context.Services.TryAddScoped<IUserInterfaceService>(sp =>
+                {
+                    var context = sp.GetService<UserInterfaceServiceContext>();
+                    if (context?.Receiver is { } receiver)
+                    {
+                        return new RemoteUserInterfaceService(receiver);
+                    }
+                    else
+                    {
+                        return sp.GetRequiredService<ConsoleUserInterfaceService>();
+                    }
+                });
+                context.Services.TryAddScoped<IConsoleService>(sp => sp.GetRequiredService<IUserInterfaceService>());
+
                 context.Services.TryAddSingleton<SimpleParser>(sp => sp.GetRequiredService<LpUnit>().subcommandParser);
                 context.AddSingleton<VaultControl>();
                 context.AddTransient<Vault>();
@@ -67,6 +82,7 @@ public class LpUnit
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<DomainControl>();
                 context.AddSingleton<DomainServiceAgent>();
+                context.AddSingleton<RemoteBenchControl>();
 
                 context.AddSingleton<Credentials>();
                 context.AddSingleton<Merger>();
@@ -74,16 +90,6 @@ public class LpUnit
                 context.AddSingleton<Linker>();
                 ConfigureRelay(context);
 
-                // RPC / Services
-                context.AddSingleton<NetServices.RemoteBenchControl>();
-                context.AddSingleton<NetServices.RemoteBenchHostAgent>();
-                context.AddTransient<Lp.T3cs.MergerServiceAgent>();
-                context.AddTransient<Lp.T3cs.MergerAdministrationAgent>();
-                context.AddTransient<Lp.Net.BasalServiceAgent>();
-                context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<LpDogmaAgent>();
-                context.AddTransient<RelayMergerServiceAgent>();
-                context.AddTransient<RemoteUserInterfaceSenderAgent>();
                 // context.AddSingleton<DomainServer>();
 
                 // RPC / Filters
@@ -102,7 +108,6 @@ public class LpUnit
                 context.AddSingleton<Services.LpDogmaMachine>();
 
                 // Subcommands
-                context.AddScoped<UserInterfaceContext>();
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
@@ -472,12 +477,12 @@ public class LpUnit
         if (this.LpBase.Options.TestFeatures)
         {
             NetAddress.SkipValidation = true;
-            this.NetUnit.Services.Register<IRemoteBenchHost, RemoteBenchHostAgent>();
+            this.NetUnit.Services.EnableNetService<IRemoteBenchHost>();
         }
 
         if (this.LpBase.RemotePublicKey.IsValid)
         {
-            this.NetUnit.Services.Register<IRemoteUserInterfaceSender, RemoteUserInterfaceSenderAgent>();
+            this.NetUnit.Services.EnableNetService<IRemoteUserInterfaceSender>();
         }
 
         this.Core = core;
@@ -530,7 +535,7 @@ public class LpUnit
 
     public async Task PreparePeer(UnitContext context)
     {
-        this.NetUnit.Services.Register<IBasalService, BasalServiceAgent>();
+        this.NetUnit.Services.EnableNetService<IBasalService>();
 
         if (!string.IsNullOrEmpty(this.LpBase.Options.RelayPeerPrivault))
         {// RelayPeerPrivault is valid
@@ -630,12 +635,12 @@ public class LpUnit
             }
 
             context.ServiceProvider.GetRequiredService<Merger>().Initialize(crystalControl, seedKey);
-            this.NetUnit.Services.Register<IMergerService, MergerServiceAgent>();
-            this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            this.NetUnit.Services.EnableNetService<IMergerService>();
+            this.NetUnit.Services.EnableNetService<LpDogmaNetService>();
 
             if (this.LpBase.RemotePublicKey.IsValid)
             {
-                this.NetUnit.Services.Register<IMergerAdministration, MergerAdministrationAgent>();
+                this.NetUnit.Services.EnableNetService<IMergerAdministration>();
             }
         }
 
@@ -653,8 +658,8 @@ public class LpUnit
             }
 
             context.ServiceProvider.GetRequiredService<RelayMerger>().Initialize(crystalControl, seedKey);
-            this.NetUnit.Services.Register<IRelayMergerService, RelayMergerServiceAgent>();
-            this.NetUnit.Services.Register<LpDogmaNetService, LpDogmaAgent>();
+            this.NetUnit.Services.EnableNetService<IRelayMergerService>();
+            this.NetUnit.Services.EnableNetService<LpDogmaNetService>();
         }
     }
 

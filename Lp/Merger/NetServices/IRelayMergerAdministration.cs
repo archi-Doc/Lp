@@ -5,12 +5,12 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface IRelayMergerAdministration : IMergerAdministration
 {
 }
 
-[NetServiceObject]
+[NetObject]
 internal class RelayMergerAdministrationAgent : MergerAdministrationAgent
 {
     public RelayMergerAdministrationAgent(LpBase lpBase, RelayMerger merger)

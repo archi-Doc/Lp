@@ -5,7 +5,7 @@ using Netsphere;
 
 namespace Lp.T3cs.NetService;
 
-/*[NetServiceInterface]
+/*[NetService]
 public interface ICreditService : INetService
 {
     public Task<T3csResult> Open(Credit credit);

@@ -4,12 +4,12 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface ILinkerToMerger : INetServiceWithAuthenticate
 {
 }
 
-[NetServiceObject]
+[NetObject]
 internal class LinkerToMergerAgent : ILinkerToMerger
 {
     private readonly Merger merger;

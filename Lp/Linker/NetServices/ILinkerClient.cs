@@ -4,13 +4,13 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface ILinkerClient : INetService
 {
     Task<T3csResultAndValue<MergeableLinkage>> Evol(EvolProof evolProof);
 }
 
-[NetServiceObject]
+[NetObject]
 internal class LinkerClientAgent : ILinkerClient
 {
     private readonly Merger merger;

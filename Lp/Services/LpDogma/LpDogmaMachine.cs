@@ -147,8 +147,6 @@ public partial class LpDogmaMachine : Machine
         var proof = new EvolProof(evol.Linker, sourceValue, destinationValue, creditIdentity);
 
         // var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
-        // Console.WriteLine(creditIdentity.ToString(Alias.Instance));
-        // Console.WriteLine(creditIdentity.GetIdentifier().ToString(Alias.Instance));
 
         if (result.FullCredit.Contains(proof))
         {

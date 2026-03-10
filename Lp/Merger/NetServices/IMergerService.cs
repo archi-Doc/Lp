@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[NetServiceInterface]
+[NetService]
 public partial interface IMergerService : INetServiceWithOwner
 {
     Task<InformationResult?> GetInformation();
@@ -27,7 +27,7 @@ public partial interface IMergerService : INetServiceWithOwner
     Task<T3csResultAndValue<Credit>> CreateCredit(Merger.CreateCreditParams param);
 }
 
-[NetServiceObject]
+[NetObject]
 internal class MergerServiceAgent : IMergerService
 {
     private readonly Merger merger;
