@@ -109,17 +109,22 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
             }
 
             this.logger.TryGet()?.Log(Hashed.Success.Connect, node.ToString());
+            var nodeName = resultAndValue.Value;
+            if (nodeName.Length > 16)// Alias.MaxAliasLength
+            {
+                nodeName = nodeName.Substring(0, 16);
+            }
 
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
             if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is { } receiver)
             {
-                receiver.Prefix = $"[{resultAndValue.Value}] ";
+                receiver.Prefix = $"[{nodeName}] ";
             }
 
             var readineOptions = new ReadLineOptions()
             {
-                Prompt = $"{resultAndValue.Value} >> ",
+                Prompt = $"{nodeName} >> ",
                 MultilineDelimiter = LpConstants.MultilineIndeitifierString,
                 MultilinePrompt = LpConstants.MultilinePromptString,
             };
