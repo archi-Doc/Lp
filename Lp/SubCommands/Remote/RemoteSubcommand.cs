@@ -112,9 +112,9 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
-            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is RemoteUserInterfaceReceiverAgent agent)
+            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is { } receiver)
             {
-                agent.Prefix = $"[{resultAndValue.Value}] ";
+                receiver.Prefix = $"[{resultAndValue.Value}] ";
             }
 
             var readineOptions = new ReadLineOptions()

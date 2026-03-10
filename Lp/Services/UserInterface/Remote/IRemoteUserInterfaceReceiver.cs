@@ -22,4 +22,6 @@ public interface IRemoteUserInterfaceReceiver : INetService
     Task<InputResult> ReadPassword(bool cancelOnEscape, string? description);
 
     Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description);
+
+    string Prefix { get; set; }
 }
