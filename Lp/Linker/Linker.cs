@@ -33,8 +33,8 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
 
     #endregion
 
-    public Linker(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
-        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
+    public Linker(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, logUnit, netBase, lpBase, netStats, domainControl)
     {
     }
 

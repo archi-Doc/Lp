@@ -40,22 +40,4 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.consoleUserInterfaceService.WriteLine(this.Prefix + message, color);
         return Task.CompletedTask;
     }
-
-    Task IRemoteUserInterfaceReceiver.WriteLineDefault(string? message)
-    {
-        this.consoleUserInterfaceService.WriteLineDefault(this.Prefix + message);
-        return Task.CompletedTask;
-    }
-
-    Task IRemoteUserInterfaceReceiver.WriteLineError(string? message)
-    {
-        this.consoleUserInterfaceService.WriteLineError(this.Prefix + message);
-        return Task.CompletedTask;
-    }
-
-    Task IRemoteUserInterfaceReceiver.WriteLineWarning(string? message)
-    {
-        this.consoleUserInterfaceService.WriteLineWarning(this.Prefix + message);
-        return Task.CompletedTask;
-    }
 }

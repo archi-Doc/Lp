@@ -32,10 +32,10 @@ public abstract partial class MergerBase : UnitBase
 
     #endregion
 
-    public MergerBase(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+    public MergerBase(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context)
     {
-        this.logger = unitLogger.GetLogger(this.GetType());
+        this.logger = logUnit.GetLogger(this.GetType());
         this.modestLogger = new(this.logger);
         this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;

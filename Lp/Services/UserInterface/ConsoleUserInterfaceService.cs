@@ -41,6 +41,12 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.simpleConsole.WriteLine(message, color);
 
+    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+        => this.simpleConsole.Write(message, color);
+
+    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+        => this.simpleConsole.WriteLine(message, color);
+
 #pragma warning disable SA1118 // Parameter should not span multiple lines
     public void WriteLine(LogLevel logLevel, string? message)
     => this.WriteLine(

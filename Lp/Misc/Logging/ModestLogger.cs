@@ -40,7 +40,7 @@ public class ModestLogger
     /// <param name="identifier">The identifier to check.</param>
     /// <param name="logLevel">The log level for the message.</param>
     /// <returns>An <see cref="ILogWriter"/> if the identifier is different; otherwise, <c>null</c>.</returns>
-    public ILogWriter? NonConsecutive(ulong identifier, LogLevel logLevel = LogLevel.Information)
+    public LogWriter? NonConsecutive(ulong identifier, LogLevel logLevel = LogLevel.Information)
     {
         if (DateTime.UtcNow < this.suppressionTime)
         {// Suppression time
@@ -53,11 +53,11 @@ public class ModestLogger
         else
         {
             this.lastIdentifier = identifier;
-            return this.logger.TryGet(logLevel);
+            return this.logger.GetWriter(logLevel);
         }
     }
 
-    public ILogWriter? Interval(TimeSpan interval, ulong identifier, LogLevel logLevel = LogLevel.Information)
+    public LogWriter? Interval(TimeSpan interval, ulong identifier, LogLevel logLevel = LogLevel.Information)
     {
         var utcNow = DateTime.UtcNow;
         if (utcNow < this.suppressionTime)
@@ -77,7 +77,7 @@ public class ModestLogger
             this.identifierToDateTime[identifier] = utcNow;
 
             this.lastIdentifier = identifier;
-            return this.logger.TryGet(logLevel);
+            return this.logger.GetWriter(logLevel);
         }
     }
 }

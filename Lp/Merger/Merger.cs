@@ -39,8 +39,8 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 
     #endregion
 
-    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
-        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
+    public Merger(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, logUnit, netBase, lpBase, netStats, domainControl)
     {
     }
 
