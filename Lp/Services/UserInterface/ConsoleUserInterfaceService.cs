@@ -76,14 +76,14 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
     public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
     {
-        var logWriter = logger?.TryGet(logLevel);
+        var logWriter = logger?.GetWriter(logLevel);
         if (logWriter is not null)
-        {
-            if (logWriter.OutputType != typeof(EmptyLogger))
+        {//
+            /*if (logWriter.OutputType != typeof(EmptyLogger))
             {
                 logWriter.Log(message);
                 return;
-            }
+            }*/
         }
 
         this.simpleConsole.WriteLine(message);

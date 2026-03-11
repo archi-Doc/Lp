@@ -724,18 +724,18 @@ public class LpUnit
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        this.UserInterfaceService.WriteLine()
-        var logger = this.LogUnit.Get<DefaultLog>(LogLevel.Information);
+        this.UserInterfaceService.WriteLine();
+        var logger = this.LogUnit.RootLogService.GetWriter<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
-        logger.Log("Press Enter key to switch to console mode.");
-        logger.Log("Press Ctrl+C to exit.");
-        logger.Log("Running");
+        logger?.Write("Press Enter key to switch to console mode.");
+        logger?.Write("Press Ctrl+C to exit.");
+        logger?.Write("Running");
     }
 
-    public void LogInformation(LogWriter logWriter)
+    public void LogInformation(LogWriter? logWriter)
     {
-        logWriter.Write($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
+        logWriter?.Write($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
         this.LpBase.LogInformation(logWriter);
     }
 

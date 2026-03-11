@@ -43,7 +43,7 @@ public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options
     public async Task RunAsync(Options options, string[] args)
     {
         this.userInterfaceService.WriteLine(LogLevel.Information, "Template subcommand");
-        this.userInterfaceService.WriteLineDefault("Default");
+        this.userInterfaceService.WriteLineInformation("Default");
         this.userInterfaceService.WriteLineWarning("Warning");
         this.userInterfaceService.WriteLineError("Error");
 
