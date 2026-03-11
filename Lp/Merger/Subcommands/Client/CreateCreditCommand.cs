@@ -26,7 +26,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
             return;
         }
 
-        this.logger.TryGet()?.Log(string.Empty);
+        this.logger.GetWriter()?.Write(string.Empty);
         if (await robustConnection.Get(this.logger) is not { } connection)
         {
             return;
@@ -41,7 +41,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         var response2 = await service.CreateCredit(param);
         if (response2.IsSuccess && response2.Value is { } result2)
         {
-            this.logger.TryGet()?.Log(result2.ToString());
+            this.logger.GetWriter()?.Write(result2.ToString());
         }
     }
 

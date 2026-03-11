@@ -20,7 +20,7 @@ public class InfoCommand : ISimpleCommandAsync
         /*var authority = await this.authority.GetKeyAsync(options.Authority);
         if (authority == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Authority.NotFound, options.Authority);
             return;
         }*/
 
@@ -29,7 +29,7 @@ public class InfoCommand : ISimpleCommandAsync
             return;
         }
 
-        this.logger.TryGet()?.Log(string.Empty);
+        this.logger.GetWriter()?.Write(string.Empty);
         if (await robustConnection.Get(this.logger) is not { } connection)
         {
             return;
@@ -40,7 +40,7 @@ public class InfoCommand : ISimpleCommandAsync
         var response = await service.GetInformation();
         if (response is { } informationResult)
         {
-            this.logger.TryGet()?.Log(informationResult.MergerName);
+            this.logger.GetWriter()?.Write(informationResult.MergerName);
         }
 
         /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
@@ -52,12 +52,12 @@ public class InfoCommand : ISimpleCommandAsync
         var service = terminal.GetService<IRemoteControlService>();
         var response = await service.RequestAuthorization(token).ResponseAsync;
         var result = response.Result;
-        this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+        this.logger.GetWriter()?.Write($"RequestAuthorization: {result}");
 
         if (result == NetResult.Success)
         {
             result = await service.Restart();
-            this.logger.TryGet()?.Log($"Restart: {result}");
+            this.logger.GetWriter()?.Write($"Restart: {result}");
         }*/
     }
 

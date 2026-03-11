@@ -21,11 +21,11 @@ public partial class CommandGroup
             var name = GetName(option.Name);
             if (this.vaultControl.Root.Remove(name))
             {
-                this.logger.TryGet()?.Log(Hashed.CommandGroup.Removed, option.Name);
+                this.logger.GetWriter()?.Write(Hashed.CommandGroup.Removed, option.Name);
             }
             else
             {
-                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.CommandGroup.NotFound, option.Name);
+                this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.CommandGroup.NotFound, option.Name);
             }
         }
 

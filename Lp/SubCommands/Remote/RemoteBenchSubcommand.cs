@@ -21,7 +21,7 @@ internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
     {
         await this.ntpCorrection.CorrectMicsAndUnitLogger();
 
-        this.logger.TryGet()?.Log($"RemoteBench");
+        this.logger.GetWriter()?.Write($"RemoteBench");
         this.remoteBenchBroker.Start(options);
     }
 

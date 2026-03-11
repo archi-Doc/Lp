@@ -159,8 +159,8 @@ public partial class NodeControlMachine : Machine
     [CommandMethod(WithLock = false)]
     protected CommandResult ShowStatus(bool showNodes = false)
     {
-        this.logger.TryGet()?.Log($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
-        this.logger.TryGet()?.Log($"Lifeline Online/Offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Active: {this.nodeControl.CountActive}");
+        this.logger.GetWriter()?.Write($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
+        this.logger.GetWriter()?.Write($"Lifeline Online/Offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Active: {this.nodeControl.CountActive}");
 
         if (showNodes)
         {
@@ -177,7 +177,7 @@ public partial class NodeControlMachine : Machine
             return true;
         }
 
-        // this.logger.TryGet()?.Log($"PingIpv4AndIpv6: {netNode.ToString()}");
+        // this.logger.GetWriter()?.Write($"PingIpv4AndIpv6: {netNode.ToString()}");
         var ipv6Task = this.PingNetNode(netNode, true);
         var ipv4Task = this.PingNetNode(netNode, false);
         var result = await Task.WhenAll(ipv6Task, ipv4Task);
@@ -246,7 +246,7 @@ public partial class NodeControlMachine : Machine
         // var isIpv6 = this.netStats.OwnNetNode?.Address.IsValidIpv6 == true && (RandomVault.Xoshiro.NextUInt32() & 1) == 0;
         var isIpv6 = (RandomVault.Xoshiro.NextUInt32() & 1) == 0;
 
-        // this.logger.TryGet()?.Log($"Ping{(isIpv6 ? "Ipv6" : "Ipv4")}: {netNode.ToString()}");
+        // this.logger.GetWriter()?.Write($"Ping{(isIpv6 ? "Ipv6" : "Ipv4")}: {netNode.ToString()}");
         var result = await this.PingNetNode(netNode, isIpv6);
         this.netStats.ReportEndpoint(isIpv6, result);
         if (result is not null)

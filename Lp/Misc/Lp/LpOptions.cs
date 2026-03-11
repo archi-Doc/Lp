@@ -112,7 +112,7 @@ public partial record LpOptions
         {
             if (!Lp.Services.MasterKey.TryParse(key, out var masterKey, out _))
             {
-                // this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidMasterKey);
+                // this.logger?.GetWriter(LogLevel.Error)?.Write(Hashed.Error.InvalidMasterKey);
                 return;
             }
 

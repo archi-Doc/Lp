@@ -77,7 +77,7 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}");
+        this.logger.GetWriter()?.Write($"{this.Configuration.Name}: {this.PublicKey.ToString()}");
     }
 
     async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)

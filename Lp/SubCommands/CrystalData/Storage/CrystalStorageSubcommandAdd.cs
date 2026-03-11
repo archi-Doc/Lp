@@ -59,7 +59,7 @@ EnterPath:
         var resultAdd = this.crystal.GroupStorage.AddStorage_SimpleLocal(path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
-            this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
+            this.logger.GetWriter()?.Write($"Storage added: {resultAdd.Id:x4}");
             this.userInterfaceService.WriteLine();
             await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
         }
@@ -93,7 +93,7 @@ EnterBucket:
         var resultAdd = this.crystal.GroupStorage.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
-            this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
+            this.logger.GetWriter()?.Write($"Storage added: {resultAdd.Id:x4}");
             this.userInterfaceService.WriteLine();
             await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
         }

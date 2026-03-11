@@ -53,7 +53,7 @@ public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options
             return;
         }
 
-        this.logger.TryGet()?.Log(seedKey.GetSignaturePublicKey().ToString());
-        this.logger.TryGet()?.Log(options.ToString());
+        this.logger.GetWriter()?.Write(seedKey.GetSignaturePublicKey().ToString());
+        this.logger.GetWriter()?.Write(options.ToString());
     }
 }

@@ -122,12 +122,12 @@ public class RelayCommand : ISimpleCommandAsync
             var count = 0;
             for (var i = 0; i < 1; i++)
             {
-                this.logger.TryGet()?.Log("Pingpong");
+                this.logger.GetWriter()?.Write("Pingpong");
                 var bin = new byte[5000];
                 bin.AsSpan().Fill(0x12);
                 var result = await service.Pingpong(bin);
                 // await Task.Delay(100);
-                this.logger.TryGet()?.Log((result is not null).ToString());
+                this.logger.GetWriter()?.Write((result is not null).ToString());
                 if (result is not null &&
                     result.SequenceEqual(bin))
                 {

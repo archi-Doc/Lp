@@ -39,7 +39,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             options.Repetition = MaxRepetitions;
         }
 
-        this.logger.TryGet()?.Log($"Benchmark subcommand: {options.ToString()}");
+        this.logger.GetWriter()?.Write($"Benchmark subcommand: {options.ToString()}");
 
         await this.RunBenchmark(options);
     }
@@ -55,7 +55,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     {
         if (this.seedKey == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log("No seed key.");
+            this.logger.GetWriter(LogLevel.Error)?.Write("No seed key.");
             return;
         }
 
@@ -80,14 +80,14 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
         }
 
-        this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify"));
+        this.logger.GetWriter()?.Write(benchTimer.GetResult("Sign & Verify"));
     }
 
     private async Task RunCrypto2Benchmark(BenchmarkOptions options)
     {
         if (this.seedKey == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log("No seed key.");
+            this.logger.GetWriter(LogLevel.Error)?.Write("No seed key.");
             return;
         }
 
@@ -111,7 +111,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
         }
 
-        this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Decompress & Verify"));
+        this.logger.GetWriter()?.Write(benchTimer.GetResult("Sign & Decompress & Verify"));
     }
 
     private async Task RunSerializeBenchmark(BenchmarkOptions options)
@@ -133,7 +133,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
         }
 
-        this.logger.TryGet()?.Log(benchTimer.GetResult("Serialize & Deserialize"));
+        this.logger.GetWriter()?.Write(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
     private IUserInterfaceService userInterfaceService;

@@ -38,12 +38,12 @@ public class FlagSubcommandOn : ISimpleCommand
 
         if (on.Count > 0)
         {
-            this.logger.TryGet()?.Log($"On: {string.Join(' ', on)}");
+            this.logger.GetWriter()?.Write($"On: {string.Join(' ', on)}");
         }
 
         if (notfound.Count > 0)
         {
-            this.logger.TryGet(LogLevel.Warning)?.Log($"Not found: {string.Join(' ', notfound)}");
+            this.logger.GetWriter(LogLevel.Warning)?.Write($"Not found: {string.Join(' ', notfound)}");
         }
     }
 

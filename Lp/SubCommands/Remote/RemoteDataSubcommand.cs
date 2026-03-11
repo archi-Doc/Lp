@@ -19,7 +19,7 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
 
     public async Task RunAsync(RemoteDataOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log($"RemoteData");
+        this.logger.GetWriter()?.Write($"RemoteData");
 
         if (this.fileLogger is not null)
         {// Reset
@@ -35,7 +35,7 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
 
         try
         {
-            this.logger.TryGet()?.Log($"Put RemoteData.data");
+            this.logger.GetWriter()?.Write($"Put RemoteData.data");
             var sendStream = await r.Service.Put("RemoteData.data", 1024 * 1024);
             if (sendStream is null)
             {
@@ -44,7 +44,7 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
 
             await sendStream.Send(new byte[1024 * 2024]);
             var result = await sendStream.CompleteSendAndReceive();
-            this.logger.TryGet()?.Log($"Put({result}) RemoteData.data {sendStream.SentLength} bytes");
+            this.logger.GetWriter()?.Write($"Put({result}) RemoteData.data {sendStream.SentLength} bytes");
 
             if (this.fileLogger is null)
             {

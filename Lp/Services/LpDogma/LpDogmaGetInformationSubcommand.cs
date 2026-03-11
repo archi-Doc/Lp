@@ -30,26 +30,26 @@ public class LpDogmaGetInformationSubcommand : ISimpleCommandAsync<ConnectNetNod
                 return;
             }
 
-            this.logger.TryGet()?.Log($"Success");
+            this.logger.GetWriter()?.Write($"Success");
 
             if (info.NodeKey.IsValid)
             {
-                this.logger.TryGet()?.Log($"NodeKey: {info.NodeKey}");
+                this.logger.GetWriter()?.Write($"NodeKey: {info.NodeKey}");
             }
 
             if (info.MergerKey.IsValid)
             {
-                this.logger.TryGet()?.Log($"MergerKey: {info.MergerKey}");
+                this.logger.GetWriter()?.Write($"MergerKey: {info.MergerKey}");
             }
 
             if (info.RelayMergerKey.IsValid)
             {
-                this.logger.TryGet()?.Log($"RelayMergerKey: {info.RelayMergerKey}");
+                this.logger.GetWriter()?.Write($"RelayMergerKey: {info.RelayMergerKey}");
             }
 
             if (info.LinkerKey.IsValid)
             {
-                this.logger.TryGet()?.Log($"LinkerKey: {info.LinkerKey}");
+                this.logger.GetWriter()?.Write($"LinkerKey: {info.LinkerKey}");
             }
         }
     }

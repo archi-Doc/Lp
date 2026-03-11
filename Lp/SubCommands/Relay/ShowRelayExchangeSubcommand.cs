@@ -16,7 +16,7 @@ public class ShowRelayExchangeSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log("Show relay exchange");
+        this.logger.GetWriter()?.Write("Show relay exchange");
 
         this.userInterfaceService.WriteLine(this.netTerminal.RelayAgent.ToString());
     }

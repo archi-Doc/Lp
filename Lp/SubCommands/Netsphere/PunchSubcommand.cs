@@ -28,7 +28,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         {
             if (connection == null)
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
                 return;
             }
         }*/
@@ -37,7 +37,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         this.netUnit.NetTerminal.TryCreateEndpoint(ref relayAddress, EndpointResolution.PreferIpv6, out var relayEndpoint);
         if (!this.netUnit.NetStats.TryGetOwnNetNode(out var ownNode))
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoOwnAddress);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.NoOwnAddress);
             return;
         }
 

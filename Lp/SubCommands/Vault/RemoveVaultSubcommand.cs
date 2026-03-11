@@ -20,7 +20,7 @@ public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
     {
         if (!this.vaultControl.Root.Contains(options.Name))
         {// Not found
-            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, options.Name);
+            this.logger.GetWriter()?.Write(Hashed.Authority.NotFound, options.Name);
             return;
         }
         else

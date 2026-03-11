@@ -35,7 +35,7 @@ public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNa
         }
         else
         {
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotAvailable, option.AuthorityName);
+            this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Authority.NotAvailable, option.AuthorityName);
         }
     }
 }

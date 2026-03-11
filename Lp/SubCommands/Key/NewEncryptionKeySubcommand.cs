@@ -16,7 +16,7 @@ public class NewEncryptionKeySubcommand : ISimpleCommand<Subcommand.NewKeyOption
 
     public void Run(Subcommand.NewKeyOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New encryption key");
+        this.logger.GetWriter()?.Write("New encryption key");
 
         SeedKey key;
         var phrase = options.Seedphrase?.Trim();
@@ -47,7 +47,7 @@ public class NewEncryptionKeySubcommand : ISimpleCommand<Subcommand.NewKeyOption
         }
 
         this.userInterfaceService.WriteLine(key.UnsafeToString());
-        this.logger.TryGet()?.Log(key.GetEncryptionPublicKey().ToString());
+        this.logger.GetWriter()?.Write(key.GetEncryptionPublicKey().ToString());
     }
 
     private readonly ILogger logger;

@@ -18,6 +18,6 @@ public class ExampleSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log(ExampleHashed.ExampleUnit.Command);
+        this.logger.GetWriter()?.Write(ExampleHashed.ExampleUnit.Command);
     }
 }

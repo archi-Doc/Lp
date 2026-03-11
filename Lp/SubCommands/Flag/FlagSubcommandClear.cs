@@ -38,7 +38,7 @@ public class FlagSubcommandClear : ISimpleCommand
 
         if (cleared.Count > 0)
         {
-            this.logger.TryGet()?.Log($"Cleared: {string.Join(' ', cleared)}");
+            this.logger.GetWriter()?.Write($"Cleared: {string.Join(' ', cleared)}");
         }
     }
 

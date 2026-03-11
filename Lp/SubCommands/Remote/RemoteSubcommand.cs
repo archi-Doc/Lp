@@ -77,7 +77,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
         if (await robustConnection.Get() is not { } connection)
         {
-            this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+            this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
             return;
         }*/
 
@@ -85,7 +85,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         {
             if (connection is null)
             {// Failed to connect
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
                 return;
             }
 
@@ -104,11 +104,11 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
             }
             else
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
                 return;
             }
 
-            this.logger.TryGet()?.Log(Hashed.Success.Connect, node.ToString());
+            this.logger.GetWriter()?.Write(Hashed.Success.Connect, node.ToString());
             var nodeName = resultAndValue.Value;
             if (nodeName.Length > 16)// Alias.MaxAliasLength
             {

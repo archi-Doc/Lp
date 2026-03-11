@@ -76,7 +76,7 @@ public partial class DomainControl
         {
             if (verbose)
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Domain.ParseError, text);
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Domain.ParseError, text);
                 this.userInterfaceService.WriteLine(StringHelper.SerializeToString(Example.DomainAssignment));
             }
 
@@ -143,7 +143,7 @@ public partial class DomainControl
             {
                 if (this.TryRemoveDomain(x.DomainAssignment.GetDomainHash()))
                 {
-                    this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Domain.Removed, domainName);
+                    this.logger.GetWriter(LogLevel.Information)?.Write(Hashed.Domain.Removed, domainName);
                     result = true;
                 }
             }

@@ -45,7 +45,7 @@ internal class RemoteControlServiceImpl : IRemoteControlService
 
         if (TransmissionContext.Current.ServerConnection.DestinationEndpoint.IsPrivateOrLocalLoopbackAddress())
         {// Restart
-            this.logger.TryGet()?.Log("RemoteControlService.Restart()");
+            this.logger.GetWriter()?.Write("RemoteControlService.Restart()");
 
             _ = Task.Run(async () =>
             {

@@ -22,7 +22,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     public async Task RunAsync(TestOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
+        this.logger.GetWriter()?.Write($"Test subcommand: {options.ToString()}");
 
         try
         {
@@ -57,13 +57,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Width: {Console.WindowWidth}");
 
         var microSleep = new Arc.Threading.MicroSleep();
-        this.logger.TryGet()?.Log($"MicroSleep: {microSleep.CurrentMode.ToString()}");
+        this.logger.GetWriter()?.Write($"MicroSleep: {microSleep.CurrentMode.ToString()}");
 
         var stopwatch = new Stopwatch();
         stopwatch.Start();
         microSleep.Sleep(1_000);
         var microSeconds = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency * 1_000_000;
-        this.logger.TryGet()?.Log($"{microSeconds}");
+        this.logger.GetWriter()?.Write($"{microSeconds}");
 
         microSleep.Dispose();
 

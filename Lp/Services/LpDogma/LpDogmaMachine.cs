@@ -54,7 +54,7 @@ public partial class LpDogmaMachine : Machine
 
         this.lpSeedKey = seedKey;
         // this.modestLogger.Interval(TimeSpan.FromHours(1), Hashed.Dogma.KeyConfirmed, LogLevel.Information)?.Log(Hashed.Dogma.KeyConfirmed);
-        this.logger.TryGet(LogLevel.Fatal)?.Log(Hashed.Dogma.KeyConfirmed);
+        this.logger.GetWriter(LogLevel.Fatal)?.Write(Hashed.Dogma.KeyConfirmed);
 
         this.ChangeState(State.Maintain, true);
         return StateResult.Continue;
@@ -220,7 +220,7 @@ public partial class LpDogmaMachine : Machine
             if (this.credentials.Nodes.TryAdd(credentialEvidence))
             {
                 _ = service.AddCredentialEvidence(credentialEvidence);
-                this.logger.TryGet()?.Log($"Added: {credentialEvidence.ToString()}");
+                this.logger.GetWriter()?.Write($"Added: {credentialEvidence.ToString()}");
             }
 
             return StateResult.Continue;

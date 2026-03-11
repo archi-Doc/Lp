@@ -21,11 +21,11 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
 
     public void Run(NewVaultOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log($"New vault key");
+        this.logger.GetWriter()?.Write($"New vault key");
 
         if (this.vaultControl.Root.Contains(options.Name))
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, options.Name);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Vault.AlreadyExists, options.Name);
             return;
         }
 
@@ -72,14 +72,14 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         {
             var key = seed is null ? SeedKey.NewEncryption() : SeedKey.NewEncryption(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
-            this.logger.TryGet()?.Log(key.GetEncryptionPublicKey().ToString());
+            this.logger.GetWriter()?.Write(key.GetEncryptionPublicKey().ToString());
             this.AddObject(options.Name, key);
         }
         else if (options.Kind == VaultKind.SignatureKey)
         {
             var key = seed is null ? SeedKey.NewSignature() : SeedKey.NewSignature(seed);
             this.userInterfaceService.WriteLine(key.UnsafeToString());
-            this.logger.TryGet()?.Log(key.GetSignaturePublicKey().ToString());
+            this.logger.GetWriter()?.Write(key.GetSignaturePublicKey().ToString());
             this.AddObject(options.Name, key);
         }
     }
@@ -104,7 +104,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         {
             if (!this.vaultControl.Root.TryAddByteArray(name, data, out _))
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Vault.AlreadyExists, name);
             }
         }
     }
@@ -115,7 +115,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         {
             if (!this.vaultControl.Root.TryAddObject(name, data, out _))
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.AlreadyExists, name);
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Vault.AlreadyExists, name);
             }
         }
     }

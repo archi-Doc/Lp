@@ -15,7 +15,7 @@ public class GCSubcommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        this.logger.TryGet()?.Log(Hashed.Subcommands.GC.Start);
+        this.logger.GetWriter()?.Write(Hashed.Subcommands.GC.Start);
         GC.Collect();
     }
 

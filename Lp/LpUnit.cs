@@ -394,7 +394,7 @@ public class LpUnit
                 LpConstants.Initialize();
 
                 // Start
-                lpUnit.UnitLogger.Get<DefaultLog>().Log($"Lp ({Arc.VersionHelper.VersionString})");
+                lpUnit.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write($"Lp ({Arc.VersionHelper.VersionString})");
 
                 // Prepare
                 await lpUnit.DomainControl.Prepare(this.Context);
@@ -454,9 +454,9 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, UnitLogger unitLogger, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, UnitCore core, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
-        this.UnitLogger = unitLogger;
+        this.LogUnit = logUnit;
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.simpleConsole = simpleConsole;
@@ -502,7 +502,7 @@ public class LpUnit
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
-    public UnitLogger UnitLogger { get; }
+    public LogUnit LogUnit { get; }
 
     public UnitCore Core { get; }
 
@@ -578,7 +578,7 @@ public class LpUnit
             if (SignaturePublicKey.TryParse(this.LpBase.Options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {
                 certificateRelayControl.SetCertificatePublicKey(relayPublicKey);
-                this.UnitLogger.Get<CertificateRelayControl>().Log($"Active: {relayPublicKey.ToString()}");
+                this.LogUnit.RootLogService.GetWriter<CertificateRelayControl>()?.Write($"Active: {relayPublicKey.ToString()}");
             }
         }
     }
@@ -590,7 +590,7 @@ public class LpUnit
         {
             if (!MasterKey.TryParse(key, out var masterKey, out _))
             {
-                this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidMasterKey);
+                this.logger?.GetWriter(LogLevel.Error)?.Write(Hashed.Error.InvalidMasterKey);
                 return;
             }
 
@@ -701,19 +701,19 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 0");
+        this.LogUnit.Get<DefaultLog>().Log("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 1");
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 1");
         await context.SendSave();
 
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 2");
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 2");
         await this.CrystalControl.StoreAndRip();
-        this.UnitLogger.Get<DefaultLog>().Log("SaveAsync - 3");
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 3");
     }
 
     public async Task Start(UnitContext context)
@@ -724,7 +724,7 @@ public class LpUnit
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        var logger = this.UnitLogger.Get<DefaultLog>(LogLevel.Information);
+        var logger = this.LogUnit.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
         logger.Log("Press Enter key to switch to console mode.");
@@ -732,10 +732,10 @@ public class LpUnit
         logger.Log("Running");
     }
 
-    public void LogInformation(ILogWriter logger)
+    public void LogInformation(LogWriter logWriter)
     {
-        logger.Log($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
-        this.LpBase.LogInformation(logger);
+        logWriter.Write($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
+        this.LpBase.LogInformation(logWriter);
     }
 
     public async Task<bool> TryTerminate(bool forceTerminate = false)
@@ -887,7 +887,7 @@ public class LpUnit
 
     private async Task TerminateAsync(UnitContext context)
     {
-        this.UnitLogger.Get<DefaultLog>().Log("Termination process initiated");
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("Termination process initiated");
 
         try
         {
@@ -903,7 +903,7 @@ public class LpUnit
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        this.UnitLogger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        this.UnitLogger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write(abort ? "Aborted" : "Terminated");
+        this.LogUnit.FlushAndTerminate().Wait(); // Write logs added after Terminate().
     }
 }

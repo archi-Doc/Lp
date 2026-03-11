@@ -36,13 +36,13 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
         this.containerAddress = new(netNode.Address, options.ContainerPort);
         if (options.IsValidContainerPort && await this.Ping() == false)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.NoPingFromContainer);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.NoPingFromContainer);
         }
 
         /*var authority = await this.authorityControl.GetAuthority(options.Authority);
         if (authority == null)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Authority.NotFound, options.Authority);
             return;
         }*/
 
@@ -51,7 +51,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
         {
             if (connection == null)
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, netNode.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, netNode.ToString());
                 return;
             }
 
@@ -59,13 +59,13 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
             var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
             if (result != NetResult.Success)
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Authorization);
                 return;
             }
 
             var service = connection.GetService<IRemoteControl>();
             result = await service.Restart();
-            this.logger.TryGet()?.Log($"Restart: {result}");
+            this.logger.GetWriter()?.Write($"Restart: {result}");
             if (result != NetResult.Success)
             {
                 return;
@@ -73,7 +73,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
         }
 
         // Wait
-        this.logger.TryGet()?.Log($"Waiting...");
+        this.logger.GetWriter()?.Write($"Waiting...");
         await Task.Delay(TimeSpan.FromSeconds(WaitIntervalInSeconds));
 
         if (options.IsValidContainerPort)
@@ -95,7 +95,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
     private async Task<bool> Ping()
     {
         var r = await this.netTerminal.PacketTerminal.SendAndReceive<PingPacket, PingPacketResponse>(this.containerAddress, new());
-        this.logger.TryGet()?.Log($"Ping {this.containerAddress.ToString()}: {r.Result}");
+        this.logger.GetWriter()?.Write($"Ping {this.containerAddress.ToString()}: {r.Result}");
 
         if (r.Result == NetResult.Success)
         {

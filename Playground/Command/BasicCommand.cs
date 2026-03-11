@@ -49,17 +49,17 @@ public class BasicCommand : ISimpleCommandAsync
             var result3 = await service.DoubleString("Test1");
             Console.WriteLine(result3);
 
-            this.logger.TryGet()?.Log("Pingpong");
+            this.logger.GetWriter()?.Write("Pingpong");
             var bin = new byte[1000];
             bin.AsSpan().Fill(0x12);
             var result = await service.Pingpong(bin);
-            this.logger.TryGet()?.Log((result is not null).ToString());
+            this.logger.GetWriter()?.Write((result is not null).ToString());
 
-            this.logger.TryGet()?.Log("Pingpong");
+            this.logger.GetWriter()?.Write("Pingpong");
             var bin2 = new byte[2000];
             bin.AsSpan().Fill(0x12);
             var result2 = await service.Pingpong(bin2);
-            this.logger.TryGet()?.Log((result2 is not null).ToString());
+            this.logger.GetWriter()?.Write((result2 is not null).ToString());
         }
     }
 

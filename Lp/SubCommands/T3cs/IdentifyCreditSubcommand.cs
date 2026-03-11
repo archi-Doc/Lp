@@ -37,9 +37,9 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
         var credit = creditIdentity.ToCredit();
         if (credit is not null)
         {
-            this.logger.TryGet()?.Log($"Credit was created successfully");
-            this.logger.TryGet()?.Log($"CreditIdentity: {StringHelper.SerializeToString(creditIdentity)}");
-            this.logger.TryGet()?.Log($"Credit: {credit.ToString()}");
+            this.logger.GetWriter()?.Write($"Credit was created successfully");
+            this.logger.GetWriter()?.Write($"CreditIdentity: {StringHelper.SerializeToString(creditIdentity)}");
+            this.logger.GetWriter()?.Write($"Credit: {credit.ToString()}");
         }
 
         void ShowErrorMessage()

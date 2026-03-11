@@ -22,7 +22,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
             seed = Seedphrase.TryGetSeed(option.Seedphrase);
             if (seed is null)
             {
-                this.logger.TryGet()?.Log(Hashed.Seedphrase.Invalid, option.Seedphrase);
+                this.logger.GetWriter()?.Write(Hashed.Seedphrase.Invalid, option.Seedphrase);
                 return;
             }
         }
@@ -33,11 +33,11 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
 
         if (result)
         {// Success
-            this.logger.TryGet()?.Log(Hashed.Authority.Created, option.Name);
+            this.logger.GetWriter()?.Write(Hashed.Authority.Created, option.Name);
         }
         else
         {// Failed
-            this.logger.TryGet()?.Log(Hashed.Authority.AlreadyExists, option.Name);
+            this.logger.GetWriter()?.Write(Hashed.Authority.AlreadyExists, option.Name);
         }
     }
 

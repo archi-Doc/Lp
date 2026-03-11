@@ -21,13 +21,13 @@ public partial class CommandGroup
             var name = GetName(options.Name);
             /*if (!this.vaultControl.Root.Contains(name))
             {
-                this.logger.TryGet()?.Log(Hashed.Custom.NotFound, options.Name);
+                this.logger.GetWriter()?.Write(Hashed.Custom.NotFound, options.Name);
                 return;
             }*/
 
             var commands = SimpleParserHelper.SeparateArguments(options.Command);
             this.vaultControl.Root.Add(name, commands);
-            this.logger.TryGet()?.Log(Hashed.CommandGroup.Set, options.Name);
+            this.logger.GetWriter()?.Write(Hashed.CommandGroup.Set, options.Name);
             ShowCommands(commands, this.logger);
         }
 

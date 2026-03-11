@@ -34,7 +34,7 @@ public class RemoteBenchControl
             result = this.connections.Add(clientConnection);
         }
 
-        this.logger.TryGet()?.Log($"Registered({result}): {clientConnection.ToString()}");
+        this.logger.GetWriter()?.Write($"Registered({result}): {clientConnection.ToString()}");
     }
 
     public void Start(Subcommands.RemoteBenchOptions options)
@@ -66,11 +66,11 @@ public class RemoteBenchControl
             var result = await service.Start(options.Total, options.Concurrent, remoteNode, remotePrivateKey);
             if (result == NetResult.Success)
             {
-                this.logger.TryGet()?.Log($"Start: {clientConnection}");
+                this.logger.GetWriter()?.Write($"Start: {clientConnection}");
             }
             else
             {
-                this.logger.TryGet()?.Log($"Unregistered: {clientConnection}");
+                this.logger.GetWriter()?.Write($"Unregistered: {clientConnection}");
             }
         }
 
@@ -115,15 +115,15 @@ public class RemoteBenchControl
 
                     if (count == 0)
                     {
-                        this.logger.TryGet()?.Log($"No record");
+                        this.logger.GetWriter()?.Write($"No record");
                     }
                     else
                     {
                         elapsedMilliseconds /= count;
                         averageLatency /= count;
 
-                        this.logger.TryGet()?.Log($"{count} Records:");
-                        this.logger.TryGet()?.Log($"Total: Success/Failure {successCount}/{failureCount}, {elapsedMilliseconds} ms, {countPerSecond} c/s, latency {averageLatency} ms");
+                        this.logger.GetWriter()?.Write($"{count} Records:");
+                        this.logger.GetWriter()?.Write($"Total: Success/Failure {successCount}/{failureCount}, {elapsedMilliseconds} ms, {countPerSecond} c/s, latency {averageLatency} ms");
                     }
 
                     break;

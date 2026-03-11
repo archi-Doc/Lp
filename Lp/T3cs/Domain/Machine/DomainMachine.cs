@@ -60,11 +60,11 @@ public partial class DomainMachine : Machine<ulong>
         {
             if (connection is null)
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, this.domainIdentifier.NetNode.ToString());
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Connect, this.domainIdentifier.NetNode.ToString());
                 return StateResult.Terminate;
             }
 
-            this.logger.TryGet(LogLevel.Information)?.Log("Connected");
+            this.logger.GetWriter(LogLevel.Information)?.Write("Connected");
             return StateResult.Terminate;
         }
 
@@ -76,7 +76,7 @@ public partial class DomainMachine : Machine<ulong>
     {
         if (this.domainIdentifier is { } domainIdentifier)
         {
-            this.logger.TryGet(LogLevel.Information)?.Log(this.GetInformation());
+            this.logger.GetWriter(LogLevel.Information)?.Write(this.GetInformation());
         }
 
         return CommandResult.Success;

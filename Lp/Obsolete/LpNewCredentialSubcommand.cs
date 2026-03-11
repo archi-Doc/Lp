@@ -29,7 +29,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
 
         if (!SignaturePublicKey.TryParse(options.PublicKey, out var publicKey, out _))
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidPublicKey);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.InvalidPublicKey);
             return;
         }
 
@@ -51,7 +51,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
         if (CredentialEvidence.TryCreate(credentialProof, seedKey, out var evidence) &&
             this.credentials.MergerCredentials.TryAdd(evidence))
         {
-            this.logger.TryGet()?.Log($"{evidence}");
+            this.logger.GetWriter()?.Write($"{evidence}");
         }
     }
 

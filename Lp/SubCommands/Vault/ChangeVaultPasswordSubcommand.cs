@@ -17,7 +17,7 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Vault.ChangePassword);
+        this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Vault.ChangePassword);
 
         InputResult result;
         while (true)
@@ -32,7 +32,7 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
                 break;
             }
 
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
+            this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Dialog.Password.NotMatch);
         }
 
         result = await this.userInterfaceService.ReadPasswordAndConfirm(true, Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
@@ -42,7 +42,7 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
         }
 
         this.vaultControl.Root.SetPassword(result.Text);
-        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
+        this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Dialog.Password.Changed);
     }
 
     private readonly ILogger logger;

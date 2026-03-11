@@ -17,7 +17,7 @@ public class ShowRelayCircuitSubcommand : ISimpleCommandAsync
     }
 
     public async Task RunAsync(string[] args)
-    {// this.logger.TryGet()?.Log
+    {// this.logger.GetWriter()?.Write
         string st;
         this.userInterfaceService.WriteLine("Relay information");
         this.userInterfaceService.WriteLine($"Relay control: {this.relayControl.GetType().Name}");

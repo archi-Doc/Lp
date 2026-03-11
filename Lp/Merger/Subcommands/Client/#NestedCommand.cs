@@ -62,7 +62,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.nestedcommand.Authority = await this.authorityControl.GetAuthority(options.Authority);
         if (this.nestedcommand.Authority is null)
         {
-            this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
+            this.logger?.GetWriter(LogLevel.Error)?.Write(Hashed.Authority.NotFound, options.Authority);
             return;
         }
 

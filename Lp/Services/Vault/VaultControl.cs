@@ -106,7 +106,7 @@ public partial class VaultControl
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, this.path);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Load, this.path);
             return false;
         }
 
@@ -120,7 +120,7 @@ public partial class VaultControl
             }
             else
             {// Deserialize failed
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, this.path);
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Deserialize, this.path);
                 return false;
             }
         }
@@ -149,7 +149,7 @@ public partial class VaultControl
                 }
                 else
                 {// Deserialize failed
-                    this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, this.path);
+                    this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Deserialize, this.path);
                     return false;
                 }
             }
