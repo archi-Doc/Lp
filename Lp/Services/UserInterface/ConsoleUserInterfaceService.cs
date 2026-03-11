@@ -41,14 +41,20 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.simpleConsole.WriteLine(message, color);
 
-    public void WriteLineDefault(ReadOnlySpan<char> message)
-        => this.WriteLine(message, this.lpSettings.Color.Default);
-
-    public void WriteLineWarning(ReadOnlySpan<char> message)
-        => this.WriteLine(message, this.lpSettings.Color.Warning);
-
-    public void WriteLineError(ReadOnlySpan<char> message)
-        => this.WriteLine(message, this.lpSettings.Color.Error);
+#pragma warning disable SA1118 // Parameter should not span multiple lines
+    public void WriteLine(LogLevel logLevel, string? message)
+    => this.WriteLine(
+        message,
+        logLevel switch
+        {
+            LogLevel.Debug => this.lpSettings.Color.Information,
+            LogLevel.Information => this.lpSettings.Color.Information,
+            LogLevel.Warning => this.lpSettings.Color.Warning,
+            LogLevel.Error => this.lpSettings.Color.Error,
+            LogLevel.Fatal => this.lpSettings.Color.Fatal,
+            _ => this.lpSettings.Color.Information,
+        });
+#pragma warning restore SA1118 // Parameter should not span multiple lines
 
     public void EnqueueLine(string? message = null)
         => this.simpleConsole.EnqueueInput(message);

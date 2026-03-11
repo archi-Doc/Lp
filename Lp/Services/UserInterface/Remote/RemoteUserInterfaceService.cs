@@ -24,14 +24,14 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
     public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.receiver.WriteLine(message.ToString(), color);
 
-    public void WriteLineDefault(ReadOnlySpan<char> message)
-        => this.receiver.WriteLineDefault(message.ToString());
+    public void WriteLineDefault(string? message)
+        => this.receiver.WriteLineDefault(message);
 
-    public void WriteLineWarning(ReadOnlySpan<char> message)
-        => this.receiver.WriteLineWarning(message.ToString());
+    public void WriteLineWarning(string? message)
+        => this.receiver.WriteLineWarning(message);
 
-    public void WriteLineError(ReadOnlySpan<char> message)
-        => this.receiver.WriteLineError(message.ToString());
+    public void WriteLineError(string? message)
+        => this.receiver.WriteLineError(message);
 
     public void EnqueueLine(string? message = null)
     {
