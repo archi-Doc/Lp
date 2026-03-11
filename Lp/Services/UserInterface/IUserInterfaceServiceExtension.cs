@@ -9,29 +9,11 @@ public static class IUserInterfaceServiceExtention
     public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash)
         => service.WriteLine(logLevel, HashedString.Get(hash));
 
-    public static void WriteLineDefault(this IUserInterfaceService service, ulong hash, object obj1)
-        => service.WriteLineDefault(HashedString.Get(hash, obj1));
+    public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash, object obj1)
+        => service.WriteLine(logLevel, HashedString.Get(hash, obj1));
 
-    public static void WriteLineDefault(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
-        => service.WriteLineDefault(HashedString.Get(hash, obj1, obj2));
-
-    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash)
-        => service.WriteLineWarning(HashedString.Get(hash));
-
-    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash, object obj1)
-        => service.WriteLineWarning(HashedString.Get(hash, obj1));
-
-    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
-        => service.WriteLineWarning(HashedString.Get(hash, obj1, obj2));
-
-    public static void WriteLineError(this IUserInterfaceService service, ulong hash)
-        => service.WriteLineError(HashedString.Get(hash));
-
-    public static void WriteLineError(this IUserInterfaceService service, ulong hash, object obj1)
-        => service.WriteLineError(HashedString.Get(hash, obj1));
-
-    public static void WriteLineError(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
-        => service.WriteLineError(HashedString.Get(hash, obj1, obj2));
+    public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash, object obj1, object obj2)
+        => service.WriteLine(logLevel, HashedString.Get(hash, obj1, obj2));
 
     public static void WriteLine(this IUserInterfaceService service, ulong hash)
         => service.WriteLine(HashedString.Get(hash));

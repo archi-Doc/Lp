@@ -135,12 +135,12 @@ public class LpBase
     public void LogInformation(LogWriter logger)
     {
        // logger.Log($"Root directory: {this.RootDirectory}");
-        logger.Log($"Data directory: {this.DataDirectory}");
-        logger.Log($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
+        logger.Write($"Data directory: {this.DataDirectory}");
+        logger.Write($"Node: {this.NodeName}, Test: {this.Options.TestFeatures}");
 
         if (this.RemotePublicKey.IsValid)
         {
-            logger.Log($"Remote public key: {this.RemotePublicKey}");
+            logger.Write($"Remote public key: {this.RemotePublicKey}");
         }
 
         // logger.Log(this.Options.ToString());

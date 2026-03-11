@@ -701,7 +701,7 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.LogUnit.Get<DefaultLog>().Log("SaveAsync - 0");
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
@@ -724,6 +724,7 @@ public class LpUnit
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
+        this.UserInterfaceService.WriteLine()
         var logger = this.LogUnit.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 

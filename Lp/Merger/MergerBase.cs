@@ -35,7 +35,7 @@ public abstract partial class MergerBase : UnitBase
     public MergerBase(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context)
     {
-        this.logger = logUnit.GetLogger(this.GetType());
+        this.logger = logUnit.RootLogService.GetLogger(this.GetType());
         this.modestLogger = new(this.logger);
         this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;
@@ -57,14 +57,14 @@ public abstract partial class MergerBase : UnitBase
         state.Name = this.GetName();
         if (state.NetNode is null)
         {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Log(Hashed.Error.NoFixedNode);
+            this.modestLogger.NonConsecutive(Hashed.Error.NoFixedNode, LogLevel.Error)?.Write(Hashed.Error.NoFixedNode);
             return;
         }
 
         // Check node type
         if (this.netStats.OwnNodeType != NodeType.Direct)
         {
-            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Log(Hashed.Error.NoDirectConnection);
+            this.modestLogger.NonConsecutive(Hashed.Error.NoDirectConnection, LogLevel.Error)?.Write(Hashed.Error.NoDirectConnection);
             return;
         }
 

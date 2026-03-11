@@ -149,7 +149,7 @@ public partial class NodeControlMachine : Machine
 
         if (this.nodeControl.NoOnlineNode)
         {
-            this.modestLogger.Interval(TimeSpan.FromMinutes(5), Hashed.Error.NoOnlineNode, LogLevel.Fatal)?.Log(Hashed.Error.NoOnlineNode);
+            this.modestLogger.Interval(TimeSpan.FromMinutes(5), Hashed.Error.NoOnlineNode, LogLevel.Fatal)?.Write(Hashed.Error.NoOnlineNode);
         }
 
         this.TimeUntilRun = TimeSpan.FromSeconds(10);

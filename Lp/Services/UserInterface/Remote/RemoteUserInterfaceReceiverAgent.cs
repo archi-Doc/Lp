@@ -40,4 +40,9 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.consoleUserInterfaceService.WriteLine(this.Prefix + message, color);
         return Task.CompletedTask;
     }
+
+    Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
+    {
+        throw new NotImplementedException();
+    }
 }
