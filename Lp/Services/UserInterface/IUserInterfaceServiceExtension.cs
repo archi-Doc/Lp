@@ -6,8 +6,8 @@ namespace Lp;
 
 public static class IUserInterfaceServiceExtention
 {
-    public static void WriteLineDefault(this IUserInterfaceService service, ulong hash)
-        => service.WriteLineDefault(HashedString.Get(hash));
+    public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash)
+        => service.WriteLine(logLevel, HashedString.Get(hash));
 
     public static void WriteLineDefault(this IUserInterfaceService service, ulong hash, object obj1)
         => service.WriteLineDefault(HashedString.Get(hash, obj1));

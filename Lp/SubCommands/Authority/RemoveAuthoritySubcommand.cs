@@ -38,11 +38,11 @@ public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommand
 
         if (result)
         {// Success
-            this.logger.TryGet()?.Log(Hashed.Authority.Removed, options.AuthorityName);
+            this.logger.GetWriter()?.Write(Hashed.Authority.Removed, options.AuthorityName);
         }
         else
         {// Failed
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
+            this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Authority.NotFound, options.AuthorityName);
         }
     }
 }

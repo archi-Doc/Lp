@@ -8,24 +8,24 @@ public class LogWriterCache<TSource>
     {
     }
 
-    public ILogWriter? TryGet(LogFilterParameter param)
+    public LogWriter? TryGet(LogFilterParameter param)
     {
         return param.LogLevel switch
         {
-            LogLevel.Debug => this.debugWriter ??= param.Context.TryGet<TSource>(LogLevel.Debug),
-            LogLevel.Information => this.informationWriter ??= param.Context.TryGet<TSource>(LogLevel.Information),
-            LogLevel.Warning => this.warningWriter ??= param.Context.TryGet<TSource>(LogLevel.Warning),
-            LogLevel.Error => this.errorWriter ??= param.Context.TryGet<TSource>(LogLevel.Error),
-            LogLevel.Fatal => this.fatalWriter ??= param.Context.TryGet<TSource>(LogLevel.Fatal),
+            LogLevel.Debug => this.debugWriter ??= param.LogService.GetWriter<TSource>(LogLevel.Debug),
+            LogLevel.Information => this.informationWriter ??= param.LogService.GetWriter<TSource>(LogLevel.Information),
+            LogLevel.Warning => this.warningWriter ??= param.LogService.GetWriter<TSource>(LogLevel.Warning),
+            LogLevel.Error => this.errorWriter ??= param.LogService.GetWriter<TSource>(LogLevel.Error),
+            LogLevel.Fatal => this.fatalWriter ??= param.LogService.GetWriter<TSource>(LogLevel.Fatal),
             _ => default,
         };
     }
 
-    private ILogWriter? debugWriter;
-    private ILogWriter? informationWriter;
-    private ILogWriter? warningWriter;
-    private ILogWriter? errorWriter;
-    private ILogWriter? fatalWriter;
+    private LogWriter? debugWriter;
+    private LogWriter? informationWriter;
+    private LogWriter? warningWriter;
+    private LogWriter? errorWriter;
+    private LogWriter? fatalWriter;
 }
 
 public class TemporaryMemoryLogFilter : ILogFilter
@@ -34,7 +34,7 @@ public class TemporaryMemoryLogFilter : ILogFilter
     {
     }
 
-    public ILogWriter? Filter(LogFilterParameter param)
+    public LogWriter? Filter(LogFilterParameter param)
     {
         if (this.Enabled)
         {

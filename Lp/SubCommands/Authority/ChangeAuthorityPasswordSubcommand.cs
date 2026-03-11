@@ -20,11 +20,11 @@ public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySu
     {
         if (!this.authorityControl.Exists(options.AuthorityName))
         {// Not found
-            this.logger.TryGet()?.Log(Hashed.Authority.NotFound, options.AuthorityName);
+            this.logger.GetWriter()?.Write(Hashed.Authority.NotFound, options.AuthorityName);
             return;
         }
 
-        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.ChangePassword);
+        this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Authority.ChangePassword);
 
         Authority? authority;
         InputResult result;
@@ -52,7 +52,7 @@ public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySu
         }
 
         authority.Vault?.SetPassword(result.Text);
-        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
+        this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Dialog.Password.Changed);
     }
 
     private readonly ILogger logger;

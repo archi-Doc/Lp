@@ -10,10 +10,10 @@ public class RelayMerger : Merger
 {
     private const string NameSuffix = "_RM";
 
-    public RelayMerger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
-        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
+    public RelayMerger(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, logUnit, netBase, lpBase, netStats, domainControl)
     {
-        this.logger = unitLogger.GetLogger<RelayMerger>();
+        this.logger = logUnit.GetLogger<RelayMerger>();
     }
 
     #region FieldAndProperty

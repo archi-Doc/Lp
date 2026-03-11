@@ -46,9 +46,10 @@ public interface IUserInterfaceService : IConsoleService
     /// <returns>A task that represents the asynchronous notification operation.</returns>
     Task Notify(ILogger? logger, LogLevel level, string message);
 
-    void WriteLineDefault(ReadOnlySpan<char> message);
-
-    void WriteLineWarning(ReadOnlySpan<char> message);
-
-    void WriteLineError(ReadOnlySpan<char> message);
+    /// <summary>
+    /// Writes a line immediately to the user interface at the specified log level.
+    /// </summary>
+    /// <param name="logLevel">The log level associated with the message.</param>
+    /// <param name="message">The message to display. If null, an empty line is written.</param>
+    void WriteLine(LogLevel logLevel, string? message);
 }

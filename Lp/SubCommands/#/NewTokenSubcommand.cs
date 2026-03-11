@@ -22,7 +22,7 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
         var authority = await this.authorityControl.GetAuthority(options.AuthorityName);
         if (authority == null)
         {
-            this.logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.AuthorityName);
+            this.logger?.GetWriter(LogLevel.Error)?.Write(Hashed.Authority.NotFound, options.AuthorityName);
             return;
         }
 

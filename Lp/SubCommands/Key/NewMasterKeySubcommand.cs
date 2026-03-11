@@ -22,7 +22,7 @@ public class NewMasterKeySubcommand : ISimpleCommand<NewMasterKeySubcommand.Opti
 
     public void Run(Options options, string[] args)
     {
-        this.logger.TryGet()?.Log("New master key");
+        this.logger.GetWriter()?.Write("New master key");
 
         MasterKey? masterKey = default;
         var st = options.Seed?.Trim();
@@ -30,7 +30,7 @@ public class NewMasterKeySubcommand : ISimpleCommand<NewMasterKeySubcommand.Opti
         {
             if (!MasterKey.TryParse(st, out masterKey, out _))
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.InvalidSeed);
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.InvalidSeed);
                 return;
             }
         }

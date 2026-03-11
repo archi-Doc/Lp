@@ -40,7 +40,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task Ping(NetAddress address, PingOptions options)
     {
-        this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
+        this.logger.GetWriter()?.Write($"Ping: {address.ToString()}");
 
         var packetTerminal = this.LpUnit.NetUnit.NetTerminal.PacketTerminal;
 
@@ -51,8 +51,8 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         sw.Stop();
         if (result.Value is not null)
         {
-            this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
-            this.logger.TryGet()?.Log(result.Value.ToString());
+            this.logger.GetWriter()?.Write($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+            this.logger.GetWriter()?.Write(result.Value.ToString());
 
             if (result.Value.SourceEndpoint.EndPoint is { } endpoint)
             {
@@ -61,7 +61,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         }
         else
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
+            this.logger.GetWriter(LogLevel.Error)?.Write($"{result}");
         }
     }
 

@@ -45,6 +45,6 @@ public class CreateCreditSubcommand : ISimpleCommandAsync
 
         var service = connection.GetService<IMergerAdministration>();
         var r = await service.CreateCredit(creditIdentity);
-        this.logger.TryGet()?.Log($"{r.ToString()}");
+        this.logger.GetWriter()?.Write($"{r.ToString()}");
     }
 }

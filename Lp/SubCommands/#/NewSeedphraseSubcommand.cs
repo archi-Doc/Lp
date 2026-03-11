@@ -16,10 +16,10 @@ public class NewSeedphraseSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log($"Create seedphrase");
+        this.logger.GetWriter()?.Write($"Create seedphrase");
 
         var phrase = Seedphrase.Create();
-        // this.logger.TryGet()?.Log($"{phrase}");
+        // this.logger.GetWriter()?.Write($"{phrase}");
         this.userInterfaceService.WriteLine(phrase);
 
         // var seed = this.seedPhrase.TryGetSeed(phrase);

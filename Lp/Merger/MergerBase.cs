@@ -32,10 +32,10 @@ public abstract partial class MergerBase : UnitBase
 
     #endregion
 
-    public MergerBase(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+    public MergerBase(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context)
     {
-        this.logger = unitLogger.GetLogger(this.GetType());
+        this.logger = logUnit.GetLogger(this.GetType());
         this.modestLogger = new(this.logger);
         this.modestLogger.SetSuppressionTime(TimeSpan.FromSeconds(5));
         this.netBase = netBase;
@@ -72,7 +72,7 @@ public abstract partial class MergerBase : UnitBase
         if (!state.IsActive)
         {
             state.IsActive = true;
-            this.logger.TryGet(LogLevel.Information)?.Log("Activated");
+            this.logger.GetWriter(LogLevel.Information)?.Write("Activated");
         }
 
         /*if (state.IsActive && state.NetNode.Address.IsValidIpv4AndIpv6)
@@ -85,10 +85,10 @@ public abstract partial class MergerBase : UnitBase
                 this.seedKey.TrySign(nodeProof, NodeProof.DefaultValiditySeconds);
                 var result = await this.domainControl.RegisterNodeToDomain(nodeProof).ConfigureAwait(false);
 
-                this.logger.TryGet(LogLevel.Information)?.Log(Hashed.Merger.Registration, result);
+                this.logger.GetWriter(LogLevel.Information)?.Write(Hashed.Merger.Registration, result);
                 if (result == NetResult.Success)
                 {
-                    // this.logger.TryGet(LogLevel.Information)?.Log(this.State.NetNode.ToString());
+                    // this.logger.GetWriter(LogLevel.Information)?.Write(this.State.NetNode.ToString());
                 }
             }
         }*/

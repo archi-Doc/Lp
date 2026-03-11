@@ -42,12 +42,12 @@ public class FlagSubcommandLs : ISimpleCommand
 
         if (on.Count > 0)
         {
-            this.logger.TryGet()?.Log($"On: {string.Join(' ', on)}");
+            this.logger.GetWriter()?.Write($"On: {string.Join(' ', on)}");
         }
 
         if (off.Count > 0)
         {
-            this.logger.TryGet()?.Log($"Off: {string.Join(' ', off)}");
+            this.logger.GetWriter()?.Write($"Off: {string.Join(' ', off)}");
         }
     }
 

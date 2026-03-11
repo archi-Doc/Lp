@@ -23,7 +23,7 @@ internal static class LpDogmaHelper
         var connection = await netTerminal.Connect(node);
         if (connection is null)
         {
-            logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, netNode.ToString());
+            logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Connect, netNode.ToString());
             return default;
         }
 

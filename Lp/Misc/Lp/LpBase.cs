@@ -132,7 +132,7 @@ public class LpBase
         }
     }
 
-    public void LogInformation(ILogWriter logger)
+    public void LogInformation(LogWriter logger)
     {
        // logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");

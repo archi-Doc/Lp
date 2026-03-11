@@ -43,7 +43,7 @@ public static class NetsphereHelper
 
         if (await robustConnection.Get() is not { } connection)
         {
-            logger.TryGet()?.Log(Hashed.Error.Connect, robustConnection.DestinationNode.ToString());
+            logger.GetWriter()?.Write(Hashed.Error.Connect, robustConnection.DestinationNode.ToString());
             return null;
         }
 

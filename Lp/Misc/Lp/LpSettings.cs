@@ -14,10 +14,14 @@ public partial record LpSettings
     [TinyhandObject(ImplicitMemberNameAsKey = true, EnumAsString = true, SkipDefaultValues = false)]
     public partial record ColorClass
     {
-        public ConsoleColor Default { get; set; } = ConsoleColor.White;
+        public ConsoleColor Debug { get; set; } = ConsoleColor.White;
+
+        public ConsoleColor Information { get; set; } = ConsoleColor.White;
 
         public ConsoleColor Warning { get; set; } = ConsoleColor.Yellow;
 
         public ConsoleColor Error { get; set; } = ConsoleColor.Red;
+
+        public ConsoleColor Fatal { get; set; } = ConsoleColor.Red;
     }
 }

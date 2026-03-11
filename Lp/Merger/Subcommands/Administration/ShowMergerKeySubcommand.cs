@@ -29,6 +29,6 @@ public class ShowMergerKeySubcommand : ISimpleCommandAsync
 
         var service = connection.GetService<IMergerAdministration>();
         var r = await service.GetMergerKey();
-        this.logger.TryGet()?.Log($"{r.ToString()}");
+        this.logger.GetWriter()?.Write($"{r.ToString()}");
     }
 }

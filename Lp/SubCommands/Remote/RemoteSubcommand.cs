@@ -77,7 +77,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
         if (await robustConnection.Get() is not { } connection)
         {
-            this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+            this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
             return;
         }*/
 
@@ -85,7 +85,7 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         {
             if (connection is null)
             {// Failed to connect
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
                 return;
             }
 
@@ -104,22 +104,27 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
             }
             else
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
                 return;
             }
 
-            this.logger.TryGet()?.Log(Hashed.Success.Connect, node.ToString());
+            this.logger.GetWriter()?.Write(Hashed.Success.Connect, node.ToString());
+            var nodeName = resultAndValue.Value;
+            if (nodeName.Length > 16)// Alias.MaxAliasLength
+            {
+                nodeName = nodeName.Substring(0, 16);
+            }
 
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
             if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is { } receiver)
             {
-                receiver.Prefix = $"[{resultAndValue.Value}] ";
+                receiver.Prefix = $"[{nodeName}] ";
             }
 
             var readineOptions = new ReadLineOptions()
             {
-                Prompt = $"{resultAndValue.Value} >> ",
+                Prompt = $"{nodeName} >> ",
                 MultilineDelimiter = LpConstants.MultilineIndeitifierString,
                 MultilinePrompt = LpConstants.MultilinePromptString,
             };

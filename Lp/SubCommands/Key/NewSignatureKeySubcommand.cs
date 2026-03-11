@@ -16,7 +16,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
 
     public void Run(Subcommand.NewKeyOptions options, string[] args)
     {
-        this.logger.TryGet()?.Log("New signature key");
+        this.logger.GetWriter()?.Write("New signature key");
 
         SeedKey key;
         var phrase = options.Seedphrase?.Trim();
@@ -47,7 +47,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
         }
 
         this.userInterfaceService.WriteLine(key.UnsafeToString());
-        this.logger.TryGet()?.Log(key.GetSignaturePublicKey().ToString());
+        this.logger.GetWriter()?.Write(key.GetSignaturePublicKey().ToString());
     }
 
     private readonly ILogger logger;

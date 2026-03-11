@@ -16,7 +16,7 @@ public partial class RelayPeerMachine : Machine
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        // this.logger.TryGet()?.Log("Initial");
+        // this.logger.GetWriter()?.Write("Initial");
         return StateResult.Continue;
     }
 

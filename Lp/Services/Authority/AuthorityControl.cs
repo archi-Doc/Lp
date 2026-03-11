@@ -41,14 +41,14 @@ public class AuthorityControl
         var authority = await this.GetAuthority(name).ConfigureAwait(false);
         if (authority is null)
         {
-            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, name);
+            logger?.GetWriter(LogLevel.Error)?.Write(Hashed.Authority.NotFound, name);
             return default;
         }
 
         var publicKey = authority.GetSignaturePublicKey();
         if (!publicKey.Equals(LpConstants.LpPublicKey))
         {
-            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.KeyMismatch);
+            logger?.GetWriter(LogLevel.Error)?.Write(Hashed.Authority.KeyMismatch);
             return default;
         }
 

@@ -39,8 +39,8 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 
     #endregion
 
-    public Merger(UnitContext context, UnitLogger unitLogger, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
-        : base(context, unitLogger, netBase, lpBase, netStats, domainControl)
+    public Merger(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
+        : base(context, logUnit, netBase, lpBase, netStats, domainControl)
     {
     }
 
@@ -91,7 +91,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return;
         }
 
-        // this.logger.TryGet()?.Log(this.Information.ToString());
+        // this.logger.GetWriter()?.Write(this.Information.ToString());
 
         if (this.Configuration.MergerType == MergerConfiguration.Type.Single)
         {// Single credit
@@ -101,7 +101,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
         {// Multi credit
         }
 
-        this.logger.TryGet()?.Log($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}+{this.equityCreditCrystal.Data.Count}/{this.Configuration.MaxCredits}");
+        this.logger.GetWriter()?.Write($"{this.Configuration.Name}: {this.PublicKey.ToString()}, Credits: {this.creditDataCrystal.Data.Count}+{this.equityCreditCrystal.Data.Count}/{this.Configuration.MaxCredits}");
     }
 
     async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
@@ -114,7 +114,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Terminated");
+        this.logger.GetWriter()?.Write("Terminated");
     }
 
     [TinyhandObject]

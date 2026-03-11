@@ -65,12 +65,12 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         {
         }
 
-        this.logger.TryGet()?.Log("Example unit prepared");
+        this.logger.GetWriter()?.Write("Example unit prepared");
     }
 
     async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Example unit started");
+        this.logger.GetWriter()?.Write("Example unit started");
     }
 
     async Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
@@ -79,6 +79,6 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Example unit terminated");
+        this.logger.GetWriter()?.Write("Example unit terminated");
     }
 }

@@ -22,7 +22,7 @@ public partial class CommandGroup
     {
         foreach (var x in commands)
         {
-            logger.TryGet()?.Log(x);
+            logger.GetWriter()?.Write(x);
         }
     }
 }

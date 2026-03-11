@@ -31,7 +31,7 @@ public class GetNodeInformationSubcommand : ISimpleCommandAsync
         {
             if (connection == null)
             {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+                this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
                 return;
             }
 

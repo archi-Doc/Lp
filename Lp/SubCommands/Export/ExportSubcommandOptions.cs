@@ -29,7 +29,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
             }
 
             await File.WriteAllBytesAsync(path, utf);
-            this.logger.TryGet()?.Log(Hashed.Success.Output, path);
+            this.logger.GetWriter()?.Write(Hashed.Success.Output, path);
         }
         catch
         {

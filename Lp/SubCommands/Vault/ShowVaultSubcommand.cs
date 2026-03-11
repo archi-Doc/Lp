@@ -21,7 +21,7 @@ public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
     {
         if (!this.vaultControl.Root.Contains(options.Name))
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Vault.NoVault, options.Name);
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Vault.NoVault, options.Name);
             return;
         }
 

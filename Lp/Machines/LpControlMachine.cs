@@ -60,14 +60,14 @@ public partial class LpControlMachine : Machine
             this.lifespan -= IntervalInSeconds;
             if (this.lifespan <= 0)
             {
-                this.logger.TryGet(LogLevel.Warning)?.Log($"Lp is terminating because the specified time has elapsed.");
+                this.logger.GetWriter(LogLevel.Warning)?.Write($"Lp is terminating because the specified time has elapsed.");
                 _ = this.lpUnit.TryTerminate(true);
                 return StateResult.Terminate;
             }
             else if (this.lifespan % DisplayIntervalInSeconds == 0)
             {
                 var x = this.lifespan / DisplayIntervalInSeconds * DisplayIntervalInSeconds;
-                this.logger.TryGet(LogLevel.Information)?.Log($"Lp will terminate in {x} seconds.");
+                this.logger.GetWriter(LogLevel.Information)?.Write($"Lp will terminate in {x} seconds.");
             }
         }
 

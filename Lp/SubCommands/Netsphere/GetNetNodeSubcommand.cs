@@ -24,7 +24,7 @@ public class GetNetNodeSubcommand : ISimpleCommandAsync<GetNetNodeOptions>
         var node = await this.netTerminal.UnsafeGetNetNode(address);
         if (node is not null)
         {
-            this.logger.TryGet()?.Log($"{node.ToString()}");
+            this.logger.GetWriter()?.Write($"{node.ToString()}");
         }
     }
 

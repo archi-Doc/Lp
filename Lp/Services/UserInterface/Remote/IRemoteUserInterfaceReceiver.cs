@@ -9,11 +9,7 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     Task WriteLine(string? message, ConsoleColor color);
 
-    Task WriteLineDefault(string? message);
-
-    Task WriteLineWarning(string? message);
-
-    Task WriteLineError(string? message);
+    Task WriteLine(LogLevel logLevel, string? message);
 
     Task<InputResult> ReadLine();
 

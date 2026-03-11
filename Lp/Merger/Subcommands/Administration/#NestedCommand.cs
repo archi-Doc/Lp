@@ -96,7 +96,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
 
         if (await this.nestedcommand.RobustConnection.Get() is not { } connection)
         {
-            this.logger.TryGet()?.Log(Hashed.Error.Connect, node.ToString());
+            this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
             return;
         }
 
