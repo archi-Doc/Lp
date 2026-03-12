@@ -67,6 +67,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         microSleep.Dispose();
 
+        await Task.Delay(500);
+        this.userInterfaceService.WriteLine("1");
+        await Task.Delay(1500);
+        this.userInterfaceService.WriteLine("2");
+        await Task.Delay(2500);
+        this.userInterfaceService.WriteLine("3");
+
         // await this.TestLinkageKey();
 
         /*_ = Task.Run(() =>

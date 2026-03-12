@@ -504,6 +504,7 @@ public class LpUnit
             typeof(InspectSubcommand),
             typeof(BenchmarkSubcommand),
             typeof(ShowOwnNetNodeSubcommand),
+            typeof(TestSubcommand),
             ];
     }
 
