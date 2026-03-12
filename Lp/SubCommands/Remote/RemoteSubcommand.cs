@@ -110,9 +110,9 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
             this.logger.GetWriter()?.Write(Hashed.Success.Connect, node.ToString());
             var nodeName = resultAndValue.Value;
-            if (nodeName.Length > 16)// Alias.MaxAliasLength
+            if (nodeName.Length > Alias.MaxAliasLength)
             {
-                nodeName = nodeName.Substring(0, 16);
+                nodeName = nodeName.Substring(0, Alias.MaxAliasLength);
             }
 
             var context = serverConnection.GetContext();

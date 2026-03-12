@@ -60,6 +60,19 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             LogLevel.Fatal => this.lpSettings.Color.Fatal,
             _ => this.lpSettings.Color.Information,
         });
+
+    public void WriteLine(LogLevel logLevel, ReadOnlySpan<char> message)
+    => this.WriteLine(
+        message,
+        logLevel switch
+        {
+            LogLevel.Debug => this.lpSettings.Color.Information,
+            LogLevel.Information => this.lpSettings.Color.Information,
+            LogLevel.Warning => this.lpSettings.Color.Warning,
+            LogLevel.Error => this.lpSettings.Color.Error,
+            LogLevel.Fatal => this.lpSettings.Color.Fatal,
+            _ => this.lpSettings.Color.Information,
+        });
 #pragma warning restore SA1118 // Parameter should not span multiple lines
 
     public void EnqueueLine(string? message = null)
