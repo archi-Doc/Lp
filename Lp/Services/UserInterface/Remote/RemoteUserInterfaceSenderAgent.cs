@@ -15,15 +15,17 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
     private readonly LpBase lpBase;
+    private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(IServiceProvider serviceProvider, LpBase lpBase)
+    public RemoteUserInterfaceSenderAgent(IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
+        this.logger = logger;
     }
 
     void INetObject.OnConnectionClosed()
@@ -43,8 +45,11 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         }
 
         serverConnection.Agreement.AcceptAll(token.Target); // Customized ConnectBidirectionally()
-        this.IsAuthenticated = true;
         TransmissionContext.Current.ServerConnection.PrepareBidirectionalConnection();
+
+        this.IsAuthenticated = true;
+        this.logger.GetWriter(LogLevel.Warning)?.Write($"Connected from {serverConnection.DestinationNode}");
+
         return new(NetResult.Success, this.lpBase.NodeName);
     }
 

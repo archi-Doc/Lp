@@ -20,7 +20,7 @@ public class InspectSubcommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        this.logger.GetWriter(LogLevel.Warning)?.Write("InspectSubcommand");
+        this.logger.GetWriter(LogLevel.Information)?.Write("InspectSubcommand");
 
         this.InspectVersion();
         this.InspectNet();
