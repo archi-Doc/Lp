@@ -37,11 +37,11 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
-        var r = this.AppendPrefix(message);
-        this.consoleUserInterfaceService.WriteLine(r.Buffer.AsSpan(0, r.Length), color);
-        if (r.Buffer.Length > 0)
+        var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.consoleUserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        if (r.Rent.Length > 0)
         {
-            ArrayPool<char>.Shared.Return(r.Buffer);
+            ArrayPool<char>.Shared.Return(r.Rent);
         }
 
         return Task.CompletedTask;
@@ -49,49 +49,13 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
     {
-        var r = this.AppendPrefix(message);
-        this.consoleUserInterfaceService.WriteLine(logLevel, r.Buffer.AsSpan(0, r.Length));
-        if (r.Buffer.Length > 0)
+        var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.consoleUserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
+        if (r.Rent.Length > 0)
         {
-            ArrayPool<char>.Shared.Return(r.Buffer);
+            ArrayPool<char>.Shared.Return(r.Rent);
         }
 
         return Task.CompletedTask;
-    }
-
-    private (char[] Buffer, int Length) AppendPrefix(string? message)
-    {
-        if (message is null)
-        {
-            return ([], 0);
-        }
-
-        var prefix = this.Prefix;
-        var source = message.AsSpan();
-        var prefixCount = 1 + source.Count('\n');
-        var maxLength = message.Length + (prefix.Length * prefixCount);
-        var rent = ArrayPool<char>.Shared.Rent(maxLength);
-        var destination = rent.AsSpan();
-
-        prefix.CopyTo(destination);
-        destination = destination.Slice(prefix.Length);
-        foreach (var x in source)
-        {
-            if (x == '\r')
-            {
-            }
-            else
-            {
-                destination[0] = x;
-                destination = destination.Slice(1);
-                if (x == '\n')
-                {
-                    prefix.CopyTo(destination);
-                    destination = destination.Slice(prefix.Length);
-                }
-            }
-        }
-
-        return (rent, rent.Length - destination.Length);
     }
 }

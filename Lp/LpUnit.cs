@@ -64,13 +64,14 @@ public class LpUnit
                 context.Services.TryAddScoped<IUserInterfaceService>(sp =>
                 {
                     var context = sp.GetService<UserInterfaceServiceContext>();
+                    var console = sp.GetRequiredService<ConsoleUserInterfaceService>();
                     if (context?.Receiver is { } receiver)
                     {
-                        return new RemoteUserInterfaceService(receiver);
+                        return new RemoteUserInterfaceService(receiver, console);
                     }
                     else
                     {
-                        return sp.GetRequiredService<ConsoleUserInterfaceService>();
+                        return console;
                     }
                 });
                 context.Services.TryAddScoped<IConsoleService>(sp => sp.GetRequiredService<IUserInterfaceService>());

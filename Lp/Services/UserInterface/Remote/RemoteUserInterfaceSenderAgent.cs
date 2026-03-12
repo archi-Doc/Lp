@@ -65,6 +65,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.NotAuthenticated;
         }
 
+        this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote>> {message}");
+
         this.Prepare(clientConnection);
         _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
 
@@ -91,7 +93,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         Type[] subcommands = [typeof(InspectSubcommand),];
 
-        this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(clientConnection.GetService<IRemoteUserInterfaceReceiver>());
+        var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
+        this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(receiver);
         this.simpleParser = new SimpleParser(subcommands, subcommandOptions);
     }
 }

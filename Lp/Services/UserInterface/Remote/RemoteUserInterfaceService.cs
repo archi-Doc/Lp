@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
+using System.Drawing;
 using Lp.NetServices;
 
 namespace Lp.Services;
@@ -9,29 +11,59 @@ namespace Lp.Services;
 /// </summary>
 internal class RemoteUserInterfaceService : IUserInterfaceService
 {
-    private readonly IRemoteUserInterfaceReceiver receiver;
+    public string Prefix { get; set; } = "Remote>> ";
 
-    public RemoteUserInterfaceService(IRemoteUserInterfaceReceiver receiver)
+    private readonly IRemoteUserInterfaceReceiver receiver;
+    private readonly ConsoleUserInterfaceService console;
+
+    public RemoteUserInterfaceService(IRemoteUserInterfaceReceiver receiver, ConsoleUserInterfaceService console)
     {
         this.receiver = receiver;
+        this.console = console;
     }
 
     public bool EnableColor { get; set; } = true;
 
-    public void WriteLine(LogLevel logLevel, string? message)
-        => this.receiver.WriteLine(logLevel, message);
-
     public void Write(string? message = null, ConsoleColor color = (ConsoleColor)(-1))
-        => this.receiver.Write(message, color);
+    {
+        this.receiver.Write(this.Prefix + message, color);
+    }
 
-    public void Write(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
-        => this.receiver.Write(message.ToString(), color);
+    public void WriteLine(LogLevel logLevel, string? message)
+    {
+        this.receiver.WriteLine(logLevel, message);
+
+        /*var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.console.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
+        if (r.Rent.Length > 0)
+        {
+            ArrayPool<char>.Shared.Return(r.Rent);
+        }*/
+    }
 
     public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
-        => this.receiver.WriteLine(message, color);
+    {
+        this.receiver.WriteLine(message, color);
+
+        /*var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.console.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        if (r.Rent.Length > 0)
+        {
+            ArrayPool<char>.Shared.Return(r.Rent);
+        }*/
+    }
 
     public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
-        => this.receiver.WriteLine(message.ToString(), color);
+    {
+        this.receiver.WriteLine(message.ToString(), color);
+
+        /*var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.console.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        if (r.Rent.Length > 0)
+        {
+            ArrayPool<char>.Shared.Return(r.Rent);
+        }*/
+    }
 
     public void EnqueueLine(string? message = null)
     {
