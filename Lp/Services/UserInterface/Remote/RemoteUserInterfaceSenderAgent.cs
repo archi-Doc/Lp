@@ -70,7 +70,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote>> {message}");
 
         this.Prepare(clientConnection);
-        _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
+        _ = Task.Run(() => this.simpleParser.ParseAndRunAsync(message));
+        // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
 
         return NetResult.Success;
     }
