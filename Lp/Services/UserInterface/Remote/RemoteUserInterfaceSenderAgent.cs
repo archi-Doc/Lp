@@ -79,7 +79,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {// Return control of console input.
-                // await receiver.EnableInput().ConfigureAwait(false);
+                // await receiver.ReturnInputControl().ConfigureAwait(false);
             }
         });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
