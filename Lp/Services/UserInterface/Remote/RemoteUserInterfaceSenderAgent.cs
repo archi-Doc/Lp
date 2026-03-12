@@ -69,15 +69,26 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote>> {message}");
 
-        this.Prepare(clientConnection);
-        _ = Task.Run(() => this.simpleParser.ParseAndRunAsync(message));
+        var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
+        this.Prepare(receiver);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
+            }
+            finally
+            {// Return control of console input.
+                // await receiver.EnableInput().ConfigureAwait(false);
+            }
+        });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
 
         return NetResult.Success;
     }
 
     [MemberNotNull(nameof(simpleParser))]
-    private void Prepare(ClientConnection clientConnection)
+    private void Prepare(IRemoteUserInterfaceReceiver receiver)
     {
         if (this.simpleParser is not null)
         {
@@ -94,7 +105,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             AutoAlias = true,
         };
 
-        var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(receiver);
         this.simpleParser = new SimpleParser(this.lpUnit.RemoteSubcommands, subcommandOptions);
     }
