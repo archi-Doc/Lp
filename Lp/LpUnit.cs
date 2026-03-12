@@ -499,6 +499,12 @@ public class LpUnit
         };
 
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
+
+        this.RemoteSubcommands = [
+            typeof(InspectSubcommand),
+            typeof(BenchmarkSubcommand),
+            typeof(ShowOwnNetNodeSubcommand),
+            ];
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -528,6 +534,8 @@ public class LpUnit
     public AuthorityControl AuthorityControl { get; }
 
     public DomainControl DomainControl { get; }
+
+    public Type[] RemoteSubcommands { get; }
 
     private readonly ILogger logger;
     private readonly SimpleParser subcommandParser;

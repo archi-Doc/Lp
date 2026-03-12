@@ -14,16 +14,18 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 {
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
+    private readonly LpUnit lpUnit;
     private readonly LpBase lpBase;
     private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
+    public RemoteUserInterfaceSenderAgent(LpUnit lpUnit, IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
+        this.lpUnit = lpUnit;
         this.lpBase = lpBase;
         this.logger = logger;
     }
@@ -91,10 +93,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             AutoAlias = true,
         };
 
-        Type[] subcommands = [typeof(InspectSubcommand),];
-
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(receiver);
-        this.simpleParser = new SimpleParser(subcommands, subcommandOptions);
+        this.simpleParser = new SimpleParser(this.lpUnit.RemoteSubcommands, subcommandOptions);
     }
 }
