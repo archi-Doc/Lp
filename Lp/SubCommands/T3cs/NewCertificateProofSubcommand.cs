@@ -41,13 +41,13 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
             return;
         }
 
-        this.userInterfaceService.WriteLine($"NetNode: {node}");
-
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
         if (seedKey is null)
         {
             return;
         }
+
+        this.userInterfaceService.WriteLine($"NetNode: {node}");
 
         MergedProof? mergedProof = default;
         var publicKey = seedKey.GetSignaturePublicKey();
@@ -67,7 +67,7 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
             return;
         }
 
-        this.logger.GetWriter(LogLevel.Information)?.Write(StringHelper.SerializeToString(mergedProof));
+        // this.logger.GetWriter(LogLevel.Information)?.Write(StringHelper.SerializeToString(mergedProof));
 
         var certificateProof = new CertificateProof(mergedProof, node);
         if (!seedKey.TrySignAndValidate(certificateProof, 60))
@@ -75,9 +75,10 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
             return;
         }
 
+        // this.userInterfaceService.WriteLine($"New certificate proof");
         var st = StringHelper.SerializeToString(certificateProof);
         this.logger.GetWriter(LogLevel.Information)?.Write(st);
-        var bin = TinyhandSerializer.SerializeObject(certificateProof);
-        this.logger.GetWriter(LogLevel.Information)?.Write($"{st.Length} {bin.Length}");
+        // var bin = TinyhandSerializer.SerializeObject(certificateProof);
+        // this.logger.GetWriter(LogLevel.Information)?.Write($"{st.Length} {bin.Length}");
     }
 }

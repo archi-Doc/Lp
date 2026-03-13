@@ -255,7 +255,7 @@ public class LpService
             return seedKey;
         }
 
-        this.userInterfaceService.WriteLine(Hashed.Error.NoPrivateKey);
+        this.userInterfaceService.WriteLine(LogLevel.Error, Hashed.Error.NoPrivateKey);
         return default;
     }
 }

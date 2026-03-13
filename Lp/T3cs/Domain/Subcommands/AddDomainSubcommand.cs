@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using SimpleCommandLine;
 
 namespace Lp.T3cs.Domain;
@@ -12,16 +13,24 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
 
     public record Options
     {
-        [SimpleOption(OptionName, Description = "", Required = true)]
-        public string DomainAssignment { get; init; } = string.Empty;
+        [SimpleOption("Name", Description = "Domain name", Required = true)]
+        public string Name { get; init; } = string.Empty;
+
+        [SimpleOption("Code", Description = "Domain name", Required = true)]
+        public string Code { get; init; } = string.Empty;
+
+        [SimpleOption("CertificateProof", Description = "", Required = true)]
+        public CertificateProof CertificateProof { get; init; } = CertificateProof.UnsafeConstructor();
     }
 
     // private readonly ILogger logger;
     // private readonly IUserInterfaceService userInterfaceService;
+    private readonly LpService lpService;
     private readonly DomainControl domainControl;
 
-    public AddDomainSubcommand(DomainControl domainControl, SimpleParser parser)
+    public AddDomainSubcommand(LpService lpService, DomainControl domainControl, SimpleParser parser)
     {
+        this.lpService = lpService;
         this.domainControl = domainControl;
 
         if (parser.TryGetOption(CommandName, OptionName, out var option))
@@ -32,12 +41,15 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
 
     public async Task RunAsync(Options options, string[] args)
     {
-        var domain = options.DomainAssignment;
-        if (string.IsNullOrEmpty(domain))
+        var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
+        if (seedKey is null)
         {
             return;
         }
 
-        var result = await this.domainControl.AddDomain(domain).ConfigureAwait(false);
+        //
+        var b = options.CertificateProof.ValidateAndVerify(ValidationOptions.IgnoreExpiration);
+
+        // var result = await this.domainControl.AddDomain(domain).ConfigureAwait(false);
     }
 }

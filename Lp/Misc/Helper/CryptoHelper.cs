@@ -11,10 +11,11 @@ public static class CryptoHelper
     /// Validate object members and verify that the signature is appropriate.
     /// </summary>
     /// <param name="proof">The proof to be verified.</param>
+    /// <param name="validationOptions">The validation options.</param>
     /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify(this Proof proof)
+    public static bool ValidateAndVerify(this Proof proof, ValidationOptions validationOptions = default)
     {
-        if (!proof.Validate(default))
+        if (!proof.Validate(validationOptions))
         {
             return false;
         }
