@@ -731,6 +731,7 @@ public class LpUnit
     {
         await context.SendStart();
 
+        context.ServiceProvider.GetRequiredService<ClockHand>().Start();
         this.BigMachine.Start(null);
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
