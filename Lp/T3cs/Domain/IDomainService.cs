@@ -13,4 +13,8 @@ public readonly partial record struct DomainOverview(
 public interface IDomainService : INetService
 {
     Task<NetResultAndValue<DomainOverview>> GetOverview(ulong domainHash);
+
+    Task<CertificateProof?> Exchange(ulong domainHash, CertificateProof? proof);
+
+    Task<int> Radiate(ulong domainHash, CertificateProof proof);
 }

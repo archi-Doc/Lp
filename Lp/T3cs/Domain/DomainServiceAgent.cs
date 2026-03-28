@@ -26,6 +26,28 @@ internal class DomainServiceAgent : IDomainService
         // return Task.FromResult<NetResultAndValue<DomainOverview>>(new(domainService.GetOverview()));
         return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
     }
+
+    Task<CertificateProof?> IDomainService.Exchange(ulong domainHash, CertificateProof? proof)
+    {
+        var domainData = this.domainControl.GetDomainData(domainHash);
+        if (domainData is null)
+        {
+            return Task.FromResult<CertificateProof?>(default);
+        }
+
+        return domainData.ExchangeProof(proof);
+    }
+
+    Task<int> IDomainService.Radiate(ulong domainHash, CertificateProof proof)
+    {
+        var domainData = this.domainControl.GetDomainData(domainHash);
+        if (domainData is null)
+        {
+            return Task.FromResult<int>(default);
+        }
+
+        return domainData.RadiateProof(proof);
+    }
 }
 
 /*[NetObject]

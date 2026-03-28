@@ -82,6 +82,7 @@ public class LpUnit
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<DomainControl>();
+                context.AddSingleton<DomainRadiant>();
                 context.AddSingleton<DomainServiceAgent>();
                 context.AddSingleton<RemoteBenchControl>();
 

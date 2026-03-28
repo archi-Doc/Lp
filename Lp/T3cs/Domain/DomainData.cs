@@ -51,6 +51,16 @@ public partial class DomainData
         }
     }
 
+    internal async Task<CertificateProof?> ExchangeProof(CertificateProof? proof)
+    {
+        return default;
+    }
+
+    internal async Task<int> RadiateProof(CertificateProof proof)
+    {
+        return default;
+    }
+
     /*public DomainOverview GetOverview()
     {
         int count;
