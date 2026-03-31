@@ -41,7 +41,13 @@ public partial class DomainMachine : Machine<ulong>
             return StateResult.Terminate;
         }
 
-        this.domainData.Initial();
+        // Validate
+        if (!this.domainData.DomainAssignment.Validate(ValidationOption.IgnoreExpiration))
+        {
+            return StateResult.Terminate;
+        }
+
+        this.domainData.DetermineRole();
 
         return StateResult.Continue;
     }

@@ -15,6 +15,7 @@ public partial class DomainControl
     #region FieldAndProperty
 
     private readonly ILogger logger;
+    private readonly ILogService logService;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly LpBase lpBase;
@@ -30,8 +31,9 @@ public partial class DomainControl
 
     #endregion
 
-    public DomainControl(ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, BigMachine bigMachine)
+    public DomainControl(ILogService logService, ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, BigMachine bigMachine)
     {
+        this.logService = logService;
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
@@ -50,6 +52,7 @@ public partial class DomainControl
 
     public async Task Prepare(UnitContext unitContext)
     {
+        // Commandline
         var domain = this.lpBase.Options.Domain;
         if (!string.IsNullOrEmpty(domain))
         {
@@ -58,6 +61,21 @@ public partial class DomainControl
             {
                 throw new PanicException();
             }
+        }
+
+        // CrystalData
+        foreach (var x in this.domainHashToData.Values)
+        {
+            var domainAssignment = x.DomainAssignment;
+            var seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
+            if (seedKey is null)
+            {
+                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Domain.FailedToRetrieveSeedKey, domainAssignment.Name);
+                continue;
+            }
+
+            this.AddDomainInternal(domainAssignment, seedKey);
+            this.logger.GetWriter()?.Write(Hashed.Domain.Added, domainAssignment.Name);
         }
 
         this.netUnit.Services.EnableNetService<IDomainService>();
@@ -118,13 +136,13 @@ public partial class DomainControl
             domainHash,
             hash =>
             {
-                var domainData = new DomainData(domainAssignment, domainSeedKey);
+                var domainData = new DomainData(this.logService.GetLogger<DomainData>(), domainAssignment, domainSeedKey);
                 this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return domainData;
             },
             (hash, original) =>
             {
-                original.Initialize(domainAssignment, domainSeedKey);
+                original.Initialize(this.logService.GetLogger<DomainData>(), domainAssignment, domainSeedKey);
                 this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return original;
             });

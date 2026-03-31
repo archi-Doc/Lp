@@ -14,19 +14,21 @@ public partial class DomainData
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
 
+    private ILogger logger;
     private DomainRole role;
     private SeedKey? domainSeedKey;
 
     public DomainRole Role => this.role;
 
-    public DomainData(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
+    public DomainData(ILogger<DomainData> logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        this.Initialize(domainAssignment, domainSeedKey);
+        this.Initialize(logger, domainAssignment, domainSeedKey);
     }
 
     [MemberNotNull(nameof(DomainAssignment))]
-    public void Initialize(DomainAssignment domainAssignment, SeedKey? domainSeedKey)
+    public void Initialize(ILogger logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
+        this.logger = logger;
         this.DomainAssignment = domainAssignment;
         this.domainSeedKey = domainSeedKey;
     }
@@ -36,19 +38,23 @@ public partial class DomainData
         return $"{this.Role} {this.DomainAssignment?.ToString()}";
     }
 
-    internal void Initial()
+    internal void DetermineRole()
     {
-        if (this.role == DomainRole.User)
+        if (this.domainSeedKey is not null)
         {
-            if (this.domainSeedKey is not null)
-            {
-                var originator = this.domainSeedKey.GetSignaturePublicKey();
-                if (this.DomainAssignment.CertificateProof.GetSignatureKey().Equals(ref originator))
-                {
-                    this.role = DomainRole.Root;
-                }
+            var originator = this.domainSeedKey.GetSignaturePublicKey();
+            if (this.DomainAssignment.CertificateProof.MergedProof.Value.Credit.PrimaryMerger.Equals(ref originator))
+            {// Root
+                this.role = DomainRole.Root;
+                this.logger.GetWriter()?.Write(Hashed.Domain.RootAssigned, this.DomainAssignment.Name);
+                return;
             }
         }
+
+        // Proof -> Peer
+
+        // Scout
+
     }
 
     internal async Task<CertificateProof?> ExchangeProof(CertificateProof? proof)

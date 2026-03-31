@@ -157,4 +157,7 @@ Domain=
   ParseError="The specified domain format is invalid: {0}"
   ServiceEnabled="DomainService has been activated: {0}"
   Removed="Domain '{0}' is successfully removed"
+  FailedToRetrieveSeedKey="Domain '{0}' will not be registered since the SeedKey could not be retrieved"
+  Added="Domain '{0}' is successfully registered"
+  RootAssigned="Root role has been assigned to domain '{0}'"
 
