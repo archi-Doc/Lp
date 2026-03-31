@@ -37,7 +37,7 @@ public partial class PeerProof : ProofWithPublicKey
 
     public override int MaxValiditySeconds => Seconds.FromDays(1);
 
-    public override bool Validate(ValidationOptions validationOptions)
+    public override bool Validate(ValidationOption validationOptions)
     {
         if (!base.Validate(validationOptions))
         {

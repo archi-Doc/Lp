@@ -147,7 +147,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// </summary>
     /// <param name="validationOptions">The validation options to apply during validation.</param>
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>
-    public virtual bool Validate(ValidationOptions validationOptions)
+    public virtual bool Validate(ValidationOption validationOptions)
     {
         if (this.ValiditySeconds == 0)
         {
@@ -159,14 +159,14 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
             return false;
         }
 
-        if (!validationOptions.HasFlag(ValidationOptions.PreSign))
+        if (!validationOptions.HasFlag(ValidationOption.IgnoreSignatureBeforeSigning))
         {
             if (this.SignedMics == 0)
             {
                 return false;
             }
 
-            if (!validationOptions.HasFlag(ValidationOptions.IgnoreExpiration) &&
+            if (!validationOptions.HasFlag(ValidationOption.IgnoreExpiration) &&
             !MicsRange.IsWithinMargin(Mics.FastCorrected, this.SignedMics, this.ExpirationMics))
             {
                 return false;

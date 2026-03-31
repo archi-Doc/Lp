@@ -101,8 +101,8 @@ public partial class Linkage
             return false;
         }
 
-        if (!evidence1.ValidateAndVerify(ValidationOptions.Default) ||
-            !evidence2.ValidateAndVerify(ValidationOptions.Default))
+        if (!evidence1.ValidateAndVerify(ValidationOption.Default) ||
+            !evidence2.ValidateAndVerify(ValidationOption.Default))
         {
             return false;
         }
@@ -141,10 +141,10 @@ public partial class Linkage
         }
     }
 
-    public bool Validate(ValidationOptions validationOptions = default)
+    public bool Validate(ValidationOption validationOptions = default)
         => this.Validate(validationOptions, out _);
 
-    public bool ValidateAndVerify(ValidationOptions validationOptions = default)
+    public bool ValidateAndVerify(ValidationOption validationOptions = default)
     {
         if (!this.Validate(validationOptions, out var linkerPublicKey))
         {
@@ -196,7 +196,7 @@ public partial class Linkage
         this.linkerSignature = sign;
     }
 
-    private bool Validate(ValidationOptions validationOptions, out SignaturePublicKey linkerPublicKey)
+    private bool Validate(ValidationOption validationOptions, out SignaturePublicKey linkerPublicKey)
     {
         if (!this.Proof1.Validate(validationOptions) || !this.Proof2.Validate(validationOptions))
         {

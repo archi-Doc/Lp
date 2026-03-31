@@ -8,6 +8,10 @@ namespace Lp;
 
 #pragma warning disable SA1203 // Constants should appear before fields
 
+/// <summary>
+/// Centralizes the constants used by Lp.<br/>
+/// These constants will never change, ever.
+/// </summary>
 public static class LpConstants
 {
     public const string PromptString = "> ";

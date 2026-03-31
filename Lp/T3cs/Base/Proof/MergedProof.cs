@@ -46,7 +46,7 @@ public partial class MergedProof : Proof
         return base.PrepareForSigning(ref publicKey, validitySeconds);
     }
 
-    public override bool Validate(ValidationOptions validationOptions)
+    public override bool Validate(ValidationOption validationOptions)
     {
         if (this.MergerIndex < 0 ||
             this.MergerIndex >= LpConstants.MaxMergers)

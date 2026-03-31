@@ -15,7 +15,7 @@ public partial class IdentificationProof : ProofWithPublicKey
     [Key(ProofWithPublicKey.ReservedKeyCount)]
     public string Name { get; private set; } = string.Empty;
 
-    public override bool Validate(ValidationOptions validationOptions)
+    public override bool Validate(ValidationOption validationOptions)
     {
         if (!base.Validate(validationOptions))
         {

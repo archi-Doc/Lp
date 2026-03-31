@@ -13,7 +13,7 @@ public static class CryptoHelper
     /// <param name="proof">The proof to be verified.</param>
     /// <param name="validationOptions">The validation options.</param>
     /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify(this Proof proof, ValidationOptions validationOptions = default)
+    public static bool ValidateAndVerify(this Proof proof, ValidationOption validationOptions = default)
     {
         if (!proof.Validate(validationOptions))
         {

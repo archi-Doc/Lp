@@ -44,7 +44,7 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
             return;
         }
 
-        if (!proof.Validate(ValidationOptions.PreSign))
+        if (!proof.Validate(ValidationOption.IgnoreSignatureBeforeSigning))
         {
             return;
         }

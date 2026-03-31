@@ -8,10 +8,8 @@ namespace Lp.T3cs;
 
 public class DomainRadiant : IClockHandTarget
 {
-    public const int QueueCapacity = 32;
-
     private readonly DomainControl domainControl;
-    private readonly CircularQueue<Message> queue = new(QueueCapacity);
+    private readonly CircularQueue<Message> queue = new(LpParameters.DomainRadiantQueueCapacity);
 
     public record class Message(ClientConnection Destination, ulong DomainHash, CertificateProof Proof);
 
@@ -48,22 +46,17 @@ public class DomainRadiant : IClockHandTarget
     {
         while (this.queue.TryDequeue(out var message))
         {
-            this.ProcessMessage(message);
+            var domainData = this.domainControl.GetDomainData(message.DomainHash);
+            if (domainData is not null)
+            {
+                var channel = new ResponseChannel<int>();
+                domainData.RadiateProof(message.Proof, ref channel);
+                // domainData.SetConvergentCount(message.Destination, convergentCount);
+            }
         }
     }
 
     void IClockHandTarget.OnEveryMinute()
     {
-    }
-
-    private void ProcessMessage(Message message)
-    {//
-        var domainData = this.domainControl.GetDomainData(message.DomainHash);
-        if (domainData is not null)
-        {
-            var channel = new ResponseChannel<int>();
-            domainData.RadiateProof(message.Proof, ref channel);
-            // domainData.SetConvergentCount(message.Destination, convergentCount);
-        }
     }
 }
