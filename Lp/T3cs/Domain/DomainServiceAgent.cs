@@ -38,15 +38,15 @@ internal class DomainServiceAgent : IDomainService
         return domainData.ExchangeProof(proof);
     }
 
-    Task<int> IDomainService.Radiate(ulong domainHash, CertificateProof proof)
+    void IDomainService.Radiate(ulong domainHash, CertificateProof proof, ref ResponseChannel<int> channel)
     {
         var domainData = this.domainControl.GetDomainData(domainHash);
         if (domainData is null)
         {
-            return Task.FromResult<int>(default);
+            return;
         }
 
-        return domainData.RadiateProof(proof);
+        domainData.RadiateProof(proof, ref channel);
     }
 }
 

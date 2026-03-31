@@ -56,9 +56,8 @@ public partial class DomainData
         return default;
     }
 
-    internal async Task<int> RadiateProof(CertificateProof proof)
+    internal void RadiateProof(CertificateProof proof, ref ResponseChannel<int> channel)
     {
-        return default;
     }
 
     /*public DomainOverview GetOverview()

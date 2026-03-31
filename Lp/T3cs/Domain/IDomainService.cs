@@ -16,5 +16,5 @@ public interface IDomainService : INetService
 
     Task<CertificateProof?> Exchange(ulong domainHash, CertificateProof? proof);
 
-    Task<int> Radiate(ulong domainHash, CertificateProof proof);
+    void Radiate(ulong domainHash, CertificateProof proof, ref ResponseChannel<int> channel);
 }

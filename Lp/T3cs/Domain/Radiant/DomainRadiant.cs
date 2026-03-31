@@ -10,7 +10,7 @@ public class DomainRadiant : IClockHandTarget
 {
     public const int QueueCapacity = 32;
 
-    private static readonly DomainControl domainControl;
+    private readonly DomainControl domainControl;
     private readonly CircularQueue<Message> queue = new(QueueCapacity);
 
     public record class Message(ClientConnection Destination, ulong DomainHash, CertificateProof Proof);
@@ -34,20 +34,10 @@ public class DomainRadiant : IClockHandTarget
         }
     }*/
 
-    private static async Task ProcessMessage(Message message)
+    public DomainRadiant(DomainControl domainControl, IChannel<IClockHandTarget> channel)
     {
-        var domainService = message.Destination.GetService<IDomainService>();
-        var convergentCount = await domainService.Radiate(message.DomainHash, message.Proof).ConfigureAwait(false);
+        this.domainControl = domainControl;
 
-        var domainData = domainControl.GetDomainData(message.DomainHash);
-        if (domainData is not null)
-        {
-            // domainData.SetConvergentCount(message.Destination, convergentCount);
-        }
-    }
-
-    public DomainRadiant(IChannel<IClockHandTarget> channel)
-    {
         channel.Open(this);
     }
 
@@ -58,11 +48,22 @@ public class DomainRadiant : IClockHandTarget
     {
         while (this.queue.TryDequeue(out var message))
         {
-            _ = ProcessMessage(message);
+            this.ProcessMessage(message);
         }
     }
 
     void IClockHandTarget.OnEveryMinute()
     {
+    }
+
+    private void ProcessMessage(Message message)
+    {//
+        var domainData = this.domainControl.GetDomainData(message.DomainHash);
+        if (domainData is not null)
+        {
+            var channel = new ResponseChannel<int>();
+            domainData.RadiateProof(message.Proof, ref channel);
+            // domainData.SetConvergentCount(message.Destination, convergentCount);
+        }
     }
 }
