@@ -50,6 +50,6 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
         //
         var b = options.CertificateProof.ValidateAndVerify(ValidationOption.IgnoreExpiration);
 
-        // var result = await this.domainControl.AddDomain(domain).ConfigureAwait(false);
+        //var result = await this.domainControl.AddDomain(domain).ConfigureAwait(false);
     }
 }
