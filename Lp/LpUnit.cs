@@ -737,7 +737,6 @@ public class LpUnit
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        this.UserInterfaceService.WriteLine();
         var logger = this.LogUnit.RootLogService.GetWriter<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
