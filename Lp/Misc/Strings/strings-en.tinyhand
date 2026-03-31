@@ -105,10 +105,10 @@ Subcommands=
   DevStage = "This feature is in the dev stage"
   GC=
     Start = "GC.Collect"
-
   NodeKey=
     Changed = "Node key changed: {0}"
     InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
+  SelfSignMergedProof="Since the Merger[{0}]'s SeedKey is specified, create a MergedProof and self-sign it"
 
 Storage=
   CreateLocal = "Creating storage with local filer"
@@ -119,9 +119,6 @@ Storage=
   InvalidId = "Storage with specified Id '{0}' is not found"
   DeleteConfirm = "Are you sure you want to delete the storage"
   Deleted = "Storage deleted: {0}"
-
-CrystalResult=
-  NoDirectory = "Directory not found"
 
 AddStorageResult=
   Success = "Success"

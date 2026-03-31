@@ -54,7 +54,7 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
         var mergerIndex = options.Credit.GetMergerIndex(ref publicKey);
         if (mergerIndex >= 0)
         {// Since the Merger's SeedKey is specified, create a MergedProof and self-sign it.
-            this.userInterfaceService.WriteLine($"Merger[{mergerIndex}] SeedKey is specified");
+            this.userInterfaceService.WriteLine(Hashed.Subcommands.SelfSignMergedProof, mergerIndex);
             mergedProof = new MergedProof(new(publicKey, 1, options.Credit));
             if (!seedKey.TrySignAndValidate(mergedProof, 60))
             {
