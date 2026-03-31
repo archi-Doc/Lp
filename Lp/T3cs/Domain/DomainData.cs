@@ -43,7 +43,7 @@ public partial class DomainData
             if (this.domainSeedKey is not null)
             {
                 var originator = this.domainSeedKey.GetSignaturePublicKey();
-                if (this.DomainAssignment.CreditIdentity.Originator.Equals(ref originator))
+                if (this.DomainAssignment.CertificateProof.GetSignatureKey().Equals(ref originator))
                 {
                     this.role = DomainRole.Root;
                 }

@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using SimpleCommandLine;
 
 namespace Lp.T3cs.Domain;
@@ -9,7 +8,7 @@ namespace Lp.T3cs.Domain;
 public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Options>
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     private const string CommandName = "add-domain";
-    private const string OptionName = "DomainAssignment";
+    private const string OptionName = "CertificateProof";
 
     public record Options
     {
@@ -24,18 +23,19 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
     }
 
     // private readonly ILogger logger;
-    // private readonly IUserInterfaceService userInterfaceService;
+    private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly DomainControl domainControl;
 
-    public AddDomainSubcommand(LpService lpService, DomainControl domainControl, SimpleParser parser)
+    public AddDomainSubcommand(IUserInterfaceService userInterfaceService, LpService lpService, DomainControl domainControl, SimpleParser parser)
     {
+        this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
         this.domainControl = domainControl;
 
         if (parser.TryGetOption(CommandName, OptionName, out var option))
         {
-            option.Description = StringHelper.SerializeToString(Example.DomainAssignment);
+            option.Description = StringHelper.SerializeToString(Example.CertificateProof);
         }
     }
 
@@ -47,9 +47,13 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
             return;
         }
 
-        //
-        var b = options.CertificateProof.ValidateAndVerify(ValidationOption.IgnoreExpiration);
+        if (!options.CertificateProof.ValidateAndVerify(ValidationOption.IgnoreExpiration))
+        {
+            this.userInterfaceService.WriteLineError(Hashed.Subcommands.InvalidCertificateProof);
+            return;
+        }
 
-        //var result = await this.domainControl.AddDomain(domain).ConfigureAwait(false);
+        var assignment = new DomainAssignment(options.Name, options.Code, options.CertificateProof);
+        var result = await this.domainControl.AddDomain(assignment).ConfigureAwait(false);
     }
 }

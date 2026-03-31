@@ -109,6 +109,7 @@ Subcommands=
     Changed = "Node key changed: {0}"
     InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
   SelfSignMergedProof="Since the Merger[{0}]'s SeedKey is specified, create a MergedProof and self-sign it"
+  InvalidCertificateProof="The CertificateProof format is invalid"
 
 Storage=
   CreateLocal = "Creating storage with local filer"

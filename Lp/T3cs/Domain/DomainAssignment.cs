@@ -14,13 +14,10 @@ public partial record class DomainAssignment
     public string Code { get; init; } = string.Empty;
 
     [Key(2)]
-    public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
-
-    [Key(3)]
-    public NetNode NetNode { get; init; } = new();
+    public CertificateProof CertificateProof { get; init; } = CertificateProof.UnsafeConstructor();
 
     public ulong GetDomainHash()
-        => this.CreditIdentity.GetIdentifier().Id1;
+        => this.CertificateProof.GetIdentifier().Id1;
 
     // [Key(2)]
     // [MaxLength(LpConstants.MaxUrlLength)]
@@ -28,18 +25,16 @@ public partial record class DomainAssignment
 
     #endregion
 
-    public DomainAssignment(string name, string code, CreditIdentity creditIdentity, NetNode netNode)
+    public DomainAssignment(string name, string code, CertificateProof certificateProof)
     {
         this.Name = name;
         this.Code = code;
-        this.CreditIdentity = creditIdentity;
-        this.NetNode = netNode;
+        this.CertificateProof = certificateProof;
     }
 
-    public bool Validate()
+    public bool Validate(ValidationOption validationOption)
     {
-        return this.CreditIdentity.Validate() &&
-            this.NetNode.Validate();
+        return this.CertificateProof.Validate(validationOption);
     }
 
     public override string ToString()

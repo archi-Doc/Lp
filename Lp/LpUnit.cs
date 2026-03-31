@@ -399,12 +399,12 @@ public class LpUnit
                 lpUnit.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write($"Lp ({Arc.VersionHelper.VersionString})");
 
                 // Prepare
-                await lpUnit.DomainControl.Prepare(this.Context);
                 await lpUnit.PrepareMaster(this.Context);
                 await lpUnit.PrepareMerger(this.Context);
                 await lpUnit.PrepareRelay(this.Context);
                 await lpUnit.PrepareLinker(this.Context);
                 await lpUnit.PreparePeer(this.Context);
+                await lpUnit.DomainControl.Prepare(this.Context); // Since the Merger must be prepared first, process DomainControl last.
 
                 // Vault -> NodeKey
                 await lpUnit.LoadKeyVault_NodeKey();
