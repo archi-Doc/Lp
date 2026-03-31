@@ -2,8 +2,6 @@
 
 using Lp.T3cs;
 using SimpleCommandLine;
-using static System.Net.Mime.MediaTypeNames;
-using static Lp.Subcommands.KeyCommand.NewMasterKeySubcommand;
 
 namespace Lp.Subcommands.T3cs;
 

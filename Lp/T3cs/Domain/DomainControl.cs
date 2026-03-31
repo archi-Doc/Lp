@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using Lp.Net;
 using Lp.Services;
 using Netsphere.Crypto;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Lp.T3cs;
 
