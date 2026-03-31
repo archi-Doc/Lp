@@ -10,13 +10,11 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
 {
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
-    private readonly LpService lpService;
 
-    public IdentifyCreditSubcommand(IUserInterfaceService userInterfaceService, ILogger<IdentifyCreditSubcommand> logger, LpService lpService)
+    public IdentifyCreditSubcommand(IUserInterfaceService userInterfaceService, ILogger<IdentifyCreditSubcommand> logger)
     {
         this.userInterfaceService = userInterfaceService;
         this.logger = logger;
-        this.lpService = lpService;
     }
 
     public async Task RunAsync(string[] args)
@@ -35,12 +33,15 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
         }
 
         var credit = creditIdentity.ToCredit();
-        if (credit is not null)
+        if (credit is null)
         {
-            this.logger.GetWriter()?.Write($"Credit was created successfully");
-            this.logger.GetWriter()?.Write($"CreditIdentity: {StringHelper.SerializeToString(creditIdentity)}");
-            this.logger.GetWriter()?.Write($"Credit: {credit.ToString()}");
+            ShowErrorMessage();
+            return;
         }
+
+        this.logger.GetWriter()?.Write($"Credit was created successfully");
+        this.logger.GetWriter()?.Write($"CreditIdentity: {StringHelper.SerializeToString(creditIdentity)}");
+        this.logger.GetWriter()?.Write($"Credit: {credit.ToString()}");
 
         void ShowErrorMessage()
         {

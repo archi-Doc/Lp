@@ -69,7 +69,7 @@ public abstract partial class ProofWithSigner : Proof
         return true;
     }*/
 
-    public override bool Validate(ValidationOptions validationOptions)
+    public override bool Validate(ValidationOption validationOptions)
     {
         if (!base.Validate(validationOptions))
         {

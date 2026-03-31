@@ -74,7 +74,7 @@ public class Program
 
         unit = builder.Build(args);
 
-        var semaphoreName = $"LpConsole_{(int)XxHash3.Hash64(unit.Context.Options.DataDirectory):x8}";
+        var semaphoreName = OperatingSystem.IsWindows() ? $"LpConsole_{(int)XxHash3.Hash64(unit.Context.Options.DataDirectory):x8}" : default; // Named semaphores are not supported on Linux.
         using var semaphore = new Semaphore(1, 1, semaphoreName);
         if (!semaphore.WaitOne(0))
         {

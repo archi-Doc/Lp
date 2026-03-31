@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
 using Lp.T3cs;
 using Netsphere.Crypto;
 
@@ -7,6 +8,41 @@ namespace Lp;
 
 public static class StringHelper
 {
+    public static (char[] Rent, int Length) AppendPrefix(ReadOnlySpan<char> prefix, ReadOnlySpan<char> message)
+    {
+        if (message.IsEmpty)
+        {
+            return ([], 0);
+        }
+
+        var source = message;
+        var prefixCount = 1 + source.Count('\n');
+        var maxLength = message.Length + (prefix.Length * prefixCount);
+        var rent = ArrayPool<char>.Shared.Rent(maxLength);
+        var destination = rent.AsSpan();
+
+        prefix.CopyTo(destination);
+        destination = destination.Slice(prefix.Length);
+        foreach (var x in source)
+        {
+            if (x == '\r')
+            {
+            }
+            else
+            {
+                destination[0] = x;
+                destination = destination.Slice(1);
+                if (x == '\n')
+                {
+                    prefix.CopyTo(destination);
+                    destination = destination.Slice(prefix.Length);
+                }
+            }
+        }
+
+        return (rent, rent.Length - destination.Length);
+    }
+
     public static string SerializeToString<T>(T value)
     {
         return TinyhandSerializer.SerializeToString<T>(value, TinyhandSerializerOptions.ConvertToStrictString);

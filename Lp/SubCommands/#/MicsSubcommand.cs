@@ -16,25 +16,26 @@ public class MicsSubcommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var logger = this.logger.TryGet();
-        if (logger != null)
+        var logWriter = this.logger.GetWriter();
+        if (logWriter.HasValue)
         {
-            logger.Log($"Stopwatch.Frequency: {Stopwatch.Frequency}");
-            logger.Log($"Mics.TimestampToMics: {Mics.TimestampToMics}");
-            logger.Log($"Mics.GetSystem(): {Mics.GetSystem()}");
-            logger.Log($"Mics.FastSystem: {Mics.FastSystem}");
-            logger.Log($"Mics.GetApplication(): {Mics.GetApplication()}");
-            logger.Log($"Mics.FastApplication: {Mics.FastApplication}");
-            logger.Log($"Mics.GetUtcNow(): {Mics.GetUtcNow()}");
-            logger.Log($"Mics.FastUtcNow: {Mics.FastUtcNow}");
-            logger.Log($"Mics.GetCorrected(): {Mics.GetCorrected()}");
-            logger.Log($"Mics.FastCorrected: {Mics.FastCorrected}");
-            logger.Log($"Mics.GetCorrected() : {Mics.GetCorrected().MicsToDateTimeString()}");
-            logger.Log($"Time.TimestampToTicks: {Time.TimestampToTicks}");
-            logger.Log($"Time.GetSystem(): {Time.GetSystem()}");
-            logger.Log($"Time.GetApplication(): {Time.GetApplication()}");
-            logger.Log($"Time.GetUtcNow(): {Time.GetUtcNow()}");
-            logger.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
+            var writer = logWriter.Value;
+            writer.Write($"Stopwatch.Frequency: {Stopwatch.Frequency}");
+            writer.Write($"Mics.TimestampToMics: {Mics.TimestampToMics}");
+            writer.Write($"Mics.GetSystem(): {Mics.GetSystem()}");
+            writer.Write($"Mics.FastSystem: {Mics.FastSystem}");
+            writer.Write($"Mics.GetApplication(): {Mics.GetApplication()}");
+            writer.Write($"Mics.FastApplication: {Mics.FastApplication}");
+            writer.Write($"Mics.GetUtcNow(): {Mics.GetUtcNow()}");
+            writer.Write($"Mics.FastUtcNow: {Mics.FastUtcNow}");
+            writer.Write($"Mics.GetCorrected(): {Mics.GetCorrected()}");
+            writer.Write($"Mics.FastCorrected: {Mics.FastCorrected}");
+            writer.Write($"Mics.GetCorrected() : {Mics.GetCorrected().MicsToDateTimeString()}");
+            writer.Write($"Time.TimestampToTicks: {Time.TimestampToTicks}");
+            writer.Write($"Time.GetSystem(): {Time.GetSystem()}");
+            writer.Write($"Time.GetApplication(): {Time.GetApplication()}");
+            writer.Write($"Time.GetUtcNow(): {Time.GetUtcNow()}");
+            writer.Write($"Time.GetCorrected(): {Time.GetCorrected()}");
         }
     }
 

@@ -9,15 +9,19 @@ public class InspectSubcommand : ISimpleCommand
 {
     private readonly LpUnit lpUnit;
     private readonly IUserInterfaceService userInterfaceService;
+    private readonly ILogger logger;
 
-    public InspectSubcommand(LpUnit lpUnit, IUserInterfaceService userInterfaceService)
+    public InspectSubcommand(LpUnit lpUnit, IUserInterfaceService userInterfaceService, ILogger<InspectSubcommand> logger)
     {
         this.lpUnit = lpUnit;
         this.userInterfaceService = userInterfaceService;
+        this.logger = logger;
     }
 
     public void Run(string[] args)
     {
+        this.logger.GetWriter(LogLevel.Information)?.Write("InspectSubcommand");
+
         this.InspectVersion();
         this.InspectNet();
         this.InspectMerger();

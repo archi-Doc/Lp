@@ -39,7 +39,7 @@ public class ModestLogger
     /// </summary>
     /// <param name="identifier">The identifier to check.</param>
     /// <param name="logLevel">The log level for the message.</param>
-    /// <returns>An <see cref="ILogWriter"/> if the identifier is different; otherwise, <c>null</c>.</returns>
+    /// <returns>An <see cref="LogWriter"/> if the identifier is different; otherwise, <c>null</c>.</returns>
     public LogWriter? NonConsecutive(ulong identifier, LogLevel logLevel = LogLevel.Information)
     {
         if (DateTime.UtcNow < this.suppressionTime)

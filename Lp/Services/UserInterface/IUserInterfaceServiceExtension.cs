@@ -1,37 +1,77 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using SimplePrompt;
-
 namespace Lp;
 
 public static class IUserInterfaceServiceExtention
 {
+    public static void WriteLineDebug(this IUserInterfaceService service, string? message)
+        => service.WriteLine(LogLevel.Debug, message);
+
+    public static void WriteLineDebug(this IUserInterfaceService service, ulong hash)
+        => service.WriteLine(LogLevel.Debug, HashedString.Get(hash));
+
+    public static void WriteLineDebug(this IUserInterfaceService service, ulong hash, object obj1)
+        => service.WriteLine(LogLevel.Debug, HashedString.Get(hash, obj1));
+
+    public static void WriteLineDebug(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
+        => service.WriteLine(LogLevel.Debug, HashedString.Get(hash, obj1, obj2));
+
+    public static void WriteLineInformation(this IUserInterfaceService service, string? message)
+        => service.WriteLine(LogLevel.Information, message);
+
+    public static void WriteLineInformation(this IUserInterfaceService service, ulong hash)
+        => service.WriteLine(LogLevel.Information, HashedString.Get(hash));
+
+    public static void WriteLineInformation(this IUserInterfaceService service, ulong hash, object obj1)
+        => service.WriteLine(LogLevel.Information, HashedString.Get(hash, obj1));
+
+    public static void WriteLineInformation(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
+        => service.WriteLine(LogLevel.Information, HashedString.Get(hash, obj1, obj2));
+
+    public static void WriteLineWarning(this IUserInterfaceService service, string? message)
+        => service.WriteLine(LogLevel.Warning, message);
+
+    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash)
+        => service.WriteLine(LogLevel.Warning, HashedString.Get(hash));
+
+    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash, object obj1)
+        => service.WriteLine(LogLevel.Warning, HashedString.Get(hash, obj1));
+
+    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
+        => service.WriteLine(LogLevel.Warning, HashedString.Get(hash, obj1, obj2));
+
+    public static void WriteLineError(this IUserInterfaceService service, string? message)
+        => service.WriteLine(LogLevel.Error, message);
+
+    public static void WriteLineError(this IUserInterfaceService service, ulong hash)
+        => service.WriteLine(LogLevel.Error, HashedString.Get(hash));
+
+    public static void WriteLineError(this IUserInterfaceService service, ulong hash, object obj1)
+        => service.WriteLine(LogLevel.Error, HashedString.Get(hash, obj1));
+
+    public static void WriteLineError(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
+        => service.WriteLine(LogLevel.Error, HashedString.Get(hash, obj1, obj2));
+
+    public static void WriteLineFatal(this IUserInterfaceService service, string? message)
+        => service.WriteLine(LogLevel.Fatal, message);
+
+    public static void WriteLineFatal(this IUserInterfaceService service, ulong hash)
+        => service.WriteLine(LogLevel.Fatal, HashedString.Get(hash));
+
+    public static void WriteLineFatal(this IUserInterfaceService service, ulong hash, object obj1)
+        => service.WriteLine(LogLevel.Fatal, HashedString.Get(hash, obj1));
+
+    public static void WriteLineFatal(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
+        => service.WriteLine(LogLevel.Fatal, HashedString.Get(hash, obj1, obj2));
+
     public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash)
         => service.WriteLine(logLevel, HashedString.Get(hash));
 
-    public static void WriteLineDefault(this IUserInterfaceService service, ulong hash, object obj1)
-        => service.WriteLineDefault(HashedString.Get(hash, obj1));
+    public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash, object obj1)
+        => service.WriteLine(logLevel, HashedString.Get(hash, obj1));
 
-    public static void WriteLineDefault(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
-        => service.WriteLineDefault(HashedString.Get(hash, obj1, obj2));
-
-    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash)
-        => service.WriteLineWarning(HashedString.Get(hash));
-
-    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash, object obj1)
-        => service.WriteLineWarning(HashedString.Get(hash, obj1));
-
-    public static void WriteLineWarning(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
-        => service.WriteLineWarning(HashedString.Get(hash, obj1, obj2));
-
-    public static void WriteLineError(this IUserInterfaceService service, ulong hash)
-        => service.WriteLineError(HashedString.Get(hash));
-
-    public static void WriteLineError(this IUserInterfaceService service, ulong hash, object obj1)
-        => service.WriteLineError(HashedString.Get(hash, obj1));
-
-    public static void WriteLineError(this IUserInterfaceService service, ulong hash, object obj1, object obj2)
-        => service.WriteLineError(HashedString.Get(hash, obj1, obj2));
+    public static void WriteLine(this IUserInterfaceService service, LogLevel logLevel, ulong hash, object obj1, object obj2)
+        => service.WriteLine(logLevel, HashedString.Get(hash, obj1, obj2));
 
     public static void WriteLine(this IUserInterfaceService service, ulong hash)
         => service.WriteLine(HashedString.Get(hash));

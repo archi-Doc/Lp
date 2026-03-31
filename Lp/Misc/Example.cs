@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -29,6 +30,8 @@ public class Example
     public static readonly SignaturePublicKey MergerPublicKey;
     public static readonly CreditIdentity CreditIdentity;
     public static readonly Credit Credit;
+    public static readonly MergedProof MergedProof;
+    public static readonly CertificateProof CertificateProof;
     public static readonly DomainAssignment DomainAssignment;
 
     static Example()
@@ -45,6 +48,11 @@ public class Example
 
         CreditIdentity = new(default, OriginatorPublicKey, [MergerPublicKey,]);
         Credit = new Credit(CreditIdentity.GetIdentifier(), [MergerPublicKey,]);
-        DomainAssignment = new(Name, Code, CreditIdentity, NetNode);
+
+        MergedProof = new MergedProof(new(MergerPublicKey, 1, Credit));
+        MergerSeedKey.TrySignAndValidate(MergedProof, 60);
+        CertificateProof = new CertificateProof(MergedProof, Alternative.NetNode);
+        MergerSeedKey.TrySignAndValidate(CertificateProof, 60);
+        DomainAssignment = new(Name, Code, CertificateProof);
     }
 }

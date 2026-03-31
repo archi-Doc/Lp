@@ -31,10 +31,10 @@ public abstract partial class Evidence
 
     #endregion
 
-    public virtual bool Validate(ValidationOptions validationOptions)
+    public virtual bool Validate(ValidationOption validationOptions)
         => this.BaseProof.Validate(validationOptions);
 
-    public virtual bool ValidateAndVerify(ValidationOptions validationOptions = default, int mergerIndex = LpConstants.MaxMergers)
+    public virtual bool ValidateAndVerify(ValidationOption validationOptions = default, int mergerIndex = LpConstants.MaxMergers)
     {
         if (!this.BaseProof.TryGetCredit(out var credit) ||
             !this.BaseProof.ValidateAndVerify())
@@ -45,7 +45,7 @@ public abstract partial class Evidence
         return this.ValidateAndVerifyExceptProof(validationOptions, mergerIndex);
     }
 
-    public bool ValidateAndVerifyExceptProof(ValidationOptions validationOptions, int mergerIndex = LpConstants.MaxMergers)
+    public bool ValidateAndVerifyExceptProof(ValidationOption validationOptions, int mergerIndex = LpConstants.MaxMergers)
     {
         if (!this.Validate(validationOptions))
         {

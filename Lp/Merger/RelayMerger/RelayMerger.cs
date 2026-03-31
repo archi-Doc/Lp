@@ -13,7 +13,7 @@ public class RelayMerger : Merger
     public RelayMerger(UnitContext context, LogUnit logUnit, NetBase netBase, LpBase lpBase, NetStats netStats, DomainControl domainControl)
         : base(context, logUnit, netBase, lpBase, netStats, domainControl)
     {
-        this.logger = logUnit.GetLogger<RelayMerger>();
+        this.logger = logUnit.RootLogService.GetLogger<RelayMerger>();
     }
 
     #region FieldAndProperty

@@ -19,5 +19,7 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description);
 
+    // Task ReturnInputControl();
+
     string Prefix { get; set; }
 }

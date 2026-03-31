@@ -64,13 +64,14 @@ public class LpUnit
                 context.Services.TryAddScoped<IUserInterfaceService>(sp =>
                 {
                     var context = sp.GetService<UserInterfaceServiceContext>();
+                    var console = sp.GetRequiredService<ConsoleUserInterfaceService>();
                     if (context?.Receiver is { } receiver)
                     {
-                        return new RemoteUserInterfaceService(receiver);
+                        return new RemoteUserInterfaceService(receiver, console);
                     }
                     else
                     {
-                        return sp.GetRequiredService<ConsoleUserInterfaceService>();
+                        return console;
                     }
                 });
                 context.Services.TryAddScoped<IConsoleService>(sp => sp.GetRequiredService<IUserInterfaceService>());
@@ -81,6 +82,7 @@ public class LpUnit
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<AuthorityControl>();
                 context.AddSingleton<DomainControl>();
+                context.AddSingleton<DomainRadiant>();
                 context.AddSingleton<DomainServiceAgent>();
                 context.AddSingleton<RemoteBenchControl>();
 
@@ -397,12 +399,12 @@ public class LpUnit
                 lpUnit.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write($"Lp ({Arc.VersionHelper.VersionString})");
 
                 // Prepare
-                await lpUnit.DomainControl.Prepare(this.Context);
                 await lpUnit.PrepareMaster(this.Context);
                 await lpUnit.PrepareMerger(this.Context);
                 await lpUnit.PrepareRelay(this.Context);
                 await lpUnit.PrepareLinker(this.Context);
                 await lpUnit.PreparePeer(this.Context);
+                await lpUnit.DomainControl.Prepare(this.Context); // Since the Merger must be prepared first, process DomainControl last.
 
                 // Vault -> NodeKey
                 await lpUnit.LoadKeyVault_NodeKey();
@@ -498,6 +500,14 @@ public class LpUnit
         };
 
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
+
+        this.RemoteSubcommands = [
+            typeof(InspectSubcommand),
+            typeof(BenchmarkSubcommand),
+            typeof(ShowOwnNetNodeSubcommand),
+            typeof(ShowNodeControlStateSubcommand),
+            typeof(TestSubcommand),
+            ];
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -527,6 +537,8 @@ public class LpUnit
     public AuthorityControl AuthorityControl { get; }
 
     public DomainControl DomainControl { get; }
+
+    public Type[] RemoteSubcommands { get; }
 
     private readonly ILogger logger;
     private readonly SimpleParser subcommandParser;
@@ -701,7 +713,7 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.LogUnit.Get<DefaultLog>().Log("SaveAsync - 0");
+        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
@@ -720,21 +732,22 @@ public class LpUnit
     {
         await context.SendStart();
 
+        context.ServiceProvider.GetRequiredService<ClockHand>().Start();
         this.BigMachine.Start(null);
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        var logger = this.LogUnit.Get<DefaultLog>(LogLevel.Information);
+        var logger = this.LogUnit.RootLogService.GetWriter<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
-        logger.Log("Press Enter key to switch to console mode.");
-        logger.Log("Press Ctrl+C to exit.");
-        logger.Log("Running");
+        logger?.Write("Press Enter key to switch to console mode.");
+        logger?.Write("Press Ctrl+C to exit.");
+        logger?.Write("Running");
     }
 
-    public void LogInformation(LogWriter logWriter)
+    public void LogInformation(LogWriter? logWriter)
     {
-        logWriter.Write($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
+        logWriter?.Write($"Utc: {Mics.GetUtcNow().MicsToDateTimeString()}");
         this.LpBase.LogInformation(logWriter);
     }
 

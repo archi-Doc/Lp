@@ -15,14 +15,13 @@ public class InfoSubcommandLp : ISimpleCommand<DumpSubcommandInfoOptions>
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
-        var logger = this.LpUnit.LogUnit.TryGet<InfoSubcommandLp>(LogLevel.Information);
+        var logWriter = this.LpUnit.LogUnit.RootLogService.GetWriter<InfoSubcommandLp>(LogLevel.Information);
 
-        logger?.Log($"Info: {target}");
+        logWriter?.Write($"Info: {target}");
 
-        var saa = DateTime.MinValue.Ticks;
-        logger?.Log(Environment.OSVersion.ToString());
-        logger?.Log($"Time.GetApplication(): {Time.GetApplication()}");
-        logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
+        logWriter?.Write(Environment.OSVersion.ToString());
+        logWriter?.Write($"Time.GetApplication(): {Time.GetApplication()}");
+        logWriter?.Write($"Time.GetCorrected(): {Time.GetCorrected()}");
     }
 
     public LpUnit LpUnit { get; set; }

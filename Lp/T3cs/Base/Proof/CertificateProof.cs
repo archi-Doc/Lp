@@ -25,7 +25,7 @@ public partial class CertificateProof : Proof
 
     public override SignaturePublicKey GetSignatureKey() => this.MergedProof.Value.Owner;
 
-    public override bool Validate(ValidationOptions validationOptions)
+    public override bool Validate(ValidationOption validationOptions)
     {
         if (!base.Validate(validationOptions))
         {

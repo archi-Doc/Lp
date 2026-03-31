@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using CrossChannel;
 using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
@@ -8,11 +9,31 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
+public class SecondHandObject : IClockHandTarget
+{
+    void IClockHandTarget.OnEveryMinute()
+    {
+    }
+
+    void IClockHandTarget.OnEverySecond()
+    {
+        Console.WriteLine("SecondHandObject");
+    }
+}
+
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService)
+    private readonly RadioClass radio;
+    private readonly ILogger logger;
+    private readonly LpUnit lpUnit;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly AuthorityControl authorityControl;
+    private readonly LpBoardService lpBoardService;
+
+    public TestSubcommand(RadioClass radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService)
     {
+        this.radio = radio;
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpUnit = lpUnit;
@@ -40,6 +61,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine(LpConstants.LpCredit.ToString());
         this.userInterfaceService.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
 
+        var obj = new SecondHandObject();
+        this.radio.Open<IClockHandTarget>(obj, true);
+
         var seedKey = SeedKey.New(KeyOrientation.Signature);
         var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);
         Credit.TryCreate(creditIdentity2, out var testCredit);
@@ -66,6 +90,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.logger.GetWriter()?.Write($"{microSeconds}");
 
         microSleep.Dispose();
+
+        await Task.Delay(500);
+        this.userInterfaceService.WriteLine("1");
+        await Task.Delay(1500);
+        this.userInterfaceService.WriteLine("2");
+        await Task.Delay(2500);
+        this.userInterfaceService.WriteLine("3");
 
         // await this.TestLinkageKey();
 
@@ -133,12 +164,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
             }
         }
     }
-
-    private readonly ILogger logger;
-    private readonly LpUnit lpUnit;
-    private readonly IUserInterfaceService userInterfaceService;
-    private readonly AuthorityControl authorityControl;
-    private readonly LpBoardService lpBoardService;
 }
 
 public record TestOptions

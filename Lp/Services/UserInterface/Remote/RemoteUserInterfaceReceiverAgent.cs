@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Amazon.S3.Model;
+using System.Buffers;
 using Lp.Services;
 
 namespace Lp.NetServices;
@@ -37,7 +37,25 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.WriteLine(this.Prefix + message, color);
+        var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.consoleUserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        if (r.Rent.Length > 0)
+        {
+            ArrayPool<char>.Shared.Return(r.Rent);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
+    {
+        var r = StringHelper.AppendPrefix(this.Prefix, message);
+        this.consoleUserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
+        if (r.Rent.Length > 0)
+        {
+            ArrayPool<char>.Shared.Return(r.Rent);
+        }
+
         return Task.CompletedTask;
     }
 }
