@@ -25,6 +25,7 @@ public partial class DomainData
         this.Initialize(logger, domainAssignment, domainSeedKey);
     }
 
+    [MemberNotNull(nameof(logger))]
     [MemberNotNull(nameof(DomainAssignment))]
     public void Initialize(ILogger logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
@@ -64,6 +65,16 @@ public partial class DomainData
 
     internal void RadiateProof(CertificateProof proof, ref ResponseChannel<int> channel)
     {
+    }
+
+    internal async Task<(bool IsPeer, CertificateProof? NewProof)> Scout(CertificateToken<SignaturePublicKey> token)
+    {
+        var ownerPublicKey = token.PublicKey;
+
+        FullCredit? fullCredit = default;
+        var owners = await fullCredit.Owners.TryGet();
+        var ownerData = owners.TryGet(ownerPublicKey);
+        ownerData.
     }
 
     /*public DomainOverview GetOverview()

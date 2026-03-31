@@ -27,6 +27,23 @@ internal class DomainServiceAgent : IDomainService
         return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
     }
 
+    Task<(bool IsPeer, CertificateProof? NewProof)> IDomainService.Scout(ulong domainHash, CertificateToken<SignaturePublicKey>? token)
+    {
+        var domainData = this.domainControl.GetDomainData(domainHash);
+        if (domainData is null)
+        {
+            return Task.FromResult<(bool, CertificateProof?)>(default);
+        }
+
+        if (token is null ||
+            !TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
+        {
+            return Task.FromResult<(bool, CertificateProof?)>(default);
+        }
+
+        return domainData.Scout(token);
+    }
+
     Task<CertificateProof?> IDomainService.Exchange(ulong domainHash, CertificateProof? proof)
     {
         var domainData = this.domainControl.GetDomainData(domainHash);

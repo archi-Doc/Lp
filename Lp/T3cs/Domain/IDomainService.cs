@@ -15,7 +15,7 @@ public interface IDomainService : INetService
 {
     Task<NetResultAndValue<DomainOverview>> GetOverview(ulong domainHash);
 
-    Task<(bool , CertificateProof?)> Scout(ulong domainHash, CertificateToken<ulong>? token);
+    Task<(bool IsPeer, CertificateProof? NewProof)> Scout(ulong domainHash, CertificateToken<SignaturePublicKey>? token);
 
     Task<CertificateProof?> Exchange(ulong domainHash, CertificateProof? proof);
 
