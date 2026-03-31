@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.T3cs;
+using Netsphere.Crypto;
 
 namespace Lp.Net;
 
@@ -13,6 +14,8 @@ public readonly partial record struct DomainOverview(
 public interface IDomainService : INetService
 {
     Task<NetResultAndValue<DomainOverview>> GetOverview(ulong domainHash);
+
+    Task<(bool , CertificateProof?)> Scout(ulong domainHash, CertificateToken<ulong>? token);
 
     Task<CertificateProof?> Exchange(ulong domainHash, CertificateProof? proof);
 
