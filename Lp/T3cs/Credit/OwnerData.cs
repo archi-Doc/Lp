@@ -4,6 +4,21 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+[TinyhandObject(Structural = true)]
+[ValueLinkObject(Isolation = IsolationLevel.ReadCommitted)]
+public partial class OwnerDataPoint : StoragePoint<OwnerData>
+{
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
+    [Key(1)]
+    public SignaturePublicKey OwnerPublicKey { get; private set; }
+
+    public OwnerDataPoint(SignaturePublicKey ownerPublicKey)
+        : base()
+    {
+        this.OwnerPublicKey = ownerPublicKey;
+    }
+}
+
 /// <summary>
 /// The isolation level of the OwnerData class is RepeatableRead.<br/>
 /// Call TryLock() when making changes.

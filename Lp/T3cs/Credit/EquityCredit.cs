@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Crypto;
+
 namespace Lp.T3cs;
 
 #pragma warning disable SA1401
@@ -50,7 +52,7 @@ public partial record EquityCredit
     public CreditInformation CreditInformation { get; private set; } = CreditInformation.UnsafeConstructor();
 
     [Key(3)]
-    public StoragePoint<OwnerData.GoshujinClass> Owners { get; private set; } = new();
+    private OwnerDataPoint.GoshujinClass owners = new();
 
     #endregion
 
@@ -64,45 +66,17 @@ public partial record EquityCredit
         this.CreditIdentity = creditIdentity;
     }
 
-    /* /// <summary>
-    /// Determines whether the specified <see cref="EvolProof"/> is contained within the owner data of this full credit.
-    /// </summary>
-    /// <param name="proof">The <see cref="EvolProof"/> to check for existence.</param>
-    /// <returns><c>true</c> if the proof exists; otherwise, <c>false</c>.</returns>
-    public bool Contains(EvolProof proof)
-    {
-        var ownerData = this.GetOwnerData(proof.SourceValue.Owner);
-        if (ownerData is null)
-        {
-            return false;
-        }
-
-        // ownerData.Linkages.SourceKeyChain.TryGetValue(proof.SourceValue.Owner, out var linkage)
-        foreach (var x in ownerData.Linkages.SourceKeyChain.Enumerate(proof.SourceValue.Owner))
-        {
-            if (x.Proof1 is EvolProof proof2 &&
-                proof.ContentEquals(proof2))
-            {
-                return true;
-            }
-        }
-
-        return false;
+    public ValueTask<OwnerData?> GetOwnerData(SignaturePublicKey ownerPublicKey)
+    {IStructuralObject
+        this.owners.Delete()
+        this.owners.TryLock(ownerPublicKey);
+        return this.owners.TryGet(ownerPublicKey);
     }
 
-    /// <summary>
-    /// Gets the <see cref="OwnerData"/> for the specified owner public key.
-    /// </summary>
-    /// <param name="ownerPublicKey">The public key of the owner.</param>
-    /// <returns>The <see cref="OwnerData"/> if found; otherwise, <c>null</c>.</returns>
-    private OwnerData? GetOwnerData(SignaturePublicKey ownerPublicKey)
+    public OwnerDataPoint? GetOwnerDataPoint(SignaturePublicKey ownerPublicKey)
     {
-        var ownerData = this.Owners.TryGet().Result;
-        if (ownerData is null)
-        {
-            return default;
-        }
-
-        return ownerData.TryGet(ownerPublicKey);
-    }*/
+        var point = this.owners.Find(ownerPublicKey);
+        point.PinData();
+        return point;
+    }
 }
