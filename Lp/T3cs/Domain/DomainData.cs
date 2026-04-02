@@ -72,6 +72,7 @@ public partial class DomainData
         var ownerPublicKey = token.PublicKey;
 
         FullCredit? fullCredit = default;
+        fullCredit.Owners.TryLock()
         var owners = await fullCredit.Owners.TryGet();
         var ownerData = owners.TryGet(ownerPublicKey);
         ownerData.
