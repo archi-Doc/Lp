@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Crypto;
-
 namespace Lp.T3cs;
 
 #pragma warning disable SA1401
@@ -44,7 +42,14 @@ public partial record EquityCredit
     [Key(1)]
     public CreditIdentity CreditIdentity { get; private set; } = CreditIdentity.UnsafeConstructor();
 
+    /// <summary>
+    /// Gets the credit information.
+    /// Thread-safety: Immutable instance.
+    /// </summary>
     [Key(2)]
+    public CreditInformation CreditInformation { get; private set; } = CreditInformation.UnsafeConstructor();
+
+    [Key(3)]
     public StoragePoint<OwnerData.GoshujinClass> Owners { get; private set; } = new();
 
     #endregion

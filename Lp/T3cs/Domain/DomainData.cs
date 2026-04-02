@@ -71,11 +71,13 @@ public partial class DomainData
     {
         var ownerPublicKey = token.PublicKey;
 
-        FullCredit? fullCredit = default;
+        /*FullCredit? fullCredit = default;
         fullCredit.Owners.TryLock()
         var owners = await fullCredit.Owners.TryGet();
         var ownerData = owners.TryGet(ownerPublicKey);
-        ownerData.
+        //ownerData.*/
+
+        return default;
     }
 
     /*public DomainOverview GetOverview()

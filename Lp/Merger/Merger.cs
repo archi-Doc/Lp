@@ -121,6 +121,29 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
+    public async ValueTask<EquityCredit?> GetEquityCredit(Credit credit)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        var point = this.equityCreditPoints.Find(credit);
+        await point.PinData();//
+
+        return await this.equityCreditPoints.TryGet(credit).ConfigureAwait(false);
+    }
+
+    public EquityCreditPoint? GetEquityCreditPoint(Credit credit)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        return this.equityCreditPoints.Find(credit);
+    }
+
     public async Task<(FullCredit? FullCredit, bool Created)> GetOrCreateCredit(CreditIdentity creditIdentity)
     {
         if (!this.Initialized)
