@@ -121,6 +121,29 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
+    public async ValueTask<EquityCredit?> GetEquityCredit(Credit credit)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        var point = this.equityCreditPoints.Find(credit);
+        await point.PinData();//
+
+        return await this.equityCreditPoints.TryGet(credit).ConfigureAwait(false);
+    }
+
+    public EquityCreditPoint? GetEquityCreditPoint(Credit credit)
+    {
+        if (!this.Initialized)
+        {
+            return default;
+        }
+
+        return this.equityCreditPoints.Find(credit);
+    }
+
     public async Task<(FullCredit? FullCredit, bool Created)> GetOrCreateCredit(CreditIdentity creditIdentity)
     {
         if (!this.Initialized)
@@ -172,7 +195,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return T3csResult.NotSupported;
         }
 
-        using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.Create).ConfigureAwait(false))
+        using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.CreateOnly).ConfigureAwait(false))
         {
             if (dataScope.IsValid)
             {
@@ -229,7 +252,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return new(T3csResult.NoData);
         }
 
-        using (var w2 = borrowers.TryLock(param.Proof.PublicKey, AcquisitionMode.Create))
+        using (var w2 = borrowers.TryLock(param.Proof.PublicKey, AcquisitionMode.CreateOnly))
         {
             if (w2 is null)
             {
