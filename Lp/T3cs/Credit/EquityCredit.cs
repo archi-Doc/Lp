@@ -6,7 +6,7 @@ namespace Lp.T3cs;
 
 #pragma warning disable SA1401
 
-[TinyhandObject(Structural = true)]
+[TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.ReadCommitted)]
 public partial class EquityCreditPoint : StoragePoint<EquityCredit>
 {
@@ -67,9 +67,7 @@ public partial record EquityCredit
     }
 
     public ValueTask<OwnerData?> GetOwnerData(SignaturePublicKey ownerPublicKey)
-    {IStructuralObject
-        this.owners.Delete()
-        this.owners.TryLock(ownerPublicKey);
+    {
         return this.owners.TryGet(ownerPublicKey);
     }
 
