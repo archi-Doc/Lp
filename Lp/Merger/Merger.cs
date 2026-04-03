@@ -197,7 +197,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 
         using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.CreateOnly).ConfigureAwait(false))
         {
-            if (dataScope.IsValid)
+            if (dataScope.IsCreated)
             {
                 dataScope.Data.Initialize(credit, creditIdentity);
                 return T3csResult.Success;
