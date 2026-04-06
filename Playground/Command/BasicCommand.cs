@@ -9,10 +9,12 @@ using Netsphere.Packet;
 using SimpleCommandLine;
 using Netsphere.Crypto;
 using Netsphere.Relay;
+using Lp.T3cs;
+using ValueLink;
 
 namespace Playground;
 
-[SimpleCommand("basic")]
+[SimpleCommand("basic", Default = true)]
 public class BasicCommand : ISimpleCommandAsync
 {
     public BasicCommand(ILogger<BasicCommand> logger, NetUnit netUnit, IRelayControl relayControl)
@@ -24,9 +26,16 @@ public class BasicCommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
+        var g = new CreditPoint.GoshujinClass();
+        using (var dataScope = await g.TryLock(Lp.LpConstants.LpCredit, AcquisitionMode.GetOrCreate))
+        {
+        }
+
         var sw = Stopwatch.StartNew();
         var netTerminal = this.netUnit.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
+
+        netTerminal.Services.EnableNetService<ITestService>();
 
         var netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress);
         if (netNode is null)
