@@ -74,7 +74,6 @@ public partial record EquityCredit
     public OwnerDataPoint? GetOwnerDataPoint(SignaturePublicKey ownerPublicKey)
     {
         var point = this.owners.Find(ownerPublicKey);
-        point.PinData();
         return point;
     }
 }
