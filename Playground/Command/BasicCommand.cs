@@ -26,9 +26,17 @@ public class BasicCommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var g = new CreditPoint.GoshujinClass();
-        using (var dataScope = await g.TryLock(Lp.LpConstants.LpCredit, AcquisitionMode.GetOrCreate))
+        CreditBase CreateEquityCredit(CreditPoint creditPoint, CreditIdentity creditIdentity)
         {
+            var obj = new EquityCredit();
+            obj.Initialize(creditPoint.Credit, creditIdentity);
+            return obj;
+        }
+
+        var g = new CreditPoint.GoshujinClass();
+        using (var dataScope = await g.TryLock(Lp.LpConstants.LpCredit, AcquisitionMode.GetOrCreate, default, default, x => CreateEquityCredit((CreditPoint)x, default)))
+        {
+            var credit = dataScope.Data;
         }
 
         var sw = Stopwatch.StartNew();
