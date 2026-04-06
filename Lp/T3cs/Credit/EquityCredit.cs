@@ -26,7 +26,7 @@ public partial class EquityCreditPoint : StoragePoint<EquityCredit>
 /// This class needs to be thread-safe.
 /// </summary>
 [TinyhandObject(Structural = true)]
-public partial record EquityCredit
+public partial record EquityCredit : CreditBase
 {
     #region FieldAndProperty
 
