@@ -18,16 +18,6 @@ public partial class CreditPoint : StoragePoint<CreditBase>
 
     public partial class GoshujinClass
     {
-        public ValueTask<CreditBase?> Find(Credit credit)
-        {
-            return this.TryGet(credit);
-        }
-
-        public async Task<DataScope<CreditBase?>> TryLock(Credit credit)
-        {
-            var result = await this.TryLock(credit, AcquisitionMode.GetOrCreate);
-            return result;
-        }
     }
 }
 
