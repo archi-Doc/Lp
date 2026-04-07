@@ -234,7 +234,10 @@ public class LpUnit
             return new CrystalUnit.Builder()
                 .ConfigureCrystal(context =>
                 {
-                    var defaultStorage = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Storage"));
+                    var defaultStorage = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Storage"))
+                    {
+                        // NumberOfHistoryFiles = 0,
+                    };
 
                     context.AddCrystal<LpSettings>(new()
                     {

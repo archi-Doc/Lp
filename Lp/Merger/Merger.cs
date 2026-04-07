@@ -71,6 +71,14 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             StorageConfiguration = mergerStorage,
         });
 
+        /*crystalControl.CreateCrystal<CreditPoint.GoshujinClass>(new()
+        {
+            SaveFormat = SaveFormat.Binary,
+            NumberOfFileHistories = 3,
+            FileConfiguration = new GlobalFileConfiguration("Credits"),
+            StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Storage")),
+        });*/
+
         if (string.IsNullOrEmpty(this.Configuration.Name))
         {
             this.Configuration.Name = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";

@@ -18,8 +18,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly AuthorityControl authorityControl;
     private readonly LpBoardService lpBoardService;
+    private readonly CreditService creditService;
 
-    public TestSubcommand(RadioClass radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService)
+    public TestSubcommand(RadioClass radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService, CreditService creditService)
     {
         this.radio = radio;
         this.logger = logger;
@@ -27,11 +28,15 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.lpUnit = lpUnit;
         this.authorityControl = authorityControl;
         this.lpBoardService = lpBoardService;
+        this.creditService = creditService;
     }
 
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.GetWriter()?.Write($"Test subcommand: {options.ToString()}");
+
+        var r = await this.creditService.CreateEquityCredit(LpConstants.LpIdentity);
+        r.Dispose();
 
         try
         {
