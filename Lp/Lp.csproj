@@ -55,4 +55,8 @@
     <PackageReference Include="ValueLink" Version="0.115.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\LpService\" />
+  </ItemGroup>
+
 </Project>

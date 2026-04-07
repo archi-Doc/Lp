@@ -13,6 +13,7 @@ namespace Lp;
 public static class LpParameters
 {
     public const int DomainRadiantQueueCapacity = 32;
+    public static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(3);
 
     static LpParameters()
     {

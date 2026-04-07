@@ -11,21 +11,29 @@ using Netsphere.Crypto;
 using Netsphere.Relay;
 using Lp.T3cs;
 using ValueLink;
+using Lp.Services;
 
 namespace Playground;
 
 [SimpleCommand("basic", Default = true)]
 public class BasicCommand : ISimpleCommandAsync
 {
+    private readonly NetUnit netUnit;
+    private readonly ILogger logger;
+    private readonly IRelayControl relayControl;
+    private readonly CreditService creditService;
+
     public BasicCommand(ILogger<BasicCommand> logger, NetUnit netUnit, IRelayControl relayControl)
     {
         this.logger = logger;
         this.netUnit = netUnit;
         this.relayControl = relayControl;
+        this.creditService = new(new());
     }
 
     public async Task RunAsync(string[] args)
     {
+        var r = await this.creditService.CreateEquityCredit(Lp.LpConstants.LpIdentity);
         CreditBase CreateEquityCredit(CreditPoint creditPoint, CreditIdentity creditIdentity)
         {
             var obj = new EquityCredit();
@@ -79,8 +87,4 @@ public class BasicCommand : ISimpleCommandAsync
             this.logger.GetWriter()?.Write((result2 is not null).ToString());
         }
     }
-
-    private readonly NetUnit netUnit;
-    private readonly ILogger logger;
-    private readonly IRelayControl relayControl;
 }

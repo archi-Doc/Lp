@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.NetServices;
+using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;

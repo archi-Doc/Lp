@@ -6,7 +6,7 @@ using Lp.T3cs;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 
-namespace Lp;
+namespace Lp.Services;
 
 /// <summary>
 /// Represents the LpService class.

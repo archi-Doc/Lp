@@ -56,6 +56,7 @@ public class LpUnit
                 context.AddSingleton<NetsphereLoggerOptions>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
+                context.AddSingleton<CreditService>();
 
                 // Console services
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
@@ -233,6 +234,8 @@ public class LpUnit
             return new CrystalUnit.Builder()
                 .ConfigureCrystal(context =>
                 {
+                    var defaultStorage = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Storage"));
+
                     context.AddCrystal<LpSettings>(new()
                     {
                         NumberOfFileHistories = 0,
@@ -277,6 +280,14 @@ public class LpUnit
                     {
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainControl.Filename),
+                    });
+
+                    context.AddCrystal<CreditPoint.GoshujinClass>(new CrystalConfiguration() with
+                    {
+                        SaveFormat = SaveFormat.Binary,
+                        NumberOfFileHistories = 3,
+                        FileConfiguration = new GlobalFileConfiguration("Credits"),
+                        StorageConfiguration = defaultStorage,
                     });
 
                     /*context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
