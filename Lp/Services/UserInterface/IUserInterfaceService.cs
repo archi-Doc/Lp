@@ -37,14 +37,14 @@ public interface IUserInterfaceService : IConsoleService
     /// <returns>A task that represents the asynchronous read operation. The result contains the password and its status.</returns>
     Task<InputResult> ReadPassword(bool cancelOnEscape, string? description);
 
-    /// <summary>
+    /*/// <summary>
     /// Notifies the user with a message at the specified log level.
     /// </summary>
     /// <param name="logger">The logger to use for logging the notification.</param>
     /// <param name="level">The log level of the notification.</param>
     /// <param name="message">The message to display.</param>
     /// <returns>A task that represents the asynchronous notification operation.</returns>
-    Task Notify(ILogger? logger, LogLevel level, string message);
+    Task Notify(ILogger? logger, LogLevel level, string message);*/
 
     /// <summary>
     /// Writes a line immediately to the user interface at the specified log level.

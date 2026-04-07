@@ -156,7 +156,7 @@ public partial class VaultControl
             else
             {// Failure
                 password = null;
-                await this.userInterfaceService.Notify(default, LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
+                this.userInterfaceService.WriteLineWarning(Hashed.Dialog.Password.NotMatch);
             }
         }
     }

@@ -42,7 +42,7 @@ public class BasicCommand : ISimpleCommandAsync
         }
 
         var g = new CreditPoint.GoshujinClass();
-        using (var dataScope = await g.TryLock(Lp.LpConstants.LpCredit, AcquisitionMode.GetOrCreate, default, default, x => CreateEquityCredit((CreditPoint)x, default)))
+        using (var dataScope = await g.TryLock(Lp.LpConstants.LpCredit, AcquisitionMode.GetOrCreate, default, default, x => CreateEquityCredit((CreditPoint)x, default!)))
         {
             var credit = dataScope.Data;
         }
