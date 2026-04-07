@@ -9,18 +9,6 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public class SecondHandObject : IClockHandTarget
-{
-    void IClockHandTarget.OnEveryMinute()
-    {
-    }
-
-    void IClockHandTarget.OnEverySecond()
-    {
-        Console.WriteLine("SecondHandObject");
-    }
-}
-
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
@@ -60,9 +48,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine(LpConstants.LpPublicKey.ToString());
         this.userInterfaceService.WriteLine(LpConstants.LpCredit.ToString());
         this.userInterfaceService.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
-
-        var obj = new SecondHandObject();
-        this.radio.Open<IClockHandTarget>(obj, true);
 
         var seedKey = SeedKey.New(KeyOrientation.Signature);
         var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);

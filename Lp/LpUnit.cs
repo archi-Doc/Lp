@@ -287,7 +287,7 @@ public class LpUnit
                         SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 3,
                         FileConfiguration = new GlobalFileConfiguration("Credits"),
-                        //StorageConfiguration = defaultStorage,
+                        StorageConfiguration = defaultStorage,
                     });
 
                     /*context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
