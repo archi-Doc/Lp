@@ -68,6 +68,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine(mergedEvidence2!.ValidateAndVerify().ToString());
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
+        this.userInterfaceService.WriteLine($"UserInteractive: {Environment.UserInteractive}, IsOutputRedirected:{Console.IsOutputRedirected}");
         this.userInterfaceService.WriteLine($"Width: {Console.WindowWidth}");
 
         var microSleep = new Arc.Threading.MicroSleep();
