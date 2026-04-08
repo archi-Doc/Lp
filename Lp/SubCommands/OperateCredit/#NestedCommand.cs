@@ -86,4 +86,3 @@ public class OperateCreditCommand : ISimpleCommandAsync<OperateCreditCommand.Opt
         await this.nestedcommand.MainAsync();
     }
 }
-
