@@ -523,6 +523,7 @@ public class LpUnit
             typeof(ShowOwnNetNodeSubcommand),
             typeof(ShowNodeControlStateSubcommand),
             typeof(TestSubcommand),
+            typeof(Lp.Subcommands.OperateCredit.OperateCreditCommand),
             ];
     }
 
