@@ -8,6 +8,10 @@ namespace Lp.Subcommands;
 public class NestedCommand<TCommand>
     where TCommand : NestedCommand<TCommand>
 {
+    private readonly SimpleConsole simpleConsole;
+    private readonly Type[] commandTypes;
+    private SimpleParser? simpleParser;
+
     public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
     {
         this.Core = core;
@@ -102,8 +106,4 @@ public class NestedCommand<TCommand>
             }
         }
     }
-
-    private readonly SimpleConsole simpleConsole;
-    private readonly Type[] commandTypes;
-    private SimpleParser? simpleParser;
 }

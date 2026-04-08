@@ -135,6 +135,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.LpDogmaGetInformationSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.OperateCredit.OperateCreditCommand));
 
                 context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowCredentialsCommand));
 
@@ -157,6 +158,7 @@ public class LpUnit
                 Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
                 Lp.Subcommands.KeyCommand.Subcommand.Configure(context);
+                Lp.Subcommands.OperateCredit.NestedCommand.Configure(context);
                 Lp.Subcommands.T3cs.Subcommand.Configure(context);
             });
 
