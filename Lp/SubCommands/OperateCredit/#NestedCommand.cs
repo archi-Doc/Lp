@@ -63,7 +63,7 @@ public class OperateCreditCommand : ISimpleCommand<OperateCreditCommand.Options>
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task RunAsync(OperateCreditCommand.Options options, string[] args)
+    public async Task Execute(OperateCreditCommand.Options options, string[] args, CancellationToken cancellationToken)
     {
         // Code
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code);

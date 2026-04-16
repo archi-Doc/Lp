@@ -16,7 +16,7 @@ public class InspectOwnerSubcommand : ISimpleCommand<InspectOwnerOptions>
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(InspectOwnerOptions option, string[] args)
+    public async Task Execute(InspectOwnerOptions option, string[] args, CancellationToken cancellationToken)
     {
         var r = await this.lpService.ParseAuthorityAndCredit(option.Source);
         if (!r.IsSuccess)

@@ -21,7 +21,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommand<AddCertificateRelayO
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(AddCertificateRelayOptions options, string[] args)
+    public async Task Execute(AddCertificateRelayOptions options, string[] args, CancellationToken cancellationToken)
     {
         RelayCircuit relayCircuit = options.Incoming switch
         {

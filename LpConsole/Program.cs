@@ -86,7 +86,7 @@ public class Program
         try
         {
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
-            await unit.RunAsync(options);
+            await unit.Run(options);
 
             await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
                                                                // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();

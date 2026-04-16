@@ -19,7 +19,7 @@ public class RemoveAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNameO
         this.userInterfaceService = userInterfaceService;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNameOptions options, string[] args)
+    public async Task Execute(AuthoritySubcommandNameOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!this.authorityControl.Exists(options.AuthorityName))
         {// Not found

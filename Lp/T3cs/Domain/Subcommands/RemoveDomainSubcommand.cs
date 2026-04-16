@@ -20,7 +20,7 @@ public class RemoveDomainSubcommand : ISimpleCommand<RemoveDomainSubcommand.Opti
         this.domainControl = domainControl;
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(options.Name))
         {

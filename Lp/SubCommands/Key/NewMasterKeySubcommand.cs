@@ -20,7 +20,7 @@ public class NewMasterKeySubcommand : ISimpleCommand<NewMasterKeySubcommand.Opti
         this.userInterfaceService = userInterfaceService;
     }
 
-    public void Run(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("New master key");
 

@@ -77,7 +77,7 @@ public class NestedCommand<TCommand>
                     {
                         if (this.SimpleParser.Parse(result.Text))
                         {
-                            this.SimpleParser.Run();
+                            await this.SimpleParser.Execute();
                         }
                         else
                         {

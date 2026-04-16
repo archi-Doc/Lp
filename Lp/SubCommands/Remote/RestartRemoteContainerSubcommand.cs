@@ -20,7 +20,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommand<RestartRemoteCont
         this.netTerminal = terminal;
     }
 
-    public async Task RunAsync(RestartRemoteContainerOptions options, string[] args)
+    public async Task Execute(RestartRemoteContainerOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (await NetHelper.TryGetNetNode(this.netTerminal, options.RunnerNode) is not { } netNode)
         {

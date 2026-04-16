@@ -46,7 +46,7 @@ public class Command : ISimpleCommand<CommandOptions>
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task RunAsync(CommandOptions options, string[] args)
+    public async Task Execute(CommandOptions options, string[] args, CancellationToken cancellationToken)
     {
         NetNode? node = Alternative.NetNode;
         if (!string.IsNullOrEmpty(options.Node))

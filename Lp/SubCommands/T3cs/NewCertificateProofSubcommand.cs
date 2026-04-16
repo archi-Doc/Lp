@@ -32,7 +32,7 @@ public partial class NewCertificateProofSubcommand : ISimpleCommand<NewCertifica
         this.netStats = netStats;
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         var node = this.netStats.GetOwnNetNode();
         if (node is null || !node.Validate())

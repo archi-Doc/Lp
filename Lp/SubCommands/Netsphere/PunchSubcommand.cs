@@ -17,7 +17,7 @@ public class PunchSubcommand : ISimpleCommand<PunchOptions>
         this.netUnit = netUnit;
     }
 
-    public async Task RunAsync(PunchOptions options, string[] args)
+    public async Task Execute(PunchOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.DestinationNode, out var node))
         {

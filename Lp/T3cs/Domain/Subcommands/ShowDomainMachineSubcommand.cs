@@ -18,7 +18,7 @@ public class ShowDomainMachineSubcommand : ISimpleCommand<ShowDomainMachineOptio
         this.bigMachine = bigMachine;
     }
 
-    public async Task RunAsync(ShowDomainMachineOptions options, string[] args)
+    public async Task Execute(ShowDomainMachineOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!DomainMachineHelper.TryParseDomainMachineKind(options.Kind, out var kind))
         {

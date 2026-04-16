@@ -378,7 +378,7 @@ public class LpUnit
             TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
-        public async Task RunAsync(LpOptions options)
+        public async Task Run(LpOptions options)
         {
             try
             {
@@ -794,17 +794,17 @@ public class LpUnit
         return true;
     }
 
-    public bool Subcommand(string subcommand)
+    public Task Subcommand(string subcommand)
     {
         if (subcommand == SimpleParser.HelpString)
         {
             this.subcommandParser.ShowHelp();
-            return true;
+            return Task.CompletedTask;
         }
         else if (subcommand == "h")
         {
             this.subcommandParser.ShowCommandList();
-            return true;
+            return Task.CompletedTask;
         }
 
         if (!this.subcommandParser.Parse(subcommand))
@@ -812,17 +812,16 @@ public class LpUnit
             if (this.subcommandParser.HelpCommand != string.Empty)
             {
                 this.subcommandParser.ShowHelp();
-                return true;
+                return Task.CompletedTask;
             }
             else
             {
                 this.UserInterfaceService.WriteLine("Invalid subcommand.");
-                return false;
+                return Task.CompletedTask;
             }
         }
 
-        this.subcommandParser.Run();
-        return true;
+        return this.subcommandParser.Execute();
 
         /*if (subcommandParser.HelpCommand != string.Empty)
         {
@@ -866,7 +865,7 @@ public class LpUnit
             {// Subcommand
                 try
                 {
-                    this.Subcommand(inputResult.Text);
+                    await this.Subcommand(inputResult.Text);
                     continue;
                 }
                 catch (Exception e)

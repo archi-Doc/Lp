@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.logger = logger;
         }
 
-        public async Task RunAsync(ExecuteOptions option, string[] args)
+        public async Task Execute(ExecuteOptions option, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(option.Name);
             if (this.vaultControl.Root.Remove(name))

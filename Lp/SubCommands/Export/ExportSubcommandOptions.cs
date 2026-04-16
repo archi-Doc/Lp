@@ -15,7 +15,7 @@ public class ExportSubcommandOptions : ISimpleCommand<ExportSubcommandOptionsOpt
         this.LpUnit = lpUnit;
     }
 
-    public async Task RunAsync(ExportSubcommandOptionsOptions options, string[] args)
+    public async Task Execute(ExportSubcommandOptionsOptions options, string[] args, CancellationToken cancellationToken)
     {
         try
         {

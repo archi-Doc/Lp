@@ -28,7 +28,7 @@ public class BenchmarkSubcommand : ISimpleCommand<BenchmarkOptions>
         }
     }
 
-    public async Task RunAsync(BenchmarkOptions options, string[] args)
+    public async Task Execute(BenchmarkOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (options.Repetition < 1)
         {

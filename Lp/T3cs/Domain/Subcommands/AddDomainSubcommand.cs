@@ -40,7 +40,7 @@ public class AddDomainSubcommand : ISimpleCommand<AddDomainSubcommand.Options>
         }
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
         if (seedKey is null)

@@ -15,7 +15,7 @@ public class PingSubcommand : ISimpleCommand<PingOptions>
         this.logger = logger;
     }
 
-    public async Task RunAsync(PingOptions options, string[] args)
+    public async Task Execute(PingOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetAddress.TryParse(this.logger, options.Node, out var address))
         {

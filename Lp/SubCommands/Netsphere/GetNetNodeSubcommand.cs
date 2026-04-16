@@ -14,7 +14,7 @@ public class GetNetNodeSubcommand : ISimpleCommand<GetNetNodeOptions>
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(GetNetNodeOptions options, string[] args)
+    public async Task Execute(GetNetNodeOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetAddress.TryParse(this.logger, options.Address, out var address))
         {

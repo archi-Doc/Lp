@@ -14,7 +14,7 @@ public class NewSignatureKeySubcommand : ISimpleCommand<Subcommand.NewKeyOptions
         this.userInterfaceService = userInterfaceService;
     }
 
-    public void Run(Subcommand.NewKeyOptions options, string[] args)
+    public async Task Execute(Subcommand.NewKeyOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("New signature key");
 

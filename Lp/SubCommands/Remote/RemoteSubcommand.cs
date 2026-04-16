@@ -41,7 +41,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
         this.simpleConsole = simpleConsole;
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {

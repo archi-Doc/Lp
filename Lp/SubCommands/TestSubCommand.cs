@@ -31,7 +31,7 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
         this.creditService = creditService;
     }
 
-    public async Task RunAsync(TestOptions options, string[] args)
+    public async Task Execute(TestOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"Test subcommand: {options.ToString()}");
 

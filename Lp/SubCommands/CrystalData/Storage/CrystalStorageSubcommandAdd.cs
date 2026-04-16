@@ -17,7 +17,7 @@ public class CrystalStorageSubcommandAdd : ISimpleCommand<CrystalStorageOptionsA
         this.CrystalDirSubcommandLs = crystalDirSubcommandLs;
     }
 
-    public async Task RunAsync(CrystalStorageOptionsAdd options, string[] args)
+    public async Task Execute(CrystalStorageOptionsAdd options, string[] args)
     {
         if (options.Capacity != 0)
         {

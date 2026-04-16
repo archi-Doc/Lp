@@ -17,7 +17,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommand<CrystalStorageOptio
         this.CrystalDirSubcommandLs = crystalDirSubcommandLs;
     }
 
-    public async Task RunAsync(CrystalStorageOptionsDelete options, string[] args)
+    public async Task Execute(CrystalStorageOptionsDelete options, string[] args)
     {
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Subcommands.DevStage));
 

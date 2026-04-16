@@ -19,7 +19,7 @@ public class ShowAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNameOpt
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
+    public async Task Execute(AuthoritySubcommandNameOptions option, string[] args, CancellationToken cancellationToken)
     {
         if (!this.authorityControl.Exists(option.AuthorityName))
         {// Not found

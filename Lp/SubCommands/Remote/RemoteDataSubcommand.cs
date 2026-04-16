@@ -17,7 +17,7 @@ internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(RemoteDataOptions options, string[] args)
+    public async Task Execute(RemoteDataOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"RemoteData");
 

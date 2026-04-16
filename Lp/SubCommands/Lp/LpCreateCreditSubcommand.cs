@@ -16,7 +16,7 @@ public class LpCreateCreditSubcommand : ISimpleCommand<LpCreateCreditOptions>
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(LpCreateCreditOptions option, string[] args)
+    public async Task Execute(LpCreateCreditOptions option, string[] args, CancellationToken cancellationToken)
     {
         var lpSeedKey = await this.lpService.AuthorityControl.GetLpSeedKey(this.logger);
         if (lpSeedKey is null)

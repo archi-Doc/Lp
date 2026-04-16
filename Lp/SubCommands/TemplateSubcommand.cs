@@ -41,7 +41,7 @@ public class TemplateSubcommand : ISimpleCommand<TemplateSubcommand.Options>
         }
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         this.userInterfaceService.WriteLine(LogLevel.Information, "Template subcommand");
         this.userInterfaceService.WriteLineInformation("Default");

@@ -75,7 +75,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
-                await this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message).ConfigureAwait(false);
             }
             finally
             {// Return control of console input.

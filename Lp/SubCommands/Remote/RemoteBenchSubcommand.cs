@@ -17,7 +17,7 @@ internal class RemoteBenchSubcommand : ISimpleCommand<RemoteBenchOptions>
         this.ntpCorrection = ntpCorrection;
     }
 
-    public async Task RunAsync(RemoteBenchOptions options, string[] args)
+    public async Task Execute(RemoteBenchOptions options, string[] args, CancellationToken cancellationToken)
     {
         await this.ntpCorrection.CorrectMicsAndUnitLogger();
 

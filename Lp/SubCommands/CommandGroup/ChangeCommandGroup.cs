@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.vaultControl = vaultControl;
         }
 
-        public async Task RunAsync(NewOptions options, string[] args)
+        public async Task Execute(NewOptions options, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(options.Name);
             /*if (!this.vaultControl.Root.Contains(name))

@@ -14,7 +14,7 @@ public class NewEncryptionKeySubcommand : ISimpleCommand<Subcommand.NewKeyOption
         this.userInterfaceService = userInterfaceService;
     }
 
-    public void Run(Subcommand.NewKeyOptions options, string[] args)
+    public async Task Execute(Subcommand.NewKeyOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("New encryption key");
 

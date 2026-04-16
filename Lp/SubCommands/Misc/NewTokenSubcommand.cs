@@ -16,7 +16,7 @@ public class NewTokenSubcommand : ISimpleCommand<NewTokenOptions>
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(NewTokenOptions options, string[] args)
+    public async Task Execute(NewTokenOptions options, string[] args, CancellationToken cancellationToken)
     {
         // Authority key
         var authority = await this.authorityControl.GetAuthority(options.AuthorityName);

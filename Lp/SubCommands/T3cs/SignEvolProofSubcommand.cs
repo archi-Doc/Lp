@@ -20,7 +20,7 @@ public class SignEvolProofSubcommand : ISimpleCommand<SignOptions>
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(SignOptions options, string[] args)
+    public async Task Execute(SignOptions options, string[] args, CancellationToken cancellationToken)
     {
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.KeyCode);
         if (seedKey is null)

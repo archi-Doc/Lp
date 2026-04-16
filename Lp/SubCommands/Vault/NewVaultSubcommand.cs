@@ -19,7 +19,7 @@ public class NewVaultSubcommand : ISimpleCommand<NewVaultOptions>
         this.vaultControl = vaultControl;
     }
 
-    public void Run(NewVaultOptions options, string[] args)
+    public async Task Execute(NewVaultOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"New vault key");
 

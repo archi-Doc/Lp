@@ -15,7 +15,7 @@ public class LpDogmaGetInformationSubcommand : ISimpleCommand<ConnectNetNodeOpti
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(ConnectNetNodeOptions options, string[] args)
+    public async Task Execute(ConnectNetNodeOptions options, string[] args, CancellationToken cancellationToken)
     {
         using (var connectionAndService = await LpDogmaHelper.TryConnect(this.logger, this.authorityControl, this.netTerminal, options.NetNode))
         {

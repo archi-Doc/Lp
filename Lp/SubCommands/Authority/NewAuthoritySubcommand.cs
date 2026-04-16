@@ -14,7 +14,7 @@ public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptio
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNewOptions option, string[] args)
+    public async Task Execute(AuthoritySubcommandNewOptions option, string[] args, CancellationToken cancellationToken)
     {
         byte[]? seed = default;
         if (option.Seedphrase is not null)
