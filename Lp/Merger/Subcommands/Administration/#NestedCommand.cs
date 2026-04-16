@@ -37,7 +37,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 }
 
 [SimpleCommand("merger-admin")]
-public class Command : ISimpleCommandAsync<CommandOptions>
+public class Command : ISimpleCommand<CommandOptions>
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;

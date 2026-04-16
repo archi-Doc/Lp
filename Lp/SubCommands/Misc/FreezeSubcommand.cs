@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand(Name)]
-public class FreezeSubcommand : ISimpleCommandAsync<FreezeSubcommand.Options>
+public class FreezeSubcommand : ISimpleCommand<FreezeSubcommand.Options>
 {
     public const string Name = "freeze";
 

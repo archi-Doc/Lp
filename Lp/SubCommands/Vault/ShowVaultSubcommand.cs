@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("show-vault")]
-public class ShowVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
+public class ShowVaultSubcommand : ISimpleCommand<SimpleVaultOptions>
 {
     public ShowVaultSubcommand(IConsoleService consoleService, ILogger<ShowVaultSubcommand> logger, VaultControl vaultControl)
     {

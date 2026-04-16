@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("benchmark", Description = "Executes a simple benchmark")]
-public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
+public class BenchmarkSubcommand : ISimpleCommand<BenchmarkOptions>
 {
     public const int MaxRepetitions = 100;
     public const string CurveName = "secp256r1";

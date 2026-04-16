@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.T3cs.Domain;
 
 [SimpleCommand("remove-domain")]
-public class RemoveDomainSubcommand : ISimpleCommandAsync<RemoveDomainSubcommand.Options>
+public class RemoveDomainSubcommand : ISimpleCommand<RemoveDomainSubcommand.Options>
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     public record Options
     {

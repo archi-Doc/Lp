@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("options")]
-public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>
+public class ExportSubcommandOptions : ISimpleCommand<ExportSubcommandOptionsOptions>
 {
     public ExportSubcommandOptions(ILogger<ExportSubcommandOptions> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit)
     {

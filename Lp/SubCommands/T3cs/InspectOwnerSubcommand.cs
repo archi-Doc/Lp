@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("inspect-owner")]
-public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
+public class InspectOwnerSubcommand : ISimpleCommand<InspectOwnerOptions>
 {
     public InspectOwnerSubcommand(IUserInterfaceService userInterfaceService, ILogger<InspectOwnerOptions> logger, LpService lpService)
     {

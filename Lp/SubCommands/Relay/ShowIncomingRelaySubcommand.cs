@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("show-incoming-relay", Description = "Check the incoming relay circuit and display detailed status.")]
-public class ShowIncomingRelaySubcommand : ISimpleCommandAsync
+public class ShowIncomingRelaySubcommand : ISimpleCommand
 {
     public ShowIncomingRelaySubcommand(ILogger<ShowIncomingRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal)
     {
@@ -14,7 +14,7 @@ public class ShowIncomingRelaySubcommand : ISimpleCommandAsync
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Show incoming relay circuit");
 

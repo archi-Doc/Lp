@@ -10,7 +10,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("test")]
-public class TestSubcommand : ISimpleCommandAsync<TestOptions>
+public class TestSubcommand : ISimpleCommand<TestOptions>
 {
     private readonly RadioClass radio;
     private readonly ILogger logger;

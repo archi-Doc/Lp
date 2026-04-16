@@ -9,7 +9,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.MergerRemote;
 
 [SimpleCommand("lp-new-credential", Alias = "lpnc")]
-public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOptions>
+public class LpNewCredentialSubcommand : ISimpleCommand<LpNewCredentialOptions>
 {
     public LpNewCredentialSubcommand(ILogger<LpNewCredentialSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, AuthorityControl authorityControl, Credentials credentials)
     {

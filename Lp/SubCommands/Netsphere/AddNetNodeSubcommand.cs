@@ -15,7 +15,7 @@ public class AddNetNodeSubcommand : ISimpleCommand
         this.bigMachine = bigMachine;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         foreach (var x in args)
         {

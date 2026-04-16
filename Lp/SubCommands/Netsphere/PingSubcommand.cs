@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("ping")]
-public class PingSubcommand : ISimpleCommandAsync<PingOptions>
+public class PingSubcommand : ISimpleCommand<PingOptions>
 {
     public PingSubcommand(ILogger<PingSubcommand> logger, LpUnit lpUnit)
     {

@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("lp-create-credit", Alias = "lpcc")]
-public class LpCreateCreditSubcommand : ISimpleCommandAsync<LpCreateCreditOptions>
+public class LpCreateCreditSubcommand : ISimpleCommand<LpCreateCreditOptions>
 {// lpcc A#Point@Identifier/Mergers: LpPublicKey#0@LpIdentifier/LpPublicKey -> A#InitialPoint@Identifier/Mergers
     public LpCreateCreditSubcommand(IUserInterfaceService userInterfaceService, ILogger<LpCreateCreditOptions> logger, LpService lpService)
     {

@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("remove-authority")]
-public class RemoveAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+public class RemoveAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNameOptions>
 {
     private readonly AuthorityControl authorityControl;
     private readonly ILogger logger;

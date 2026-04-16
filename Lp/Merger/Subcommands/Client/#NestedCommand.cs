@@ -35,7 +35,7 @@ public class NestedCommand
 }
 
 [SimpleCommand("merger-client")]
-public class Command : ISimpleCommandAsync<CommandOptions>
+public class Command : ISimpleCommand<CommandOptions>
 {
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
     {

@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("add", Description = "Add storage.")]
-public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOptionsAdd>
+public class CrystalStorageSubcommandAdd : ISimpleCommand<CrystalStorageOptionsAdd>
 {
     public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, IBigCrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {

@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("show-relay-exchange", Description = "Display relay exchange.")]
-public class ShowRelayExchangeSubcommand : ISimpleCommandAsync
+public class ShowRelayExchangeSubcommand : ISimpleCommand
 {
     public ShowRelayExchangeSubcommand(ILogger<ShowRelayExchangeSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal)
     {
@@ -14,7 +14,7 @@ public class ShowRelayExchangeSubcommand : ISimpleCommandAsync
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Show relay exchange");
 

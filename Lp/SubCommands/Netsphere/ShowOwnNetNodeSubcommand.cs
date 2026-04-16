@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("show-own-netnode")]
-public class ShowOwnNetNodeSubcommand : ISimpleCommandAsync
+public class ShowOwnNetNodeSubcommand : ISimpleCommand
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
     public ShowOwnNetNodeSubcommand(ILogger<ShowOwnNetNodeSubcommand> logger, IUserInterfaceService userInterfaceService, NetStats netStats)
     {
@@ -15,7 +15,7 @@ public class ShowOwnNetNodeSubcommand : ISimpleCommandAsync
         this.netStats = netStats;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var node = this.netStats.GetOwnNetNode();
         this.userInterfaceService.WriteLine($"Own NetNode ({this.netStats.GetOwnNodeType().ToString()}): {node.ToString()}");

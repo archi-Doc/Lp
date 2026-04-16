@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("sign-evolproof")]
-public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
+public class SignEvolProofSubcommand : ISimpleCommand<SignOptions>
 {
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;

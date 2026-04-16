@@ -9,7 +9,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("punch")]
-public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
+public class PunchSubcommand : ISimpleCommand<PunchOptions>
 {
     public PunchSubcommand(ILogger<PunchSubcommand> logger, NetUnit netUnit)
     {

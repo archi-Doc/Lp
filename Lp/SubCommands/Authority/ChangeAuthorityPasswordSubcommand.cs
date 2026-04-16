@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("change-authority-password")]
-public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+public class ChangeAuthorityPasswordSubcommand : ISimpleCommand<AuthoritySubcommandNameOptions>
 {
     public ChangeAuthorityPasswordSubcommand(ILogger<ChangeAuthorityPasswordSubcommand> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl)
     {

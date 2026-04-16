@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("remotebench")]
-internal class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
+internal class RemoteBenchSubcommand : ISimpleCommand<RemoteBenchOptions>
 {
     public RemoteBenchSubcommand(ILogger<RemoteBenchSubcommand> logger, IUserInterfaceService userInterfaceService, RemoteBenchControl remoteBenchBroker, NtpCorrection ntpCorrection)
     {

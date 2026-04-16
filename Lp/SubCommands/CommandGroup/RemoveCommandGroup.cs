@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("remove-command-group")]
-    public class RemoveCommandGroup : ISimpleCommandAsync<ExecuteOptions>
+    public class RemoveCommandGroup : ISimpleCommand<ExecuteOptions>
     {
         public RemoveCommandGroup(ILogger<ExecuteOptions> logger, VaultControl vaultControl)
         {

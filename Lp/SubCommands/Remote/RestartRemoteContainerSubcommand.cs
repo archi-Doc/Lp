@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("restart-remote-container")]
-public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemoteContainerOptions>
+public class RestartRemoteContainerSubcommand : ISimpleCommand<RestartRemoteContainerOptions>
 {
     private const int WaitIntervalInSeconds = 10;
     private const int PingIntervalInSeconds = 1;

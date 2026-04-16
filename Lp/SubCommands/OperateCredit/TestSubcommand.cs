@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.OperateCredit;
 
 [SimpleCommand("test")]
-public class TestSubcommand : ISimpleCommandAsync
+public class TestSubcommand : ISimpleCommand
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
@@ -18,7 +18,7 @@ public class TestSubcommand : ISimpleCommandAsync
         this.nestedcommand = nestedcommand;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"Log");
         this.userInterfaceService.WriteLine("UI");

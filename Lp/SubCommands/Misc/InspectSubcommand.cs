@@ -18,7 +18,7 @@ public class InspectSubcommand : ISimpleCommand
         this.logger = logger;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter(LogLevel.Information)?.Write("InspectSubcommand");
 

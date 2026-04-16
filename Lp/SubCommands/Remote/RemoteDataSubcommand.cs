@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("remotedata")]
-internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
+internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
 {
     public RemoteDataSubcommand(IServiceProvider serviceProvider, ILogger<RemoteDataOptions> logger, NetTerminal netTerminal)
     {

@@ -16,7 +16,7 @@ using Lp.Services;
 namespace Playground;
 
 [SimpleCommand("basic", Default = true)]
-public class BasicCommand : ISimpleCommandAsync
+public class BasicCommand : ISimpleCommand
 {
     private readonly NetUnit netUnit;
     private readonly ILogger logger;
@@ -31,7 +31,7 @@ public class BasicCommand : ISimpleCommandAsync
         this.creditService = new(new());
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var r = await this.creditService.CreateEquityCredit(Lp.LpConstants.LpIdentity);
         CreditBase CreateEquityCredit(CreditPoint creditPoint, CreditIdentity creditIdentity)

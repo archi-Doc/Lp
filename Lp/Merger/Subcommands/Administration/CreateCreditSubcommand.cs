@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.MergerRemote;
 
 [SimpleCommand("create-credit")]
-public class CreateCreditSubcommand : ISimpleCommandAsync
+public class CreateCreditSubcommand : ISimpleCommand
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
@@ -20,7 +20,7 @@ public class CreateCreditSubcommand : ISimpleCommandAsync
         this.nestedcommand = nestedcommand;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         if (await this.nestedcommand.RobustConnection.Get(this.logger) is not { } connection)
         {

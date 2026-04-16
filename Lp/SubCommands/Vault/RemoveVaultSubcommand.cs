@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("remove-vault")]
-public class RemoveVaultSubcommand : ISimpleCommandAsync<SimpleVaultOptions>
+public class RemoveVaultSubcommand : ISimpleCommand<SimpleVaultOptions>
 {
     public RemoveVaultSubcommand(ILogger<RemoveAuthoritySubcommand> logger, IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {

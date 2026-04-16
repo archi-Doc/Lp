@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("new-token")]
-public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
+public class NewTokenSubcommand : ISimpleCommand<NewTokenOptions>
 {
     public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityControl authorityControl)
     {

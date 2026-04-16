@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("show-nodecontrol-state")]
-public class ShowNodeControlStateSubcommand : ISimpleCommandAsync
+public class ShowNodeControlStateSubcommand : ISimpleCommand
 {
     public ShowNodeControlStateSubcommand(ILogger<ShowNodeControlStateSubcommand> logger, IUserInterfaceService userInterfaceService, BigMachine bigMachine)
     {
@@ -15,7 +15,7 @@ public class ShowNodeControlStateSubcommand : ISimpleCommandAsync
         this.bigMachine = bigMachine;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         await this.bigMachine.NodeControlMachine.GetOrCreate().Command.ShowStatus(true);
     }

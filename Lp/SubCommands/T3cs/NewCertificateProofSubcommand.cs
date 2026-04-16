@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("new-certificate-proof")]
-public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCertificateProofSubcommand.Options>
+public partial class NewCertificateProofSubcommand : ISimpleCommand<NewCertificateProofSubcommand.Options>
 {
     public record Options
     {

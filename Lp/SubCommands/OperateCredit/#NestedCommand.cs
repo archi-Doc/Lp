@@ -37,7 +37,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 }
 
 [SimpleCommand("operate-credit")]
-public class OperateCreditCommand : ISimpleCommandAsync<OperateCreditCommand.Options>
+public class OperateCreditCommand : ISimpleCommand<OperateCreditCommand.Options>
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;

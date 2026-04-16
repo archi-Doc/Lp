@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("lp-dogma-get-information")]
-public class LpDogmaGetInformationSubcommand : ISimpleCommandAsync<ConnectNetNodeOptions>
+public class LpDogmaGetInformationSubcommand : ISimpleCommand<ConnectNetNodeOptions>
 {
     public LpDogmaGetInformationSubcommand(ILogger<LpDogmaGetInformationSubcommand> logger, AuthorityControl authorityControl, NetTerminal netTerminal)
     {

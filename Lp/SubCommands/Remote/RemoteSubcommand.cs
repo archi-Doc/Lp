@@ -10,7 +10,7 @@ using SimplePrompt;
 namespace Lp.Subcommands;
 
 [SimpleCommand("remote")]
-public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
+public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 {
     public record Options
     {

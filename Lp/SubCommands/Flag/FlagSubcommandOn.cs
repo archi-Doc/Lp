@@ -14,7 +14,7 @@ public class FlagSubcommandOn : ISimpleCommand
         this.LpUnit = lpUnit;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var ope = VisceralClass.TryGet(this.LpUnit.LpBase.Settings.Flags);
         if (ope == null)

@@ -14,7 +14,7 @@ public class MicsSubcommand : ISimpleCommand
         this.LpUnit = lpUnit;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var logWriter = this.logger.GetWriter();
         if (logWriter.HasValue)

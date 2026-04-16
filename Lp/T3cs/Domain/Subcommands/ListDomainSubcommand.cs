@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.T3cs.Domain;
 
 [SimpleCommand("list-domain")]
-public class ListDomainSubcommand : ISimpleCommandAsync
+public class ListDomainSubcommand : ISimpleCommand
 {
     // private readonly IUserInterfaceService userInterfaceService;
     private readonly DomainControl domainControl;
@@ -15,7 +15,7 @@ public class ListDomainSubcommand : ISimpleCommandAsync
         this.domainControl = domainControl;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.domainControl.ListDomain();
     }

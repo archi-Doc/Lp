@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.MergerClient;
 
 [SimpleCommand("create-credit")]
-public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
+public class CreateCreditCommand : ISimpleCommand<CreateCreditOptions>
 {
     public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityControl authorityControl, RobustConnection.Factory robustConnectionFactory)
     {

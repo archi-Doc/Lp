@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("show-authority")]
-public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+public class ShowAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNameOptions>
 {
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;

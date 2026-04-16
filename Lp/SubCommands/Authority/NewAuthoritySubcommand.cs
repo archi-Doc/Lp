@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("new-authority")]
-public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
+public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptions>
 {
     public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl)
     {

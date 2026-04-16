@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.T3cs.Domain;
 
 [SimpleCommand(CommandName)]
-public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Options>
+public class AddDomainSubcommand : ISimpleCommand<AddDomainSubcommand.Options>
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     private const string CommandName = "add-domain";
     private const string OptionName = "CertificateProof";

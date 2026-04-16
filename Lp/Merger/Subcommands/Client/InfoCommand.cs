@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.MergerClient;
 
 [SimpleCommand("info")]
-public class InfoCommand : ISimpleCommandAsync
+public class InfoCommand : ISimpleCommand
 {
     public InfoCommand(ILogger<InfoCommand> logger, NetTerminal terminal, NestedCommand nestedcommand)
     {
@@ -15,7 +15,7 @@ public class InfoCommand : ISimpleCommandAsync
         this.nestedcommand = nestedcommand;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         /*var authority = await this.authority.GetKeyAsync(options.Authority);
         if (authority == null)

@@ -12,7 +12,7 @@ namespace Lp.Subcommands;
 /// Do not forget to register the subcommand type with context.AddSubcommand().
 /// </summary>
 [SimpleCommand(Name)]
-public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options>
+public class TemplateSubcommand : ISimpleCommand<TemplateSubcommand.Options>
 {
     public const string Name = "template-subcommand";
 
