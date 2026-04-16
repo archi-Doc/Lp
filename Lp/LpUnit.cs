@@ -112,6 +112,7 @@ public class LpUnit
 
                 // Subcommands
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.FreezeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
@@ -150,7 +151,7 @@ public class LpUnit
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
                 Lp.Subcommands.ExportSubcommand.Configure(context);
-                Lp.Subcommands.FlagSubcommand.Configure(context);
+                // Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CommandGroup.Configure(context);
