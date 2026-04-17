@@ -146,13 +146,22 @@ public class ExecutionStack
     /// <summary>
     /// Cancels the current top scope, if it exists and is not the <see cref="Root"/> scope.
     /// </summary>
-    public void CancelTop()
+    /// <returns>
+    /// <see langword="true"/> if a non-root top scope existed and its <see ref="System.Threading.CancellationTokenSource"/> was signaled;
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
+    public bool CancelTop()
     {
         var scope = this.Peek();
         if (scope is not null &&
             !scope.IsRoot)
         {
             scope.CancellationTokenSource.Cancel();
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 

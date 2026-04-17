@@ -824,14 +824,7 @@ public class LpUnit
         }
 
         return this.subcommandParser.Execute(cancellationToken);
-
-        /*if (subcommandParser.HelpCommand != string.Empty)
-        {
-            return false;
-        }
-
-        this.ConsoleService.WriteLine();
-        return true;*/
+        // return Task.Run(() => this.subcommandParser.Execute(cancellationToken));
     }
 
     private async Task Main(UnitContext context)
@@ -841,7 +834,11 @@ public class LpUnit
         {
             if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
             {// Ctrl+Q
-                executionStack.CancelTop();
+                if (executionStack.CancelTop())
+                {
+                    this.UserInterfaceService.WriteLineError("Task canceled");
+                }
+
                 return KeyInputHookResult.Handled;
             }
 
@@ -877,19 +874,19 @@ public class LpUnit
             }
             else
             {// Subcommand
-                try
+                using (var scope = executionStack.Push())
                 {
-                    using (var scope = executionStack.Push())
+                    try
                     {
                         await this.Subcommand(inputResult.Text, scope.CancellationToken);
                     }
-
-                    continue;
-                }
-                catch (Exception e)
-                {
-                    this.UserInterfaceService.WriteLine(e.ToString());
-                    break;
+                    catch (TaskCanceledException)
+                    {
+                    }
+                    catch (Exception e)
+                    {
+                        this.UserInterfaceService.WriteLine(e.ToString());
+                    }
                 }
             }
         }
