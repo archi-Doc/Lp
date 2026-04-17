@@ -826,23 +826,6 @@ public class LpUnit
         // return Task.Run(() => this.subcommandParser.Execute(cancellationToken));
     }
 
-    public class TestCore : TaskCore
-    {
-        private static async Task Method(object? core)
-        {
-            Console.WriteLine("1");
-            await Task.Delay(300);
-            Console.WriteLine("2");
-            await Task.Delay(300);
-            Console.WriteLine("3");
-        }
-
-        public TestCore(ThreadCoreBase? parent, bool startImmediately = true)
-            : base(parent, Method, startImmediately)
-        {
-        }
-    }
-
     private async Task Main(UnitContext context)
     {
         var executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
@@ -850,7 +833,6 @@ public class LpUnit
         {
             if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
             {// Ctrl+Q
-                this.simpleConsole.WriteLine("Q");
                 if (executionStack.CancelTop())
                 {
                     this.UserInterfaceService.WriteLineError("Task canceled");
@@ -895,8 +877,6 @@ public class LpUnit
                 {
                     try
                     {
-                        var rcore = new TestCore(this.Core);
-                        // await Task.Yield();
                         await this.Subcommand(inputResult.Text, scope.CancellationToken);
                     }
                     catch (OperationCanceledException)

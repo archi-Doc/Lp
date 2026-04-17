@@ -41,8 +41,6 @@ public class BenchmarkSubcommand : ISimpleCommand<BenchmarkOptions>
 
         this.logger.GetWriter()?.Write($"Benchmark subcommand: {options.ToString()}");
 
-        Thread.Sleep(5000);//
-
         await this.RunBenchmark(options, cancellationToken);
     }
 
