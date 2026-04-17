@@ -99,7 +99,7 @@ public class ExecutionStack
     /// Creates and pushes a new <see cref="Scope"/> onto the stack.
     /// </summary>
     /// <returns>The newly created scope.</returns>
-    public Scope Add()
+    public Scope Push()
     {
         Scope newScope;
         using (this.syncObject.EnterScope())

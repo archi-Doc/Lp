@@ -27,7 +27,7 @@ public class FreezeSubcommand : ISimpleCommand<FreezeSubcommand.Options>
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         this.userInterfaceService.WriteLine($"Freeze for {options.Duration} seconds");
-        await Task.Delay(options.Duration * 1000);
+        await Task.Delay(options.Duration * 1000, cancellationToken);
         this.userInterfaceService.WriteLine($"Freeze completed");
     }
 }

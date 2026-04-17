@@ -57,6 +57,7 @@ public class LpUnit
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.AddSingleton<CreditService>();
+                context.AddSingleton<ExecutionStack>();//
 
                 // Console services
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
@@ -454,7 +455,7 @@ public class LpUnit
             {// Start, Main loop
                 await lpUnit.Start(this.Context);
 
-                await lpUnit.MainAsync();
+                await lpUnit.Main(this.Context);
 
                 await this.Context.SendStop();
                 await lpUnit.TerminateAsync(this.Context);
@@ -771,6 +772,7 @@ public class LpUnit
 
     public async Task<bool> TryTerminate(bool forceTerminate = false)
     {
+        this.simpleConsole.Terminate();//
         if (forceTerminate)
         {// Force termination
             this.Core.Terminate(); // this.Terminate(false);
@@ -794,7 +796,7 @@ public class LpUnit
         return true;
     }
 
-    public Task Subcommand(string subcommand)
+    public Task Subcommand(string subcommand, CancellationToken cancellationToken)
     {
         if (subcommand == SimpleParser.HelpString)
         {
@@ -821,7 +823,7 @@ public class LpUnit
             }
         }
 
-        return this.subcommandParser.Execute();
+        return this.subcommandParser.Execute(cancellationToken);
 
         /*if (subcommandParser.HelpCommand != string.Empty)
         {
@@ -832,8 +834,20 @@ public class LpUnit
         return true;*/
     }
 
-    private async Task MainAsync()
+    private async Task Main(UnitContext context)
     {
+        var executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
+        this.simpleConsole.KeyInputHook = (ref keyInfo) =>
+        {
+            if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
+            {// Ctrl+Q
+                executionStack.CancelTop();
+                return KeyInputHookResult.Handled;
+            }
+
+            return KeyInputHookResult.NotHandled;
+        };
+
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
         var options = new ReadLineOptions()
         {
@@ -865,7 +879,11 @@ public class LpUnit
             {// Subcommand
                 try
                 {
-                    await this.Subcommand(inputResult.Text);
+                    using (var scope = executionStack.Push())
+                    {
+                        await this.Subcommand(inputResult.Text, scope.CancellationToken);
+                    }
+
                     continue;
                 }
                 catch (Exception e)
@@ -875,6 +893,7 @@ public class LpUnit
                 }
             }
         }
+
     }
 
     private void RunMachines()
