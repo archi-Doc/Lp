@@ -109,7 +109,7 @@ public class Program
         await unit.Terminate();
 
         ThreadCore.Root.Terminate();
-        await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } logUnit)
         {
             await logUnit.FlushAndTerminate();
