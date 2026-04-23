@@ -10,6 +10,7 @@ using Arc.Crypto;
 using Lp.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
+using SimplePrompt;
 
 namespace LpConsole;
 
