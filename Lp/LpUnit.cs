@@ -854,7 +854,7 @@ public class LpUnit
 
         while (!this.Core.IsTerminated)
         {
-            var inputResult = await this.simpleConsole.ReadLine(options);
+            var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
             if (inputResult.Kind == InputResultKind.Terminated)
             {
                 return;
