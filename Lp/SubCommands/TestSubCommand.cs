@@ -82,12 +82,18 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
 
         microSleep.Dispose();
 
-        await Task.Delay(500);
-        this.userInterfaceService.WriteLine("1");
-        await Task.Delay(1500);
-        this.userInterfaceService.WriteLine("2");
-        await Task.Delay(2500);
-        this.userInterfaceService.WriteLine("3");
+        try
+        {
+            await Task.Delay(500, cancellationToken);
+            this.userInterfaceService.WriteLine("1");
+            await Task.Delay(1500, cancellationToken);
+            this.userInterfaceService.WriteLine("2");
+            await Task.Delay(2500, cancellationToken);
+            this.userInterfaceService.WriteLine("3");
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         // await this.TestLinkageKey();
 

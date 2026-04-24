@@ -759,8 +759,7 @@ public class LpUnit
         var logger = this.LogUnit.RootLogService.GetWriter<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
-        logger?.Write("Press Enter key to switch to console mode.");
-        logger?.Write("Press Ctrl+C to exit.");
+        logger?.Write("Press Ctrl+C to exit, Ctrl+Q to cancel the task");
         logger?.Write("Running");
     }
 
@@ -835,7 +834,7 @@ public class LpUnit
             {// Ctrl+Q
                 if (executionStack.CancelTop())
                 {
-                    this.UserInterfaceService.WriteLineError("Task canceled");
+                    this.UserInterfaceService.WriteLineError("Canceled");
                 }
 
                 return KeyInputHookResult.Handled;
