@@ -11,7 +11,7 @@ public class FreezeSubcommand : ISimpleCommand<FreezeSubcommand.Options>
 
     public record Options
     {
-        [SimpleOption("Duration", Description = "Duration", Required = true)]
+        [SimpleOption("Duration", Description = "Duration")]
         public int Duration { get; init; } = 3;
     }
 
@@ -26,8 +26,15 @@ public class FreezeSubcommand : ISimpleCommand<FreezeSubcommand.Options>
 
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
-        this.userInterfaceService.WriteLine($"Freeze for {options.Duration} seconds");
-        await Task.Delay(options.Duration * 1000, cancellationToken);
+        var duration = options.Duration;
+        if (args.Length > 0 &&
+            int.TryParse(args[0], out var x))
+        {
+            duration = x;
+        }
+
+        this.userInterfaceService.WriteLine($"Freeze for {duration} seconds");
+        await Task.Delay(duration * 1000, cancellationToken);
         this.userInterfaceService.WriteLine($"Freeze completed");
     }
 }
