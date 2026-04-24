@@ -76,9 +76,9 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
 
     public bool KeyAvailable => false;
 
-    public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
+    /*public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
     {
-    }
+    }*/
 
     public Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
         => this.receiver.ReadLine(cancelOnEscape, description);

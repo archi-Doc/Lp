@@ -58,4 +58,9 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
         return Task.CompletedTask;
     }
+
+    Task IRemoteUserInterfaceReceiver.ReturnInputControl()
+    {
+        return Task.CompletedTask;
+    }
 }

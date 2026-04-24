@@ -30,6 +30,16 @@ namespace Lp;
 
 public class LpUnit
 {
+    public static readonly Type[] RemoteSubcommands = [
+        typeof(FreezeSubcommand),
+        typeof(InspectSubcommand),
+        typeof(BenchmarkSubcommand),
+        typeof(ShowOwnNetNodeSubcommand),
+        typeof(ShowNodeControlStateSubcommand),
+        typeof(TestSubcommand),
+        typeof(Lp.Subcommands.OperateCredit.OperateCreditCommand),
+    ];
+
     #region Builder
 
     public class Builder : UnitBuilder<Product>
@@ -534,16 +544,6 @@ public class LpUnit
         };
 
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
-
-        this.RemoteSubcommands = [
-            typeof(FreezeSubcommand),
-            typeof(InspectSubcommand),
-            typeof(BenchmarkSubcommand),
-            typeof(ShowOwnNetNodeSubcommand),
-            typeof(ShowNodeControlStateSubcommand),
-            typeof(TestSubcommand),
-            typeof(Lp.Subcommands.OperateCredit.OperateCreditCommand),
-            ];
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -575,8 +575,6 @@ public class LpUnit
     public AuthorityControl AuthorityControl { get; }
 
     public DomainControl DomainControl { get; }
-
-    public Type[] RemoteSubcommands { get; }
 
     private readonly ILogger logger;
     private readonly SimpleParser subcommandParser;

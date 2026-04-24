@@ -28,8 +28,9 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
     private readonly NetTerminal netTerminal;
     private readonly RobustConnection.Factory robustConnectionFactory;
     private readonly SimpleConsole simpleConsole;
+    private readonly ExecutionStack executionStack;
 
-    public RemoteSubcommand(UnitContext unitContext, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole)
+    public RemoteSubcommand(UnitContext unitContext, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole, ExecutionStack executionStack)
     {
         this.unitContext = unitContext;
         var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
@@ -39,6 +40,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
         this.netTerminal = netTerminal;
         this.robustConnectionFactory = robustConnectionFactory;
         this.simpleConsole = simpleConsole;
+        this.executionStack = executionStack;
     }
 
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
@@ -118,55 +120,93 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
-            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is { } receiver)
+            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is not { } receiver)
             {
-                receiver.Prefix = $"[{nodeName}] ";
+                return;
             }
+
+            receiver.Prefix = $"[{nodeName}] ";
 
             var readineOptions = new ReadLineOptions()
             {
                 Prompt = $"{nodeName} >> ",
                 MultilineDelimiter = LpConstants.MultilineIndeitifierString,
                 MultilinePrompt = LpConstants.MultilinePromptString,
+                KeyInputHook = (ref ConsoleKeyInfo keyInfo) =>
+                {
+                    if (keyInfo.Modifiers == ConsoleModifiers.Control)
+                    {
+                        if (keyInfo.Key == ConsoleKey.Q)
+                        {// Ctrl+Q: Cancel
+                            this.executionStack.CancelTop();
+                            return KeyInputHookResult.Handled;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.C)
+                        {// Ctrl+C: Exit
+                            return KeyInputHookResult.Cancel;
+                        }
+                    }
+
+                    return KeyInputHookResult.NotHandled;
+                },
             };
 
-            while (!this.unitContext.Core.IsTerminated)
+            using (var scope = this.executionStack.Push())
             {
-                var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
-
-                if (!result.IsSuccess)
+                while (!this.unitContext.Core.IsTerminated)
                 {
-                    break;
-                }
+                    var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
+                    if (!result.IsSuccess)
+                    {
+                        break;
+                    }
 
-                if (string.Compare(result.Text, "exit", true) == 0)
-                {// Exit
-                    return;
-                }
-                else
-                {
+                    if (string.Compare(result.Text, "exit", true) == 0)
+                    {// Exit
+                        return;
+                    }
+
                     var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
                     if (netResult != NetResult.Success)
                     {
                         this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
                         break;
                     }
-                }
 
-                /*using (var scope = this.serviceProvider.CreateScope())
-                {
-                    var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
-                    if (userInterfaceContext.InitializeRemote(connection))
+                    await receiver.ReturnInputControl().ConfigureAwait(false);
+
+                    /*using (var scope = this.serviceProvider.CreateScope())
                     {
+                        var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
+                        if (userInterfaceContext.InitializeRemote(connection))
+                        {
 
-                    }
-                }*/
+                        }
+                    }*/
 
-                /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
-                this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
+                    /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
+                    this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
 
-                await this.nestedcommand.MainAsync();*/
+                    await this.nestedcommand.MainAsync();*/
+                }
             }
         }
+    }
+
+    private static KeyInputHookResult KeyInput(ref ConsoleKeyInfo keyInfo)
+    {
+        if (keyInfo.Modifiers == ConsoleModifiers.Control)
+        {
+            if (keyInfo.Key == ConsoleKey.Q)
+            {// Ctrl+Q: Cancel
+                return KeyInputHookResult.Handled;
+            }
+            else if (keyInfo.Key == ConsoleKey.C)
+            {// Ctrl+C: Exit
+                return KeyInputHookResult.Cancel;
+            }
+        }
+
+        return KeyInputHookResult.NotHandled;
     }
 }

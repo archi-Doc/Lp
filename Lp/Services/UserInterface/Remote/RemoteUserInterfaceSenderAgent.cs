@@ -77,9 +77,12 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             {
                 await this.simpleParser.ParseAndExecute(message).ConfigureAwait(false);
             }
+            catch
+            {
+            }
             finally
             {// Return control of console input.
-                //await receiver.ReturnInputControl().ConfigureAwait(false);
+                await receiver.ReturnInputControl().ConfigureAwait(false);
             }
         });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
@@ -106,6 +109,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         };
 
         this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(receiver);
-        this.simpleParser = new SimpleParser(this.lpUnit.RemoteSubcommands, subcommandOptions);
+        this.simpleParser = new SimpleParser(LpUnit.RemoteSubcommands, subcommandOptions);
     }
 }
