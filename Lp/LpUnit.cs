@@ -474,13 +474,12 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, UnitCore core, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
+        this.ExecutionStack = executionStack;
         this.LogUnit = logUnit;
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
-        this.simpleConsole = simpleConsole;
-        this.simpleConsole.Core = core;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetUnit = netsphere;
@@ -493,6 +492,23 @@ public class LpUnit
         this.RelayMerger = relayMerger;
         this.Linker = linker;
         this.lpService = lpService;
+
+        this.simpleConsole = simpleConsole;
+        this.simpleConsole.Core = core;
+        this.simpleConsole.KeyInputHook = (ref keyInfo) =>
+        {
+            if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
+            {// Ctrl+Q
+                if (this.ExecutionStack.CancelTop())
+                {
+                    this.UserInterfaceService.WriteLineError("Canceled");
+                }
+
+                return KeyInputHookResult.Handled;
+            }
+
+            return KeyInputHookResult.NotHandled;
+        };
 
         if (this.LpBase.Options.TestFeatures)
         {
@@ -534,6 +550,8 @@ public class LpUnit
     public LogUnit LogUnit { get; }
 
     public UnitCore Core { get; }
+
+    public ExecutionStack ExecutionStack { get; }
 
     public IUserInterfaceService UserInterfaceService { get; }
 
@@ -827,22 +845,6 @@ public class LpUnit
 
     private async Task Main(UnitContext context)
     {
-        var executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
-        this.simpleConsole.KeyInputHook = (ref keyInfo) =>
-        {
-            if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
-            {// Ctrl+Q
-                if (executionStack.CancelTop())
-                {
-                    this.UserInterfaceService.WriteLineError("Canceled");
-                }
-
-                return KeyInputHookResult.Handled;
-            }
-
-            return KeyInputHookResult.NotHandled;
-        };
-
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
         var options = new ReadLineOptions()
         {
@@ -872,7 +874,7 @@ public class LpUnit
             }
             else
             {// Subcommand
-                using (var scope = executionStack.Push())
+                using (var scope = this.ExecutionStack.Push())
                 {
                     try
                     {
