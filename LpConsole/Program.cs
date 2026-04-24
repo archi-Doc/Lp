@@ -32,6 +32,15 @@ public class Program
 
             try
             {
+                /*var executionStack = unit?.Context.ServiceProvider.GetService<ExecutionStack>();
+                if (executionStack is not null)
+                {
+                    if (executionStack.CancelTop())
+                    {
+                        return;
+                    }
+                }*/
+
                 var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
                 if (lpUnit != null)
                 {
@@ -90,7 +99,7 @@ public class Program
             await unit.Run(options);
 
             await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
-                                                               // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
+                                                        // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
             ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
         }
         finally

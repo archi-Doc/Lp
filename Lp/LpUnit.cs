@@ -536,6 +536,7 @@ public class LpUnit
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
 
         this.RemoteSubcommands = [
+            typeof(FreezeSubcommand),
             typeof(InspectSubcommand),
             typeof(BenchmarkSubcommand),
             typeof(ShowOwnNetNodeSubcommand),
