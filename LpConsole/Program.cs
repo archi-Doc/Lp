@@ -32,15 +32,6 @@ public class Program
 
             try
             {
-                /*var executionStack = unit?.Context.ServiceProvider.GetService<ExecutionStack>();
-                if (executionStack is not null)
-                {
-                    if (executionStack.CancelTop())
-                    {
-                        return;
-                    }
-                }*/
-
                 var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
                 if (lpUnit != null)
                 {

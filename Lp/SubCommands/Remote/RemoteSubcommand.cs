@@ -155,7 +155,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
             while (!this.executionStack.TopCancellationToken.IsCancellationRequested)
             {
-                var result = await this.simpleConsole.ReadLine(readineOptions, this.executionStack.TopCancellationToken).ConfigureAwait(false);
+                var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {
                     break;
