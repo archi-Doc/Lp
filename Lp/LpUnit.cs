@@ -507,14 +507,28 @@ public class LpUnit
         this.simpleConsole.Core = core;
         this.simpleConsole.KeyInputHook = (ref keyInfo) =>
         {
-            if (keyInfo.Key == ConsoleKey.Q && keyInfo.Modifiers == ConsoleModifiers.Control)
-            {// Ctrl+Q
-                if (this.ExecutionStack.CancelTop())
-                {
-                    this.UserInterfaceService.WriteLineError("Canceled");
-                }
+            if (keyInfo.Modifiers == ConsoleModifiers.Control)
+            {
+                if (keyInfo.Key == ConsoleKey.Q)
+                {// Ctrl+Q
+                    if (this.ExecutionStack.CancelTop())
+                    {
+                        this.UserInterfaceService.WriteLineError("Canceled");
+                    }
 
-                return KeyInputHookResult.Handled;
+                    return KeyInputHookResult.Handled;
+                }
+                else if (keyInfo.Key == ConsoleKey.C)
+                {// Ctrl+C
+                    try
+                    {
+                        this.TryTerminate().Wait();
+                    }
+                    catch
+                    {
+                        ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                    }
+                }
             }
 
             return KeyInputHookResult.NotHandled;

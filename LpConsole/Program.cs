@@ -30,7 +30,9 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            try
+            SimpleConsole.GetOrCreate().EnqueueInput("Ctrl+C");
+
+            /*try
             {
                 var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
                 if (lpUnit != null)
@@ -45,7 +47,7 @@ public class Program
             catch
             {
                 ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            }
+            }*/
         };
 
         var builder = new LpUnit.Builder()
