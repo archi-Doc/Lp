@@ -6,11 +6,18 @@ using System.Threading;
 
 namespace Arc.Threading;
 
+public enum ExecutionSignal
+{
+    Interrupt,
+}
+
 /// <summary>
 /// Provides a thread-safe, stack-like collection of execution <see cref="Scope"/> objects.
 /// </summary>
 public class ExecutionStack
 {
+    public delegate void ProcessSignal(ExecutionSignal executionSignal);
+
     /// <summary>
     /// Represents a removable scope entry within an <see cref="ExecutionStack"/>.
     /// </summary>
@@ -29,6 +36,8 @@ public class ExecutionStack
         /// Gets the identifier of this scope within the owning <see cref="ExecutionStack"/>.
         /// </summary>
         public int Id { get; }
+
+        private readonly ProcessSignal? processSignal;
 
         /// <summary>
         /// Gets the <see cref="System.Threading.CancellationTokenSource"/> associated with this scope.
@@ -50,13 +59,17 @@ public class ExecutionStack
         /// </summary>
         /// <param name="executionStack">The owning <see            cref="Arc.Threading.ExecutionStack"/>.</param>
         /// <param name="id">The scope identifier to assign.</param>
-        public Scope(ExecutionStack executionStack, int id)
+        public Scope(ExecutionStack executionStack, int id, ProcessSignal? processSignal = default)
         {
             this.ExecutionStack = executionStack;
             this.Id = id;
-            this.CancellationTokenSource = new();
+            this.processSignal = processSignal;
+            this.CancellationTokenSource = CancellationTokenHelper.Pool.Rent();
             this.CancellationToken = this.CancellationTokenSource.Token;
         }
+
+        public void ProcessSignal(ExecutionSignal signal)
+            => this.processSignal?.Invoke(signal);
 
         /// <summary>
         /// Removes this scope from its owning <see cref="ExecutionStack"/>.
@@ -64,6 +77,10 @@ public class ExecutionStack
         public void Dispose()
         {
             this.ExecutionStack.Remove(this);
+            if (this.CancellationTokenSource.TryReset())
+            {
+
+            }
         }
 
         /// <inheritdoc/>
@@ -159,6 +176,20 @@ public class ExecutionStack
             !scope.IsRoot)
         {
             scope.CancellationTokenSource.Cancel();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool Signal(ExecutionSignal signal)
+    {
+        var scope = this.Peek();
+        if (scope is not null)
+        {
+            scope.ProcessSignal(signal);
             return true;
         }
         else

@@ -30,8 +30,10 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
-            SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);
+            unit?.Context.ServiceProvider.GetRequiredService<LpUnit>().ExecutionStack.Signal(ExecutionSignal.Interrupt);
+
+            // var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
+            // SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);
 
             /*try
             {
