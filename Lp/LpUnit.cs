@@ -518,17 +518,6 @@ public class LpUnit
 
                     return KeyInputHookResult.Handled;
                 }
-                else if (keyInfo.Key == ConsoleKey.C)
-                {// Ctrl+C
-                    try
-                    {
-                        this.TryTerminate().Wait();
-                    }
-                    catch
-                    {
-                        ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-                    }
-                }
             }
 
             return KeyInputHookResult.NotHandled;
@@ -864,6 +853,16 @@ public class LpUnit
             Prompt = LpConstants.PromptString,
             MultilineDelimiter = LpConstants.MultilineIndeitifierString,
             MultilinePrompt = LpConstants.MultilinePromptString,
+            KeyInputHook = (ref keyInfo) =>
+            {
+                if (keyInfo.Key == ConsoleKey.C)
+                {// Ctrl+C
+                    _ = this.TryTerminate();
+                    return KeyInputHookResult.Handled;
+                }
+
+                return KeyInputHookResult.NotHandled;
+            },
         };
 
         while (!this.Core.IsTerminated)

@@ -30,7 +30,8 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            SimpleConsole.GetOrCreate().EnqueueInput("Ctrl+C");
+            var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
+            SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);
 
             /*try
             {
