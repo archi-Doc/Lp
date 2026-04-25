@@ -136,36 +136,37 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 {
                     if (keyInfo.Modifiers == ConsoleModifiers.Control)
                     {
-                        if (keyInfo.Key == ConsoleKey.Q)
+                        /*if (keyInfo.Key == ConsoleKey.Q)
                         {// Ctrl+Q: Cancel
                             this.executionStack.CancelTop();
                             return KeyInputHookResult.Handled;
-                        }
-                        else if (keyInfo.Key == ConsoleKey.C)
+                        }*/
+
+                        /*if (keyInfo.Key == ConsoleKey.C)
                         {// Ctrl+C: Exit
                             return KeyInputHookResult.Cancel;
-                        }
+                        }*/
                     }
 
                     return KeyInputHookResult.NotHandled;
                 },
             };
 
-            using (var scope = this.executionStack.Push())
+            while (!this.unitContext.Core.IsTerminated)
             {
-                while (!this.unitContext.Core.IsTerminated)
+                var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
+                if (!result.IsSuccess)
                 {
-                    var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
-                    if (!result.IsSuccess)
-                    {
-                        break;
-                    }
+                    break;
+                }
 
-                    if (string.Compare(result.Text, "exit", true) == 0)
-                    {// Exit
-                        return;
-                    }
+                if (string.Compare(result.Text, "exit", true) == 0)
+                {// Exit
+                    return;
+                }
 
+                using (var scope = this.executionStack.Push())
+                {
                     var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
                     if (netResult != NetResult.Success)
                     {
@@ -174,21 +175,21 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     }
 
                     await receiver.ReturnInputControl().ConfigureAwait(false);
-
-                    /*using (var scope = this.serviceProvider.CreateScope())
-                    {
-                        var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
-                        if (userInterfaceContext.InitializeRemote(connection))
-                        {
-
-                        }
-                    }*/
-
-                    /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
-                    this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
-
-                    await this.nestedcommand.MainAsync();*/
                 }
+
+                /*using (var scope = this.serviceProvider.CreateScope())
+                {
+                    var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
+                    if (userInterfaceContext.InitializeRemote(connection))
+                    {
+
+                    }
+                }*/
+
+                /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
+                this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
+
+                await this.nestedcommand.MainAsync();*/
             }
         }
     }
