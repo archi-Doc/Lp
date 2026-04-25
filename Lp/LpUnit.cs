@@ -511,10 +511,11 @@ public class LpUnit
             {
                 if (keyInfo.Key == ConsoleKey.Q)
                 {// Ctrl+Q
-                    if (this.ExecutionStack.CancelTop())
+                    this.ExecutionStack.Signal(ExecutionSignal.Cancel);
+                    /*if (this.ExecutionStack.CancelTop())
                     {
                         this.UserInterfaceService.WriteLineError("Canceled");
-                    }
+                    }*/
 
                     return KeyInputHookResult.Handled;
                 }
@@ -853,7 +854,7 @@ public class LpUnit
             Prompt = LpConstants.PromptString,
             MultilineDelimiter = LpConstants.MultilineIndeitifierString,
             MultilinePrompt = LpConstants.MultilinePromptString,
-            KeyInputHook = (ref keyInfo) =>
+            /*KeyInputHook = (ref keyInfo) =>
             {
                 if (keyInfo.Modifiers == ConsoleModifiers.Control &&
                 keyInfo.Key == ConsoleKey.C)
@@ -863,42 +864,58 @@ public class LpUnit
                 }
 
                 return KeyInputHookResult.NotHandled;
-            },
+            },*/
         };
 
-        while (!this.Core.IsTerminated)
+        using (var scope = this.ExecutionStack.Push((scope, signal) =>
         {
-            var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
-            if (inputResult.Kind == InputResultKind.Terminated)
+            if (signal == ExecutionSignal.Exit)
             {
-                return;
+                _ = this.TryTerminate();
             }
-            else if (inputResult.Kind == InputResultKind.Canceled)
+        }))
+        {
+            while (!this.Core.IsTerminated)
             {
-                continue;
-            }
-
-            if (string.Equals(inputResult.Text, "exit", defaultComparison))
-            {// Exit
-                if (await this.TryTerminate(false))
-                {// Terminate
+                var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+                if (inputResult.Kind == InputResultKind.Terminated)
+                {
                     return;
                 }
-            }
-            else
-            {// Subcommand
-                using (var scope = this.ExecutionStack.Push())
+                else if (inputResult.Kind == InputResultKind.Canceled)
                 {
-                    try
-                    {
-                        await this.Subcommand(inputResult.Text, scope.CancellationToken);
+                    continue;
+                }
+
+                if (string.Equals(inputResult.Text, "exit", defaultComparison))
+                {// Exit
+                    if (await this.TryTerminate(false))
+                    {// Terminate
+                        return;
                     }
-                    catch (OperationCanceledException)
+                }
+                else
+                {// Subcommand
+                    using (var scope2 = this.ExecutionStack.Push((x, signal) =>
                     {
-                    }
-                    catch (Exception e)
+                        if (signal == ExecutionSignal.Cancel)
+                        {
+                            x.CancellationTokenSource.Cancel();
+                            this.UserInterfaceService.WriteLineError("Canceled");
+                        }
+                    }))
                     {
-                        this.UserInterfaceService.WriteLine(e.ToString());
+                        try
+                        {
+                            await this.Subcommand(inputResult.Text, scope2.CancellationToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                        catch (Exception e)
+                        {
+                            this.UserInterfaceService.WriteLine(e.ToString());
+                        }
                     }
                 }
             }

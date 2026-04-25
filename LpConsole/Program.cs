@@ -30,7 +30,7 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            unit?.Context.ServiceProvider.GetRequiredService<LpUnit>().ExecutionStack.Signal(ExecutionSignal.Interrupt);
+            unit?.Context.ServiceProvider.GetRequiredService<LpUnit>().ExecutionStack.Signal(ExecutionSignal.Exit);
 
             // var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
             // SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);

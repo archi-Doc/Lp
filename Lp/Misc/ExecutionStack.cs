@@ -8,7 +8,8 @@ namespace Arc.Threading;
 
 public enum ExecutionSignal
 {
-    Interrupt,
+    Cancel,
+    Exit,
 }
 
 /// <summary>
@@ -16,7 +17,7 @@ public enum ExecutionSignal
 /// </summary>
 public class ExecutionStack
 {
-    public delegate void ProcessSignal(ExecutionSignal executionSignal);
+    public delegate void ProcessSignalDelegate(Scope scope, ExecutionSignal executionSignal);
 
     /// <summary>
     /// Represents a removable scope entry within an <see cref="ExecutionStack"/>.
@@ -37,7 +38,7 @@ public class ExecutionStack
         /// </summary>
         public int Id { get; }
 
-        private readonly ProcessSignal? processSignal;
+        private readonly ProcessSignalDelegate? processSignal;
 
         /// <summary>
         /// Gets the <see cref="System.Threading.CancellationTokenSource"/> associated with this scope.
@@ -59,17 +60,17 @@ public class ExecutionStack
         /// </summary>
         /// <param name="executionStack">The owning <see            cref="Arc.Threading.ExecutionStack"/>.</param>
         /// <param name="id">The scope identifier to assign.</param>
-        public Scope(ExecutionStack executionStack, int id, ProcessSignal? processSignal = default)
+        public Scope(ExecutionStack executionStack, int id, ProcessSignalDelegate? processSignal = default)
         {
             this.ExecutionStack = executionStack;
             this.Id = id;
             this.processSignal = processSignal;
-            this.CancellationTokenSource = CancellationTokenHelper.Pool.Rent();
+            this.CancellationTokenSource = CancellationTokenPool.Rent();
             this.CancellationToken = this.CancellationTokenSource.Token;
         }
 
         public void ProcessSignal(ExecutionSignal signal)
-            => this.processSignal?.Invoke(signal);
+            => this.processSignal?.Invoke(this, signal);
 
         /// <summary>
         /// Removes this scope from its owning <see cref="ExecutionStack"/>.
@@ -77,10 +78,7 @@ public class ExecutionStack
         public void Dispose()
         {
             this.ExecutionStack.Remove(this);
-            if (this.CancellationTokenSource.TryReset())
-            {
-
-            }
+            CancellationTokenPool.TryResetAndReturn(this.CancellationTokenSource);
         }
 
         /// <inheritdoc/>
@@ -118,12 +116,12 @@ public class ExecutionStack
     /// Creates and pushes a new <see cref="Scope"/> onto the stack.
     /// </summary>
     /// <returns>The newly created scope.</returns>
-    public Scope Push()
+    public Scope Push(ProcessSignalDelegate? @delegate)
     {
         Scope newScope;
         using (this.syncObject.EnterScope())
         {
-            newScope = new Scope(this, this.incrementalId++);
+            newScope = new Scope(this, this.incrementalId++, @delegate);
             this.list.Add(newScope);
         }
 

@@ -134,62 +134,53 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 Prompt = $"{nodeName} >> ",
                 MultilineDelimiter = LpConstants.MultilineIndeitifierString,
                 MultilinePrompt = LpConstants.MultilinePromptString,
-                KeyInputHook = (ref ConsoleKeyInfo keyInfo) =>
-                {
-                    if (keyInfo.Modifiers == ConsoleModifiers.Control)
-                    {
-                        if (keyInfo.Key == ConsoleKey.C)
-                        {// Ctrl+C
-                            return KeyInputHookResult.Cancel;
-                        }
-
-                        return KeyInputHookResult.NotHandled;
-                    }
-
-                    return KeyInputHookResult.NotHandled;
-                },
             };
 
             // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
-            while (!this.executionStack.TopCancellationToken.IsCancellationRequested)
+            using (var scope = this.executionStack.Push((x, signal) =>
             {
-                var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
-                if (!result.IsSuccess)
+                if (signal == ExecutionSignal.Exit)
                 {
-                    break;
+                    x.CancellationTokenSource.Cancel();
                 }
-
-                if (string.Compare(result.Text, "exit", true) == 0)
-                {// Exit
-                    return;
-                }
-
-                using (var scope = this.executionStack.Push())
+            }))
+            {
+                while (!scope.CancellationToken.IsCancellationRequested)
                 {
-                    var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
-                    if (netResult != NetResult.Success)
+                    var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
+                    if (!result.IsSuccess)
                     {
-                        this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
                         break;
                     }
 
-                    await receiver.ReturnInputControl().ConfigureAwait(false);
-                }
-
-                /*using (var scope = this.serviceProvider.CreateScope())
-                {
-                    var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
-                    if (userInterfaceContext.InitializeRemote(connection))
-                    {
-
+                    if (string.Compare(result.Text, "exit", true) == 0)
+                    {// Exit
+                        return;
                     }
-                }*/
 
-                /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
-                this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
+                    using (var scope2 = this.executionStack.Push((x, signal) =>
+                    {
+                        if (signal == ExecutionSignal.Cancel)
+                        {
+                            x.CancellationTokenSource.Cancel();
+                            this.userInterfaceService.WriteLineError("Canceled");
+                        }
+                    }))
+                    {
+                        var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
+                        if (netResult != NetResult.Success)
+                        {
+                            this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
+                            break;
+                        }
 
-                await this.nestedcommand.MainAsync();*/
+                        await receiver.ReturnInputControl().ConfigureAwait(false);
+                    }
+                }
             }
+
+            this.userInterfaceService.WriteLineError("Canceled");
+            await Task.Delay(500);
         }
     }
 }
