@@ -152,9 +152,10 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 },
             };
 
-            while (!this.unitContext.Core.IsTerminated)
+            // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
+            while (!this.executionStack.TopCancellationToken.IsCancellationRequested)
             {
-                var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
+                var result = await this.simpleConsole.ReadLine(readineOptions, this.executionStack.TopCancellationToken).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {
                     break;
@@ -192,22 +193,5 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 await this.nestedcommand.MainAsync();*/
             }
         }
-    }
-
-    private static KeyInputHookResult KeyInput(ref ConsoleKeyInfo keyInfo)
-    {
-        if (keyInfo.Modifiers == ConsoleModifiers.Control)
-        {
-            if (keyInfo.Key == ConsoleKey.Q)
-            {// Ctrl+Q: Cancel
-                return KeyInputHookResult.Handled;
-            }
-            else if (keyInfo.Key == ConsoleKey.C)
-            {// Ctrl+C: Exit
-                return KeyInputHookResult.Cancel;
-            }
-        }
-
-        return KeyInputHookResult.NotHandled;
     }
 }

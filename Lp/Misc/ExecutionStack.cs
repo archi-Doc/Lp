@@ -82,6 +82,8 @@ public class ExecutionStack
     /// </remarks>
     public Scope Root { get; }
 
+    public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;
+
     private readonly Lock syncObject = new();
     private readonly List<Scope> list = new();
     private int incrementalId;
