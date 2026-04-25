@@ -179,7 +179,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 }
             }
 
-            this.userInterfaceService.WriteLineError("Canceled");
+            this.userInterfaceService.WriteLineError("Exit");
             await Task.Delay(500);
         }
     }
