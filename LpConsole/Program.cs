@@ -74,7 +74,7 @@ public class Program
         // .ConfigureBuilder(new LpConsole.Example.ExampleUnit.Builder()); // Alternative
 
         var args = SimpleParserHelper.GetCommandLineArguments();
-        SimpleCommandLine.SimpleParserHelper.AqddEnvironmentVariable(ref args, "lpargs");
+        SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
 
         unit = builder.Build(args);
 
@@ -92,8 +92,10 @@ public class Program
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
             await unit.Run(options);
 
+            Console.WriteLine("a");
             await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
                                                         // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
+            Console.WriteLine("b");
             ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
         }
         finally

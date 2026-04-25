@@ -855,7 +855,8 @@ public class LpUnit
             MultilinePrompt = LpConstants.MultilinePromptString,
             KeyInputHook = (ref keyInfo) =>
             {
-                if (keyInfo.Key == ConsoleKey.C)
+                if (keyInfo.Modifiers == ConsoleModifiers.Control &&
+                keyInfo.Key == ConsoleKey.C)
                 {// Ctrl+C
                     _ = this.TryTerminate();
                     return KeyInputHookResult.Handled;
