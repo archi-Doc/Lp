@@ -24,15 +24,17 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
     private readonly UnitContext unitContext;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
+    private readonly LpUnit lpUnit;
     private readonly LpService lpService;
     private readonly NetTerminal netTerminal;
     private readonly RobustConnection.Factory robustConnectionFactory;
     private readonly SimpleConsole simpleConsole;
     private readonly ExecutionStack executionStack;
 
-    public RemoteSubcommand(UnitContext unitContext, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole, ExecutionStack executionStack)
+    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole, ExecutionStack executionStack)
     {
         this.unitContext = unitContext;
+        this.lpUnit = lpUnit;
         var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -136,16 +138,12 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 {
                     if (keyInfo.Modifiers == ConsoleModifiers.Control)
                     {
-                        /*if (keyInfo.Key == ConsoleKey.Q)
-                        {// Ctrl+Q: Cancel
-                            this.executionStack.CancelTop();
-                            return KeyInputHookResult.Handled;
-                        }*/
-
-                        /*if (keyInfo.Key == ConsoleKey.C)
-                        {// Ctrl+C: Exit
+                        if (keyInfo.Key == ConsoleKey.C)
+                        {// Ctrl+C
                             return KeyInputHookResult.Cancel;
-                        }*/
+                        }
+
+                        return KeyInputHookResult.NotHandled;
                     }
 
                     return KeyInputHookResult.NotHandled;
