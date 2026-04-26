@@ -51,20 +51,20 @@ public class ExecutionStack
         /// </summary>
         public CancellationToken CancellationToken { get; }
 
-        public TaskCompletionSource TaskCompletionSource
-        {
-            get
-            {
-                var current = Volatile.Read(ref field);
-                if (current is not null)
-                {
-                    return current;
-                }
+        private TaskCompletionSource? completionSource;
 
-                current = new(TaskCreationOptions.RunContinuationsAsynchronously);
-                var original = Interlocked.CompareExchange(ref field, current, null);
-                return original ?? current;
+        public Task Completion => this.GetCompletionSource().Task;
+
+        internal TaskCompletionSource GetCompletionSource()
+        {
+            var current = Volatile.Read(ref this.completionSource);
+            if (current is not null)
+            {
+                return current;
             }
+
+            var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
         }
 
         /// <summary>
@@ -253,12 +253,12 @@ public class ExecutionStack
         }
     }
 
-    public bool TrySet(long id)
+    public bool TrySetCompleted(long id)
     {
         var scope = this.Peek();
         if (scope is not null)
         {
-            scope.TaskCompletionSource.TrySetResult();
+            scope.GetCompletionSource().TrySetResult();
             return true;
         }
         else

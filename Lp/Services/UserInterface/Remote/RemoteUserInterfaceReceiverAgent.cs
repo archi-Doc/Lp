@@ -63,7 +63,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.ReturnInputControl(long id, CancellationToken cancellationToken)
     {
-        this.executionStack.TrySet(id);
+        this.executionStack.TrySetCompleted(id);
         return Task.CompletedTask;
     }
 }

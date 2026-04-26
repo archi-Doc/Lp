@@ -176,7 +176,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
                         try
                         {
-                            await scope2.TaskCompletionSource.Task.WaitAsync(scope2.CancellationToken).ConfigureAwait(false);
+                            await scope2.Completion.WaitAsync(scope2.CancellationToken).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)
                         {
