@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("list-command-group")]
-    public class ListCommandGroup : ISimpleCommandAsync
+    public class ListCommandGroup : ISimpleCommand
     {
         public ListCommandGroup(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
         {
@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.userInterfaceService = userInterfaceService;
         }
 
-        public async Task RunAsync(string[] args)
+        public async Task Execute(string[] args, CancellationToken cancellationToken)
         {
             var names = this.vaultControl.Root.GetNames(CommandGroup.Prefix).Select(x => x.Substring(CommandGroup.Prefix.Length)).ToArray();
             this.userInterfaceService.WriteLine(string.Join(' ', names));

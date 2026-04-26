@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.T3cs.Domain;
 
 [SimpleCommand("show-domain-machine")]
-public class ShowDomainMachineSubcommand : ISimpleCommandAsync<ShowDomainMachineOptions>
+public class ShowDomainMachineSubcommand : ISimpleCommand<ShowDomainMachineOptions>
 {// DomainMachine: CreditPeer, RelayPeer, DataPeer
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
@@ -18,7 +18,7 @@ public class ShowDomainMachineSubcommand : ISimpleCommandAsync<ShowDomainMachine
         this.bigMachine = bigMachine;
     }
 
-    public async Task RunAsync(ShowDomainMachineOptions options, string[] args)
+    public async Task Execute(ShowDomainMachineOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!DomainMachineHelper.TryParseDomainMachineKind(options.Kind, out var kind))
         {

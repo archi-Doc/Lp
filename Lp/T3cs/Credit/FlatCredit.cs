@@ -1,32 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Crypto;
-
 namespace Lp.T3cs;
-
-#pragma warning disable SA1401
-
-[TinyhandObject]
-[ValueLinkObject(Isolation = IsolationLevel.ReadCommitted)]
-public partial class EquityCreditPoint : StoragePoint<EquityCredit>
-{
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
-    [Key(1)]
-    public Credit Credit { get; private set; }
-
-    public EquityCreditPoint(Credit credit)
-        : base()
-    {
-        this.Credit = credit;
-    }
-}
 
 /// <summary>
 /// Represents a full credit entity, including its credit, information, and associated owners.<br/>
 /// This class needs to be thread-safe.
 /// </summary>
 [TinyhandObject(Structural = true)]
-public partial record EquityCredit : CreditBase
+public partial record FlatCredit : CreditBase
 {
     #region FieldAndProperty
 
@@ -52,11 +33,14 @@ public partial record EquityCredit : CreditBase
     public CreditInformation CreditInformation { get; private set; } = CreditInformation.UnsafeConstructor();
 
     [Key(3)]
-    private OwnerDataPoint.GoshujinClass owners = new();
+    public MergeableEvidence.GoshujinClass Evidences { get; private set; } = new();
+
+    [Key(4)]
+    public AccountableLinkage.GoshujinClass Linkages { get; private set; } = new();
 
     #endregion
 
-    public EquityCredit()
+    public FlatCredit()
     {
     }
 
@@ -64,16 +48,5 @@ public partial record EquityCredit : CreditBase
     {
         this.Credit = credit;
         this.CreditIdentity = creditIdentity;
-    }
-
-    public ValueTask<OwnerData?> GetOwnerData(SignaturePublicKey ownerPublicKey)
-    {
-        return this.owners.TryGet(ownerPublicKey);
-    }
-
-    public OwnerDataPoint? GetOwnerDataPoint(SignaturePublicKey ownerPublicKey)
-    {
-        var point = this.owners.Find(ownerPublicKey);
-        return point;
     }
 }

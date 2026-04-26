@@ -15,7 +15,7 @@ public class OpenDataDirectorySubcommand : ISimpleCommand
         this.lpBase = lpBase;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         try
         {

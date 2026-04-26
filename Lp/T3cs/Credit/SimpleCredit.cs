@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Lp.T3cs;
+/*namespace Lp.T3cs;
 
 #pragma warning disable SA1401
 
@@ -29,4 +29,4 @@ public partial record SimpleCredit : ICredit
 
     [Key(3)]
     public StoragePoint<OwnerData.GoshujinClass> Owners { get; protected set; } = new();
-}
+}*/

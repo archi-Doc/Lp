@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("change-authority-password")]
-public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+public class ChangeAuthorityPasswordSubcommand : ISimpleCommand<AuthoritySubcommandNameOptions>
 {
     public ChangeAuthorityPasswordSubcommand(ILogger<ChangeAuthorityPasswordSubcommand> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl)
     {
@@ -16,7 +16,7 @@ public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySu
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNameOptions options, string[] args)
+    public async Task Execute(AuthoritySubcommandNameOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!this.authorityControl.Exists(options.AuthorityName))
         {// Not found
@@ -42,7 +42,7 @@ public class ChangeAuthorityPasswordSubcommand : ISimpleCommandAsync<AuthoritySu
                 break;
             }
 
-            await this.userInterfaceService.Notify(this.logger, LogLevel.Warning, Hashed.Dialog.Password.NotMatch);
+            this.userInterfaceService.WriteLineWarning(Hashed.Dialog.Password.NotMatch);
         }
 
         result = await this.userInterfaceService.ReadPasswordAndConfirm(true, Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);

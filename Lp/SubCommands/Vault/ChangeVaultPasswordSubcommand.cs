@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("change-vault-password")]
-public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
+public class ChangeVaultPasswordSubcommand : ISimpleCommand
 {
     public ChangeVaultPasswordSubcommand(ILogger<ChangeVaultPasswordSubcommand> logger, IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
@@ -15,7 +15,7 @@ public class ChangeVaultPasswordSubcommand : ISimpleCommandAsync
         this.vaultControl = vaultControl;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Vault.ChangePassword);
 

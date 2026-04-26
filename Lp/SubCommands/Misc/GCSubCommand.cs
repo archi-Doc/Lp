@@ -13,7 +13,7 @@ public class GCSubcommand : ISimpleCommand
         this.LpUnit = lpUnit;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write(Hashed.Subcommands.GC.Start);
         GC.Collect();

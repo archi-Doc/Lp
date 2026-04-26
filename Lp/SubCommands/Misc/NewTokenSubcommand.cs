@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("new-token")]
-public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
+public class NewTokenSubcommand : ISimpleCommand<NewTokenOptions>
 {
     public NewTokenSubcommand(IConsoleService consoleService, ILogger<NewTokenSubcommand> logger, AuthorityControl authorityControl)
     {
@@ -16,7 +16,7 @@ public class NewTokenSubcommand : ISimpleCommandAsync<NewTokenOptions>
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(NewTokenOptions options, string[] args)
+    public async Task Execute(NewTokenOptions options, string[] args, CancellationToken cancellationToken)
     {
         // Authority key
         var authority = await this.authorityControl.GetAuthority(options.AuthorityName);

@@ -10,6 +10,7 @@ using Arc.Crypto;
 using Lp.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
+using SimplePrompt;
 
 namespace LpConsole;
 
@@ -29,7 +30,12 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            try
+            unit?.Context.ServiceProvider.GetRequiredService<LpUnit>().ExecutionStack.Signal(ExecutionSignal.Exit);
+
+            // var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
+            // SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);
+
+            /*try
             {
                 var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
                 if (lpUnit != null)
@@ -44,7 +50,7 @@ public class Program
             catch
             {
                 ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            }
+            }*/
         };
 
         var builder = new LpUnit.Builder()
@@ -86,10 +92,12 @@ public class Program
         try
         {
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
-            await unit.RunAsync(options);
+            await unit.Run(options);
 
-            await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-                                                               // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
+            Console.WriteLine("a");
+            await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
+                                                        // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
+            Console.WriteLine("b");
             ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
         }
         finally

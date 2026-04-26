@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("inspect-owner")]
-public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
+public class InspectOwnerSubcommand : ISimpleCommand<InspectOwnerOptions>
 {
     public InspectOwnerSubcommand(IUserInterfaceService userInterfaceService, ILogger<InspectOwnerOptions> logger, LpService lpService)
     {
@@ -15,7 +16,7 @@ public class InspectOwnerSubcommand : ISimpleCommandAsync<InspectOwnerOptions>
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(InspectOwnerOptions option, string[] args)
+    public async Task Execute(InspectOwnerOptions option, string[] args, CancellationToken cancellationToken)
     {
         var r = await this.lpService.ParseAuthorityAndCredit(option.Source);
         if (!r.IsSuccess)

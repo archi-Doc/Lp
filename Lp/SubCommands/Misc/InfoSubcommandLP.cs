@@ -12,7 +12,7 @@ public class InfoSubcommandLp : ISimpleCommand<DumpSubcommandInfoOptions>
         this.LpUnit = lpUnit;
     }
 
-    public void Run(DumpSubcommandInfoOptions options, string[] args)
+    public async Task Execute(DumpSubcommandInfoOptions options, string[] args, CancellationToken cancellationToken)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
         var logWriter = this.LpUnit.LogUnit.RootLogService.GetWriter<InfoSubcommandLp>(LogLevel.Information);

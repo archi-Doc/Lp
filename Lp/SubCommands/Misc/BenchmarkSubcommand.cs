@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("benchmark", Description = "Executes a simple benchmark")]
-public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
+public class BenchmarkSubcommand : ISimpleCommand<BenchmarkOptions>
 {
     public const int MaxRepetitions = 100;
     public const string CurveName = "secp256r1";
@@ -28,7 +28,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         }
     }
 
-    public async Task RunAsync(BenchmarkOptions options, string[] args)
+    public async Task Execute(BenchmarkOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (options.Repetition < 1)
         {
@@ -41,17 +41,17 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
         this.logger.GetWriter()?.Write($"Benchmark subcommand: {options.ToString()}");
 
-        await this.RunBenchmark(options);
+        await this.RunBenchmark(options, cancellationToken);
     }
 
-    private async Task RunBenchmark(BenchmarkOptions options)
+    private async Task RunBenchmark(BenchmarkOptions options, CancellationToken cancellationToken)
     {
-        await this.RunCryptoBenchmark(options);
-        await this.RunCrypto2Benchmark(options);
-        await this.RunSerializeBenchmark(options);
+        await this.RunCryptoBenchmark(options, cancellationToken);
+        await this.RunCrypto2Benchmark(options, cancellationToken);
+        await this.RunSerializeBenchmark(options, cancellationToken);
     }
 
-    private async Task RunCryptoBenchmark(BenchmarkOptions options)
+    private async Task RunCryptoBenchmark(BenchmarkOptions options, CancellationToken cancellationToken)
     {
         if (this.seedKey == null)
         {
@@ -66,7 +66,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         var benchTimer = new BenchTimer();
         for (var r = 0; r < options.Repetition; r++)
         {
-            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();
 
             benchTimer.Start();
 
@@ -83,7 +83,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         this.logger.GetWriter()?.Write(benchTimer.GetResult("Sign & Verify"));
     }
 
-    private async Task RunCrypto2Benchmark(BenchmarkOptions options)
+    private async Task RunCrypto2Benchmark(BenchmarkOptions options, CancellationToken cancellationToken)
     {
         if (this.seedKey == null)
         {
@@ -97,7 +97,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         var benchTimer = new BenchTimer();
         for (var r = 0; r < options.Repetition; r++)
         {
-            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();
 
             benchTimer.Start();
 
@@ -114,14 +114,14 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         this.logger.GetWriter()?.Write(benchTimer.GetResult("Sign & Decompress & Verify"));
     }
 
-    private async Task RunSerializeBenchmark(BenchmarkOptions options)
+    private async Task RunSerializeBenchmark(BenchmarkOptions options, CancellationToken cancellationToken)
     {
         var obj = new ObjectH2H();
 
         var benchTimer = new BenchTimer();
         for (var r = 0; r < options.Repetition; r++)
         {
-            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();
 
             benchTimer.Start();
 

@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("show-command-group")]
-    public class ShowCommandGroup : ISimpleCommandAsync<ExecuteOptions>
+    public class ShowCommandGroup : ISimpleCommand<ExecuteOptions>
     {
         public ShowCommandGroup(ILogger<ShowCommandGroup> logger, VaultControl vaultControl)
         {
@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.vaultControl = vaultControl;
         }
 
-        public async Task RunAsync(ExecuteOptions option, string[] args)
+        public async Task Execute(ExecuteOptions option, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(option.Name);
             if (!this.vaultControl.Root.TryGet<string[]>(name, out var commands, out _))

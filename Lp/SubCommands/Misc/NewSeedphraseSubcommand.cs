@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("new-seedphrase")]
-public class NewSeedphraseSubcommand : ISimpleCommandAsync
+public class NewSeedphraseSubcommand : ISimpleCommand
 {
     public NewSeedphraseSubcommand(ILogger<NewSeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit)
     {
@@ -14,7 +14,7 @@ public class NewSeedphraseSubcommand : ISimpleCommandAsync
         this.lpUnit = lpUnit;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"Create seedphrase");
 

@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("new-authority")]
-public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNewOptions>
+public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptions>
 {
     public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl)
     {
@@ -14,7 +14,7 @@ public class NewAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNew
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNewOptions option, string[] args)
+    public async Task Execute(AuthoritySubcommandNewOptions option, string[] args, CancellationToken cancellationToken)
     {
         byte[]? seed = default;
         if (option.Seedphrase is not null)

@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("sign-evolproof")]
-public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
+public class SignEvolProofSubcommand : ISimpleCommand<SignOptions>
 {
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
@@ -19,7 +20,7 @@ public class SignEvolProofSubcommand : ISimpleCommandAsync<SignOptions>
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(SignOptions options, string[] args)
+    public async Task Execute(SignOptions options, string[] args, CancellationToken cancellationToken)
     {
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.KeyCode);
         if (seedKey is null)

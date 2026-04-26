@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("delete-all", Description = "Delete all crystal data.")]
-public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
+public class CrystalDataSubcommandDeleteAll : ISimpleCommand
 {
     public CrystalDataSubcommandDeleteAll(IConsoleService consoleService, CrystalControl crystal)
     {
@@ -13,7 +13,7 @@ public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
         this.crystalControl = crystal;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         await this.crystalControl.DeleteAll();
 

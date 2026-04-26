@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.MergerClient;
 
 [SimpleCommand("create-credit")]
-public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
+public class CreateCreditCommand : ISimpleCommand<CreateCreditOptions>
 {
     public CreateCreditCommand(ILogger<CreateCreditCommand> logger, NetTerminal netTerminal, NestedCommand nestedcommand, AuthorityControl authorityControl, RobustConnection.Factory robustConnectionFactory)
     {
@@ -18,7 +18,7 @@ public class CreateCreditCommand : ISimpleCommandAsync<CreateCreditOptions>
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task RunAsync(CreateCreditOptions options, string[] args)
+    public async Task Execute(CreateCreditOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (this.nestedcommand.RobustConnection is not { } robustConnection ||
             this.nestedcommand.Authority is not { } authority)

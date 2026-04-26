@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using SimpleCommandLine;
 
@@ -11,7 +12,7 @@ namespace Lp.Subcommands;
 /// Do not forget to register the subcommand type with context.AddSubcommand().
 /// </summary>
 [SimpleCommand(Name)]
-public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options>
+public class TemplateSubcommand : ISimpleCommand<TemplateSubcommand.Options>
 {
     public const string Name = "template-subcommand";
 
@@ -40,7 +41,7 @@ public class TemplateSubcommand : ISimpleCommandAsync<TemplateSubcommand.Options
         }
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         this.userInterfaceService.WriteLine(LogLevel.Information, "Template subcommand");
         this.userInterfaceService.WriteLineInformation("Default");

@@ -9,7 +9,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("add-certificate-relay")]
-public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateRelayOptions>
+public class AddCertificateRelaySubcommand : ISimpleCommand<AddCertificateRelayOptions>
 {
     public AddCertificateRelaySubcommand(ILogger<AddCertificateRelaySubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, AuthorityControl authorityControl, VaultControl vaultControl, LpService lpService)
     {
@@ -21,7 +21,7 @@ public class AddCertificateRelaySubcommand : ISimpleCommandAsync<AddCertificateR
         this.lpService = lpService;
     }
 
-    public async Task RunAsync(AddCertificateRelayOptions options, string[] args)
+    public async Task Execute(AddCertificateRelayOptions options, string[] args, CancellationToken cancellationToken)
     {
         RelayCircuit relayCircuit = options.Incoming switch
         {

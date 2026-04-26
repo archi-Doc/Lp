@@ -9,7 +9,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("punch")]
-public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
+public class PunchSubcommand : ISimpleCommand<PunchOptions>
 {
     public PunchSubcommand(ILogger<PunchSubcommand> logger, NetUnit netUnit)
     {
@@ -17,7 +17,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         this.netUnit = netUnit;
     }
 
-    public async Task RunAsync(PunchOptions options, string[] args)
+    public async Task Execute(PunchOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.DestinationNode, out var node))
         {

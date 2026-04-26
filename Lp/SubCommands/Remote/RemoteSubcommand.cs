@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.NetServices;
+using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -9,7 +10,7 @@ using SimplePrompt;
 namespace Lp.Subcommands;
 
 [SimpleCommand("remote")]
-public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
+public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 {
     public record Options
     {
@@ -23,14 +24,17 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
     private readonly UnitContext unitContext;
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
+    private readonly LpUnit lpUnit;
     private readonly LpService lpService;
     private readonly NetTerminal netTerminal;
     private readonly RobustConnection.Factory robustConnectionFactory;
     private readonly SimpleConsole simpleConsole;
+    private readonly ExecutionStack executionStack;
 
-    public RemoteSubcommand(UnitContext unitContext, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole)
+    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole, ExecutionStack executionStack)
     {
         this.unitContext = unitContext;
+        this.lpUnit = lpUnit;
         var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -38,9 +42,10 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
         this.netTerminal = netTerminal;
         this.robustConnectionFactory = robustConnectionFactory;
         this.simpleConsole = simpleConsole;
+        this.executionStack = executionStack;
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
@@ -117,10 +122,12 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
 
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
-            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is { } receiver)
+            if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is not { } receiver)
             {
-                receiver.Prefix = $"[{nodeName}] ";
+                return;
             }
+
+            receiver.Prefix = $"[{nodeName}] ";
 
             var readineOptions = new ReadLineOptions()
             {
@@ -129,43 +136,51 @@ public class RemoteSubcommand : ISimpleCommandAsync<RemoteSubcommand.Options>
                 MultilinePrompt = LpConstants.MultilinePromptString,
             };
 
-            while (!this.unitContext.Core.IsTerminated)
+            // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
+            using (var scope = this.executionStack.Push((x, signal) =>
             {
-                var result = await this.simpleConsole.ReadLine(readineOptions, this.unitContext.Core.CancellationToken).ConfigureAwait(false);
-
-                if (!result.IsSuccess)
+                if (signal == ExecutionSignal.Exit)
                 {
-                    break;
+                    x.CancellationTokenSource.Cancel();
                 }
-
-                if (string.Compare(result.Text, "exit", true) == 0)
-                {// Exit
-                    return;
-                }
-                else
+            }))
+            {
+                while (scope.CanContinue)
                 {
-                    var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
-                    if (netResult != NetResult.Success)
+                    var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
+                    if (!result.IsSuccess)
                     {
-                        this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
                         break;
                     }
-                }
 
-                /*using (var scope = this.serviceProvider.CreateScope())
-                {
-                    var userInterfaceContext = scope.ServiceProvider.GetRequiredService<UserInterfaceContext>();
-                    if (userInterfaceContext.InitializeRemote(connection))
-                    {
-
+                    if (string.Compare(result.Text, "exit", true) == 0)
+                    {// Exit
+                        return;
                     }
-                }*/
 
-                /*this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
-                this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
+                    using (var scope2 = this.executionStack.Push((x, signal) =>
+                    {
+                        if (signal == ExecutionSignal.Cancel)
+                        {
+                            x.CancellationTokenSource.Cancel();
+                            this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
+                        }
+                    }))
+                    {
+                        var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
+                        if (netResult != NetResult.Success)
+                        {
+                            this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
+                            break;
+                        }
 
-                await this.nestedcommand.MainAsync();*/
+                        await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
+                    }
+                }
             }
+
+            this.userInterfaceService.WriteLineError(Hashed.Dialog.Exit);
+            await Task.Delay(LpParameters.ExitDelayMilliseconds);
         }
     }
 }

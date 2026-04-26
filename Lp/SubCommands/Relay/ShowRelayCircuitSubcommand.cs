@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.Relay;
 
 [SimpleCommand("show-relay-circuit", Description = "Display relay information")]
-public class ShowRelayCircuitSubcommand : ISimpleCommandAsync
+public class ShowRelayCircuitSubcommand : ISimpleCommand
 {
     public ShowRelayCircuitSubcommand(ILogger<ShowRelayCircuitSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal, IRelayControl relayControl)
     {
@@ -16,7 +16,7 @@ public class ShowRelayCircuitSubcommand : ISimpleCommandAsync
         this.relayControl = relayControl;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {// this.logger.GetWriter()?.Write
         string st;
         this.userInterfaceService.WriteLine("Relay information");

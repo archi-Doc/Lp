@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("new-command-group")]
-    public class NewCommandGroup : ISimpleCommandAsync<NewOptions>
+    public class NewCommandGroup : ISimpleCommand<NewOptions>
     {
         public NewCommandGroup(ILogger<NewOptions> logger, VaultControl vaultControl)
         {
@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.vaultControl = vaultControl;
         }
 
-        public async Task RunAsync(NewOptions options, string[] args)
+        public async Task Execute(NewOptions options, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(options.Name);
             if (this.vaultControl.Root.Contains(name))

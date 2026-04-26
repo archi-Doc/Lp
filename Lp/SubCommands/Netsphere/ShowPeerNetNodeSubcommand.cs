@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("show-peer-netnode")]
-public class ShowPeerNetNodeSubcommand : ISimpleCommandAsync
+public class ShowPeerNetNodeSubcommand : ISimpleCommand
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.ShowOwnNodeSubcommand));
     public ShowPeerNetNodeSubcommand(ILogger<ShowPeerNetNodeSubcommand> logger, IUserInterfaceService userInterfaceService, NetStats netStats)
     {
@@ -15,7 +15,7 @@ public class ShowPeerNetNodeSubcommand : ISimpleCommandAsync
         this.netStats = netStats;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var node = this.netStats.PeerNetNode;
         this.userInterfaceService.WriteLine($"Peer Netnode: {node?.ToString()}");

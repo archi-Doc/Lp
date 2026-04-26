@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -20,8 +21,8 @@ public class NestedCommand : NestedCommand<NestedCommand>
         group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
-    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
-        : base(context, core, simpleConsole)
+    public NestedCommand(UnitContext context)
+        : base(context)
     {
         this.ReadLineOptions = new ReadLineOptions
         {
@@ -36,7 +37,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
 }
 
 [SimpleCommand("merger-admin")]
-public class Command : ISimpleCommandAsync<CommandOptions>
+public class Command : ISimpleCommand<CommandOptions>
 {
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
@@ -53,7 +54,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task RunAsync(CommandOptions options, string[] args)
+    public async Task Execute(CommandOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {

@@ -4,7 +4,7 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
-[TinyhandObject(Structural = true)]
+[TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.ReadCommitted)]
 public partial class OwnerDataPoint : StoragePoint<OwnerData>
 {
@@ -12,10 +12,8 @@ public partial class OwnerDataPoint : StoragePoint<OwnerData>
     [Key(1)]
     public SignaturePublicKey OwnerPublicKey { get; private set; }
 
-    public OwnerDataPoint(SignaturePublicKey ownerPublicKey)
-        : base()
+    public OwnerDataPoint()
     {
-        this.OwnerPublicKey = ownerPublicKey;
     }
 }
 
@@ -25,14 +23,9 @@ public partial class OwnerDataPoint : StoragePoint<OwnerData>
 /// For changes to Evidences, TryLock() is unnecessary since the instance remains the same.<br/>
 /// Instead, acquire a lock with lock (this.Evidence.SyncObject).
 /// </summary>
-[TinyhandObject(Structural = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead, Restricted = true)]
 public sealed partial record OwnerData // : ITinyhandCustomJournal
 {
-    public OwnerData()
-    {
-    }
-
     [Key(0)]
     [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
     public SignaturePublicKey PublicKey { get; private set; }
@@ -42,6 +35,15 @@ public sealed partial record OwnerData // : ITinyhandCustomJournal
 
     [Key(2)]
     public AccountableLinkage.GoshujinClass Linkages { get; private set; } = new();
+
+    public OwnerData()
+    {
+    }
+
+    public void Initialize(SignaturePublicKey ownerPublicKey)
+    {
+        this.PublicKey = ownerPublicKey;
+    }
 
     /*
     void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)

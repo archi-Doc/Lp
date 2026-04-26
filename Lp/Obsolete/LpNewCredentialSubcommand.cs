@@ -9,7 +9,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.MergerRemote;
 
 [SimpleCommand("lp-new-credential", Alias = "lpnc")]
-public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOptions>
+public class LpNewCredentialSubcommand : ISimpleCommand<LpNewCredentialOptions>
 {
     public LpNewCredentialSubcommand(ILogger<LpNewCredentialSubcommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, AuthorityControl authorityControl, Credentials credentials)
     {
@@ -20,7 +20,7 @@ public class LpNewCredentialSubcommand : ISimpleCommandAsync<LpNewCredentialOpti
         this.credentials = credentials;
     }
 
-    public async Task RunAsync(LpNewCredentialOptions options, string[] args)
+    public async Task Execute(LpNewCredentialOptions options, string[] args)
     {
         if (await this.nestedcommand.RobustConnection.Get(this.logger) is not { } connection)
         {

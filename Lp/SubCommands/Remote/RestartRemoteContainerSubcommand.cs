@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("restart-remote-container")]
-public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemoteContainerOptions>
+public class RestartRemoteContainerSubcommand : ISimpleCommand<RestartRemoteContainerOptions>
 {
     private const int WaitIntervalInSeconds = 10;
     private const int PingIntervalInSeconds = 1;
@@ -20,7 +20,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommandAsync<RestartRemot
         this.netTerminal = terminal;
     }
 
-    public async Task RunAsync(RestartRemoteContainerOptions options, string[] args)
+    public async Task Execute(RestartRemoteContainerOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (await NetHelper.TryGetNetNode(this.netTerminal, options.RunnerNode) is not { } netNode)
         {

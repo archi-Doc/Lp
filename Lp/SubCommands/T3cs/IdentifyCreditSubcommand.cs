@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("identify-credit", Description = "Create a Credit from CreditIdentity")]
-public class IdentifyCreditSubcommand : ISimpleCommandAsync
+public class IdentifyCreditSubcommand : ISimpleCommand
 {
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
@@ -17,7 +17,7 @@ public class IdentifyCreditSubcommand : ISimpleCommandAsync
         this.logger = logger;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         if (args.Length == 0)
         {

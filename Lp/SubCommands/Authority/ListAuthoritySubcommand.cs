@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("list-authority")]
-public class ListAuthoritySubcommand : ISimpleCommandAsync
+public class ListAuthoritySubcommand : ISimpleCommand
 {
     public ListAuthoritySubcommand(IUserInterfaceService userInterfaceService, AuthorityControl authorityControl)
     {
@@ -14,7 +14,7 @@ public class ListAuthoritySubcommand : ISimpleCommandAsync
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var names = this.authorityControl.GetNames();
         this.userInterfaceService.WriteLine(string.Join(' ', names));

@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.VaultCommand;
 
 [SimpleCommand("list-vault")]
-public class ListVaultSubcommand : ISimpleCommandAsync
+public class ListVaultSubcommand : ISimpleCommand
 {
     public ListVaultSubcommand(IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
@@ -14,7 +14,7 @@ public class ListVaultSubcommand : ISimpleCommandAsync
         this.vaultControl = vaultControl;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var names = this.vaultControl.Root.GetNames();
         this.userInterfaceService.WriteLine(string.Join(' ', names));

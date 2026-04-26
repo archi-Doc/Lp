@@ -30,6 +30,16 @@ namespace Lp;
 
 public class LpUnit
 {
+    public static readonly Type[] RemoteSubcommands = [
+        typeof(FreezeSubcommand),
+        typeof(InspectSubcommand),
+        typeof(BenchmarkSubcommand),
+        typeof(ShowOwnNetNodeSubcommand),
+        typeof(ShowNodeControlStateSubcommand),
+        typeof(TestSubcommand),
+        typeof(Lp.Subcommands.OperateCredit.OperateCreditCommand),
+    ];
+
     #region Builder
 
     public class Builder : UnitBuilder<Product>
@@ -56,6 +66,8 @@ public class LpUnit
                 context.AddSingleton<NetsphereLoggerOptions>();
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
+                context.AddSingleton<CreditService>();
+                context.AddSingleton<ExecutionStack>();//
 
                 // Console services
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
@@ -111,6 +123,7 @@ public class LpUnit
 
                 // Subcommands
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.FreezeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
@@ -134,6 +147,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNetNodeSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GetNodeInformationSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.LpDogmaGetInformationSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.OperateCredit.OperateCreditCommand));
 
                 context.AddSubcommand(typeof(Lp.Subcommands.Credential.ShowCredentialsCommand));
 
@@ -148,7 +162,7 @@ public class LpUnit
                 // Lp.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
                 Lp.Subcommands.ExportSubcommand.Configure(context);
-                Lp.Subcommands.FlagSubcommand.Configure(context);
+                // Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
                 Lp.Subcommands.CommandGroup.Configure(context);
@@ -156,6 +170,7 @@ public class LpUnit
                 Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
                 Lp.Subcommands.KeyCommand.Subcommand.Configure(context);
+                Lp.Subcommands.OperateCredit.NestedCommand.Configure(context);
                 Lp.Subcommands.T3cs.Subcommand.Configure(context);
             });
 
@@ -233,6 +248,11 @@ public class LpUnit
             return new CrystalUnit.Builder()
                 .ConfigureCrystal(context =>
                 {
+                    var defaultStorage = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Storage"))
+                    {
+                        // NumberOfHistoryFiles = 0,
+                    };
+
                     context.AddCrystal<LpSettings>(new()
                     {
                         NumberOfFileHistories = 0,
@@ -277,6 +297,14 @@ public class LpUnit
                     {
                         NumberOfFileHistories = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainControl.Filename),
+                    });
+
+                    context.AddCrystal<CreditPoint.GoshujinClass>(new CrystalConfiguration() with
+                    {
+                        SaveFormat = SaveFormat.Binary,
+                        NumberOfFileHistories = 3,
+                        FileConfiguration = new GlobalFileConfiguration("Credits"),
+                        StorageConfiguration = defaultStorage,
                     });
 
                     /*context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
@@ -361,7 +389,7 @@ public class LpUnit
             TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
-        public async Task RunAsync(LpOptions options)
+        public async Task Run(LpOptions options)
         {
             try
             {
@@ -437,7 +465,7 @@ public class LpUnit
             {// Start, Main loop
                 await lpUnit.Start(this.Context);
 
-                await lpUnit.MainAsync();
+                await lpUnit.Main(this.Context);
 
                 await this.Context.SendStop();
                 await lpUnit.TerminateAsync(this.Context);
@@ -456,13 +484,12 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, UnitCore core, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
+        this.ExecutionStack = executionStack;
         this.LogUnit = logUnit;
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
-        this.simpleConsole = simpleConsole;
-        this.simpleConsole.Core = core;
         this.LpBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetUnit = netsphere;
@@ -475,6 +502,27 @@ public class LpUnit
         this.RelayMerger = relayMerger;
         this.Linker = linker;
         this.lpService = lpService;
+
+        this.simpleConsole = simpleConsole;
+        this.simpleConsole.Core = core;
+        this.simpleConsole.KeyInputHook = (ref keyInfo) =>
+        {
+            if (keyInfo.Modifiers == ConsoleModifiers.Control)
+            {
+                if (keyInfo.Key == ConsoleKey.Q)
+                {// Ctrl+Q
+                    this.ExecutionStack.Signal(ExecutionSignal.Cancel);
+                    /*if (this.ExecutionStack.CancelTop())
+                    {
+                        this.UserInterfaceService.WriteLineError("Canceled");
+                    }*/
+
+                    return KeyInputHookResult.Handled;
+                }
+            }
+
+            return KeyInputHookResult.NotHandled;
+        };
 
         if (this.LpBase.Options.TestFeatures)
         {
@@ -500,14 +548,6 @@ public class LpUnit
         };
 
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
-
-        this.RemoteSubcommands = [
-            typeof(InspectSubcommand),
-            typeof(BenchmarkSubcommand),
-            typeof(ShowOwnNetNodeSubcommand),
-            typeof(ShowNodeControlStateSubcommand),
-            typeof(TestSubcommand),
-            ];
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -515,6 +555,8 @@ public class LpUnit
     public LogUnit LogUnit { get; }
 
     public UnitCore Core { get; }
+
+    public ExecutionStack ExecutionStack { get; }
 
     public IUserInterfaceService UserInterfaceService { get; }
 
@@ -538,8 +580,6 @@ public class LpUnit
 
     public DomainControl DomainControl { get; }
 
-    public Type[] RemoteSubcommands { get; }
-
     private readonly ILogger logger;
     private readonly SimpleParser subcommandParser;
     private readonly SimpleConsole simpleConsole;
@@ -556,7 +596,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    this.UserInterfaceService.WriteLineError(Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.NewSignature();
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -570,7 +610,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    this.UserInterfaceService.WriteLineError(Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.NewSignature();
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -663,7 +703,7 @@ public class LpUnit
             {// 1st: Tries to parse as SignaturePrivateKey, 2nd : Tries to get from Vault.
                 if (!this.VaultControl.Root.TryGetObject<SeedKey>(privault, out seedKey, out _))
                 {
-                    await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Merger.NoPrivateKey, privault);
+                    this.UserInterfaceService.WriteLineError(Hashed.Merger.NoPrivateKey, privault);
                     seedKey = SeedKey.New(KeyOrientation.Signature);
                     this.VaultControl.Root.AddObject(privault, seedKey);
                 }
@@ -740,8 +780,7 @@ public class LpUnit
         var logger = this.LogUnit.RootLogService.GetWriter<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
-        logger?.Write("Press Enter key to switch to console mode.");
-        logger?.Write("Press Ctrl+C to exit.");
+        logger?.Write("Press Ctrl+C to exit, Ctrl+Q to cancel the task");
         logger?.Write("Running");
     }
 
@@ -776,17 +815,17 @@ public class LpUnit
         return true;
     }
 
-    public bool Subcommand(string subcommand)
+    public Task Subcommand(string subcommand, CancellationToken cancellationToken)
     {
         if (subcommand == SimpleParser.HelpString)
         {
             this.subcommandParser.ShowHelp();
-            return true;
+            return Task.CompletedTask;
         }
         else if (subcommand == "h")
         {
             this.subcommandParser.ShowCommandList();
-            return true;
+            return Task.CompletedTask;
         }
 
         if (!this.subcommandParser.Parse(subcommand))
@@ -794,28 +833,20 @@ public class LpUnit
             if (this.subcommandParser.HelpCommand != string.Empty)
             {
                 this.subcommandParser.ShowHelp();
-                return true;
+                return Task.CompletedTask;
             }
             else
             {
                 this.UserInterfaceService.WriteLine("Invalid subcommand.");
-                return false;
+                return Task.CompletedTask;
             }
         }
 
-        this.subcommandParser.Run();
-        return true;
-
-        /*if (subcommandParser.HelpCommand != string.Empty)
-        {
-            return false;
-        }
-
-        this.ConsoleService.WriteLine();
-        return true;*/
+        return this.subcommandParser.Execute(cancellationToken);
+        // return Task.Run(() => this.subcommandParser.Execute(cancellationToken));
     }
 
-    private async Task MainAsync()
+    private async Task Main(UnitContext context)
     {
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
         var options = new ReadLineOptions()
@@ -823,38 +854,69 @@ public class LpUnit
             Prompt = LpConstants.PromptString,
             MultilineDelimiter = LpConstants.MultilineIndeitifierString,
             MultilinePrompt = LpConstants.MultilinePromptString,
+            /*KeyInputHook = (ref keyInfo) =>
+            {
+                if (keyInfo.Modifiers == ConsoleModifiers.Control &&
+                keyInfo.Key == ConsoleKey.C)
+                {// Ctrl+C
+                    _ = this.TryTerminate();
+                    return KeyInputHookResult.Handled;
+                }
+
+                return KeyInputHookResult.NotHandled;
+            },*/
         };
 
-        while (!this.Core.IsTerminated)
+        using (var scope = this.ExecutionStack.Push((scope, signal) =>
         {
-            var inputResult = await this.simpleConsole.ReadLine(options);
-            if (inputResult.Kind == InputResultKind.Terminated)
+            if (signal == ExecutionSignal.Exit)
             {
-                return;
+                _ = this.TryTerminate();
             }
-            else if (inputResult.Kind == InputResultKind.Canceled)
+        }))
+        {
+            while (!this.Core.IsTerminated)
             {
-                continue;
-            }
-
-            if (string.Equals(inputResult.Text, "exit", defaultComparison))
-            {// Exit
-                if (await this.TryTerminate(false))
-                {// Terminate
+                var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+                if (inputResult.Kind == InputResultKind.Terminated)
+                {
                     return;
                 }
-            }
-            else
-            {// Subcommand
-                try
+                else if (inputResult.Kind == InputResultKind.Canceled)
                 {
-                    this.Subcommand(inputResult.Text);
                     continue;
                 }
-                catch (Exception e)
-                {
-                    this.UserInterfaceService.WriteLine(e.ToString());
-                    break;
+
+                if (string.Equals(inputResult.Text, "exit", defaultComparison))
+                {// Exit
+                    if (await this.TryTerminate(false))
+                    {// Terminate
+                        return;
+                    }
+                }
+                else
+                {// Subcommand
+                    using (var scope2 = this.ExecutionStack.Push((x, signal) =>
+                    {
+                        if (signal == ExecutionSignal.Cancel)
+                        {
+                            x.CancellationTokenSource.Cancel();
+                            this.UserInterfaceService.WriteLineError("Canceled");
+                        }
+                    }))
+                    {
+                        try
+                        {
+                            await this.Subcommand(inputResult.Text, scope2.CancellationToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                        catch (Exception e)
+                        {
+                            this.UserInterfaceService.WriteLine(e.ToString());
+                        }
+                    }
                 }
             }
         }
@@ -885,7 +947,7 @@ public class LpUnit
         {// Failure
             if (!this.VaultControl.NewlyCreated)
             {
-                await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
+                this.UserInterfaceService.WriteLineError(Hashed.Vault.NoData, NetConstants.NodeSecretKeyName);
             }
 
             return;
@@ -893,7 +955,7 @@ public class LpUnit
 
         if (!this.NetUnit.NetBase.SetNodeSeedKey(key))
         {
-            await this.UserInterfaceService.Notify(default, LogLevel.Error, Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
+            this.UserInterfaceService.WriteLineError(Hashed.Vault.NoRestore, NetConstants.NodeSecretKeyName);
             return;
         }
     }

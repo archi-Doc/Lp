@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("get-node-information")]
-public class GetNodeInformationSubcommand : ISimpleCommandAsync
+public class GetNodeInformationSubcommand : ISimpleCommand
 {
     public GetNodeInformationSubcommand(ILogger<GetNodeInformationSubcommand> logger, IUserInterfaceService userInterfaceService, NetTerminal netTerminal)
     {
@@ -15,7 +15,7 @@ public class GetNodeInformationSubcommand : ISimpleCommandAsync
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         if (args.Length == 0)
         {

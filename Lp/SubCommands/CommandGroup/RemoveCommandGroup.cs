@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("remove-command-group")]
-    public class RemoveCommandGroup : ISimpleCommandAsync<ExecuteOptions>
+    public class RemoveCommandGroup : ISimpleCommand<ExecuteOptions>
     {
         public RemoveCommandGroup(ILogger<ExecuteOptions> logger, VaultControl vaultControl)
         {
@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.logger = logger;
         }
 
-        public async Task RunAsync(ExecuteOptions option, string[] args)
+        public async Task Execute(ExecuteOptions option, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(option.Name);
             if (this.vaultControl.Root.Remove(name))

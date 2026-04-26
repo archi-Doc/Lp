@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("options")]
-public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>
+public class ExportSubcommandOptions : ISimpleCommand<ExportSubcommandOptionsOptions>
 {
     public ExportSubcommandOptions(ILogger<ExportSubcommandOptions> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit)
     {
@@ -15,7 +15,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
         this.LpUnit = lpUnit;
     }
 
-    public async Task RunAsync(ExportSubcommandOptionsOptions options, string[] args)
+    public async Task Execute(ExportSubcommandOptionsOptions options, string[] args, CancellationToken cancellationToken)
     {
         try
         {

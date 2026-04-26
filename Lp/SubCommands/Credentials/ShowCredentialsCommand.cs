@@ -15,7 +15,7 @@ public class ShowCredentialsCommand : ISimpleCommand
         this.credentials = credentials;
     }
 
-    public void Run(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.userInterfaceService.WriteLine($"Evidences");
         foreach (var evidence in this.credentials.Nodes.ToArray())

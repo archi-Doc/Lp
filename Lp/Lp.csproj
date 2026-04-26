@@ -38,21 +38,21 @@
 
   <ItemGroup>
     <PackageReference Include="Arc.Collections" Version="1.33.0" />
-    <PackageReference Include="Arc.Crypto" Version="1.42.1" />
-    <PackageReference Include="Arc.Threading" Version="0.36.2" />
-    <PackageReference Include="Arc.Unit" Version="0.37.0" />
-    <PackageReference Include="BigMachines" Version="0.53.4" />
-    <PackageReference Include="CrystalData" Version="0.39.3" />
-    <PackageReference Include="Netsphere" Version="0.51.2" />
-    <PackageReference Include="Netsphere.Shared" Version="0.51.2" />
-    <PackageReference Include="SimpleCommandLine" Version="0.39.3" />
-    <PackageReference Include="SimplePrompt" Version="0.15.2" />
+    <PackageReference Include="Arc.Crypto" Version="1.44.0" />
+    <PackageReference Include="Arc.Threading" Version="0.45.1" />
+    <PackageReference Include="Arc.Unit" Version="0.39.0" />
+    <PackageReference Include="BigMachines" Version="0.54.2" />
+    <PackageReference Include="CrystalData" Version="0.44.0" />
+    <PackageReference Include="Netsphere" Version="0.54.0" />
+    <PackageReference Include="Netsphere.Shared" Version="0.54.0" />
+    <PackageReference Include="SimpleCommandLine" Version="0.40.2" />
+    <PackageReference Include="SimplePrompt" Version="0.18.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tinyhand" Version="0.135.3" />
-    <PackageReference Include="ValueLink" Version="0.109.2" />
+    <PackageReference Include="Tinyhand" Version="0.136.2" />
+    <PackageReference Include="ValueLink" Version="0.115.1" />
   </ItemGroup>
 
 </Project>

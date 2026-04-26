@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("ls", Description = "List storages.")]
-public class CrystalStorageSubcommandLs : ISimpleCommandAsync
+public class CrystalStorageSubcommandLs : ISimpleCommand
 {
     public CrystalStorageSubcommandLs(IConsoleService consoleService, IBigCrystal crystal)
     {
@@ -13,7 +13,7 @@ public class CrystalStorageSubcommandLs : ISimpleCommandAsync
         this.crystal = crystal;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         var info = this.crystal.GroupStorage.GetInformation();
 

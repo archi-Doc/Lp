@@ -9,24 +9,49 @@ using Netsphere.Packet;
 using SimpleCommandLine;
 using Netsphere.Crypto;
 using Netsphere.Relay;
+using Lp.T3cs;
+using ValueLink;
+using Lp.Services;
 
 namespace Playground;
 
-[SimpleCommand("basic")]
-public class BasicCommand : ISimpleCommandAsync
+[SimpleCommand("basic", Default = true)]
+public class BasicCommand : ISimpleCommand
 {
+    private readonly NetUnit netUnit;
+    private readonly ILogger logger;
+    private readonly IRelayControl relayControl;
+    private readonly CreditService creditService;
+
     public BasicCommand(ILogger<BasicCommand> logger, NetUnit netUnit, IRelayControl relayControl)
     {
         this.logger = logger;
         this.netUnit = netUnit;
         this.relayControl = relayControl;
+        this.creditService = new(new());
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
+        var r = await this.creditService.CreateEquityCredit(Lp.LpConstants.LpIdentity);
+        CreditBase CreateEquityCredit(CreditPoint creditPoint, CreditIdentity creditIdentity)
+        {
+            var obj = new EquityCredit();
+            obj.Initialize(creditPoint.Credit, creditIdentity);
+            return obj;
+        }
+
+        var g = new CreditPoint.GoshujinClass();
+        using (var dataScope = await g.TryLock(Lp.LpConstants.LpCredit, AcquisitionMode.GetOrCreate, default, default, x => CreateEquityCredit((CreditPoint)x, default!)))
+        {
+            var credit = dataScope.Data;
+        }
+
         var sw = Stopwatch.StartNew();
         var netTerminal = this.netUnit.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
+
+        netTerminal.Services.EnableNetService<ITestService>();
 
         var netNode = await netTerminal.UnsafeGetNetNode(Alternative.NetAddress);
         if (netNode is null)
@@ -62,8 +87,4 @@ public class BasicCommand : ISimpleCommandAsync
             this.logger.GetWriter()?.Write((result2 is not null).ToString());
         }
     }
-
-    private readonly NetUnit netUnit;
-    private readonly ILogger logger;
-    private readonly IRelayControl relayControl;
 }

@@ -19,8 +19,8 @@ public class NestedCommand
         group.AddCommand(typeof(CreateCreditCommand));
     }
 
-    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
-        : base(context, core, simpleConsole)
+    public NestedCommand(UnitContext context)
+        : base(context)
     {
         this.ReadLineOptions = new ReadLineOptions
         {
@@ -35,7 +35,7 @@ public class NestedCommand
 }
 
 [SimpleCommand("merger-client")]
-public class Command : ISimpleCommandAsync<CommandOptions>
+public class Command : ISimpleCommand<CommandOptions>
 {
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
     {
@@ -46,7 +46,7 @@ public class Command : ISimpleCommandAsync<CommandOptions>
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task RunAsync(CommandOptions options, string[] args)
+    public async Task Execute(CommandOptions options, string[] args, CancellationToken cancellationToken)
     {
         NetNode? node = Alternative.NetNode;
         if (!string.IsNullOrEmpty(options.Node))

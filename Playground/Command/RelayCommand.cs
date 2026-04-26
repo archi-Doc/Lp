@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 namespace Playground;
 
 [SimpleCommand("relay")]
-public class RelayCommand : ISimpleCommandAsync
+public class RelayCommand : ISimpleCommand
 {
     public static bool BreakpointFlag { get; set; } = false;
 
@@ -25,7 +25,7 @@ public class RelayCommand : ISimpleCommandAsync
         this.relayControl = relayControl;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.netUnit.Responders.Register(Netsphere.Responder.MemoryResponder.Instance);
         this.netUnit.Responders.Register(Netsphere.Responder.TestBlockResponder.Instance);

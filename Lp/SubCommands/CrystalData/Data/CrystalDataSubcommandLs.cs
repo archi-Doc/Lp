@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.CrystalData;
 
 /*[SimpleCommand("ls", Description = "List crystal data information.")]
-public class CrystalDataSubcommandLs : ISimpleCommandAsync
+public class CrystalDataSubcommandLs : ISimpleCommand
 {
     public CrystalDataSubcommandLs(IConsoleService consoleService)
     {
@@ -13,7 +13,7 @@ public class CrystalDataSubcommandLs : ISimpleCommandAsync
         // this.crystal = crystal;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
     }
 

@@ -87,20 +87,20 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     public bool KeyAvailable
         => ((IConsoleService)this.simpleConsole).KeyAvailable;
 
-    public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
+    /*public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
     {
         var logWriter = logger?.GetWriter(logLevel);
         if (logWriter is not null)
-        {//
-            /*if (logWriter.OutputType != typeof(EmptyLogger))
-            {
-                logWriter.Log(message);
-                return;
-            }*/
+        {
+            // if (logWriter.OutputType != typeof(EmptyLogger))
+            // {
+            //    logWriter.Log(message);
+            //    return;
+            // }
         }
 
         this.simpleConsole.WriteLine(message);
-    }
+    }*/
 
     public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
     {

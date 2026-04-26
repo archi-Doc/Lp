@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.Data;
+using Lp.Services;
 using Lp.T3cs;
 using Netsphere.Stats;
 using SimpleCommandLine;
@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.T3cs;
 
 [SimpleCommand("new-certificate-proof")]
-public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCertificateProofSubcommand.Options>
+public partial class NewCertificateProofSubcommand : ISimpleCommand<NewCertificateProofSubcommand.Options>
 {
     public record Options
     {
@@ -32,7 +32,7 @@ public partial class NewCertificateProofSubcommand : ISimpleCommandAsync<NewCert
         this.netStats = netStats;
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         var node = this.netStats.GetOwnNetNode();
         if (node is null || !node.Validate())

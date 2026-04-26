@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands.AuthorityCommand;
 
 [SimpleCommand("show-authority")]
-public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
+public class ShowAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNameOptions>
 {
     private readonly IUserInterfaceService userInterfaceService;
     private readonly ILogger logger;
@@ -19,7 +19,7 @@ public class ShowAuthoritySubcommand : ISimpleCommandAsync<AuthoritySubcommandNa
         this.authorityControl = authorityControl;
     }
 
-    public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
+    public async Task Execute(AuthoritySubcommandNameOptions option, string[] args, CancellationToken cancellationToken)
     {
         if (!this.authorityControl.Exists(option.AuthorityName))
         {// Not found

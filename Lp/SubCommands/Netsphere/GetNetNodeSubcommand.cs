@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("get-netnode")]
-public class GetNetNodeSubcommand : ISimpleCommandAsync<GetNetNodeOptions>
+public class GetNetNodeSubcommand : ISimpleCommand<GetNetNodeOptions>
 {
     public GetNetNodeSubcommand(ILogger<GetNetNodeSubcommand> logger, NetTerminal netTerminal)
     {
@@ -14,7 +14,7 @@ public class GetNetNodeSubcommand : ISimpleCommandAsync<GetNetNodeOptions>
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(GetNetNodeOptions options, string[] args)
+    public async Task Execute(GetNetNodeOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetAddress.TryParse(this.logger, options.Address, out var address))
         {

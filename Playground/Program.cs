@@ -104,12 +104,12 @@ public class Program
             RequireStrictOptionName = false,
         };
 
-        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, SimpleParserHelper.GetCommandLineArguments(), parserOptions); // Main process
+        await SimpleParser.ParseAndExecute(unit.Context.Commands, SimpleParserHelper.GetCommandLineArguments(), parserOptions); // Main process
 
         await unit.Terminate();
 
         ThreadCore.Root.Terminate();
-        await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } logUnit)
         {
             await logUnit.FlushAndTerminate();

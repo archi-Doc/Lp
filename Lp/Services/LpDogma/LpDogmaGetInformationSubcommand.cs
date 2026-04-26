@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("lp-dogma-get-information")]
-public class LpDogmaGetInformationSubcommand : ISimpleCommandAsync<ConnectNetNodeOptions>
+public class LpDogmaGetInformationSubcommand : ISimpleCommand<ConnectNetNodeOptions>
 {
     public LpDogmaGetInformationSubcommand(ILogger<LpDogmaGetInformationSubcommand> logger, AuthorityControl authorityControl, NetTerminal netTerminal)
     {
@@ -15,7 +15,7 @@ public class LpDogmaGetInformationSubcommand : ISimpleCommandAsync<ConnectNetNod
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(ConnectNetNodeOptions options, string[] args)
+    public async Task Execute(ConnectNetNodeOptions options, string[] args, CancellationToken cancellationToken)
     {
         using (var connectionAndService = await LpDogmaHelper.TryConnect(this.logger, this.authorityControl, this.netTerminal, options.NetNode))
         {

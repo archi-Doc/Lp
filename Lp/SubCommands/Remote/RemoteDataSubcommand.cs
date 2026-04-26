@@ -8,7 +8,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("remotedata")]
-internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
+internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
 {
     public RemoteDataSubcommand(IServiceProvider serviceProvider, ILogger<RemoteDataOptions> logger, NetTerminal netTerminal)
     {
@@ -17,7 +17,7 @@ internal class RemoteDataSubcommand : ISimpleCommandAsync<RemoteDataOptions>
         this.netTerminal = netTerminal;
     }
 
-    public async Task RunAsync(RemoteDataOptions options, string[] args)
+    public async Task Execute(RemoteDataOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"RemoteData");
 

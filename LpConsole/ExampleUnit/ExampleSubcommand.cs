@@ -5,7 +5,7 @@ using SimpleCommandLine;
 namespace LpConsole.Example;
 
 [SimpleCommand("example")]
-public class ExampleSubcommand : ISimpleCommandAsync
+public class ExampleSubcommand : ISimpleCommand
 {
     private readonly LpUnit lpUnit;
     private readonly ILogger logger;
@@ -16,7 +16,7 @@ public class ExampleSubcommand : ISimpleCommandAsync
         this.logger = logger;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write(ExampleHashed.ExampleUnit.Command);
     }

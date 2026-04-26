@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace Lp.Subcommands;
 
 [SimpleCommand("ping")]
-public class PingSubcommand : ISimpleCommandAsync<PingOptions>
+public class PingSubcommand : ISimpleCommand<PingOptions>
 {
     public PingSubcommand(ILogger<PingSubcommand> logger, LpUnit lpUnit)
     {
@@ -15,7 +15,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         this.logger = logger;
     }
 
-    public async Task RunAsync(PingOptions options, string[] args)
+    public async Task Execute(PingOptions options, string[] args, CancellationToken cancellationToken)
     {
         if (!NetAddress.TryParse(this.logger, options.Node, out var address))
         {

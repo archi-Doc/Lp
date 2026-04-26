@@ -9,20 +9,8 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public class SecondHandObject : IClockHandTarget
-{
-    void IClockHandTarget.OnEveryMinute()
-    {
-    }
-
-    void IClockHandTarget.OnEverySecond()
-    {
-        Console.WriteLine("SecondHandObject");
-    }
-}
-
 [SimpleCommand("test")]
-public class TestSubcommand : ISimpleCommandAsync<TestOptions>
+public class TestSubcommand : ISimpleCommand<TestOptions>
 {
     private readonly RadioClass radio;
     private readonly ILogger logger;
@@ -30,8 +18,9 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private readonly IUserInterfaceService userInterfaceService;
     private readonly AuthorityControl authorityControl;
     private readonly LpBoardService lpBoardService;
+    private readonly CreditService creditService;
 
-    public TestSubcommand(RadioClass radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService)
+    public TestSubcommand(RadioClass radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService, CreditService creditService)
     {
         this.radio = radio;
         this.logger = logger;
@@ -39,11 +28,15 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.lpUnit = lpUnit;
         this.authorityControl = authorityControl;
         this.lpBoardService = lpBoardService;
+        this.creditService = creditService;
     }
 
-    public async Task RunAsync(TestOptions options, string[] args)
+    public async Task Execute(TestOptions options, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write($"Test subcommand: {options.ToString()}");
+
+        var r = await this.creditService.CreateEquityCredit(LpConstants.LpIdentity);
+        r.Dispose();
 
         try
         {
@@ -61,9 +54,6 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine(LpConstants.LpCredit.ToString());
         this.userInterfaceService.WriteLine(StringHelper.SerializeToString(LpConstants.LpIdentity));
 
-        var obj = new SecondHandObject();
-        this.radio.Open<IClockHandTarget>(obj, true);
-
         var seedKey = SeedKey.New(KeyOrientation.Signature);
         var creditIdentity2 = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), [seedKey.GetSignaturePublicKey(),]);
         Credit.TryCreate(creditIdentity2, out var testCredit);
@@ -78,6 +68,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine(mergedEvidence2!.ValidateAndVerify().ToString());
 
         await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
+        this.userInterfaceService.WriteLine($"UserInteractive: {Environment.UserInteractive}, IsOutputRedirected:{Console.IsOutputRedirected}");
         this.userInterfaceService.WriteLine($"Width: {Console.WindowWidth}");
 
         var microSleep = new Arc.Threading.MicroSleep();
@@ -91,12 +82,18 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         microSleep.Dispose();
 
-        await Task.Delay(500);
-        this.userInterfaceService.WriteLine("1");
-        await Task.Delay(1500);
-        this.userInterfaceService.WriteLine("2");
-        await Task.Delay(2500);
-        this.userInterfaceService.WriteLine("3");
+        try
+        {
+            await Task.Delay(500, cancellationToken);
+            this.userInterfaceService.WriteLine("1");
+            await Task.Delay(1500, cancellationToken);
+            this.userInterfaceService.WriteLine("2");
+            await Task.Delay(2500, cancellationToken);
+            this.userInterfaceService.WriteLine("3");
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         // await this.TestLinkageKey();
 

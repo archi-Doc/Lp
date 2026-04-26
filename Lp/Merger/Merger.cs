@@ -71,6 +71,14 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             StorageConfiguration = mergerStorage,
         });
 
+        /*crystalControl.CreateCrystal<CreditPoint.GoshujinClass>(new()
+        {
+            SaveFormat = SaveFormat.Binary,
+            NumberOfFileHistories = 3,
+            FileConfiguration = new GlobalFileConfiguration("Credits"),
+            StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Storage")),
+        });*/
+
         if (string.IsNullOrEmpty(this.Configuration.Name))
         {
             this.Configuration.Name = $"{this.netBase.NetOptions.NodeName}{NameSuffix}";
@@ -121,17 +129,15 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public async ValueTask<EquityCredit?> GetEquityCredit(Credit credit)
+    public ValueTask<EquityCredit?> GetEquityCredit(Credit credit)
     {
         if (!this.Initialized)
         {
             return default;
         }
 
-        var point = this.equityCreditPoints.Find(credit);
-        await point.PinData();//
-
-        return await this.equityCreditPoints.TryGet(credit).ConfigureAwait(false);
+        // var point = this.equityCreditPoints.Find(credit);
+        return this.equityCreditPoints.TryGet(credit);
     }
 
     public EquityCreditPoint? GetEquityCreditPoint(Credit credit)
@@ -197,7 +203,7 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
 
         using (var dataScope = await this.equityCreditPoints.TryLock(credit, AcquisitionMode.CreateOnly).ConfigureAwait(false))
         {
-            if (dataScope.IsValid)
+            if (dataScope.IsCreated)
             {
                 dataScope.Data.Initialize(credit, creditIdentity);
                 return T3csResult.Success;

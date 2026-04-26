@@ -1,11 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Lp.Services;
 using SimpleCommandLine;
 
 namespace Lp.T3cs.Domain;
 
 [SimpleCommand(CommandName)]
-public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Options>
+public class AddDomainSubcommand : ISimpleCommand<AddDomainSubcommand.Options>
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     private const string CommandName = "add-domain";
     private const string OptionName = "CertificateProof";
@@ -39,7 +40,7 @@ public class AddDomainSubcommand : ISimpleCommandAsync<AddDomainSubcommand.Optio
         }
     }
 
-    public async Task RunAsync(Options options, string[] args)
+    public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
         var seedKey = await this.lpService.GetSeedKeyFromCode(options.Code).ConfigureAwait(false);
         if (seedKey is null)
