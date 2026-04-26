@@ -36,7 +36,7 @@ public class ExecutionStack
         /// <summary>
         /// Gets the identifier of this scope within the owning <see cref="ExecutionStack"/>.
         /// </summary>
-        public int Id { get; }
+        public long Id { get; }
 
         private readonly ProcessSignalHandler? processSignalHandler;
 
@@ -63,7 +63,7 @@ public class ExecutionStack
         /// <param name="executionStack">The owning <see cref="Arc.Threading.ExecutionStack"/>.</param>
         /// <param name="id">The scope identifier to assign.</param>
         /// <param name="processSignalHandler">An optional handler invoked when this scope processes an <see cref="ExecutionSignal"/>.</param>
-        public Scope(ExecutionStack executionStack, int id, ProcessSignalHandler? processSignalHandler = default)
+        public Scope(ExecutionStack executionStack, long id, ProcessSignalHandler? processSignalHandler = default)
         {
             this.ExecutionStack = executionStack;
             this.Id = id;
@@ -104,7 +104,7 @@ public class ExecutionStack
 
     private readonly Lock syncObject = new();
     private readonly List<Scope> list = new();
-    private int incrementalId;
+    private long incrementalId;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExecutionStack"/> class and creates <see cref="Root"/>.
@@ -137,7 +137,7 @@ public class ExecutionStack
     /// </summary>
     /// <param name="id">The scope identifier.</param>
     /// <returns>The matching scope; otherwise, <see langword="null"/>.</returns>
-    public Scope? Find(int id)
+    public Scope? Find(long id)
     {
         using (this.syncObject.EnterScope())
         {
@@ -218,7 +218,7 @@ public class ExecutionStack
     /// </summary>
     /// <param name="id">The scope identifier.</param>
     /// <returns><see langword="true"/> if a scope was removed; otherwise, <see langword="false"/>.</returns>
-    public bool Remove(int id)
+    public bool Remove(long id)
     {
         using (this.syncObject.EnterScope())
         {
