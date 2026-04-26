@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 using SimplePrompt;
 
@@ -8,14 +9,17 @@ namespace Lp.Subcommands;
 public class NestedCommand<TCommand>
     where TCommand : NestedCommand<TCommand>
 {
+    private readonly ExecutionStack executionStack;
     private readonly SimpleConsole simpleConsole;
+    private readonly IUserInterfaceService userInterfaceService;
     private readonly Type[] commandTypes;
     private SimpleParser? simpleParser;
 
-    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
+    public NestedCommand(UnitContext context)
     {
-        this.Core = core;
-        this.simpleConsole = simpleConsole;
+        this.executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
+        this.simpleConsole = context.ServiceProvider.GetRequiredService<SimpleConsole>();
+        this.userInterfaceService = context.ServiceProvider.GetRequiredService<IUserInterfaceService>();
 
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
@@ -28,11 +32,6 @@ public class NestedCommand<TCommand>
             AutoAlias = true,
         };
     }
-
-    /// <summary>
-    /// Gets <see cref="UnitCore"/>.
-    /// </summary>
-    public UnitCore Core { get; }
 
     /// <summary>
     /// Gets <see cref="SimpleParserOptions"/>.
@@ -61,49 +60,67 @@ public class NestedCommand<TCommand>
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
 
-        while (!this.Core.IsTerminated)
+        using (var scope = this.executionStack.Push((x, signal) =>
         {
-            var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, this.Core.CancellationToken).ConfigureAwait(false);
-
-            if (result.IsSuccess)
+            if (signal == ExecutionSignal.Exit)
             {
+                x.CancellationTokenSource.Cancel();
+            }
+        }))
+        {
+            while (scope.CanContinue)
+            {
+                var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
+                if (!result.IsSuccess)
+                {
+                    break;
+                }
+
                 if (string.Compare(result.Text, "exit", true) == 0)
                 {// Exit
-                    return;
+                    break;
                 }
-                else
-                {// NestedCommand
-                    try
+
+                // NestedCommand
+                try
+                {
+                    if (this.SimpleParser.Parse(result.Text))
                     {
-                        if (this.SimpleParser.Parse(result.Text))
+                        using (var scope2 = this.executionStack.Push((x, signal) =>
                         {
-                            await this.SimpleParser.Execute();
+                            if (signal == ExecutionSignal.Cancel)
+                            {
+                                x.CancellationTokenSource.Cancel();
+                                this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
+                            }
+                        }))
+                        {
+                            await this.SimpleParser.Execute(scope2.CancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        if (this.SimpleParser.HelpCommand != string.Empty)
+                        {
+                            this.SimpleParser.ShowHelp();
                         }
                         else
                         {
-                            if (this.SimpleParser.HelpCommand != string.Empty)
-                            {
-                                this.SimpleParser.ShowHelp();
-                            }
-                            else
-                            {
-                                this.simpleConsole.WriteLine("Invalid subcommand.");
-                            }
+                            this.simpleConsole.WriteLine("Invalid subcommand.");
                         }
+                    }
 
-                        continue;
-                    }
-                    catch (Exception e)
-                    {
-                        this.simpleConsole.WriteLine(e.ToString());
-                        break;
-                    }
+                    continue;
+                }
+                catch (Exception e)
+                {
+                    this.simpleConsole.WriteLine(e.ToString());
+                    break;
                 }
             }
-            else
-            {
-                return;
-            }
         }
+
+        this.userInterfaceService.WriteLineError(Hashed.Dialog.Exit);
+        await Task.Delay(LpParameters.ExitDelayMilliseconds);
     }
 }

@@ -20,7 +20,14 @@ public class TestSubcommand : ISimpleCommand
 
     public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
-        this.logger.GetWriter()?.Write($"Log");
-        this.userInterfaceService.WriteLine("UI");
+        try
+        {
+            this.logger.GetWriter()?.Write($"Log");
+            await Task.Delay(3000, cancellationToken);
+            this.userInterfaceService.WriteLine("UI");
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 }

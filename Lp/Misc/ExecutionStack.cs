@@ -55,6 +55,8 @@ public class ExecutionStack
         /// </summary>
         public bool IsRoot => this.Id == 0;
 
+        public bool CanContinue => !this.CancellationToken.IsCancellationRequested;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Scope"/> class.
         /// </summary>

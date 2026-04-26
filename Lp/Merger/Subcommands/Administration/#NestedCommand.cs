@@ -21,8 +21,8 @@ public class NestedCommand : NestedCommand<NestedCommand>
         group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
-    public NestedCommand(UnitContext context, UnitCore core, SimpleConsole simpleConsole)
-        : base(context, core, simpleConsole)
+    public NestedCommand(UnitContext context)
+        : base(context)
     {
         this.ReadLineOptions = new ReadLineOptions
         {
