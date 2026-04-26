@@ -163,7 +163,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         if (signal == ExecutionSignal.Cancel)
                         {
                             x.CancellationTokenSource.Cancel();
-                            this.userInterfaceService.WriteLineError("Canceled");
+                            this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
                     }))
                     {
@@ -179,8 +179,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 }
             }
 
-            this.userInterfaceService.WriteLineError("Exit");
-            await Task.Delay(500);
+            this.userInterfaceService.WriteLineError(Hashed.Dialog.Exit);
+            await Task.Delay(LpParameters.ExitDelayMilliseconds);
         }
     }
 }

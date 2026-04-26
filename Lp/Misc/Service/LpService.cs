@@ -217,21 +217,24 @@ public class LpService
 
         if (code.Equals("Merger", StringComparison.InvariantCultureIgnoreCase))
         {
-            if (this.serviceProvider.GetService<Merger>() is { } merger)
+            if (this.serviceProvider.GetService<Merger>() is { } merger &&
+                merger.SeedKey.IsValid)
             {
                 return merger.SeedKey;
             }
         }
         else if (code.Equals("RelayMerger", StringComparison.InvariantCultureIgnoreCase))
         {
-            if (this.serviceProvider.GetService<RelayMerger>() is { } relayMerger)
+            if (this.serviceProvider.GetService<RelayMerger>() is { } relayMerger &&
+                relayMerger.SeedKey.IsValid)
             {
                 return relayMerger.SeedKey;
             }
         }
         else if (code.Equals("Linker", StringComparison.InvariantCultureIgnoreCase))
         {
-            if (this.serviceProvider.GetService<Linker>() is { } linker)
+            if (this.serviceProvider.GetService<Linker>() is { } linker &&
+                linker.SeedKey.IsValid)
             {
                 return linker.SeedKey;
             }
