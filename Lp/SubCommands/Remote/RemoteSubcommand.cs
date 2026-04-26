@@ -167,12 +167,14 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                     }))
                     {
-                        var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
+                        var netResult = await clientService.Send(scope2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
                             this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
                             break;
                         }
+
+                        await scope2.TaskCompletionSource.ConfigureAwait(false);
 
                         //await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
                     }

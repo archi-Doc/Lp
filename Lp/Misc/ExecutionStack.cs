@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Amazon.Runtime.Internal;
 
 namespace Arc.Threading;
 
@@ -50,6 +51,22 @@ public class ExecutionStack
         /// </summary>
         public CancellationToken CancellationToken { get; }
 
+        public TaskCompletionSource TaskCompletionSource
+        {
+            get
+            {
+                var current = Volatile.Read(ref field);
+                if (current is not null)
+                {
+                    return current;
+                }
+
+                current = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                var original = Interlocked.CompareExchange(ref field, current, null);
+                return original ?? current;
+            }
+        }
+
         /// <summary>
         /// Gets a value indicating whether this scope is the root scope (<c>Id == 0</c>).
         /// </summary>
@@ -70,6 +87,7 @@ public class ExecutionStack
             this.processSignalHandler = processSignalHandler;
             this.CancellationTokenSource = CancellationTokenPool.Rent();
             this.CancellationToken = this.CancellationTokenSource.Token;
+            // this.TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         public void ProcessSignal(ExecutionSignal signal)
@@ -224,7 +242,7 @@ public class ExecutionStack
         {
             var index = this.list.FindIndex(x => x.Id == id);
             if (index >= 0)
-            {// Found
+            {// Foudddnd
                 this.list.RemoveAt(index);
                 return true;
             }
@@ -232,6 +250,20 @@ public class ExecutionStack
             {// Not found
                 return false;
             }
+        }
+    }
+
+    public bool TrySet(long id)
+    {
+        var scope = this.Peek();
+        if (scope is not null)
+        {
+            scope.TaskCompletionSource.TrySetResult();
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }

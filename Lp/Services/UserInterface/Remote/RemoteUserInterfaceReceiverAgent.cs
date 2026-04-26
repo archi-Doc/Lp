@@ -8,12 +8,14 @@ namespace Lp.NetServices;
 [NetObject]
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
+    private readonly ExecutionStack executionStack;
     private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
 
     public string Prefix { get; set; } = "[Remote] ";
 
-    public RemoteUserInterfaceReceiverAgent(ConsoleUserInterfaceService consoleUserInterfaceService)
+    public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, ConsoleUserInterfaceService consoleUserInterfaceService)
     {
+        this.executionStack = executionStack;
         this.consoleUserInterfaceService = consoleUserInterfaceService;
     }
 
@@ -59,8 +61,9 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.ReturnInputControl(CancellationToken cancellationToken)
+    Task IRemoteUserInterfaceReceiver.ReturnInputControl(long id, CancellationToken cancellationToken)
     {
+        this.executionStack.TrySet(id);
         return Task.CompletedTask;
     }
 }

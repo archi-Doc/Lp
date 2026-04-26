@@ -55,7 +55,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         return new(NetResult.Success, this.lpBase.NodeName);
     }
 
-    async Task<NetResult> IRemoteUserInterfaceSender.Send(string message)
+    async Task<NetResult> IRemoteUserInterfaceSender.Send(long id, string message)
     {
         if (!this.IsAuthenticated)
         {
@@ -82,7 +82,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {// Return control of console input.
-                await receiver.ReturnInputControl(default).ConfigureAwait(false);
+                await receiver.ReturnInputControl(id, default).ConfigureAwait(false);
             }
         });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
