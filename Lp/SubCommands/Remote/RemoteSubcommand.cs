@@ -174,7 +174,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                             break;
                         }
 
-                        await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
+                        //await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
                     }
                 }
             }
