@@ -47,11 +47,11 @@ public class OperateCreditCommand : ISimpleCommand<OperateCreditCommand.Options>
 
     public record Options
     {
-        [SimpleOption("CreditIdentity", Description = "CreditIdentity", Required = true)]
-        public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
-
         [SimpleOption("Code", Description = LpConstants.CodeDescription, Required = true)]
         public string Code { get; init; } = string.Empty;
+
+        [SimpleOption("CreditIdentity", Description = "CreditIdentity", Required = true)]
+        public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
     }
 
     public OperateCreditCommand(ILogger<OperateCreditCommand> logger, IUserInterfaceService userInterfaceService, NestedCommand nestedcommand, LpService lpService, RobustConnection.Factory robustConnectionFactory)
