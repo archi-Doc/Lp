@@ -174,9 +174,13 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                             break;
                         }
 
-                        await scope2.TaskCompletionSource.ConfigureAwait(false);
-
-                        //await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await scope2.TaskCompletionSource.Task.WaitAsync(scope2.CancellationToken).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
                     }
                 }
             }

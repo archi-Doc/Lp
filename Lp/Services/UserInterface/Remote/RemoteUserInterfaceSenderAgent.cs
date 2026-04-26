@@ -74,7 +74,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         _ = Task.Run(async () =>
         {
             try
-            {
+            {//Timeout
                 await this.simpleParser.ParseAndExecute(message).ConfigureAwait(false);
             }
             catch
