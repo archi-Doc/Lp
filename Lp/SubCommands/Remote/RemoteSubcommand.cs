@@ -145,7 +145,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 }
             }))
             {
-                while (!scope.CancellationToken.IsCancellationRequested)
+                while (scope.CanContinue)
                 {
                     var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
@@ -174,7 +174,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                             break;
                         }
 
-                        await receiver.ReturnInputControl().ConfigureAwait(false);
+                        await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
                     }
                 }
             }
