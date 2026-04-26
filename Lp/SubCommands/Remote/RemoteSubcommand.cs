@@ -162,7 +162,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            x.CancellationTokenSource.Cancel();
+                            // x.CancellationTokenSource.Cancel();
+                            clientService.Cancel(scope2.Id);
                             this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
                     }))

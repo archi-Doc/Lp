@@ -12,20 +12,20 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
+    private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
-    private readonly LpUnit lpUnit;
     private readonly LpBase lpBase;
     private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(LpUnit lpUnit, IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
+    public RemoteUserInterfaceSenderAgent(ExecutionStack executionStack, IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
+        this.executionStack = executionStack;
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
-        this.lpUnit = lpUnit;
         this.lpBase = lpBase;
         this.logger = logger;
     }
@@ -67,6 +67,11 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.NotAuthenticated;
         }
 
+        if (id == 0)
+        {
+            return NetResult.InvalidData;
+        }
+
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote>> {message}");
 
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
@@ -88,6 +93,30 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
 
         return NetResult.Success;
+    }
+
+    Task<NetResult> IRemoteUserInterfaceSender.Cancel(long id)
+    {
+        if (!this.IsAuthenticated)
+        {
+            return Task.FromResult(NetResult.NotAuthenticated);
+        }
+
+        if (TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
+        {
+            return Task.FromResult(NetResult.NotAuthenticated);
+        }
+
+        if (id == 0)
+        {
+            Task.FromResult(NetResult.InvalidData);
+        }
+
+        //
+        var scope = this.executionStack.Find(id);
+        scope?.CancellationTokenSource.Cancel();
+
+        return Task.FromResult(NetResult.Success);
     }
 
     [MemberNotNull(nameof(simpleParser))]
