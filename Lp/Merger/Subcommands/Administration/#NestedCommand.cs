@@ -26,7 +26,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
     {
         this.ReadLineOptions = new ReadLineOptions
         {
-            Prompt = "merger-admin>> ",
+            Prompt = "merger-admin > ",
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
     }

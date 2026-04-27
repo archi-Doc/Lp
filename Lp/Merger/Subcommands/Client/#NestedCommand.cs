@@ -24,7 +24,7 @@ public class NestedCommand
     {
         this.ReadLineOptions = new ReadLineOptions
         {
-            Prompt = "merger-client>> ",
+            Prompt = "merger-client > ",
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
     }
@@ -35,8 +35,19 @@ public class NestedCommand
 }
 
 [SimpleCommand("merger-client")]
-public class Command : ISimpleCommand<CommandOptions>
+public class Command : ISimpleCommand<Command.Options>
 {
+    public record Options
+    {
+        [SimpleOption("Node", Description = "Node information", Required = true)]
+        public string Node { get; init; } = string.Empty;
+
+        [SimpleOption("Authority", Description = "Authority name", Required = true)]
+        public string Authority { get; init; } = string.Empty;
+
+        public override string ToString() => $"{this.Node}";
+    }
+
     public Command(ILogger<Command> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl, NestedCommand nestedcommand, RobustConnection.Factory robustConnectionFactory)
     {
         this.logger = logger;
@@ -46,7 +57,7 @@ public class Command : ISimpleCommand<CommandOptions>
         this.robustConnectionFactory = robustConnectionFactory;
     }
 
-    public async Task Execute(CommandOptions options, string[] args, CancellationToken cancellationToken)
+    public async Task Execute(Command.Options options, string[] args, CancellationToken cancellationToken)
     {
         NetNode? node = Alternative.NetNode;
         if (!string.IsNullOrEmpty(options.Node))
@@ -77,15 +88,4 @@ public class Command : ISimpleCommand<CommandOptions>
     private readonly AuthorityControl authorityControl;
     private readonly NestedCommand nestedcommand;
     private readonly RobustConnection.Factory robustConnectionFactory;
-}
-
-public record CommandOptions
-{
-    [SimpleOption("Node", Description = "Node information", Required = true)]
-    public string Node { get; init; } = string.Empty;
-
-    [SimpleOption("Authority", Description = "Authority name", Required = true)]
-    public string Authority { get; init; } = string.Empty;
-
-    public override string ToString() => $"{this.Node}";
 }

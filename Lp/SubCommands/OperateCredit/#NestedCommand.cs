@@ -16,6 +16,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
         context.TryAddSingleton(t);
 
         var group = context.GetCommandGroup(t);
+        group.AddCommand(typeof(InspectSubcommand));
         group.AddCommand(typeof(TestSubcommand));
     }
 
@@ -24,7 +25,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
     {
         this.ReadLineOptions = new ReadLineOptions
         {
-            Prompt = "operate-credit>> ",
+            Prompt = "operate-credit > ",
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
     }

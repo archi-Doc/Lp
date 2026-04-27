@@ -162,8 +162,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            // x.CancellationTokenSource.Cancel();
                             clientService.Cancel(x.Id);
+                            x.CancellationTokenSource.Cancel(); // Perform cancellation in advance in case the network is disconnected.
                             this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
                     }))
