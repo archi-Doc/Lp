@@ -12,7 +12,7 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private static readonly ExecutionStack RemoteStack = new();
+    private static readonly ExecutionStack RemoteStack = new(1);
     private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -68,9 +68,10 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.NotAuthenticated;
         }
 
-        if (id == 0)
+        var scope = RemoteStack.TryPush(id, default);
+        if (scope is null)
         {
-            return NetResult.InvalidData;
+            return NetResult.Refused;
         }
 
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote>> {message}");
@@ -79,21 +80,16 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         this.Prepare(receiver);
         _ = Task.Run(async () =>
         {
-
-            var scope = RemoteStack.TryPush(id, default);
-            if (scope is not null)
+            try
+            {//Timeout
+                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).ConfigureAwait(false);
+            }
+            finally
             {
-                try
-                {//Timeout
-                    await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).ConfigureAwait(false);
-                }
-                finally
-                {
-                    scope.Dispose();
+                scope.Dispose();
 
-                    // Return control of console input.
-                    await receiver.ReturnInputControl(id, default).ConfigureAwait(false);
-                }
+                // Return control of console input.
+                await receiver.ReturnInputControl(id, default).ConfigureAwait(false);
             }
         });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);

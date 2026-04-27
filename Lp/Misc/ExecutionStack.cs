@@ -18,6 +18,7 @@ public enum ExecutionSignal
 /// </summary>
 public class ExecutionStack
 {
+    public const int DefaultMaxCount = 32;
     public delegate void ProcessSignalHandler(Scope scope, ExecutionSignal executionSignal);
 
     /// <summary>
@@ -120,15 +121,20 @@ public class ExecutionStack
 
     public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;
 
+    public int MaxCount { get; }
+
+    public int Count => this.list.Count;
+
     private readonly Lock syncObject = new();
     private readonly List<Scope> list = new();
     private readonly Xoshiro256StarStar random;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ExecutionStack"/> class and creates <see cref="Root"/>.
+    /// Initializes a new instance of the <see cref="ExecutionStack"/> class.
     /// </summary>
-    public ExecutionStack()
+    public ExecutionStack(int maxCount = DefaultMaxCount)
     {
+        this.MaxCount = maxCount;
         this.random = new();
         // this.Root = new(this, 0);
         // this.list.Add(this.Root);
@@ -144,16 +150,20 @@ public class ExecutionStack
         Scope newScope;
         using (this.syncObject.EnterScope())
         {
+            if (this.Count >= this.MaxCount)
+            {
+                throw new InvalidOperationException();
+            }
+
             while (true)
             {
-                var id = (long)this.random.NextUInt64();
-                if (this.list.Find(x => x.Id == id) is not null)
+                var id = this.random.NextInt64();
+                if (this.list.Find(x => x.Id == id) is null)
                 {
-                    continue;
+                    newScope = new Scope(this, id, processSignalHandler);
+                    this.list.Add(newScope);
+                    break;
                 }
-
-                newScope = new Scope(this, id, processSignalHandler);
-                this.list.Add(newScope);
             }
         }
 
@@ -164,7 +174,8 @@ public class ExecutionStack
     {
         using (this.syncObject.EnterScope())
         {
-            if (this.list.Find(x => x.Id == id) is not null)
+            if (this.Count >= this.MaxCount ||
+                this.list.Find(x => x.Id == id) is not null)
             {
                 return null;
             }
@@ -208,7 +219,7 @@ public class ExecutionStack
     }
 
     /// <summary>
-    /// Cancels the current top scope, if it exists and is not the <see cref="Root"/> scope.
+    /// Cancels the current top scope.
     /// </summary>
     /// <returns>
     /// <see langword="true"/> if a non-root top scope existed and its <see ref="System.Threading.CancellationTokenSource"/> was signaled;
