@@ -80,7 +80,7 @@ public class ExecutionStack
         /// <param name="executionStack">The owning <see cref="Arc.Threading.ExecutionStack"/>.</param>
         /// <param name="id">The scope identifier to assign.</param>
         /// <param name="processSignalHandler">An optional handler invoked when this scope processes an <see cref="ExecutionSignal"/>.</param>
-        public Scope(ExecutionStack executionStack, long id, ProcessSignalHandler? processSignalHandler = default)
+        internal Scope(ExecutionStack executionStack, long id, ProcessSignalHandler? processSignalHandler = default)
         {
             this.ExecutionStack = executionStack;
             this.Id = id;
@@ -110,27 +110,28 @@ public class ExecutionStack
         }
     }
 
-    /// <summary>
+    /*/// <summary>
     /// Gets the root scope (created at construction time).
     /// </summary>
     /// <remarks>
     /// The root scope uses <c>Id = 0</c> and is not canceled by <see cref="CancelTop"/>.
     /// </remarks>
-    public Scope Root { get; }
+    public Scope Root { get; } */
 
     public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;
 
     private readonly Lock syncObject = new();
     private readonly List<Scope> list = new();
-    private long incrementalId;
+    private readonly Xoshiro256StarStar random;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExecutionStack"/> class and creates <see cref="Root"/>.
     /// </summary>
     public ExecutionStack()
     {
-        this.Root = new(this, this.incrementalId++);
-        this.list.Add(this.Root);
+        this.random = new();
+        // this.Root = new(this, 0);
+        // this.list.Add(this.Root);
     }
 
     /// <summary>
@@ -143,11 +144,35 @@ public class ExecutionStack
         Scope newScope;
         using (this.syncObject.EnterScope())
         {
-            newScope = new Scope(this, this.incrementalId++, processSignalHandler);
-            this.list.Add(newScope);
+            while (true)
+            {
+                var id = (long)this.random.NextUInt64();
+                if (this.list.Find(x => x.Id == id) is not null)
+                {
+                    continue;
+                }
+
+                newScope = new Scope(this, id, processSignalHandler);
+                this.list.Add(newScope);
+            }
         }
 
         return newScope;
+    }
+
+    public Scope? TryPush(long id, ProcessSignalHandler? processSignalHandler)
+    {
+        using (this.syncObject.EnterScope())
+        {
+            if (this.list.Find(x => x.Id == id) is not null)
+            {
+                return null;
+            }
+
+            var newScope = new Scope(this, id, processSignalHandler);
+            this.list.Add(newScope);
+            return newScope;
+        }
     }
 
     /// <summary>

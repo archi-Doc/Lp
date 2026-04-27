@@ -12,6 +12,7 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
+    private static readonly ExecutionStack RemoteStack = new();
     private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -78,16 +79,21 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         this.Prepare(receiver);
         _ = Task.Run(async () =>
         {
-            try
-            {//Timeout
-                await this.simpleParser.ParseAndExecute(message).ConfigureAwait(false);
-            }
-            catch
+
+            var scope = RemoteStack.TryPush(id, default);
+            if (scope is not null)
             {
-            }
-            finally
-            {// Return control of console input.
-                await receiver.ReturnInputControl(id, default).ConfigureAwait(false);
+                try
+                {//Timeout
+                    await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    scope.Dispose();
+
+                    // Return control of console input.
+                    await receiver.ReturnInputControl(id, default).ConfigureAwait(false);
+                }
             }
         });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
@@ -107,14 +113,13 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotAuthenticated);
         }
 
-        if (id == 0)
+        var scope = RemoteStack.Find(id);
+        if (scope is null)
         {
-            Task.FromResult(NetResult.InvalidData);
+            return Task.FromResult(NetResult.NotFound);
         }
 
-        //
-        var scope = this.executionStack.Find(id);
-        scope?.CancellationTokenSource.Cancel();
+        scope.CancellationTokenSource.Cancel();
 
         return Task.FromResult(NetResult.Success);
     }
