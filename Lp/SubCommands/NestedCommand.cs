@@ -69,7 +69,7 @@ public class NestedCommand<TCommand>
         }))
         {
             while (scope.CanContinue)
-            {
+            {//
                 var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {
