@@ -67,7 +67,7 @@ public class LpUnit
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.AddSingleton<CreditService>();
-                context.AddSingleton<ExecutionStack>();//
+                context.AddSingleton<ExecutionStack>();
 
                 // Console services
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());

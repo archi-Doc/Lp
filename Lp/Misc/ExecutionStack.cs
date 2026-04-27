@@ -19,6 +19,7 @@ public enum ExecutionSignal
 public class ExecutionStack
 {
     public const int DefaultMaxCount = 32;
+
     public delegate void ProcessSignalHandler(Scope scope, ExecutionSignal executionSignal);
 
     /// <summary>
@@ -132,6 +133,9 @@ public class ExecutionStack
     /// <summary>
     /// Initializes a new instance of the <see cref="ExecutionStack"/> class.
     /// </summary>
+    /// <param name="maxCount">
+    /// The maximum number of <see cref="Scope"/> instances that can be stored in the stack at the same time.
+    /// </param>
     public ExecutionStack(int maxCount = DefaultMaxCount)
     {
         this.MaxCount = maxCount;
