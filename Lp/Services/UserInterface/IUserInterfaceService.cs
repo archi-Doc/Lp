@@ -19,7 +19,7 @@ public interface IUserInterfaceService : IConsoleService
     /// <param name="cancelOnEscape">If true, allows the user to cancel input with the Escape key.</param>
     /// <param name="description">An optional description to display to the user.</param>
     /// <returns>A task that represents the asynchronous read operation. The result contains the input and its status.</returns>
-    Task<InputResult> ReadLine(bool cancelOnEscape, string? description);
+    Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Prompts the user for a yes/no response.
@@ -27,7 +27,7 @@ public interface IUserInterfaceService : IConsoleService
     /// <param name="cancelOnEscape">If true, allows the user to cancel input with the Escape key.</param>
     /// <param name="description">An optional description to display to the user.</param>
     /// <returns>A task that represents the asynchronous read operation. The result indicates the user's choice.</returns>
-    Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description);
+    Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads a password input from the user, masking the input.
@@ -35,7 +35,7 @@ public interface IUserInterfaceService : IConsoleService
     /// <param name="cancelOnEscape">If true, allows the user to cancel input with the Escape key.</param>
     /// <param name="description">An optional description to display to the user.</param>
     /// <returns>A task that represents the asynchronous read operation. The result contains the password and its status.</returns>
-    Task<InputResult> ReadPassword(bool cancelOnEscape, string? description);
+    Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default);
 
     /*/// <summary>
     /// Notifies the user with a message at the specified log level.

@@ -13,7 +13,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
     public static void Configure(IUnitConfigurationContext context)
     {
         var t = typeof(NestedCommand);
-        context.TryAddSingleton(t);
+        context.TryAddScoped(t);
 
         var group = context.GetCommandGroup(t);
         // group.AddCommand(typeof(LpNewCredentialSubcommand));
@@ -21,8 +21,8 @@ public class NestedCommand : NestedCommand<NestedCommand>
         group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
-    public NestedCommand(UnitContext context)
-        : base(context)
+    public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
+        : base(context, serviceProvider)
     {
         this.ReadLineOptions = new ReadLineOptions
         {

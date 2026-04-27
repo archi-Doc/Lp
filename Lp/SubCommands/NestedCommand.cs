@@ -15,11 +15,11 @@ public class NestedCommand<TCommand>
     private readonly Type[] commandTypes;
     private SimpleParser? simpleParser;
 
-    public NestedCommand(UnitContext context)
+    public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
     {
-        this.executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
-        // this.simpleConsole = context.ServiceProvider.GetRequiredService<SimpleConsole>();
-        this.userInterfaceService = context.ServiceProvider.GetRequiredService<IUserInterfaceService>();
+        this.executionStack = serviceProvider.GetRequiredService<ExecutionStack>();
+        // this.simpleConsole = serviceProvider.GetRequiredService<SimpleConsole>();
+        this.userInterfaceService = serviceProvider.GetRequiredService<IUserInterfaceService>();
 
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
@@ -71,7 +71,7 @@ public class NestedCommand<TCommand>
             while (scope.CanContinue)
             {//
                 // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
-                var result = await this.userInterfaceService.ReadLine(false, this.ReadLineOptions.Prompt).ConfigureAwait(false);
+                var result = await this.userInterfaceService.ReadLine(false, this.ReadLineOptions.Prompt, scope.CancellationToken).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {
                     break;

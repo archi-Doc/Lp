@@ -70,7 +70,7 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
     }
 
     public Task<InputResult> ReadLine(CancellationToken cancellationToken)
-        => this.receiver.ReadLine();
+        => this.receiver.ReadLine(cancellationToken);
 
     public ConsoleKeyInfo ReadKey(bool intercept) => default;
 
@@ -80,12 +80,12 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
     {
     }*/
 
-    public Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
-        => this.receiver.ReadLine(cancelOnEscape, description);
+    public Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
+        => this.receiver.ReadLine(cancelOnEscape, description, cancellationToken);
 
-    public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
-        => this.receiver.ReadPassword(cancelOnEscape, description);
+    public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
+        => this.receiver.ReadPassword(cancelOnEscape, description, cancellationToken);
 
-    public Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description)
-        => this.receiver.ReadYesNo(cancelOnEscape, description);
+    public Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
+        => this.receiver.ReadYesNo(cancelOnEscape, description, cancellationToken);
 }

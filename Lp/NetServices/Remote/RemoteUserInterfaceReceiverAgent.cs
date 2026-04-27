@@ -19,17 +19,17 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.consoleUserInterfaceService = consoleUserInterfaceService;
     }
 
-    Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine()
-        => this.consoleUserInterfaceService.ReadLine(default);
+    Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
+        => this.consoleUserInterfaceService.ReadLine(cancellationToken);
 
-    Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description)
-        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.Prefix + description);
+    Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
+        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.Prefix + description, cancellationToken);
 
-    Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description)
-        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.Prefix + description);
+    Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
+        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.Prefix + description, cancellationToken);
 
-    Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description)
-        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix + description);
+    Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
+        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix + description, cancellationToken);
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {

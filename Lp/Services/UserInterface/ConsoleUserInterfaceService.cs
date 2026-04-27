@@ -102,7 +102,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         this.simpleConsole.WriteLine(message);
     }*/
 
-    public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description)
+    public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
         var options = this.PasswordOptions with
         {
@@ -110,10 +110,10 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             Prompt = description ?? string.Empty,
         };
 
-        return this.simpleConsole.ReadLine(options);
+        return this.simpleConsole.ReadLine(options, cancellationToken);
     }
 
-    public Task<InputResult> ReadLine(bool cancelOnEscape, string? description)
+    public Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
         var options = new ReadLineOptions
         {
@@ -122,10 +122,10 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             Prompt = description ?? string.Empty,
         };
 
-        return this.simpleConsole.ReadLine(options);
+        return this.simpleConsole.ReadLine(options, cancellationToken);
     }
 
-    public async Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description)
+    public async Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
         var options = ReadLineOptions.YesNo with
         {
@@ -135,7 +135,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
         while (true)
         {
-            var result = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+            var result = await this.simpleConsole.ReadLine(options, cancellationToken).ConfigureAwait(false);
             if (result.Kind == InputResultKind.Terminated ||
                 result.Kind == InputResultKind.Canceled)
             {// Ctrl+C
