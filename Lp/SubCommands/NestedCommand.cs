@@ -10,7 +10,7 @@ public class NestedCommand<TCommand>
     where TCommand : NestedCommand<TCommand>
 {
     private readonly ExecutionStack executionStack;
-    private readonly SimpleConsole simpleConsole;
+    // private readonly SimpleConsole simpleConsole;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Type[] commandTypes;
     private SimpleParser? simpleParser;
@@ -18,7 +18,7 @@ public class NestedCommand<TCommand>
     public NestedCommand(UnitContext context)
     {
         this.executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
-        this.simpleConsole = context.ServiceProvider.GetRequiredService<SimpleConsole>();
+        // this.simpleConsole = context.ServiceProvider.GetRequiredService<SimpleConsole>();
         this.userInterfaceService = context.ServiceProvider.GetRequiredService<IUserInterfaceService>();
 
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
@@ -70,7 +70,8 @@ public class NestedCommand<TCommand>
         {
             while (scope.CanContinue)
             {//
-                var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
+                // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
+                var result = await this.userInterfaceService.ReadLine(false, this.ReadLineOptions.Prompt).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {
                     break;
@@ -106,7 +107,7 @@ public class NestedCommand<TCommand>
                         }
                         else
                         {
-                            this.simpleConsole.WriteLine("Invalid subcommand.");
+                            this.userInterfaceService.WriteLine("Invalid subcommand.");
                         }
                     }
 
@@ -114,7 +115,7 @@ public class NestedCommand<TCommand>
                 }
                 catch (Exception e)
                 {
-                    this.simpleConsole.WriteLine(e.ToString());
+                    this.userInterfaceService.WriteLine(e.ToString());
                     break;
                 }
             }
