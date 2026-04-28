@@ -23,11 +23,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
     public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
         : base(context, serviceProvider)
     {
-        this.ReadLineOptions = new ReadLineOptions
-        {
-            Prompt = "operate-credit > ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
+        this.Prompt = "operate-credit > ";
     }
 
     public SeedKey? SeedKey { get; set; }

@@ -2,7 +2,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Lp.Services;
-using Lp.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using SimpleCommandLine;
@@ -12,7 +11,7 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private static readonly ExecutionStack RemoteStack = new(2);
+    private static readonly ExecutionStack RemoteStack = new(3);
     // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -75,7 +74,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.Refused;
         }
 
-        this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote>> {message}");
+        this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote >> {message}");
 
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.Prepare(receiver);
@@ -83,7 +82,11 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {//Timeout
-                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                this.logger.GetWriter(LogLevel.Warning)?.Write("Timeout");
             }
             finally
             {

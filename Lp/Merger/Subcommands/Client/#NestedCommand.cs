@@ -22,11 +22,7 @@ public class NestedCommand
     public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
         : base(context, serviceProvider)
     {
-        this.ReadLineOptions = new ReadLineOptions
-        {
-            Prompt = "merger-client > ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
+        this.Prompt = "merger-client > ";
     }
 
     public RobustConnection? RobustConnection { get; set; }

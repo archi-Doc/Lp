@@ -35,7 +35,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
     {
         this.unitContext = unitContext;
         this.lpUnit = lpUnit;
-        var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
@@ -96,6 +95,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             var senderService = connection.GetService<IRemoteUserInterfaceSender>();
             var agreement = new ConnectionAgreement();
             agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(1);
+            agreement.TransmissionTimeout = TimeSpan.FromMinutes(1);
             var token = CertificateToken<ConnectionAgreement>.CreateAndSign(agreement, seedKey, connection);
 
             // // Customized ConnectBidirectionally()

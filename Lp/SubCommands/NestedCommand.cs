@@ -21,7 +21,7 @@ public class NestedCommand<TCommand>
 
     public SimpleParser SimpleParser { get; }
 
-    public ReadLineOptions? ReadLineOptions { get; protected set; }
+    public string Prompt { get; protected set; } = "> ";
 
     public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
     {
@@ -46,12 +46,6 @@ public class NestedCommand<TCommand>
 
     public async Task MainAsync()
     {
-        this.ReadLineOptions ??= new ReadLineOptions
-        {
-            Prompt = "> ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
-
         using (var scope = this.executionStack.Push((x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
@@ -63,7 +57,7 @@ public class NestedCommand<TCommand>
             while (scope.CanContinue)
             {//
                 // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
-                var result = await this.userInterfaceService.ReadLine(false, this.ReadLineOptions.Prompt, scope.CancellationToken).ConfigureAwait(false);
+                var result = await this.userInterfaceService.ReadLine(false, this.Prompt, scope.CancellationToken).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {// Canceled, Terminated, Timeout
                     break;

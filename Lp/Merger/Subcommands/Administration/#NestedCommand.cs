@@ -24,11 +24,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
     public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
         : base(context, serviceProvider)
     {
-        this.ReadLineOptions = new ReadLineOptions
-        {
-            Prompt = "merger-admin > ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
+        this.Prompt = "merger-admin > ";
     }
 
     public RobustConnection? RobustConnection { get; set; }
