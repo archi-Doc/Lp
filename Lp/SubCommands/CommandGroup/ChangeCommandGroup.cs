@@ -8,7 +8,7 @@ namespace Lp.Subcommands;
 public partial class CommandGroup
 {
     [SimpleCommand("change-command-group")]
-    public class ChangeCommandGroup : ISimpleCommand<NewOptions>
+    public class ChangeCommandGroup : ISimpleCommand<Options>
     {
         public ChangeCommandGroup(ILogger<ChangeCommandGroup> logger, VaultControl vaultControl)
         {
@@ -16,7 +16,7 @@ public partial class CommandGroup
             this.vaultControl = vaultControl;
         }
 
-        public async Task Execute(NewOptions options, string[] args, CancellationToken cancellationToken)
+        public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(options.Name);
             /*if (!this.vaultControl.Root.Contains(name))
@@ -25,7 +25,7 @@ public partial class CommandGroup
                 return;
             }*/
 
-            var commands = SimpleParserHelper.SeparateArguments(options.Command);
+            var commands = SplitLines(options.Command);
             this.vaultControl.Root.Add(name, commands);
             this.logger.GetWriter()?.Write(Hashed.CommandGroup.Set, options.Name);
             ShowCommands(commands, this.logger);

@@ -55,10 +55,4 @@ public partial class CommandGroup
         private readonly VaultControl vaultControl;
         private readonly ILogger logger;
     }
-
-    public record ExecuteOptions
-    {
-        [SimpleOption("Name", Description = "Command group name", Required = true)]
-        public string Name { get; init; } = string.Empty;
-    }
 }
