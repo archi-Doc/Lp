@@ -295,12 +295,38 @@ public class ExecutionStack
         }
     }
 
-    public bool TrySetCompleted(long id)
+    public bool TryGetCancellationToken(long id, out CancellationToken cancellationToken)
+    {
+        var scope = this.Find(id);
+        if (scope is not null)
+        {
+            cancellationToken = scope.CancellationToken;
+            return true;
+        }
+        else
+        {
+            cancellationToken = default;
+            return false;
+        }
+    }
+
+    public bool TrySetCompleted(long id, bool cancel = false)
     {
         var scope = this.Find(id);
         if (scope is not null)
         {
             scope.GetCompletionSource().TrySetResult();
+            if (cancel)
+            {
+                try
+                {
+                    scope.CancellationTokenSource.Cancel();
+                }
+                catch
+                {
+                }
+            }
+
             return true;
         }
         else

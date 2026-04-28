@@ -32,7 +32,14 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, this.CancellationToken);
+        var scope = this.executionStack.Find(this.Id);
+        if (scope is not null)
+        {
+            cancellationToken = scope.CancellationToken;
+        }
+
+        var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+
         return new(result.Text);
 
         /*using (var scope = this.executionStack.Push((x, signal) =>
@@ -91,7 +98,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.ReturnInputControl(long id)
     {
-        this.executionStack.TrySetCompleted(id);
+        this.executionStack.TrySetCompleted(id, false);
         return Task.CompletedTask;
     }
 }

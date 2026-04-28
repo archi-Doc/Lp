@@ -79,7 +79,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.Prepare(receiver);
-        receiver.Id = id;
         _ = Task.Run(async () =>
         {
             try

@@ -163,6 +163,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     }))
                     {
                         receiver.CancellationToken = scope2.CancellationToken;
+                        receiver.Id = scope2.Id;
 
                         var netResult = await senderService.Send(scope2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
