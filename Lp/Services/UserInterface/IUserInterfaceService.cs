@@ -18,6 +18,7 @@ public interface IUserInterfaceService : IConsoleService
     /// </summary>
     /// <param name="cancelOnEscape">If true, allows the user to cancel input with the Escape key.</param>
     /// <param name="description">An optional description to display to the user.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation. The result contains the input and its status.</returns>
     Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default);
 
@@ -26,6 +27,7 @@ public interface IUserInterfaceService : IConsoleService
     /// </summary>
     /// <param name="cancelOnEscape">If true, allows the user to cancel input with the Escape key.</param>
     /// <param name="description">An optional description to display to the user.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation. The result indicates the user's choice.</returns>
     Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default);
 
@@ -34,6 +36,7 @@ public interface IUserInterfaceService : IConsoleService
     /// </summary>
     /// <param name="cancelOnEscape">If true, allows the user to cancel input with the Escape key.</param>
     /// <param name="description">An optional description to display to the user.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation. The result contains the password and its status.</returns>
     Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default);
 

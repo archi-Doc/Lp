@@ -11,7 +11,7 @@ namespace Lp.Services;
 /// </summary>
 internal class RemoteUserInterfaceService : IUserInterfaceService
 {
-    public string Prefix { get; set; } = "Remote > ";
+    public string Prefix { get; set; } = "Remote >> ";
 
     private readonly IRemoteUserInterfaceReceiver receiver;
     private readonly ConsoleUserInterfaceService console;
