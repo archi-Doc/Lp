@@ -90,6 +90,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
+                scope.TryCancel();
                 scope.Dispose();
 
                 // Return control of console input.
