@@ -25,7 +25,7 @@ public partial class CommandGroup
                 return;
             }
 
-            var commands = SplitLines(options.Command);
+            var commands = BaseHelper.SplitLines(options.Command);
             if (this.vaultControl.Root.TryAdd(name, commands, out _))
             {
                 this.logger.GetWriter()?.Write(Hashed.CommandGroup.Created, options.Name);
