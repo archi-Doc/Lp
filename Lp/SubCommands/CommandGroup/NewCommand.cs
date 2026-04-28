@@ -7,10 +7,10 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("new-command-group")]
-    public class NewCommandGroup : ISimpleCommand<Options>
+    [SimpleCommand("new-command")]
+    public class NewCommand : ISimpleCommand<Options>
     {
-        public NewCommandGroup(ILogger<Options> logger, VaultControl vaultControl)
+        public NewCommand(ILogger<Options> logger, VaultControl vaultControl)
         {
             this.logger = logger;
             this.vaultControl = vaultControl;

@@ -7,9 +7,12 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("change-command-group")]
+    [SimpleCommand("change-command")]
     public class ChangeCommandGroup : ISimpleCommand<Options>
     {
+        private readonly ILogger logger;
+        private readonly VaultControl vaultControl;
+
         public ChangeCommandGroup(ILogger<ChangeCommandGroup> logger, VaultControl vaultControl)
         {
             this.logger = logger;
@@ -30,8 +33,5 @@ public partial class CommandGroup
             this.logger.GetWriter()?.Write(Hashed.CommandGroup.Set, options.Name);
             ShowCommands(commands, this.logger);
         }
-
-        private readonly ILogger logger;
-        private readonly VaultControl vaultControl;
     }
 }
