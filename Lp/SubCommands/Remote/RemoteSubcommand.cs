@@ -27,11 +27,11 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
     private readonly LpUnit lpUnit;
     private readonly LpService lpService;
     private readonly NetTerminal netTerminal;
-    private readonly RobustConnection.Factory robustConnectionFactory;
+    // private readonly RobustConnection.Factory robustConnectionFactory;
     private readonly SimpleConsole simpleConsole;
     private readonly ExecutionStack executionStack;
 
-    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole, ExecutionStack executionStack)
+    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, SimpleConsole simpleConsole, ExecutionStack executionStack)
     {
         this.unitContext = unitContext;
         this.lpUnit = lpUnit;
@@ -40,7 +40,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
         this.netTerminal = netTerminal;
-        this.robustConnectionFactory = robustConnectionFactory;
+        // this.robustConnectionFactory = robustConnectionFactory;
         this.simpleConsole = simpleConsole;
         this.executionStack = executionStack;
     }
