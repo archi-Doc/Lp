@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using Lp.NetServices;
+using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 using SimplePrompt;
@@ -9,54 +12,43 @@ namespace Lp.Subcommands;
 public class NestedCommand<TCommand>
     where TCommand : NestedCommand<TCommand>
 {
+    private readonly IServiceProvider serviceProvider;
     private readonly ExecutionStack executionStack;
-    // private readonly SimpleConsole simpleConsole;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Type[] commandTypes;
-    private SimpleParser? simpleParser;
+
+    public SimpleParserOptions SimpleParserOptions { get; }
+
+    public SimpleParser SimpleParser { get; }
+
+    public ReadLineOptions? ReadLineOptions { get; protected set; }
 
     public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
     {
-        this.executionStack = serviceProvider.GetRequiredService<ExecutionStack>();
-        // this.simpleConsole = serviceProvider.GetRequiredService<SimpleConsole>();
-        this.userInterfaceService = serviceProvider.GetRequiredService<IUserInterfaceService>();
+        this.serviceProvider = serviceProvider;
+        this.executionStack = this.serviceProvider.GetRequiredService<ExecutionStack>();
 
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = context.ServiceProvider,
+            ServiceProvider = this.serviceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };
+
+        // this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeLocal();
+        this.SimpleParser = new SimpleParser(this.commandTypes, this.SimpleParserOptions);
+        this.userInterfaceService = this.serviceProvider.GetRequiredService<IUserInterfaceService>();
     }
-
-    /// <summary>
-    /// Gets <see cref="SimpleParserOptions"/>.
-    /// </summary>
-    public SimpleParserOptions SimpleParserOptions { get; }
-
-    /// <summary>
-    /// Gets <see cref="SimpleParser"/> instance.
-    /// </summary>
-    public SimpleParser SimpleParser
-    {
-        get
-        {
-            this.simpleParser ??= new(this.commandTypes, this.SimpleParserOptions);
-            return this.simpleParser;
-        }
-    }
-
-    public ReadLineOptions? ReadLineOptions { get; protected set; }
 
     public async Task MainAsync()
     {
         this.ReadLineOptions ??= new ReadLineOptions
         {
-            Prompt = ">> ",
+            Prompt = "> ",
             MultilinePrompt = LpConstants.MultilinePromptString,
         };
 
