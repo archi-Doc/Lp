@@ -28,10 +28,10 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
     private readonly LpService lpService;
     private readonly NetTerminal netTerminal;
     // private readonly RobustConnection.Factory robustConnectionFactory;
-    private readonly SimpleConsole simpleConsole;
+    // private readonly SimpleConsole simpleConsole;
     private readonly ExecutionStack executionStack;
 
-    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, SimpleConsole simpleConsole, ExecutionStack executionStack)
+    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, ExecutionStack executionStack)
     {
         this.unitContext = unitContext;
         this.lpUnit = lpUnit;
@@ -41,7 +41,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
         this.lpService = lpService;
         this.netTerminal = netTerminal;
         // this.robustConnectionFactory = robustConnectionFactory;
-        this.simpleConsole = simpleConsole;
         this.executionStack = executionStack;
     }
 
@@ -94,14 +93,14 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 return;
             }
 
-            var clientService = connection.GetService<IRemoteUserInterfaceSender>();
+            var senderService = connection.GetService<IRemoteUserInterfaceSender>();
             var agreement = new ConnectionAgreement();
             agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(1);
             var token = CertificateToken<ConnectionAgreement>.CreateAndSign(agreement, seedKey, connection);
 
             // // Customized ConnectBidirectionally()
             var serverConnection = connection.PrepareBidirectionalConnection();
-            var resultAndValue = await clientService.ConnectBidirectionally(token);
+            var resultAndValue = await senderService.ConnectBidirectionally(token);
             if (resultAndValue.IsSuccessAndValid)
             {
                 connection.Agreement.EnableBidirectionalConnection = true;
@@ -130,13 +129,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            var readineOptions = new ReadLineOptions()
-            {
-                Prompt = $"{nodeName} >> ",
-                MultilineDelimiter = LpConstants.MultilineIndeitifierString,
-                MultilinePrompt = LpConstants.MultilinePromptString,
-            };
-
             // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
             using (var scope = this.executionStack.Push((x, signal) =>
             {
@@ -148,7 +140,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             {
                 while (scope.CanContinue)
                 {
-                    var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
+                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, scope.CancellationToken).ConfigureAwait(false);
+                    // var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
                     {
                         break;
@@ -163,7 +156,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            clientService.Cancel(x.Id);
+                            senderService.Cancel(x.Id);
                             x.CancellationTokenSource.Cancel(); // Perform cancellation in advance in case the network is disconnected.
                             this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
@@ -171,7 +164,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         receiver.CancellationToken = scope2.CancellationToken;
 
-                        var netResult = await clientService.Send(scope2.Id, result.Text).ConfigureAwait(false);
+                        var netResult = await senderService.Send(scope2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
                             this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));

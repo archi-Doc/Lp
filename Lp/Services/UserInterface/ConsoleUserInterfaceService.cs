@@ -118,7 +118,8 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         var options = new ReadLineOptions
         {
             CancelOnEscape = cancelOnEscape,
-            MultilineDelimiter = default,
+            MultilineDelimiter = LpConstants.MultilineIndeitifierString, //default
+            MultilinePrompt = LpConstants.MultilinePromptString,
             Prompt = description ?? string.Empty,
         };
 
