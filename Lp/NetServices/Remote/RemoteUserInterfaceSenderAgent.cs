@@ -12,7 +12,7 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private static readonly ExecutionStack RemoteStack = new(1);
+    private static readonly ExecutionStack RemoteStack = new(2);
     // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -79,6 +79,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.Prepare(receiver);
+        receiver.Id = id;
         _ = Task.Run(async () =>
         {
             try
@@ -90,7 +91,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
                 scope.Dispose();
 
                 // Return control of console input.
-                await receiver.ReturnInputControl(id, default).ConfigureAwait(false);
+                await receiver.ReturnInputControl(id).ConfigureAwait(false);
             }
         });
         // _ = this.simpleParser.ParseAndRunAsync(message).ConfigureAwait(false);
@@ -117,7 +118,13 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotFound);
         }
 
-        scope.CancellationTokenSource.Cancel();
+        try
+        {
+            scope.CancellationTokenSource.Cancel();
+        }
+        catch
+        {
+        }
 
         return Task.FromResult(NetResult.Success);
     }

@@ -297,7 +297,7 @@ public class ExecutionStack
 
     public bool TrySetCompleted(long id)
     {
-        var scope = this.Peek();
+        var scope = this.Find(id);
         if (scope is not null)
         {
             scope.GetCompletionSource().TrySetResult();

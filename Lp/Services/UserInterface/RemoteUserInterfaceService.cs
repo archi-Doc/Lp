@@ -56,23 +56,23 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
     {
     }
 
-    public Task<InputResult> ReadLine(CancellationToken cancellationToken)
-        => this.receiver.ReadLine(cancellationToken);
-
     public ConsoleKeyInfo ReadKey(bool intercept) => default;
 
     public bool KeyAvailable => false;
 
+    public Task<InputResult> ReadLine(CancellationToken cancellationToken)
+        => this.receiver.ReadLine(cancellationToken);
+
     public async Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
     {
-        var result = await this.receiver.ReadLine(cancelOnEscape, description, cancellationToken);
+        var result = await this.receiver.ReadLine(cancelOnEscape, description, cancellationToken).ConfigureAwait(false);
         if (result.IsSuccess)
         {
             return new(result.Value ?? string.Empty);
         }
         else
         {
-            this.receiver.ReturnInputControl();
+            // await this.receiver.ReturnInputControl(this.receiver.Id).ConfigureAwait(false);//
             // TransmissionContext.Current.ServerConnection.Close();
             return new(InputResultKind.Terminated);
         }
