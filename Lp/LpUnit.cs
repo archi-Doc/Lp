@@ -435,6 +435,11 @@ public class LpUnit
                 await lpUnit.PreparePeer(this.Context);
                 await lpUnit.DomainControl.Prepare(this.Context); // Since the Merger must be prepared first, process DomainControl last.
 
+                if (lpUnit.Core.IsTerminated)
+                {
+                    throw new PanicException();
+                }
+
                 // Vault -> NodeKey
                 await lpUnit.LoadKeyVault_NodeKey();
 
