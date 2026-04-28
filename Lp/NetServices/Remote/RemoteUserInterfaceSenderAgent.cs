@@ -120,13 +120,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotFound);
         }
 
-        try
-        {
-            scope.CancellationTokenSource.Cancel();
-        }
-        catch
-        {
-        }
+        scope.TryCancel();
 
         return Task.FromResult(NetResult.Success);
     }

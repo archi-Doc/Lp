@@ -907,7 +907,7 @@ public class LpUnit
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            x.CancellationTokenSource.Cancel();
+                            x.TryCancel();
                             this.UserInterfaceService.WriteLineError("Canceled");
                         }
                     }))

@@ -134,7 +134,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             {
                 if (signal == ExecutionSignal.Exit)
                 {
-                    x.CancellationTokenSource.Cancel();
+                    x.TryCancel();
                 }
             }))
             {
@@ -157,7 +157,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         if (signal == ExecutionSignal.Cancel)
                         {
                             senderService.Cancel(x.Id);
-                            x.CancellationTokenSource.Cancel(); // Perform cancellation in advance in case the network is disconnected.
+                            x.TryCancel(); // Perform cancellation in advance in case the network is disconnected.
                             this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
                     }))
@@ -181,7 +181,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                         finally
                         {
-                            scope2.CancellationTokenSource.Cancel();
+                            scope2.TryCancel();
                         }
                     }
                 }

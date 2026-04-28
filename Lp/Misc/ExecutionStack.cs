@@ -31,6 +31,10 @@ public class ExecutionStack
     /// </remarks>
     public class Scope : IDisposable
     {
+        private readonly ProcessSignalHandler? processSignalHandler;
+        private CancellationTokenSource cancellationTokenSource;
+        private TaskCompletionSource? completionSource;
+
         /// <summary>
         /// Gets the owning <see cref="Arc.Threading.ExecutionStack"/> instance.
         /// </summary>
@@ -41,33 +45,12 @@ public class ExecutionStack
         /// </summary>
         public long Id { get; }
 
-        private readonly ProcessSignalHandler? processSignalHandler;
-
-        /// <summary>
-        /// Gets the <see cref="System.Threading.CancellationTokenSource"/> associated with this scope.
-        /// </summary>
-        public CancellationTokenSource CancellationTokenSource { get; }
-
         /// <summary>
         /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this scope.
         /// </summary>
         public CancellationToken CancellationToken { get; }
 
-        private TaskCompletionSource? completionSource;
-
         public Task Completion => this.GetCompletionSource().Task;
-
-        internal TaskCompletionSource GetCompletionSource()
-        {
-            var current = Volatile.Read(ref this.completionSource);
-            if (current is not null)
-            {
-                return current;
-            }
-
-            var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
-        }
 
         /// <summary>
         /// Gets a value indicating whether this scope is the root scope (<c>Id == 0</c>).
@@ -87,19 +70,22 @@ public class ExecutionStack
             this.ExecutionStack = executionStack;
             this.Id = id;
             this.processSignalHandler = processSignalHandler;
-            this.CancellationTokenSource = CancellationTokenPool.Rent();
-            this.CancellationToken = this.CancellationTokenSource.Token;
+            this.cancellationTokenSource = CancellationTokenPool.Rent();
+            this.CancellationToken = this.cancellationTokenSource.Token;
             // this.TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         public void ProcessSignal(ExecutionSignal signal)
             => this.processSignalHandler?.Invoke(this, signal);
 
+        public void TrySetResult()
+            => this.GetCompletionSource().TrySetResult();
+
         public void TryCancel()
         {
             try
             {
-                this.CancellationTokenSource.Cancel();
+                this.cancellationTokenSource.Cancel();
             }
             catch
             {
@@ -112,14 +98,25 @@ public class ExecutionStack
         public void Dispose()
         {
             this.ExecutionStack.Remove(this);
-            CancellationTokenPool.TryResetAndReturn(this.CancellationTokenSource);
+            CancellationTokenPool.TryResetAndReturn(this.cancellationTokenSource);
         }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            var isCanceled = this.CancellationTokenSource.IsCancellationRequested ? " Canceled" : string.Empty;
-            return $"Execution Scope {this.Id}{isCanceled}";
+            return $"Execution Scope {this.Id}";
+        }
+
+        private TaskCompletionSource GetCompletionSource()
+        {
+            var current = Volatile.Read(ref this.completionSource);
+            if (current is not null)
+            {
+                return current;
+            }
+
+            var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
         }
     }
 
@@ -248,7 +245,7 @@ public class ExecutionStack
         if (scope is not null &&
             !scope.IsRoot)
         {
-            scope.CancellationTokenSource.Cancel();
+            scope.TryCancel();
             return true;
         }
         else
@@ -326,16 +323,10 @@ public class ExecutionStack
         var scope = this.Find(id);
         if (scope is not null)
         {
-            scope.GetCompletionSource().TrySetResult();
+            scope.TrySetResult();
             if (cancel)
             {
-                try
-                {
-                    scope.CancellationTokenSource.Cancel();
-                }
-                catch
-                {
-                }
+                scope.TryCancel();
             }
 
             return true;

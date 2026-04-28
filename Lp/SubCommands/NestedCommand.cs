@@ -50,7 +50,7 @@ public class NestedCommand<TCommand>
         {
             if (signal == ExecutionSignal.Exit)
             {
-                x.CancellationTokenSource.Cancel();
+                x.TryCancel();
             }
         }))
         {
@@ -77,7 +77,7 @@ public class NestedCommand<TCommand>
                         {
                             if (signal == ExecutionSignal.Cancel)
                             {
-                                x.CancellationTokenSource.Cancel();
+                                x.TryCancel();
                                 this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                             }
                         }))
