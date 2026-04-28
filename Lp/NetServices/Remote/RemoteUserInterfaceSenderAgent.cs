@@ -82,7 +82,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {//Timeout
-                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {

@@ -95,6 +95,17 @@ public class ExecutionStack
         public void ProcessSignal(ExecutionSignal signal)
             => this.processSignalHandler?.Invoke(this, signal);
 
+        public void TryCancel()
+        {
+            try
+            {
+                this.CancellationTokenSource.Cancel();
+            }
+            catch
+            {
+            }
+        }
+
         /// <summary>
         /// Removes this scope from its owning <see cref="ExecutionStack"/>.
         /// </summary>

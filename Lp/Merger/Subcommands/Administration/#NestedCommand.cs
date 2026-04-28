@@ -100,7 +100,7 @@ public class Command : ISimpleCommand<CommandOptions>
         this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
         this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
 
-        await this.nestedcommand.MainAsync();
+        await this.nestedcommand.MainAsync(cancellationToken);
     }
 }
 

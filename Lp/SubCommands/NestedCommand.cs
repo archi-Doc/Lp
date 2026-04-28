@@ -44,7 +44,7 @@ public class NestedCommand<TCommand>
         this.userInterfaceService = this.serviceProvider.GetRequiredService<IUserInterfaceService>();
     }
 
-    public async Task MainAsync()
+    public async Task MainAsync(CancellationToken cancellationToken)
     {
         using (var scope = this.executionStack.Push((x, signal) =>
         {
@@ -54,7 +54,7 @@ public class NestedCommand<TCommand>
             }
         }))
         {
-            while (scope.CanContinue)
+            while (scope.CanContinue) // (!cancellationToken.IsCancellationRequested)
             {//
                 // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
                 var result = await this.userInterfaceService.ReadLine(false, this.Prompt, scope.CancellationToken).ConfigureAwait(false);

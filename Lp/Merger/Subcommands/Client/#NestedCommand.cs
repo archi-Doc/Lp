@@ -76,7 +76,7 @@ public class Command : ISimpleCommand<Command.Options>
         this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => NetsphereHelper.SetAuthenticationToken(x, this.nestedcommand.Authority));
         // this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => RobustConnection.SetAuthenticationToken(x, authority.UnsafeGetPrivateKey()));
         this.userInterfaceService.WriteLine(node.ToString());
-        await this.nestedcommand.MainAsync();
+        await this.nestedcommand.MainAsync(cancellationToken);
     }
 
     private readonly ILogger logger;

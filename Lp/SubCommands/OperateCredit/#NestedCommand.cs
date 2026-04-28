@@ -80,6 +80,6 @@ public class OperateCreditCommand : ISimpleCommand<OperateCreditCommand.Options>
         this.userInterfaceService.WriteLine($"Credit: {this.nestedcommand.Credit}");
         this.userInterfaceService.WriteLine($"Seed key: {seedKey.GetSignaturePublicKey()}");
 
-        await this.nestedcommand.MainAsync();
+        await this.nestedcommand.MainAsync(cancellationToken);
     }
 }
