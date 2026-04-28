@@ -6,7 +6,7 @@ using Lp.Services;
 namespace Lp.NetServices;
 
 [NetObject]
-public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver //, INetObject
+public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
     private readonly ExecutionStack executionStack;
     private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
@@ -37,6 +37,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver //,
         }))
         {
             var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, scope.CancellationToken);
+            var state = TransmissionContext.Current.ServerConnection.CurrentState;
             return new(result.Text);
         }
     }
@@ -86,8 +87,4 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver //,
         this.executionStack.TrySetCompleted(id);
         return Task.CompletedTask;
     }
-
-    /*void INetObject.OnConnectionClosed()
-    {
-    }*/
 }

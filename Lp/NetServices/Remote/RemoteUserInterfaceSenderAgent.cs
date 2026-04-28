@@ -13,7 +13,7 @@ namespace Lp.NetServices;
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
     private static readonly ExecutionStack RemoteStack = new(1);
-    private readonly ExecutionStack executionStack;
+    // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
     private readonly LpBase lpBase;
@@ -22,9 +22,9 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(ExecutionStack executionStack, IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
+    public RemoteUserInterfaceSenderAgent(/*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
-        this.executionStack = executionStack;
+        // this.executionStack = executionStack;
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
