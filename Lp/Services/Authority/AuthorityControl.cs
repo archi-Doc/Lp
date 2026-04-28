@@ -107,6 +107,7 @@ public class AuthorityControl
                 var inputResult = await this.userInterfaceService.ReadPassword(true, Hashed.Authority.EnterPassword, name).ConfigureAwait(false);
                 if (!inputResult.IsSuccess)
                 {// Canceled
+                    this.userInterfaceService.WriteLine();
                     return default;
                 }
 
