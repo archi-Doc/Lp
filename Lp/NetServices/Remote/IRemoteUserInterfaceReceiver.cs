@@ -11,11 +11,11 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     Task WriteLine(LogLevel logLevel, string? message);
 
-    Task<InputResult> ReadLine(CancellationToken cancellationToken);
+    Task<NetResultAndValue<string>> ReadLine(CancellationToken cancellationToken);
 
     Task<NetResultAndValue<string>> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
 
-    Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
+    Task<NetResultAndValue<string>> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
 
     Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
 

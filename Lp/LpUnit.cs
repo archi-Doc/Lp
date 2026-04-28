@@ -32,6 +32,7 @@ namespace Lp;
 public class LpUnit
 {
     public static readonly Type[] RemoteSubcommands = [
+        typeof(RemoteSubcommand),//
         typeof(FreezeSubcommand),
         typeof(InspectSubcommand),
         typeof(BenchmarkSubcommand),

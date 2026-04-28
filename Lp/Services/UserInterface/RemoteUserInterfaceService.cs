@@ -60,8 +60,18 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
 
     public bool KeyAvailable => false;
 
-    public Task<InputResult> ReadLine(CancellationToken cancellationToken)
-        => this.receiver.ReadLine(cancellationToken);
+    public async Task<InputResult> ReadLine(CancellationToken cancellationToken)
+    {
+        var result = await this.receiver.ReadLine(cancellationToken).ConfigureAwait(false);
+        if (result.IsSuccess)
+        {
+            return new(result.Value ?? string.Empty);
+        }
+        else
+        {
+            return new(InputResultKind.Terminated);
+        }
+    }
 
     public async Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
     {
@@ -72,14 +82,22 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
         }
         else
         {
-            // await this.receiver.ReturnInputControl(this.receiver.Id).ConfigureAwait(false);//
-            // TransmissionContext.Current.ServerConnection.Close();
             return new(InputResultKind.Terminated);
         }
     }
 
-    public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
-        => this.receiver.ReadPassword(cancelOnEscape, description, cancellationToken);
+    public async Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
+    {
+        var result = await this.receiver.ReadPassword(cancelOnEscape, description, cancellationToken).ConfigureAwait(false);
+        if (result.IsSuccess)
+        {
+            return new(result.Value ?? string.Empty);
+        }
+        else
+        {
+            return new(InputResultKind.Terminated);
+        }
+    }
 
     public Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
         => this.receiver.ReadYesNo(cancelOnEscape, description, cancellationToken);

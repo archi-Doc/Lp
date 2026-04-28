@@ -25,21 +25,17 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.consoleUserInterfaceService = consoleUserInterfaceService;
     }
 
-    Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
+    async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
     {
-        return this.consoleUserInterfaceService.ReadLine(cancellationToken);
+        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
+        var result = await this.consoleUserInterfaceService.ReadLine(cancellationToken);
+        return new(result.Text);
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        var scope = this.executionStack.Find(this.Id);
-        if (scope is not null)
-        {
-            cancellationToken = scope.CancellationToken;
-        }
-
+        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
         var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
-
         return new(result.Text);
 
         /*using (var scope = this.executionStack.Push((x, signal) =>
@@ -56,9 +52,11 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         }*/
     }
 
-    Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
+    async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        return this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
+        var result = await this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        return new(result.Text);
     }
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
@@ -98,7 +96,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.ReturnInputControl(long id)
     {
-        this.executionStack.TrySetCompleted(id, false);
+        this.executionStack.TrySetCompleted(id);
         return Task.CompletedTask;
     }
 }
