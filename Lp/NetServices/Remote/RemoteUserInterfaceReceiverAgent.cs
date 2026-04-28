@@ -13,6 +13,8 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public string Prefix { get; set; } = "[Remote] ";
 
+    public string Prefix2 { get; set; } = "Remote >> ";
+
     public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, ConsoleUserInterfaceService consoleUserInterfaceService)
     {
         this.executionStack = executionStack;
@@ -23,13 +25,13 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         => this.consoleUserInterfaceService.ReadLine(cancellationToken);
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.Prefix + description, cancellationToken);
+        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.Prefix2 + description, cancellationToken);
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.Prefix + description, cancellationToken);
+        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.Prefix2 + description, cancellationToken);
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix + description, cancellationToken);
+        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix2 + description, cancellationToken);
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {

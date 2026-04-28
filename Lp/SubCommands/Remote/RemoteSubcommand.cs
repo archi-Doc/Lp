@@ -128,6 +128,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             }
 
             receiver.Prefix = $"[{nodeName}] ";
+            receiver.Prefix2 = $"{nodeName} >> ";
 
             var readineOptions = new ReadLineOptions()
             {

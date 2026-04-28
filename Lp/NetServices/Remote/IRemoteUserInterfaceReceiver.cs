@@ -22,4 +22,7 @@ public interface IRemoteUserInterfaceReceiver : INetService
     Task ReturnInputControl(long id, CancellationToken cancellationToken);
 
     string Prefix { get; set; }
+
+    string Prefix2 { get; set; }
+
 }
