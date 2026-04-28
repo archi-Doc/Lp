@@ -126,6 +126,8 @@ public class ExecutionStack
 
     public int Count => this.list.Count;
 
+    public bool IsEmpty => this.list.Count == 0;
+
     private readonly Lock syncObject = new();
     private readonly List<Scope> list = new();
     private readonly Xoshiro256StarStar random;

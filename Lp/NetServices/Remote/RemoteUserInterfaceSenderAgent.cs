@@ -58,14 +58,15 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
     async Task<NetResult> IRemoteUserInterfaceSender.Send(long id, string message)
     {
-        if (!this.IsAuthenticated)
+        if (!this.IsAuthenticated ||
+            TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
         {
             return NetResult.NotAuthenticated;
         }
 
-        if (TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
+        if (id == 0)
         {
-            return NetResult.NotAuthenticated;
+            return NetResult.InvalidData;
         }
 
         var scope = RemoteStack.TryPush(id, default);
@@ -99,14 +100,15 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
     Task<NetResult> IRemoteUserInterfaceSender.Cancel(long id)
     {
-        if (!this.IsAuthenticated)
+        if (!this.IsAuthenticated ||
+            TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
         {
             return Task.FromResult(NetResult.NotAuthenticated);
         }
 
-        if (TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
+        if (id == 0)
         {
-            return Task.FromResult(NetResult.NotAuthenticated);
+            return Task.FromResult(NetResult.InvalidData);
         }
 
         var scope = RemoteStack.Find(id);

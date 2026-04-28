@@ -12,6 +12,7 @@ global using Lp;
 global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
+using Amazon.Runtime.Internal;
 using Lp.Data;
 using Lp.Logging;
 using Lp.Net;
