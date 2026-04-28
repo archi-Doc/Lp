@@ -80,8 +80,18 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
     {
     }*/
 
-    public Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
-        => this.receiver.ReadLine(cancelOnEscape, description, cancellationToken);
+    public async Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
+    {
+        var result = await this.receiver.ReadLine(cancelOnEscape, description, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return new(result.Value ?? string.Empty);
+        }
+        else
+        {
+            return new(InputResultKind.Terminated);
+        }
+    }
 
     public Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
         => this.receiver.ReadPassword(cancelOnEscape, description, cancellationToken);

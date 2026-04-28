@@ -13,7 +13,7 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     Task<InputResult> ReadLine(CancellationToken cancellationToken);
 
-    Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
+    Task<NetResultAndValue<string>> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
 
     Task<InputResult> ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken);
 
@@ -21,8 +21,7 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     Task ReturnInputControl(long id, CancellationToken cancellationToken);
 
-    string Prefix { get; set; }
+    string OutputPrefix { get; set; }
 
-    string Prefix2 { get; set; }
-
+    string InputPrefix { get; set; }
 }

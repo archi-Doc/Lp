@@ -6,14 +6,14 @@ using Lp.Services;
 namespace Lp.NetServices;
 
 [NetObject]
-public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
+public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver //, INetObject
 {
     private readonly ExecutionStack executionStack;
     private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
 
-    public string Prefix { get; set; } = "[Remote] ";
+    public string OutputPrefix { get; set; } = "[Remote] ";
 
-    public string Prefix2 { get; set; } = "Remote >> ";
+    public string InputPrefix { get; set; } = "Remote >> ";
 
     public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, ConsoleUserInterfaceService consoleUserInterfaceService)
     {
@@ -22,26 +22,44 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     }
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadLine(cancellationToken);
+    {
+        return this.consoleUserInterfaceService.ReadLine(cancellationToken);
+    }
 
-    Task<InputResult> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.Prefix2 + description, cancellationToken);
+    async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
+    {
+        using (var scope = this.executionStack.Push((x, signal) =>
+        {
+            if (signal == ExecutionSignal.Exit)
+            {
+                x.CancellationTokenSource.Cancel();
+            }
+        }))
+        {
+            var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, scope.CancellationToken);
+            return new(result.Text);
+        }
+    }
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.Prefix2 + description, cancellationToken);
+    {
+        return this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+    }
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
-        => this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.Prefix2 + description, cancellationToken);
+    {
+        return this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+    }
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.Write(this.Prefix + message, color);
+        this.consoleUserInterfaceService.Write(this.OutputPrefix + message, color);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
-        var r = StringHelper.AppendPrefix(this.Prefix, message);
+        var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.consoleUserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
         if (r.Rent.Length > 0)
         {
@@ -53,7 +71,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
     {
-        var r = StringHelper.AppendPrefix(this.Prefix, message);
+        var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.consoleUserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
         if (r.Rent.Length > 0)
         {
@@ -68,4 +86,8 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.executionStack.TrySetCompleted(id);
         return Task.CompletedTask;
     }
+
+    /*void INetObject.OnConnectionClosed()
+    {
+    }*/
 }

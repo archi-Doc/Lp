@@ -64,8 +64,8 @@ public class NestedCommand<TCommand>
             {//
                 // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
                 var result = await this.userInterfaceService.ReadLine(false, this.ReadLineOptions.Prompt, scope.CancellationToken).ConfigureAwait(false);
-                if (!result.IsSuccess)
-                {
+                if (!result.IsSuccess || string.IsNullOrEmpty(result.Text))
+                {// Canceled, Terminated, Timeout
                     break;
                 }
 

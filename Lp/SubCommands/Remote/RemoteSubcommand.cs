@@ -127,8 +127,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 return;
             }
 
-            receiver.Prefix = $"[{nodeName}] ";
-            receiver.Prefix2 = $"{nodeName} >> ";
+            receiver.OutputPrefix = $"[{nodeName}] ";
+            receiver.InputPrefix = $"{nodeName} >> ";
 
             var readineOptions = new ReadLineOptions()
             {
