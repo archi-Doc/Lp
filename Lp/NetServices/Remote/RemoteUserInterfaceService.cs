@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
-using System.Drawing;
 using Lp.NetServices;
 
 namespace Lp.Services;
@@ -11,34 +9,23 @@ namespace Lp.Services;
 /// </summary>
 internal class RemoteUserInterfaceService : IUserInterfaceService
 {
-    public string Prefix { get; set; } = "Remote >> ";
-
     private readonly IRemoteUserInterfaceReceiver receiver;
-    private readonly ConsoleUserInterfaceService console;
 
-    public RemoteUserInterfaceService(IRemoteUserInterfaceReceiver receiver, ConsoleUserInterfaceService console)
+    public RemoteUserInterfaceService(IRemoteUserInterfaceReceiver receiver)
     {
         this.receiver = receiver;
-        this.console = console;
     }
 
     public bool EnableColor { get; set; } = true;
 
     public void Write(string? message = null, ConsoleColor color = (ConsoleColor)(-1))
     {
-        this.receiver.Write(this.Prefix + message, color);
+        this.receiver.Write(message, color);
     }
 
     public void WriteLine(LogLevel logLevel, string? message)
     {
         this.receiver.WriteLine(logLevel, message);
-
-        /*var r = StringHelper.AppendPrefix(this.Prefix, message);
-        this.console.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
-        if (r.Rent.Length > 0)
-        {
-            ArrayPool<char>.Shared.Return(r.Rent);
-        }*/
     }
 
     public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
@@ -76,10 +63,6 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
 
     public bool KeyAvailable => false;
 
-    /*public async Task Notify(ILogger? logger, LogLevel logLevel, string message)
-    {
-    }*/
-
     public async Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken = default)
     {
         var result = await this.receiver.ReadLine(cancelOnEscape, description, cancellationToken);
@@ -89,6 +72,7 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
         }
         else
         {
+            this.receiver.ReturnInputControl();
             // TransmissionContext.Current.ServerConnection.Close();
             return new(InputResultKind.Terminated);
         }

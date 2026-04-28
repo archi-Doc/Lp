@@ -80,7 +80,7 @@ public class LpUnit
                     var console = sp.GetRequiredService<ConsoleUserInterfaceService>();
                     if (context?.Receiver is { } receiver)
                     {
-                        return new RemoteUserInterfaceService(receiver, console);
+                        return new RemoteUserInterfaceService(receiver);
                     }
                     else
                     {
