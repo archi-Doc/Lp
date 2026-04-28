@@ -89,7 +89,7 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
         }
         else
         {
-            TransmissionContext.Current.ServerConnection.Close();
+            // TransmissionContext.Current.ServerConnection.Close();
             return new(InputResultKind.Terminated);
         }
     }

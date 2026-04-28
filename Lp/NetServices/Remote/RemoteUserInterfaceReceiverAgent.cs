@@ -15,6 +15,8 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public string InputPrefix { get; set; } = "Remote >> ";
 
+    public CancellationToken CancellationToken { get; set; }
+
     public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, ConsoleUserInterfaceService consoleUserInterfaceService)
     {
         this.executionStack = executionStack;
@@ -28,7 +30,10 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        using (var scope = this.executionStack.Push((x, signal) =>
+        var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, this.CancellationToken);
+        return new(result.Text);
+
+        /*using (var scope = this.executionStack.Push((x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -39,7 +44,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, scope.CancellationToken);
             var state = TransmissionContext.Current.ServerConnection.CurrentState;
             return new(result.Text);
-        }
+        }*/
     }
 
     Task<InputResult> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)

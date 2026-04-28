@@ -169,6 +169,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                     }))
                     {
+                        receiver.CancellationToken = scope2.CancellationToken;
+
                         var netResult = await clientService.Send(scope2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
@@ -182,6 +184,10 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                         catch (OperationCanceledException)
                         {
+                        }
+                        finally
+                        {
+                            scope2.CancellationTokenSource.Cancel();
                         }
                     }
                 }
