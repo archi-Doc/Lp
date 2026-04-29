@@ -167,7 +167,7 @@ public class LpUnit
                 // Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
-                Lp.Subcommands.CommandGroup.Configure(context);
+                Lp.Subcommands.Batch.Configure(context);
                 Lp.Subcommands.MergerClient.NestedCommand.Configure(context);
                 Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);

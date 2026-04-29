@@ -4,19 +4,19 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public partial class CommandGroup
+public partial class Batch
 {
-    public const string Prefix = "Command\\";
+    public const string Prefix = "Batch\\";
 
     public record ExecuteOptions
     {
-        [SimpleOption("Name", Description = "Command name", Required = true)]
+        [SimpleOption("Name", Description = "Batch name", Required = true)]
         public string Name { get; init; } = string.Empty;
     }
 
     public record Options
     {
-        [SimpleOption("Name", Description = "Command name", Required = true)]
+        [SimpleOption("Name", Description = "Batch name", Required = true)]
         public string Name { get; init; } = string.Empty;
 
         [SimpleOption("Command", Description = "Command content. To specify multiple commands, use the multiline delimiter \"\"\".", Required = true)]
@@ -27,12 +27,12 @@ public partial class CommandGroup
 
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddSubcommand(typeof(ListCommand));
-        context.AddSubcommand(typeof(NewCommand));
-        context.AddSubcommand(typeof(ChangeCommandGroup));
-        context.AddSubcommand(typeof(ExecuteCommand));
-        context.AddSubcommand(typeof(ShowCommand));
-        context.AddSubcommand(typeof(RemoveCommand));
+        context.AddSubcommand(typeof(ListBatch));
+        context.AddSubcommand(typeof(NewBatch));
+        context.AddSubcommand(typeof(ChangeBatch));
+        context.AddSubcommand(typeof(ExecuteBatch));
+        context.AddSubcommand(typeof(ShowBatch));
+        context.AddSubcommand(typeof(RemoveBatch));
     }
 
     public static void ShowCommands(string[] commands, ILogger logger)

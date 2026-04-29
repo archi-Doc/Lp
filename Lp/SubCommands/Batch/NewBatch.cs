@@ -5,12 +5,12 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public partial class CommandGroup
+public partial class Batch
 {
-    [SimpleCommand("new-command")]
-    public class NewCommand : ISimpleCommand<Options>
+    [SimpleCommand("new-batch")]
+    public class NewBatch : ISimpleCommand<Options>
     {
-        public NewCommand(ILogger<Options> logger, VaultControl vaultControl)
+        public NewBatch(ILogger<Options> logger, VaultControl vaultControl)
         {
             this.logger = logger;
             this.vaultControl = vaultControl;

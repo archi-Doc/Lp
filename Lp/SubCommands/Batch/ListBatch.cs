@@ -5,15 +5,15 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public partial class CommandGroup
+public partial class Batch
 {
-    [SimpleCommand("list-command")]
-    public class ListCommand : ISimpleCommand
+    [SimpleCommand("list-batch")]
+    public class ListBatch : ISimpleCommand
     {
         private readonly VaultControl vaultControl;
         private readonly IUserInterfaceService userInterfaceService;
 
-        public ListCommand(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
+        public ListBatch(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
         {
             this.vaultControl = vaultControl;
             this.userInterfaceService = userInterfaceService;
@@ -21,7 +21,7 @@ public partial class CommandGroup
 
         public async Task Execute(string[] args, CancellationToken cancellationToken)
         {
-            var names = this.vaultControl.Root.GetNames(CommandGroup.Prefix).Select(x => x.Substring(CommandGroup.Prefix.Length)).ToArray();
+            var names = this.vaultControl.Root.GetNames(Batch.Prefix).Select(x => x.Substring(Batch.Prefix.Length)).ToArray();
             this.userInterfaceService.WriteLine(string.Join(' ', names));
         }
     }

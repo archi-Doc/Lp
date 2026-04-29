@@ -5,27 +5,28 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public partial class CommandGroup
+public partial class Batch
 {
-    [SimpleCommand("show-command")]
-    public class ShowCommand : ISimpleCommand<ExecuteOptions>
+    [SimpleCommand("remove-batch")]
+    public class RemoveBatch : ISimpleCommand<ExecuteOptions>
     {
-        public ShowCommand(ILogger<ShowCommand> logger, VaultControl vaultControl)
+        public RemoveBatch(ILogger<ExecuteOptions> logger, VaultControl vaultControl)
         {
-            this.logger = logger;
             this.vaultControl = vaultControl;
+            this.logger = logger;
         }
 
         public async Task Execute(ExecuteOptions option, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(option.Name);
-            if (!this.vaultControl.Root.TryGet<string[]>(name, out var commands, out _))
+            if (this.vaultControl.Root.Remove(name))
+            {
+                this.logger.GetWriter()?.Write(Hashed.CommandGroup.Removed, option.Name);
+            }
+            else
             {
                 this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.CommandGroup.NotFound, option.Name);
-                return;
             }
-
-            ShowCommands(commands, this.logger);
         }
 
         private readonly ILogger logger;
