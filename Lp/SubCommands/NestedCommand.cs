@@ -1,11 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Lp.NetServices;
-using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
-using SimplePrompt;
 
 namespace Lp.Subcommands;
 
@@ -46,7 +42,8 @@ public class NestedCommand<TCommand>
 
     public async Task MainAsync(CancellationToken cancellationToken)
     {
-        using (var scope = this.executionStack.Push((x, signal) =>
+        var parent = cancellationToken.ExtractContext();
+        using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -54,7 +51,7 @@ public class NestedCommand<TCommand>
             }
         }))
         {
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(scope.CancellationToken, cancellationToken);
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(executionContext.CancellationToken, cancellationToken);
             while (!cts.IsCancellationRequested) // (scope.CanContinue) // (!cancellationToken.IsCancellationRequested)
             {//
                 // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
@@ -74,7 +71,7 @@ public class NestedCommand<TCommand>
                 {
                     if (this.SimpleParser.Parse(result.Text))
                     {
-                        using (var scope2 = this.executionStack.Push((x, signal) =>
+                        using (var executionContext2 = this.executionStack.Push(executionContext, (x, signal) =>
                         {
                             if (signal == ExecutionSignal.Cancel)
                             {
@@ -83,7 +80,7 @@ public class NestedCommand<TCommand>
                             }
                         }))
                         {
-                            var cts2 = CancellationTokenSource.CreateLinkedTokenSource(scope2.CancellationToken, cancellationToken);
+                            var cts2 = CancellationTokenSource.CreateLinkedTokenSource(executionContext2.CancellationToken, cancellationToken);
                             await this.SimpleParser.Execute(cts2.Token);
                         }
                     }

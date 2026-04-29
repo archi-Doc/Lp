@@ -129,8 +129,8 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
-            using (var scope = this.executionStack.Push((x, signal) =>
+            var parent = cancellationToken.ExtractContext();
+            using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)
                 {
@@ -138,9 +138,9 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 }
             }))
             {
-                while (scope.CanContinue)
+                while (executionContext.CanContinue)
                 {
-                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, scope.CancellationToken).ConfigureAwait(false);
+                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, executionContext.CancellationToken).ConfigureAwait(false);
                     // var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
                     {
@@ -152,7 +152,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         return;
                     }
 
-                    using (var scope2 = this.executionStack.Push((x, signal) =>
+                    using (var executionContext2 = this.executionStack.Push(executionContext, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
@@ -162,10 +162,10 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                     }))
                     {
-                        receiver.CancellationToken = scope2.CancellationToken;
-                        receiver.Id = scope2.Id;
+                        receiver.CancellationToken = executionContext2.CancellationToken;
+                        receiver.Id = executionContext2.Id;
 
-                        var netResult = await senderService.Send(scope2.Id, result.Text).ConfigureAwait(false);
+                        var netResult = await senderService.Send(executionContext2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
                             this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
@@ -174,14 +174,14 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
                         try
                         {
-                            await scope2.Completion.WaitAsync(scope2.CancellationToken).ConfigureAwait(false);
+                            await executionContext2.Completion.WaitAsync(executionContext2.CancellationToken).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)
                         {
                         }
                         finally
                         {
-                            scope2.TryCancel();
+                            executionContext2.TryCancel();
                         }
                     }
                 }

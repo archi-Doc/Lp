@@ -1,8 +1,25 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Arc.Collections;
 
 namespace Arc.Threading;
+
+public static class ExecutionStackHelper
+{
+    public static ExecutionStack.Context? ExtractContext(this CancellationToken cancellationToken)
+    {
+        try
+        {
+            var cts = Unsafe.As<CancellationToken, CancellationTokenSource>(ref cancellationToken);
+            return cts as ExecutionStack.Context;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}
 
 public enum ExecutionSignal
 {
@@ -11,26 +28,25 @@ public enum ExecutionSignal
 }
 
 /// <summary>
-/// Provides a thread-safe, stack-like collection of execution <see cref="Execution"/> objects.
+/// Provides a thread-safe, stack-like collection of execution <see cref="Context"/> objects.
 /// </summary>
 public class ExecutionStack
 {
     // public const int DefaultMaxCount = 32;
 
-    public delegate void ProcessSignalDelegate(Execution execution, ExecutionSignal executionSignal);
+    public delegate void ProcessSignalDelegate(Context execution, ExecutionSignal executionSignal);
 
     /// <summary>
     /// Represents a removable execution entry within an <see cref="Stack"/>.
     /// </summary>
     /// <remarks>
-    /// Disposing a <see cref="Execution"/> removes it from its owning <see cref="Stack"/>; it does not automatically cancel the execution.
+    /// Disposing a <see cref="Context"/> removes it from its owning <see cref="Stack"/>; it does not automatically cancel the execution.
     /// </remarks>
-    public class Execution : IDisposable
+    public class Context : CancellationTokenSource, IDisposable
     {
         #region FieldAndProperty
 
         private ProcessSignalDelegate? processSignal;
-        private CancellationTokenSource cancellationTokenSource;
         private TaskCompletionSource? completionSource;
         // private Execution[]? children;
 
@@ -39,9 +55,9 @@ public class ExecutionStack
         /// </summary>
         public ExecutionStack Stack { get; private set; }
 
-        public Execution? Parent { get; private set; }
+        public Context? Parent { get; private set; }
 
-        public Execution? Child { get; private set; }
+        public Context? Child { get; internal set; }
 
         // public Execution[] Children => this.children ?? [];
 
@@ -53,9 +69,9 @@ public class ExecutionStack
         /// <summary>
         /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this execution.
         /// </summary>
-        public CancellationToken CancellationToken => this.cancellationTokenSource.Token;
+        public CancellationToken CancellationToken => this.Token;
 
-        public bool IsTerminated => this.CancellationToken.IsCancellationRequested;
+        public bool IsTerminated => this.IsCancellationRequested;
 
         /// <summary>
         /// Gets a value indicating whether this execution can continue running.
@@ -63,7 +79,7 @@ public class ExecutionStack
         /// <remarks>
         /// Returns <see langword="false"/> after <see cref="CancellationToken"/> has been canceled.
         /// </remarks>
-        public bool CanContinue => !this.CancellationToken.IsCancellationRequested;
+        public bool CanContinue => !this.IsCancellationRequested;
 
         /// <summary>
         /// Gets a task that completes when this execution is explicitly marked as completed.
@@ -78,17 +94,16 @@ public class ExecutionStack
         #endregion
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Execution"/> class.
+        /// Initializes a new instance of the <see cref="Context"/> class.
         /// </summary>
         /// <param name="executionStack">The owning <see cref="Arc.Threading.ExecutionStack"/>.</param>
         /// <param name="id">The execution identifier to assign.</param>
         /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
-        internal Execution(ExecutionStack executionStack, long id, ProcessSignalDelegate? processSignalHandler = default)
+        internal Context(ExecutionStack executionStack, long id, ProcessSignalDelegate? processSignalHandler = default)
         {
             this.Stack = executionStack;
             this.Id = id;
             this.processSignal = processSignalHandler;
-            this.cancellationTokenSource = CancellationTokenPool.Rent();
             this.completionSource = null;
         }
 
@@ -102,7 +117,7 @@ public class ExecutionStack
         {
             try
             {
-                this.cancellationTokenSource.Cancel();
+                this.Cancel();
             }
             catch
             {
@@ -112,10 +127,10 @@ public class ExecutionStack
         /// <summary>
         /// Removes this execution from its owning <see cref="Stack"/>.
         /// </summary>
-        public void Dispose()
+        public new void Dispose()
         {
+            base.Dispose();
             this.Stack.RemoveInternal(this);
-            CancellationTokenPool.TryResetAndReturn(this.cancellationTokenSource);
         }
 
         /// <inheritdoc/>
@@ -129,7 +144,7 @@ public class ExecutionStack
         /// This must be called within ExecutionStack's synchronization lock (syncObject).
         /// </summary>
         /// <param name="child">A child execution.</param>
-        internal void AddChild(Execution child)
+        internal void AddChild(Context child)
         {
             if (this.Child is not null)
             {
@@ -170,7 +185,7 @@ public class ExecutionStack
     public bool IsEmpty => this.list.Count == 0;
 
     private readonly Lock syncObject = new();
-    private readonly List<Execution> list = new();
+    private readonly List<Context> list = new();
     private readonly Xoshiro256StarStar random;
 
     public ExecutionStack()
@@ -182,15 +197,15 @@ public class ExecutionStack
     }
 
     /// <summary>
-    /// Creates and pushes a new <see cref="Execution"/> onto the stack.
+    /// Creates and pushes a new <see cref="Context"/> onto the stack.
     /// </summary>
     /// <param name="parent">Specify the parent execution.<br/>
     /// When the parent is deleted, this execution is automatically canceled and deleted as well.</param>
     /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
     /// <returns>The newly created execution.</returns>
-    public Execution Push(Execution? parent, ProcessSignalDelegate? processSignalHandler)
+    public Context Push(Context? parent, ProcessSignalDelegate? processSignalHandler)
     {
-        Execution execution;
+        Context execution;
         using (this.syncObject.EnterScope())
         {
             /*if (this.Count >= this.MaxCount)
@@ -203,7 +218,7 @@ public class ExecutionStack
                 var id = this.random.NextInt64();
                 if (this.list.Find(x => x.Id == id) is null)
                 {
-                    execution = new Execution(this, id, processSignalHandler);
+                    execution = new Context(this, id, processSignalHandler);
                     parent?.AddChild(execution);
                     this.list.Add(execution);
                     break;
@@ -214,7 +229,7 @@ public class ExecutionStack
         return execution;
     }
 
-    public Execution? TryPush(long id, Execution? parent, ProcessSignalDelegate? processSignalHandler)
+    public Context? TryPush(long id, Context? parent, ProcessSignalDelegate? processSignalHandler)
     {
         using (this.syncObject.EnterScope())
         {
@@ -223,7 +238,7 @@ public class ExecutionStack
                 return null;
             }
 
-            var execution = new Execution(this, id, processSignalHandler);
+            var execution = new Context(this, id, processSignalHandler);
             parent?.AddChild(execution);
             this.list.Add(execution);
             return execution;
@@ -235,7 +250,7 @@ public class ExecutionStack
     /// </summary>
     /// <param name="id">The execution identifier.</param>
     /// <returns>The matching execution; otherwise, <see langword="null"/>.</returns>
-    public Execution? Find(long id)
+    public Context? Find(long id)
     {
         using (this.syncObject.EnterScope())
         {
@@ -247,7 +262,7 @@ public class ExecutionStack
     /// Gets the current top execution without removing it.
     /// </summary>
     /// <returns>The top execution; or <see langword="null"/> if the stack is empty.</returns>
-    public Execution? Peek()
+    public Context? Peek()
     {
         using (this.syncObject.EnterScope())
         {
@@ -310,16 +325,18 @@ public class ExecutionStack
         }
     }
 
-    private void RemoveInternal(Execution item)
+    private void RemoveInternal(Context item)
     {
-        TemporaryList<Execution> toCancel = default;
+        TemporaryList<Context> toCancel = default;
         using (this.syncObject.EnterScope())
         {
+            item.Parent?.Child = null;
             this.list.Remove(item);
 
             var e = item.Child;
             while (e is not null)
             {
+
                 toCancel.Add(e);
                 e = e.Child;
             }

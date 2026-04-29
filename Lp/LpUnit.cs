@@ -853,7 +853,7 @@ public class LpUnit
         // return Task.Run(() => this.subcommandParser.Execute(cancellationToken));
     }
 
-    private async Task Main(UnitContext context)
+    private async Task Main(UnitContext unitContext)
     {
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
         var options = new ReadLineOptions()
@@ -874,7 +874,7 @@ public class LpUnit
             },*/
         };
 
-        using (var execution = this.ExecutionStack.Push(default, (scope, signal) =>
+        using (var context = this.ExecutionStack.Push(default, (scope, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -903,7 +903,7 @@ public class LpUnit
                 }
                 else
                 {// Subcommand
-                    using (var execution2 = this.ExecutionStack.Push(execution, (x, signal) =>
+                    using (var context2 = this.ExecutionStack.Push(context, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
@@ -914,7 +914,7 @@ public class LpUnit
                     {
                         try
                         {
-                            await this.Subcommand(inputResult.Text, execution2.CancellationToken);
+                            await this.Subcommand(inputResult.Text, context2.CancellationToken);
                         }
                         catch (OperationCanceledException)
                         {
