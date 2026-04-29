@@ -110,17 +110,44 @@ public class ExecutionStack
         public void ProcessSignal(ExecutionSignal signal)
             => this.processSignal?.Invoke(this, signal);
 
-        public void TrySetResult()
-            => this.GetCompletionSource().TrySetResult();
+        public new void Cancel()
+        {
+            var context = this.FindLeaf();
+            while (true)
+            {
+                ((CancellationTokenSource)context!).Cancel();
+                if (context == this)
+                {
+                    break;
+                }
+                else
+                {
+                    context = context.Parent;
+                }
+            }
+        }
 
         public void TryCancel()
         {
-            try
+            var context = this.FindLeaf();
+            while (context is not null)
             {
-                this.Cancel();
-            }
-            catch
-            {
+                try
+                {
+                    ((CancellationTokenSource)context).Cancel();
+                }
+                catch
+                {
+                }
+
+                if (context == this)
+                {
+                    break;
+                }
+                else
+                {
+                    context = context.Parent;
+                }
             }
         }
 
@@ -155,7 +182,7 @@ public class ExecutionStack
             child.Parent = this;
         }
 
-        private TaskCompletionSource GetCompletionSource()
+        internal TaskCompletionSource GetCompletionSource()
         {
             var current = Volatile.Read(ref this.completionSource);
             if (current is not null)
@@ -165,6 +192,23 @@ public class ExecutionStack
 
             var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Context FindLeaf()
+        {
+            var context = this;
+            while (true)
+            {
+                if (context.Child is null)
+                {
+                    return context;
+                }
+                else
+                {
+                    context = context.Child;
+                }
+            }
         }
     }
 
@@ -296,7 +340,7 @@ public class ExecutionStack
         var execution = this.Find(id);
         if (execution is not null)
         {
-            execution.TrySetResult();
+            execution.GetCompletionSource().TrySetResult();
             if (cancel)
             {
                 execution.TryCancel();
@@ -336,7 +380,6 @@ public class ExecutionStack
             var e = item.Child;
             while (e is not null)
             {
-
                 toCancel.Add(e);
                 e = e.Child;
             }

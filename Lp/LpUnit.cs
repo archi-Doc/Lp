@@ -760,19 +760,15 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 1");
         await context.SendSave();
 
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 2");
         await this.CrystalControl.StoreAndRip();
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 3");
     }
 
     public async Task Start(UnitContext context)
