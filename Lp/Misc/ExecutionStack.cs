@@ -156,6 +156,11 @@ public class ExecutionStack
         /// </summary>
         public new void Dispose()
         {
+            if (!this.IsCancellationRequested)
+            {
+                this.TryCancel();
+            }
+
             base.Dispose();
             this.Stack.RemoveInternal(this);
         }

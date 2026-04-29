@@ -51,11 +51,9 @@ public class NestedCommand<TCommand>
             }
         }))
         {
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(executionContext.CancellationToken, cancellationToken);
-            while (!cts.IsCancellationRequested) // (scope.CanContinue) // (!cancellationToken.IsCancellationRequested)
-            {//
-                // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
-                var result = await this.userInterfaceService.ReadLine(false, this.Prompt, cts.Token).ConfigureAwait(false);
+            while (executionContext.CanContinue)
+            {
+                var result = await this.userInterfaceService.ReadLine(false, this.Prompt, executionContext.Token).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {// Canceled, Terminated, Timeout
                     break;
@@ -80,8 +78,7 @@ public class NestedCommand<TCommand>
                             }
                         }))
                         {
-                            var cts2 = CancellationTokenSource.CreateLinkedTokenSource(executionContext2.CancellationToken, cancellationToken);
-                            await this.SimpleParser.Execute(cts2.Token);
+                            await this.SimpleParser.Execute(executionContext2.Token);
                         }
                     }
                     else

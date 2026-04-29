@@ -86,8 +86,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         _ = Task.Run(async () =>
         {
             try
-            {//Timeout
-                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+            {
+                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -95,7 +95,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                scope.TryCancel();
                 scope.Dispose();
 
                 // Return control of console input.
