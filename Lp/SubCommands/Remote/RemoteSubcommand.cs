@@ -162,7 +162,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                     }))
                     {
-                        receiver.CancellationToken = executionContext2.CancellationToken;
                         receiver.Id = executionContext2.Id;
 
                         var netResult = await senderService.Send(executionContext2.Id, result.Text).ConfigureAwait(false);

@@ -25,7 +25,5 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     string InputPrefix { get; set; }
 
-    CancellationToken CancellationToken { get; set; }
-
     long Id { get; set; }
 }
