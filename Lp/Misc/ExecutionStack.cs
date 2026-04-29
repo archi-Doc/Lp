@@ -1,9 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using Amazon.Runtime.Internal;
+using Arc.Collections;
 
 namespace Arc.Threading;
 
@@ -18,31 +15,38 @@ public enum ExecutionSignal
 /// </summary>
 public class ExecutionStack
 {
-    public const int DefaultMaxCount = 32;
+    // public const int DefaultMaxCount = 32;
 
     public delegate void ProcessSignalDelegate(Execution execution, ExecutionSignal executionSignal);
 
     /// <summary>
-    /// Represents a removable execution entry within an <see cref="ExecutionStack"/>.
+    /// Represents a removable execution entry within an <see cref="Stack"/>.
     /// </summary>
     /// <remarks>
-    /// Disposing a <see cref="Execution"/> removes it from its owning <see cref="ExecutionStack"/>; it does not automatically cancel the execution.
+    /// Disposing a <see cref="Execution"/> removes it from its owning <see cref="Stack"/>; it does not automatically cancel the execution.
     /// </remarks>
     public class Execution : IDisposable
     {
+        #region FieldAndProperty
+
         private ProcessSignalDelegate? processSignal;
         private CancellationTokenSource cancellationTokenSource;
         private TaskCompletionSource? completionSource;
-        private Execution? parent;
-        private List<Execution>? children;
+        // private Execution[]? children;
 
         /// <summary>
         /// Gets the owning <see cref="Arc.Threading.ExecutionStack"/> instance.
         /// </summary>
-        public ExecutionStack ExecutionStack { get; private set; }
+        public ExecutionStack Stack { get; private set; }
+
+        public Execution? Parent { get; private set; }
+
+        public Execution? Child { get; private set; }
+
+        // public Execution[] Children => this.children ?? [];
 
         /// <summary>
-        /// Gets the identifier of this execution within the owning <see cref="ExecutionStack"/>.
+        /// Gets the identifier of this execution within the owning <see cref="Stack"/>.
         /// </summary>
         public long Id { get; private set; }
 
@@ -51,6 +55,19 @@ public class ExecutionStack
         /// </summary>
         public CancellationToken CancellationToken { get; private set; }
 
+        public bool IsTerminated => this.CancellationToken.IsCancellationRequested;
+
+        /// <summary>
+        /// Gets a value indicating whether this execution can continue running.
+        /// </summary>
+        /// <remarks>
+        /// Returns <see langword="false"/> after <see cref="CancellationToken"/> has been canceled.
+        /// </remarks>
+        public bool CanContinue => !this.CancellationToken.IsCancellationRequested;
+
+        /// <summary>
+        /// Gets a task that completes when this execution is explicitly marked as completed.
+        /// </summary>
         public Task Completion => this.GetCompletionSource().Task;
 
         /// <summary>
@@ -58,7 +75,7 @@ public class ExecutionStack
         /// </summary>
         public bool IsRoot => this.Id == 0;
 
-        public bool CanContinue => !this.CancellationToken.IsCancellationRequested;
+        #endregion
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Execution"/> class.
@@ -68,7 +85,7 @@ public class ExecutionStack
         /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
         internal Execution(ExecutionStack executionStack, long id, ProcessSignalDelegate? processSignalHandler = default)
         {
-            this.ExecutionStack = executionStack;
+            this.Stack = executionStack;
             this.Id = id;
             this.processSignal = processSignalHandler;
             this.cancellationTokenSource = CancellationTokenPool.Rent();
@@ -94,11 +111,11 @@ public class ExecutionStack
         }
 
         /// <summary>
-        /// Removes this execution from its owning <see cref="ExecutionStack"/>.
+        /// Removes this execution from its owning <see cref="Stack"/>.
         /// </summary>
         public void Dispose()
         {
-            this.ExecutionStack.Remove(this);
+            this.Stack.RemoveInternal(this);
             CancellationTokenPool.TryResetAndReturn(this.cancellationTokenSource);
         }
 
@@ -106,6 +123,22 @@ public class ExecutionStack
         public override string ToString()
         {
             return $"Execution {this.Id}";
+        }
+
+        /// <summary>
+        /// Add a child Execution.<br/>
+        /// This must be called within ExecutionStack's synchronization lock (syncObject).
+        /// </summary>
+        /// <param name="child">A child execution.</param>
+        internal void AddChild(Execution child)
+        {
+            if (this.Child is not null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            this.Child = child;
+            child.Parent = this;
         }
 
         private TaskCompletionSource GetCompletionSource()
@@ -131,7 +164,7 @@ public class ExecutionStack
 
     public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;*/
 
-    public int MaxCount { get; }
+    // public int MaxCount { get; }
 
     public int Count => this.list.Count;
 
@@ -141,15 +174,9 @@ public class ExecutionStack
     private readonly List<Execution> list = new();
     private readonly Xoshiro256StarStar random;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ExecutionStack"/> class.
-    /// </summary>
-    /// <param name="maxCount">
-    /// The maximum number of <see cref="Execution"/> instances that can be stored in the stack at the same time.
-    /// </param>
-    public ExecutionStack(int maxCount = DefaultMaxCount)
+    public ExecutionStack()
     {
-        this.MaxCount = maxCount;
+        // this.MaxCount = maxCount;
         this.random = new();
         // this.Root = new(this, 0);
         // this.list.Add(this.Root);
@@ -164,30 +191,31 @@ public class ExecutionStack
     /// <returns>The newly created execution.</returns>
     public Execution Push(Execution? parent, ProcessSignalDelegate? processSignalHandler)
     {
-        Execution newScope;
+        Execution execution;
         using (this.syncObject.EnterScope())
         {
-            if (this.Count >= this.MaxCount)
+            /*if (this.Count >= this.MaxCount)
             {
                 throw new InvalidOperationException();
-            }
+            }*/
 
             while (true)
             {
                 var id = this.random.NextInt64();
                 if (this.list.Find(x => x.Id == id) is null)
                 {
-                    newScope = new Execution(this, id, processSignalHandler);
-                    this.list.Add(newScope);
+                    execution = new Execution(this, id, processSignalHandler);
+                    parent?.AddChild(execution);
+                    this.list.Add(execution);
                     break;
                 }
             }
         }
 
-        return newScope;
+        return execution;
     }
 
-    public Execution? TryPush(long id, ProcessSignalDelegate? processSignalHandler)
+    /*public Execution? TryPush(Execution? parent, long id, ProcessSignalDelegate? processSignalHandler)
     {
         using (this.syncObject.EnterScope())
         {
@@ -197,11 +225,12 @@ public class ExecutionStack
                 return null;
             }
 
-            var newScope = new Execution(this, id, processSignalHandler);
-            this.list.Add(newScope);
-            return newScope;
+            var execution = new Execution(this, id, processSignalHandler);
+            parent?.AddChild(execution);
+            this.list.Add(execution);
+            return execution;
         }
-    }
+    }*/
 
     /// <summary>
     /// Finds the first execution with the specified identifier.
@@ -283,11 +312,27 @@ public class ExecutionStack
         }
     }
 
-    private bool Remove(Execution item)
+    private void RemoveInternal(Execution item)
     {
+        TemporaryList<Execution> toCancel = default;
         using (this.syncObject.EnterScope())
         {
-            return this.list.Remove(item);
+            this.list.Remove(item);
+
+            var e = item.Child;
+            while (e is not null)
+            {
+                toCancel.Add(e);
+                e = e.Child;
+            }
+        }
+
+        if (toCancel.Count > 0)
+        {
+            foreach (var x in toCancel)
+            {
+                x.TryCancel();
+            }
         }
     }
 
