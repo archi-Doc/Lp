@@ -122,7 +122,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
             if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is not { } receiver)
-            {
+            {//
                 return;
             }
 

@@ -9,7 +9,7 @@ namespace Lp.NetServices;
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
     private readonly ExecutionStack executionStack;
-    private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
+    private readonly IUserInterfaceService userInterfaceService;
 
     public string OutputPrefix { get; set; } = "[Remote] ";
 
@@ -19,23 +19,23 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public long Id { get; set; }
 
-    public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, ConsoleUserInterfaceService consoleUserInterfaceService)
+    public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
     {
         this.executionStack = executionStack;
-        this.consoleUserInterfaceService = consoleUserInterfaceService;
+        this.userInterfaceService = userInterfaceService;
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
     {
         this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
-        var result = await this.consoleUserInterfaceService.ReadLine(cancellationToken);
+        var result = await this.userInterfaceService.ReadLine(cancellationToken);
         return new(result.Text);
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
         this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
-        var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var result = await this.userInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
 
         /*using (var scope = this.executionStack.Push((x, signal) =>
@@ -55,25 +55,25 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
         this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
-        var result = await this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var result = await this.userInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
     }
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        return this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        return this.userInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
     }
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.Write(this.OutputPrefix + message, color);
+        this.userInterfaceService.Write(this.OutputPrefix + message, color);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-        this.consoleUserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        this.userInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
@@ -85,7 +85,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-        this.consoleUserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
+        this.userInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
