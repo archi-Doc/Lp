@@ -53,7 +53,7 @@ public class ExecutionStack
         /// <summary>
         /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this execution.
         /// </summary>
-        public CancellationToken CancellationToken { get; private set; }
+        public CancellationToken CancellationToken => this.cancellationTokenSource.Token;
 
         public bool IsTerminated => this.CancellationToken.IsCancellationRequested;
 
@@ -89,7 +89,6 @@ public class ExecutionStack
             this.Id = id;
             this.processSignal = processSignalHandler;
             this.cancellationTokenSource = CancellationTokenPool.Rent();
-            this.CancellationToken = this.cancellationTokenSource.Token;
             this.completionSource = null;
         }
 
@@ -215,13 +214,12 @@ public class ExecutionStack
         return execution;
     }
 
-    /*public Execution? TryPush(Execution? parent, long id, ProcessSignalDelegate? processSignalHandler)
+    public Execution? TryPush(long id, Execution? parent, ProcessSignalDelegate? processSignalHandler)
     {
         using (this.syncObject.EnterScope())
         {
-            if (this.Count >= this.MaxCount ||
-                this.list.Find(x => x.Id == id) is not null)
-            {
+            if (this.list.Find(x => x.Id == id) is not null)
+            {// this.Count >= this.MaxCount
                 return null;
             }
 
@@ -230,7 +228,7 @@ public class ExecutionStack
             this.list.Add(execution);
             return execution;
         }
-    }*/
+    }
 
     /// <summary>
     /// Finds the first execution with the specified identifier.

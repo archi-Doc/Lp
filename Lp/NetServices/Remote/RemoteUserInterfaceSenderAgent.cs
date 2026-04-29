@@ -11,7 +11,7 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private static readonly ExecutionStack RemoteStack = new(3);
+    private static readonly ExecutionStack RemoteStack = new();
     // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -68,7 +68,12 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.InvalidData;
         }
 
-        var scope = RemoteStack.TryPush(id, default);
+        if (RemoteStack.Count > 2)
+        {
+            return NetResult.Refused;
+        }
+
+        var scope = RemoteStack.TryPush(id, null, default);
         if (scope is null)
         {
             return NetResult.Refused;

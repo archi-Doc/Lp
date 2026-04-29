@@ -874,7 +874,7 @@ public class LpUnit
             },*/
         };
 
-        using (var scope = this.ExecutionStack.Push((scope, signal) =>
+        using (var execution = this.ExecutionStack.Push(default, (scope, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -903,7 +903,7 @@ public class LpUnit
                 }
                 else
                 {// Subcommand
-                    using (var scope2 = this.ExecutionStack.Push((x, signal) =>
+                    using (var execution2 = this.ExecutionStack.Push(execution, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
@@ -914,7 +914,7 @@ public class LpUnit
                     {
                         try
                         {
-                            await this.Subcommand(inputResult.Text, scope2.CancellationToken);
+                            await this.Subcommand(inputResult.Text, execution2.CancellationToken);
                         }
                         catch (OperationCanceledException)
                         {
