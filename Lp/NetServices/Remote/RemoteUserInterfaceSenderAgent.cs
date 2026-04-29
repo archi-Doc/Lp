@@ -73,8 +73,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.Refused;
         }
 
-        var scope = RemoteStack.TryPush(id, null, default);
-        if (scope is null)
+        var context = RemoteStack.TryPush(id, null, default);
+        if (context is null)
         {
             return NetResult.Refused;
         }
@@ -87,7 +87,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
-                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message, context.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -95,7 +95,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                scope.Dispose();
+                context.Dispose();
 
                 // Return control of console input.
                 await receiver.ReturnInputControl(id).ConfigureAwait(false);
