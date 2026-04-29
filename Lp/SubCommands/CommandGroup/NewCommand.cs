@@ -7,16 +7,16 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("new-command-group")]
-    public class NewCommandGroup : ISimpleCommand<NewOptions>
+    [SimpleCommand("new-command")]
+    public class NewCommand : ISimpleCommand<Options>
     {
-        public NewCommandGroup(ILogger<NewOptions> logger, VaultControl vaultControl)
+        public NewCommand(ILogger<Options> logger, VaultControl vaultControl)
         {
             this.logger = logger;
             this.vaultControl = vaultControl;
         }
 
-        public async Task Execute(NewOptions options, string[] args, CancellationToken cancellationToken)
+        public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
         {
             var name = GetName(options.Name);
             if (this.vaultControl.Root.Contains(name))
@@ -25,7 +25,7 @@ public partial class CommandGroup
                 return;
             }
 
-            var commands = SimpleParserHelper.SeparateArguments(options.Command);
+            var commands = BaseHelper.SplitLines(options.Command);
             if (this.vaultControl.Root.TryAdd(name, commands, out _))
             {
                 this.logger.GetWriter()?.Write(Hashed.CommandGroup.Created, options.Name);
@@ -39,14 +39,5 @@ public partial class CommandGroup
 
         private readonly ILogger logger;
         private readonly VaultControl vaultControl;
-    }
-
-    public record NewOptions
-    {
-        [SimpleOption("Name", Description = "Command group name", Required = true)]
-        public string Name { get; init; } = string.Empty;
-
-        [SimpleOption("Command", Description = "Command group separated by a separator '|'", Required = true)]
-        public string Command { get; init; } = string.Empty;
     }
 }

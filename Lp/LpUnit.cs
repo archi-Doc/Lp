@@ -12,6 +12,7 @@ global using Lp;
 global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
+using Amazon.Runtime.Internal;
 using Lp.Data;
 using Lp.Logging;
 using Lp.Net;
@@ -31,6 +32,7 @@ namespace Lp;
 public class LpUnit
 {
     public static readonly Type[] RemoteSubcommands = [
+        typeof(RemoteSubcommand),//
         typeof(FreezeSubcommand),
         typeof(InspectSubcommand),
         typeof(BenchmarkSubcommand),
@@ -67,7 +69,7 @@ public class LpUnit
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.AddSingleton<CreditService>();
-                context.AddSingleton<ExecutionStack>();//
+                context.AddSingleton<ExecutionStack>();
 
                 // Console services
                 context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
@@ -79,7 +81,7 @@ public class LpUnit
                     var console = sp.GetRequiredService<ConsoleUserInterfaceService>();
                     if (context?.Receiver is { } receiver)
                     {
-                        return new RemoteUserInterfaceService(receiver, console);
+                        return new RemoteUserInterfaceService(receiver);
                     }
                     else
                     {
@@ -433,6 +435,11 @@ public class LpUnit
                 await lpUnit.PrepareLinker(this.Context);
                 await lpUnit.PreparePeer(this.Context);
                 await lpUnit.DomainControl.Prepare(this.Context); // Since the Merger must be prepared first, process DomainControl last.
+
+                if (lpUnit.Core.IsTerminated)
+                {
+                    throw new PanicException();
+                }
 
                 // Vault -> NodeKey
                 await lpUnit.LoadKeyVault_NodeKey();
@@ -900,7 +907,7 @@ public class LpUnit
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            x.CancellationTokenSource.Cancel();
+                            x.TryCancel();
                             this.UserInterfaceService.WriteLineError("Canceled");
                         }
                     }))

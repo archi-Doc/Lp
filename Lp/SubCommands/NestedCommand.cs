@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using Lp.NetServices;
+using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 using SimplePrompt;
@@ -9,70 +12,55 @@ namespace Lp.Subcommands;
 public class NestedCommand<TCommand>
     where TCommand : NestedCommand<TCommand>
 {
+    private readonly IServiceProvider serviceProvider;
     private readonly ExecutionStack executionStack;
-    private readonly SimpleConsole simpleConsole;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly Type[] commandTypes;
-    private SimpleParser? simpleParser;
 
-    public NestedCommand(UnitContext context)
+    public SimpleParserOptions SimpleParserOptions { get; }
+
+    public SimpleParser SimpleParser { get; }
+
+    public string Prompt { get; protected set; } = "> ";
+
+    public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
     {
-        this.executionStack = context.ServiceProvider.GetRequiredService<ExecutionStack>();
-        this.simpleConsole = context.ServiceProvider.GetRequiredService<SimpleConsole>();
-        this.userInterfaceService = context.ServiceProvider.GetRequiredService<IUserInterfaceService>();
+        this.serviceProvider = serviceProvider;
+        this.executionStack = this.serviceProvider.GetRequiredService<ExecutionStack>();
 
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = context.ServiceProvider,
+            ServiceProvider = this.serviceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };
+
+        // this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeLocal();
+        this.SimpleParser = new SimpleParser(this.commandTypes, this.SimpleParserOptions);
+        this.userInterfaceService = this.serviceProvider.GetRequiredService<IUserInterfaceService>();
     }
 
-    /// <summary>
-    /// Gets <see cref="SimpleParserOptions"/>.
-    /// </summary>
-    public SimpleParserOptions SimpleParserOptions { get; }
-
-    /// <summary>
-    /// Gets <see cref="SimpleParser"/> instance.
-    /// </summary>
-    public SimpleParser SimpleParser
+    public async Task MainAsync(CancellationToken cancellationToken)
     {
-        get
-        {
-            this.simpleParser ??= new(this.commandTypes, this.SimpleParserOptions);
-            return this.simpleParser;
-        }
-    }
-
-    public ReadLineOptions? ReadLineOptions { get; protected set; }
-
-    public async Task MainAsync()
-    {
-        this.ReadLineOptions ??= new ReadLineOptions
-        {
-            Prompt = ">> ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
-
         using (var scope = this.executionStack.Push((x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
-                x.CancellationTokenSource.Cancel();
+                x.TryCancel();
             }
         }))
         {
-            while (scope.CanContinue)
-            {
-                var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(scope.CancellationToken, cancellationToken);
+            while (!cts.IsCancellationRequested) // (scope.CanContinue) // (!cancellationToken.IsCancellationRequested)
+            {//
+                // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
+                var result = await this.userInterfaceService.ReadLine(false, this.Prompt, cts.Token).ConfigureAwait(false);
                 if (!result.IsSuccess)
-                {
+                {// Canceled, Terminated, Timeout
                     break;
                 }
 
@@ -90,12 +78,13 @@ public class NestedCommand<TCommand>
                         {
                             if (signal == ExecutionSignal.Cancel)
                             {
-                                x.CancellationTokenSource.Cancel();
+                                x.TryCancel();
                                 this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                             }
                         }))
                         {
-                            await this.SimpleParser.Execute(scope2.CancellationToken);
+                            var cts2 = CancellationTokenSource.CreateLinkedTokenSource(scope2.CancellationToken, cancellationToken);
+                            await this.SimpleParser.Execute(cts2.Token);
                         }
                     }
                     else
@@ -106,7 +95,7 @@ public class NestedCommand<TCommand>
                         }
                         else
                         {
-                            this.simpleConsole.WriteLine("Invalid subcommand.");
+                            this.userInterfaceService.WriteLine("Invalid subcommand.");
                         }
                     }
 
@@ -114,7 +103,7 @@ public class NestedCommand<TCommand>
                 }
                 catch (Exception e)
                 {
-                    this.simpleConsole.WriteLine(e.ToString());
+                    this.userInterfaceService.WriteLine(e.ToString());
                     break;
                 }
             }

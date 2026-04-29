@@ -9,5 +9,7 @@ public interface IRemoteUserInterfaceSender : INetService
 {
     Task<NetResultAndValue<string>> ConnectBidirectionally(CertificateToken<ConnectionAgreement> token);
 
-    Task<NetResult> Send(string message);
+    Task<NetResult> Send(long id, string message);
+
+    Task<NetResult> Cancel(long id);
 }

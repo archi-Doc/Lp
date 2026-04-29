@@ -13,7 +13,7 @@ public class NestedCommand : NestedCommand<NestedCommand>
     public static void Configure(IUnitConfigurationContext context)
     {
         var t = typeof(NestedCommand);
-        context.TryAddSingleton(t);
+        context.TryAddScoped(t);
 
         var group = context.GetCommandGroup(t);
         // group.AddCommand(typeof(LpNewCredentialSubcommand));
@@ -21,14 +21,10 @@ public class NestedCommand : NestedCommand<NestedCommand>
         group.AddCommand(typeof(CreateCreditSubcommand));
     }
 
-    public NestedCommand(UnitContext context)
-        : base(context)
+    public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
+        : base(context, serviceProvider)
     {
-        this.ReadLineOptions = new ReadLineOptions
-        {
-            Prompt = "merger-admin>> ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
+        this.Prompt = "merger-admin > ";
     }
 
     public RobustConnection? RobustConnection { get; set; }
@@ -104,7 +100,7 @@ public class Command : ISimpleCommand<CommandOptions>
         this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
         this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
 
-        await this.nestedcommand.MainAsync();
+        await this.nestedcommand.MainAsync(cancellationToken);
     }
 }
 

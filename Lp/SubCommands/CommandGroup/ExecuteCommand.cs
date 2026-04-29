@@ -7,10 +7,15 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("execute-command-group")]
-    public class ExecuteCommandGroup : ISimpleCommand<ExecuteOptions>
+    [SimpleCommand("execute-command")]
+    public class ExecuteCommand : ISimpleCommand<ExecuteOptions>
     {
-        public ExecuteCommandGroup(ILogger<ExecuteCommandGroup> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, VaultControl vaultControl)
+        private readonly IUserInterfaceService userInterfaceService;
+        private readonly LpUnit lpUnit;
+        private readonly VaultControl vaultControl;
+        private readonly ILogger logger;
+
+        public ExecuteCommand(ILogger<ExecuteCommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, VaultControl vaultControl)
         {
             this.userInterfaceService = userInterfaceService;
             this.lpUnit = lpUnit;
@@ -49,16 +54,5 @@ public partial class CommandGroup
                 // this.lpUnit.Subcommand(x);
             }
         }
-
-        private readonly IUserInterfaceService userInterfaceService;
-        private readonly LpUnit lpUnit;
-        private readonly VaultControl vaultControl;
-        private readonly ILogger logger;
-    }
-
-    public record ExecuteOptions
-    {
-        [SimpleOption("Name", Description = "Command group name", Required = true)]
-        public string Name { get; init; } = string.Empty;
     }
 }

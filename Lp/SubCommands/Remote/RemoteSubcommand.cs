@@ -27,21 +27,19 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
     private readonly LpUnit lpUnit;
     private readonly LpService lpService;
     private readonly NetTerminal netTerminal;
-    private readonly RobustConnection.Factory robustConnectionFactory;
-    private readonly SimpleConsole simpleConsole;
+    // private readonly RobustConnection.Factory robustConnectionFactory;
+    // private readonly SimpleConsole simpleConsole;
     private readonly ExecutionStack executionStack;
 
-    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, RobustConnection.Factory robustConnectionFactory, SimpleConsole simpleConsole, ExecutionStack executionStack)
+    public RemoteSubcommand(UnitContext unitContext, LpUnit lpUnit, ILogger<RemoteSubcommand> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetTerminal netTerminal, ExecutionStack executionStack)
     {
         this.unitContext = unitContext;
         this.lpUnit = lpUnit;
-        var obj = this.unitContext.ServiceProvider.GetService<IRemoteUserInterfaceReceiver>();
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
         this.netTerminal = netTerminal;
-        this.robustConnectionFactory = robustConnectionFactory;
-        this.simpleConsole = simpleConsole;
+        // this.robustConnectionFactory = robustConnectionFactory;
         this.executionStack = executionStack;
     }
 
@@ -94,14 +92,15 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 return;
             }
 
-            var clientService = connection.GetService<IRemoteUserInterfaceSender>();
+            var senderService = connection.GetService<IRemoteUserInterfaceSender>();
             var agreement = new ConnectionAgreement();
             agreement.MinimumConnectionRetentionMics = Mics.FromMinutes(1);
+            agreement.TransmissionTimeout = TimeSpan.FromMinutes(1);
             var token = CertificateToken<ConnectionAgreement>.CreateAndSign(agreement, seedKey, connection);
 
             // // Customized ConnectBidirectionally()
             var serverConnection = connection.PrepareBidirectionalConnection();
-            var resultAndValue = await clientService.ConnectBidirectionally(token);
+            var resultAndValue = await senderService.ConnectBidirectionally(token);
             if (resultAndValue.IsSuccessAndValid)
             {
                 connection.Agreement.EnableBidirectionalConnection = true;
@@ -127,27 +126,22 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 return;
             }
 
-            receiver.Prefix = $"[{nodeName}] ";
-
-            var readineOptions = new ReadLineOptions()
-            {
-                Prompt = $"{nodeName} >> ",
-                MultilineDelimiter = LpConstants.MultilineIndeitifierString,
-                MultilinePrompt = LpConstants.MultilinePromptString,
-            };
+            receiver.OutputPrefix = $"[{nodeName}] ";
+            receiver.InputPrefix = $"{nodeName} >> ";
 
             // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
             using (var scope = this.executionStack.Push((x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)
                 {
-                    x.CancellationTokenSource.Cancel();
+                    x.TryCancel();
                 }
             }))
             {
                 while (scope.CanContinue)
                 {
-                    var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
+                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, scope.CancellationToken).ConfigureAwait(false);
+                    // var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
                     {
                         break;
@@ -162,19 +156,33 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            x.CancellationTokenSource.Cancel();
+                            senderService.Cancel(x.Id);
+                            x.TryCancel(); // Perform cancellation in advance in case the network is disconnected.
                             this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
                     }))
                     {
-                        var netResult = await clientService.Send(result.Text).ConfigureAwait(false);
+                        receiver.CancellationToken = scope2.CancellationToken;
+                        receiver.Id = scope2.Id;
+
+                        var netResult = await senderService.Send(scope2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
                             this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
                             break;
                         }
 
-                        await receiver.ReturnInputControl(scope2.CancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await scope2.Completion.WaitAsync(scope2.CancellationToken).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                        finally
+                        {
+                            scope2.TryCancel();
+                        }
                     }
                 }
             }

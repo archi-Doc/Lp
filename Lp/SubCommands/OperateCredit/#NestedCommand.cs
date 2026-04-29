@@ -13,20 +13,17 @@ public class NestedCommand : NestedCommand<NestedCommand>
     public static void Configure(IUnitConfigurationContext context)
     {
         var t = typeof(NestedCommand);
-        context.TryAddSingleton(t);
+        context.TryAddScoped(t);
 
         var group = context.GetCommandGroup(t);
+        group.AddCommand(typeof(InspectSubcommand));
         group.AddCommand(typeof(TestSubcommand));
     }
 
-    public NestedCommand(UnitContext context)
-        : base(context)
+    public NestedCommand(UnitContext context, IServiceProvider serviceProvider)
+        : base(context, serviceProvider)
     {
-        this.ReadLineOptions = new ReadLineOptions
-        {
-            Prompt = "operate-credit>> ",
-            MultilinePrompt = LpConstants.MultilinePromptString,
-        };
+        this.Prompt = "operate-credit > ";
     }
 
     public SeedKey? SeedKey { get; set; }
@@ -83,6 +80,6 @@ public class OperateCreditCommand : ISimpleCommand<OperateCreditCommand.Options>
         this.userInterfaceService.WriteLine($"Credit: {this.nestedcommand.Credit}");
         this.userInterfaceService.WriteLine($"Seed key: {seedKey.GetSignaturePublicKey()}");
 
-        await this.nestedcommand.MainAsync();
+        await this.nestedcommand.MainAsync(cancellationToken);
     }
 }

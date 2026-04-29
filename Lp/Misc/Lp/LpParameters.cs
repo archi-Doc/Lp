@@ -14,7 +14,7 @@ public static class LpParameters
 {
     public const int DomainRadiantQueueCapacity = 32;
     public static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(3);
-    public static readonly int ExitDelayMilliseconds = 500;
+    public static readonly int ExitDelayMilliseconds = 300;
 
     static LpParameters()
     {

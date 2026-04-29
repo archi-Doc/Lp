@@ -30,27 +30,35 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            unit?.Context.ServiceProvider.GetRequiredService<LpUnit>().ExecutionStack.Signal(ExecutionSignal.Exit);
-
-            // var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
-            // SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);
-
-            /*try
+            if (unit?.Context.ServiceProvider.GetService<LpUnit>()?.ExecutionStack is { } executionStack)
             {
-                var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
-                if (lpUnit != null)
+                if (executionStack.IsEmpty)
                 {
-                    lpUnit.TryTerminate().Wait();
+                    try
+                    {
+                        var lpUnit = unit?.Context.ServiceProvider.GetService<LpUnit>();
+                        if (lpUnit != null)
+                        {
+                            lpUnit.TryTerminate().Wait();
+                        }
+                        else
+                        {
+                            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                        }
+                    }
+                    catch
+                    {
+                        ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                    }
                 }
                 else
                 {
-                    ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                    executionStack.Signal(ExecutionSignal.Exit);
                 }
             }
-            catch
-            {
-                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            }*/
+
+            // var keyInfo = new ConsoleKeyInfo(keyChar: '\u0003', ConsoleKey.C, false, false, true);
+            // SimpleConsole.GetOrCreate().EnqueueKey(keyInfo);
         };
 
         var builder = new LpUnit.Builder()
@@ -94,10 +102,8 @@ public class Program
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
             await unit.Run(options);
 
-            Console.WriteLine("a");
             await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
                                                         // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
-            Console.WriteLine("b");
             ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
         }
         finally

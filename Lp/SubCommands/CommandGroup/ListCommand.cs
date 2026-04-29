@@ -7,10 +7,13 @@ namespace Lp.Subcommands;
 
 public partial class CommandGroup
 {
-    [SimpleCommand("list-command-group")]
-    public class ListCommandGroup : ISimpleCommand
+    [SimpleCommand("list-command")]
+    public class ListCommand : ISimpleCommand
     {
-        public ListCommandGroup(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
+        private readonly VaultControl vaultControl;
+        private readonly IUserInterfaceService userInterfaceService;
+
+        public ListCommand(VaultControl vaultControl, IUserInterfaceService userInterfaceService)
         {
             this.vaultControl = vaultControl;
             this.userInterfaceService = userInterfaceService;
@@ -21,8 +24,5 @@ public partial class CommandGroup
             var names = this.vaultControl.Root.GetNames(CommandGroup.Prefix).Select(x => x.Substring(CommandGroup.Prefix.Length)).ToArray();
             this.userInterfaceService.WriteLine(string.Join(' ', names));
         }
-
-        private readonly VaultControl vaultControl;
-        private readonly IUserInterfaceService userInterfaceService;
     }
 }
