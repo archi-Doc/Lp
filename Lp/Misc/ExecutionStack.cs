@@ -14,69 +14,70 @@ public enum ExecutionSignal
 }
 
 /// <summary>
-/// Provides a thread-safe, stack-like collection of execution <see cref="Scope"/> objects.
+/// Provides a thread-safe, stack-like collection of execution <see cref="Execution"/> objects.
 /// </summary>
 public class ExecutionStack
 {
     public const int DefaultMaxCount = 32;
 
-    public delegate void ProcessSignalHandler(Scope scope, ExecutionSignal executionSignal);
+    public delegate void ProcessSignalDelegate(Execution execution, ExecutionSignal executionSignal);
 
     /// <summary>
-    /// Represents a removable scope entry within an <see cref="ExecutionStack"/>.
+    /// Represents a removable execution entry within an <see cref="ExecutionStack"/>.
     /// </summary>
     /// <remarks>
-    /// Disposing a <see cref="Scope"/> removes it from its owning <see cref="ExecutionStack"/>; it does not
-    /// automatically cancel the scope.
+    /// Disposing a <see cref="Execution"/> removes it from its owning <see cref="ExecutionStack"/>; it does not automatically cancel the execution.
     /// </remarks>
-    public class Scope : IDisposable
+    public class Execution : IDisposable
     {
-        private readonly ProcessSignalHandler? processSignalHandler;
+        private ProcessSignalDelegate? processSignal;
         private CancellationTokenSource cancellationTokenSource;
         private TaskCompletionSource? completionSource;
+        private Execution? parent;
+        private List<Execution>? children;
 
         /// <summary>
         /// Gets the owning <see cref="Arc.Threading.ExecutionStack"/> instance.
         /// </summary>
-        public ExecutionStack ExecutionStack { get; }
+        public ExecutionStack ExecutionStack { get; private set; }
 
         /// <summary>
-        /// Gets the identifier of this scope within the owning <see cref="ExecutionStack"/>.
+        /// Gets the identifier of this execution within the owning <see cref="ExecutionStack"/>.
         /// </summary>
-        public long Id { get; }
+        public long Id { get; private set; }
 
         /// <summary>
-        /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this scope.
+        /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this execution.
         /// </summary>
-        public CancellationToken CancellationToken { get; }
+        public CancellationToken CancellationToken { get; private set; }
 
         public Task Completion => this.GetCompletionSource().Task;
 
         /// <summary>
-        /// Gets a value indicating whether this scope is the root scope (<c>Id == 0</c>).
+        /// Gets a value indicating whether this execution is the root execution (<c>Id == 0</c>).
         /// </summary>
         public bool IsRoot => this.Id == 0;
 
         public bool CanContinue => !this.CancellationToken.IsCancellationRequested;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Scope"/> class.
+        /// Initializes a new instance of the <see cref="Execution"/> class.
         /// </summary>
         /// <param name="executionStack">The owning <see cref="Arc.Threading.ExecutionStack"/>.</param>
-        /// <param name="id">The scope identifier to assign.</param>
-        /// <param name="processSignalHandler">An optional handler invoked when this scope processes an <see cref="ExecutionSignal"/>.</param>
-        internal Scope(ExecutionStack executionStack, long id, ProcessSignalHandler? processSignalHandler = default)
+        /// <param name="id">The execution identifier to assign.</param>
+        /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
+        internal Execution(ExecutionStack executionStack, long id, ProcessSignalDelegate? processSignalHandler = default)
         {
             this.ExecutionStack = executionStack;
             this.Id = id;
-            this.processSignalHandler = processSignalHandler;
+            this.processSignal = processSignalHandler;
             this.cancellationTokenSource = CancellationTokenPool.Rent();
             this.CancellationToken = this.cancellationTokenSource.Token;
-            // this.TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            this.completionSource = null;
         }
 
         public void ProcessSignal(ExecutionSignal signal)
-            => this.processSignalHandler?.Invoke(this, signal);
+            => this.processSignal?.Invoke(this, signal);
 
         public void TrySetResult()
             => this.GetCompletionSource().TrySetResult();
@@ -93,7 +94,7 @@ public class ExecutionStack
         }
 
         /// <summary>
-        /// Removes this scope from its owning <see cref="ExecutionStack"/>.
+        /// Removes this execution from its owning <see cref="ExecutionStack"/>.
         /// </summary>
         public void Dispose()
         {
@@ -104,7 +105,7 @@ public class ExecutionStack
         /// <inheritdoc/>
         public override string ToString()
         {
-            return $"Execution Scope {this.Id}";
+            return $"Execution {this.Id}";
         }
 
         private TaskCompletionSource GetCompletionSource()
@@ -126,9 +127,9 @@ public class ExecutionStack
     /// <remarks>
     /// The root scope uses <c>Id = 0</c> and is not canceled by <see cref="CancelTop"/>.
     /// </remarks>
-    public Scope Root { get; } */
+    public Scope Root { get; }
 
-    public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;
+    public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;*/
 
     public int MaxCount { get; }
 
@@ -137,14 +138,14 @@ public class ExecutionStack
     public bool IsEmpty => this.list.Count == 0;
 
     private readonly Lock syncObject = new();
-    private readonly List<Scope> list = new();
+    private readonly List<Execution> list = new();
     private readonly Xoshiro256StarStar random;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ExecutionStack"/> class.
     /// </summary>
     /// <param name="maxCount">
-    /// The maximum number of <see cref="Scope"/> instances that can be stored in the stack at the same time.
+    /// The maximum number of <see cref="Execution"/> instances that can be stored in the stack at the same time.
     /// </param>
     public ExecutionStack(int maxCount = DefaultMaxCount)
     {
@@ -155,13 +156,15 @@ public class ExecutionStack
     }
 
     /// <summary>
-    /// Creates and pushes a new <see cref="Scope"/> onto the stack.
+    /// Creates and pushes a new <see cref="Execution"/> onto the stack.
     /// </summary>
-    /// <param name="processSignalHandler">An optional handler invoked when this scope processes an <see cref="ExecutionSignal"/>.</param>
-    /// <returns>The newly created scope.</returns>
-    public Scope Push(ProcessSignalHandler? processSignalHandler)
+    /// <param name="parent">Specify the parent execution.<br/>
+    /// When the parent is deleted, this execution is automatically canceled and deleted as well.</param>
+    /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
+    /// <returns>The newly created execution.</returns>
+    public Execution Push(Execution? parent, ProcessSignalDelegate? processSignalHandler)
     {
-        Scope newScope;
+        Execution newScope;
         using (this.syncObject.EnterScope())
         {
             if (this.Count >= this.MaxCount)
@@ -174,7 +177,7 @@ public class ExecutionStack
                 var id = this.random.NextInt64();
                 if (this.list.Find(x => x.Id == id) is null)
                 {
-                    newScope = new Scope(this, id, processSignalHandler);
+                    newScope = new Execution(this, id, processSignalHandler);
                     this.list.Add(newScope);
                     break;
                 }
@@ -184,7 +187,7 @@ public class ExecutionStack
         return newScope;
     }
 
-    public Scope? TryPush(long id, ProcessSignalHandler? processSignalHandler)
+    public Execution? TryPush(long id, ProcessSignalDelegate? processSignalHandler)
     {
         using (this.syncObject.EnterScope())
         {
@@ -194,18 +197,18 @@ public class ExecutionStack
                 return null;
             }
 
-            var newScope = new Scope(this, id, processSignalHandler);
+            var newScope = new Execution(this, id, processSignalHandler);
             this.list.Add(newScope);
             return newScope;
         }
     }
 
     /// <summary>
-    /// Finds the first scope with the specified identifier.
+    /// Finds the first execution with the specified identifier.
     /// </summary>
-    /// <param name="id">The scope identifier.</param>
-    /// <returns>The matching scope; otherwise, <see langword="null"/>.</returns>
-    public Scope? Find(long id)
+    /// <param name="id">The execution identifier.</param>
+    /// <returns>The matching execution; otherwise, <see langword="null"/>.</returns>
+    public Execution? Find(long id)
     {
         using (this.syncObject.EnterScope())
         {
@@ -214,10 +217,10 @@ public class ExecutionStack
     }
 
     /// <summary>
-    /// Gets the current top scope without removing it.
+    /// Gets the current top execution without removing it.
     /// </summary>
-    /// <returns>The top scope; or <see langword="null"/> if the stack is empty.</returns>
-    public Scope? Peek()
+    /// <returns>The top execution; or <see langword="null"/> if the stack is empty.</returns>
+    public Execution? Peek()
     {
         using (this.syncObject.EnterScope())
         {
@@ -232,7 +235,63 @@ public class ExecutionStack
         }
     }
 
-    /// <summary>
+    public bool Signal(ExecutionSignal signal)
+    {
+        var execution = this.Peek();
+        if (execution is not null)
+        {
+            execution.ProcessSignal(signal);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool TrySetCompleted(long id, bool cancel = false)
+    {
+        var execution = this.Find(id);
+        if (execution is not null)
+        {
+            execution.TrySetResult();
+            if (cancel)
+            {
+                execution.TryCancel();
+            }
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool TryGetCancellationToken(long id, out CancellationToken cancellationToken)
+    {
+        var execution = this.Find(id);
+        if (execution is not null)
+        {
+            cancellationToken = execution.CancellationToken;
+            return true;
+        }
+        else
+        {
+            cancellationToken = default;
+            return false;
+        }
+    }
+
+    private bool Remove(Execution item)
+    {
+        using (this.syncObject.EnterScope())
+        {
+            return this.list.Remove(item);
+        }
+    }
+
+    /*/// <summary>
     /// Cancels the current top scope.
     /// </summary>
     /// <returns>
@@ -254,38 +313,11 @@ public class ExecutionStack
         }
     }
 
-    public bool Signal(ExecutionSignal signal)
-    {
-        var scope = this.Peek();
-        if (scope is not null)
-        {
-            scope.ProcessSignal(signal);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     /// <summary>
-    /// Removes the specified scope from the stack.
+    /// Removes the first execution with the specified identifier from the stack.
     /// </summary>
-    /// <param name="item">The scope instance to remove.</param>
-    /// <returns><see langword="true"/> if the scope was removed; otherwise, <see langword="false"/>.</returns>
-    public bool Remove(Scope item)
-    {
-        using (this.syncObject.EnterScope())
-        {
-            return this.list.Remove(item);
-        }
-    }
-
-    /// <summary>
-    /// Removes the first scope with the specified identifier from the stack.
-    /// </summary>
-    /// <param name="id">The scope identifier.</param>
-    /// <returns><see langword="true"/> if a scope was removed; otherwise, <see langword="false"/>.</returns>
+    /// <param name="id">The execution identifier.</param>
+    /// <returns><see langword="true"/> if a execution was removed; otherwise, <see langword="false"/>.</returns>
     public bool Remove(long id)
     {
         using (this.syncObject.EnterScope())
@@ -301,39 +333,5 @@ public class ExecutionStack
                 return false;
             }
         }
-    }
-
-    public bool TryGetCancellationToken(long id, out CancellationToken cancellationToken)
-    {
-        var scope = this.Find(id);
-        if (scope is not null)
-        {
-            cancellationToken = scope.CancellationToken;
-            return true;
-        }
-        else
-        {
-            cancellationToken = default;
-            return false;
-        }
-    }
-
-    public bool TrySetCompleted(long id, bool cancel = false)
-    {
-        var scope = this.Find(id);
-        if (scope is not null)
-        {
-            scope.TrySetResult();
-            if (cancel)
-            {
-                scope.TryCancel();
-            }
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+    }*/
 }
