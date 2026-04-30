@@ -20,4 +20,27 @@ public class ExecutionRoot : ExecutionCore
         : base(0)
     {
     }
+
+    public ExecutionCore? Find(long id)
+    {
+        using (this.SyncObject.EnterScope())
+        {
+            this.IdToCore.TryGetValue(id, out var core);
+            return core;
+        }
+    }
+
+    public bool FindAndGetCancellationToken(long id, out CancellationToken cancellationToken)
+    {
+        if (this.Find(id) is { } core)
+        {
+            cancellationToken = core.CancellationToken;
+            return true;
+        }
+        else
+        {
+            cancellationToken = default;
+            return false;
+        }
+    }
 }

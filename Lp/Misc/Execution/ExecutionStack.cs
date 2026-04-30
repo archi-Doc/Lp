@@ -5,22 +5,18 @@ using Arc.Collections;
 
 namespace Arc.Threading;
 
-/// <summary>
-/// Provides a thread-safe, stack-like collection of execution <see cref="ExecutionCore"/> objects.
-/// </summary>
 public class ExecutionStack
 {
     #region FieldAndProperty
 
     private readonly Lock syncObject = new();
     private readonly List<ExecutionCore> list = new();
-    private readonly Xoshiro256StarStar random;
 
     public int Count => this.list.Count;
 
     public bool IsEmpty => this.list.Count == 0;
 
-    public ExecutionCore? TopContext
+    public ExecutionCore? TopCore
     {
         get
         {
@@ -31,7 +27,7 @@ public class ExecutionStack
         }
     }
 
-    public ExecutionCore? BottomContext
+    public ExecutionCore? BottomCore
     {
         get
         {
@@ -46,10 +42,6 @@ public class ExecutionStack
 
     public ExecutionStack()
     {
-        // this.MaxCount = maxCount;
-        this.random = new();
-        // this.Root = new(this, 0);
-        // this.list.Add(this.Root);
     }
 
     /// <summary>
@@ -147,40 +139,6 @@ public class ExecutionStack
         }
     }
 
-    public bool TrySetCompleted(long id, bool cancel = false)
-    {
-        var execution = this.Find(id);
-        if (execution is not null)
-        {
-            execution.GetCompletionSource().TrySetResult();
-            if (cancel)
-            {
-                execution.TryCancel();
-            }
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    public bool TryGetCancellationToken(long id, out CancellationToken cancellationToken)
-    {
-        var execution = this.Find(id);
-        if (execution is not null)
-        {
-            cancellationToken = execution.CancellationToken;
-            return true;
-        }
-        else
-        {
-            cancellationToken = default;
-            return false;
-        }
-    }
-
     private void RemoveInternal(ExecutionCore item)
     {
         TemporaryList<ExecutionCore> toCancel = default;
@@ -205,48 +163,4 @@ public class ExecutionStack
             }
         }
     }
-
-    /*/// <summary>
-    /// Cancels the current top scope.
-    /// </summary>
-    /// <returns>
-    /// <see langword="true"/> if a non-root top scope existed and its <see ref="System.Threading.CancellationTokenSource"/> was signaled;
-    /// otherwise, <see langword="false"/>.
-    /// </returns>
-    public bool CancelTop()
-    {
-        var scope = this.Peek();
-        if (scope is not null &&
-            !scope.IsRoot)
-        {
-            scope.TryCancel();
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Removes the first execution with the specified identifier from the stack.
-    /// </summary>
-    /// <param name="id">The execution identifier.</param>
-    /// <returns><see langword="true"/> if a execution was removed; otherwise, <see langword="false"/>.</returns>
-    public bool Remove(long id)
-    {
-        using (this.syncObject.EnterScope())
-        {
-            var index = this.list.FindIndex(x => x.Id == id);
-            if (index >= 0)
-            {// Foudddnd
-                this.list.RemoveAt(index);
-                return true;
-            }
-            else
-            {// Not found
-                return false;
-            }
-        }
-    }*/
 }

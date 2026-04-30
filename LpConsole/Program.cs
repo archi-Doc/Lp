@@ -25,7 +25,7 @@ public class Program
             if (unit?.Context.ServiceProvider.GetService<LpUnit>()?.ExecutionStack is { } executionStack)
             {
                 // executionStack.TopContext?.Signal(ExecutionSignal.Exit);
-                executionStack.TopContext?.Dispose();
+                executionStack.TopCore?.Dispose();
             }
 
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.

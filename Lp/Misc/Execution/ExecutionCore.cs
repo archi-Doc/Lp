@@ -3,7 +3,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Arc.Threading;
 
@@ -84,6 +83,9 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
+    public void TrySetCompleted()
+        => this.GetCompletionSource().TrySetResult();
+
     public void SendSignal(ExecutionSignal signal)
         => this.executionSignalHandler?.Invoke(this, signal);
 
@@ -93,9 +95,12 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
         while (true)
         {
-            this.CreateCancelList(ref list);
-            if (list is null ||
-                list.Count == 0)
+            using (this.Root.SyncObject.EnterScope())
+            {
+                CreateCancelList(ref list, this);
+            }
+
+            if (list is null || list.Count == 0)
             {
                 break;
             }
@@ -115,11 +120,10 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         {
             using (this.Root.SyncObject.EnterScope())
             {
-                this.CreateCancelList(ref list);
+                CreateCancelList(ref list, this);
             }
 
-            if (list is null ||
-                list.Count == 0)
+            if (list is null || list.Count == 0)
             {
                 break;
             }
@@ -137,21 +141,6 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
-    private void CreateCancelList(ref List<ExecutionCore>? list)
-    {
-        var children = this.Children;
-        foreach (var x in children)
-        {
-            this.CreateCancelList(ref list);
-        }
-
-        if (!this.IsCancellationRequested)
-        {
-            list ??= new();
-            list.Add(this);
-        }
-    }
-
     /// <summary>
     /// Removes this execution from its owning <see cref="Stack"/>.
     /// </summary>
@@ -163,7 +152,6 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
 
         base.Dispose();
-        this.Stack.RemoveInternal(this);
     }
 
     /// <inheritdoc/>
@@ -174,7 +162,10 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
     public void AddChild(ExecutionCore child)
     {
-        Debug.Assert(this.Root == child.Root);
+        if (this.Root != child.Root)
+        {
+            throw new InvalidOperationException("The parent and child objects must be created from the same Root.");
+        }
 
         using (this.Root.SyncObject.EnterScope())
         {
@@ -200,6 +191,21 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
     }
 
+    private static void CreateCancelList(ref List<ExecutionCore>? list, ExecutionCore core)
+    {
+        var children = core.Children;
+        foreach (var x in children)
+        {
+            CreateCancelList(ref list, x);
+        }
+
+        if (!core.IsCancellationRequested)
+        {
+            list ??= new();
+            list.Add(core);
+        }
+    }
+
     [MemberNotNull(nameof(parent))]
     private void AddChildInternal(ExecutionCore child)
     {
@@ -208,6 +214,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         var newArray = new ExecutionCore[this.children.Length + 1];
         Array.Copy(this.children, newArray, this.children.Length);
         newArray[this.children.Length] = child;
+
         this.children = newArray;
         child.parent = this;
     }
@@ -235,22 +242,5 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         child.parent = default!;
 
         return true;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ExecutionCore FindLeaf()
-    {
-        var context = this;
-        while (true)
-        {
-            if (context.Child is null)
-            {
-                return context;
-            }
-            else
-            {
-                context = context.Child;
-            }
-        }
     }
 }

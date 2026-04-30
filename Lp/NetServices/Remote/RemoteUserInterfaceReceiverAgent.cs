@@ -1,14 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
-using Lp.Services;
 
 namespace Lp.NetServices;
 
 [NetObject]
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
-    private readonly ExecutionStack executionStack;
+    private readonly ExecutionRoot executionRoot;
     private readonly IUserInterfaceService userInterfaceService;
 
     public string OutputPrefix { get; set; } = "[Remote] ";
@@ -19,22 +18,22 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public long Id { get; set; }
 
-    public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
+    public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
     {
-        this.executionStack = executionStack;
+        this.executionRoot = executionRoot;
         this.userInterfaceService = userInterfaceService;
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
     {
-        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
+        this.executionRoot.FindAndGetCancellationToken(this.Id, out cancellationToken);
         var result = await this.userInterfaceService.ReadLine(cancellationToken);
         return new(result.Text);
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
+        this.executionRoot.FindAndGetCancellationToken(this.Id, out cancellationToken);
         var result = await this.userInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
 
@@ -54,7 +53,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
+        this.executionRoot.FindAndGetCancellationToken(this.Id, out cancellationToken);
         var result = await this.userInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
     }
@@ -96,7 +95,11 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.ReturnInputControl(long id)
     {
-        this.executionStack.TrySetCompleted(id);
+        if (this.executionRoot.Find(id) is { } core)
+        {
+            core.TrySetCompleted();
+        }
+
         return Task.CompletedTask;
     }
 }
