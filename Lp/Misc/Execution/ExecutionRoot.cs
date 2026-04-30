@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-
 namespace Arc.Threading;
 
 public class ExecutionRoot : ExecutionCore
@@ -17,7 +15,7 @@ public class ExecutionRoot : ExecutionCore
 #pragma warning restore SA1401 // Fields should be private
 
     public ExecutionRoot()
-        : base(0)
+        : base()
     {
     }
 

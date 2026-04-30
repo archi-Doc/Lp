@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace Arc.Threading;
 
@@ -12,7 +11,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
     private readonly ExecutionSignalHandler? executionSignalHandler;
     private TaskCompletionSource? completionSource;
-    private ExecutionCore parent;
+    private ExecutionCore? parent;
     private ExecutionCore[] children = [];
 
     public ExecutionRoot Root { get; }
@@ -22,10 +21,28 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// </summary>
     public ExecutionStack? Stack { get; private set; }
 
-    public ExecutionCore Parent
+    public ExecutionCore? Parent
     {
         get => this.parent;
-        set => value.AddChild(this);
+        set
+        {
+            if (this.IsRoot ||
+                this.parent == value)
+            {
+                return;
+            }
+            else if (value is null)
+            {
+                using (this.Root.SyncObject.EnterScope())
+                {
+                    this.parent?.RemoveChildInternal(this);
+                }
+            }
+            else
+            {
+                value.AddChild(this);
+            }
+        }
     }
 
     public ExecutionCore[] Children => this.children;
@@ -83,6 +100,13 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
+    private protected ExecutionCore()
+    {// Root
+        this.Root = (ExecutionRoot)this;
+        this.Id = 0;
+        this.Root.IdToCore[0] = this;
+    }
+
     public void TrySetCompleted()
         => this.GetCompletionSource().TrySetResult();
 
@@ -92,12 +116,11 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     public new void Cancel()
     {
         List<ExecutionCore>? list = default;
-
         while (true)
         {
             using (this.Root.SyncObject.EnterScope())
             {
-                CreateCancelList(ref list, this);
+                ProcessCancellationAndRemove(ref list, this, false);
             }
 
             if (list is null || list.Count == 0)
@@ -113,44 +136,14 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     }
 
     public void TryCancel()
-    {
-        List<ExecutionCore>? list = default;
-
-        while (true)
-        {
-            using (this.Root.SyncObject.EnterScope())
-            {
-                CreateCancelList(ref list, this);
-            }
-
-            if (list is null || list.Count == 0)
-            {
-                break;
-            }
-
-            foreach (var x in list)
-            {
-                try
-                {
-                    ((CancellationTokenSource)x).Cancel();
-                }
-                catch
-                {
-                }
-            }
-        }
-    }
+        => this.TryCancel(false);
 
     /// <summary>
     /// Removes this execution from its owning <see cref="Stack"/>.
-    /// </summary>
+    /// </summary>using (this.Root.SyncObject.EnterScope())
     public new void Dispose()
     {
-        if (!this.IsCancellationRequested)
-        {
-            this.TryCancel();
-        }
-
+        this.TryCancel(true);
         base.Dispose();
     }
 
@@ -174,7 +167,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
                 return;
             }
 
-            child.Parent.RemoveChildInternal(child);
+            child.Parent?.RemoveChildInternal(child);
             this.AddChildInternal(child);
         }
     }
@@ -191,18 +184,24 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
     }
 
-    private static void CreateCancelList(ref List<ExecutionCore>? list, ExecutionCore core)
+    private static void ProcessCancellationAndRemove(ref List<ExecutionCore>? list, ExecutionCore core, bool remove)
     {
         var children = core.Children;
         foreach (var x in children)
         {
-            CreateCancelList(ref list, x);
+            ProcessCancellationAndRemove(ref list, x, remove);
         }
 
         if (!core.IsCancellationRequested)
         {
             list ??= new();
             list.Add(core);
+        }
+
+        if (remove)
+        {
+            core.Root.IdToCore.Remove(core.Id);
+            core.parent?.RemoveChildInternal(core);
         }
     }
 
@@ -239,8 +238,37 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
 
         this.children = newArray;
-        child.parent = default!;
+        child.parent = null;
 
         return true;
+    }
+
+    private void TryCancel(bool remove)
+    {
+        List<ExecutionCore>? list = default;
+        while (true)
+        {
+            using (this.Root.SyncObject.EnterScope())
+            {
+                ProcessCancellationAndRemove(ref list, this, remove);
+                remove = false;
+            }
+
+            if (list is null || list.Count == 0)
+            {
+                break;
+            }
+
+            foreach (var x in list)
+            {
+                try
+                {
+                    ((CancellationTokenSource)x).Cancel();
+                }
+                catch
+                {
+                }
+            }
+        }
     }
 }

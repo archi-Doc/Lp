@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using Arc.Collections;
 
 namespace Arc.Threading;
@@ -51,30 +50,15 @@ public class ExecutionStack
     /// When the parent is deleted, this execution is automatically canceled and deleted as well.</param>
     /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
     /// <returns>The newly created execution.</returns>
-    public ExecutionCore Push(ExecutionCore? parent, ExecutionSignalHandler? processSignalHandler)
+    public ExecutionCore Push(ExecutionCore parent, ExecutionSignalHandler? processSignalHandler)
     {
-        ExecutionCore execution;
+        var core = new ExecutionCore(parent, processSignalHandler);
         using (this.syncObject.EnterScope())
         {
-            /*if (this.Count >= this.MaxCount)
-            {
-                throw new InvalidOperationException();
-            }*/
-
-            while (true)
-            {
-                var id = this.random.NextInt64();
-                if (this.list.Find(x => x.Id == id) is null)
-                {
-                    execution = new ExecutionCore(this, id, processSignalHandler);
-                    parent?.AddChild(execution);
-                    this.list.Add(execution);
-                    break;
-                }
-            }
+            this.list.Add(core);
         }
 
-        return execution;
+        return core;
     }
 
     public ExecutionCore? TryPush(long id, ExecutionCore? parent, ExecutionSignalHandler? processSignalHandler)
@@ -106,28 +90,9 @@ public class ExecutionStack
         }
     }
 
-    /// <summary>
-    /// Gets the current top execution without removing it.
-    /// </summary>
-    /// <returns>The top execution; or <see langword="null"/> if the stack is empty.</returns>
-    public ExecutionCore? Peek()
-    {
-        using (this.syncObject.EnterScope())
-        {
-            if (this.list.Count == 0)
-            {
-                return null;
-            }
-            else
-            {
-                return this.list[^1];
-            }
-        }
-    }
-
     public bool SignalBottom(ExecutionSignal signal)
     {
-        var execution = this.Peek();
+        var execution = this.BottomCore;
         if (execution is not null)
         {
             execution.SendSignal(signal);
