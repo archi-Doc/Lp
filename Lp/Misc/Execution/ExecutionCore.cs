@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Arc.Threading;
 
@@ -11,8 +12,9 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
     private readonly ExecutionSignalHandler? executionSignalHandler;
     private TaskCompletionSource? completionSource;
-    private ExecutionCore? parent;
-    private ExecutionCore[] children = [];
+    private ExecutionCore? parent; // Root.SyncObject
+    private List<ExecutionCore>? childrenList; // Root.SyncObject
+    private ExecutionCore[]? childrenArray; // Root.SyncObject
 
     public ExecutionRoot Root { get; }
 
@@ -45,7 +47,18 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
-    public ExecutionCore[] Children => this.children;
+    public ExecutionCore[] GetChildren()
+    {
+        if (this.childrenArray is { } array)
+        {
+            return array;
+        }
+
+        using (this.Root.SyncObject.EnterScope())
+        {
+            return this.GetChildrenArrayInternal();
+        }
+    }
 
     /// <summary>
     /// Gets the identifier of this execution within the owning <see cref="Stack"/>.
@@ -145,7 +158,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         {
             using (this.Root.SyncObject.EnterScope())
             {
-                ProcessCancellationAndRemove(ref list, this, false);
+                ProcessCancellationInternal(ref list, this, false);
             }
 
             if (list is null || list.Count == 0)
@@ -209,12 +222,12 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
     }
 
-    private static void ProcessCancellationAndRemove(ref List<ExecutionCore>? list, ExecutionCore core, bool remove)
+    private static void ProcessCancellationInternal(ref List<ExecutionCore>? list, ExecutionCore core, bool remove)
     {
-        var children = core.Children;
+        var children = core.GetChildrenArrayInternal();
         foreach (var x in children)
         {
-            ProcessCancellationAndRemove(ref list, x, remove);
+            ProcessCancellationInternal(ref list, x, remove);
         }
 
         if (!core.IsCancellationRequested)
@@ -226,8 +239,28 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         if (remove)
         {
             core.Root.IdToCore.Remove(core.Id);
-            core.parent?.RemoveChildInternal(core);
+
+            core.Id = long.MinValue;
+            core.parent = default;
+            core.childrenList = default;
+            core.ClearChildrenArrayInternal();
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearChildrenArrayInternal()
+    {
+        this.childrenArray = default;
+    }
+
+    private ExecutionCore[] GetChildrenArrayInternal()
+    {
+        if (this.childrenArray is null)
+        {
+            this.childrenArray = this.childrenList is null ? [] : this.childrenList.ToArray();
+        }
+
+        return this.childrenArray;
     }
 
     [MemberNotNull(nameof(parent))]
@@ -235,36 +268,26 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     {
         Debug.Assert(child.Parent is null);
 
-        var newArray = new ExecutionCore[this.children.Length + 1];
-        Array.Copy(this.children, newArray, this.children.Length);
-        newArray[this.children.Length] = child;
-
-        this.children = newArray;
+        this.childrenList ??= new();
+        this.childrenList.Add(child);
+        this.ClearChildrenArrayInternal();
         child.parent = this;
     }
 
     private bool RemoveChildInternal(ExecutionCore child)
     {
-        var index = Array.IndexOf(this.children, child);
-        if (index < 0)
+        if (this.childrenList is null)
         {
             return false;
         }
 
-        var newArray = new ExecutionCore[this.children.Length - 1];
-        if (index > 0)
+        if (!this.childrenList.Remove(child))
         {
-            Array.Copy(this.children, 0, newArray, 0, index);
+            return false;
         }
 
-        if (index < this.children.Length - 1)
-        {
-            Array.Copy(this.children, index + 1, newArray, index, this.children.Length - index - 1);
-        }
-
-        this.children = newArray;
+        this.ClearChildrenArrayInternal();
         child.parent = null;
-
         return true;
     }
 
@@ -275,8 +298,14 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         {
             using (this.Root.SyncObject.EnterScope())
             {
-                ProcessCancellationAndRemove(ref list, this, remove);
+                if (remove)
+                {
+                    this.parent?.RemoveChildInternal(this);
+                }
+
+                ProcessCancellationInternal(ref list, this, remove);
                 remove = false;
+
             }
 
             if (list is null || list.Count == 0)
