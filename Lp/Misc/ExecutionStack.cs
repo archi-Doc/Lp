@@ -8,7 +8,7 @@ namespace Arc.Threading;
 public static class ExecutionStackHelper
 {
     public static ExecutionStack.Context? ExtractContext(this CancellationToken cancellationToken)
-    {
+    {// In my opinion, CancellationToken should have been named something like TaskContext, with added features for managing parent-child dependencies and for canceling or terminating processing.
         try
         {
             var cts = Unsafe.As<CancellationToken, CancellationTokenSource>(ref cancellationToken);
@@ -107,7 +107,7 @@ public class ExecutionStack
             this.completionSource = null;
         }
 
-        public void ProcessSignal(ExecutionSignal signal)
+        public void Signal(ExecutionSignal signal)
             => this.processSignal?.Invoke(this, signal);
 
         public new void Cancel()
@@ -217,25 +217,39 @@ public class ExecutionStack
         }
     }
 
-    /*/// <summary>
-    /// Gets the root scope (created at construction time).
-    /// </summary>
-    /// <remarks>
-    /// The root scope uses <c>Id = 0</c> and is not canceled by <see cref="CancelTop"/>.
-    /// </remarks>
-    public Scope Root { get; }
+    #region FieldAndProperty
 
-    public CancellationToken TopCancellationToken => this.Peek() is { } scope ? scope.CancellationToken : default;*/
-
-    // public int MaxCount { get; }
+    private readonly Lock syncObject = new();
+    private readonly List<Context> list = new();
+    private readonly Xoshiro256StarStar random;
 
     public int Count => this.list.Count;
 
     public bool IsEmpty => this.list.Count == 0;
 
-    private readonly Lock syncObject = new();
-    private readonly List<Context> list = new();
-    private readonly Xoshiro256StarStar random;
+    public Context? TopContext
+    {
+        get
+        {
+            using (this.syncObject.EnterScope())
+            {
+                return this.list.Count == 0 ? null : this.list[0];
+            }
+        }
+    }
+
+    public Context? BottomContext
+    {
+        get
+        {
+            using (this.syncObject.EnterScope())
+            {
+                return this.list.Count == 0 ? null : this.list[^1];
+            }
+        }
+    }
+
+    #endregion
 
     public ExecutionStack()
     {
@@ -326,12 +340,12 @@ public class ExecutionStack
         }
     }
 
-    public bool Signal(ExecutionSignal signal)
+    public bool SignalBottom(ExecutionSignal signal)
     {
         var execution = this.Peek();
         if (execution is not null)
         {
-            execution.ProcessSignal(signal);
+            execution.Signal(signal);
             return true;
         }
         else

@@ -78,14 +78,13 @@ public class LpUnit
                 context.Services.TryAddScoped<IUserInterfaceService>(sp =>
                 {
                     var context = sp.GetService<UserInterfaceServiceContext>();
-                    var console = sp.GetRequiredService<ConsoleUserInterfaceService>();
                     if (context?.Receiver is { } receiver)
                     {
                         return new RemoteUserInterfaceService(receiver);
                     }
                     else
                     {
-                        return console;
+                        return sp.GetRequiredService<ConsoleUserInterfaceService>();
                     }
                 });
                 context.Services.TryAddScoped<IConsoleService>(sp => sp.GetRequiredService<IUserInterfaceService>());
@@ -518,7 +517,7 @@ public class LpUnit
             {
                 if (keyInfo.Key == ConsoleKey.Q)
                 {// Ctrl+Q
-                    this.ExecutionStack.Signal(ExecutionSignal.Cancel);
+                    this.ExecutionStack.SignalBottom(ExecutionSignal.Cancel);
                     /*if (this.ExecutionStack.CancelTop())
                     {
                         this.UserInterfaceService.WriteLineError("Canceled");

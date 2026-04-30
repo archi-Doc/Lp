@@ -22,6 +22,12 @@ public class Program
     {
         AppCloseHandler.Set(() =>
         {// Console window closing or process terminated.
+            if (unit?.Context.ServiceProvider.GetService<LpUnit>()?.ExecutionStack is { } executionStack)
+            {
+                // executionStack.TopContext?.Signal(ExecutionSignal.Exit);
+                executionStack.TopContext?.Dispose();
+            }
+
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
             ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
         });
@@ -53,7 +59,7 @@ public class Program
                 }
                 else
                 {
-                    executionStack.Signal(ExecutionSignal.Exit);
+                    executionStack.SignalBottom(ExecutionSignal.Exit);
                 }
             }
 
