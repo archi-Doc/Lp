@@ -138,7 +138,7 @@ public class ExecutionStack
         var execution = this.Peek();
         if (execution is not null)
         {
-            execution.Signal(signal);
+            execution.SendSignal(signal);
             return true;
         }
         else

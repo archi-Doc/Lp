@@ -1,22 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Arc.Threading;
 
-/// <summary>
-/// Represents a removable execution entry within an <see cref="Stack"/>.
-/// </summary>
-/// <remarks>
-/// Disposing a <see cref="ExecutionCore"/> removes it from its owning <see cref="Stack"/>; it does not automatically cancel the execution.
-/// </remarks>
 public class ExecutionCore : CancellationTokenSource, IDisposable
 {
     #region FieldAndProperty
 
-    private ExecutionSignalHandler? processSignal;
+    private readonly ExecutionSignalHandler? executionSignalHandler;
     private TaskCompletionSource? completionSource;
+    private ExecutionCore parent;
     private ExecutionCore[] children = [];
 
     public ExecutionRoot Root { get; }
@@ -26,7 +23,11 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// </summary>
     public ExecutionStack? Stack { get; private set; }
 
-    public ExecutionCore? Parent { get; private set; }
+    public ExecutionCore Parent
+    {
+        get => this.parent;
+        set => value.AddChild(this);
+    }
 
     public ExecutionCore[] Children => this.children;
 
@@ -34,6 +35,11 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// Gets the identifier of this execution within the owning <see cref="Stack"/>.
     /// </summary>
     public long Id { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether this execution is the root execution (<c>Id == 0</c>).
+    /// </summary>
+    public bool IsRoot => this.Id == 0;
 
     /// <summary>
     /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this execution.
@@ -55,68 +61,94 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// </summary>
     public Task Completion => this.GetCompletionSource().Task;
 
-    /// <summary>
-    /// Gets a value indicating whether this execution is the root execution (<c>Id == 0</c>).
-    /// </summary>
-    public bool IsRoot => this.Id == 0;
-
     #endregion
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ExecutionCore"/> class.
-    /// </summary>
-    /// <param name="id">The execution identifier to assign.</param>
-    /// <param name="executionSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
-    internal ExecutionCore(ExecutionCore parent, ExecutionSignalHandler? executionSignalHandler = default)
+    public ExecutionCore(ExecutionCore parent, ExecutionSignalHandler? executionSignalHandler = default)
     {
         this.Root = parent.Root;
-        parent.AddChild(this);
-        this.Id = id;
-        this.processSignal = executionSignalHandler;
-        this.completionSource = null;
+        this.executionSignalHandler = executionSignalHandler;
+
+        using (this.Root.SyncObject.EnterScope())
+        {
+            while (true)
+            {
+                var id = this.Root.Random.NextInt64();
+                if (!this.Root.IdToCore.ContainsKey(id))
+                {
+                    this.Id = id;
+                    break;
+                }
+            }
+
+            this.AddChildInternal(this);
+        }
     }
 
-    public void Signal(ExecutionSignal signal)
-        => this.processSignal?.Invoke(this, signal);
+    public void SendSignal(ExecutionSignal signal)
+        => this.executionSignalHandler?.Invoke(this, signal);
 
     public new void Cancel()
     {
-        var context = this.FindLeaf();
+        List<ExecutionCore>? list = default;
+
         while (true)
         {
-            ((CancellationTokenSource)context!).Cancel();
-            if (context == this)
+            this.CreateCancelList(ref list);
+            if (list is null ||
+                list.Count == 0)
             {
                 break;
             }
-            else
+
+            foreach (var x in list)
             {
-                context = context.Parent;
+                ((CancellationTokenSource)x).Cancel();
             }
         }
     }
 
     public void TryCancel()
     {
-        var context = this.FindLeaf();
-        while (context is not null)
+        List<ExecutionCore>? list = default;
+
+        while (true)
         {
-            try
+            using (this.Root.SyncObject.EnterScope())
             {
-                ((CancellationTokenSource)context).Cancel();
-            }
-            catch
-            {
+                this.CreateCancelList(ref list);
             }
 
-            if (context == this)
+            if (list is null ||
+                list.Count == 0)
             {
                 break;
             }
-            else
+
+            foreach (var x in list)
             {
-                context = context.Parent;
+                try
+                {
+                    ((CancellationTokenSource)x).Cancel();
+                }
+                catch
+                {
+                }
             }
+        }
+    }
+
+    private void CreateCancelList(ref List<ExecutionCore>? list)
+    {
+        var children = this.Children;
+        foreach (var x in children)
+        {
+            this.CreateCancelList(ref list);
+        }
+
+        if (!this.IsCancellationRequested)
+        {
+            list ??= new();
+            list.Add(this);
         }
     }
 
@@ -137,40 +169,47 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// <inheritdoc/>
     public override string ToString()
     {
-        return $"Execution {this.Id}";
+        return $"Execution {this.Id:x4}";
     }
 
-    /// <summary>
-    /// Add a child Execution.<br/>
-    /// This must be called within ExecutionStack's synchronization lock (syncObject).
-    /// </summary>
-    /// <param name="child">A child execution.</param>
     public void AddChild(ExecutionCore child)
     {
-        using (this.Root.syncObject.EnterScope())
+        Debug.Assert(this.Root == child.Root);
+
+        using (this.Root.SyncObject.EnterScope())
         {
-            if (child.Parent is { } parent)
+            if (child.Parent == this)
             {
-                parent.RemoveChildInternal(child);
+                return;
             }
 
+            child.Parent.RemoveChildInternal(child);
             this.AddChildInternal(child);
         }
-
-        if (this.Child is not null)
-        {
-            throw new InvalidOperationException();
-        }
-
-        this.Child = child;
-        child.Parent = this;
     }
 
+    internal TaskCompletionSource GetCompletionSource()
+    {
+        var current = Volatile.Read(ref this.completionSource);
+        if (current is not null)
+        {
+            return current;
+        }
+
+        var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
+    }
+
+    [MemberNotNull(nameof(parent))]
     private void AddChildInternal(ExecutionCore child)
     {
-        var length = this.children.Length;
-        Array.Resize(ref this.children, length + 1);
-        array[length] = item;
+        Debug.Assert(child.Parent is null);
+
+        var newArray = new ExecutionCore[this.children.Length + 1];
+        Array.Copy(this.children, newArray, this.children.Length);
+        newArray[this.children.Length] = child;
+        this.children = newArray;
+        child.parent = this;
     }
 
     private bool RemoveChildInternal(ExecutionCore child)
@@ -193,21 +232,9 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
 
         this.children = newArray;
-        child.Parent = null;
+        child.parent = default!;
 
         return true;
-    }
-
-    internal TaskCompletionSource GetCompletionSource()
-    {
-        var current = Volatile.Read(ref this.completionSource);
-        if (current is not null)
-        {
-            return current;
-        }
-
-        var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

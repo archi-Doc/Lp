@@ -4,8 +4,15 @@ namespace Arc.Threading;
 
 public delegate void ExecutionSignalHandler(ExecutionCore executionCore, ExecutionSignal executionSignal);
 
-public enum ExecutionSignal
+public enum ExecutionSignal : byte
 {
+    /// <summary>
+    /// Requests cancellation of the execution.
+    /// </summary>
     Cancel,
+
+    /// <summary>
+    /// Requests termination of the execution.
+    /// </summary>
     Exit,
 }
