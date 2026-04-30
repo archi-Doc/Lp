@@ -1,17 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Arc.Collections;
-
 namespace Arc.Threading;
 
 public class ExecutionStack
 {
     #region FieldAndProperty
 
-    private readonly Lock syncObject = new();
-    private readonly List<ExecutionCore> list = new(); // syncObject
+    private readonly List<ExecutionCore> list = new(); // Root.SyncObject
+
+    public ExecutionRoot Root { get; }
 
     public int Count => this.list.Count;
 
@@ -21,7 +18,7 @@ public class ExecutionStack
     {
         get
         {
-            using (this.syncObject.EnterScope())
+            using (this.Root.SyncObject.EnterScope())
             {
                 return this.list.Count == 0 ? null : this.list[0];
             }
@@ -32,7 +29,7 @@ public class ExecutionStack
     {
         get
         {
-            using (this.syncObject.EnterScope())
+            using (this.Root.SyncObject.EnterScope())
             {
                 return this.list.Count == 0 ? null : this.list[^1];
             }
@@ -41,8 +38,9 @@ public class ExecutionStack
 
     #endregion
 
-    public ExecutionStack()
+    public ExecutionStack(ExecutionRoot root)
     {
+        this.Root = root;
     }
 
     /// <summary>
@@ -54,30 +52,34 @@ public class ExecutionStack
     /// <returns>The newly created execution.</returns>
     public ExecutionCore Push(ExecutionCore parent, ExecutionSignalHandler? processSignalHandler)
     {
-        var core = new ExecutionCore(parent, processSignalHandler);
-        using (this.syncObject.EnterScope())
+        if (this.Root != parent.Root)
         {
-            this.list.Add(core);
-            core.Stack = this;
+            throw new InvalidOperationException("The stack and parent objects must be created from the same Root.");
         }
 
+        var core = new ExecutionCore(parent, this, processSignalHandler);
         return core;
     }
 
     public ExecutionCore? TryPush(long id, ExecutionCore parent, ExecutionSignalHandler? processSignalHandler)
     {
-        var core = ExecutionCore.TryCreate(parent, id, processSignalHandler);
-        if (core is null)
-        {
-            return null;
-        }
-
-        using (this.syncObject.EnterScope())
-        {
-            this.list.Add(core);
-        }
-
+        var core = ExecutionCore.TryCreate(parent, id, this, processSignalHandler);
         return core;
+    }
+
+    public bool TryPush(ExecutionCore core)
+    {
+        using (this.Root.SyncObject.EnterScope())
+        {
+            if (core.Stack is not null)
+            {
+                return false;
+            }
+
+            this.AddInternal(core);
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -87,7 +89,7 @@ public class ExecutionStack
     /// <returns>The matching execution; otherwise, <see langword="null"/>.</returns>
     public ExecutionCore? Find(long id)
     {
-        using (this.syncObject.EnterScope())
+        using (this.Root.SyncObject.EnterScope())
         {
             foreach (var x in this.list)
             {
@@ -101,28 +103,15 @@ public class ExecutionStack
         return null;
     }
 
-    private void RemoveInternal(ExecutionCore item)
+    internal void AddInternal(ExecutionCore core)
     {
-        TemporaryList<ExecutionCore> toCancel = default;
-        using (this.syncObject.EnterScope())
-        {
-            item.Parent?.Child = null;
-            this.list.Remove(item);
+        core.Stack = this;
+        this.list.Add(core);
+    }
 
-            var e = item.Child;
-            while (e is not null)
-            {
-                toCancel.Add(e);
-                e = e.Child;
-            }
-        }
-
-        if (toCancel.Count > 0)
-        {
-            foreach (var x in toCancel)
-            {
-                x.TryCancel();
-            }
-        }
+    internal void RemoveInternal(ExecutionCore core)
+    {
+        core.Stack = null;
+        this.list.Remove(core);
     }
 }

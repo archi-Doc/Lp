@@ -11,7 +11,7 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private static readonly ExecutionStack RemoteStack = new();
+    private readonly ExecutionStack remoteStack;//
     // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
@@ -21,9 +21,10 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(/*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
+    public RemoteUserInterfaceSenderAgent(ExecutionRoot root, /*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
         // this.executionStack = executionStack;
+        this.remoteStack = new(root);
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
@@ -68,12 +69,12 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.InvalidData;
         }
 
-        if (RemoteStack.Count > 2)
+        if (this.remoteStack.Count > 2)
         {
             return NetResult.Refused;
         }
 
-        var context = RemoteStack.TryPush(id, null, default);
+        var context = this.remoteStack.TryPush(id, null, default);
         if (context is null)
         {
             return NetResult.Refused;
@@ -119,7 +120,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.InvalidData);
         }
 
-        var scope = RemoteStack.Find(id);
+        var scope = this.remoteStack.Find(id);
         if (scope is null)
         {
             return Task.FromResult(NetResult.NotFound);

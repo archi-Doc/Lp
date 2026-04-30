@@ -21,7 +21,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// <summary>
     /// Gets the owning <see cref="Arc.Threading.ExecutionStack"/> instance.
     /// </summary>
-    public ExecutionStack? Stack { get; internal set; } // Stack.syncObject
+    public ExecutionStack? Stack { get; internal set; } // Root.SyncObject
 
     public ExecutionCore? Parent
     {
@@ -92,7 +92,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
     #endregion
 
-    public static ExecutionCore? TryCreate(ExecutionCore parent, long id, ExecutionSignalHandler? executionSignalHandler = default)
+    public static ExecutionCore? TryCreate(ExecutionCore parent, long id, ExecutionStack stack, ExecutionSignalHandler? executionSignalHandler = default)
     {
         var root = parent.Root;
         using (root.SyncObject.EnterScope())
@@ -104,11 +104,17 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
             var core = new ExecutionCore(parent, id, executionSignalHandler);
             root.IdToCore.Add(id, core);
+            stack.AddInternal(core);
             return core;
         }
     }
 
     public ExecutionCore(ExecutionCore parent, ExecutionSignalHandler? executionSignalHandler = default)
+        : this(parent, null, executionSignalHandler)
+    {
+    }
+
+    internal ExecutionCore(ExecutionCore parent, ExecutionStack? stack, ExecutionSignalHandler? executionSignalHandler)
     {
         this.Root = parent.Root;
         this.executionSignalHandler = executionSignalHandler;
@@ -125,6 +131,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
                 }
             }
 
+            stack?.AddInternal(this);
             parent.AddChildInternal(this);
         }
     }
@@ -300,6 +307,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
                 if (remove)
                 {
                     this.parent?.RemoveChildInternal(this);
+                    this.Stack?.RemoveInternal(this);
                 }
 
                 ProcessCancellationInternal(ref list, this, remove);

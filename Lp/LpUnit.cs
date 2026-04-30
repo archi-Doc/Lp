@@ -69,6 +69,7 @@ public class LpUnit
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.AddSingleton<CreditService>();
+                context.AddSingleton<ExecutionRoot>();
                 context.AddSingleton<ExecutionStack>();
 
                 // Console services
@@ -490,8 +491,9 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, UnitCore core, ExecutionRoot executionRoot, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
+        this.ExecutionRoot = executionRoot;
         this.ExecutionStack = executionStack;
         this.LogUnit = logUnit;
         this.logger = logger;
@@ -561,6 +563,8 @@ public class LpUnit
     public LogUnit LogUnit { get; }
 
     public UnitCore Core { get; }
+
+    public ExecutionRoot ExecutionRoot { get; }
 
     public ExecutionStack ExecutionStack { get; }
 
@@ -869,7 +873,7 @@ public class LpUnit
             },*/
         };
 
-        using (var context = this.ExecutionStack.Push(default, (scope, signal) =>
+        using (var executionCore = this.ExecutionStack.Push(this.ExecutionRoot, (scope, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -898,7 +902,7 @@ public class LpUnit
                 }
                 else
                 {// Subcommand
-                    using (var context2 = this.ExecutionStack.Push(context, (x, signal) =>
+                    using (var context2 = this.ExecutionStack.Push(executionCore, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
