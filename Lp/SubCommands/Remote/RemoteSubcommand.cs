@@ -129,7 +129,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            var parent = cancellationToken.ExtractContext();
+            var parent = cancellationToken.ExtractCore();
             using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)

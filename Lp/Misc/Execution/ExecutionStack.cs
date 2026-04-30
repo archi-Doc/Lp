@@ -5,28 +5,6 @@ using Arc.Collections;
 
 namespace Arc.Threading;
 
-public static class ExecutionStackHelper
-{
-    public static ExecutionStack.Context? ExtractContext(this CancellationToken cancellationToken)
-    {// In my opinion, CancellationToken should have been named something like TaskContext, with added features for managing parent-child dependencies and for canceling or terminating processing.
-        try
-        {
-            var cts = Unsafe.As<CancellationToken, CancellationTokenSource>(ref cancellationToken);
-            return cts as ExecutionStack.Context;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-}
-
-public enum ExecutionSignal
-{
-    Cancel,
-    Exit,
-}
-
 /// <summary>
 /// Provides a thread-safe, stack-like collection of execution <see cref="Context"/> objects.
 /// </summary>
