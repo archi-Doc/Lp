@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Arc.Collections;
 
 namespace Arc.Threading;
@@ -61,20 +63,20 @@ public class ExecutionStack
         return core;
     }
 
-    public ExecutionCore? TryPush(long id, ExecutionCore? parent, ExecutionSignalHandler? processSignalHandler)
+    public ExecutionCore? TryPush(long id, ExecutionCore parent, ExecutionSignalHandler? processSignalHandler)
     {
+        var core = ExecutionCore.TryCreate(parent, id, processSignalHandler);
+        if (core is null)
+        {
+            return null;
+        }
+
         using (this.syncObject.EnterScope())
         {
-            if (this.list.Find(x => x.Id == id) is not null)
-            {// this.Count >= this.MaxCount
-                return null;
-            }
-
-            var execution = new ExecutionCore(this, id, processSignalHandler);
-            parent?.AddChild(execution);
-            this.list.Add(execution);
-            return execution;
+            this.list.Add(core);
         }
+
+        return core;
     }
 
     /// <summary>
@@ -86,7 +88,7 @@ public class ExecutionStack
     {
         using (this.syncObject.EnterScope())
         {
-            return this.list.Find(x => x.Id == id);
+            return this.FindInternal(id);
         }
     }
 
@@ -127,5 +129,29 @@ public class ExecutionStack
                 x.TryCancel();
             }
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ExecutionCore? FindInternal(long id)
+    {
+        foreach (var x in this.list)
+        {
+            if (x.Id == id)
+            {
+                return x;
+            }
+        }
+
+        /*var span = CollectionsMarshal.AsSpan(this.list);
+        for (var i = 0; i < span.Length; i++)
+        {
+            var item = span[i];
+            if (item.Id == id)
+            {
+                return item;
+            }
+        }*/
+
+        return null;
     }
 }

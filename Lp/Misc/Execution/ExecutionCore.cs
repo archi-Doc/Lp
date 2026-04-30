@@ -79,6 +79,22 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
     #endregion
 
+    public static ExecutionCore? TryCreate(ExecutionCore parent, long id, ExecutionSignalHandler? executionSignalHandler = default)
+    {
+        var root = parent.Root;
+        using (root.SyncObject.EnterScope())
+        {
+            var core = new ExecutionCore(parent, id, executionSignalHandler);
+            if (!root.IdToCore.TryAdd(id, core))
+            {
+                return null;
+            }
+
+            parent.AddChildInternal(core);
+            return core;
+        }
+    }
+
     public ExecutionCore(ExecutionCore parent, ExecutionSignalHandler? executionSignalHandler = default)
     {
         this.Root = parent.Root;
@@ -89,14 +105,14 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
             while (true)
             {
                 var id = this.Root.Random.NextInt64();
-                if (!this.Root.IdToCore.ContainsKey(id))
+                if (this.Root.IdToCore.TryAdd(id, this))
                 {
                     this.Id = id;
                     break;
                 }
             }
 
-            this.AddChildInternal(this);
+            parent.AddChildInternal(this);
         }
     }
 
@@ -105,6 +121,15 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         this.Root = (ExecutionRoot)this;
         this.Id = 0;
         this.Root.IdToCore[0] = this;
+    }
+
+    private ExecutionCore(ExecutionCore parent, long id, ExecutionSignalHandler? executionSignalHandler)
+    {
+        this.Root = parent.Root;
+        this.Id = id;
+        this.executionSignalHandler = executionSignalHandler;
+
+        parent.AddChildInternal(this);
     }
 
     public void TrySetCompleted()
