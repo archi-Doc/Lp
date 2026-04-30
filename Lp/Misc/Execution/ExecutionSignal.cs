@@ -2,6 +2,8 @@
 
 namespace Arc.Threading;
 
+public delegate void ExecutionSignalHandler(ExecutionCore executionCore, ExecutionSignal executionSignal);
+
 public enum ExecutionSignal
 {
     Cancel,
