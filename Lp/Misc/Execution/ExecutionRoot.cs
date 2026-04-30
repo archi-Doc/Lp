@@ -8,8 +8,8 @@ public class ExecutionRoot : ExecutionCore
 #pragma warning disable SA1304 // Non-private readonly fields should begin with upper-case letter
 
     internal readonly Lock SyncObject = new();
-    internal readonly Xoshiro256StarStar Random = new();
-    internal readonly Dictionary<long, ExecutionCore> IdToCore = new();
+    internal readonly Xoshiro256StarStar Random = new(); // SyncObject
+    internal readonly Dictionary<long, ExecutionCore> IdToCore = new(); // SyncObject
 
 #pragma warning restore SA1304 // Non-private readonly fields should begin with upper-case letter
 #pragma warning restore SA1401 // Fields should be private

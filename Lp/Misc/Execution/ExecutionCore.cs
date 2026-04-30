@@ -84,13 +84,13 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         var root = parent.Root;
         using (root.SyncObject.EnterScope())
         {
-            var core = new ExecutionCore(parent, id, executionSignalHandler);
-            if (!root.IdToCore.TryAdd(id, core))
-            {
+            if (root.IdToCore.ContainsKey(id))
+            {// Already exists
                 return null;
             }
 
-            parent.AddChildInternal(core);
+            var core = new ExecutionCore(parent, id, executionSignalHandler);
+            root.IdToCore.Add(id, core);
             return core;
         }
     }
@@ -124,7 +124,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     }
 
     private ExecutionCore(ExecutionCore parent, long id, ExecutionSignalHandler? executionSignalHandler)
-    {
+    {// Create an ExecutionCore with the specified Id.
         this.Root = parent.Root;
         this.Id = id;
         this.executionSignalHandler = executionSignalHandler;
