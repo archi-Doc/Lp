@@ -21,7 +21,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// <summary>
     /// Gets the owning <see cref="Arc.Threading.ExecutionStack"/> instance.
     /// </summary>
-    public ExecutionStack? Stack { get; private set; }
+    public ExecutionStack? Stack { get; internal set; } // Stack.syncObject
 
     public ExecutionCore? Parent
     {
@@ -263,7 +263,6 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         return this.childrenArray;
     }
 
-    [MemberNotNull(nameof(parent))]
     private void AddChildInternal(ExecutionCore child)
     {
         Debug.Assert(child.Parent is null);

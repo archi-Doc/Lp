@@ -517,7 +517,7 @@ public class LpUnit
             {
                 if (keyInfo.Key == ConsoleKey.Q)
                 {// Ctrl+Q
-                    this.ExecutionStack.SignalBottom(ExecutionSignal.Cancel);
+                    this.ExecutionStack.BottomCore?.SendSignal(ExecutionSignal.Cancel);
                     /*if (this.ExecutionStack.CancelTop())
                     {
                         this.UserInterfaceService.WriteLineError("Canceled");

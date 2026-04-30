@@ -59,7 +59,7 @@ public class Program
                 }
                 else
                 {
-                    executionStack.SignalBottom(ExecutionSignal.Exit);
+                    executionStack.BottomCore?.SendSignal(ExecutionSignal.Exit);
                 }
             }
 

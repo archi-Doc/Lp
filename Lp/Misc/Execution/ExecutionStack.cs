@@ -11,7 +11,7 @@ public class ExecutionStack
     #region FieldAndProperty
 
     private readonly Lock syncObject = new();
-    private readonly List<ExecutionCore> list = new();
+    private readonly List<ExecutionCore> list = new(); // syncObject
 
     public int Count => this.list.Count;
 
@@ -58,6 +58,7 @@ public class ExecutionStack
         using (this.syncObject.EnterScope())
         {
             this.list.Add(core);
+            core.Stack = this;
         }
 
         return core;
@@ -88,22 +89,16 @@ public class ExecutionStack
     {
         using (this.syncObject.EnterScope())
         {
-            return this.FindInternal(id);
+            foreach (var x in this.list)
+            {
+                if (x.Id == id)
+                {
+                    return x;
+                }
+            }
         }
-    }
 
-    public bool SignalBottom(ExecutionSignal signal)
-    {
-        var execution = this.BottomCore;
-        if (execution is not null)
-        {
-            execution.SendSignal(signal);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return null;
     }
 
     private void RemoveInternal(ExecutionCore item)
@@ -129,29 +124,5 @@ public class ExecutionStack
                 x.TryCancel();
             }
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ExecutionCore? FindInternal(long id)
-    {
-        foreach (var x in this.list)
-        {
-            if (x.Id == id)
-            {
-                return x;
-            }
-        }
-
-        /*var span = CollectionsMarshal.AsSpan(this.list);
-        for (var i = 0; i < span.Length; i++)
-        {
-            var item = span[i];
-            if (item.Id == id)
-            {
-                return item;
-            }
-        }*/
-
-        return null;
     }
 }
