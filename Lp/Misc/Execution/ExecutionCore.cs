@@ -73,7 +73,18 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// <summary>
     /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this execution.
     /// </summary>
-    public CancellationToken CancellationToken => this.Token;
+    public CancellationToken CancellationToken// => this.Token;
+    {
+        get
+        {
+            try
+            {
+                return this.Token;
+
+            }
+            catch { return default; }
+        }
+    }
 
     public bool IsTerminated => this.IsCancellationRequested;
 
@@ -97,12 +108,12 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         var root = parent.Root;
         using (root.SyncObject.EnterScope())
         {
-            if (root.IdToCore.ContainsKey(id))
+            if (root.IdToCore.TryGetValue(id, out var core))
             {// Already exists
-                return null;
+                return core;
             }
 
-            var core = new ExecutionCore(parent, id, executionSignalHandler);
+            core = new ExecutionCore(parent, id, executionSignalHandler);
             root.IdToCore.Add(id, core);
             stack.AddInternal(core);
             return core;
@@ -314,7 +325,6 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
                 ProcessCancellationInternal(ref list, this, remove);
                 remove = false;
-
             }
 
             if (list is null || list.Count == 0)

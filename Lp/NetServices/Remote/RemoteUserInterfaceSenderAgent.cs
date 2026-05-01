@@ -11,20 +11,19 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private readonly ExecutionStack remoteStack;//
-    // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
     private readonly LpBase lpBase;
     private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
+    private long remoteId;
+    private CancellationTokenSource? remoteCts;
+
     public bool IsAuthenticated { get; private set; }
 
     public RemoteUserInterfaceSenderAgent(ExecutionRoot root, /*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
-        // this.executionStack = executionStack;
-        this.remoteStack = new(root);
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
@@ -69,13 +68,19 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.InvalidData;
         }
 
-        if (this.remoteStack.Count > 2)
+        /*var context = this.remoteStack.TryPush(id, this.remoteStack.Root, default);//
+        if (context is null)
         {
             return NetResult.Refused;
-        }
+        }*/
 
-        var context = this.remoteStack.TryPush(id, null, default);
-        if (context is null)
+        //Not thread-safe
+        if (this.remoteId == 0)
+        {
+            this.remoteId = id;
+            this.remoteCts = new();
+        }
+        else
         {
             return NetResult.Refused;
         }
@@ -88,7 +93,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
-                await this.simpleParser.ParseAndExecute(message, context.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message, this.remoteCts.Token).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -96,7 +101,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                context.Dispose();
+                this.remoteId = 0;
 
                 // Return control of console input.
                 await receiver.ReturnInputControl(id).ConfigureAwait(false);
@@ -115,18 +120,19 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotAuthenticated);
         }
 
-        if (id == 0)
+        if (id != this.remoteId)
         {
-            return Task.FromResult(NetResult.InvalidData);
+            return Task.FromResult(NetResult.Refused);
         }
 
-        var scope = this.remoteStack.Find(id);
-        if (scope is null)
+        this.remoteId = 0;
+        try
         {
-            return Task.FromResult(NetResult.NotFound);
+            this.remoteCts?.Cancel();
         }
-
-        scope.TryCancel();
+        catch
+        {
+        }
 
         return Task.FromResult(NetResult.Success);
     }
