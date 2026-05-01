@@ -123,7 +123,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         {
             while (true)
             {
-                var id = this.Root.Random.NextInt64();
+                var id = Random.Shared.NextInt64();
                 if (this.Root.IdToCore.TryAdd(id, this))
                 {
                     this.Id = id;
