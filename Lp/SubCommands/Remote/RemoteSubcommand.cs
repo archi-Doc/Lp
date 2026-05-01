@@ -45,6 +45,12 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
+        var parent = cancellationToken.ExtractCore();
+        if (parent is null)
+        {
+            return;
+        }
+
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
             return;
@@ -129,7 +135,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            var parent = cancellationToken.ExtractCore();
             using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)

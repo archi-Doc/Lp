@@ -26,14 +26,14 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
     {
-        this.executionRoot.FindAndGetCancellationToken(this.Id, out cancellationToken);
+        this.executionRoot.FindCancellationToken(this.Id, out cancellationToken);
         var result = await this.userInterfaceService.ReadLine(cancellationToken);
         return new(result.Text);
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        this.executionRoot.FindAndGetCancellationToken(this.Id, out cancellationToken);
+        this.executionRoot.FindCancellationToken(this.Id, out cancellationToken);
         var result = await this.userInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
 
@@ -53,7 +53,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        this.executionRoot.FindAndGetCancellationToken(this.Id, out cancellationToken);
+        this.executionRoot.FindCancellationToken(this.Id, out cancellationToken);
         var result = await this.userInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
     }

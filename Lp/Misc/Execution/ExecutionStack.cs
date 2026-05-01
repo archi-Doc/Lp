@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Arc.Threading;
 
 public class ExecutionStack
@@ -50,25 +52,35 @@ public class ExecutionStack
     /// When the parent is deleted, this execution is automatically canceled and deleted as well.</param>
     /// <param name="processSignalHandler">An optional handler invoked when this execution processes an <see cref="ExecutionSignal"/>.</param>
     /// <returns>The newly created execution.</returns>
-    public ExecutionCore Push(ExecutionCore parent, ExecutionSignalHandler? processSignalHandler)
+    public ExecutionCore Push(ExecutionCore parent, ExecutionSignalHandler? processSignalHandler = default)
     {
         if (this.Root != parent.Root)
         {
-            throw new InvalidOperationException("The stack and parent objects must be created from the same Root.");
+            ThrowDifferentRootException();
         }
 
         var core = new ExecutionCore(parent, this, processSignalHandler);
         return core;
     }
 
-    public ExecutionCore? TryPush(long id, ExecutionCore parent, ExecutionSignalHandler? processSignalHandler)
+    public ExecutionCore? TryPush(ExecutionCore parent, long id, ExecutionSignalHandler? processSignalHandler = default)
     {
+        if (this.Root != parent.Root)
+        {
+            ThrowDifferentRootException();
+        }
+
         var core = ExecutionCore.TryCreate(parent, id, this, processSignalHandler);
         return core;
     }
 
     public bool TryPush(ExecutionCore core)
     {
+        if (this.Root != core.Root)
+        {
+            ThrowDifferentRootException();
+        }
+
         using (this.Root.SyncObject.EnterScope())
         {
             if (core.Stack is not null)
@@ -114,4 +126,8 @@ public class ExecutionStack
         core.Stack = null;
         this.list.Remove(core);
     }
+
+    [DoesNotReturn]
+    private static void ThrowDifferentRootException()
+        => throw new InvalidOperationException("The stack and parent objects must be created from the same Root.");
 }

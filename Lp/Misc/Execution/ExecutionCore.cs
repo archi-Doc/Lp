@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Arc.Threading;
@@ -73,18 +72,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
     /// <summary>
     /// Gets the <see cref="System.Threading.CancellationToken"/> associated with this execution.
     /// </summary>
-    public CancellationToken CancellationToken// => this.Token;
-    {
-        get
-        {
-            try
-            {
-                return this.Token;
-
-            }
-            catch { return default; }
-        }
-    }
+    public CancellationToken CancellationToken => this.Token;
 
     public bool IsTerminated => this.IsCancellationRequested;
 
@@ -103,7 +91,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
     #endregion
 
-    public static ExecutionCore? TryCreate(ExecutionCore parent, long id, ExecutionStack stack, ExecutionSignalHandler? executionSignalHandler = default)
+    public static ExecutionCore? TryCreate(ExecutionCore parent, long id, ExecutionStack? stack = default, ExecutionSignalHandler? executionSignalHandler = default)
     {
         var root = parent.Root;
         using (root.SyncObject.EnterScope())
@@ -115,7 +103,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
 
             core = new ExecutionCore(parent, id, executionSignalHandler);
             root.IdToCore.Add(id, core);
-            stack.AddInternal(core);
+            stack?.AddInternal(core);
             return core;
         }
     }
@@ -230,18 +218,6 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
-    internal TaskCompletionSource GetCompletionSource()
-    {
-        var current = Volatile.Read(ref this.completionSource);
-        if (current is not null)
-        {
-            return current;
-        }
-
-        var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
-    }
-
     private static void ProcessCancellationInternal(ref List<ExecutionCore>? list, ExecutionCore core, bool remove)
     {
         var children = core.GetChildrenArrayInternal();
@@ -267,12 +243,25 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
+    private TaskCompletionSource GetCompletionSource()
+    {
+        var current = Volatile.Read(ref this.completionSource);
+        if (current is not null)
+        {
+            return current;
+        }
+
+        var created = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        return Interlocked.CompareExchange(ref this.completionSource, created, null) ?? created;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClearChildrenArrayInternal()
     {
         this.childrenArray = default;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ExecutionCore[] GetChildrenArrayInternal()
     {
         if (this.childrenArray is null)

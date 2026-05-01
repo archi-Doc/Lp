@@ -27,7 +27,7 @@ public class ExecutionRoot : ExecutionCore
         }
     }
 
-    public bool FindAndGetCancellationToken(long id, out CancellationToken cancellationToken)
+    public bool FindCancellationToken(long id, out CancellationToken cancellationToken)
     {
         if (this.Find(id) is { } core)
         {

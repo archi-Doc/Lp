@@ -43,6 +43,11 @@ public class NestedCommand<TCommand>
     public async Task MainAsync(CancellationToken cancellationToken)
     {
         var parent = cancellationToken.ExtractCore();
+        if (parent is null)
+        {
+            return;
+        }
+
         using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
