@@ -177,6 +177,8 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
             {
                 ((CancellationTokenSource)x).Cancel();
             }
+
+            list.Clear();
         }
     }
 
@@ -330,6 +332,8 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
                 {
                 }
             }
+
+            list.Clear();
         }
     }
 }
