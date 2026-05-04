@@ -181,15 +181,15 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         }
     }
 
-    public void TryCancel()
-        => this.TryCancel(false);
+    public void RequestTermination()
+        => this.RequestTermination(false);
 
     /// <summary>
     /// Removes this execution from its owning <see cref="Stack"/>.
     /// </summary>using (this.Root.SyncObject.EnterScope())
     public new void Dispose()
     {
-        this.TryCancel(true);
+        this.RequestTermination(true);
         base.Dispose();
     }
 
@@ -299,7 +299,7 @@ public class ExecutionCore : CancellationTokenSource, IDisposable
         return true;
     }
 
-    private void TryCancel(bool remove)
+    private void RequestTermination(bool remove)
     {
         List<ExecutionCore>? list = default;
         while (true)

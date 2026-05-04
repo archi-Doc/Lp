@@ -801,14 +801,14 @@ public class LpUnit
         if (forceTerminate)
         {// Force termination
             this.Core.Terminate(); // this.Terminate(false);
-            this.ExecutionRoot.TryCancel();
+            this.ExecutionRoot.RequestTermination();
             return true;
         }
 
         if (!this.LpBase.Options.ConfirmExit)
         {// No confirmation
             this.Core.Terminate(); // this.Terminate(false);
-            this.ExecutionRoot.TryCancel();
+            this.ExecutionRoot.RequestTermination();
             return true;
         }
 
@@ -820,7 +820,7 @@ public class LpUnit
         }
 
         this.Core.Terminate(); // this.Terminate(false);
-        this.ExecutionRoot.TryCancel();
+        this.ExecutionRoot.RequestTermination();
         return true;
     }
 
@@ -909,7 +909,7 @@ public class LpUnit
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            x.TryCancel();
+                            x.RequestTermination();
                             this.UserInterfaceService.WriteLineError("Canceled");
                         }
                     }))
