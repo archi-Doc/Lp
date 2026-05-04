@@ -876,7 +876,7 @@ public class LpUnit
             },*/
         };
 
-        using (var executionCore = this.ExecutionStack.Push(this.ExecutionRoot, (scope, signal) =>
+        using (var executionCore = this.ExecutionStack.PushNew(this.ExecutionRoot, (scope, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -905,7 +905,7 @@ public class LpUnit
                 }
                 else
                 {// Subcommand
-                    using (var context2 = this.ExecutionStack.Push(executionCore, (x, signal) =>
+                    using (var context2 = this.ExecutionStack.PushNew(executionCore, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {

@@ -135,7 +135,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
+            using (var executionContext = this.executionStack.PushNew(parent, (x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)
                 {
@@ -157,7 +157,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         return;
                     }
 
-                    using (var executionContext2 = this.executionStack.Push(executionContext, (x, signal) =>
+                    using (var executionContext2 = this.executionStack.PushNew(executionContext, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {

@@ -48,7 +48,7 @@ public class NestedCommand<TCommand>
             return;
         }
 
-        using (var executionContext = this.executionStack.Push(parent, (x, signal) =>
+        using (var executionContext = this.executionStack.PushNew(parent, (x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -74,7 +74,7 @@ public class NestedCommand<TCommand>
                 {
                     if (this.SimpleParser.Parse(result.Text))
                     {
-                        using (var executionContext2 = this.executionStack.Push(executionContext, (x, signal) =>
+                        using (var executionContext2 = this.executionStack.PushNew(executionContext, (x, signal) =>
                         {
                             if (signal == ExecutionSignal.Cancel)
                             {
