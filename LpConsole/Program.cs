@@ -106,7 +106,7 @@ public class Program
         {
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
             await unit.Run(options);
-            await unit.Context.Root.WaitForTermination(); // Wait for the termination infinitely.
+            await unit.Context.Root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
         }
         finally
         {
