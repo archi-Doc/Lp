@@ -416,7 +416,7 @@ public class LpUnit
             }
             catch
             {
-                ExecutionRoot.RequestTermination();
+                this.Context.Root.RequestTermination();
                 return;
             }
 

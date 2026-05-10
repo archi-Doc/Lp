@@ -42,7 +42,7 @@ public class NestedCommand<TCommand>
 
     public async Task MainAsync(CancellationToken cancellationToken)
     {
-        var parent = cancellationToken.ExtractCore();
+        var parent = cancellationToken.Extract<ExecutionGroup>();
         if (parent is null)
         {
             return;
