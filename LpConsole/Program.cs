@@ -25,11 +25,11 @@ public class Program
             if (unit?.Context.ServiceProvider.GetService<LpUnit>()?.ExecutionStack is { } executionStack)
             {
                 // executionStack.TopContext?.Signal(ExecutionSignal.Exit);
-                executionStack.TopCore?.Dispose();
+                executionStack.FirstCore?.Dispose();
             }
 
-            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+            unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
+            unit?.Context.Root.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
         });
 
         Console.CancelKeyPress += (s, e) =>
@@ -49,17 +49,17 @@ public class Program
                         }
                         else
                         {
-                            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                            unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
                         }
                     }
                     catch
                     {
-                        ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                        unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
                     }
                 }
                 else
                 {
-                    executionStack.BottomCore?.SendSignal(ExecutionSignal.Exit);
+                    executionStack.LastCore?.SendSignal(ExecutionSignal.Exit);
                 }
             }
 
@@ -99,7 +99,6 @@ public class Program
         if (!semaphore.WaitOne(0))
         {
             Console.WriteLine("The application is already running, so it will be terminated.");
-            ThreadCore.Root.TerminationEvent.Set();
             return;
         }
 
@@ -107,10 +106,7 @@ public class Program
         {
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
             await unit.Run(options);
-
-            await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
-                                                        // unit.Context.ServiceProvider.GetService<LogUnit>()?.FlushAndTerminate();
-            ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+            await unit.Context.Root.WaitForTermination(); // Wait for the termination infinitely.
         }
         finally
         {

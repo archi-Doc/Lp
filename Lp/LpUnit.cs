@@ -73,7 +73,7 @@ public class LpUnit
                 context.AddSingleton<ExecutionStack>();
 
                 // Console services
-                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
+                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.Instance);
                 context.AddSingleton<ConsoleUserInterfaceService>();
                 context.Services.AddScoped<UserInterfaceServiceContext>();
                 context.Services.TryAddScoped<IUserInterfaceService>(sp =>
@@ -562,8 +562,6 @@ public class LpUnit
 
     public LogUnit LogUnit { get; }
 
-    public UnitCore Core { get; }
-
     public ExecutionRoot ExecutionRoot { get; }
 
     public ExecutionStack ExecutionStack { get; }
@@ -779,7 +777,7 @@ public class LpUnit
         await context.SendStart();
 
         context.ServiceProvider.GetRequiredService<ClockHand>().Start();
-        this.BigMachine.Start(null);
+        this.BigMachine.Start();
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
@@ -800,14 +798,12 @@ public class LpUnit
     {
         if (forceTerminate)
         {// Force termination
-            this.Core.Terminate(); // this.Terminate(false);
             this.ExecutionRoot.RequestTermination();
             return true;
         }
 
         if (!this.LpBase.Options.ConfirmExit)
         {// No confirmation
-            this.Core.Terminate(); // this.Terminate(false);
             this.ExecutionRoot.RequestTermination();
             return true;
         }
@@ -819,7 +815,6 @@ public class LpUnit
             return false;
         }
 
-        this.Core.Terminate(); // this.Terminate(false);
         this.ExecutionRoot.RequestTermination();
         return true;
     }
