@@ -416,7 +416,7 @@ public class LpUnit
             }
             catch
             {
-                ThreadCore.Root.Terminate();
+                ExecutionRoot.RequestTermination();
                 return;
             }
 
@@ -436,7 +436,7 @@ public class LpUnit
                 await lpUnit.PreparePeer(this.Context);
                 await lpUnit.DomainControl.Prepare(this.Context); // Since the Merger must be prepared first, process DomainControl last.
 
-                if (lpUnit.Core.IsTerminated)
+                if (lpUnit.ExecutionRoot.IsTerminated)
                 {
                     throw new PanicException();
                 }
@@ -453,7 +453,7 @@ public class LpUnit
             catch
             {
                 await lpUnit.Save(this.Context);
-                lpUnit.Terminate(true);
+                await lpUnit.Terminate(true);
                 return;
             }
 
@@ -464,7 +464,7 @@ public class LpUnit
             catch
             {
                 await lpUnit.AbortAsync();
-                lpUnit.Terminate(true);
+                await lpUnit.Terminate(true);
                 return;
             }
 
@@ -477,13 +477,13 @@ public class LpUnit
                 await this.Context.SendStop();
                 await lpUnit.TerminateAsync(this.Context);
                 await lpUnit.Save(this.Context);
-                lpUnit.Terminate(false);
+                await lpUnit.Terminate(false);
             }
             catch
             {
                 await lpUnit.TerminateAsync(this.Context);
                 await lpUnit.Save(this.Context);
-                lpUnit.Terminate(true);
+                await lpUnit.Terminate(true);
                 return;
             }
         }
@@ -491,7 +491,7 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, ExecutionRoot executionRoot, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, ExecutionRoot executionRoot, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
         this.ExecutionRoot = executionRoot;
         this.ExecutionStack = executionStack;
@@ -512,14 +512,14 @@ public class LpUnit
         this.lpService = lpService;
 
         this.simpleConsole = simpleConsole;
-        this.simpleConsole.Core = core;
+        this.simpleConsole.ExecutionGroup = this.ExecutionRoot;
         this.simpleConsole.KeyInputHook = (ref keyInfo) =>
         {
             if (keyInfo.Modifiers == ConsoleModifiers.Control)
             {
                 if (keyInfo.Key == ConsoleKey.Q)
                 {// Ctrl+Q
-                    this.ExecutionStack.BottomCore?.SendSignal(ExecutionSignal.Cancel);
+                    this.ExecutionStack.LastCore?.SendSignal(ExecutionSignal.Cancel);
                     /*if (this.ExecutionStack.CancelTop())
                     {
                         this.UserInterfaceService.WriteLineError("Canceled");
@@ -542,8 +542,6 @@ public class LpUnit
         {
             this.NetUnit.Services.EnableNetService<IRemoteUserInterfaceSender>();
         }
-
-        this.Core = core;
 
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
@@ -776,7 +774,7 @@ public class LpUnit
     {
         await context.SendStart();
 
-        context.ServiceProvider.GetRequiredService<ClockHand>().Start();
+        context.ServiceProvider.GetRequiredService<ClockHand>().SendSignal(ExecutionSignal.Start);
         this.BigMachine.Start();
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
@@ -977,12 +975,12 @@ public class LpUnit
         }
     }
 
-    private void Terminate(bool abort)
+    private async Task Terminate(bool abort)
     {
-        this.Core.Terminate();
-        this.Core.WaitForTermination(-1);
+        this.ExecutionRoot.RequestTermination();
+        await this.ExecutionRoot.WaitForTermination().ConfigureAwait(false);
 
         this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write(abort ? "Aborted" : "Terminated");
-        this.LogUnit.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+        await this.LogUnit.FlushAndTerminate().ConfigureAwait(false); // Write logs added after Terminate().
     }
 }

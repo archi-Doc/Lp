@@ -45,7 +45,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
-        var parent = cancellationToken.ExtractCore();
+        var parent = cancellationToken.Extract<ExecutionGroup>();
         if (parent is null)
         {
             return;
@@ -135,7 +135,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            using (var executionContext = this.executionStack.PushNew(parent, (x, signal) =>
+            using (var executionGroup = this.executionStack.PushNew(parent, (x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)
                 {
@@ -143,9 +143,9 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 }
             }))
             {
-                while (executionContext.CanContinue)
+                while (executionGroup.CanContinue)
                 {
-                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, executionContext.CancellationToken).ConfigureAwait(false);
+                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, executionGroup.CancellationToken).ConfigureAwait(false);
                     // var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
                     {
@@ -157,7 +157,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         return;
                     }
 
-                    using (var executionContext2 = this.executionStack.PushNew(executionContext, (x, signal) =>
+                    using (var executionGroup2 = this.executionStack.PushNew(executionGroup, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
@@ -167,9 +167,9 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                     }))
                     {
-                        receiver.Id = executionContext2.Id;
+                        receiver.Id = executionGroup2.Id;
 
-                        var netResult = await senderService.Send(executionContext2.Id, result.Text).ConfigureAwait(false);
+                        var netResult = await senderService.Send(executionGroup2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
                             this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
@@ -178,14 +178,14 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
                         try
                         {
-                            await executionContext2.Completion.WaitAsync(executionContext2.CancellationToken).ConfigureAwait(false);
+                            await executionGroup2.Completion.WaitAsync(executionGroup2.CancellationToken).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)
                         {
                         }
                         finally
                         {
-                            executionContext2.RequestTermination();
+                            executionGroup2.RequestTermination();
                         }
                     }
                 }
