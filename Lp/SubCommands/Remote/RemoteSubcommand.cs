@@ -178,7 +178,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
                         try
                         {
-                            await executionGroup2.Completion.WaitAsync(executionGroup2.CancellationToken).ConfigureAwait(false);
+                            await executionGroup2.CompletionTask.WaitAsync(executionGroup2.CancellationToken).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)
                         {

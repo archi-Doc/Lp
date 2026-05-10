@@ -55,7 +55,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         return new(NetResult.Success, this.lpBase.NodeName);
     }
 
-    async Task<NetResult> IRemoteUserInterfaceSender.Send(long id, string message)
+    async Task<NetResult> IRemoteUserInterfaceSender.Send(int id, string message)
     {
         if (!this.IsAuthenticated ||
             TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
@@ -112,7 +112,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         return NetResult.Success;
     }
 
-    Task<NetResult> IRemoteUserInterfaceSender.Cancel(long id)
+    Task<NetResult> IRemoteUserInterfaceSender.Cancel(int id)
     {
         if (!this.IsAuthenticated ||
             TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
