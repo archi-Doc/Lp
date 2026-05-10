@@ -22,7 +22,7 @@ internal class RemoteBenchSubcommand : ISimpleCommand<RemoteBenchOptions>
         await this.ntpCorrection.CorrectMicsAndUnitLogger();
 
         this.logger.GetWriter()?.Write($"RemoteBench");
-        this.remoteBenchBroker.Start(options);
+        this.remoteBenchBroker.Start(options, cancellationToken);
     }
 
     private readonly RemoteBenchControl remoteBenchBroker;

@@ -37,7 +37,7 @@ public class RemoteBenchControl
         this.logger.GetWriter()?.Write($"Registered({result}): {clientConnection.ToString()}");
     }
 
-    public void Start(Subcommands.RemoteBenchOptions options)
+    public void Start(Subcommands.RemoteBenchOptions options, CancellationToken cancellationToken)
     {
         ClientConnection[] array;
         lock (this.syncObject)
@@ -82,7 +82,7 @@ public class RemoteBenchControl
         this.singleTask.TryRun(async () =>
         {
             var sw = Stopwatch.StartNew();
-            while (await ThreadCore.Root.Delay(1_000))
+            while (await Task.TryDelay(1_000, cancellationToken))
             {
                 lock (this.syncObject)
                 {

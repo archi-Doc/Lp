@@ -51,8 +51,8 @@ public class LpUnit
         {
             this.PreConfigure(context =>
             {
-                // SimpleConsole
-                var simpleConsole = SimpleConsole.GetOrCreate();
+                // Create SimpleConsole instance.
+                _ = SimpleConsole.Instance;
 
                 this.LoadStrings();
                 this.LoadLpOptions(context);
@@ -877,7 +877,7 @@ public class LpUnit
             }
         }))
         {
-            while (!this.Core.IsTerminated)
+            while (!executionCore.IsTerminated)
             {
                 var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
                 if (inputResult.Kind == InputResultKind.Terminated)
