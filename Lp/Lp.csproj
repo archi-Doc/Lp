@@ -41,8 +41,8 @@
     <PackageReference Include="Arc.Crypto" Version="1.44.2" />
     <PackageReference Include="Arc.Threading" Version="0.48.2" />
     <PackageReference Include="Arc.Unit" Version="0.40.0" />
-    <PackageReference Include="BigMachines" Version="0.55.0" />
-    <PackageReference Include="CrystalData" Version="0.45.2" />
+    <PackageReference Include="BigMachines" Version="0.55.1" />
+    <PackageReference Include="CrystalData" Version="0.45.3" />
     <PackageReference Include="Netsphere" Version="0.56.0" />
     <PackageReference Include="Netsphere.Shared" Version="0.56.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.41.0" />
@@ -51,8 +51,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tinyhand" Version="0.137.1" />
-    <PackageReference Include="ValueLink" Version="0.115.2" />
+    <PackageReference Include="Tinyhand" Version="0.137.3" />
+    <PackageReference Include="ValueLink" Version="0.115.4" />
   </ItemGroup>
 
 </Project>
