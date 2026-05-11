@@ -21,6 +21,8 @@ public interface IRemoteUserInterfaceReceiver : INetService
 
     Task ReturnInputControl(int id);
 
+    IUserInterfaceService UserInterfaceService { get; set; }
+
     string OutputPrefix { get; set; }
 
     string InputPrefix { get; set; }

@@ -12,7 +12,8 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     private readonly ExecutionRoot executionRoot;
     private readonly ExecutionStack executionStack;
     // private readonly ExecutionGroup executionGroup;
-    private readonly IUserInterfaceService userInterfaceService;
+
+    public IUserInterfaceService UserInterfaceService { get; set; }
 
     public string OutputPrefix { get; set; } = "[Remote] ";
 
@@ -27,7 +28,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.executionRoot = executionRoot;
         this.executionStack = executionStack;
         // this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
-        this.userInterfaceService = userInterfaceService;
+        this.UserInterfaceService = userInterfaceService;
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
@@ -38,7 +39,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             cancellationToken = core.CancellationToken;
         }
 
-        var result = await this.userInterfaceService.ReadLine(cancellationToken);
+        var result = await this.UserInterfaceService.ReadLine(cancellationToken);
         return new(result.Text);
     }
 
@@ -50,7 +51,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             cancellationToken = core.CancellationToken;
         }
 
-        var result = await this.userInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var result = await this.UserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
 
         /*using (var scope = this.executionStack.Push((x, signal) =>
@@ -75,25 +76,31 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             cancellationToken = core.CancellationToken;
         }
 
-        var result = await this.userInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var result = await this.UserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
     }
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        return this.userInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var core = this.executionStack.Find(this.Id);
+        if (core is not null)
+        {
+            cancellationToken = core.CancellationToken;
+        }
+
+        return this.UserInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
     }
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        this.userInterfaceService.Write(this.OutputPrefix + message, color);
+        this.UserInterfaceService.Write(this.OutputPrefix + message, color);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-        this.userInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
@@ -105,7 +112,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-        this.userInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());
+        this.UserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);

@@ -128,10 +128,11 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             var context = serverConnection.GetContext();
             context.EnableNetService<IRemoteUserInterfaceReceiver>();
             if (context.GetOrCreateNetService<IRemoteUserInterfaceReceiver>() is not { } receiver)
-            {//
+            {
                 return;
             }
 
+            receiver.UserInterfaceService = this.userInterfaceService;
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
