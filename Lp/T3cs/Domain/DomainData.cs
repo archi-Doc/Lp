@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Lp.Services;
 using Netsphere.Crypto;
 
 namespace Lp.T3cs;
@@ -14,21 +15,25 @@ public partial class DomainData
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
 
+    private CreditService creditService;
     private ILogger logger;
     private DomainRole role;
     private SeedKey? domainSeedKey;
 
     public DomainRole Role => this.role;
 
-    public DomainData(ILogger<DomainData> logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
+    public Credit Credit => this.DomainAssignment.CertificateProof.MergedProof.Value.Credit;
+
+    public DomainData(CreditService creditService, ILogger<DomainData> logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
-        this.Initialize(logger, domainAssignment, domainSeedKey);
+        this.Initialize(creditService, logger, domainAssignment, domainSeedKey);
     }
 
     [MemberNotNull(nameof(logger))]
     [MemberNotNull(nameof(DomainAssignment))]
-    public void Initialize(ILogger logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
+    public void Initialize(CreditService creditService, ILogger logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
     {
+        this.creditService = creditService;
         this.logger = logger;
         this.DomainAssignment = domainAssignment;
         this.domainSeedKey = domainSeedKey;
@@ -78,6 +83,15 @@ public partial class DomainData
         //ownerData.*/
 
         return default;
+    }
+
+    internal async Task MaintainRoot(CancellationToken cancellationToken)
+    {
+        var credit = this.Credit;//
+        var creditIdentity = new CreditIdentity(default, this.domainSeedKey.GetSignaturePublicKey(), credit.Mergers);
+        using (var scope = await this.creditService.CreateEquityCredit(creditIdentity))
+        {
+        }
     }
 
     /*public DomainOverview GetOverview()
