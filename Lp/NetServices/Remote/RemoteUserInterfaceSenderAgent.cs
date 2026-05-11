@@ -17,12 +17,14 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
     private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
+    private ExecutionRoot root;
     private ExecutionGroup? remoteGroup;
 
     public bool IsAuthenticated { get; private set; }
 
     public RemoteUserInterfaceSenderAgent(ExecutionRoot root, /*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
+        this.root = root;
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
@@ -74,10 +76,12 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         }*/
 
         // Not thread-safe
-        if (this.remoteGroup is null)
+        var group = this.remoteGroup;
+        if (group is null)
         {
-            this.remoteGroup = new(parent);
-            this.remoteGroup.Id = id;
+            group = new(this.root);
+            group.Id = id;
+            this.remoteGroup = group;
         }
 
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote >> {message}");
@@ -88,7 +92,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
-                await this.simpleParser.ParseAndExecute(message, this.remoteGroup.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message, group.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -96,7 +100,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                this.remoteGroup.Id = 0;
+                group.Dispose();
+                this.remoteGroup = default;
 
                 // Return control of console input.
                 await receiver.ReturnInputControl(id).ConfigureAwait(false);
@@ -115,22 +120,27 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotAuthenticated);
         }
 
-        if (this.remoteGroup is null ||
-            id != this.remoteGroup.Id)
+        if (this.remoteGroup is { } group)
         {
-            return Task.FromResult(NetResult.Refused);
-        }
+            if (group.IsTerminated)
+            {
+                this.remoteGroup = default;
+                return Task.FromResult(NetResult.Refused);
+            }
 
-        try
-        {
-            this.remoteGroup.Cancel();
-        }
-        catch
-        {
-        }
-        finally
-        {
-            this.remoteGroup = default;
+            if (id != group.Id)
+            {
+                return Task.FromResult(NetResult.Refused);
+            }
+
+            try
+            {
+                group.Dispose();
+            }
+            finally
+            {
+                this.remoteGroup = default;
+            }
         }
 
         return Task.FromResult(NetResult.Success);
