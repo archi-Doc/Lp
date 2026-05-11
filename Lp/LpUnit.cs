@@ -879,7 +879,7 @@ public class LpUnit
         {
             while (!executionCore.IsTerminated)
             {
-                var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+                var inputResult = await this.simpleConsole.ReadLine(options, executionCore.CancellationToken).ConfigureAwait(false);
                 if (inputResult.Kind == InputResultKind.Terminated)
                 {
                     return;

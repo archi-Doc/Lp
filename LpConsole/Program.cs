@@ -25,11 +25,19 @@ public class Program
             if (unit?.Context.ServiceProvider.GetService<LpUnit>()?.ExecutionStack is { } executionStack)
             {
                 // executionStack.TopContext?.Signal(ExecutionSignal.Exit);
-                executionStack.FirstCore?.Dispose();
+                while (executionStack.FirstCore is { } core)
+                {
+                    core.Dispose();
+                    Thread.Sleep(100);
+                }
             }
 
-            unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
-            unit?.Context.Root.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+            var result = unit?.Context.Root.WaitForTermination(TimeSpan.FromSeconds(2)).Result;
+            if (result != true)
+            {
+                unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
+                unit?.Context.Root.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+            }
         });
 
         Console.CancelKeyPress += (s, e) =>
