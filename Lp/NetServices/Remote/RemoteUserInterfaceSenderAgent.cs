@@ -17,8 +17,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
     private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
-    private long remoteId;
-    private CancellationTokenSource? remoteCts;
+    private ExecutionGroup? remoteGroup;
 
     public bool IsAuthenticated { get; private set; }
 
@@ -74,15 +73,11 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.Refused;
         }*/
 
-        //Not thread-safe
-        if (this.remoteId == 0)
+        // Not thread-safe
+        if (this.remoteGroup is null)
         {
-            this.remoteId = id;
-            this.remoteCts = new();
-        }
-        else
-        {
-            return NetResult.Refused;
+            this.remoteGroup = new(parent);
+            this.remoteGroup.Id = id;
         }
 
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote >> {message}");
@@ -93,7 +88,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
-                await this.simpleParser.ParseAndExecute(message, this.remoteCts.Token).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
+                await this.simpleParser.ParseAndExecute(message, this.remoteGroup.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -101,7 +96,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                this.remoteId = 0;
+                this.remoteGroup.Id = 0;
 
                 // Return control of console input.
                 await receiver.ReturnInputControl(id).ConfigureAwait(false);
@@ -120,18 +115,22 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotAuthenticated);
         }
 
-        if (id != this.remoteId)
+        if (this.remoteGroup is null ||
+            id != this.remoteGroup.Id)
         {
             return Task.FromResult(NetResult.Refused);
         }
 
-        this.remoteId = 0;
         try
         {
-            this.remoteCts?.Cancel();
+            this.remoteGroup.Cancel();
         }
         catch
         {
+        }
+        finally
+        {
+            this.remoteGroup = default;
         }
 
         return Task.FromResult(NetResult.Success);
