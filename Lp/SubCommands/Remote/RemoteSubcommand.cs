@@ -185,7 +185,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         }
                         finally
                         {
-                            executionGroup2.RequestTermination();
+                            // executionGroup2.RequestTermination();
                         }
                     }
                 }

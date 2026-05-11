@@ -7,10 +7,11 @@ namespace Lp.NetServices;
 [NetObject]
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
-    public const string GroupName = "RemoteUi";
+    // public const string GroupName = "RemoteUi";
 
     private readonly ExecutionRoot executionRoot;
-    private readonly ExecutionGroup executionGroup;
+    private readonly ExecutionStack executionStack;
+    // private readonly ExecutionGroup executionGroup;
     private readonly IUserInterfaceService userInterfaceService;
 
     public string OutputPrefix { get; set; } = "[Remote] ";
@@ -24,13 +25,14 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
     {
         this.executionRoot = executionRoot;
-        this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
+        this.executionStack = executionStack;
+        // this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
         this.userInterfaceService = userInterfaceService;
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
     {
-        var core = this.executionGroup.FindChild(this.Id);
+        var core = this.executionStack.Find(this.Id);
         if (core is not null)
         {
             cancellationToken = core.CancellationToken;
@@ -42,7 +44,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        var core = this.executionGroup.FindChild(this.Id);
+        var core = this.executionStack.Find(this.Id);
         if (core is not null)
         {
             cancellationToken = core.CancellationToken;
@@ -67,7 +69,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        var core = this.executionGroup.FindChild(this.Id);
+        var core = this.executionStack.Find(this.Id);
         if (core is not null)
         {
             cancellationToken = core.CancellationToken;
@@ -114,7 +116,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.ReturnInputControl(int id)
     {
-        if (this.executionGroup.FindChild(id) is TaskCompletionGroup group)
+        if (this.executionStack.Find(id) is TaskCompletionGroup group)
         {
             group.TrySetCompleted();
         }

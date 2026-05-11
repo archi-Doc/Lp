@@ -29,10 +29,10 @@ public class PingSubcommand : ISimpleCommand<PingOptions>
                 break;
             }
 
-            await this.Ping(address, options);//
+            await this.Ping(address, options);
 
             if (n < options.Count - 1 &&
-                !await Task.TryDelay(options.Interval))
+                !await Task.TryDelay(TimeSpan.FromSeconds(options.Interval), cancellationToken))
             {
                 break;
             }
