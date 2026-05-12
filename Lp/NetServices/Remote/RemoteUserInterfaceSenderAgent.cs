@@ -34,7 +34,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
     void INetObject.OnConnectionClosed()
     {
         this.serviceScope.Dispose();
-        Console.WriteLine("Server IServiceScope Disposed");
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceSender.ConnectBidirectionally(CertificateToken<ConnectionAgreement> token)

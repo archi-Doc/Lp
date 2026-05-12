@@ -50,7 +50,7 @@ public class PunchSubcommand : ISimpleCommand<PunchOptions>
         var packetTerminal = this.netUnit.NetTerminal.PacketTerminal;
         var p = new PunchPacket(relayEndpoint, ownEndpoint);
         var result = await packetTerminal.SendAndReceive<PunchPacket, PunchPacketResponse>(node.Address, p);
-        Console.WriteLine(result);
+        this.logger.GetWriter()?.Write(result.ToString());
     }
 
     private readonly NetUnit netUnit;

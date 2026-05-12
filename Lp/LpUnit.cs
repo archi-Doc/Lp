@@ -347,12 +347,12 @@ public class LpUnit
                         if (op != null)
                         {
                             options = op;
-                            Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
+                            SimpleConsole.Instance.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
                         }
                     }
                     catch
                     {
-                        Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
+                        SimpleConsole.Instance.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
                     }
                 }
             }
