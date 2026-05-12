@@ -11,17 +11,19 @@ public partial class DomainMachine : Machine<ulong>
     private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
+    private readonly CreditService creditService;
     private readonly NetUnit netUnit;
     private readonly DomainControl domainControl;
     private DomainData? domainData;
 
     public ulong DomainHash => this.Identifier;
 
-    public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, NetUnit netUnit, DomainControl domainControl)
+    public DomainMachine(ILogger<DomainMachine> logger, IUserInterfaceService userInterfaceService, LpService lpService, CreditService creditService, NetUnit netUnit, DomainControl domainControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
+        this.creditService = creditService;
         this.netUnit = netUnit;
         this.domainControl = domainControl;
 
@@ -47,60 +49,78 @@ public partial class DomainMachine : Machine<ulong>
         }
 
         this.domainData.DetermineRole();
+        if (this.domainData.Role == DomainRole.Root)
+        {
+            this.ChangeState(State.MaintainRoot);
+        }
 
+        return StateResult.Continue;
+    }
+
+    [StateMethod]
+    protected async Task<StateResult> MaintainRoot(StateParameter parameter)
+    {
+        if (!this.EnsureDomainData())
+        {
+            return StateResult.Terminate;
+        }
+
+        await this.domainData.MaintainRoot(this.CancellationToken);
+
+        this.TimeUntilRun = TimeSpan.FromSeconds(5);
         return StateResult.Continue;
     }
 
     /*[StateMethod]
-    protected async Task<StateResult> Connect(StateParameter parameter)
-    {
-        if (this.domainIdentifier is null)
+        protected async Task<StateResult> Connect(StateParameter parameter)
         {
-            return StateResult.Terminate;
-        }
-
-        var netNode = this.domainIdentifier.NetNode;
-        netNode = Alternative.NetNode;
-        using (var connection = await this.netUnit.NetTerminal.Connect(netNode))
-        {
-            if (connection is null)
+            if (this.domainIdentifier is null)
             {
-                this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Connect, this.domainIdentifier.NetNode.ToString());
                 return StateResult.Terminate;
             }
 
-            this.logger.GetWriter(LogLevel.Information)?.Write("Connected");
-            return StateResult.Terminate;
+            var netNode = this.domainIdentifier.NetNode;
+            netNode = Alternative.NetNode;
+            using (var connection = await this.netUnit.NetTerminal.Connect(netNode))
+            {
+                if (connection is null)
+                {
+                    this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Connect, this.domainIdentifier.NetNode.ToString());
+                    return StateResult.Terminate;
+                }
+
+                this.logger.GetWriter(LogLevel.Information)?.Write("Connected");
+                return StateResult.Terminate;
+            }
+
+            return StateResult.Continue;
         }
 
-        return StateResult.Continue;
-    }
-
-    [CommandMethod(WithLock = false)]
-    protected CommandResult Show()
-    {
-        if (this.domainIdentifier is { } domainIdentifier)
+        [CommandMethod(WithLock = false)]
+        protected CommandResult Show()
         {
-            this.logger.GetWriter(LogLevel.Information)?.Write(this.GetInformation());
+            if (this.domainIdentifier is { } domainIdentifier)
+            {
+                this.logger.GetWriter(LogLevel.Information)?.Write(this.GetInformation());
+            }
+
+            return CommandResult.Success;
         }
 
-        return CommandResult.Success;
-    }
-
-    private string GetInformation()
-    {
-        if (this.domainIdentifier is not { } domainIdentifier)
+        private string GetInformation()
         {
-            return string.Empty;
-        }
+            if (this.domainIdentifier is not { } domainIdentifier)
+            {
+                return string.Empty;
+            }
 
-        return $"{(this.isMerger ? "Merger" : "Peer")}: {domainIdentifier.ToString()}";
-    }*/
+            return $"{(this.isMerger ? "Merger" : "Peer")}: {domainIdentifier.ToString()}";
+        }*/
 
     [MemberNotNullWhen(true, nameof(domainData))]
     private bool EnsureDomainData()
     {
-        this.domainData = this.domainControl.GetDomainData(this.DomainHash);
+        this.domainData ??= this.domainControl.GetDomainData(this.DomainHash);
         return this.domainData is not null;
     }
 }

@@ -36,6 +36,9 @@ public sealed partial record OwnerData // : ITinyhandCustomJournal
     [Key(2)]
     public AccountableLinkage.GoshujinClass Linkages { get; private set; } = new();
 
+    [Key(3)]
+    public Point Point { get; private set; }
+
     public OwnerData()
     {
     }

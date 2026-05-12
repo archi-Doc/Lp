@@ -11,19 +11,20 @@ namespace Lp.NetServices;
 [NetObject]
 public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender, INetObject
 {
-    private static readonly ExecutionStack RemoteStack = new(3);
-    // private readonly ExecutionStack executionStack;
     private readonly IServiceScope serviceScope;
     private readonly IServiceProvider serviceProvider;
     private readonly LpBase lpBase;
     private readonly ILogger logger;
     private SimpleParser? simpleParser;
 
+    private ExecutionRoot root;
+    private ExecutionGroup? remoteGroup;
+
     public bool IsAuthenticated { get; private set; }
 
-    public RemoteUserInterfaceSenderAgent(/*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
+    public RemoteUserInterfaceSenderAgent(ExecutionRoot root, /*ExecutionStack executionStack, */IServiceProvider serviceProvider, LpBase lpBase, ILogger<RemoteUserInterfaceSenderAgent> logger)
     {
-        // this.executionStack = executionStack;
+        this.root = root;
         this.serviceScope = serviceProvider.CreateScope();
         this.serviceProvider = this.serviceScope.ServiceProvider;
         this.lpBase = lpBase;
@@ -55,7 +56,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         return new(NetResult.Success, this.lpBase.NodeName);
     }
 
-    async Task<NetResult> IRemoteUserInterfaceSender.Send(long id, string message)
+    async Task<NetResult> IRemoteUserInterfaceSender.Send(int id, string message)
     {
         if (!this.IsAuthenticated ||
             TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
@@ -68,10 +69,19 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.InvalidData;
         }
 
-        var scope = RemoteStack.TryPush(id, default);
-        if (scope is null)
+        /*var context = this.remoteStack.TryPush(id, this.remoteStack.Root, default);//
+        if (context is null)
         {
             return NetResult.Refused;
+        }*/
+
+        // Not thread-safe
+        var group = this.remoteGroup;
+        if (group is null)
+        {
+            group = new(this.root);
+            group.Id = id;
+            this.remoteGroup = group;
         }
 
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote >> {message}");
@@ -81,8 +91,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         _ = Task.Run(async () =>
         {
             try
-            {//Timeout
-                await this.simpleParser.ParseAndExecute(message, scope.CancellationToken).WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+            {
+                await this.simpleParser.ParseAndExecute(message, group.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -90,8 +100,8 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                scope.TryCancel();
-                scope.Dispose();
+                group.Dispose();
+                this.remoteGroup = default;
 
                 // Return control of console input.
                 await receiver.ReturnInputControl(id).ConfigureAwait(false);
@@ -102,7 +112,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         return NetResult.Success;
     }
 
-    Task<NetResult> IRemoteUserInterfaceSender.Cancel(long id)
+    Task<NetResult> IRemoteUserInterfaceSender.Cancel(int id)
     {
         if (!this.IsAuthenticated ||
             TransmissionContext.Current.ServerConnection.BidirectionalConnection is not { } clientConnection)
@@ -110,18 +120,28 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return Task.FromResult(NetResult.NotAuthenticated);
         }
 
-        if (id == 0)
+        if (this.remoteGroup is { } group)
         {
-            return Task.FromResult(NetResult.InvalidData);
-        }
+            if (group.IsTerminated)
+            {
+                this.remoteGroup = default;
+                return Task.FromResult(NetResult.Refused);
+            }
 
-        var scope = RemoteStack.Find(id);
-        if (scope is null)
-        {
-            return Task.FromResult(NetResult.NotFound);
-        }
+            if (id != group.Id)
+            {
+                return Task.FromResult(NetResult.Refused);
+            }
 
-        scope.TryCancel();
+            try
+            {
+                group.Dispose();
+            }
+            finally
+            {
+                this.remoteGroup = default;
+            }
+        }
 
         return Task.FromResult(NetResult.Success);
     }

@@ -45,6 +45,12 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
+        var parent = cancellationToken.Extract<ExecutionGroup>();
+        if (parent is null)
+        {
+            return;
+        }
+
         if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
             return;
@@ -126,21 +132,21 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 return;
             }
 
+            receiver.UserInterfaceService = this.userInterfaceService;
             receiver.OutputPrefix = $"[{nodeName}] ";
             receiver.InputPrefix = $"{nodeName} >> ";
 
-            // this.unitContext.Core.IsTerminated, this.unitContext.Core.CancellationToken
-            using (var scope = this.executionStack.Push((x, signal) =>
+            using (var executionGroup = this.executionStack.PushNew(parent, (x, signal) =>
             {
                 if (signal == ExecutionSignal.Exit)
                 {
-                    x.TryCancel();
+                    x.RequestTermination();
                 }
             }))
             {
-                while (scope.CanContinue)
+                while (executionGroup.CanContinue)
                 {
-                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, scope.CancellationToken).ConfigureAwait(false);
+                    var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, executionGroup.CancellationToken).ConfigureAwait(false);
                     // var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
                     {
@@ -152,20 +158,19 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         return;
                     }
 
-                    using (var scope2 = this.executionStack.Push((x, signal) =>
+                    using (var executionGroup2 = this.executionStack.PushNew(executionGroup, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
                             senderService.Cancel(x.Id);
-                            x.TryCancel(); // Perform cancellation in advance in case the network is disconnected.
+                            x.RequestTermination(); // Perform cancellation in advance in case the network is disconnected.
                             this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                         }
                     }))
                     {
-                        receiver.CancellationToken = scope2.CancellationToken;
-                        receiver.Id = scope2.Id;
+                        receiver.Id = executionGroup2.Id;
 
-                        var netResult = await senderService.Send(scope2.Id, result.Text).ConfigureAwait(false);
+                        var netResult = await senderService.Send(executionGroup2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {
                             this.userInterfaceService.WriteLineError(HashedString.FromEnum(netResult));
@@ -174,14 +179,14 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
                         try
                         {
-                            await scope2.Completion.WaitAsync(scope2.CancellationToken).ConfigureAwait(false);
+                            await executionGroup2.CompletionTask.WaitAsync(executionGroup2.CancellationToken).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)
                         {
                         }
                         finally
                         {
-                            scope2.TryCancel();
+                            // executionGroup2.RequestTermination();
                         }
                     }
                 }

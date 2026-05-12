@@ -1,15 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
-using Lp.Services;
 
 namespace Lp.NetServices;
 
 [NetObject]
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
+    // public const string GroupName = "RemoteUi";
+
+    private readonly ExecutionRoot executionRoot;
     private readonly ExecutionStack executionStack;
-    private readonly ConsoleUserInterfaceService consoleUserInterfaceService;
+    // private readonly ExecutionGroup executionGroup;
+
+    public IUserInterfaceService UserInterfaceService { get; set; }
 
     public string OutputPrefix { get; set; } = "[Remote] ";
 
@@ -17,25 +21,37 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public CancellationToken CancellationToken { get; set; }
 
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public RemoteUserInterfaceReceiverAgent(ExecutionStack executionStack, ConsoleUserInterfaceService consoleUserInterfaceService)
+    public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
     {
+        this.executionRoot = executionRoot;
         this.executionStack = executionStack;
-        this.consoleUserInterfaceService = consoleUserInterfaceService;
+        // this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
+        this.UserInterfaceService = userInterfaceService;
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
     {
-        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
-        var result = await this.consoleUserInterfaceService.ReadLine(cancellationToken);
+        var core = this.executionStack.Find(this.Id);
+        if (core is not null)
+        {
+            cancellationToken = core.CancellationToken;
+        }
+
+        var result = await this.UserInterfaceService.ReadLine(cancellationToken);
         return new(result.Text);
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
-        var result = await this.consoleUserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var core = this.executionStack.Find(this.Id);
+        if (core is not null)
+        {
+            cancellationToken = core.CancellationToken;
+        }
+
+        var result = await this.UserInterfaceService.ReadLine(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
 
         /*using (var scope = this.executionStack.Push((x, signal) =>
@@ -54,26 +70,37 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadPassword(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        this.executionStack.TryGetCancellationToken(this.Id, out cancellationToken);
-        var result = await this.consoleUserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var core = this.executionStack.Find(this.Id);
+        if (core is not null)
+        {
+            cancellationToken = core.CancellationToken;
+        }
+
+        var result = await this.UserInterfaceService.ReadPassword(cancelOnEscape, this.InputPrefix + description, cancellationToken);
         return new(result.Text);
     }
 
     Task<InputResultKind> IRemoteUserInterfaceReceiver.ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
     {
-        return this.consoleUserInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
+        var core = this.executionStack.Find(this.Id);
+        if (core is not null)
+        {
+            cancellationToken = core.CancellationToken;
+        }
+
+        return this.UserInterfaceService.ReadYesNo(cancelOnEscape, this.InputPrefix + description, cancellationToken);
     }
 
     Task IRemoteUserInterfaceReceiver.Write(string? message, ConsoleColor color)
     {
-        this.consoleUserInterfaceService.Write(this.OutputPrefix + message, color);
+        this.UserInterfaceService.Write(this.OutputPrefix + message, color);
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-        this.consoleUserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+        this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
@@ -85,7 +112,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-        this.consoleUserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length));
+        this.UserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
@@ -94,9 +121,13 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.ReturnInputControl(long id)
+    Task IRemoteUserInterfaceReceiver.ReturnInputControl(int id)
     {
-        this.executionStack.TrySetCompleted(id);
+        if (this.executionStack.Find(id) is TaskCompletionGroup group)
+        {
+            group.TrySetCompleted();
+        }
+
         return Task.CompletedTask;
     }
 }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using Arc.Collections;
 using Lp.Net;
 using Lp.Services;
 using Netsphere.Crypto;
@@ -19,6 +20,7 @@ public partial class DomainControl
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LpService lpService;
     private readonly LpBase lpBase;
+    private readonly CreditService creditService;
     private readonly NetUnit netUnit;
     private readonly BigMachine bigMachine;
 
@@ -31,9 +33,10 @@ public partial class DomainControl
 
     #endregion
 
-    public DomainControl(ILogService logService, ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, BigMachine bigMachine)
+    public DomainControl(ILogService logService, CreditService creditService, ILogger<DomainControl> logger, IUserInterfaceService userInterfaceService, LpService lpService, LpBase lpBase, NetUnit netUnit, BigMachine bigMachine)
     {
         this.logService = logService;
+        this.creditService = creditService;
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpService = lpService;
@@ -64,9 +67,17 @@ public partial class DomainControl
         }
 
         // CrystalData
-        foreach (var x in this.domainHashToData.Values)
+        List<ulong>? toDelete = default;
+        foreach (var x in this.domainHashToData)
         {
-            var domainAssignment = x.DomainAssignment;
+            var domainAssignment = x.Value.DomainAssignment;
+            if (!domainAssignment.Validate(ValidationOption.IgnoreExpiration))
+            {
+                toDelete ??= new();
+                toDelete.Add(x.Key);
+                continue;
+            }
+
             var seedKey = await this.lpService.GetSeedKeyFromCode(domainAssignment.Code).ConfigureAwait(false);
             if (seedKey is null)
             {
@@ -76,6 +87,14 @@ public partial class DomainControl
 
             this.AddDomainInternal(domainAssignment, seedKey);
             this.logger.GetWriter()?.Write(Hashed.Domain.Added, domainAssignment.Name);
+        }
+
+        if (toDelete is not null)
+        {
+            foreach (var x in toDelete)
+            {
+                this.TryRemoveDomain(x);
+            }
         }
 
         this.netUnit.Services.EnableNetService<IDomainService>();
@@ -136,13 +155,13 @@ public partial class DomainControl
             domainHash,
             hash =>
             {
-                var domainData = new DomainData(this.logService.GetLogger<DomainData>(), domainAssignment, domainSeedKey);
+                var domainData = new DomainData(this.creditService, this.logService.GetLogger<DomainData>(), domainAssignment, domainSeedKey);
                 this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return domainData;
             },
             (hash, original) =>
             {
-                original.Initialize(this.logService.GetLogger<DomainData>(), domainAssignment, domainSeedKey);
+                original.Initialize(this.creditService, this.logService.GetLogger<DomainData>(), domainAssignment, domainSeedKey);
                 this.bigMachine.DomainMachine.GetOrCreate(domainHash);
                 return original;
             });

@@ -32,7 +32,7 @@ namespace Lp;
 public class LpUnit
 {
     public static readonly Type[] RemoteSubcommands = [
-        typeof(RemoteSubcommand),//
+        // typeof(RemoteSubcommand),
         typeof(FreezeSubcommand),
         typeof(InspectSubcommand),
         typeof(BenchmarkSubcommand),
@@ -51,8 +51,8 @@ public class LpUnit
         {
             this.PreConfigure(context =>
             {
-                // SimpleConsole
-                var simpleConsole = SimpleConsole.GetOrCreate();
+                // Create SimpleConsole instance.
+                _ = SimpleConsole.Instance;
 
                 this.LoadStrings();
                 this.LoadLpOptions(context);
@@ -69,23 +69,23 @@ public class LpUnit
                 context.AddSingleton<LpService>();
                 context.AddSingleton<LpBoardService>();
                 context.AddSingleton<CreditService>();
+                context.AddSingleton<ExecutionRoot>();
                 context.AddSingleton<ExecutionStack>();
 
                 // Console services
-                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.GetOrCreate());
+                context.Services.TryAddSingleton<SimpleConsole>(sp => SimpleConsole.Instance);
                 context.AddSingleton<ConsoleUserInterfaceService>();
                 context.Services.AddScoped<UserInterfaceServiceContext>();
                 context.Services.TryAddScoped<IUserInterfaceService>(sp =>
                 {
                     var context = sp.GetService<UserInterfaceServiceContext>();
-                    var console = sp.GetRequiredService<ConsoleUserInterfaceService>();
                     if (context?.Receiver is { } receiver)
                     {
                         return new RemoteUserInterfaceService(receiver);
                     }
                     else
                     {
-                        return console;
+                        return sp.GetRequiredService<ConsoleUserInterfaceService>();
                     }
                 });
                 context.Services.TryAddScoped<IConsoleService>(sp => sp.GetRequiredService<IUserInterfaceService>());
@@ -167,7 +167,7 @@ public class LpUnit
                 // Lp.Subcommands.FlagSubcommand.Configure(context);
                 Lp.Subcommands.AuthorityCommand.Subcommand.Configure(context);
                 Lp.Subcommands.VaultCommand.Subcommand.Configure(context);
-                Lp.Subcommands.CommandGroup.Configure(context);
+                Lp.Subcommands.Batch.Configure(context);
                 Lp.Subcommands.MergerClient.NestedCommand.Configure(context);
                 Lp.Subcommands.MergerRemote.NestedCommand.Configure(context);
                 Lp.Subcommands.Relay.Subcommand.Configure(context);
@@ -416,7 +416,7 @@ public class LpUnit
             }
             catch
             {
-                ThreadCore.Root.Terminate();
+                this.Context.Root.RequestTermination();
                 return;
             }
 
@@ -436,7 +436,7 @@ public class LpUnit
                 await lpUnit.PreparePeer(this.Context);
                 await lpUnit.DomainControl.Prepare(this.Context); // Since the Merger must be prepared first, process DomainControl last.
 
-                if (lpUnit.Core.IsTerminated)
+                if (lpUnit.ExecutionRoot.IsTerminated)
                 {
                     throw new PanicException();
                 }
@@ -453,7 +453,7 @@ public class LpUnit
             catch
             {
                 await lpUnit.Save(this.Context);
-                lpUnit.Terminate(true);
+                await lpUnit.Terminate(true);
                 return;
             }
 
@@ -464,7 +464,7 @@ public class LpUnit
             catch
             {
                 await lpUnit.AbortAsync();
-                lpUnit.Terminate(true);
+                await lpUnit.Terminate(true);
                 return;
             }
 
@@ -477,13 +477,13 @@ public class LpUnit
                 await this.Context.SendStop();
                 await lpUnit.TerminateAsync(this.Context);
                 await lpUnit.Save(this.Context);
-                lpUnit.Terminate(false);
+                await lpUnit.Terminate(false);
             }
             catch
             {
                 await lpUnit.TerminateAsync(this.Context);
                 await lpUnit.Save(this.Context);
-                lpUnit.Terminate(true);
+                await lpUnit.Terminate(true);
                 return;
             }
         }
@@ -491,8 +491,9 @@ public class LpUnit
 
     #endregion
 
-    public LpUnit(UnitContext context, UnitCore core, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
+    public LpUnit(UnitContext context, ExecutionRoot executionRoot, ExecutionStack executionStack, LogUnit logUnit, ILogger<LpUnit> logger, IUserInterfaceService userInterfaceService, SimpleConsole simpleConsole, LpBase lpBase, BigMachine bigMachine, NetUnit netsphere, CrystalControl crystalControl, VaultControl vault, AuthorityControl authorityControl, DomainControl domainControl, LpSettings settings, Merger merger, RelayMerger relayMerger, Linker linker, LpService lpService)
     {
+        this.ExecutionRoot = executionRoot;
         this.ExecutionStack = executionStack;
         this.LogUnit = logUnit;
         this.logger = logger;
@@ -511,14 +512,14 @@ public class LpUnit
         this.lpService = lpService;
 
         this.simpleConsole = simpleConsole;
-        this.simpleConsole.Core = core;
+        this.simpleConsole.ExecutionGroup = this.ExecutionRoot;
         this.simpleConsole.KeyInputHook = (ref keyInfo) =>
         {
             if (keyInfo.Modifiers == ConsoleModifiers.Control)
             {
                 if (keyInfo.Key == ConsoleKey.Q)
                 {// Ctrl+Q
-                    this.ExecutionStack.Signal(ExecutionSignal.Cancel);
+                    this.ExecutionStack.LastCore?.SendSignal(ExecutionSignal.Cancel);
                     /*if (this.ExecutionStack.CancelTop())
                     {
                         this.UserInterfaceService.WriteLineError("Canceled");
@@ -542,8 +543,6 @@ public class LpUnit
             this.NetUnit.Services.EnableNetService<IRemoteUserInterfaceSender>();
         }
 
-        this.Core = core;
-
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = context.ServiceProvider,
@@ -561,7 +560,7 @@ public class LpUnit
 
     public LogUnit LogUnit { get; }
 
-    public UnitCore Core { get; }
+    public ExecutionRoot ExecutionRoot { get; }
 
     public ExecutionStack ExecutionStack { get; }
 
@@ -760,27 +759,23 @@ public class LpUnit
 
     public async Task Save(UnitContext context)
     {
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 0");
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 1");
         await context.SendSave();
 
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 2");
         await this.CrystalControl.StoreAndRip();
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("SaveAsync - 3");
     }
 
     public async Task Start(UnitContext context)
     {
         await context.SendStart();
 
-        context.ServiceProvider.GetRequiredService<ClockHand>().Start();
-        this.BigMachine.Start(null);
+        context.ServiceProvider.GetRequiredService<ClockHand>().SendSignal(ExecutionSignal.Start);
+        this.BigMachine.Start();
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
@@ -801,13 +796,13 @@ public class LpUnit
     {
         if (forceTerminate)
         {// Force termination
-            this.Core.Terminate(); // this.Terminate(false);
+            this.ExecutionRoot.RequestTermination();
             return true;
         }
 
         if (!this.LpBase.Options.ConfirmExit)
         {// No confirmation
-            this.Core.Terminate(); // this.Terminate(false);
+            this.ExecutionRoot.RequestTermination();
             return true;
         }
 
@@ -818,7 +813,7 @@ public class LpUnit
             return false;
         }
 
-        this.Core.Terminate(); // this.Terminate(false);
+        this.ExecutionRoot.RequestTermination();
         return true;
     }
 
@@ -853,7 +848,7 @@ public class LpUnit
         // return Task.Run(() => this.subcommandParser.Execute(cancellationToken));
     }
 
-    private async Task Main(UnitContext context)
+    private async Task Main(UnitContext unitContext)
     {
         var defaultComparison = StringComparison.InvariantCultureIgnoreCase;
         var options = new ReadLineOptions()
@@ -874,7 +869,7 @@ public class LpUnit
             },*/
         };
 
-        using (var scope = this.ExecutionStack.Push((scope, signal) =>
+        using (var executionCore = this.ExecutionStack.PushNew(this.ExecutionRoot, (scope, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
@@ -882,9 +877,9 @@ public class LpUnit
             }
         }))
         {
-            while (!this.Core.IsTerminated)
+            while (!executionCore.IsTerminated)
             {
-                var inputResult = await this.simpleConsole.ReadLine(options).ConfigureAwait(false);
+                var inputResult = await this.simpleConsole.ReadLine(options, executionCore.CancellationToken).ConfigureAwait(false);
                 if (inputResult.Kind == InputResultKind.Terminated)
                 {
                     return;
@@ -903,18 +898,18 @@ public class LpUnit
                 }
                 else
                 {// Subcommand
-                    using (var scope2 = this.ExecutionStack.Push((x, signal) =>
+                    using (var context2 = this.ExecutionStack.PushNew(executionCore, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
                         {
-                            x.TryCancel();
+                            x.RequestTermination();
                             this.UserInterfaceService.WriteLineError("Canceled");
                         }
                     }))
                     {
                         try
                         {
-                            await this.Subcommand(inputResult.Text, scope2.CancellationToken);
+                            await this.Subcommand(inputResult.Text, context2.CancellationToken);
                         }
                         catch (OperationCanceledException)
                         {
@@ -980,12 +975,12 @@ public class LpUnit
         }
     }
 
-    private void Terminate(bool abort)
+    private async Task Terminate(bool abort)
     {
-        this.Core.Terminate();
-        this.Core.WaitForTermination(-1);
+        this.ExecutionRoot.RequestTermination();
+        await this.ExecutionRoot.WaitForTermination().ConfigureAwait(false);
 
         this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write(abort ? "Aborted" : "Terminated");
-        this.LogUnit.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+        await this.LogUnit.FlushAndTerminate().ConfigureAwait(false); // Write logs added after Terminate().
     }
 }

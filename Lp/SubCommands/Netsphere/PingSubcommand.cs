@@ -24,16 +24,17 @@ public class PingSubcommand : ISimpleCommand<PingOptions>
 
         for (var n = 0; n < options.Count; n++)
         {
-            if (this.LpUnit.Core.IsTerminated)
+            if (cancellationToken.IsCancellationRequested)
             {
                 break;
             }
 
             await this.Ping(address, options);
 
-            if (n < options.Count - 1)
+            if (n < options.Count - 1 &&
+                !await Task.TryDelay(TimeSpan.FromSeconds(options.Interval), cancellationToken))
             {
-                this.LpUnit.Core.Sleep(TimeSpan.FromSeconds(options.Interval), TimeSpan.FromSeconds(0.1));
+                break;
             }
         }
     }

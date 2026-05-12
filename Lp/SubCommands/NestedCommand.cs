@@ -1,11 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Lp.NetServices;
-using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
-using SimplePrompt;
 
 namespace Lp.Subcommands;
 
@@ -46,19 +42,23 @@ public class NestedCommand<TCommand>
 
     public async Task MainAsync(CancellationToken cancellationToken)
     {
-        using (var scope = this.executionStack.Push((x, signal) =>
+        var parent = cancellationToken.Extract<ExecutionGroup>();
+        if (parent is null)
+        {
+            return;
+        }
+
+        using (var executionContext = this.executionStack.PushNew(parent, (x, signal) =>
         {
             if (signal == ExecutionSignal.Exit)
             {
-                x.TryCancel();
+                x.RequestTermination();
             }
         }))
         {
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(scope.CancellationToken, cancellationToken);
-            while (!cts.IsCancellationRequested) // (scope.CanContinue) // (!cancellationToken.IsCancellationRequested)
-            {//
-                // var result = await this.simpleConsole.ReadLine(this.ReadLineOptions, scope.CancellationToken).ConfigureAwait(false);
-                var result = await this.userInterfaceService.ReadLine(false, this.Prompt, cts.Token).ConfigureAwait(false);
+            while (executionContext.CanContinue)
+            {
+                var result = await this.userInterfaceService.ReadLine(false, this.Prompt, executionContext.Token).ConfigureAwait(false);
                 if (!result.IsSuccess)
                 {// Canceled, Terminated, Timeout
                     break;
@@ -74,17 +74,16 @@ public class NestedCommand<TCommand>
                 {
                     if (this.SimpleParser.Parse(result.Text))
                     {
-                        using (var scope2 = this.executionStack.Push((x, signal) =>
+                        using (var executionContext2 = this.executionStack.PushNew(executionContext, (x, signal) =>
                         {
                             if (signal == ExecutionSignal.Cancel)
                             {
-                                x.TryCancel();
+                                x.RequestTermination();
                                 this.userInterfaceService.WriteLineError(Hashed.Dialog.Canceled);
                             }
                         }))
                         {
-                            var cts2 = CancellationTokenSource.CreateLinkedTokenSource(scope2.CancellationToken, cancellationToken);
-                            await this.SimpleParser.Execute(cts2.Token);
+                            await this.SimpleParser.Execute(executionContext2.Token);
                         }
                     }
                     else

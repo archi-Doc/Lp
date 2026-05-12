@@ -5,17 +5,17 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-public partial class CommandGroup
+public partial class Batch
 {
-    [SimpleCommand("execute-command")]
-    public class ExecuteCommand : ISimpleCommand<ExecuteOptions>
+    [SimpleCommand("execute-batch")]
+    public class ExecuteBatch : ISimpleCommand<ExecuteOptions>
     {
         private readonly IUserInterfaceService userInterfaceService;
         private readonly LpUnit lpUnit;
         private readonly VaultControl vaultControl;
         private readonly ILogger logger;
 
-        public ExecuteCommand(ILogger<ExecuteCommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, VaultControl vaultControl)
+        public ExecuteBatch(ILogger<ExecuteBatch> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, VaultControl vaultControl)
         {
             this.userInterfaceService = userInterfaceService;
             this.lpUnit = lpUnit;
