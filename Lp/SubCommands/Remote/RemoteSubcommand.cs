@@ -177,7 +177,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                             break;
                         }
 
-                        Console.WriteLine($"RemoteSubcommand: {serverConnection.Agreement.ToString()} {connection.Agreement.ToString()}");//
                         try
                         {
                             await executionGroup2.CompletionTask.WaitAsync(executionGroup2.CancellationToken).ConfigureAwait(false);

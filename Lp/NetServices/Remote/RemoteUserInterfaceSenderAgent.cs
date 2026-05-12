@@ -85,7 +85,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
 
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote >> {message}");
 
-        Console.WriteLine($"Agent: {TransmissionContext.Current.ServerConnection.Agreement.ToString()} {clientConnection.Agreement.ToString()}");//
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.Prepare(receiver);
         _ = Task.Run(async () =>
