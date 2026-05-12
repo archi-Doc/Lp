@@ -67,8 +67,6 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
         this.userInterfaceService.WriteLine(mergedEvidence.Serialize().Length.ToString());
         this.userInterfaceService.WriteLine(mergedEvidence2!.ValidateAndVerify().ToString());
 
-        /*await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
-
         var microSleep = new Arc.Threading.MicroSleep();
         this.logger.GetWriter()?.Write($"MicroSleep: {microSleep.CurrentMode.ToString()}");
 
@@ -78,7 +76,9 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
         var microSeconds = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency * 1_000_000;
         this.logger.GetWriter()?.Write($"{microSeconds}");
 
-        microSleep.Dispose();*/
+        microSleep.Dispose();
+
+        await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
 
         try
         {
