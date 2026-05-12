@@ -35,7 +35,12 @@ internal class DomainServiceAgent : IDomainService
             return Task.FromResult<(bool, CertificateProof?)>(default);
         }
 
-        if (token is null ||
+        if (domainData.Role != DomainRole.Root)
+        {
+            return Task.FromResult<(bool, CertificateProof?)>(default);
+        }
+
+        if (token is not null &&
             !TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
             return Task.FromResult<(bool, CertificateProof?)>(default);

@@ -20,6 +20,9 @@ public partial class DomainData
     private DomainRole role;
     private SeedKey? domainSeedKey;
 
+    // Root
+    private EquityCredit? equityCredit;
+
     public DomainRole Role => this.role;
 
     public Credit Credit => this.DomainAssignment.CertificateProof.MergedProof.Value.Credit;
@@ -29,6 +32,7 @@ public partial class DomainData
         this.Initialize(creditService, logger, domainAssignment, domainSeedKey);
     }
 
+    [MemberNotNull(nameof(creditService))]
     [MemberNotNull(nameof(logger))]
     [MemberNotNull(nameof(DomainAssignment))]
     public void Initialize(CreditService creditService, ILogger logger, DomainAssignment domainAssignment, SeedKey? domainSeedKey)
@@ -72,9 +76,37 @@ public partial class DomainData
     {
     }
 
-    internal async Task<(bool IsPeer, CertificateProof? NewProof)> Scout(CertificateToken<SignaturePublicKey> token)
+    internal async Task MaintainRoot(CancellationToken cancellationToken)
     {
-        var ownerPublicKey = token.PublicKey;
+        var creditIdentity = new CreditIdentity(default, this.domainSeedKey.GetSignaturePublicKey(), this.Credit.Mergers);
+        using (var scope = await this.creditService.CreateEquityCredit(creditIdentity))
+        {
+            if (scope.IsValid)
+            {
+                this.equityCredit = scope.Data;
+            }
+        }
+    }
+
+    internal async Task<(bool IsPeer, MergedProof? NewProof)> Scout(CertificateToken<SignaturePublicKey>? token)
+    {
+        MergedProof? proof = default;
+        bool isPeer = false;
+        if (token is not null &&
+            this.Role == DomainRole.Root &&
+            this.equityCredit is not null &&
+            this.domainSeedKey is not null)
+        {
+            var ownerData = await this.equityCredit.GetOwnerData(token.PublicKey).ConfigureAwait(false);
+            if (ownerData is not null)
+            {
+                proof = new(new(ownerData.PublicKey, ownerData.Point, this.equityCredit.Credit));
+                if (!this.domainSeedKey.TrySignAndValidate(proof, 10))
+                {
+                    proof = default;
+                }
+            }
+        }
 
         /*FullCredit? fullCredit = default;
         fullCredit.Owners.TryLock()
@@ -82,16 +114,7 @@ public partial class DomainData
         var ownerData = owners.TryGet(ownerPublicKey);
         //ownerData.*/
 
-        return default;
-    }
-
-    internal async Task MaintainRoot(CancellationToken cancellationToken)
-    {
-        var credit = this.Credit;//
-        var creditIdentity = new CreditIdentity(default, this.domainSeedKey.GetSignaturePublicKey(), credit.Mergers);
-        using (var scope = await this.creditService.CreateEquityCredit(creditIdentity))
-        {
-        }
+        return (isPeer, proof);
     }
 
     /*public DomainOverview GetOverview()
