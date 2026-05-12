@@ -27,23 +27,23 @@ internal class DomainServiceAgent : IDomainService
         return Task.FromResult<NetResultAndValue<DomainOverview>>(new(NetResult.NotFound));
     }
 
-    Task<(bool IsPeer, CertificateProof? NewProof)> IDomainService.Scout(ulong domainHash, CertificateToken<SignaturePublicKey>? token)
+    Task<(bool IsPeer, MergedProof? NewProof)> IDomainService.Scout(ulong domainHash, CertificateToken<SignaturePublicKey>? token)
     {
         var domainData = this.domainControl.GetDomainData(domainHash);
         if (domainData is null)
         {
-            return Task.FromResult<(bool, CertificateProof?)>(default);
+            return Task.FromResult<(bool, MergedProof?)>(default);
         }
 
         if (domainData.Role != DomainRole.Root)
         {
-            return Task.FromResult<(bool, CertificateProof?)>(default);
+            return Task.FromResult<(bool, MergedProof?)>(default);
         }
 
         if (token is not null &&
             !TransmissionContext.Current.ServerConnection.ValidateAndVerifyWithSalt(token))
         {
-            return Task.FromResult<(bool, CertificateProof?)>(default);
+            return Task.FromResult<(bool, MergedProof?)>(default);
         }
 
         return domainData.Scout(token);
