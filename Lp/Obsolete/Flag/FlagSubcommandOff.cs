@@ -1,14 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.Data;
+/*using Lp.Data;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("on")]
-public class FlagSubcommandOn : ISimpleCommand
+[SimpleCommand("off")]
+public class FlagSubcommandOff : ISimpleCommand
 {
-    public FlagSubcommandOn(ILogger<FlagSubcommandOn> logger, LpUnit lpUnit)
+    public FlagSubcommandOff(ILogger<FlagSubcommandOff> logger, LpUnit lpUnit)
     {
         this.logger = logger;
         this.LpUnit = lpUnit;
@@ -22,13 +22,13 @@ public class FlagSubcommandOn : ISimpleCommand
             return;
         }
 
-        List<string> on = new();
+        List<string> off = new();
         List<string> notfound = new();
         foreach (var x in args)
         {
-            if (ope.TrySet(x, true))
+            if (ope.TrySet(x, false))
             {
-                on.Add(x);
+                off.Add(x);
             }
             else
             {
@@ -36,9 +36,9 @@ public class FlagSubcommandOn : ISimpleCommand
             }
         }
 
-        if (on.Count > 0)
+        if (off.Count > 0)
         {
-            this.logger.GetWriter()?.Write($"On: {string.Join(' ', on)}");
+            this.logger.GetWriter()?.Write($"Off: {string.Join(' ', off)}");
         }
 
         if (notfound.Count > 0)
@@ -49,5 +49,5 @@ public class FlagSubcommandOn : ISimpleCommand
 
     public LpUnit LpUnit { get; set; }
 
-    private ILogger<FlagSubcommandOn> logger;
-}
+    private ILogger<FlagSubcommandOff> logger;
+}*/

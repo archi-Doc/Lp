@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using SimpleCommandLine;
+/*using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
@@ -20,4 +20,4 @@ public class FlagSubcommand : SimpleCommandGroup<FlagSubcommand>
         : base(context, "ls")
     {
     }
-}
+}*/

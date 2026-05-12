@@ -1,14 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Lp.Data;
+/*using Lp.Data;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("ls")]
-public class FlagSubcommandLs : ISimpleCommand
+[SimpleCommand("clear")]
+public class FlagSubcommandClear : ISimpleCommand
 {
-    public FlagSubcommandLs(ILogger<FlagSubcommandLs> logger, LpUnit lpUnit)
+    public FlagSubcommandClear(ILogger<FlagSubcommandClear> logger, LpUnit lpUnit)
     {
         this.logger = logger;
         this.LpUnit = lpUnit;
@@ -22,8 +22,7 @@ public class FlagSubcommandLs : ISimpleCommand
             return;
         }
 
-        List<string> on = new();
-        List<string> off = new();
+        List<string> cleared = new();
         var names = ope.GetNames();
         foreach (var x in names)
         {
@@ -31,27 +30,19 @@ public class FlagSubcommandLs : ISimpleCommand
             {
                 if (value)
                 {
-                    on.Add(x);
-                }
-                else
-                {
-                    off.Add(x);
+                    ope.TrySet(x, false);
+                    cleared.Add(x);
                 }
             }
         }
 
-        if (on.Count > 0)
+        if (cleared.Count > 0)
         {
-            this.logger.GetWriter()?.Write($"On: {string.Join(' ', on)}");
-        }
-
-        if (off.Count > 0)
-        {
-            this.logger.GetWriter()?.Write($"Off: {string.Join(' ', off)}");
+            this.logger.GetWriter()?.Write($"Cleared: {string.Join(' ', cleared)}");
         }
     }
 
     public LpUnit LpUnit { get; set; }
 
-    private ILogger<FlagSubcommandLs> logger;
-}
+    private ILogger<FlagSubcommandClear> logger;
+}*/
