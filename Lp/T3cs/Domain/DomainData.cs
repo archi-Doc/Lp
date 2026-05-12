@@ -6,6 +6,12 @@ using Netsphere.Crypto;
 
 namespace Lp.T3cs;
 
+[TinyhandObject(ImplicitMemberNameAsKey = true)]
+public partial class DomainParameters
+{
+    public int ValiditySeconds { get; set; } = 60;
+}
+
 [TinyhandObject]
 public partial class DomainData
 {
@@ -14,6 +20,9 @@ public partial class DomainData
 
     [Key(1)]
     private PeerProof.GoshujinClass peerProofs = new();
+
+    [Key(2)]
+    public DomainParameters Parameters { get; private set; } = new();
 
     private CreditService creditService;
     private ILogger logger;
