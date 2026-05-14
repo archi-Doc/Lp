@@ -115,6 +115,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             else
             {
                 this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
+                this.userInterfaceService.WriteLine(HashedString.FromEnum(resultAndValue.Result));
                 return;
             }
 
