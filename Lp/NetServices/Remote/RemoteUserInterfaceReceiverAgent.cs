@@ -36,10 +36,10 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.UserInterfaceService = userInterfaceService;
         this.lpSettings = lpSettings;
 
-        this.writer = new(WriterCapacity, message =>
+        this.writer = new(WriterCapacity, (message, color) =>
         {
             var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
-            this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length));
+            this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
             if (r.Rent.Length > 0)
             {
                 ArrayPool<char>.Shared.Return(r.Rent);
@@ -115,7 +115,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, string? message, ConsoleColor color)
     {
-        this.writer.Add(lineNumber, message);
+        this.writer.Add(lineNumber, message, color);
 
         /*var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
@@ -139,7 +139,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             _ => this.lpSettings.Color.Information,
         };
 
-        this.writer.Add(lineNumber, message);
+        this.writer.Add(lineNumber, message, color);
 
         /*var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());

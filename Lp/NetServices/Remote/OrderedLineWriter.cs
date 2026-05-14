@@ -7,19 +7,27 @@ namespace Lp.NetServices.Remote;
 
 internal sealed class OrderedLineWriter
 {
-    private readonly Entry[] buffer;
-    private readonly int mask;
-    private readonly Action<string?> writeDelegate;
-    private int nextLine;
-
     private struct Entry
     {
         public int Line;
         public string? Message;
-        public LogLevel 
+        public ConsoleColor Color;
     }
 
-    public OrderedLineWriter(int bufferCapacity, Action<string?> writeDelegate)
+    #region FieldAndProperty
+
+    private readonly Entry[] buffer;
+    private readonly int mask;
+    private readonly Action<string?, ConsoleColor> writeDelegate;
+    private int nextLine;
+
+    public int NextLine => this.nextLine;
+
+    public int Capacity => this.buffer.Length;
+
+    #endregion
+
+    public OrderedLineWriter(int bufferCapacity, Action<string?, ConsoleColor> writeDelegate)
     {
         var bufferSizePowerOfTwo = CollectionHelper.CalculatePowerOfTwoCapacity(bufferCapacity);
 
@@ -34,11 +42,7 @@ internal sealed class OrderedLineWriter
         }
     }
 
-    public int NextLine => this.nextLine;
-
-    public int Capacity => this.buffer.Length;
-
-    public void Add(int line, string? message, Con)
+    public void Add(int line, string? message, ConsoleColor color)
     {
         var next = this.nextLine;
 
@@ -46,14 +50,14 @@ internal sealed class OrderedLineWriter
         // Since ordering may be broken in overflow cases, output it immediately.
         if (line < next)
         {
-            this.writeDelegate(message);
+            this.writeDelegate(message, color);
             return;
         }
 
         // Fast path: the expected line arrived.
         if (line == next)
         {
-            this.WriteAndAdvance(message);
+            this.WriteAndAdvance(message, color);
             this.FlushReadyLines();
             return;
         }
@@ -63,7 +67,7 @@ internal sealed class OrderedLineWriter
         // Normal path: the line fits into the reorder buffer.
         if ((uint)distance < (uint)this.buffer.Length)
         {
-            this.StoreOrWriteDuplicate(line, message);
+            this.StoreOrWriteDuplicate(line, message, color);
             return;
         }
 
@@ -75,12 +79,12 @@ internal sealed class OrderedLineWriter
         next = this.nextLine;
         if (line < next)
         {
-            this.writeDelegate(message);
+            this.writeDelegate(message, color);
             return;
         }
         else if (line == next)
         {
-            this.WriteAndAdvance(message);
+            this.WriteAndAdvance(message, color);
             this.FlushReadyLines();
             return;
         }
@@ -88,7 +92,7 @@ internal sealed class OrderedLineWriter
         distance = line - next;
         if ((uint)distance < (uint)this.buffer.Length)
         {
-            this.StoreOrWriteDuplicate(line, message);
+            this.StoreOrWriteDuplicate(line, message, color);
             return;
         }
 
@@ -97,34 +101,31 @@ internal sealed class OrderedLineWriter
         this.ForceFlushBufferedLines();
 
         // Output the incoming message even though ordering may be broken.
-        this.writeDelegate(message);
+        this.writeDelegate(message, color);
 
         // Continue from the next expected line after the incoming one.
         this.nextLine = line + 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteAndAdvance(string? message)
+    private void WriteAndAdvance(string? message, ConsoleColor color)
     {
-        this.writeDelegate(message);
+        this.writeDelegate(message, color);
         this.nextLine++;
     }
 
-    private void StoreOrWriteDuplicate(int line, string? message)
+    private void StoreOrWriteDuplicate(int line, string? message, ConsoleColor color)
     {
         ref var entry = ref this.buffer[line & this.mask];
-
         if (entry.Line == -1)
         {
             entry.Line = line;
             entry.Message = message;
+            entry.Color = color;
             return;
         }
 
-        // Same line or unexpected slot collision.
-        // Since the requirement is to output as much as possible,
-        // output the incoming message instead of throwing.
-        this.writeDelegate(message);
+        // this.writeDelegate(message, color);
     }
 
     private void FlushReadyLines()
@@ -132,17 +133,17 @@ internal sealed class OrderedLineWriter
         while (true)
         {
             ref var entry = ref this.buffer[this.nextLine & this.mask];
-
             if (entry.Line != this.nextLine)
             {
                 return;
             }
 
             var message = entry.Message;
+            var color = entry.Color;
             entry.Line = -1;
             entry.Message = null;
 
-            this.WriteAndAdvance(message);
+            this.WriteAndAdvance(message, color);
         }
     }
 
@@ -171,7 +172,7 @@ internal sealed class OrderedLineWriter
 
             ref var entry = ref this.buffer[bestIndex];
 
-            this.writeDelegate(entry.Message);
+            this.writeDelegate(entry.Message, entry.Color);
 
             entry.Line = -1;
             entry.Message = null;
