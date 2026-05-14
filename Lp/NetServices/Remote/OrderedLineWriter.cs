@@ -38,7 +38,7 @@ internal sealed class OrderedLineWriter
 
     public int Capacity => this.buffer.Length;
 
-    public void Add(int line, string? message)
+    public void Add(int line, string? message, Con)
     {
         var next = this.nextLine;
 
