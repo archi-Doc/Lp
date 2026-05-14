@@ -32,6 +32,7 @@ public class LpUnit
 {
     public static readonly Type[] RemoteSubcommands = [
         // typeof(RemoteSubcommand),
+        typeof(InteractiveTestSubcommand),
         typeof(FreezeSubcommand),
         typeof(InspectSubcommand),
         typeof(BenchmarkSubcommand),
@@ -128,6 +129,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.InteractiveTestSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PingSubcommand));
