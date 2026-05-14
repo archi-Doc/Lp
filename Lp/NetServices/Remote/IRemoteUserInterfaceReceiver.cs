@@ -7,9 +7,9 @@ public interface IRemoteUserInterfaceReceiver : INetService
 {
     Task Write(string? message, ConsoleColor color);
 
-    Task WriteLine(string? message, ConsoleColor color);
+    Task WriteLine(int lineNumber, string? message, ConsoleColor color);
 
-    Task WriteLine(LogLevel logLevel, string? message);
+    Task WriteLine(int lineNumber, LogLevel logLevel, string? message);
 
     Task<NetResultAndValue<string>> ReadLine(CancellationToken cancellationToken);
 

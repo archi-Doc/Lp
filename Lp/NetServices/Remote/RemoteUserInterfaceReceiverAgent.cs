@@ -9,7 +9,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
     // public const string GroupName = "RemoteUi";
 
-    private readonly ExecutionRoot executionRoot;
+    // private readonly ExecutionRoot executionRoot;
     private readonly ExecutionStack executionStack;
     // private readonly ExecutionGroup executionGroup;
 
@@ -25,7 +25,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
     {
-        this.executionRoot = executionRoot;
+        // this.executionRoot = executionRoot;
         this.executionStack = executionStack;
         // this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
         this.UserInterfaceService = userInterfaceService;
@@ -97,7 +97,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
+    Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, string? message, ConsoleColor color)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
@@ -109,7 +109,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
+    Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, LogLevel logLevel, string? message)
     {
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());

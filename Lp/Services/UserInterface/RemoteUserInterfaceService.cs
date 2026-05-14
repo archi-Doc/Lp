@@ -10,6 +10,7 @@ namespace Lp.Services;
 internal class RemoteUserInterfaceService : IUserInterfaceService
 {
     private readonly IRemoteUserInterfaceReceiver receiver;
+    private int lineNumber = -1;
 
     public RemoteUserInterfaceService(IRemoteUserInterfaceReceiver receiver)
     {
@@ -25,12 +26,12 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
 
     public void WriteLine(LogLevel logLevel, string? message)
     {
-        this.receiver.WriteLine(logLevel, message);
+        this.receiver.WriteLine(Interlocked.Increment(ref this.lineNumber), logLevel, message);
     }
 
     public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        this.receiver.WriteLine(message, color);
+        this.receiver.WriteLine(Interlocked.Increment(ref this.lineNumber), message, color);
 
         /*var r = StringHelper.AppendPrefix(this.Prefix, message);
         this.console.WriteLine(r.Rent.AsSpan(0, r.Length), color);
@@ -42,7 +43,7 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
 
     public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        this.receiver.WriteLine(message.ToString(), color);
+        this.receiver.WriteLine(Interlocked.Increment(ref this.lineNumber), message.ToString(), color);
 
         /*var r = StringHelper.AppendPrefix(this.Prefix, message);
         this.console.WriteLine(r.Rent.AsSpan(0, r.Length), color);
