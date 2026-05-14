@@ -159,6 +159,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         return;
                     }
 
+                    this.logger.GetWriter()?.Write(result.Text);
                     using (var executionGroup2 = this.executionStack.PushNew(executionGroup, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
