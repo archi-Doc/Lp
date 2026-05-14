@@ -16,6 +16,7 @@ internal sealed class OrderedLineWriter
     {
         public int Line;
         public string? Message;
+        public LogLevel 
     }
 
     public OrderedLineWriter(int bufferCapacity, Action<string?> writeDelegate)

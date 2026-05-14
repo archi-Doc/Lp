@@ -2,6 +2,7 @@
 
 using System.Buffers;
 using System.Drawing;
+using Lp.Data;
 using Lp.NetServices.Remote;
 
 namespace Lp.NetServices;
@@ -13,6 +14,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     // public const string GroupName = "RemoteUi";
 
     // private readonly ExecutionRoot executionRoot;
+    private readonly LpSettings lpSettings;
     private readonly ExecutionStack executionStack;
     private readonly OrderedLineWriter writer;
 
@@ -26,12 +28,13 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public int Id { get; set; }
 
-    public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
+    public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService, LpSettings lpSettings)
     {
         // this.executionRoot = executionRoot;
         this.executionStack = executionStack;
         // this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
         this.UserInterfaceService = userInterfaceService;
+        this.lpSettings = lpSettings;
 
         this.writer = new(WriterCapacity, message =>
         {
@@ -126,6 +129,16 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, LogLevel logLevel, string? message)
     {
+        var color = logLevel switch
+        {
+            LogLevel.Debug => this.lpSettings.Color.Information,
+            LogLevel.Information => this.lpSettings.Color.Information,
+            LogLevel.Warning => this.lpSettings.Color.Warning,
+            LogLevel.Error => this.lpSettings.Color.Error,
+            LogLevel.Fatal => this.lpSettings.Color.Fatal,
+            _ => this.lpSettings.Color.Information,
+        };
+
         this.writer.Add(lineNumber, message);
 
         /*var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
