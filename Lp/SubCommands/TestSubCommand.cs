@@ -76,11 +76,9 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
         var microSeconds = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency * 1_000_000;
         this.logger.GetWriter()?.Write($"{microSeconds}");
 
-        this.userInterfaceService.WriteLine("1");
         microSleep.Dispose();
-        this.userInterfaceService.WriteLine("2");
 
-        await this.lpBoardService.CreateBoard(this.userInterfaceService, SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
+        await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
 
         try
         {
