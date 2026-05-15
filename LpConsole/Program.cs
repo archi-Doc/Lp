@@ -93,11 +93,11 @@ public class Program
                 // Looger resolver
                 context.AddLoggerResolver(context =>
                 {
-                    /*if (context.LogLevel == LogLevel.Debug)
-                    {
+                    if (context.LogLevel == LogLevel.Debug)
+                    {//
                         context.SetOutput<ConsoleLogger>();
                         return;
-                    }*/
+                    }
                 });
             });
         // .ConfigureBuilder(new LpConsole.Example.ExampleUnit.Builder()); // Alternative
