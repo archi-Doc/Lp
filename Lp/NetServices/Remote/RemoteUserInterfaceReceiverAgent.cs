@@ -16,7 +16,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     // private readonly ExecutionRoot executionRoot;
     private readonly LpSettings lpSettings;
     private readonly ExecutionStack executionStack;
-    private readonly OrderedLineWriter writer;
+    // private readonly OrderedLineWriter writer;
 
     public IUserInterfaceService UserInterfaceService { get; set; }
 
@@ -36,7 +36,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         this.UserInterfaceService = userInterfaceService;
         this.lpSettings = lpSettings;
 
-        this.writer = new(WriterCapacity, (message, color) =>
+        /*this.writer = new(WriterCapacity, (message, color) =>
         {
             var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
             this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
@@ -44,7 +44,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             {
                 ArrayPool<char>.Shared.Return(r.Rent);
             }
-        });
+        });*/
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
@@ -115,21 +115,21 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, string? message, ConsoleColor color)
     {
-        this.writer.Add(lineNumber, message, color);
+        // this.writer.Add(lineNumber, message, color);
 
-        /*var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
+        var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
-        }*/
+        }
 
         return Task.CompletedTask;
     }
 
     Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, LogLevel logLevel, string? message)
     {
-        var color = logLevel switch
+        /*var color = logLevel switch
         {
             LogLevel.Debug => this.lpSettings.Color.Information,
             LogLevel.Information => this.lpSettings.Color.Information,
@@ -139,14 +139,14 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             _ => this.lpSettings.Color.Information,
         };
 
-        this.writer.Add(lineNumber, message, color);
+        this.writer.Add(lineNumber, message, color);*/
 
-        /*var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
+        var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());
         if (r.Rent.Length > 0)
         {
             ArrayPool<char>.Shared.Return(r.Rent);
-        }*/
+        }
 
         return Task.CompletedTask;
     }
