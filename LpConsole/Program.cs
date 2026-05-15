@@ -22,7 +22,7 @@ public class Program
     {
         AppCloseHandler.Set(() =>
         {// Console window closing or process terminated.
-            if (unit?.Context.ServiceProvider.GetService<LpUnit>()?.ExecutionStack is { } executionStack)
+            if (unit?.Context.ServiceProvider.GetService<ExecutionStack>() is { } executionStack)
             {
                 // executionStack.TopContext?.Signal(ExecutionSignal.Exit);
                 while (executionStack.FirstCore is { } core)
