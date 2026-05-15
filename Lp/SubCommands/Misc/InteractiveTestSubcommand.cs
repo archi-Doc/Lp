@@ -26,7 +26,7 @@ public class InteractiveTestSubcommand : ISimpleCommand
         this.userInterfaceService.WriteLine(LogLevel.Information, "Interactive test");
         this.userInterfaceService.WriteLineWarning("Warning text");
 
-        var result = await this.userInterfaceService.ReadLine(false, "Enter> ", cancellationToken);
+        var result = await this.userInterfaceService.ReadLine(false, "Enter > ", cancellationToken);
         this.userInterfaceService.WriteLine($"ReadLine: {result.ToString()}");
         this.userInterfaceService.WriteLine($"Address: {this.netStats.OwnNetNode?.ToString()}");
         this.userInterfaceService.WriteLine();
