@@ -929,7 +929,7 @@ public class LpUnit
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         // _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();//
+        //_ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();//
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
         this.BigMachine.LpDogmaMachine.GetOrCreate(); // .RunAsync();
 
