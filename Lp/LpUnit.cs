@@ -324,7 +324,7 @@ public class LpUnit
             try
             {
                 HashedString.LoadAssembly(null, asm, "Misc.Strings.strings-en.tinyhand");
-                HashedString.LoadAssembly("ja", asm, "Misc.Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Misc.Strings.strings-ja.tinyhand");
             }
             catch
             {
