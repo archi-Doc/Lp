@@ -91,6 +91,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
+                Console.WriteLine($"Server {TransmissionContext.Current.ServerConnection.Agreement}, Client {clientConnection.Agreement}");//
                 await this.simpleParser.ParseAndExecute(message, group.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
