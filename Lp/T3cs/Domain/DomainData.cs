@@ -73,7 +73,6 @@ public partial class DomainData
         // Proof -> Peer
 
         // Scout
-
     }
 
     internal async Task<CertificateProof?> ExchangeProof(CertificateProof? proof)

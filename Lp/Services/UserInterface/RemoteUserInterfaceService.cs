@@ -24,6 +24,11 @@ internal class RemoteUserInterfaceService : IUserInterfaceService
         this.receiver.Write(message, color);
     }
 
+    public void Write(ReadOnlySpan<char> message, ConsoleColor color = (ConsoleColor)(-1))
+    {
+        this.receiver.Write(message.ToString(), color);
+    }
+
     public void WriteLine(LogLevel logLevel, string? message)
     {
         this.receiver.WriteLine(Interlocked.Increment(ref this.lineNumber), logLevel, message);
