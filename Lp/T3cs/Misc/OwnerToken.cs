@@ -28,7 +28,7 @@ public sealed partial class OwnerToken : ISignAndVerify, IEquatable<OwnerToken>,
         token.Salt = MaxHelper.UInt64;
         token.Credit = Credit.Max;
         var rentMemory = TinyhandSerializer.SerializeObjectToRentMemory(token);
-        MaxStringLength = Base64.Url.GetEncodedLength(rentMemory.Length) + 10;
+        MaxStringLength = Base64Url.GetEncodedLength(rentMemory.Length) + 10;
         rentMemory.Return();
     }
 

@@ -25,7 +25,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
 
     static MasterKey()
     {
-        MaxStringLength = Base64.Url.GetEncodedLength(Size);
+        MaxStringLength = Base64Url.GetEncodedLength(Size);
     }
 
     public static int MaxStringLength { get; }
@@ -40,7 +40,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
         }
 
         var seed = new byte[Size];
-        if (!Base64.Url.FromStringToSpan(source.Slice(0, MaxStringLength), seed, out _))
+        if (!Base64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out _))
         {
             masterKey = null;
             read = 0;
@@ -56,7 +56,10 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
         => MaxStringLength;
 
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
-        => Base64.Url.FromByteArrayToSpan(this.seed, destination, out written);
+    {
+        written = Base64Url.Encode(this.seed, destination);
+        return true;
+    }
 
     #endregion
 

@@ -8,8 +8,5 @@ internal class Program
     {
         Console.WriteLine("Manual test");
         Console.WriteLine();
-
-        RsCoderTest.SampleCode();
-        RsCoderTest.SpeedTest();
     }
 }
