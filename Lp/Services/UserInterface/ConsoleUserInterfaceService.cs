@@ -13,7 +13,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
     public ReadLineOptions PasswordOptions { get; } = new()
     {
-        AllowEmptyLineInput = true,
+        AllowEmptyInput = true,
         CancelOnEscape = false,
         MaxInputLength = 100,
         MaskingCharacter = '*',
