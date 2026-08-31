@@ -159,7 +159,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             ServiceProvider = this.serviceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
+            DisplayUsage = false,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };

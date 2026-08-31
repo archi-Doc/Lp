@@ -15,7 +15,7 @@ using Lp.Services;
 
 namespace Playground;
 
-[SimpleCommand("basic", Default = true)]
+[SimpleCommand("basic", IsDefault = true)]
 public class BasicCommand : ISimpleCommand
 {
     private readonly NetUnit netUnit;

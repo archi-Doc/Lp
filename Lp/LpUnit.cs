@@ -549,7 +549,7 @@ public class LpUnit
             ServiceProvider = context.ServiceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
+            DisplayUsage = false,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };
@@ -820,7 +820,7 @@ public class LpUnit
 
     public Task Subcommand(string subcommand, CancellationToken cancellationToken)
     {
-        if (subcommand == SimpleParser.HelpString)
+        if (subcommand == SimpleParser.HelpName)
         {
             this.subcommandParser.ShowHelp();
             return Task.CompletedTask;
@@ -833,7 +833,7 @@ public class LpUnit
 
         if (!this.subcommandParser.Parse(subcommand))
         {
-            if (this.subcommandParser.HelpCommand != string.Empty)
+            if (this.subcommandParser.HelpCommandName != string.Empty)
             {
                 this.subcommandParser.ShowHelp();
                 return Task.CompletedTask;

@@ -103,7 +103,7 @@ public class Program
         // .ConfigureBuilder(new LpConsole.Example.ExampleUnit.Builder()); // Alternative
 
         var args = SimpleParserHelper.GetCommandLineArguments();
-        SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
+        SimpleCommandLine.SimpleParserHelper.AppendEnvironmentVariable(ref args, "lpargs");
 
         unit = builder.Build(args);
 
