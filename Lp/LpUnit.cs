@@ -192,7 +192,7 @@ public class LpUnit
                 {
                     Path = Path.Combine(context.DataDirectory, "Logs/Net.txt"),
                     MaxLogCapacity = 100,
-                    Formatter = netsphereLoggerOptions.Formatter with { TimestampFormat = "mm:ss.ffffff K", },
+                    FormatterOptions = netsphereLoggerOptions.FormatterOptions with { TimestampFormat = "mm:ss.ffffff K", },
                     ClearLogsAtStartup = true,
                     MaxQueue = 100_000,
                 });
@@ -417,7 +417,7 @@ public class LpUnit
             }
             catch
             {
-                this.Context.Root.RequestTermination();
+                this.Context.ExecutionRoot.RequestTermination();
                 return;
             }
 

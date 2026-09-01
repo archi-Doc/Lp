@@ -32,11 +32,11 @@ public class Program
                 }
             }
 
-            var result = unit?.Context.Root.WaitForTermination(TimeSpan.FromSeconds(2)).Result;
+            var result = unit?.Context.ExecutionRoot.WaitForTermination(TimeSpan.FromSeconds(2)).Result;
             if (result != true)
             {
-                unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
-                unit?.Context.Root.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+                unit?.Context.ExecutionRoot.RequestTermination(); // Send a termination signal to the root.
+                unit?.Context.ExecutionRoot.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
             }
         });
 
@@ -57,12 +57,12 @@ public class Program
                         }
                         else
                         {
-                            unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
+                            unit?.Context.ExecutionRoot.RequestTermination(); // Send a termination signal to the root.
                         }
                     }
                     catch
                     {
-                        unit?.Context.Root.RequestTermination(); // Send a termination signal to the root.
+                        unit?.Context.ExecutionRoot.RequestTermination(); // Send a termination signal to the root.
                     }
                 }
                 else
@@ -119,7 +119,7 @@ public class Program
         {
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
             await unit.Run(options);
-            await unit.Context.Root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
+            await unit.Context.ExecutionRoot.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
         }
         finally
         {

@@ -41,7 +41,7 @@ public class TemporaryMemoryLogFilter : ILogFilter
             return this.cache.TryGet(param);
         }
 
-        return param.OriginalLogger;
+        return param.OriginalWriter;
     }
 
     public bool Enabled { get; set; }

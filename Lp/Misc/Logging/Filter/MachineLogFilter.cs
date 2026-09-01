@@ -16,7 +16,7 @@ internal class MachineLogFilter : ILogFilter
             return this.lpBase.Settings.Flags.LogEssentialNetMachine ? param.OriginalLogger : null;
         }*/
 
-        return param.OriginalLogger;
+        return param.OriginalWriter;
     }
 
     private LpBase lpBase;
