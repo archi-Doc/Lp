@@ -17,7 +17,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     public const int EncryptedDataSize = 32 + 32 + sizeof(uint) + sizeof(uint); // PublicKey, Encrypted, EncryptionSalt, OriginalHash
     public const int SubIdMaxLength = 10;
 
-    public static readonly int EncryptedStringLength = Base64.Url.GetEncodedLength(EncryptedDataSize);
+    public static readonly int EncryptedStringLength = Base64Url.GetEncodedLength(EncryptedDataSize);
 
     private const uint SubKey_HashMask = 0x3FFU; // 10 bits
     private const uint SubKey_IdMask = ~SubKey_HashMask; // 32 bits
@@ -112,7 +112,7 @@ Failure:
         bool TryParseEncrypted(uint subKey, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, IConversionOptions? conversionOptions)
         {
             Span<byte> destination = stackalloc byte[EncryptedDataSize];
-            if (!Base64.Url.FromStringToSpan(source, destination, out var w) ||
+            if (!Base64Url.TryDecode(source, destination, out var w) ||
                 w != EncryptedDataSize)
             {
                 @object = null;
@@ -168,7 +168,7 @@ Failure:
 
             Span<byte> encrypted = stackalloc byte[EncryptedDataSize];
             this.WriteEncryptedSpan(encrypted);
-            Base64.Url.FromByteArrayToSpan(encrypted, span, out w);
+            w = Base64Url.Encode(encrypted, span);
             span = span.Slice(w);
         }
         else

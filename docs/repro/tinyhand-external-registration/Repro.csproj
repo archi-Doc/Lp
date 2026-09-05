@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TinyhandVersion Condition="'$(TinyhandVersion)' == ''">0.144.2</TinyhandVersion>
+    <ValueLinkVersion Condition="'$(ValueLinkVersion)' == ''">0.118.3</ValueLinkVersion>
+    <Case Condition="'$(Case)' == ''">Orphan</Case>
+    <DefineConstants>$(DefineConstants);CASE_$(Case)</DefineConstants>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>obj/generated/$(Case)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Tinyhand" Version="$(TinyhandVersion)" />
+    <PackageReference Include="ValueLink" Version="$(ValueLinkVersion)" Condition="'$(Case)' == 'Owner'" />
+  </ItemGroup>
+</Project>

@@ -39,7 +39,7 @@ public readonly partial struct ChecksumStruct
         {
             TinyhandSerializer.SerializeObject(ref writer, this);
             writer.FlushAndGetReadOnlySpan(out var span, out _);
-            return FarmHash.Hash64(span);
+            return Arc.Crypto.FarmHash.Hash64(span);
         }
         finally
         {
@@ -49,7 +49,7 @@ public readonly partial struct ChecksumStruct
 
     public unsafe ulong GetChecksum2()
     {
-        return FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(in this)), sizeof(ChecksumStruct)));
+        return Arc.Crypto.FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(in this)), sizeof(ChecksumStruct)));
     }
 
     public unsafe ulong GetChecksum3()
@@ -64,7 +64,7 @@ public readonly partial struct ChecksumStruct
         span = span.Slice(8);
         BitConverter.TryWriteBytes(span, this.D);
 
-        return FarmHash.Hash64(buffer);
+        return Arc.Crypto.FarmHash.Hash64(buffer);
     }
 }
 

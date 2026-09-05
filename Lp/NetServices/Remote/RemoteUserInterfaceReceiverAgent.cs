@@ -1,17 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
+using System.Drawing;
+using Lp.Data;
+using Lp.NetServices.Remote;
 
 namespace Lp.NetServices;
 
 [NetObject]
 public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 {
+    private const int WriterCapacity = 16;
     // public const string GroupName = "RemoteUi";
 
-    private readonly ExecutionRoot executionRoot;
+    // private readonly ExecutionRoot executionRoot;
+    private readonly LpSettings lpSettings;
     private readonly ExecutionStack executionStack;
-    // private readonly ExecutionGroup executionGroup;
+    // private readonly OrderedLineWriter writer;
 
     public IUserInterfaceService UserInterfaceService { get; set; }
 
@@ -23,12 +28,23 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
     public int Id { get; set; }
 
-    public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService)
+    public RemoteUserInterfaceReceiverAgent(ExecutionRoot executionRoot, ExecutionStack executionStack, IUserInterfaceService userInterfaceService, LpSettings lpSettings)
     {
-        this.executionRoot = executionRoot;
+        // this.executionRoot = executionRoot;
         this.executionStack = executionStack;
         // this.executionGroup = this.executionRoot.GetOrAddGroup(false, GroupName);
         this.UserInterfaceService = userInterfaceService;
+        this.lpSettings = lpSettings;
+
+        /*this.writer = new(WriterCapacity, (message, color) =>
+        {
+            var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
+            this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
+            if (r.Rent.Length > 0)
+            {
+                ArrayPool<char>.Shared.Return(r.Rent);
+            }
+        });*/
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceReceiver.ReadLine(CancellationToken cancellationToken)
@@ -97,8 +113,10 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLine(string? message, ConsoleColor color)
+    Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, string? message, ConsoleColor color)
     {
+        // this.writer.Add(lineNumber, message, color);
+
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(r.Rent.AsSpan(0, r.Length), color);
         if (r.Rent.Length > 0)
@@ -109,8 +127,20 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
         return Task.CompletedTask;
     }
 
-    Task IRemoteUserInterfaceReceiver.WriteLine(LogLevel logLevel, string? message)
+    Task IRemoteUserInterfaceReceiver.WriteLine(int lineNumber, LogLevel logLevel, string? message)
     {
+        /*var color = logLevel switch
+        {
+            LogLevel.Debug => this.lpSettings.Color.Information,
+            LogLevel.Information => this.lpSettings.Color.Information,
+            LogLevel.Warning => this.lpSettings.Color.Warning,
+            LogLevel.Error => this.lpSettings.Color.Error,
+            LogLevel.Fatal => this.lpSettings.Color.Fatal,
+            _ => this.lpSettings.Color.Information,
+        };
+
+        this.writer.Add(lineNumber, message, color);*/
+
         var r = StringHelper.AppendPrefix(this.OutputPrefix, message);
         this.UserInterfaceService.WriteLine(logLevel, r.Rent.AsSpan(0, r.Length).ToString());
         if (r.Rent.Length > 0)

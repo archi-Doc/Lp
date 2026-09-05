@@ -7,7 +7,7 @@ public partial record LpSettings
 {
     public const string Filename = "Settings.tinyhand";
 
-    public LpFlags Flags { get; set; } = new();
+    // public LpFlags Flags { get; set; } = new();
 
     public ColorClass Color { get; set; } = new();
 

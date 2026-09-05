@@ -30,7 +30,7 @@ public class NestedCommand<TCommand>
             ServiceProvider = this.serviceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
+            DisplayUsage = false,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };
@@ -88,7 +88,7 @@ public class NestedCommand<TCommand>
                     }
                     else
                     {
-                        if (this.SimpleParser.HelpCommand != string.Empty)
+                        if (this.SimpleParser.HelpCommandName != string.Empty)
                         {
                             this.SimpleParser.ShowHelp();
                         }

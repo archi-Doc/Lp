@@ -115,6 +115,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
             else
             {
                 this.logger.GetWriter()?.Write(Hashed.Error.Connect, node.ToString());
+                this.userInterfaceService.WriteLine(HashedString.FromEnum(resultAndValue.Result));
                 return;
             }
 
@@ -158,6 +159,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         return;
                     }
 
+                    this.logger.GetWriter()?.Write(result.Text);
                     using (var executionGroup2 = this.executionStack.PushNew(executionGroup, (x, signal) =>
                     {
                         if (signal == ExecutionSignal.Cancel)
@@ -170,6 +172,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         receiver.Id = executionGroup2.Id;
 
+                        Console.WriteLine($"Server {serverConnection.Agreement}, Client {connection.Agreement}");//
                         var netResult = await senderService.Send(executionGroup2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {

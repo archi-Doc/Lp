@@ -12,7 +12,6 @@ global using Lp;
 global using Netsphere;
 global using Tinyhand;
 global using ValueLink;
-using Amazon.Runtime.Internal;
 using Lp.Data;
 using Lp.Logging;
 using Lp.Net;
@@ -33,6 +32,7 @@ public class LpUnit
 {
     public static readonly Type[] RemoteSubcommands = [
         // typeof(RemoteSubcommand),
+        typeof(InteractiveTestSubcommand),
         typeof(FreezeSubcommand),
         typeof(InspectSubcommand),
         typeof(BenchmarkSubcommand),
@@ -129,6 +129,7 @@ public class LpUnit
                 context.AddSubcommand(typeof(Lp.Subcommands.InspectSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.OpenDataDirectorySubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.TestSubcommand));
+                context.AddSubcommand(typeof(Lp.Subcommands.InteractiveTestSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(Lp.Subcommands.PingSubcommand));
@@ -191,7 +192,7 @@ public class LpUnit
                 {
                     Path = Path.Combine(context.DataDirectory, "Logs/Net.txt"),
                     MaxLogCapacity = 100,
-                    Formatter = netsphereLoggerOptions.Formatter with { TimestampFormat = "mm:ss.ffffff K", },
+                    FormatterOptions = netsphereLoggerOptions.FormatterOptions with { TimestampFormat = "mm:ss.ffffff K", },
                     ClearLogsAtStartup = true,
                     MaxQueue = 100_000,
                 });
@@ -323,7 +324,7 @@ public class LpUnit
             try
             {
                 HashedString.LoadAssembly(null, asm, "Misc.Strings.strings-en.tinyhand");
-                HashedString.LoadAssembly("ja", asm, "Misc.Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Misc.Strings.strings-ja.tinyhand");
             }
             catch
             {
@@ -347,12 +348,12 @@ public class LpUnit
                         if (op != null)
                         {
                             options = op;
-                            Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
+                            SimpleConsole.Instance.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
                         }
                     }
                     catch
                     {
-                        Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
+                        SimpleConsole.Instance.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
                     }
                 }
             }
@@ -416,7 +417,7 @@ public class LpUnit
             }
             catch
             {
-                this.Context.Root.RequestTermination();
+                this.Context.ExecutionRoot.RequestTermination();
                 return;
             }
 
@@ -548,7 +549,7 @@ public class LpUnit
             ServiceProvider = context.ServiceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
+            DisplayUsage = false,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };
@@ -819,7 +820,7 @@ public class LpUnit
 
     public Task Subcommand(string subcommand, CancellationToken cancellationToken)
     {
-        if (subcommand == SimpleParser.HelpString)
+        if (subcommand == SimpleParser.HelpName)
         {
             this.subcommandParser.ShowHelp();
             return Task.CompletedTask;
@@ -832,7 +833,7 @@ public class LpUnit
 
         if (!this.subcommandParser.Parse(subcommand))
         {
-            if (this.subcommandParser.HelpCommand != string.Empty)
+            if (this.subcommandParser.HelpCommandName != string.Empty)
             {
                 this.subcommandParser.ShowHelp();
                 return Task.CompletedTask;
@@ -928,7 +929,7 @@ public class LpUnit
     {
         _ = this.BigMachine.NtpMachine.GetOrCreate().RunAsync();
         // _ = this.BigMachine.NetStatsMachine.GetOrCreate().RunAsync();
-        _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();
+        // _ = this.BigMachine.NodeControlMachine.GetOrCreate().RunAsync();//
         this.BigMachine.LpControlMachine.GetOrCreate(); // .RunAsync();
         this.BigMachine.LpDogmaMachine.GetOrCreate(); // .RunAsync();
 

@@ -34,7 +34,6 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
     void INetObject.OnConnectionClosed()
     {
         this.serviceScope.Dispose();
-        Console.WriteLine("Server IServiceScope Disposed");
     }
 
     async Task<NetResultAndValue<string>> IRemoteUserInterfaceSender.ConnectBidirectionally(CertificateToken<ConnectionAgreement> token)
@@ -92,6 +91,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             try
             {
+                Console.WriteLine($"Server {TransmissionContext.Current.ServerConnection.Agreement}, Client {clientConnection.Agreement}");//
                 await this.simpleParser.ParseAndExecute(message, group.CancellationToken).WaitAsync(clientConnection.Agreement.TransmissionTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException)
@@ -159,7 +159,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             ServiceProvider = this.serviceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
+            DisplayUsage = false,
             DisplayCommandListAsHelp = true,
             AutoAlias = true,
         };

@@ -44,8 +44,7 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
         var stream = transmissionContext.GetReceiveStream<ulong>();
 
         var buffer = new byte[100_000];
-        var hash = new FarmHash();
-        hash.HashInitialize();
+        var hash = new XxHash3();
         long total = 0;
 
         while (true)
@@ -54,7 +53,7 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
             if (r.Result == NetResult.Success ||
                 r.Result == NetResult.Completed)
             {
-                hash.HashUpdate(buffer.AsMemory(0, r.Written).Span);
+                hash.Append(buffer.AsMemory(0, r.Written).Span);
                 total += r.Written;
             }
             else
@@ -65,7 +64,7 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
             if (r.Result == NetResult.Completed)
             {
                 // transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
-                stream.SendAndDispose(BitConverter.ToUInt64(hash.HashFinal()));
+                stream.SendAndDispose(hash.GetCurrentHashAsUInt64());
                 break;
             }
         }

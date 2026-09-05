@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Lp;
 
-public static partial class Lp
+/*public static partial class Lp
 {
     public static ParameterClass Parameters { get; } = new();
 
@@ -19,4 +19,4 @@ public static partial class Lp
 
         public int ExitDelayMilliseconds { get; set; } = 300;
     }
-}
+}*/

@@ -67,10 +67,6 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
         this.userInterfaceService.WriteLine(mergedEvidence.Serialize().Length.ToString());
         this.userInterfaceService.WriteLine(mergedEvidence2!.ValidateAndVerify().ToString());
 
-        await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
-        this.userInterfaceService.WriteLine($"UserInteractive: {Environment.UserInteractive}, IsOutputRedirected:{Console.IsOutputRedirected}");
-        this.userInterfaceService.WriteLine($"Width: {Console.WindowWidth}");
-
         var microSleep = new Arc.Threading.MicroSleep();
         this.logger.GetWriter()?.Write($"MicroSleep: {microSleep.CurrentMode.ToString()}");
 
@@ -81,6 +77,8 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
         this.logger.GetWriter()?.Write($"{microSeconds}");
 
         microSleep.Dispose();
+
+        await this.lpBoardService.CreateBoard(SeedKey.NewSignature().GetSignaturePublicKey(), SeedKey.NewSignature().GetSignaturePublicKey());
 
         try
         {
