@@ -163,8 +163,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
     {
         written = 0;
-        var length = this.GetStringLength();
-        if (destination.Length < length)
+        if (destination.IsEmpty)
         {
             return false;
         }
@@ -194,6 +193,12 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         var isFirst = true;
         foreach (var x in this.Mergers)
         {
+            if (span.IsEmpty)
+            {
+                written = 0;
+                return false;
+            }
+
             if (isFirst)
             {
                 isFirst = false;

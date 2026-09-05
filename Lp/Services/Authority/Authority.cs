@@ -115,10 +115,10 @@ public sealed partial class Authority
     }
 
     public SeedKey GetSeedKey()
-        => this.seedKeyCache.GetOrAdd(Credit.Default, x => SeedKey.NewSignature(this.seed));
+        => this.seedKeyCache.GetOrAdd(Credit.Default, static (x, seed) => SeedKey.NewSignature(seed), this.seed);
 
     public SeedKey GetSeedKey(Credit credit)
-        => this.seedKeyCache.GetOrAdd(credit, x => CreateSeedKey(this.seed, x));
+        => this.seedKeyCache.GetOrAdd(credit, static (x, seed) => CreateSeedKey(seed, x), this.seed);
 
     public EncryptionPublicKey GetEncryptionPublicKey()
         => this.GetSeedKey().GetEncryptionPublicKey();

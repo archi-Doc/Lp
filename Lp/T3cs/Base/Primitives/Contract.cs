@@ -186,9 +186,8 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
                 writer.Write(this.Partial);
                 writer.Write(this.Total);
 
-                var rentMemory = writer.FlushAndGetRentMemory();
-                Blake3.Get256_Span(rentMemory.Span, span32);
-                rentMemory.Return();
+                writer.FlushAndGetReadOnlySpan(out var span, out _);
+                Blake3.Get256_Span(span, span32);
             }
             finally
             {

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Buffers;
+using System.Collections.Frozen;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -39,6 +41,8 @@ public static class Seedphrase
     /// </summary>
     private static Dictionary<string, ushort> dictionary = new(StringComparer.InvariantCultureIgnoreCase);
 
+    private static FrozenDictionary<string, ushort> fastDictionary = FrozenDictionary<string, ushort>.Empty;
+
     #endregion
 
     static Seedphrase()
@@ -60,6 +64,8 @@ public static class Seedphrase
                         {
                             dictionary.TryAdd(words[i], i);
                         }
+
+                        fastDictionary = dictionary.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
                     }
                 }
             }
@@ -81,7 +87,7 @@ public static class Seedphrase
             throw new PanicException();
         }
 
-        var index = new ushort[DefaultNumberOfWords - 1];
+        Span<ushort> index = stackalloc ushort[DefaultNumberOfWords - 1];
         for (var i = 0; i < index.Length; i++)
         {
             index[i] = (ushort)(RandomVault.Default.NextUInt32() & mask);
@@ -100,17 +106,31 @@ public static class Seedphrase
         var span = MemoryMarshal.AsBytes<ushort>(seedSpan);
         var checksum = (ushort)(XxHash3.Hash64(span) % divisor);
 
-        var sb = new StringBuilder();
-        for (var i = 0; i < seedSpan.Length; i++)
+        var length = words[checksum].Length;
+        foreach (var index in seedSpan)
         {
-            sb.Append(words[seedSpan[i]]);
-            sb.Append(" ");
+            if (index >= words.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(seedSpan));
+            }
+
+            length = checked(length + words[index].Length + 1);
         }
 
-        // Checksum
-        sb.Append(words[checksum]);
+        return string.Create(length, new PhraseState(seedSpan, checksum), static (destination, state) =>
+        {
+            foreach (var index in state.Indices)
+            {
+                var word = words[index];
+                word.AsSpan().CopyTo(destination);
+                destination = destination.Slice(word.Length);
+                destination[0] = ' ';
+                destination = destination.Slice(1);
+            }
 
-        return sb.ToString();
+            // Checksum
+            words[state.Checksum].AsSpan().CopyTo(destination);
+        });
     }
 
     /// <summary>
@@ -126,32 +146,74 @@ public static class Seedphrase
             throw new PanicException();
         }
 
-        var wordArray = seedphrase.Split(' ');
-        if (wordArray.Length < MinimumNumberOfWords)
+        var phrase = seedphrase.AsSpan();
+        var wordCount = phrase.Count(' ') + 1;
+        if (wordCount < MinimumNumberOfWords)
         {// Minimum length
             return null;
         }
 
-        var index = new ushort[wordArray.Length];
-        for (var i = 0; i < wordArray.Length; i++)
+        ushort[]? rentedIndices = null;
+        Span<ushort> index = wordCount <= 128
+            ? stackalloc ushort[wordCount]
+            : (rentedIndices = ArrayPool<ushort>.Shared.Rent(wordCount)).AsSpan(0, wordCount);
+        try
         {
-            if (!dictionary.TryGetValue(wordArray[i], out var j))
+            var lookup = dictionary.GetAlternateLookup<ReadOnlySpan<char>>();
+            var fastLookup = fastDictionary.GetAlternateLookup<ReadOnlySpan<char>>();
+            var i = 0;
+            foreach (var range in phrase.Split(' '))
+            {
+                var word = phrase[range];
+                if (!fastLookup.TryGetValue(word, out var value) && !lookup.TryGetValue(word, out value))
+                {
+                    return null;
+                }
+
+                index[i++] = value;
+            }
+
+            var span = MemoryMarshal.AsBytes<ushort>(index.Slice(0, index.Length - 1));
+            var checksum = (uint)(XxHash3.Hash64(span) % divisor);
+            if (checksum != index[index.Length - 1])
             {
                 return null;
             }
 
-            index[i] = j;
+            var byteCount = Encoding.UTF8.GetByteCount(phrase);
+            byte[]? rentedUtf8 = null;
+            Span<byte> utf8 = byteCount <= 1024
+                ? stackalloc byte[byteCount]
+                : (rentedUtf8 = ArrayPool<byte>.Shared.Rent(byteCount)).AsSpan(0, byteCount);
+            try
+            {
+                Encoding.UTF8.GetBytes(phrase, utf8);
+                return Sha3Helper.Get256_ByteArray(utf8);
+            }
+            finally
+            {
+                utf8.Clear();
+                if (rentedUtf8 is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedUtf8);
+                }
+            }
         }
-
-        var span = MemoryMarshal.AsBytes<ushort>(index.AsSpan().Slice(0, index.Length - 1));
-        var checksum = (uint)(XxHash3.Hash64(span) % divisor);
-        if (checksum != index[index.Length - 1])
+        finally
         {
-            return null;
+            index.Clear();
+            if (rentedIndices is not null)
+            {
+                ArrayPool<ushort>.Shared.Return(rentedIndices);
+            }
         }
+    }
 
-        var seed = Sha3Helper.Get256_ByteArray(Encoding.UTF8.GetBytes(seedphrase));
-        return seed;
+    private readonly ref struct PhraseState(ReadOnlySpan<ushort> indices, ushort checksum)
+    {
+        public ReadOnlySpan<ushort> Indices { get; } = indices;
+
+        public ushort Checksum { get; } = checksum;
     }
 
     /*

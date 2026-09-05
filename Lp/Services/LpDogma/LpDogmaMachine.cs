@@ -148,7 +148,7 @@ public partial class LpDogmaMachine : Machine
 
         // var creditIdentity = new CreditIdentity(LpConstants.LpIdentifier, evol.Originator, [evol.Merger]);
 
-        if (result.FullCredit.Contains(proof))
+        if (await result.FullCredit.ContainsAsync(proof).ConfigureAwait(false))
         {
             return StateResult.Continue;
         }

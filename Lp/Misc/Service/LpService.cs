@@ -108,29 +108,44 @@ public class LpService
             return new(NetResult.NoNetwork);
         }
 
-        using (var connection = await this.NetTerminal.Connect(netNode))
+        var connection = await this.NetTerminal.Connect(netNode).ConfigureAwait(false);
+        if (connection is null)
         {
-            if (connection is null)
-            {
-                this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
-                return new(NetResult.NoNetwork);
-            }
+            this.userInterfaceService.WriteLine($"Could not connect to {netNode.ToString()}");
+            return new(NetResult.NoNetwork);
+        }
 
+        var transferred = false;
+        try
+        {
             var service = connection.GetService<TService>();
             // var authenticationToken = AuthenticationToken.CreateAndSign(seedKey, connection);
             var ownerToken = OwnerToken.CreateAndSign(seedKey, connection, credit);
-            var r = await service.Authenticate(ownerToken);
+            var r = await service.Authenticate(ownerToken).ConfigureAwait(false);
             if (r != NetResult.Success)
             {
                 return new(r);
             }
 
+            transferred = true;
             return new(connection, service);
+        }
+        finally
+        {
+            if (!transferred)
+            {
+                connection.Dispose();
+            }
         }
     }
 
     public CredentialEvidence? ResolveMerger(Credit credit)
     {
+        if (credit.MergerCount == 0)
+        {
+            return null;
+        }
+
         this.Credentials.Nodes.TryGet(credit.Mergers[0], out var credentialEvidence);
         return credentialEvidence;
     }
@@ -156,7 +171,10 @@ public class LpService
             }
 
             memory = memory.Slice(read);
-            TryParsePoint();
+            if (!TryParsePoint())
+            {
+                return new(ParseResultCode.InvalidFormat);
+            }
 
             if (!Credit.TryParse(memory.Span, out credit, out read, this.conversionOptions))
             {
@@ -179,7 +197,10 @@ public class LpService
             }
 
             memory = memory.Slice(index);
-            TryParsePoint();
+            if (!TryParsePoint())
+            {
+                return new(ParseResultCode.InvalidFormat);
+            }
 
             if (!Credit.TryParse(memory.Span, out credit, out read, this.conversionOptions))
             {
@@ -195,19 +216,23 @@ public class LpService
 
         return new(ParseResultCode.Success, seedKey, point, credit);
 
-        void TryParsePoint()
+        bool TryParsePoint()
         {
-            var pointIndex = memory.Span.IndexOf(LpConstants.PointSymbol);
-            if (pointIndex >= 0)
+            if (memory.IsEmpty || memory.Span[0] != LpConstants.PointSymbol)
             {
-                pointIndex++;
-                var creditIndex = memory.Span.Slice(pointIndex).IndexOf(LpConstants.CreditSymbol);
-                if (creditIndex >= 0)
-                {
-                    Point.TryParse(memory.Span.Slice(pointIndex, creditIndex), out point);
-                    memory = memory.Slice(pointIndex + creditIndex);
-                }
+                return true;
             }
+
+            var creditIndex = memory.Span.IndexOf(LpConstants.CreditSymbol);
+            if (creditIndex < 0 ||
+                !Point.TryParse(memory.Span.Slice(1, creditIndex - 1), out point) ||
+                point < LpConstants.MinPoint || point > LpConstants.MaxPoint)
+            {
+                return false;
+            }
+
+            memory = memory.Slice(creditIndex);
+            return true;
         }
     }
 

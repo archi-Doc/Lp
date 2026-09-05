@@ -16,8 +16,9 @@ public class ProofTest
 
     public ProofTest()
     {
-        NetNode.TryParse("12.34.56.78:4567[1111:2222:3333:4444:5555:6666:7777:8888]:5678(e:hRp62w_fsJ9YeLVyyrXnPPilxUOKGePvaYsqJtE8GJenll5C)", out var node, out _);
-        this.testNode = node!;
+        var encryptionKey = SeedKey.NewEncryption().GetEncryptionPublicKey();
+        this.testNode = new NetNode(new NetAddress(System.Net.IPAddress.Parse("12.34.56.78"), System.Net.IPAddress.Parse("1111:2222:3333:4444:5555:6666:7777:8888"), 4567), encryptionKey);
+        Assert.True(this.testNode.Validate());
     }
 
     /*[Fact]

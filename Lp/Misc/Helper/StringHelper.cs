@@ -17,7 +17,7 @@ public static class StringHelper
 
         var source = message;
         var prefixCount = 1 + source.Count('\n');
-        var maxLength = message.Length + (prefix.Length * prefixCount);
+        var maxLength = checked(message.Length + (prefix.Length * prefixCount));
         var rent = ArrayPool<char>.Shared.Rent(maxLength);
         var destination = rent.AsSpan();
 
@@ -112,46 +112,78 @@ public static class StringHelper
     /// <returns>The result.</returns>
     public static string CleanupInput(this string input)
     {
-        var span = input.AsSpan();
-        Span<char> dest = stackalloc char[input.Length];
-
-        // Remove control characters.
-        var destLength = 0;
-        foreach (var x in span)
+        if (input.Length <= 256)
         {
-            if (!char.IsControl(x))
+            Span<char> buffer = stackalloc char[input.Length];
+            var written = 0;
+            foreach (var c in input)
             {
-                dest[destLength++] = x;
+                if (!char.IsControl(c))
+                {
+                    buffer[written++] = c;
+                }
             }
+
+            var first = 0;
+            while (first < written && char.IsWhiteSpace(buffer[first]))
+            {
+                first++;
+            }
+
+            var last = written - 1;
+            while (first < last && char.IsWhiteSpace(buffer[last]))
+            {
+                last--;
+            }
+
+            return first == 0 && last == input.Length - 1 ? input : buffer.Slice(first, last - first + 1).ToString();
         }
 
         // Leading white-space
         var start = 0;
-        for (start = 0; start < destLength; start++)
+        while (start < input.Length && (char.IsWhiteSpace(input[start]) || char.IsControl(input[start])))
         {
-            if (!char.IsWhiteSpace(dest[start]))
-            {
-                break;
-            }
+            start++;
         }
 
         // Trailing white-space
-        var end = destLength - 1;
-        for (; start < end; end--)
+        var end = input.Length;
+        while (start < end && (char.IsWhiteSpace(input[end - 1]) || char.IsControl(input[end - 1])))
         {
-            if (!char.IsWhiteSpace(dest[end]))
+            end--;
+        }
+
+        // Remove control characters.
+        var length = end - start;
+        for (var i = start; i < end; i++)
+        {
+            if (char.IsControl(input[i]))
             {
-                break;
+                length--;
             }
         }
 
-        if (start == 0 && end == (input.Length - 1))
+        if (length == input.Length)
         {// Returns the original string.
             return input;
         }
-        else
-        {// Cleaned string.
-            return dest.Slice(start, end - start + 1).ToString();
+
+        if (length == end - start)
+        {
+            return input.Substring(start, length);
         }
+
+        return string.Create(length, (Input: input, Start: start, End: end), static (destination, state) =>
+        {// Cleaned string.
+            var written = 0;
+            for (var i = state.Start; i < state.End; i++)
+            {
+                var c = state.Input[i];
+                if (!char.IsControl(c))
+                {
+                    destination[written++] = c;
+                }
+            }
+        });
     }
 }

@@ -110,13 +110,8 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
     {
         written = 0;
-        if (destination.Length < MaxStringLength)
-        {
-            return false;
-        }
-
         var span = destination;
-        if (!this.Owner.TryFormat(span, out var ownerWritten, conversionOptions))
+        if (!this.Owner.TryFormat(span, out var ownerWritten, conversionOptions) || span.Length <= ownerWritten)
         {
             return false;
         }

@@ -85,14 +85,16 @@ public abstract partial class ProofWithSigner : Proof
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Owner);
         }
-        else if (this.Signer > 0 && this.Signer <= LpConstants.MaxMergers)
+        else if (this.Signer > 0 && this.Signer <= this.Value.Credit.MergerCount)
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.Merger);
         }
-        else
+        else if (this.Signer == -1)
         {
             return this.PermittedSigner.HasFlag(PermittedSigner.LpKey);
         }
+
+        return false;
     }
 
     public override bool PrepareForSigning(ref SignaturePublicKey publicKey, int validitySeconds)
@@ -136,7 +138,7 @@ public abstract partial class ProofWithSigner : Proof
                 goto Success;
             }
 
-            if (this.Value.Credit.Mergers[2].Equals(ref publicKey))
+            if (mergerCount > 2 && this.Value.Credit.Mergers[2].Equals(ref publicKey))
             {// Merger-2
                 this.Signer = 3;
                 goto Success;

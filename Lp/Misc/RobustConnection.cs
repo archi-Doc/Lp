@@ -87,12 +87,12 @@ public class RobustConnection
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, SeedKey seedKey)
     {
         var context = connection.GetContext();
-        var token = AuthenticationToken.CreateAndSign(seedKey, connection);
-        if (context.AuthenticationTokenEquals(token.PublicKey))
+        if (context.AuthenticationTokenEquals(seedKey.GetSignaturePublicKey()))
         {
             return true;
         }
 
+        var token = AuthenticationToken.CreateAndSign(seedKey, connection);
         var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
         return result == NetResult.Success;
     }
@@ -109,17 +109,6 @@ public class RobustConnection
             return currentConnection;
         }
 
-        // Suppress frequent reconnection.
-        var currentSystemMics = Mics.GetSystem();
-        if (currentSystemMics < this.lastConnectionMics + this.DurationToSuppressReconnection)
-        {
-            return default;
-        }
-        else
-        {
-            this.lastConnectionMics = currentSystemMics;
-        }
-
         ClientConnection? newConnection = default;
         await this.semaphore.EnterAsync().ConfigureAwait(false);
         try
@@ -128,6 +117,15 @@ public class RobustConnection
             {// Safe
                 return this.connection;
             }
+
+            // Suppress frequent reconnection.
+            var currentSystemMics = Mics.GetSystem();
+            if (currentSystemMics < this.lastConnectionMics + this.DurationToSuppressReconnection)
+            {
+                return default;
+            }
+
+            this.lastConnectionMics = currentSystemMics;
 
             if (this.connection is not null)
             {
@@ -153,6 +151,11 @@ public class RobustConnection
         }
         finally
         {
+            if (newConnection is not null && !ReferenceEquals(this.connection, newConnection))
+            {
+                newConnection.Dispose();
+            }
+
             this.semaphore.Exit();
         }
 

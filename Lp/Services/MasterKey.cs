@@ -39,15 +39,15 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
             return false;
         }
 
-        var seed = new byte[Size];
-        if (!Base64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out _))
+        Span<byte> seed = stackalloc byte[Size];
+        if (!Base64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out var decoded) || decoded != Size)
         {
             masterKey = null;
             read = 0;
             return false;
         }
 
-        masterKey = new MasterKey(seed);
+        masterKey = new MasterKey(seed.ToArray());
         read = MaxStringLength;
         return true;
     }
@@ -57,6 +57,12 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
 
     public bool TryFormat(Span<char> destination, out int written, IConversionOptions? conversionOptions = default)
     {
+        if (destination.Length < MaxStringLength)
+        {
+            written = 0;
+            return false;
+        }
+
         written = Base64Url.Encode(this.seed, destination);
         return true;
     }
@@ -93,11 +99,13 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
         cipher[30] ^= (byte)kind;
 
         Span<byte> key32 = stackalloc byte[Aegis256.KeySize];
-        this.seed[0] ^= (byte)kind;
-        this.seed[24] ^= (byte)kind;
-        Blake3.Get256_Span(this.seed, key32);
-        this.seed[0] ^= (byte)kind; // Restore
-        this.seed[24] ^= (byte)kind;
+        Span<byte> keySource = stackalloc byte[Size];
+        this.seed.CopyTo(keySource);
+        keySource[0] ^= (byte)kind;
+        keySource[24] ^= (byte)kind;
+        Blake3.Get256_Span(keySource, key32);
+        // Restore
+        // The shared seed no longer needs restoring because only keySource is modified.
 
         Span<byte> nonce32 = stackalloc byte[Aegis256.NonceSize];
         this.seed.AsSpan(0, Aegis256.NonceSize).CopyTo(nonce32);

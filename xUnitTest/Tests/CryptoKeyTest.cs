@@ -8,6 +8,37 @@ namespace xUnitTest;
 
 public class CryptoKeyTest
 {
+    [Theory]
+    [InlineData("()x")]
+    [InlineData("(")]
+    [InlineData("(:)")]
+    [InlineData("(!)")]
+    [InlineData("not a key")]
+    public void MalformedKeysDoNotThrow(string text)
+    {
+        Assert.False(CryptoKey.TryParse(text, out _, out _));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OwnershipRoundTripsWithTrailingCredit(bool encrypted)
+    {
+        var original = SeedKey.NewSignature();
+        var publicKey = original.GetSignaturePublicKey();
+        var mergerKey = SeedKey.NewEncryption().GetEncryptionPublicKey();
+        var key = encrypted ? new CryptoKey(original, ref mergerKey, true) : new CryptoKey(ref publicKey, true);
+        var credit = new Credit(default, [publicKey, publicKey, publicKey]);
+        var ownership = new CryptoOwnership(key, credit);
+        var text = ownership.ToString();
+        Assert.True(CryptoOwnership.TryParse(text, out var parsed, out var read));
+        Assert.Equal(text.Length, read);
+        Assert.Equal(ownership, parsed);
+        Assert.True(CryptoKey.TryParse(text, out var parsedKey, out read));
+        Assert.Equal(key.ToString().Length, read);
+        Assert.Equal(key, parsedKey);
+    }
+
     [Fact]
     public void Test1()
     {

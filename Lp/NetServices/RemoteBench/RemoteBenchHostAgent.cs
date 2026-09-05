@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
 using Netsphere.Crypto;
 
 namespace Lp.NetServices;
@@ -43,30 +44,34 @@ public class RemoteBenchHostAgent : IRemoteBenchHost, IRemoteBenchService
         var transmissionContext = TransmissionContext.Current;
         var stream = transmissionContext.GetReceiveStream<ulong>();
 
-        var buffer = new byte[100_000];
+        var buffer = ArrayPool<byte>.Shared.Rent(100_000);
         var hash = new XxHash3();
-        long total = 0;
-
-        while (true)
+        try
         {
-            var r = await stream.Receive(buffer);
-            if (r.Result == NetResult.Success ||
-                r.Result == NetResult.Completed)
+            while (true)
             {
-                hash.Append(buffer.AsMemory(0, r.Written).Span);
-                total += r.Written;
-            }
-            else
-            {
-                break;
-            }
+                var r = await stream.Receive(buffer.AsMemory(0, 100_000));
+                if (r.Result == NetResult.Success ||
+                    r.Result == NetResult.Completed)
+                {
+                    hash.Append(buffer.AsSpan(0, r.Written));
+                }
+                else
+                {
+                    break;
+                }
 
-            if (r.Result == NetResult.Completed)
-            {
-                // transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
-                stream.SendAndDispose(hash.GetCurrentHashAsUInt64());
-                break;
+                if (r.Result == NetResult.Completed)
+                {
+                    // transmissionContext.SendAndForget(BitConverter.ToUInt64(hash.HashFinal()));
+                    stream.SendAndDispose(hash.GetCurrentHashAsUInt64());
+                    break;
+                }
             }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         return default;

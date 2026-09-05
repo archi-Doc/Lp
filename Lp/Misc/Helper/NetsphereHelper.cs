@@ -11,12 +11,13 @@ public static class NetsphereHelper
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority)
     {
         var context = connection.GetContext();
-        var token = AuthenticationToken.CreateAndSign(authority.GetSeedKey(), connection);
-        if (context.AuthenticationTokenEquals(token.PublicKey))
+        var seedKey = authority.GetSeedKey();
+        if (context.AuthenticationTokenEquals(seedKey.GetSignaturePublicKey()))
         {
             return true;
         }
 
+        var token = AuthenticationToken.CreateAndSign(seedKey, connection);
         var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
         return result == NetResult.Success;
     }
@@ -24,12 +25,13 @@ public static class NetsphereHelper
     public static async Task<bool> SetAuthenticationToken(ClientConnection connection, Authority authority, Credit credit)
     {
         var context = connection.GetContext();
-        var token = AuthenticationToken.CreateAndSign(authority.GetSeedKey(credit), connection);
-        if (context.AuthenticationTokenEquals(token.PublicKey))
+        var seedKey = authority.GetSeedKey(credit);
+        if (context.AuthenticationTokenEquals(seedKey.GetSignaturePublicKey()))
         {
             return true;
         }
 
+        var token = AuthenticationToken.CreateAndSign(seedKey, connection);
         var result = await connection.SetAuthenticationToken(token).ConfigureAwait(false);
         return result == NetResult.Success;
     }

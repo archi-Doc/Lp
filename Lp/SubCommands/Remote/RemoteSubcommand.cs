@@ -172,7 +172,6 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                     {
                         receiver.Id = executionGroup2.Id;
 
-                        Console.WriteLine($"Server {serverConnection.Agreement}, Client {connection.Agreement}");//
                         var netResult = await senderService.Send(executionGroup2.Id, result.Text).ConfigureAwait(false);
                         if (netResult != NetResult.Success)
                         {

@@ -16,7 +16,12 @@ public partial class PeerProof : ProofWithPublicKey
         public PeerProof? GetRandomInternal()
         {// LockObject
             var node = this.LinkedListChain.First;
-            var count = RandomVault.Default.NextInt32(Math.Max(this.LinkedListChain.Count, MaxRandom));
+            if (node is null)
+            {
+                return null;
+            }
+
+            var count = RandomVault.Default.NextInt32(Math.Min(this.LinkedListChain.Count, MaxRandom));
             while (count-- > 0)
             {
                 node = node!.LinkedListLink.Next;

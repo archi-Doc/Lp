@@ -66,7 +66,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
 
     public bool Validate()
     {
-        if (!this.Credit.Validate())
+        if (this.Credit is null || !this.Credit.Validate())
         {
             return false;
         }
@@ -85,14 +85,21 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
             return false;
         }
 
+        var writer = TinyhandWriter.CreateFromBytePool();
+        writer.Level = TinyhandWriter.DefaultSignatureLevel;
         try
         {
-            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
-            return this.Authority.Verify(bytes, this.Signature);
+            TinyhandSerializer.SerializeObject(ref writer, this, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            return this.Authority.Verify(span, this.Signature);
         }
         catch
         {
             return false;
+        }
+        finally
+        {
+            writer.Dispose();
         }
     }
 
@@ -103,13 +110,17 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
             return false;
         }
 
-        return true;
+        return this.OrderType == other.OrderType &&
+            this.Point == other.Point &&
+            EqualityComparer<Credit>.Default.Equals(this.Credit, other.Credit) &&
+            this.Authority.Equals(other.Authority) &&
+            this.OrderCondition.Equals(other.OrderCondition) &&
+            this.ExpirationMics == other.ExpirationMics &&
+            this.Signature.AsSpan().SequenceEqual(other.Signature);
     }
 
     public override int GetHashCode()
     {
-        var hash = default(HashCode);
-
-        return hash.ToHashCode();
+        return HashCode.Combine(this.OrderType, this.Point, this.Credit, this.Authority, this.OrderCondition, this.ExpirationMics);
     }
 }

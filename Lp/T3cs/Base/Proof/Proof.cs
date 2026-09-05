@@ -149,7 +149,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
     /// <returns><c>true</c> if the proof is valid; otherwise, <c>false</c>.</returns>
     public virtual bool Validate(ValidationOption validationOptions)
     {
-        if (this.ValiditySeconds == 0)
+        if (this.ValiditySeconds <= 0)
         {
             return false;
         }

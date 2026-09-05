@@ -102,6 +102,7 @@ public sealed partial class ContractableEvidence : Evidence
 
     internal void FromLinkage(Linkage linkage, bool isPrimary)
     {
+        this.IsPrimary = isPrimary;
         if (isPrimary)
         {
             this.MergerSignature0 = linkage.MergerSignature10;

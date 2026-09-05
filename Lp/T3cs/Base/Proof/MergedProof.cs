@@ -48,8 +48,7 @@ public partial class MergedProof : Proof
 
     public override bool Validate(ValidationOption validationOptions)
     {
-        if (this.MergerIndex < 0 ||
-            this.MergerIndex >= LpConstants.MaxMergers)
+        if (!this.Value.Validate() || this.MergerIndex >= this.Value.Credit.MergerCount)
         {
             return false;
         }

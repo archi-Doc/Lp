@@ -19,16 +19,10 @@ internal readonly struct VisceralOperation<T> : IVisceralOperation<T>
 
     public bool TryGet<TValue>(string name, [MaybeNullWhen(false)] out TValue value)
     {
-        if (this.ope.TryGet(this.instance, name, out var v))
+        if (this.ope.TryGet(this.instance, name, out var v) && v is TValue typed)
         {
-            try
-            {
-                value = (TValue?)v;
-                return value != null;
-            }
-            catch
-            {
-            }
+            value = typed;
+            return true;
         }
 
         value = default;

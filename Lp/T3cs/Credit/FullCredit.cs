@@ -52,7 +52,18 @@ public partial record FullCredit
     /// <returns><c>true</c> if the proof exists; otherwise, <c>false</c>.</returns>
     public bool Contains(EvolProof proof)
     {
-        var ownerData = this.GetOwnerData(proof.SourceValue.Owner);
+        var pending = this.ContainsAsync(proof);
+        return pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Checks owner data for the proof without blocking while storage is loaded.
+    /// </summary>
+    /// <param name="proof">The proof to find.</param>
+    /// <returns>Whether a proof with the same content exists.</returns>
+    public async ValueTask<bool> ContainsAsync(EvolProof proof)
+    {
+        var ownerData = await this.GetOwnerData(proof.SourceValue.Owner).ConfigureAwait(false);
         if (ownerData is null)
         {
             return false;
@@ -76,9 +87,9 @@ public partial record FullCredit
     /// </summary>
     /// <param name="ownerPublicKey">The public key of the owner.</param>
     /// <returns>The <see cref="OwnerData"/> if found; otherwise, <c>null</c>.</returns>
-    private OwnerData? GetOwnerData(SignaturePublicKey ownerPublicKey)
+    private async ValueTask<OwnerData?> GetOwnerData(SignaturePublicKey ownerPublicKey)
     {
-        var ownerData = this.Owners.TryGet().Result;
+        var ownerData = await this.Owners.TryGet().ConfigureAwait(false);
         if (ownerData is null)
         {
             return default;

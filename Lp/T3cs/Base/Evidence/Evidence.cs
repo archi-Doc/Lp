@@ -37,7 +37,7 @@ public abstract partial class Evidence
     public virtual bool ValidateAndVerify(ValidationOption validationOptions = default, int mergerIndex = LpConstants.MaxMergers)
     {
         if (!this.BaseProof.TryGetCredit(out var credit) ||
-            !this.BaseProof.ValidateAndVerify())
+            !this.BaseProof.ValidateAndVerify(validationOptions))
         {
             return false;
         }
@@ -47,6 +47,11 @@ public abstract partial class Evidence
 
     public bool ValidateAndVerifyExceptProof(ValidationOption validationOptions, int mergerIndex = LpConstants.MaxMergers)
     {
+        if (mergerIndex < 0)
+        {
+            return false;
+        }
+
         if (!this.Validate(validationOptions))
         {
             return false;
@@ -87,10 +92,8 @@ public abstract partial class Evidence
             try
             {
                 ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-                var rentMemory = writer.FlushAndGetRentMemory();
-                var result = credit.Mergers[mergerIndex].Verify(rentMemory.Span, signature);
-                rentMemory.Return();
-                return result;
+                writer.FlushAndGetReadOnlySpan(out var span, out _);
+                return credit.Mergers[mergerIndex].Verify(span, signature);
             }
             catch
             {

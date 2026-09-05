@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+    <ProjectReference Include="..\Lp\Lp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

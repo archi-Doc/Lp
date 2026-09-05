@@ -9,6 +9,27 @@ namespace xUnitTest;
 
 public class CreditTest
 {
+    [Theory]
+    [InlineData(0)]
+    [InlineData(111)]
+    [InlineData(-111)]
+    [InlineData(long.MinValue)]
+    [InlineData(long.MaxValue)]
+    public void ValueFormatsIntoAnExactlySizedBuffer(long point)
+    {
+        var key = SeedKey.NewSignature().GetSignaturePublicKey();
+        var value = new Value(key, point, new Credit(default, [key]));
+        var expected = value.ToString();
+        var destination = new char[expected.Length];
+        Assert.True(value.TryFormat(destination, out var written));
+        Assert.Equal(expected.Length, written);
+        Assert.Equal(expected, new string(destination));
+        Assert.False(value.TryFormat(destination.AsSpan(1), out written));
+        Assert.Equal(0, written);
+        Assert.False(value.TryFormat(Span<char>.Empty, out written));
+        Assert.Equal(0, written);
+    }
+
     [Fact]
     public void TestCodeAndCredit()
     {

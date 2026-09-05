@@ -25,10 +25,8 @@ public static class CryptoHelper
         try
         {
             TinyhandSerializer.SerializeObject<Proof>(ref writer, proof, TinyhandSerializerOptions.Signature);
-            var rentMemory = writer.FlushAndGetRentMemory();
-            var result = proof.GetSignatureKey().Verify(rentMemory.Span, proof.Signature);
-            rentMemory.Return();
-            return result;
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            return proof.GetSignatureKey().Verify(span, proof.Signature);
         }
         finally
         {

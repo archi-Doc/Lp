@@ -39,6 +39,7 @@ internal class VisceralOperator<T>
 
             this.GetMethod = getMethod;
             this.SetMethod = setMethod;
+            this.FieldInfo = fieldInfo;
         }
 
         public string Name { get; private set; }

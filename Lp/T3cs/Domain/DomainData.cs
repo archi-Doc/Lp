@@ -86,7 +86,12 @@ public partial class DomainData
 
     internal async Task MaintainRoot(CancellationToken cancellationToken)
     {
-        var creditIdentity = new CreditIdentity(default, this.domainSeedKey.GetSignaturePublicKey(), this.Credit.Mergers);
+        if (this.domainSeedKey is not { } seedKey)
+        {
+            return;
+        }
+
+        var creditIdentity = new CreditIdentity(default, seedKey.GetSignaturePublicKey(), this.Credit.Mergers);
         using (var scope = await this.creditService.CreateEquityCredit(creditIdentity))
         {
             if (scope.IsValid)

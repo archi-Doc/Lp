@@ -176,10 +176,8 @@ public partial class Linkage
         try
         {
             ((ITinyhandSerializable)this).Serialize(ref writer, TinyhandSerializerOptions.Signature);
-            var rentMemory = writer.FlushAndGetRentMemory();
-            var result = linkerPublicKey.Verify(rentMemory.Span, this.linkerSignature);
-            rentMemory.Return();
-            return result;
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            return linkerPublicKey.Verify(span, this.linkerSignature);
         }
         catch
         {

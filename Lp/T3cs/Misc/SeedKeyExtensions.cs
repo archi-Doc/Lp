@@ -9,7 +9,7 @@ public static class SeedKeyExtensions
 {
     public static bool TrySign(this SeedKey seedKey, Proof proof, int validitySeconds)
     {
-        if (validitySeconds > proof.MaxValiditySeconds)
+        if (validitySeconds <= 0 || validitySeconds > proof.MaxValiditySeconds)
         {
             return false;
         }
@@ -25,7 +25,6 @@ public static class SeedKeyExtensions
             }
 
             TinyhandSerializer.SerializeObject<Proof>(ref writer, proof, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[Blake3.Size];
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             var signature = new byte[CryptoSign.SignatureSize];
@@ -55,7 +54,7 @@ public static class SeedKeyExtensions
             return false;
         }
 
-        if (credit.MergerCount <= mergerIndex ||
+        if ((uint)mergerIndex >= (uint)credit.MergerCount ||
             !credit.Mergers[mergerIndex].Equals(seedKey.GetSignaturePublicKey()))
         {
             return false;
@@ -167,7 +166,6 @@ public static class SeedKeyExtensions
         try
         {
             TinyhandSerializer.SerializeObject<Linkage>(ref writer, linkage, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[Blake3.Size];
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             var signature = new byte[CryptoSign.SignatureSize];

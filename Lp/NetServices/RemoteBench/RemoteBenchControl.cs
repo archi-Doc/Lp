@@ -51,11 +51,9 @@ public class RemoteBenchControl
             }
         }
 
-        Task[] tasks = new Task[array.Length];
         for (var i = 0; i < array.Length; i++)
         {
-            var c = array[i];
-            tasks[i] = Task.Run(() => Process(i, c));
+            _ = Process(i, array[i]);
         }
 
         async Task Process(int index, ClientConnection clientConnection)

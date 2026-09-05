@@ -50,7 +50,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     {// (:encrypted), (!raw), (id:encrypted), (id!raw)
         uint subKey = 0;
         @object = null;
-        if (source.Length < 3 || source.Length > MaxStringLength)
+        if (source.Length < 3)
         {
             goto Failure;
         }
@@ -61,7 +61,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
         }
 
         var last = source.IndexOf(SeedKeyHelper.PublicKeyCloseBracket);
-        if (last < 0)
+        if (last < 2 || last >= MaxStringLength)
         {
             goto Failure;
         }
