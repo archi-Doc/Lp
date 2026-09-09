@@ -142,7 +142,13 @@ public sealed partial class Vault
             return false;
         }
 
-        return TinyhandSerializer.TryDeserialize(byteArray, out obj);
+        if (TinyhandSerializer.TryDeserialize(byteArray, out obj))
+        {
+            return true;
+        }
+
+        result = VaultResult.DeserializationFailure;
+        return false;
     }
 
     public bool TryGetByteArray(string name, [MaybeNullWhen(false)] out byte[] byteArray, out VaultResult result)
@@ -396,10 +402,25 @@ public sealed partial class Vault
                 return Array.Empty<string>();
             }
 
-            var list = new List<string>();
+            // Count the nodes in the range first so that the result array is allocated exactly once.
+            var count = 0;
+            var node = lower;
+            while (node != null)
+            {
+                count++;
+                if (node == upper)
+                {
+                    break;
+                }
+
+                node = node.Next;
+            }
+
+            var names = new string[count];
+            var index = 0;
             while (lower != null)
             {
-                list.Add(lower.Key); // list.Add(node.Key.Substring(prefix.Length));
+                names[index++] = lower.Key; // list.Add(node.Key.Substring(prefix.Length));
 
                 if (lower == upper)
                 {
@@ -411,7 +432,7 @@ public sealed partial class Vault
                 }
             }
 
-            return list.ToArray(); // this.nameToItem.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
+            return names; // this.nameToItem.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
         }
     }
 
@@ -419,7 +440,14 @@ public sealed partial class Vault
     {
         using (this.lockObject.EnterScope())
         {
-            return this.nameToItem.Select(x => x.Key).ToArray();
+            var names = new string[this.nameToItem.Count];
+            var index = 0;
+            foreach ((var key, _) in this.nameToItem)
+            {
+                names[index++] = key;
+            }
+
+            return names;
         }
     }
 
@@ -503,7 +531,7 @@ public sealed partial class Vault
         {// Delete invalid items.
             foreach (var x in toDelete)
             {
-                this.Remove(x);
+                this.RemoveInternal(x);
             }
 
             this.SetModifiedFlag();

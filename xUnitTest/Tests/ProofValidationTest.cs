@@ -110,7 +110,7 @@ public class ProofValidationTest
         Assert.True(merger1.TrySign(evidence1, 0));
         Assert.True(merger2.TrySign(evidence2, 0));
         Assert.True(Linkage.TryCreate(evidence1, evidence2, out var linkage));
-        Assert.True(linker.TrySign(linkage, 60));
+        Assert.True(linker.TrySign(linkage));
         for (var i = 0; i < 10; i++)
         {
             Assert.True(linkage.ValidateAndVerify());

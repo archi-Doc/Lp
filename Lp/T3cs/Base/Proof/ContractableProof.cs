@@ -49,7 +49,7 @@ public abstract partial class ContractableProof : Proof
         return this.SignId == other.SignId &&
             this.SignedMics == other.SignedMics &&
             this.ValiditySeconds == other.ValiditySeconds &&
-            this.Signature.SequenceEqual(other.Signature) &&
+            this.Signature.AsSpan().SequenceEqual(other.Signature) &&
             this.GetSignatureKey().Equals(other.GetSignatureKey()) &&
             this.LinkerPublicKey.Equals(other.LinkerPublicKey);
     }

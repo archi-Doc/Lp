@@ -83,7 +83,7 @@ public class ProofTest
         linkageEvidence2.ValidateAndVerify().IsTrue();
 
         Linkage.TryCreate(linkageEvidence, linkageEvidence2, out var linkage).IsTrue();
-        linkerKey.TrySign(linkage!, validitySeconds).IsTrue();
+        linkerKey.TrySign(linkage!).IsTrue();
 
         linkage!.ValidateAndVerify().IsTrue();
 

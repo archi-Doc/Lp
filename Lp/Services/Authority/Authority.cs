@@ -133,7 +133,7 @@ public sealed partial class Authority
         => this.GetSeedKey(credit).GetSignaturePublicKey();
 
     public override int GetHashCode()
-        => BitConverter.ToInt32(this.seed.AsSpan());
+        => this.seed.Length >= sizeof(int) ? BitConverter.ToInt32(this.seed.AsSpan()) : this.seed.Length;
 
     public override string ToString()
         => $"PublicKey=\"{this.GetSeedKey().GetSignaturePublicKey()}\", Lifetime={this.Lifecycle}, DurationMics={this.DurationMics}";

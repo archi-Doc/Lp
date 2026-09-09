@@ -86,7 +86,7 @@ public sealed partial class OwnerToken : ISignAndVerify, IEquatable<OwnerToken>,
         }
 
         return this.PublicKey.Equals(other.PublicKey) &&
-            this.Signature.SequenceEqual(other.Signature) &&
+            this.Signature.AsSpan().SequenceEqual(other.Signature) &&
             this.SignedMics == other.SignedMics &&
             this.Salt == other.Salt;
     }

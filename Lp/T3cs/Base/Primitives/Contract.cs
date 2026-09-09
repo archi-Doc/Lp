@@ -61,7 +61,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     {
         if (options.IsSignatureMode)
         {
-            if (v.proofOrIdentifier is ContractableProof proof)
+            if (v.proofOrIdentifier is ContractableProof)
             {
                 // v.GetIdentifier(writer.Level); // Cannot use a thread static buffer.
                 Span<byte> span = stackalloc byte[Identifier.Length];

@@ -46,17 +46,6 @@ public partial record FullCredit
     }
 
     /// <summary>
-    /// Determines whether the specified <see cref="EvolProof"/> is contained within the owner data of this full credit.
-    /// </summary>
-    /// <param name="proof">The <see cref="EvolProof"/> to check for existence.</param>
-    /// <returns><c>true</c> if the proof exists; otherwise, <c>false</c>.</returns>
-    public bool Contains(EvolProof proof)
-    {
-        var pending = this.ContainsAsync(proof);
-        return pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
-    }
-
-    /// <summary>
     /// Checks owner data for the proof without blocking while storage is loaded.
     /// </summary>
     /// <param name="proof">The proof to find.</param>

@@ -240,7 +240,7 @@ public class LpService
     {
         SeedKey? seedKey;
 
-        if (code.Equals("Merger", StringComparison.InvariantCultureIgnoreCase))
+        if (code.Equals("Merger", StringComparison.OrdinalIgnoreCase))
         {
             if (this.serviceProvider.GetService<Merger>() is { } merger &&
                 merger.SeedKey.IsValid)
@@ -248,7 +248,7 @@ public class LpService
                 return merger.SeedKey;
             }
         }
-        else if (code.Equals("RelayMerger", StringComparison.InvariantCultureIgnoreCase))
+        else if (code.Equals("RelayMerger", StringComparison.OrdinalIgnoreCase))
         {
             if (this.serviceProvider.GetService<RelayMerger>() is { } relayMerger &&
                 relayMerger.SeedKey.IsValid)
@@ -256,7 +256,7 @@ public class LpService
                 return relayMerger.SeedKey;
             }
         }
-        else if (code.Equals("Linker", StringComparison.InvariantCultureIgnoreCase))
+        else if (code.Equals("Linker", StringComparison.OrdinalIgnoreCase))
         {
             if (this.serviceProvider.GetService<Linker>() is { } linker &&
                 linker.SeedKey.IsValid)

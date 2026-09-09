@@ -36,7 +36,7 @@ public abstract partial class Evidence
 
     public virtual bool ValidateAndVerify(ValidationOption validationOptions = default, int mergerIndex = LpConstants.MaxMergers)
     {
-        if (!this.BaseProof.TryGetCredit(out var credit) ||
+        if (!this.BaseProof.TryGetCredit(out _) ||
             !this.BaseProof.ValidateAndVerify(validationOptions))
         {
             return false;

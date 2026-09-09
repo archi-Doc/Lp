@@ -169,17 +169,17 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
             return new(fullCredit, false);
         }
 
-        using (var w = this.creditData.TryLock(credit, AcquisitionMode.GetOrCreate))
+        using (var w = this.creditData.TryLock(credit, AcquisitionMode.CreateOnly))
         {
-            if (w is null)
-            {
-                return default;
+            if (w is not null)
+            {// Newly created
+                return new(w.Commit(), true);
             }
-
-            fullCredit = w.Commit();
         }
 
-        return new(fullCredit, false);
+        // Created by another thread while this method was running.
+        fullCredit = this.creditData.TryGet(credit);
+        return fullCredit is null ? default : new(fullCredit, false);
     }
 
     public async Task<T3csResult> CreateCredit(CreditIdentity creditIdentity)

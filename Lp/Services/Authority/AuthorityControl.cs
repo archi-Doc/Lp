@@ -91,9 +91,14 @@ public class AuthorityControl
             if (this.vaultControl.Root.TryGetVault(vaultName, null, out vault, out var result))
             {
                 authority = Authority.GetFromVault(vault);
-                if (authority is null || authority.IsExpired)
-                {
+                if (authority is null)
+                {// The vault does not hold an authority.
+                    return default;
+                }
+                else if (authority.IsExpired)
+                {// Ask for the password again in order to renew the expiration.
                     vault = null;
+                    result = VaultResult.PasswordRequired;
                 }
             }
 
@@ -125,7 +130,15 @@ public class AuthorityControl
     }
 
     public string[] GetNames()
-        => this.vaultControl.Root.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
+    {
+        var names = this.vaultControl.Root.GetNames(VaultPrefix);
+        for (var i = 0; i < names.Length; i++)
+        {
+            names[i] = names[i].Substring(VaultPrefix.Length);
+        }
+
+        return names;
+    }
 
     public bool Exists(string name)
         => this.vaultControl.Root.Contains(GetVaultName(name));

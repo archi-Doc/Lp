@@ -149,7 +149,7 @@ public static class SeedKeyExtensions
         }
     }
 
-    public static bool TrySign(this SeedKey seedKey, Linkage linkage, long validMics)
+    public static bool TrySign(this SeedKey seedKey, Linkage linkage)
     {
         if (!linkage.Proof1.TryGetLinkerPublicKey(out var linkerPublicKey))
         {

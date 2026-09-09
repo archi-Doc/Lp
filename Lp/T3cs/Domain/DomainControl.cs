@@ -134,7 +134,7 @@ public partial class DomainControl
             }
         }
 
-        var domainData = this.AddDomainInternal(domainAssignment, seedKey);
+        this.AddDomainInternal(domainAssignment, seedKey);
         return T3csResult.Success;
     }
 
@@ -200,6 +200,12 @@ public partial class DomainControl
             machine.TerminateMachine();
         }
 
-        return this.domainHashToData.TryRemove(domainHash, out _);
+        if (!this.domainHashToData.TryRemove(domainHash, out _))
+        {
+            return false;
+        }
+
+        this.domainDataArray = default;
+        return true;
     }
 }

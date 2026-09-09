@@ -21,7 +21,12 @@ public partial class Batch
 
         public async Task Execute(string[] args, CancellationToken cancellationToken)
         {
-            var names = this.vaultControl.Root.GetNames(Batch.Prefix).Select(x => x.Substring(Batch.Prefix.Length)).ToArray();
+            var names = this.vaultControl.Root.GetNames(Batch.Prefix);
+            for (var i = 0; i < names.Length; i++)
+            {
+                names[i] = names[i].Substring(Batch.Prefix.Length);
+            }
+
             this.userInterfaceService.WriteLine(string.Join(' ', names));
         }
     }

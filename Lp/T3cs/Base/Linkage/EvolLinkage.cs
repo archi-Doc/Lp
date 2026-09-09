@@ -15,7 +15,7 @@ public partial class EvolLinkage : Linkage
 
     #region Integrality
 
-    public class Integrality : Integrality<LinkLinkage.GoshujinClass, LinkLinkage>
+    public class Integrality : Integrality<EvolLinkage.GoshujinClass, EvolLinkage>
     {
         public static readonly Integrality Default = new()
         {
@@ -23,7 +23,7 @@ public partial class EvolLinkage : Linkage
             RemoveIfItemNotFound = false,
         };
 
-        public override bool Validate(LinkLinkage.GoshujinClass goshujin, LinkLinkage newItem, LinkLinkage? oldItem)
+        public override bool Validate(EvolLinkage.GoshujinClass goshujin, EvolLinkage newItem, EvolLinkage? oldItem)
         {
             if (oldItem is not null &&
                 oldItem.LinkedMics >= newItem.LinkedMics)

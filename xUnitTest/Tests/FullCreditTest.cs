@@ -9,7 +9,7 @@ namespace xUnitTest;
 public class FullCreditTest
 {
     [Fact]
-    public async Task MissingOwnerIsConsistentBetweenAsyncAndSynchronousLookups()
+    public async Task MissingOwnerIsReportedBeforeAndAfterOwnerStorageIsSet()
     {
         var key = SeedKey.NewSignature().GetSignaturePublicKey();
         var credit = new Credit(default, [key]);
@@ -17,9 +17,7 @@ public class FullCreditTest
         var proof = new EvolProof(key, value, value, null);
         var fullCredit = new FullCredit(credit);
         Assert.False(await fullCredit.ContainsAsync(proof));
-        Assert.False(fullCredit.Contains(proof));
         fullCredit.Owners.Set(new OwnerData.GoshujinClass());
         Assert.False(await fullCredit.ContainsAsync(proof));
-        Assert.False(fullCredit.Contains(proof));
     }
 }

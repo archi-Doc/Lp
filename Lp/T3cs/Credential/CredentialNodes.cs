@@ -20,6 +20,11 @@ public sealed partial class CredentialNodes
 
     public bool CheckAuthorization(Credit credit)
     {
+        if (credit.MergerCount == 0)
+        {// An empty credit is never authorized.
+            return false;
+        }
+
         using (this.goshujin.LockObject.EnterScope())
         {
             foreach (var x in credit.Mergers)

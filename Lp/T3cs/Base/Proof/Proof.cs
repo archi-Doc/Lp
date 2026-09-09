@@ -190,7 +190,7 @@ public abstract partial class Proof : IEquatable<Proof>, ISignable
 
         return this.SignedMics == other.SignedMics &&
             this.ValiditySeconds == other.ValiditySeconds &&
-            this.Signature.SequenceEqual(other.Signature) &&
+            this.Signature.AsSpan().SequenceEqual(other.Signature) &&
             this.GetSignatureKey().Equals(other.GetSignatureKey());
     }
 

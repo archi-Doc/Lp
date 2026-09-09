@@ -72,6 +72,11 @@ public static class StringHelper
 
     public static string ToMergerString(this SignaturePublicKey[] mergers, IConversionOptions? conversionOptions)
     {
+        if (mergers.Length > LpConstants.MaxMergers)
+        {
+            return string.Empty;
+        }
+
         Span<char> buffer = stackalloc char[Credit.MaxStringLength];
         var span = buffer;
 
