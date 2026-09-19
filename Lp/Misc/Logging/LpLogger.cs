@@ -29,7 +29,7 @@ public class LpLogger
         {
             this.Configure(context =>
             {
-                // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogger)
+                // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogOutput)
                 context.AddSingleton<ConsoleAndFileLogger>();
 
                 // Filters
@@ -37,16 +37,16 @@ public class LpLogger
                 context.AddSingleton<TemporaryMemoryLogFilter>();
 
                 // Resolver
-                context.ClearLoggerResolver();
-                context.AddLoggerResolver(NetUnit.LowLevelLoggerResolver<FileLogger<NetsphereLoggerOptions>>);
-                context.AddLoggerResolver(context =>
+                context.ClearLogOutputResolvers();
+                context.AddLogOutputResolver(NetUnit.LowLevelLoggerResolver<FileLogOutput<NetsphereLoggerOptions>>);
+                context.AddLogOutputResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        // context.SetOutput<FileLogger<NetsphereLoggerOptions>>();
+                        // context.SetOutput<FileLogOutput<NetsphereLoggerOptions>>();
                         if (context.LogOutputType is null)
                         {
-                            context.SetOutput<EmptyLogger>();
+                            context.SetOutput<EmptyLogOutput>();
                         }
 
                         return;
@@ -55,7 +55,7 @@ public class LpLogger
                     {
                         if (context.LogSourceType == typeof(CrystalControl))
                         {
-                            context.SetOutput<FileLogger<FileLoggerOptions>>();
+                            context.SetOutput<FileLogOutput<FileLogOutputOptions>>();
                             return;
                         }
                     }
@@ -89,7 +89,7 @@ public class LpLogger
                     }
                     else if (context.LogSourceType == typeof(NetSocketObsolete))
                     {
-                        context.SetOutput<EmptyLogger>();
+                        context.SetOutput<EmptyLogOutput>();
                         return;
                     }*/
 

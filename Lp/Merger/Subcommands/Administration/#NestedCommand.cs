@@ -106,10 +106,10 @@ public class Command : ISimpleCommand<CommandOptions>
 
 public record CommandOptions
 {
-    [SimpleOption("Node", Description = "Node information", Required = true)]
+    [SimpleOption("Node", Description = "Node information", IsRequired = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", Required = true)]
+    [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", IsRequired = true)]
     public string Code { get; init; } = string.Empty;
 
     // [SimpleOption("PrivateKey", Description = "Signature private key string")]

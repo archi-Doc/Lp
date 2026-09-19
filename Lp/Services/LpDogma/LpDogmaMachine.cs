@@ -34,7 +34,7 @@ public partial class LpDogmaMachine : Machine
         this.credentials = credentials;
         this.merger = merger;
 
-        this.DefaultTimeout = TimeSpan.FromSeconds(3);
+        this.DefaultInterval = TimeSpan.FromSeconds(3);
     }
 
     public int Count { get; set; }

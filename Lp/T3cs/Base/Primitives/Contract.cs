@@ -66,11 +66,11 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
                 // v.GetIdentifier(writer.Level); // Cannot use a thread static buffer.
                 Span<byte> span = stackalloc byte[Identifier.Length];
                 v.GetHash(span);
-                writer.WriteSpan(span);
+                writer.WriteRaw(span);
             }
             else if (v.proofOrIdentifier is byte[] identifier)
             {
-                writer.WriteSpan(identifier);
+                writer.WriteRaw(identifier);
             }
         }
         else
@@ -98,7 +98,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
     static unsafe void ITinyhandSerializable<Contract>.Deserialize(ref TinyhandReader reader, scoped ref Contract v, TinyhandSerializerOptions options)
     {
         var numberOfData = reader.ReadArrayHeader();
-        options.Security.DepthStep(ref reader);
+        options.Security.IncrementDepth(ref reader);
         try
         {
             if (numberOfData-- > 0 && !reader.TryReadNil())
@@ -187,7 +187,7 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
                 writer.Write(this.Total);
 
                 writer.FlushAndGetReadOnlySpan(out var span, out _);
-                Blake3.Get256_Span(span, span32);
+                Blake3.Get256Span(span, span32);
             }
             finally
             {

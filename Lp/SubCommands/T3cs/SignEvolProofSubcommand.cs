@@ -69,9 +69,9 @@ public class SignEvolProofSubcommand : ISimpleCommand<SignOptions>
 
 public record SignOptions
 {
-    [SimpleOption("KeyCode", Description = "Key code (secret key, vault, authority)", Required = true)]
+    [SimpleOption("KeyCode", Description = "Key code (secret key, vault, authority)", IsRequired = true)]
     public string KeyCode { get; init; } = string.Empty;
 
-    [SimpleOption("Proof", Description = "Proof", Required = true)]
+    [SimpleOption("Proof", Description = "Proof", IsRequired = true)]
     public string Proof { get; init; } = string.Empty;
 }

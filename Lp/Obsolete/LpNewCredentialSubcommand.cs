@@ -64,6 +64,6 @@ public class LpNewCredentialSubcommand : ISimpleCommand<LpNewCredentialOptions>
 
 public record LpNewCredentialOptions
 {
-    [SimpleOption("PublicKey", Description = "Target public key", Required = true)]
+    [SimpleOption("PublicKey", Description = "Target public key", IsRequired = true)]
     public string PublicKey { get; init; } = string.Empty;
 }*/

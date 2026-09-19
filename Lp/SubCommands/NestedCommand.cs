@@ -28,11 +28,11 @@ public class NestedCommand<TCommand>
         this.SimpleParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = this.serviceProvider,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
+            RequireCommandName = true,
+            RejectUnknownOptionNames = true,
             DisplayUsage = false,
             DisplayCommandListAsHelp = true,
-            AutoAlias = true,
+            GenerateAliases = true,
         };
 
         // this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeLocal();
@@ -42,7 +42,7 @@ public class NestedCommand<TCommand>
 
     public async Task MainAsync(CancellationToken cancellationToken)
     {
-        var parent = cancellationToken.Extract<ExecutionGroup>();
+        var parent = cancellationToken.AsExecution<ExecutionGroup>();
         if (parent is null)
         {
             return;
@@ -50,7 +50,7 @@ public class NestedCommand<TCommand>
 
         using (var executionContext = this.executionStack.PushNew(parent, (x, signal) =>
         {
-            if (signal == ExecutionSignal.Exit)
+            if (signal == ExecutionSignal.Terminate)
             {
                 x.RequestTermination();
             }

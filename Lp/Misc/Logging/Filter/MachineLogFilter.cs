@@ -9,7 +9,7 @@ internal class MachineLogFilter : ILogFilter
         this.lpBase = lpBase;
     }
 
-    public LogWriter? Filter(LogFilterParameter param)
+    public LogWriter? Filter(LogFilterContext param)
     {
         /*if (param.LogSourceType == typeof(Netsphere.Machines.EssentialNetMachine))
         {

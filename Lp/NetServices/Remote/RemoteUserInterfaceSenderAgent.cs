@@ -156,11 +156,11 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         var subcommandOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = this.serviceProvider,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
+            RequireCommandName = true,
+            RejectUnknownOptionNames = true,
             DisplayUsage = false,
             DisplayCommandListAsHelp = true,
-            AutoAlias = true,
+            GenerateAliases = true,
         };
 
         this.serviceProvider.GetRequiredService<UserInterfaceServiceContext>().InitializeRemote(receiver);

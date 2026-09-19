@@ -8,7 +8,7 @@ public class LogWriterCache<TSource>
     {
     }
 
-    public LogWriter? TryGet(LogFilterParameter param)
+    public LogWriter? TryGet(LogFilterContext param)
     {
         return param.LogLevel switch
         {
@@ -34,7 +34,7 @@ public class TemporaryMemoryLogFilter : ILogFilter
     {
     }
 
-    public LogWriter? Filter(LogFilterParameter param)
+    public LogWriter? Filter(LogFilterContext param)
     {
         if (this.Enabled)
         {
@@ -46,5 +46,5 @@ public class TemporaryMemoryLogFilter : ILogFilter
 
     public bool Enabled { get; set; }
 
-    private LogWriterCache<MemoryLogger> cache = new();
+    private LogWriterCache<MemoryLogOutput> cache = new();
 }

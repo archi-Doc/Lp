@@ -4,12 +4,12 @@
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("flag", IsSubcommand = true)]
+[SimpleCommand("flag", IsCommandGroup = true)]
 public class FlagSubcommand : SimpleCommandGroup<FlagSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        var group = ConfigureGroup(context);
+        var group = RegisterAndGetChildGroup(context);
         group.AddCommand(typeof(FlagSubcommandOn));
         group.AddCommand(typeof(FlagSubcommandOff));
         group.AddCommand(typeof(FlagSubcommandLs));

@@ -74,7 +74,7 @@ public sealed partial class CredentialNodes
         }
     }
 
-    public BytePool.RentMemory Differentiate(ReadOnlyMemory<byte> memory)
+    public BytePool.RentedMemory Differentiate(ReadOnlyMemory<byte> memory)
         => CredentialEvidence.Integrality.Default.Differentiate(this.goshujin, memory);
 
     public Task<IntegralityResultAndCount> Integrate(IntegralityBrokerDelegate broker)

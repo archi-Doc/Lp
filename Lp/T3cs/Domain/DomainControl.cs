@@ -197,7 +197,7 @@ public partial class DomainControl
     {
         if (this.bigMachine.DomainMachine.TryGet(domainHash, out var machine))
         {
-            machine.TerminateMachine();
+            machine.Terminate();
         }
 
         if (!this.domainHashToData.TryRemove(domainHash, out _))

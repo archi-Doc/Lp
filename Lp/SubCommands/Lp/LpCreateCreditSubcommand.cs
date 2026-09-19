@@ -68,6 +68,6 @@ public class LpCreateCreditSubcommand : ISimpleCommand<LpCreateCreditOptions>
 
 public record LpCreateCreditOptions
 {
-    [SimpleOption("Source", Description = "Authority@Identifier/Mergers", Required = true)]
+    [SimpleOption("Source", Description = "Authority@Identifier/Mergers", IsRequired = true)]
     public string Source { get; init; } = string.Empty;
 }

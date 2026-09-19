@@ -134,7 +134,7 @@ public enum VaultKind
 
 public record NewVaultOptions
 {
-    [SimpleOption("Name", Description = "Vault name", Required = true)]
+    [SimpleOption("Name", Description = "Vault name", IsRequired = true)]
     public string Name { get; init; } = string.Empty;
 
     [SimpleOption("Kind", Description = "Kind [string, encryption, signature]")]

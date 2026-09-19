@@ -43,7 +43,7 @@ public partial class NodeControlMachine : Machine
         this.lpBase = lpBase;
         this.credentials = credentials;
 
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.DefaultInterval = TimeSpan.FromSeconds(1);
     }
 
     [StateMethod(0)]
@@ -157,7 +157,7 @@ public partial class NodeControlMachine : Machine
     }
 
     [CommandMethod(WithLock = false)]
-    protected CommandResult ShowStatus(bool showNodes = false)
+    protected CommandStatus ShowStatus(bool showNodes = false)
     {
         this.logger.GetWriter()?.Write($"{this.netStats.GetOwnNodeType().ToString()}: {this.netStats.GetOwnNetNode().ToString()}");
         this.logger.GetWriter()?.Write($"Lifeline Online/Offline: {this.nodeControl.CountLinfelineOnline}/{this.nodeControl.CountLinfelineOffline}, Active: {this.nodeControl.CountActive}");
@@ -167,7 +167,7 @@ public partial class NodeControlMachine : Machine
             this.nodeControl.ShowNodes();
         }
 
-        return CommandResult.Success;
+        return CommandStatus.Success;
     }
 
     private async Task<bool> PingIpv4AndIpv6(NetNode netNode, bool isLifelineNode)

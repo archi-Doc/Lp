@@ -4,12 +4,12 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands;
 
-[SimpleCommand("export", IsSubcommand = true)]
+[SimpleCommand("export", IsCommandGroup = true)]
 public class ExportSubcommand : SimpleCommandGroup<ExportSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        var group = ConfigureGroup(context);
+        var group = RegisterAndGetChildGroup(context);
         group.AddCommand(typeof(ExportSubcommandOptions));
     }
 

@@ -61,6 +61,6 @@ public class LpDogmaGetInformationSubcommand : ISimpleCommand<ConnectNetNodeOpti
 
 public record ConnectNetNodeOptions
 {
-    [SimpleOption("NetNode", Description = "Net node", Required = true)]
+    [SimpleOption("NetNode", Description = "Net node", IsRequired = true)]
     public string NetNode { get; init; } = string.Empty;
 }

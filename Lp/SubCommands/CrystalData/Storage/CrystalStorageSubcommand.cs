@@ -4,12 +4,12 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.CrystalData;
 
-/*[SimpleCommand("storage", IsSubcommand = true, Description = "Crystal storage subcommand")]
+/*[SimpleCommand("storage", IsCommandGroup = true, Description = "Crystal storage subcommand")]
 public class CrystalStorageSubcommand : SimpleCommandGroup<CrystalStorageSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        var group = ConfigureGroup(context);
+        var group = RegisterAndGetChildGroup(context);
         group.AddCommand(typeof(CrystalStorageSubcommandLs));
         group.AddCommand(typeof(CrystalStorageSubcommandAdd));
         group.AddCommand(typeof(CrystalStorageSubcommandDelete));

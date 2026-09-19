@@ -28,7 +28,7 @@ public partial class LpControlMachine : Machine
         this.lpUnit = lpUnit;
         this.options = options;
         this.credentials = credentials;
-        this.DefaultTimeout = TimeSpan.FromSeconds(IntervalInSeconds);
+        this.DefaultInterval = TimeSpan.FromSeconds(IntervalInSeconds);
 
         this.lifespan = -1;
         if (this.options.Lifespan > 0)

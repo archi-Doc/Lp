@@ -53,6 +53,6 @@ public class InspectOwnerSubcommand : ISimpleCommand<InspectOwnerOptions>
 
 public record InspectOwnerOptions
 {
-    [SimpleOption("Source", Description = "Authority@Identifier/Mergers", Required = true)]
+    [SimpleOption("Source", Description = "Authority@Identifier/Mergers", IsRequired = true)]
     public string Source { get; init; } = string.Empty;
 }

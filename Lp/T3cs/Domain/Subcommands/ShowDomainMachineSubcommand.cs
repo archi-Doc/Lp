@@ -34,6 +34,6 @@ public class ShowDomainMachineSubcommand : ISimpleCommand<ShowDomainMachineOptio
 
 public record ShowDomainMachineOptions
 {
-    [SimpleOption("Kind", Description = "Domain machine kind (CreditMerger, CreditPeer...)", Required = true)]
+    [SimpleOption("Kind", Description = "Domain machine kind (CreditMerger, CreditPeer...)", IsRequired = true)]
     public string Kind { get; init; } = string.Empty;
 }

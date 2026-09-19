@@ -6,6 +6,6 @@ namespace Lp.Subcommands.VaultCommand;
 
 public record SimpleVaultOptions
 {
-    [SimpleOption("Name", Description = "Name", Required = true)]
+    [SimpleOption("Name", Description = "Name", IsRequired = true)]
     public string Name { get; init; } = string.Empty;
 }

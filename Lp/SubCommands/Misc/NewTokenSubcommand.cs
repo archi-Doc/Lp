@@ -45,6 +45,6 @@ public class NewTokenSubcommand : ISimpleCommand<NewTokenOptions>
 
 public record NewTokenOptions
 {
-    [SimpleOption("Authority", Description = "Authority name", Required = true)]
+    [SimpleOption("Authority", Description = "Authority name", IsRequired = true)]
     public string AuthorityName { get; init; } = string.Empty;
 }

@@ -6,7 +6,7 @@ using Arc.Collections;
 
 namespace Lp.Services;
 
-[TinyhandObject(UseServiceProvider = true, LockObject = nameof(lockObject))]
+[TinyhandObject(UseServiceProvider = true, LockMemberName = nameof(lockObject))]
 public sealed partial class Vault
 {
     [TinyhandObject]

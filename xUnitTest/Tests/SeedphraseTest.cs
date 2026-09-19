@@ -15,7 +15,7 @@ public class SeedphraseTest
         var phrase = Seedphrase.Create(Enumerable.Range(0, 23).Select(x => (ushort)x).ToArray());
         Assert.Equal("7D1850E16F1364F48A5E49008472F394BF32C634BC99A9DE7931F61509BAB0C0", Convert.ToHexString(Seedphrase.TryGetSeed(phrase)!));
         var upper = phrase.ToUpperInvariant();
-        Assert.Equal(Sha3Helper.Get256_ByteArray(Encoding.UTF8.GetBytes(upper)), Seedphrase.TryGetSeed(upper));
+        Assert.Equal(Sha3Helper.Get256ByteArray(Encoding.UTF8.GetBytes(upper)), Seedphrase.TryGetSeed(upper));
     }
 
     [Theory]
@@ -27,7 +27,7 @@ public class SeedphraseTest
     public void ValidPhrasesUseBothStackAndPoolPaths(int count)
     {
         var phrase = Seedphrase.Create(new ushort[count]);
-        Assert.Equal(Sha3Helper.Get256_ByteArray(Encoding.UTF8.GetBytes(phrase)), Seedphrase.TryGetSeed(phrase));
+        Assert.Equal(Sha3Helper.Get256ByteArray(Encoding.UTF8.GetBytes(phrase)), Seedphrase.TryGetSeed(phrase));
     }
 
     [Fact]

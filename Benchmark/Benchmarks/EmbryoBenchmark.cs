@@ -35,7 +35,7 @@ public class StructEmbryoClass
 
     public void CreateEmbryo(ReadOnlySpan<byte> data)
     {
-        Blake2B.Get512_Span(data, this.embryo.Span);
+        Blake2B.Get512Span(data, this.embryo.Span);
     }
 
     public ReadOnlySpan<byte> Key => this.embryo.Span.Slice(32, 32);
@@ -51,7 +51,7 @@ public class ByteArrayEmbryoClass
 
     public void CreateEmbryo(ReadOnlySpan<byte> data)
     {
-        Blake2B.Get512_Span(data, this.embryo);
+        Blake2B.Get512Span(data, this.embryo);
     }
 
     public ReadOnlySpan<byte> Key => this.embryo.AsSpan(32, 32);

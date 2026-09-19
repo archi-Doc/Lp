@@ -10,16 +10,16 @@ public partial class Batch
 
     public record ExecuteOptions
     {
-        [SimpleOption("Name", Description = "Batch name", Required = true)]
+        [SimpleOption("Name", Description = "Batch name", IsRequired = true)]
         public string Name { get; init; } = string.Empty;
     }
 
     public record Options
     {
-        [SimpleOption("Name", Description = "Batch name", Required = true)]
+        [SimpleOption("Name", Description = "Batch name", IsRequired = true)]
         public string Name { get; init; } = string.Empty;
 
-        [SimpleOption("Command", Description = "Command content. To specify multiple commands, use the multiline delimiter \"\"\".", Required = true)]
+        [SimpleOption("Command", Description = "Command content. To specify multiple commands, use the multiline delimiter \"\"\".", IsRequired = true)]
         public string Command { get; init; } = string.Empty;
     }
 

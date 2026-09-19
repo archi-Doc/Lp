@@ -50,6 +50,6 @@ public class CrystalStorageSubcommandDelete : ISimpleCommand<CrystalStorageOptio
 
 public record CrystalStorageOptionsDelete
 {
-    [SimpleOption("id", Required = true, Description = "Storage id")]
+    [SimpleOption("id", IsRequired = true, Description = "Storage id")]
     public string Id { get; init; } = string.Empty;
 }*/

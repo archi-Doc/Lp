@@ -2,6 +2,6 @@
 
 namespace Lp.Logging;
 
-public record class NetsphereLoggerOptions : FileLoggerOptions
+public record class NetsphereLoggerOptions : FileLogOutputOptions
 {
 }

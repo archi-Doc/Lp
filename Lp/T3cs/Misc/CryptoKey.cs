@@ -17,7 +17,7 @@ public sealed partial record class CryptoKey : IEquatable<CryptoKey>, IStringCon
     public const int EncryptedDataSize = 32 + 32 + sizeof(uint) + sizeof(uint); // PublicKey, Encrypted, EncryptionSalt, OriginalHash
     public const int SubIdMaxLength = 10;
 
-    public static readonly int EncryptedStringLength = Base64Url.GetEncodedLength(EncryptedDataSize);
+    public static readonly int EncryptedStringLength = FastBase64Url.GetEncodedLength(EncryptedDataSize);
 
     private const uint SubKey_HashMask = 0x3FFU; // 10 bits
     private const uint SubKey_IdMask = ~SubKey_HashMask; // 32 bits
@@ -112,7 +112,7 @@ Failure:
         bool TryParseEncrypted(uint subKey, ReadOnlySpan<char> source, [MaybeNullWhen(false)] out CryptoKey? @object, IConversionOptions? conversionOptions)
         {
             Span<byte> destination = stackalloc byte[EncryptedDataSize];
-            if (!Base64Url.TryDecode(source, destination, out var w) ||
+            if (!FastBase64Url.TryDecode(source, destination, out var w) ||
                 w != EncryptedDataSize)
             {
                 @object = null;
@@ -168,7 +168,7 @@ Failure:
 
             Span<byte> encrypted = stackalloc byte[EncryptedDataSize];
             this.WriteEncryptedSpan(encrypted);
-            w = Base64Url.Encode(encrypted, span);
+            w = FastBase64Url.Encode(encrypted, span);
             span = span.Slice(w);
         }
         else
@@ -279,10 +279,10 @@ Failure:
         this.originalHash = (uint)XxHash3Slim.Hash64(originalPublicKeySpan);
 
         var temporalKey = SeedKey.New(originalSeedKey, new ReadOnlySpan<byte>(&salt, sizeof(uint)));
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
-        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
-        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), salt); // Salt
-        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
+        Span<byte> material = stackalloc byte[CryptoBox.SharedSecretSize + sizeof(uint)]; // KeyMaterial + Salt
+        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.SharedSecretSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.SharedSecretSize), salt); // Salt
+        Blake3.Get256Span(material, material.Slice(0, Blake3.HashLength));
 
         byte[] ciphertext = new byte[originalPublicKeySpan.Length];
         Aegis128L.Encrypt(ciphertext, originalPublicKeySpan, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
@@ -355,10 +355,10 @@ Failure:
         }
 
         var publicKey = new EncryptionPublicKey(this.x0, this.x1, this.x2, this.x3);
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
-        mergerSeedKey.DeriveKeyMaterial(publicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
-        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), this.encryptionSalt); // Salt
-        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
+        Span<byte> material = stackalloc byte[CryptoBox.SharedSecretSize + sizeof(uint)]; // KeyMaterial + Salt
+        mergerSeedKey.DeriveKeyMaterial(publicKey, material.Slice(0, CryptoBox.SharedSecretSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.SharedSecretSize), this.encryptionSalt); // Salt
+        Blake3.Get256Span(material, material.Slice(0, Blake3.HashLength));
 
         Span<byte> plaintext = stackalloc byte[SeedKeyHelper.PublicKeySize];
         var result = Aegis128L.TryDecrypt(plaintext, this.encrypted, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
@@ -387,10 +387,10 @@ Failure:
 
         var salt = this.encryptionSalt;
         var temporalKey = SeedKey.New(originalSeedKey, new ReadOnlySpan<byte>(&salt, sizeof(uint)));
-        Span<byte> material = stackalloc byte[CryptoBox.KeyMaterialSize + sizeof(uint)]; // KeyMaterial + Salt
-        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.KeyMaterialSize));
-        MemoryMarshal.Write(material.Slice(CryptoBox.KeyMaterialSize), salt); // Salt
-        Blake3.Get256_Span(material, material.Slice(0, Blake3.Size));
+        Span<byte> material = stackalloc byte[CryptoBox.SharedSecretSize + sizeof(uint)]; // KeyMaterial + Salt
+        temporalKey.DeriveKeyMaterial(mergerPublicKey, material.Slice(0, CryptoBox.SharedSecretSize));
+        MemoryMarshal.Write(material.Slice(CryptoBox.SharedSecretSize), salt); // Salt
+        Blake3.Get256Span(material, material.Slice(0, Blake3.HashLength));
 
         Span<byte> plaintext = stackalloc byte[SeedKeyHelper.PublicKeySize];
         var result = Aegis128L.TryDecrypt(plaintext, this.encrypted, material.Slice(0, Aegis128L.NonceSize), material.Slice(Aegis128L.NonceSize, Aegis128L.KeySize), default, 0);
@@ -531,7 +531,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         if (span[1] == '!')
         {// Raw
             if (span.Length != RawStringLength ||
-                !Base64.Url.FromStringToSpan(span.Slice(2, span.Length - 3), destination, out written))
+                !FastBase64.Url.FromStringToSpan(span.Slice(2, span.Length - 3), destination, out written))
             {
                 instance = default;
                 return false;
@@ -540,7 +540,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         else
         {
             if (span.Length != MaxStringLength ||
-                !Base64.Url.FromStringToSpan(span.Slice(1, span.Length - 2), destination, out written))
+                !FastBase64.Url.FromStringToSpan(span.Slice(1, span.Length - 2), destination, out written))
             {
                 instance = default;
                 return false;
@@ -567,7 +567,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         MemoryMarshal.Write(span, encryption);
 
         // Span<byte> cryptoKeySource = stackalloc byte[KeyHelper.PrivateKeyLength];
-        // Sha3Helper.Get256_Span(buffer, cryptoKeySource);
+        // Sha3Helper.Get256Span(buffer, cryptoKeySource);
 
         var encrypted = new byte[EncryptedLength];
         var originalPublicKey = originalKey.ToPublicKey();
@@ -586,7 +586,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
                 var material = ecdh.DeriveKeyMaterial(cache.Object.PublicKey);
 
                 // Hash key material
-                Sha3Helper.Get256_Span(material, material);
+                Sha3Helper.Get256Span(material, material);
 
                 using (var aes = Aes.Create())
                 {
@@ -779,7 +779,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
                 var material = ecdh.DeriveKeyMaterial(cache.Object.PublicKey);
 
                 // Hash key material
-                Sha3Helper.Get256_Span(material, material);
+                Sha3Helper.Get256Span(material, material);
 
                 using (var aes = Aes.Create())
                 {
@@ -822,7 +822,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out var w);
         span = span.Slice(0, w);
-        return this.IsEncrypted ? $"[{Base64.Url.FromByteArrayToString(span)}]" : $"[!{Base64.Url.FromByteArrayToString(span)}]";
+        return this.IsEncrypted ? $"[{FastBase64.Url.FromBytesToString(span)}]" : $"[!{FastBase64.Url.FromBytesToString(span)}]";
     }
 
     public override int GetHashCode()
@@ -876,7 +876,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
         Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out var written);
         span = span.Slice(0, written);
-        return $"{Base64.Url.FromByteArrayToString(span)}";
+        return $"{FastBase64.Url.FromBytesToString(span)}";
     }
 
     public int GetStringLength()
@@ -902,7 +902,7 @@ public sealed partial record class CryptoKey : IStringConvertible<CryptoKey>, IE
             c = c.Slice(1);
         }
 
-        Base64.Url.FromByteArrayToSpan(span, c, out written);
+        FastBase64.Url.FromBytesToSpan(span, c, out written);
         c = c.Slice(written);
         c[0] = ']';
 

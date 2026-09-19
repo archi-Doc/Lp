@@ -14,12 +14,12 @@ public class RemoteBenchControl
     {
         this.logger = logger;
         this.netTerminal = netTerminal;
-        this.fileLogger = serviceProvider.GetService<FileLogger<NetsphereLoggerOptions>>();
+        this.fileLogger = serviceProvider.GetService<FileLogOutput<NetsphereLoggerOptions>>();
     }
 
     private readonly ILogger logger;
     private readonly NetTerminal netTerminal;
-    private readonly IFileLogger? fileLogger;
+    private readonly IFileLogOutput? fileLogger;
     private readonly SingleTask singleTask = new();
 
     private readonly object syncObject = new();

@@ -30,7 +30,7 @@ public class LpFixture : IDisposable
                 // Unit
 
                 // Looger resolver
-                context.AddLoggerResolver(context =>
+                context.AddLogOutputResolver(context =>
                 {
                 });
             });
@@ -41,7 +41,7 @@ public class LpFixture : IDisposable
 
     public void Dispose()
     {
-        this.product.Context.SendTerminate().Wait();
+        this.product.Context.SendTerminateAsync().Wait();
     }
 
     public IServiceProvider ServiceProvider => this.product.Context.ServiceProvider;

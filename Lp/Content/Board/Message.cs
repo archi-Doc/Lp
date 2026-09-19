@@ -53,7 +53,7 @@ public partial class Message // : IVerifiable
     [MaxLength(MaxContentLength)]
     public partial string Content { get; private set; } = string.Empty;
 
-    // [Link(Type = ChainType.Ordered, AddValue = false)]
+    // [Link(Type = ChainType.Ordered, GenerateValue = false)]
     // public long SignedMics => this.valueToken.Signature.SignedMics;
 
     [IgnoreMember]

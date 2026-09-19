@@ -59,7 +59,7 @@ public class PunchSubcommand : ISimpleCommand<PunchOptions>
 
 public record PunchOptions
 {
-    [SimpleOption("Destination", Description = "Destination node", Required = true)]
+    [SimpleOption("Destination", Description = "Destination node", IsRequired = true)]
     public string DestinationNode { get; init; } = string.Empty;
 
     [SimpleOption("Relay", Description = "Relay node")]

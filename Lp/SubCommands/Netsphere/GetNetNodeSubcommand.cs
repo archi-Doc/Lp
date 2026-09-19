@@ -34,6 +34,6 @@ public class GetNetNodeSubcommand : ISimpleCommand<GetNetNodeOptions>
 
 public record GetNetNodeOptions
 {
-    [SimpleOption("Address", Description = "Node address", Required = true)]
+    [SimpleOption("Address", Description = "Node address", IsRequired = true)]
     public string Address { get; init; } = string.Empty;
 }

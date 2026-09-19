@@ -7,9 +7,9 @@ namespace Lp.Net;
 [NetService]
 public interface IBasalService : INetService
 {
-    Task<BytePool.RentMemory> GetActiveNodes();
+    Task<BytePool.RentedMemory> GetActiveNodes();
 
-    Task<BytePool.RentMemory> DifferentiateNodes(ReadOnlyMemory<byte> memory);
+    Task<BytePool.RentedMemory> DifferentiateNodes(ReadOnlyMemory<byte> memory);
 
     Task<string?> GetNodeInformation();
 }

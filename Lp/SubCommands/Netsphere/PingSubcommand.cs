@@ -73,7 +73,7 @@ public class PingSubcommand : ISimpleCommand<PingOptions>
 
 public record PingOptions
 {
-    [SimpleOption("Node", Description = "Node address", Required = true)]
+    [SimpleOption("Node", Description = "Node address", IsRequired = true)]
     public string Node { get; init; } = string.Empty;
 
     [SimpleOption("Count", Description = "Count")]

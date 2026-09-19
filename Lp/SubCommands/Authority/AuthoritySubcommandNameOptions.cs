@@ -7,6 +7,6 @@ namespace Lp.Subcommands.AuthorityCommand;
 
 public record AuthoritySubcommandNameOptions
 {
-    [SimpleOption("Name", Description = "Authority name", Required = true)]
+    [SimpleOption("Name", Description = "Authority name", IsRequired = true)]
     public string AuthorityName { get; init; } = string.Empty;
 }

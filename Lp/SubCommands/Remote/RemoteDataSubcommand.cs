@@ -13,7 +13,7 @@ internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
     public RemoteDataSubcommand(IServiceProvider serviceProvider, ILogger<RemoteDataOptions> logger, NetTerminal netTerminal)
     {
         this.logger = logger;
-        this.fileLogger = serviceProvider.GetService<FileLogger<NetsphereLoggerOptions>>();
+        this.fileLogger = serviceProvider.GetService<FileLogOutput<NetsphereLoggerOptions>>();
         this.netTerminal = netTerminal;
     }
 
@@ -51,7 +51,7 @@ internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
                 return;
             }
 
-            await this.fileLogger.Flush(false);
+            await this.fileLogger.FlushAsync(false);
 
             var path = this.fileLogger.GetCurrentPath();
             using var fileStream = File.OpenRead(path);
@@ -71,15 +71,15 @@ internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
     }
 
     private readonly ILogger logger;
-    private readonly IFileLogger? fileLogger;
+    private readonly IFileLogOutput? fileLogger;
     private readonly NetTerminal netTerminal;
 }
 
 public record RemoteDataOptions
 {
-    [SimpleOption("Node", Description = "Node address", Required = false)]
+    [SimpleOption("Node", Description = "Node address", IsRequired = false)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("Remoteprivatekey", Description = "Remote private key", Required = false)]
+    [SimpleOption("Remoteprivatekey", Description = "Remote private key", IsRequired = false)]
     public string RemotePrivateKey { get; init; } = string.Empty;
 }

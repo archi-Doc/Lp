@@ -73,7 +73,7 @@ public partial record EquityCredit : CreditBase
 
     public OwnerDataPoint? GetOwnerDataPoint(SignaturePublicKey ownerPublicKey)
     {
-        var point = this.owners.Find(ownerPublicKey);
+        var point = this.owners.GetObject(ownerPublicKey);
         return point;
     }
 }

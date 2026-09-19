@@ -142,7 +142,7 @@ public class AuthorityControlTest
         {
         }
 
-        public Task<InputResult> ReadLine(CancellationToken cancellationToken = default)
+        public Task<InputResult> ReadLineAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new InputResult(InputResultKind.Canceled));
 
         public ConsoleKeyInfo ReadKey(bool intercept) => default;

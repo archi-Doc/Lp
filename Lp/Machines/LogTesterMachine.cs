@@ -9,7 +9,7 @@ public partial class LogTesterMachine : Machine
     public LogTesterMachine(ILogger<LogTesterMachine> logger)
     {
         this.logger = logger;
-        this.DefaultTimeout = TimeSpan.FromSeconds(2);
+        this.DefaultInterval = TimeSpan.FromSeconds(2);
     }
 
     public int Count { get; set; }

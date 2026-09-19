@@ -47,7 +47,7 @@ public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptio
 
 public record AuthoritySubcommandNewOptions
 {
-    [SimpleOption("Name", Description = "Key name", Required = true)]
+    [SimpleOption("Name", Description = "Key name", IsRequired = true)]
     public string Name { get; init; } = string.Empty;
 
     [SimpleOption("Passphrase", Description = "Passphrase")]

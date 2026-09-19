@@ -39,9 +39,9 @@ public record RemoteBenchOptions
     [SimpleOption("Concurrent", Description = "Concurrent")]
     public int Concurrent { get; init; } = 25;
 
-    [SimpleOption("Node", Description = "Node address", Required = false)]
+    [SimpleOption("Node", Description = "Node address", IsRequired = false)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("RemotePrivatekey", Description = "Remote private key", Required = false)]
+    [SimpleOption("RemotePrivatekey", Description = "Remote private key", IsRequired = false)]
     public string RemotePrivateKey { get; init; } = string.Empty;
 }

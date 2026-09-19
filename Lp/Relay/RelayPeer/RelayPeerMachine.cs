@@ -10,7 +10,7 @@ public partial class RelayPeerMachine : Machine
         this.logger = logger;
         this.netUnit = netUnit;
 
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.DefaultInterval = TimeSpan.FromSeconds(1);
     }
 
     [StateMethod(0)]

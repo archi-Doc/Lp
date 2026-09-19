@@ -42,7 +42,7 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
     {
         this.Configuration = crystalControl.CreateCrystal<LinkerConfiguration>(new()
         {
-            NumberOfFileHistories = 0,
+            NumberOfHistoryFiles = 0,
             FileConfiguration = new GlobalFileConfiguration(LinkerConfiguration.Filename),
             RequiredForLoading = true,
         }).Data;
@@ -50,7 +50,7 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
         this.dataCrystal = crystalControl.CreateCrystal<FullCredit.GoshujinClass>(new()
         {
             SaveFormat = SaveFormat.Binary,
-            NumberOfFileHistories = 3,
+            NumberOfHistoryFiles = 3,
             FileConfiguration = new GlobalFileConfiguration("Linker/Data"),
             StorageConfiguration = new SimpleStorageConfiguration(
                 new GlobalDirectoryConfiguration("Linker/Storage")),
@@ -70,7 +70,7 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
 
     public SeedKey SeedKey => this.seedKey;
 
-    async Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
+    async Task IUnitPreparable.PrepareAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
         if (!this.Initialized)
         {
@@ -80,15 +80,15 @@ public partial class Linker : MergerBase, IUnitPreparable, IUnitExecutable
         this.logger.GetWriter()?.Write($"{this.Configuration.Name}: {this.PublicKey.ToString()}");
     }
 
-    async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
+    async Task IUnitExecutable.StartAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
     }
 
-    async Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
+    async Task IUnitExecutable.StopAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
     }
 
-    async Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
+    async Task IUnitExecutable.TerminateAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
     }
 }

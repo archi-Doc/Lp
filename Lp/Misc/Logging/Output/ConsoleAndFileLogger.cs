@@ -4,7 +4,7 @@ namespace Lp.Logging;
 
 internal class ConsoleAndFileLogger : ILogOutput
 {
-    public ConsoleAndFileLogger(IUserInterfaceService userInterfaceService, ConsoleLogger consoleLogger, FileLogger<FileLoggerOptions> fileLogger)
+    public ConsoleAndFileLogger(IUserInterfaceService userInterfaceService, ConsoleLogOutput consoleLogger, FileLogOutput<FileLogOutputOptions> fileLogger)
     {
         this.userInterfaceService = userInterfaceService;
         this.consoleLogger = consoleLogger;
@@ -22,6 +22,6 @@ internal class ConsoleAndFileLogger : ILogOutput
     }
 
     private IUserInterfaceService userInterfaceService;
-    private ConsoleLogger consoleLogger;
-    private FileLogger<FileLoggerOptions> fileLogger;
+    private ConsoleLogOutput consoleLogger;
+    private FileLogOutput<FileLogOutputOptions> fileLogger;
 }

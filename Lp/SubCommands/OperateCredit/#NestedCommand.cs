@@ -44,10 +44,10 @@ public class OperateCreditCommand : ISimpleCommand<OperateCreditCommand.Options>
 
     public record Options
     {
-        [SimpleOption("Code", Description = LpConstants.CodeDescription, Required = true)]
+        [SimpleOption("Code", Description = LpConstants.CodeDescription, IsRequired = true)]
         public string Code { get; init; } = string.Empty;
 
-        [SimpleOption("CreditIdentity", Description = "CreditIdentity", Required = true)]
+        [SimpleOption("CreditIdentity", Description = "CreditIdentity", IsRequired = true)]
         public CreditIdentity CreditIdentity { get; init; } = CreditIdentity.UnsafeConstructor();
     }
 

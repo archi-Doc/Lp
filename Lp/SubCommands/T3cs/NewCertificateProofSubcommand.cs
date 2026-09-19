@@ -12,10 +12,10 @@ public partial class NewCertificateProofSubcommand : ISimpleCommand<NewCertifica
 {
     public record Options
     {
-        [SimpleOption("Code", Description = "Code", Required = false)]
+        [SimpleOption("Code", Description = "Code", IsRequired = false)]
         public string Code { get; init; } = string.Empty;
 
-        [SimpleOption("Credit", Description = "Credit", Required = true)]
+        [SimpleOption("Credit", Description = "Credit", IsRequired = true)]
         public Credit Credit { get; init; } = Credit.UnsafeConstructor();
     }
 

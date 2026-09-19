@@ -2,7 +2,7 @@
 
 namespace Lp;
 
-[BigMachineObject(Inclusive = true)]
+[BigMachineObject(IncludeAllMachines = true)]
 [AddMachine<Netsphere.Machines.NtpMachine>]
 // [AddMachine<Netsphere.Machines.NetStatsMachine>]
 [AddMachine<Lp.Machines.NodeControlMachine>]

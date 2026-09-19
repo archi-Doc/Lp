@@ -9,7 +9,7 @@ public class RemoveDomainSubcommand : ISimpleCommand<RemoveDomainSubcommand.Opti
 {// Control -> context.AddSubcommand(typeof(Lp.Subcommands.SetCreditPeerSubcommand));
     public record Options
     {
-        [SimpleOption("Name", Description = "Domain name", Required = true)]
+        [SimpleOption("Name", Description = "Domain name", IsRequired = true)]
         public string Name { get; init; } = string.Empty;
     }
 

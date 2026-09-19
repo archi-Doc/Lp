@@ -35,10 +35,10 @@ public class Command : ISimpleCommand<Command.Options>
 {
     public record Options
     {
-        [SimpleOption("Node", Description = "Node information", Required = true)]
+        [SimpleOption("Node", Description = "Node information", IsRequired = true)]
         public string Node { get; init; } = string.Empty;
 
-        [SimpleOption("Authority", Description = "Authority name", Required = true)]
+        [SimpleOption("Authority", Description = "Authority name", IsRequired = true)]
         public string Authority { get; init; } = string.Empty;
 
         public override string ToString() => $"{this.Node}";

@@ -188,7 +188,7 @@ public static class Seedphrase
             try
             {
                 Encoding.UTF8.GetBytes(phrase, utf8);
-                return Sha3Helper.Get256_ByteArray(utf8);
+                return Sha3Helper.Get256ByteArray(utf8);
             }
             finally
             {
@@ -239,7 +239,7 @@ public static class Seedphrase
             return false;
         }
 
-        Span<byte> hash = stackalloc byte[Blake3.Size];
+        Span<byte> hash = stackalloc byte[Blake3.HashLength];
         using var hasher = Blake3Hasher.New();
         hasher.Update(additional);
         hasher.Update(previousSeed);

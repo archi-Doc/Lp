@@ -101,12 +101,12 @@ public class AddCertificateRelaySubcommand : ISimpleCommand<AddCertificateRelayO
 
 public record AddCertificateRelayOptions
 {
-    [SimpleOption("Code", Required = true, Description = "Code")]
+    [SimpleOption("Code", IsRequired = true, Description = "Code")]
     public string Code { get; init; } = string.Empty;
 
-    [SimpleOption("RelayNode", Required = true, Description = "Relay node")]
+    [SimpleOption("RelayNode", IsRequired = true, Description = "Relay node")]
     public string RelayNode { get; init; } = string.Empty;
 
-    [SimpleOption("Incoming", Required = false, Description = "")]
+    [SimpleOption("Incoming", IsRequired = false, Description = "")]
     public bool Incoming { get; init; } = false;
 }

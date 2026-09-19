@@ -141,11 +141,11 @@ public static class IUserInterfaceServiceExtention
             {// Empty password
                 viewService.WriteLine(Hashed.Dialog.Password.EmptyWarning);
                 var resultKind = await viewService.ReadYesNo(cancelOnEscape, Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
-                if (resultKind.IsPositive)
+                if (resultKind.IsSuccess)
                 {// Yes (Empty password)
                     return result;
                 }
-                else if (resultKind.IsNegative)
+                else if (resultKind.IsNo)
                 {// No
                     continue;
                 }

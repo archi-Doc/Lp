@@ -114,7 +114,7 @@ public class RestartRemoteContainerSubcommand : ISimpleCommand<RestartRemoteCont
 
 public record RestartRemoteContainerOptions
 {
-    [SimpleOption("RunnerNode", Description = "Runner node", Required = true)]
+    [SimpleOption("RunnerNode", Description = "Runner node", IsRequired = true)]
     public string RunnerNode { get; init; } = string.Empty;
 
     [SimpleOption("RemotePrivault", Description = "Private key or vault name for remote operation")]

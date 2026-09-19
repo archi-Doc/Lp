@@ -25,7 +25,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
 
     static MasterKey()
     {
-        MaxStringLength = Base64Url.GetEncodedLength(Size);
+        MaxStringLength = FastBase64Url.GetEncodedLength(Size);
     }
 
     public static int MaxStringLength { get; }
@@ -40,7 +40,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
         }
 
         Span<byte> seed = stackalloc byte[Size];
-        if (!Base64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out var decoded) || decoded != Size)
+        if (!FastBase64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out var decoded) || decoded != Size)
         {
             masterKey = null;
             read = 0;
@@ -63,7 +63,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
             return false;
         }
 
-        written = Base64Url.Encode(this.seed, destination);
+        written = FastBase64Url.Encode(this.seed, destination);
         return true;
     }
 
@@ -103,7 +103,7 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
         this.seed.CopyTo(keySource);
         keySource[0] ^= (byte)kind;
         keySource[24] ^= (byte)kind;
-        Blake3.Get256_Span(keySource, key32);
+        Blake3.Get256Span(keySource, key32);
         // Restore
         // The shared seed no longer needs restoring because only keySource is modified.
 

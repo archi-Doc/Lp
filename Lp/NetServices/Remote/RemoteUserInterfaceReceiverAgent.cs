@@ -55,7 +55,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
             cancellationToken = core.CancellationToken;
         }
 
-        var result = await this.UserInterfaceService.ReadLine(cancellationToken);
+        var result = await this.UserInterfaceService.ReadLineAsync(cancellationToken);
         return new(result.Text);
     }
 
@@ -72,7 +72,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
 
         /*using (var scope = this.executionStack.Push((x, signal) =>
         {
-            if (signal == ExecutionSignal.Exit)
+            if (signal == ExecutionSignal.Terminate)
             {
                 x.CancellationTokenSource.Cancel();
             }
@@ -155,7 +155,7 @@ public class RemoteUserInterfaceReceiverAgent : IRemoteUserInterfaceReceiver
     {
         if (this.executionStack.Find(id) is TaskCompletionGroup group)
         {
-            group.TrySetCompleted();
+            group.SetCompleted();
         }
 
         return Task.CompletedTask;

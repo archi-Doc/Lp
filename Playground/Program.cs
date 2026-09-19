@@ -19,10 +19,10 @@ public class Program
 
     public static async Task Main()
     {
-        AppCloseHandler.Set(() =>
+        AppCloseHandler.Register(() =>
         {// Closing the console window or terminating the process.
             root?.RequestTermination(); // Send a termination signal to the root.
-            root?.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+            root?.WaitForTerminationAsync(TimeSpan.FromSeconds(2)).Wait();
         });
 
         Console.CancelKeyPress += (s, e) =>
@@ -40,15 +40,15 @@ public class Program
                 context.AddCommand(typeof(RelayCommand));
                 context.AddCommand(typeof(BasicCommand));
 
-                context.AddLoggerResolver(context =>
+                context.AddLogOutputResolver(context =>
                 {// Logger
                     if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        context.SetOutput<FileLogOutput<FileLogOutputOptions>>();
                         return;
                     }
 
-                    context.SetOutput<ConsoleAndFileLogger>();
+                    context.SetOutput<ConsoleAndFileLogOutput>();
                 });
             })
              .ConfigureNetsphere(context =>
@@ -57,23 +57,23 @@ public class Program
              })
              .PostConfigure(context =>
              {
-                 {// FileLoggerOptions
+                 {// FileLogOutputOptions
                      var logfile = "Logs/Debug.txt";
-                     var options = context.GetOptions<FileLoggerOptions>();
+                     var options = context.GetOrCreateOptions<FileLogOutputOptions>();
                      options = options with
                      {
-                         Path = Path.Combine(context.DataDirectory, logfile),
-                         MaxLogCapacity = 1,
+                         FilePath = Path.Combine(context.DataDirectory, logfile),
+                         MaxLogCapacityInMegabytes = 1,
                          FormatterOptions = options.FormatterOptions with { TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K", },
                          ClearLogsAtStartup = true,
-                         MaxQueue = 100_000,
+                         MaxQueueLength = 100_000,
                      };
 
                      context.SetOptions(options);
                  }
 
                  {// NetOptions
-                     var options = context.GetOptions<NetOptions>();
+                     var options = context.GetOrCreateOptions<NetOptions>();
                      options = options with
                      {
                          NodeName = "test",
@@ -103,20 +103,20 @@ public class Program
         var parserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = unit.Context.ServiceProvider,
-            RequireStrictCommandName = false,
-            RequireStrictOptionName = false,
+            RequireCommandName = false,
+            RejectUnknownOptionNames = false,
         };
 
-        await SimpleParser.ParseAndExecute(unit.Context.Commands, SimpleParserHelper.GetCommandLineArguments(), parserOptions); // Main process
+        await SimpleParser.ParseAndExecute(unit.Context.CommandTypes, SimpleParserHelper.GetCommandLineArguments(), parserOptions); // Main process
 
         await unit.Terminate();
 
         root.RequestTermination();
         if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
         {
-            await unitLogger.FlushAndTerminate();
+            await unitLogger.FlushAndTerminateAsync();
         }
 
-        await root.WaitForTermination(); // Wait for the termination infinitely.
+        await root.WaitForTerminationAsync(); // Wait for the termination infinitely.
     }
 }

@@ -27,7 +27,7 @@ public partial class DomainMachine : Machine<ulong>
         this.netUnit = netUnit;
         this.domainControl = domainControl;
 
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.DefaultInterval = TimeSpan.FromSeconds(1);
     }
 
     protected override void OnCreate(object? createParam)
@@ -97,14 +97,14 @@ public partial class DomainMachine : Machine<ulong>
         }
 
         [CommandMethod(WithLock = false)]
-        protected CommandResult Show()
+        protected CommandStatus Show()
         {
             if (this.domainIdentifier is { } domainIdentifier)
             {
                 this.logger.GetWriter(LogLevel.Information)?.Write(this.GetInformation());
             }
 
-            return CommandResult.Success;
+            return CommandStatus.Success;
         }
 
         private string GetInformation()

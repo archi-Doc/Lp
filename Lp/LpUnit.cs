@@ -179,27 +179,27 @@ public class LpUnit
 
             this.PostConfigure(context =>
             {
-                // FileLoggerOptions
-                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+                // FileLogOutputOptions
+                context.SetOptions(context.GetOrCreateOptions<FileLogOutputOptions>() with
                 {
-                    Path = Path.Combine(context.DataDirectory, "Logs/Log.txt"),
-                    MaxLogCapacity = 20,
+                    FilePath = Path.Combine(context.DataDirectory, "Logs/Log.txt"),
+                    MaxLogCapacityInMegabytes = 20,
                 });
 
                 // NetsphereLoggerOptions
-                var netsphereLoggerOptions = context.GetOptions<Lp.Logging.NetsphereLoggerOptions>();
+                var netsphereLoggerOptions = context.GetOrCreateOptions<Lp.Logging.NetsphereLoggerOptions>();
                 context.SetOptions(netsphereLoggerOptions with
                 {
-                    Path = Path.Combine(context.DataDirectory, "Logs/Net.txt"),
-                    MaxLogCapacity = 100,
+                    FilePath = Path.Combine(context.DataDirectory, "Logs/Net.txt"),
+                    MaxLogCapacityInMegabytes = 100,
                     FormatterOptions = netsphereLoggerOptions.FormatterOptions with { TimestampFormat = "mm:ss.ffffff K", },
                     ClearLogsAtStartup = true,
-                    MaxQueue = 100_000,
+                    MaxQueueLength = 100_000,
                 });
 
-                // ConsoleLoggerOptions
-                var lpOptions = context.GetOptions<LpOptions>();
-                var consoleLoggerOptions = context.GetOptions<ConsoleLoggerOptions>();
+                // ConsoleLogOutputOptions
+                var lpOptions = context.GetOrCreateOptions<LpOptions>();
+                var consoleLoggerOptions = context.GetOrCreateOptions<ConsoleLogOutputOptions>();
                 context.SetOptions(consoleLoggerOptions with
                 {
                     FormatterOptions = consoleLoggerOptions.FormatterOptions with
@@ -208,7 +208,7 @@ public class LpUnit
                     },
                 });
 
-                var netOptions = context.GetOptions<NetOptions>();
+                var netOptions = context.GetOrCreateOptions<NetOptions>();
 
                 var lpBase = context.ServiceProvider.GetRequiredService<LpBase>();
                 lpBase.Initialize(context.DataDirectory, lpOptions, true, "merger");
@@ -219,7 +219,7 @@ public class LpUnit
                 netBase.NetOptions.EnableServer = true; // betacode
                 netBase.DefaultAgreement = netBase.DefaultAgreement with { MaxStreamLength = 100_000_000, }; // betacode
 
-                context.SetOptions(context.GetOptions<CrystalOptions>() with
+                context.SetOptions(context.GetOrCreateOptions<CrystalOptions>() with
                 {
                     DefaultSaveFormat = SaveFormat.Utf8,
                     SaveInterval = TimeSpan.FromMinutes(10),
@@ -239,7 +239,7 @@ public class LpUnit
 
         private static void ConfigureRelay(IUnitConfigurationContext context)
         {
-            var options = context.GetOptions<LpOptions>();
+            var options = context.GetOrCreateOptions<LpOptions>();
             if (SignaturePublicKey.TryParse(options.CertificateRelayPublicKey, out var relayPublicKey, out _))
             {// CertificateRelayControl
                 context.AddSingleton<IRelayControl, CertificateRelayControl>();
@@ -258,7 +258,7 @@ public class LpUnit
 
                     context.AddCrystal<LpSettings>(new()
                     {
-                        NumberOfFileHistories = 0,
+                        NumberOfHistoryFiles = 0,
                         FileConfiguration = new GlobalFileConfiguration(LpSettings.Filename),
                         RequiredForLoading = true,
                     });
@@ -266,53 +266,53 @@ public class LpUnit
                     context.AddCrystal<Credentials>(new()
                     {
                         // SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 0,
+                        NumberOfHistoryFiles = 0,
                         FileConfiguration = new GlobalFileConfiguration(),
                     });
 
                     context.AddCrystal<Mono>(new()
                     {
                         SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 0,
+                        NumberOfHistoryFiles = 0,
                         FileConfiguration = new GlobalFileConfiguration(Mono.Filename),
                     });
 
                     context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
                         // SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 2,
+                        NumberOfHistoryFiles = 2,
                         FileConfiguration = new GlobalFileConfiguration(Netsphere.Stats.NetStats.Filename),
                     });
 
                     context.AddCrystal<Netsphere.Misc.NtpCorrection>(new CrystalConfiguration() with
                     {
-                        NumberOfFileHistories = 0,
+                        NumberOfHistoryFiles = 0,
                         FileConfiguration = new GlobalFileConfiguration(Netsphere.Misc.NtpCorrection.Filename),
                     });
 
                     context.AddCrystal<Lp.Services.LpDogma>(new CrystalConfiguration() with
                     {
-                        NumberOfFileHistories = 0,
+                        NumberOfHistoryFiles = 0,
                         FileConfiguration = new GlobalFileConfiguration(Lp.Services.LpDogma.Filename),
                     });
 
                     context.AddCrystal<DomainControl>(new CrystalConfiguration() with
                     {
-                        NumberOfFileHistories = 2,
+                        NumberOfHistoryFiles = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainControl.Filename),
                     });
 
                     context.AddCrystal<CreditPoint.GoshujinClass>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Binary,
-                        NumberOfFileHistories = 3,
+                        NumberOfHistoryFiles = 3,
                         FileConfiguration = new GlobalFileConfiguration("Credits"),
                         StorageConfiguration = defaultStorage,
                     });
 
                     /*context.AddCrystal<DomainStorage>(new CrystalConfiguration() with
                     {
-                        NumberOfFileHistories = 2,
+                        NumberOfHistoryFiles = 2,
                         FileConfiguration = new GlobalFileConfiguration(DomainStorage.Filename),
                     });*/
                 });
@@ -427,7 +427,7 @@ public class LpUnit
                 LpConstants.Initialize();
 
                 // Start
-                lpUnit.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write($"Lp ({Arc.VersionHelper.VersionString})");
+                lpUnit.LogUnit.RootLogService.GetWriter<DefaultLogSource>()?.Write($"Lp ({Arc.VersionHelper.VersionString})");
 
                 // Prepare
                 await lpUnit.PrepareMaster(this.Context);
@@ -449,7 +449,7 @@ public class LpUnit
                 this.Context.CreateInstances();
 
                 // Prepare
-                await this.Context.SendPrepare();
+                await this.Context.SendPrepareAsync();
             }
             catch
             {
@@ -475,7 +475,7 @@ public class LpUnit
 
                 await lpUnit.Main(this.Context);
 
-                await this.Context.SendStop();
+                await this.Context.SendStopAsync();
                 await lpUnit.TerminateAsync(this.Context);
                 await lpUnit.Save(this.Context);
                 await lpUnit.Terminate(false);
@@ -547,14 +547,14 @@ public class LpUnit
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = context.ServiceProvider,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
+            RequireCommandName = true,
+            RejectUnknownOptionNames = true,
             DisplayUsage = false,
             DisplayCommandListAsHelp = true,
-            AutoAlias = true,
+            GenerateAliases = true,
         };
 
-        this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
+        this.subcommandParser = new SimpleParser(context.SubcommandTypes, SubcommandParserOptions);
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -750,7 +750,7 @@ public class LpUnit
 
     public async Task LoadAsync(UnitContext context)
     {
-        await context.SendLoad();
+        await context.SendLoadAsync();
     }
 
     public async Task AbortAsync()
@@ -766,21 +766,21 @@ public class LpUnit
         this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
         await this.VaultControl.SaveAsync();
 
-        await context.SendSave();
+        await context.SendSaveAsync();
 
         await this.CrystalControl.StoreAndRip();
     }
 
     public async Task Start(UnitContext context)
     {
-        await context.SendStart();
+        await context.SendStartAsync();
 
         context.ServiceProvider.GetRequiredService<ClockHand>().SendSignal(ExecutionSignal.Start);
         this.BigMachine.Start();
         this.RunMachines(); // Start machines after context.SendStartAsync (some machines require NetTerminal).
 
         this.UserInterfaceService.WriteLine();
-        var logger = this.LogUnit.RootLogService.GetWriter<DefaultLog>(LogLevel.Information);
+        var logger = this.LogUnit.RootLogService.GetWriter<DefaultLogSource>(LogLevel.Information);
         this.LogInformation(logger);
 
         logger?.Write("Press Ctrl+C to exit, Ctrl+Q to cancel the task");
@@ -856,7 +856,7 @@ public class LpUnit
         {
             Prompt = LpConstants.PromptString,
             MultilineDelimiter = LpConstants.MultilineIndeitifierString,
-            MultilinePrompt = LpConstants.MultilinePromptString,
+            ContinuationPrompt = LpConstants.MultilinePromptString,
             /*KeyInputHook = (ref keyInfo) =>
             {
                 if (keyInfo.Modifiers == ConsoleModifiers.Control &&
@@ -872,7 +872,7 @@ public class LpUnit
 
         using (var executionCore = this.ExecutionStack.PushNew(this.ExecutionRoot, (scope, signal) =>
         {
-            if (signal == ExecutionSignal.Exit)
+            if (signal == ExecutionSignal.Terminate)
             {
                 _ = this.TryTerminate();
             }
@@ -880,7 +880,7 @@ public class LpUnit
         {
             while (!executionCore.IsTerminated)
             {
-                var inputResult = await this.simpleConsole.ReadLine(options, executionCore.CancellationToken).ConfigureAwait(false);
+                var inputResult = await this.simpleConsole.ReadLineAsync(options, executionCore.CancellationToken).ConfigureAwait(false);
                 if (inputResult.Kind == InputResultKind.Terminated)
                 {
                     return;
@@ -965,11 +965,11 @@ public class LpUnit
 
     private async Task TerminateAsync(UnitContext context)
     {
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write("Termination process initiated");
+        this.LogUnit.RootLogService.GetWriter<DefaultLogSource>()?.Write("Termination process initiated");
 
         try
         {
-            await context.SendTerminate();
+            await context.SendTerminateAsync();
         }
         catch
         {
@@ -979,9 +979,9 @@ public class LpUnit
     private async Task Terminate(bool abort)
     {
         this.ExecutionRoot.RequestTermination();
-        await this.ExecutionRoot.WaitForTermination().ConfigureAwait(false);
+        await this.ExecutionRoot.WaitForTerminationAsync().ConfigureAwait(false);
 
-        this.LogUnit.RootLogService.GetWriter<DefaultLog>()?.Write(abort ? "Aborted" : "Terminated");
-        await this.LogUnit.FlushAndTerminate().ConfigureAwait(false); // Write logs added after Terminate().
+        this.LogUnit.RootLogService.GetWriter<DefaultLogSource>()?.Write(abort ? "Aborted" : "Terminated");
+        await this.LogUnit.FlushAndTerminateAsync().ConfigureAwait(false); // Write logs added after Terminate().
     }
 }

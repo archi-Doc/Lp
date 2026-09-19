@@ -18,10 +18,10 @@ public class TemplateSubcommand : ISimpleCommand<TemplateSubcommand.Options>
 
     public record Options
     {
-        [SimpleOption("Credit", Description = "Credit", Required = true)]
+        [SimpleOption("Credit", Description = "Credit", IsRequired = true)]
         public Credit Credit { get; init; } = Credit.UnsafeConstructor();
 
-        [SimpleOption("Code", Description = LpConstants.CodeDescription, Required = true)]
+        [SimpleOption("Code", Description = LpConstants.CodeDescription, IsRequired = true)]
         public string Code { get; init; } = string.Empty;
     }
 

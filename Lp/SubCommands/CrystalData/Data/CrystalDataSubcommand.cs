@@ -4,12 +4,12 @@ using SimpleCommandLine;
 
 namespace Lp.Subcommands.CrystalData;
 
-/*[SimpleCommand("data", IsSubcommand = true, Description = "Crystal data subcommand")]
+/*[SimpleCommand("data", IsCommandGroup = true, Description = "Crystal data subcommand")]
 public class CrystalDataSubcommand : SimpleCommandGroup<CrystalDataSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        var group = ConfigureGroup(context);
+        var group = RegisterAndGetChildGroup(context);
         group.AddCommand(typeof(CrystalDataSubcommandLs));
         group.AddCommand(typeof(CrystalDataSubcommandDeleteAll));
     }

@@ -13,13 +13,13 @@ public class AddDomainSubcommand : ISimpleCommand<AddDomainSubcommand.Options>
 
     public record Options
     {
-        [SimpleOption("Name", Description = "Domain name", Required = true)]
+        [SimpleOption("Name", Description = "Domain name", IsRequired = true)]
         public string Name { get; init; } = string.Empty;
 
-        [SimpleOption("Code", Description = "Domain name", Required = true)]
+        [SimpleOption("Code", Description = "Domain name", IsRequired = true)]
         public string Code { get; init; } = string.Empty;
 
-        [SimpleOption("CertificateProof", Description = "", Required = true)]
+        [SimpleOption("CertificateProof", Description = "", IsRequired = true)]
         public CertificateProof CertificateProof { get; init; } = CertificateProof.UnsafeConstructor();
     }
 

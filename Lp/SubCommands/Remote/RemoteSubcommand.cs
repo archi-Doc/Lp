@@ -14,10 +14,10 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 {
     public record Options
     {
-        [SimpleOption("Node", Description = "Node information", Required = true)]
+        [SimpleOption("Node", Description = "Node information", IsRequired = true)]
         public string Node { get; init; } = string.Empty;
 
-        [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", Required = true)]
+        [SimpleOption("Code", Description = "Remote code (secret key, vault, authority)", IsRequired = true)]
         public string Code { get; init; } = string.Empty;
     }
 
@@ -45,7 +45,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
     public async Task Execute(Options options, string[] args, CancellationToken cancellationToken)
     {
-        var parent = cancellationToken.Extract<ExecutionGroup>();
+        var parent = cancellationToken.AsExecution<ExecutionGroup>();
         if (parent is null)
         {
             return;
@@ -139,7 +139,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
 
             using (var executionGroup = this.executionStack.PushNew(parent, (x, signal) =>
             {
-                if (signal == ExecutionSignal.Exit)
+                if (signal == ExecutionSignal.Terminate)
                 {
                     x.RequestTermination();
                 }
@@ -148,7 +148,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                 while (executionGroup.CanContinue)
                 {
                     var result = await this.userInterfaceService.ReadLine(false, receiver.InputPrefix, executionGroup.CancellationToken).ConfigureAwait(false);
-                    // var result = await this.simpleConsole.ReadLine(readineOptions, scope.CancellationToken).ConfigureAwait(false);
+                    // var result = await this.simpleConsole.ReadLineAsync(readineOptions, scope.CancellationToken).ConfigureAwait(false);
                     if (!result.IsSuccess)
                     {
                         break;

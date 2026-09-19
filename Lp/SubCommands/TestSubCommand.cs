@@ -12,7 +12,7 @@ namespace Lp.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommand<TestOptions>
 {
-    private readonly RadioClass radio;
+    private readonly LocalRadio radio;
     private readonly ILogger logger;
     private readonly LpUnit lpUnit;
     private readonly IUserInterfaceService userInterfaceService;
@@ -20,7 +20,7 @@ public class TestSubcommand : ISimpleCommand<TestOptions>
     private readonly LpBoardService lpBoardService;
     private readonly CreditService creditService;
 
-    public TestSubcommand(RadioClass radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService, CreditService creditService)
+    public TestSubcommand(LocalRadio radio, ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, LpUnit lpUnit, AuthorityControl authorityControl, LpBoardService lpBoardService, LpService lpService, CreditService creditService)
     {
         this.radio = radio;
         this.logger = logger;

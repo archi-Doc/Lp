@@ -28,7 +28,7 @@ public class MasterKeyTest
     [Fact]
     public void ConcurrentDerivationIsDeterministicAndDoesNotModifyMasterKey()
     {
-        var encoded = Base64Url.EncodeToString(Enumerable.Range(0, MasterKey.Size).Select(x => (byte)x).ToArray());
+        var encoded = FastBase64Url.EncodeToString(Enumerable.Range(0, MasterKey.Size).Select(x => (byte)x).ToArray());
         Assert.True(MasterKey.TryParse(encoded, out var master, out _));
         var kinds = Enum.GetValues<MasterKey.Kind>();
         var expected = kinds.Select(kind => master.CreateSeedKey(kind).Seedphrase).ToArray();

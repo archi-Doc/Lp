@@ -76,10 +76,10 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 #pragma warning restore SA1118 // Parameter should not span multiple lines
 
     public void EnqueueLine(string? message = null)
-        => this.simpleConsole.EnqueueInput(message);
+        => this.simpleConsole.EnqueueLine(message);
 
-    public Task<InputResult> ReadLine(CancellationToken cancellationToken)
-        => this.simpleConsole.ReadLine(default, cancellationToken);
+    public Task<InputResult> ReadLineAsync(CancellationToken cancellationToken)
+        => this.simpleConsole.ReadLineAsync(default, cancellationToken);
 
     public ConsoleKeyInfo ReadKey(bool intercept)
         => ((IConsoleService)this.simpleConsole).ReadKey(intercept);
@@ -92,7 +92,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         var logWriter = logger?.GetWriter(logLevel);
         if (logWriter is not null)
         {
-            // if (logWriter.OutputType != typeof(EmptyLogger))
+            // if (logWriter.OutputType != typeof(EmptyLogOutput))
             // {
             //    logWriter.Log(message);
             //    return;
@@ -110,7 +110,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             Prompt = description ?? string.Empty,
         };
 
-        return this.simpleConsole.ReadLine(options, cancellationToken);
+        return this.simpleConsole.ReadLineAsync(options, cancellationToken);
     }
 
     public Task<InputResult> ReadLine(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
@@ -119,11 +119,11 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         {
             CancelOnEscape = cancelOnEscape,
             MultilineDelimiter = LpConstants.MultilineIndeitifierString,
-            MultilinePrompt = LpConstants.MultilinePromptString,
+            ContinuationPrompt = LpConstants.MultilinePromptString,
             Prompt = description ?? string.Empty,
         };
 
-        return this.simpleConsole.ReadLine(options, cancellationToken);
+        return this.simpleConsole.ReadLineAsync(options, cancellationToken);
     }
 
     public async Task<InputResultKind> ReadYesNo(bool cancelOnEscape, string? description, CancellationToken cancellationToken)
@@ -136,7 +136,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
         while (true)
         {
-            var result = await this.simpleConsole.ReadLine(options, cancellationToken).ConfigureAwait(false);
+            var result = await this.simpleConsole.ReadLineAsync(options, cancellationToken).ConfigureAwait(false);
             if (result.Kind == InputResultKind.Terminated ||
                 result.Kind == InputResultKind.Canceled)
             {// Ctrl+C

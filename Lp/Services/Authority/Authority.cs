@@ -33,12 +33,12 @@ public sealed partial class Authority
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
         try
         {
-            writer.WriteSpan(seed);
+            writer.WriteRaw(seed);
             TinyhandSerializer.SerializeObject(ref writer, credit);
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
-            Span<byte> s = stackalloc byte[Blake3.Size];
-            Blake3.Get256_Span(span, s);
+            Span<byte> s = stackalloc byte[Blake3.HashLength];
+            Blake3.Get256Span(span, s);
             seedKey = SeedKey.New(s, KeyOrientation.NotSpecified);
         }
         finally

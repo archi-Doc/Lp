@@ -12,7 +12,7 @@ public class NetSenderBenchmark
 {
     public readonly struct Item
     {
-        public Item(IPEndPoint endPoint, BytePool.RentMemory toBeShared)
+        public Item(IPEndPoint endPoint, BytePool.RentedMemory toBeShared)
         {
             this.EndPoint = endPoint;
             this.MemoryOwner = toBeShared;
@@ -20,18 +20,18 @@ public class NetSenderBenchmark
 
         public readonly IPEndPoint EndPoint;
 
-        public readonly BytePool.RentMemory MemoryOwner;
+        public readonly BytePool.RentedMemory MemoryOwner;
     }
 
     private IPEndPoint endPoint;
-    private BytePool.RentMemory memoryOwner;
+    private BytePool.RentedMemory memoryOwner;
     private Queue<Item> items = new();
     private ConcurrentQueue<Item> items2 = new();
 
     public NetSenderBenchmark()
     {
         this.endPoint = new(IPAddress.Loopback, 1234);
-        this.memoryOwner = BytePool.RentMemory.CreateFrom(new byte[100]);
+        this.memoryOwner = BytePool.RentedMemory.CreateFrom(new byte[100]);
     }
 
     [GlobalSetup]

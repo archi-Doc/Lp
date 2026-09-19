@@ -59,7 +59,7 @@ public sealed partial class CredentialLinks
         }
     }
 
-    public BytePool.RentMemory Differentiate(ReadOnlyMemory<byte> memory)
+    public BytePool.RentedMemory Differentiate(ReadOnlyMemory<byte> memory)
         => LinkLinkage.Integrality.Default.Differentiate(this.goshujin, memory);
 
     public Task<IntegralityResultAndCount> Integrate(IntegralityBrokerDelegate broker)

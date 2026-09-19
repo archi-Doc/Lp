@@ -37,7 +37,7 @@ public readonly partial record struct LinkageKey
                 var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
                 // Hash key material
-                Sha3Helper.Get256_Span(material, material);
+                Sha3Helper.Get256Span(material, material);
 
                 using (var aes = Aes.Create())
                 {
@@ -137,7 +137,7 @@ public readonly partial record struct LinkageKey
                 var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
                 // Hash key material
-                Sha3Helper.Get256_Span(material, material);
+                Sha3Helper.Get256Span(material, material);
 
                 using (var aes = Aes.Create())
                 {
@@ -181,7 +181,7 @@ public readonly partial record struct LinkageKey
         Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out var written);
         span = span.Slice(0, written);
-        return this.IsEncrypted ? $"[{Base64.Url.FromByteArrayToString(span)}]" : $"[!{Base64.Url.FromByteArrayToString(span)}]";
+        return this.IsEncrypted ? $"[{FastBase64.Url.FromBytesToString(span)}]" : $"[!{FastBase64.Url.FromBytesToString(span)}]";
     }
 
     public string ToBase64()
@@ -189,7 +189,7 @@ public readonly partial record struct LinkageKey
         Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out var written);
         span = span.Slice(0, written);
-        return $"{Base64.Url.FromByteArrayToString(span)}";
+        return $"{FastBase64.Url.FromBytesToString(span)}";
     }
 
     private bool TryWriteBytes(Span<byte> span, out int written)

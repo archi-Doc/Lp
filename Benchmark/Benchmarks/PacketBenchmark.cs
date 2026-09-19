@@ -91,7 +91,7 @@ public class PacketBenchmark
         this.Iv.AsSpan().CopyTo(source.Slice(16));
 
         Span<byte> hash = stackalloc byte[32];
-        Sha3Helper.Get256_Span(source, hash);
+        Sha3Helper.Get256Span(source, hash);
         this.Aes.TryDecryptCbc(this.Encrypted, hash.Slice(0, 16), this.Decrypted, out var written, PaddingMode.None);
         return this.Decrypted;
     }

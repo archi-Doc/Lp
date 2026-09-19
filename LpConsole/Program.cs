@@ -20,11 +20,11 @@ public class Program
 
     public static async Task Main()
     {
-        AppCloseHandler.Set(() =>
+        AppCloseHandler.Register(() =>
         {// Console window closing or process terminated.
             if (unit?.Context.ServiceProvider.GetService<ExecutionStack>() is { } executionStack)
             {
-                // executionStack.TopContext?.Signal(ExecutionSignal.Exit);
+                // executionStack.TopContext?.Signal(ExecutionSignal.Terminate);
                 while (executionStack.FirstCore is { } core)
                 {
                     core.Dispose();
@@ -32,11 +32,11 @@ public class Program
                 }
             }
 
-            var result = unit?.Context.ExecutionRoot.WaitForTermination(TimeSpan.FromSeconds(2)).Result;
+            var result = unit?.Context.ExecutionRoot.WaitForTerminationAsync(TimeSpan.FromSeconds(2)).Result;
             if (result != true)
             {
                 unit?.Context.ExecutionRoot.RequestTermination(); // Send a termination signal to the root.
-                unit?.Context.ExecutionRoot.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+                unit?.Context.ExecutionRoot.WaitForTerminationAsync(TimeSpan.FromSeconds(2)).Wait();
             }
         });
 
@@ -67,7 +67,7 @@ public class Program
                 }
                 else
                 {
-                    executionStack.LastCore?.SendSignal(ExecutionSignal.Exit);
+                    executionStack.LastCore?.SendSignal(ExecutionSignal.Terminate);
                 }
             }
 
@@ -91,11 +91,11 @@ public class Program
                 LpConsole.Example.ExampleUnit.Configure(context);
 
                 // Looger resolver
-                context.AddLoggerResolver(context =>
+                context.AddLogOutputResolver(context =>
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {//
-                        context.SetOutput<ConsoleLogger>();
+                        context.SetOutput<ConsoleLogOutput>();
                         return;
                     }
                 });
@@ -119,7 +119,7 @@ public class Program
         {
             var options = unit.Context.ServiceProvider.GetRequiredService<LpOptions>();
             await unit.Run(options);
-            await unit.Context.ExecutionRoot.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
+            await unit.Context.ExecutionRoot.WaitForTerminationAsync(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
         }
         finally
         {
