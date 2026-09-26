@@ -27,9 +27,7 @@ public partial class DomainControl
     [Key(0)]
     private readonly ConcurrentDictionary<ulong, DomainData> domainHashToData = new();
 
-    private DomainData[]? domainDataArray;
-
-    public DomainData[] DomainDataArray => this.domainDataArray ??= this.domainHashToData.Values.ToArray();
+    public DomainData[] DomainDataArray => this.domainHashToData.Values.ToArray(); // Not cached: a cached array could be replaced by a stale one while a domain is being added.
 
     #endregion
 
@@ -166,7 +164,6 @@ public partial class DomainControl
                 return original;
             });
 
-        this.domainDataArray = default;
         return serviceClass;
     }
 
@@ -185,11 +182,6 @@ public partial class DomainControl
             }
         }
 
-        if (result)
-        {
-            this.domainDataArray = default;
-        }
-
         return result;
     }
 
@@ -205,7 +197,6 @@ public partial class DomainControl
             return false;
         }
 
-        this.domainDataArray = default;
         return true;
     }
 }

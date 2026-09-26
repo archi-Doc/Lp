@@ -154,7 +154,7 @@ public class RemoteSubcommand : ISimpleCommand<RemoteSubcommand.Options>
                         break;
                     }
 
-                    if (string.Compare(result.Text, "exit", true) == 0)
+                    if (string.Equals(result.Text, "exit", StringComparison.OrdinalIgnoreCase))
                     {// Exit
                         return;
                     }

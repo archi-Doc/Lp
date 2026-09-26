@@ -22,6 +22,7 @@ Success=
 
 Error=
   Load="Could not load '{0}'"
+  Save="Could not save '{0}': {1}"
   Deserialize="Could not deserialize '{0}'"
   KeyVault="Could not deserialize '{0}'"
   Parse="Could not parse '{0}'"
@@ -35,7 +36,7 @@ Error=
   NoFixedNode="Unable to obtain own IP address due to the lack of a network connection or a NodeList"
   NoDirectConnection="Direct network connection through the specified port number is required"
   NoOwnAddress="Own IP address is not determined"
-  NoOnlineNode="No online nodes. Please check your internet connection or add a node to connect (add-net-node)"
+  NoOnlineNode="No online nodes. Please check your internet connection or add a node to connect (add-netnode)"
 
 Vault=
   AlreadyExists="{0} already exists"
@@ -51,6 +52,7 @@ Vault=
   AddSuccess="{0} is successfully added"
   RemoveConfirm="Are you sure you want to remove vault '{0}' ?"
   Removed="Vault '{0}' is successfully removed"
+  Preserved="The vault could not be loaded, so it was moved to '{0}'"
 
 Authority=
   AlreadyExists="Authority '{0}' already exists"
@@ -64,7 +66,7 @@ Authority=
   KeyMismatch="Does not match the specified Key"
 
 Seedphrase=
-  Invalid="Seedphrase '{0}' is invaid"
+  Invalid="Seedphrase '{0}' is invalid"
 
 CommandGroup=
   AlreadyExists="Command group '{0}' already exists"

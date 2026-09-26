@@ -28,7 +28,7 @@ public class ExportSubcommandOptions : ISimpleCommand<ExportSubcommandOptionsOpt
                 return;
             }
 
-            await File.WriteAllBytesAsync(path, utf);
+            await File.WriteAllBytesAsync(path, utf, cancellationToken);
             this.logger.GetWriter()?.Write(Hashed.Success.Output, path);
         }
         catch

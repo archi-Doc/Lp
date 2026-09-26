@@ -7,7 +7,7 @@ namespace Netsphere;
 /// <summary>
 /// Represents a robust connection that manages client connections with optional authentication.
 /// </summary>
-public class RobustConnection
+public sealed class RobustConnection : IDisposable
 {
     /// <summary>
     /// Delegate for authenticating a client connection.
@@ -163,4 +163,16 @@ public class RobustConnection
     }
 
     public bool IsConnected => this.connection?.IsActive == true;
+
+    /// <summary>
+    /// Closes the current connection (a connection is created again by <see cref="Get"/> if needed).
+    /// </summary>
+    public void Dispose()
+    {
+        using (this.semaphore.EnterScope())
+        {
+            this.connection?.Dispose();
+            this.connection = null;
+        }
+    }
 }

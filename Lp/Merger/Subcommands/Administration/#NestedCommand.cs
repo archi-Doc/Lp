@@ -100,7 +100,14 @@ public class Command : ISimpleCommand<CommandOptions>
         this.userInterfaceService.WriteLine($"Retention: {connection.Agreement.MinimumConnectionRetentionMics.MicsToTimeSpanString()}");
         this.userInterfaceService.WriteLine($"Connection successful (merger-admin)");
 
-        await this.nestedcommand.MainAsync(cancellationToken);
+        try
+        {
+            await this.nestedcommand.MainAsync(cancellationToken);
+        }
+        finally
+        {// The connection is used only in this nested session.
+            this.nestedcommand.RobustConnection?.Dispose();
+        }
     }
 }
 

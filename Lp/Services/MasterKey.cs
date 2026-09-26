@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Netsphere.Crypto;
 
 namespace Lp.Services;
@@ -40,16 +41,23 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
         }
 
         Span<byte> seed = stackalloc byte[Size];
-        if (!FastBase64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out var decoded) || decoded != Size)
+        try
         {
-            masterKey = null;
-            read = 0;
-            return false;
-        }
+            if (!FastBase64Url.TryDecode(source.Slice(0, MaxStringLength), seed, out var decoded) || decoded != Size)
+            {
+                masterKey = null;
+                read = 0;
+                return false;
+            }
 
-        masterKey = new MasterKey(seed.ToArray());
-        read = MaxStringLength;
-        return true;
+            masterKey = new MasterKey(seed.ToArray());
+            read = MaxStringLength;
+            return true;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(seed);
+        }
     }
 
     public int GetStringLength()
@@ -127,6 +135,14 @@ public sealed partial class MasterKey : IStringConvertible<MasterKey>
             _ => KeyOrientation.Signature,
         };
 
-        return (seedphrase, SeedKey.New(seed, orientation));
+        var seedKey = SeedKey.New(seed, orientation); // Copies the seed.
+
+        // Clear the key material derived from the master seed.
+        CryptographicOperations.ZeroMemory(cipher);
+        CryptographicOperations.ZeroMemory(key32);
+        CryptographicOperations.ZeroMemory(keySource);
+        CryptographicOperations.ZeroMemory(nonce32);
+        CryptographicOperations.ZeroMemory(seed);
+        return (seedphrase, seedKey);
     }
 }

@@ -162,10 +162,10 @@ public static class SeedKeyExtensions
         }
 
         var writer = TinyhandWriter.CreateFromThreadStaticBuffer();
-        writer.Level = Linkage.SignatureLevel - 1;
+        writer.Level = Linkage.SignatureLevel;
         try
-        {
-            TinyhandSerializer.SerializeObject<Linkage>(ref writer, linkage, TinyhandSerializerOptions.Signature);
+        {// Serialize the runtime type at the same level as Linkage.ValidateAndVerify(), so that derived linkages can be verified.
+            ((ITinyhandSerializable)linkage).Serialize(ref writer, TinyhandSerializerOptions.Signature);
             writer.FlushAndGetReadOnlySpan(out var span, out _);
 
             var signature = new byte[CryptoSign.SignatureSize];

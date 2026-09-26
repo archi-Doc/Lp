@@ -24,6 +24,11 @@ public enum ProofKey : int
 
     TestLinkageProof,
     TemplateProof,
+
+    MergerProof,
+    OrderProof,
+    CryptoTransferProof,
+    TransferProof2,
 }
 
 /// <summary>
@@ -47,6 +52,10 @@ public enum ProofKey : int
 [TinyhandUnion((int)ProofKey.RequestMergeProof, typeof(RequestMergeProof))]
 [TinyhandUnion((int)ProofKey.TestLinkageProof, typeof(TestLinkageProof))]
 [TinyhandUnion((int)ProofKey.TemplateProof, typeof(TemplateProof))]
+[TinyhandUnion((int)ProofKey.MergerProof, typeof(MergerProof))]
+[TinyhandUnion((int)ProofKey.OrderProof, typeof(OrderProof))]
+[TinyhandUnion((int)ProofKey.CryptoTransferProof, typeof(CryptoTransferProof))]
+[TinyhandUnion((int)ProofKey.TransferProof2, typeof(TransferProof2))]
 [TinyhandObject(ReservedKeyCount = Proof.ReservedKeyCount)]
 public abstract partial class Proof : IEquatable<Proof>, ISignable
 {

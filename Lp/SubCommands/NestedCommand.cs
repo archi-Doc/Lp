@@ -64,7 +64,7 @@ public class NestedCommand<TCommand>
                     break;
                 }
 
-                if (string.Compare(result.Text, "exit", true) == 0)
+                if (string.Equals(result.Text, "exit", StringComparison.OrdinalIgnoreCase))
                 {// Exit
                     break;
                 }

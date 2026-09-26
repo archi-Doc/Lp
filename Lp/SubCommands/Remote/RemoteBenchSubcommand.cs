@@ -19,10 +19,13 @@ internal class RemoteBenchSubcommand : ISimpleCommand<RemoteBenchOptions>
 
     public async Task Execute(RemoteBenchOptions options, string[] args, CancellationToken cancellationToken)
     {
-        await this.ntpCorrection.CorrectMicsAndUnitLogger();
+        await this.ntpCorrection.CorrectMicsAndUnitLogger(cancellationToken: cancellationToken);
 
         this.logger.GetWriter()?.Write($"RemoteBench");
-        this.remoteBenchBroker.Start(options, cancellationToken);
+        if (this.remoteBenchBroker.Start(options, cancellationToken) is { } task)
+        {// Wait for the aggregation, since the cancellation token is canceled when this command returns.
+            await task.ConfigureAwait(false);
+        }
     }
 
     private readonly RemoteBenchControl remoteBenchBroker;

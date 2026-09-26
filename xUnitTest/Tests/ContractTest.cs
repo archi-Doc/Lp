@@ -92,6 +92,25 @@ public class ContractTest
         Assert.True(restoredEmpty.IsEmpty);
     }
 
+    [Fact]
+    public void CloningKeepsTheProofOrIdentifierAndTheAmounts()
+    {
+        var contract = new Contract(CreateProof(), 5, 6);
+        var clone = TinyhandSerializer.CloneObject(contract);
+        Assert.True(clone.IsProof);
+        Assert.Equal(5, clone.Partial);
+        Assert.Equal(6, clone.Total);
+        Assert.True(clone.Equals(contract));
+        Assert.NotSame(contract.Proof, clone.Proof); // Deep copy
+
+        var stripped = contract.StripProof();
+        var strippedClone = TinyhandSerializer.CloneObject(stripped);
+        Assert.True(strippedClone.IsIdentifier);
+        Assert.True(strippedClone.Equals(stripped));
+
+        Assert.True(TinyhandSerializer.CloneObject(default(Contract)).IsEmpty);
+    }
+
     private static TestLinkageProof CreateProof()
     {
         var key = SeedKey.NewSignature();

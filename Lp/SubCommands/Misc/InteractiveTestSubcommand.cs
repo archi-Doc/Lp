@@ -31,7 +31,7 @@ public class InteractiveTestSubcommand : ISimpleCommand
         this.userInterfaceService.WriteLine($"Address: {this.netStats.OwnNetNode?.ToString()}");
         this.userInterfaceService.WriteLine();
 
-        var result2 = await this.userInterfaceService.ReadYesNo(true, "Yes or No?");
+        var result2 = await this.userInterfaceService.ReadYesNo(true, "Yes or No?", cancellationToken);
         if (result2 == InputResultKind.Success)
         {
             this.userInterfaceService.WriteLine($"Yes!");

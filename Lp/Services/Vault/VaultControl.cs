@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Globalization;
 using CrystalData;
 
 namespace Lp.Services;
@@ -7,6 +8,7 @@ namespace Lp.Services;
 public partial class VaultControl
 {
     public const string Filename = "Vault" + CrystalControl.BinaryExtension;
+    private const string TemporaryExtension = ".tmp";
 
     public VaultControl(ILogger<VaultControl> logger, IUserInterfaceService userInterfaceService, LpBase lpBase, CrystalOptions options)
     {// Vault cannot use CrystalControl due to its dependency on IStorageKey.
@@ -42,20 +44,46 @@ public partial class VaultControl
     {
         try
         {
-            await File.WriteAllBytesAsync(this.path, this.Root.SerializeVault()).ConfigureAwait(false);
+            var data = this.Root.SerializeVault();
+            if (Path.GetDirectoryName(this.path) is { Length: > 0 } directory)
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Write to a temporary file and then replace the vault, so that an interrupted write cannot corrupt the only copy.
+            var exists = File.Exists(this.path);
+            var temporaryPath = this.path + TemporaryExtension;
+            File.Delete(temporaryPath); // A leftover file would keep its own permissions.
+            var options = new FileStreamOptions() { Mode = FileMode.CreateNew, Access = FileAccess.Write, Options = FileOptions.Asynchronous | FileOptions.WriteThrough, }; // WriteThrough: the data reaches the disk before the vault is replaced.
+            if (exists && !OperatingSystem.IsWindows())
+            {// Keep the permissions of the vault (e.g., 600).
+                options.UnixCreateMode = File.GetUnixFileMode(this.path);
+            }
+
+            using (var stream = new FileStream(temporaryPath, options))
+            {
+                await stream.WriteAsync(data).ConfigureAwait(false);
+            }
+
+            if (exists && OperatingSystem.IsWindows())
+            {// Keep the ACL and attributes of the vault.
+                File.Replace(temporaryPath, this.path, null);
+            }
+            else
+            {
+                File.Move(temporaryPath, this.path, true);
+            }
         }
-        catch
+        catch (Exception e)
         {
+            this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Save, this.path, e.Message);
         }
     }
 
     internal async Task LoadAsync()
     {
-        if (this.lpBase.IsFirstRun)
-        {// First run
-        }
-        else
-        {
+        if (File.Exists(this.path))
+        {// The vault may exist outside the data directory (VaultPath), so check the file itself.
             var result = await this.ReadAndDecrypt(this.lpBase.Options.VaultPass).ConfigureAwait(false);
             if (result)
             {
@@ -68,6 +96,19 @@ public partial class VaultControl
             {// No
                 throw new PanicException();
             }*/
+
+            // The vault was read and decrypted but could not be deserialized: keep it instead of overwriting it with a new one when saving.
+            var preservedPath = $"{this.path}.{DateTime.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture)}";
+            try
+            {
+                File.Move(this.path, preservedPath);
+            }
+            catch
+            {
+                throw new PanicException();
+            }
+
+            this.userInterfaceService.WriteLineWarning(Hashed.Vault.Preserved, preservedPath);
         }
 
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
@@ -79,8 +120,8 @@ public partial class VaultControl
         {
             var result = await this.userInterfaceService.ReadPasswordAndConfirm(false, Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
             if (result.IsTerminated)
-            {
-                return;
+            {// Abort as ReadAndDecrypt() does, instead of continuing and saving a vault with an empty password.
+                throw new PanicException();
             }
             else if (result.IsSuccess)
             {
@@ -105,9 +146,9 @@ public partial class VaultControl
             data = await File.ReadAllBytesAsync(this.path).ConfigureAwait(false);
         }
         catch
-        {
+        {// The vault exists but cannot be read (e.g., access denied or in use), which does not mean it is broken: stop without replacing it.
             this.logger.GetWriter(LogLevel.Error)?.Write(Hashed.Error.Load, this.path);
-            return false;
+            throw new PanicException();
         }
 
         if (PasswordEncryption.TryDecrypt(data, string.Empty, out var plaintext))
@@ -125,7 +166,7 @@ public partial class VaultControl
             }
         }
 
-        string? password = lppass;
+        string? password = string.IsNullOrEmpty(lppass) ? null : lppass; // The empty password has already been tried.
         while (true)
         {
             if (password == null)

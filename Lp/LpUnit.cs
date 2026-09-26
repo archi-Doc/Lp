@@ -118,10 +118,10 @@ public class LpUnit
                 context.AddTransient<Machines.TemplateMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
                 context.AddTransient<Machines.LpControlMachine>();
-                context.AddSingleton<T3cs.Domain.DomainMachine>();
-                context.AddSingleton<Machines.RelayPeerMachine>();
-                context.AddSingleton<Machines.NodeControlMachine>();
-                context.AddSingleton<Services.LpDogmaMachine>();
+                context.AddTransient<T3cs.Domain.DomainMachine>(); // Machines must be transient: BigMachines creates a new instance per machine (and on re-creation).
+                context.AddTransient<Machines.RelayPeerMachine>();
+                context.AddTransient<Machines.NodeControlMachine>();
+                context.AddTransient<Services.LpDogmaMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(Lp.Subcommands.TemplateSubcommand));
@@ -763,7 +763,11 @@ public class LpUnit
         Directory.CreateDirectory(this.LpBase.DataDirectory);
 
         // Vault
-        this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
+        if (this.NetUnit.NetBase.IsValidNodeKey)
+        {// The node key is not yet loaded if startup fails early; storing null would erase the saved key.
+            this.VaultControl.Root.AddObject(NetConstants.NodeSecretKeyName, this.NetUnit.NetBase.NodeSeedKey);
+        }
+
         await this.VaultControl.SaveAsync();
 
         await context.SendSaveAsync();

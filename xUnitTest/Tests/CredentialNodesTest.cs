@@ -45,6 +45,50 @@ public class CredentialNodesTest
     }
 
     [Fact]
+    public void RemovingAnEvidenceKeepsAnAliasItDidNotAdd()
+    {
+        var key = SeedKey.NewSignature().GetSignaturePublicKey();
+        var existingAlias = "A" + Guid.NewGuid().ToString("N").Substring(0, 12);
+        Alias.Instance.Add(existingAlias, key);
+        try
+        {
+            var goshujin = new CredentialEvidence.GoshujinClass() { SyncAlias = true, };
+            var evidence = new CredentialEvidence(new CredentialProof(key, CredentialKind.Merger, new MergerState() { Name = "B" + Guid.NewGuid().ToString("N").Substring(0, 12), }));
+            using (goshujin.LockObject.EnterScope())
+            {
+                evidence.Goshujin = goshujin; // The key already has an alias, so none is added.
+                evidence.Goshujin = null;
+            }
+
+            Assert.True(Alias.Instance.TryGetAliasFromPublicKey(key, out var alias));
+            Assert.Equal(existingAlias, alias);
+        }
+        finally
+        {
+            Alias.Instance.Remove(key);
+        }
+    }
+
+    [Fact]
+    public void AnAliasAddedByAnEvidenceIsRemovedWithIt()
+    {
+        var key = SeedKey.NewSignature().GetSignaturePublicKey();
+        var name = "C" + Guid.NewGuid().ToString("N").Substring(0, 12);
+        var goshujin = new CredentialEvidence.GoshujinClass() { SyncAlias = true, };
+        var evidence = new CredentialEvidence(new CredentialProof(key, CredentialKind.Merger, new MergerState() { Name = name, }));
+        using (goshujin.LockObject.EnterScope())
+        {
+            evidence.Goshujin = goshujin;
+            Assert.True(Alias.Instance.TryGetAliasFromPublicKey(key, out var alias));
+            Assert.Equal(name, alias);
+
+            evidence.Goshujin = null;
+        }
+
+        Assert.False(Alias.Instance.TryGetAliasFromPublicKey(key, out _));
+    }
+
+    [Fact]
     public void ValidateLeavesAnEmptyCollectionUntouched()
     {
         var nodes = new CredentialNodes();

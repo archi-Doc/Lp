@@ -69,6 +69,7 @@ public abstract partial class MergerBase : UnitBase
         }
 
         // Active
+        this.modestLogger.ResetNonConsecutive(); // Log the errors above again if they recur.
         if (!state.IsActive)
         {
             state.IsActive = true;

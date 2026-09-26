@@ -333,7 +333,7 @@ public partial class NodeControlMachine : Machine
                     this.lpBase.BasalServiceCount++;
 
                     // Active node
-                    var r2 = await service.GetActiveNodes();
+                    using var r2 = await service.GetActiveNodes(); // The pooled memory is transferred to the caller.
                     this.nodeControl.ProcessGetActiveNodes(r2.Span);
 
                     // Credentials
@@ -359,7 +359,7 @@ public partial class NodeControlMachine : Machine
                     if (service is not null)
                     {
                         // var r2 = await this.nodeControl.IntegrateActiveNode(async (x, y) => await service.DifferentiateActiveNode(x), this.CancellationToken);
-                        var r2 = await service.GetActiveNodes();
+                        using var r2 = await service.GetActiveNodes(); // The pooled memory is transferred to the caller.
                         this.nodeControl.ProcessGetActiveNodes(r2.Span);
                     }
                 }

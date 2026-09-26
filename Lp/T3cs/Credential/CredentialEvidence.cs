@@ -83,8 +83,10 @@ public partial class CredentialEvidence : Evidence
 
     protected void CredentialKeyLinkRemoved()
     {
-        if (this.Goshujin?.SyncAlias == true)
-        {
+        if (this.Goshujin?.SyncAlias == true &&
+            Alias.Instance.TryGetAliasFromPublicKey(this.CredentialKey, out var alias) &&
+            alias == this.Proof.State.Name)
+        {// TryAdd() does not replace an existing alias, so remove only the alias added by this evidence.
             Alias.Instance.Remove(this.CredentialKey);
         }
     }

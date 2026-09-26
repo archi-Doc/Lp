@@ -1,5 +1,6 @@
 // Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
 using Lp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
@@ -125,4 +126,53 @@ public class VaultResultTest
         Assert.True(restored.TryGetByteArray("inner", out var bytes, out result));
         Assert.Equal([9, 8, 7], bytes);
     }
+
+    [Fact]
+    public void GettingAVaultFromAnotherKindOfItemIsAKindMismatch()
+    {// Not a password mismatch, which would make the caller ask for a password again and again.
+        var name = this.prefix + "bytes";
+        this.root.AddByteArray(name, [1, 2, 3]);
+
+        Assert.False(this.root.TryGetVault(name, null, out _, out var result));
+        Assert.Equal(VaultResult.KindMismatch, result);
+        Assert.False(this.root.TryGetVault(name, "pass", out _, out result));
+        Assert.Equal(VaultResult.KindMismatch, result);
+
+        Assert.True(this.root.Remove(name));
+    }
+
+    [Fact]
+    public void AnItemIsKeptWhenItsObjectCannotBeSerializedAgain()
+    {
+        var vault = new Vault(null!);
+        var obj = new ThrowingVaultObject() { Value = 42, };
+        vault.AddObject("item", obj);
+        _ = vault.SerializeVault(); // The item now holds its serialized data.
+
+        obj.ThrowOnSerialize = true;
+        var data = vault.SerializeVault();
+        obj.ThrowOnSerialize = false;
+
+        Assert.True(vault.Contains("item"));
+        Assert.True(PasswordEncryption.TryDecrypt(data, string.Empty, out var plaintext));
+        Assert.True(TinyhandSerializer.TryDeserializeObject<Vault>(plaintext, out var restored));
+        Assert.True(restored.TryGetObject<ThrowingVaultObject>("item", out var restoredObject, out _));
+        Assert.Equal(42, restoredObject.Value); // The previously serialized data is saved.
+    }
+}
+
+[TinyhandObject]
+public partial class ThrowingVaultObject
+{
+    private int value;
+
+    [Key(0)]
+    public int Value
+    {
+        get => this.ThrowOnSerialize ? throw new InvalidOperationException() : this.value;
+        set => this.value = value;
+    }
+
+    [IgnoreMember]
+    public bool ThrowOnSerialize { get; set; }
 }

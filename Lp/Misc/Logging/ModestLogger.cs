@@ -57,6 +57,12 @@ public class ModestLogger
         }
     }
 
+    /// <summary>
+    /// Resets the last identifier so that <see cref="NonConsecutive"/> logs the next message (e.g., when the error occurs again after recovery).
+    /// </summary>
+    public void ResetNonConsecutive()
+        => this.lastIdentifier = default;
+
     public LogWriter? Interval(TimeSpan interval, ulong identifier, LogLevel logLevel = LogLevel.Information)
     {
         var utcNow = DateTime.UtcNow;

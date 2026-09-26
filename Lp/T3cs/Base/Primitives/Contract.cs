@@ -147,6 +147,32 @@ public readonly partial struct Contract : IEquatable<Contract>, ITinyhandSeriali
         }
     }
 
+    static Contract ITinyhandCloneable<Contract>.Clone(scoped ref Contract v, TinyhandSerializerOptions options)
+    {// The generated method ignores the members of a type with custom serialization, so a deep copy is implemented here.
+        var value = v;
+        if (v.proofOrIdentifier is Proof proof)
+        {// Proof is a union (abstract) type that does not support Clone(), so it is copied through serialization.
+            var writer = TinyhandWriter.CreateFromBytePool();
+            try
+            {
+                TinyhandSerializer.SerializeObject(ref writer, proof, options);
+                writer.FlushAndGetReadOnlySpan(out var span, out _);
+                var reader = new TinyhandReader(span);
+                Unsafe.AsRef(in value.proofOrIdentifier) = TinyhandSerializer.DeserializeObject<Proof>(ref reader, options);
+            }
+            finally
+            {
+                writer.Dispose();
+            }
+        }
+        else if (v.proofOrIdentifier is byte[] identifier)
+        {
+            Unsafe.AsRef(in value.proofOrIdentifier) = identifier.AsSpan().ToArray();
+        }
+
+        return value;
+    }
+
     public bool TryGetProof([MaybeNullWhen(false)] out ContractableProof proof)
     {
         if (this.proofOrIdentifier is ContractableProof p)

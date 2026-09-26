@@ -37,7 +37,13 @@ public class RemoteBenchControl
         this.logger.GetWriter()?.Write($"Registered({result}): {clientConnection.ToString()}");
     }
 
-    public void Start(Subcommands.RemoteBenchOptions options, CancellationToken cancellationToken)
+    /// <summary>
+    /// Starts the registered runners and aggregates their records.
+    /// </summary>
+    /// <param name="options">The options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The task that aggregates the records, or <see langword="null"/> if the aggregation is already running.</returns>
+    public Task? Start(Subcommands.RemoteBenchOptions options, CancellationToken cancellationToken)
     {
         ClientConnection[] array;
         lock (this.syncObject)
@@ -68,6 +74,11 @@ public class RemoteBenchControl
             }
             else
             {
+                lock (this.syncObject)
+                {// Do not wait for a record that will never be reported.
+                    this.records.Remove(clientConnection);
+                }
+
                 this.logger.GetWriter()?.Write($"Unregistered: {clientConnection}");
             }
         }
@@ -77,7 +88,7 @@ public class RemoteBenchControl
             this.fileLogger.DeleteAllLogs();
         }
 
-        this.singleTask.TryRun(async () =>
+        return this.singleTask.TryRun(async () =>
         {
             var sw = Stopwatch.StartNew();
             while (await Task.TryDelay(1_000, cancellationToken))
@@ -126,6 +137,11 @@ public class RemoteBenchControl
 
                     break;
                 }
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {// The command was canceled (it waits for this task).
+                return;
             }
 
             // Send

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Lp.Services;
-using Lp.Subcommands.AuthorityCommand;
 using SimpleCommandLine;
 
 namespace Lp.Subcommands.VaultCommand;
@@ -9,7 +8,7 @@ namespace Lp.Subcommands.VaultCommand;
 [SimpleCommand("remove-vault")]
 public class RemoveVaultSubcommand : ISimpleCommand<SimpleVaultOptions>
 {
-    public RemoveVaultSubcommand(ILogger<RemoveAuthoritySubcommand> logger, IUserInterfaceService userInterfaceService, VaultControl vaultControl)
+    public RemoveVaultSubcommand(ILogger<RemoveVaultSubcommand> logger, IUserInterfaceService userInterfaceService, VaultControl vaultControl)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -20,7 +19,7 @@ public class RemoveVaultSubcommand : ISimpleCommand<SimpleVaultOptions>
     {
         if (!this.vaultControl.Root.Contains(options.Name))
         {// Not found
-            this.logger.GetWriter()?.Write(Hashed.Authority.NotFound, options.Name);
+            this.logger.GetWriter()?.Write(Hashed.Vault.NotFound, options.Name);
             return;
         }
         else

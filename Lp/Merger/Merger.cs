@@ -208,9 +208,13 @@ public partial class Merger : MergerBase, IUnitPreparable, IUnitExecutable
                 dataScope.Data.Initialize(credit, creditIdentity);
                 return T3csResult.Success;
             }
-            else
+            else if (dataScope.Result == DataScopeResult.AlreadyExists)
             {
                 return T3csResult.AlreadyExists;
+            }
+            else
+            {// Timeout, Shutdown, etc.
+                return T3csResult.UnknownError;
             }
         }
     }

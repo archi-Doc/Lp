@@ -5,7 +5,7 @@ namespace Lp.Machines;
 [MachineObject(UseServiceProvider = true)]
 // [TinyhandObject(UseServiceProvider = true)]
 public partial class TemplateMachine : Machine
-{// Control: context.AddSingleton<Machines.RelayPeerMachine>();
+{// Control: context.AddTransient<Machines.TemplateMachine>(); (BigMachines creates each instance through the service provider)
     #region FieldAndProperty
 
     private readonly IUserInterfaceService userInterfaceService;

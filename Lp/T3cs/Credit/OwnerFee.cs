@@ -55,4 +55,10 @@ public sealed partial class OwnerFee : IEquatable<OwnerFee>
 
         return true;
     }
+
+    public override bool Equals(object? obj)
+        => this.Equals(obj as OwnerFee);
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Type, this.ConstantPerMonth, this.RatioPerMonth); // Consistent with Equals() (records such as CreditColor hash their members).
 }

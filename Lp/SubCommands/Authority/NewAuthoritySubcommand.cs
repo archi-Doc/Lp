@@ -8,9 +8,10 @@ namespace Lp.Subcommands.AuthorityCommand;
 [SimpleCommand("new-authority")]
 public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptions>
 {
-    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, AuthorityControl authorityControl)
+    public NewAuthoritySubcommand(ILogger<NewAuthoritySubcommand> logger, IUserInterfaceService userInterfaceService, AuthorityControl authorityControl)
     {
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
         this.authorityControl = authorityControl;
     }
 
@@ -21,8 +22,8 @@ public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptio
         {
             seed = Seedphrase.TryGetSeed(option.Seedphrase);
             if (seed is null)
-            {
-                this.logger.GetWriter()?.Write(Hashed.Seedphrase.Invalid, option.Seedphrase);
+            {// Write to the console only; the logger also writes to the log file, and the phrase may be almost valid.
+                this.userInterfaceService.WriteLine(Hashed.Seedphrase.Invalid, option.Seedphrase);
                 return;
             }
         }
@@ -42,6 +43,7 @@ public class NewAuthoritySubcommand : ISimpleCommand<AuthoritySubcommandNewOptio
     }
 
     private readonly ILogger logger;
+    private readonly IUserInterfaceService userInterfaceService;
     private readonly AuthorityControl authorityControl;
 }
 

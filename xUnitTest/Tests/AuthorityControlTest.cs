@@ -86,6 +86,35 @@ public class AuthorityControlTest
     }
 
     [Fact]
+    public async Task TheUserIsAskedAgainAfterAWrongPassword()
+    {
+        var ui = new ScriptedUserInterfaceService("wrong", "pass");
+        var control = new AuthorityControl(ui, this.vaultControl);
+        var name = Guid.NewGuid().ToString("N");
+
+        // A Duration authority starts expired, so the password is required.
+        Assert.True(control.NewAuthority(name, "pass", new Authority(new byte[32], AuthorityLifecycle.Duration, Mics.FromMinutes(10))));
+        Assert.NotNull(await control.GetAuthority(name));
+        Assert.Equal(2, ui.PasswordRequests);
+
+        Assert.True(control.RemoveAuthority(name));
+    }
+
+    [Fact]
+    public async Task AnItemThatIsNotAVaultIsNotAnAuthority()
+    {
+        var ui = new ScriptedUserInterfaceService("pass");
+        var control = new AuthorityControl(ui, this.vaultControl);
+        var name = Guid.NewGuid().ToString("N");
+        this.vaultControl.Root.AddByteArray(AuthorityControl.VaultPrefix + name, [1, 2, 3]);
+
+        Assert.Null(await control.GetAuthority(name));
+        Assert.Equal(0, ui.PasswordRequests); // No password can open it, so the user is not asked.
+
+        Assert.True(this.vaultControl.Root.Remove(AuthorityControl.VaultPrefix + name));
+    }
+
+    [Fact]
     public async Task AnUnknownNameYieldsNoAuthority()
     {
         var control = new AuthorityControl(new StubUserInterfaceService("pass"), this.vaultControl);

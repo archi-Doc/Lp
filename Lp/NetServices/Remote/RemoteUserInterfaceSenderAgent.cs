@@ -74,19 +74,15 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             return NetResult.Refused;
         }*/
 
-        // Not thread-safe
-        var group = this.remoteGroup;
-        if (group is null)
-        {
-            group = new(this.root);
-            group.Id = id;
-            this.remoteGroup = group;
-        }
-
         this.logger.GetWriter(LogLevel.Warning)?.Write($"Remote >> {message}");
 
         var receiver = clientConnection.GetService<IRemoteUserInterfaceReceiver>();
         this.Prepare(receiver);
+
+        // Each command has its own group, so that finishing or canceling one command does not affect a newer one.
+        var group = new ExecutionGroup(this.root);
+        group.Id = id;
+        this.remoteGroup = group;
         _ = Task.Run(async () =>
         {
             try
@@ -100,7 +96,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             finally
             {
                 group.Dispose();
-                this.remoteGroup = default;
+                Interlocked.CompareExchange(ref this.remoteGroup, null, group); // Do not clear the group of a newer command.
 
                 // Return control of console input.
                 await receiver.ReturnInputControl(id).ConfigureAwait(false);
@@ -123,7 +119,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
         {
             if (group.IsTerminated)
             {
-                this.remoteGroup = default;
+                Interlocked.CompareExchange(ref this.remoteGroup, null, group);
                 return Task.FromResult(NetResult.Refused);
             }
 
@@ -138,7 +134,7 @@ public partial class RemoteUserInterfaceSenderAgent : IRemoteUserInterfaceSender
             }
             finally
             {
-                this.remoteGroup = default;
+                Interlocked.CompareExchange(ref this.remoteGroup, null, group);
             }
         }
 

@@ -57,8 +57,9 @@ public abstract partial class Evidence
             return false;
         }
 
-        if (!this.BaseProof.TryGetCredit(out var credit))
-        {
+        if (!this.BaseProof.TryGetCredit(out var credit) ||
+            !credit.Validate())
+        {// A credit without valid mergers would pass without any merger signature.
             return false;
         }
 

@@ -326,6 +326,12 @@ public sealed partial class Vault
                 result = VaultResult.NotFound;
                 return false;
             }
+            else if (item.ItemKind != Item.Kind.Vault)
+            {// Kind mismatch (decrypting other data would be reported as a password mismatch).
+                vault = default;
+                result = VaultResult.KindMismatch;
+                return false;
+            }
 
             // Object instance
             vault = item.Object as Vault;
@@ -522,8 +528,11 @@ public sealed partial class Vault
             }
             catch
             {
-                toDelete ??= new();
-                toDelete.Add(key);
+                if (x.ByteArray is null)
+                {// Nothing to keep. Otherwise, the previously serialized data is kept (and the vault is retried on the next save).
+                    toDelete ??= new();
+                    toDelete.Add(key);
+                }
             }
         }
 

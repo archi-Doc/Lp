@@ -59,25 +59,25 @@ public class AddCertificateRelaySubcommand : ISimpleCommand<AddCertificateRelayO
             var block = relayCircuit.NewAssignRelayBlock();
             var token = new CertificateToken<AssignRelayBlock>(block);
             seedKey.SignWithSalt(token, relayConnection.EmbryoSalt);
-            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token).ConfigureAwait(false);
+            var r = await relayConnection.SendAndReceive<CertificateToken<AssignRelayBlock>, AssignRelayResponse>(token, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (r.IsFailure || r.Value is null)
             {
                 this.userInterfaceService.WriteLine(r.Result.ToString());
                 return;
             }
             else if (r.Value.Result != RelayResult.Success)
-            {
-                this.userInterfaceService.WriteLine(r.Result.ToString());
+            {// r.Result is Success here, so show the relay result.
+                this.userInterfaceService.WriteLine(r.Value.Result.ToString());
                 return;
             }
 
             var result = await relayCircuit.AddRelay(block, r.Value, relayConnection);
+            this.userInterfaceService.WriteLine($"AddRelay: {result.ToString()}");
             if (result != RelayResult.Success)
             {
                 return;
             }
 
-            this.userInterfaceService.WriteLine($"AddRelay: {result.ToString()}");
             this.userInterfaceService.WriteLine(relayCircuit.NumberOfRelays.ToString());
 
             var outerAddress = new NetAddress(r.Value.OuterRelayId, netNode.Address);

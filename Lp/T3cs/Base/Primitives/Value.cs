@@ -68,9 +68,9 @@ public sealed partial class Value : IValidatable, IEquatable<Value>, IStringConv
 
         var initialLength = span.Length;
         var ownerSpan = span.Slice(0, pointIndex);
-        if (ownerSpan.Length < SignaturePublicKey.MaxStringLength ||
-            !SignaturePublicKey.TryParse(ownerSpan, out var owner, out _, conversionOptions))
-        {
+        if (!SignaturePublicKey.TryParse(ownerSpan, out var owner, out var ownerRead, conversionOptions) ||
+            ownerRead != ownerSpan.Length)
+        {// The owner must be the whole text before the point symbol (an alias is allowed as in Credit.TryParse()).
             return false;
         }
 

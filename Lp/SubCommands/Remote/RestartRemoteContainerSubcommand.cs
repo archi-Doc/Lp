@@ -74,7 +74,10 @@ public class RestartRemoteContainerSubcommand : ISimpleCommand<RestartRemoteCont
 
         // Wait
         this.logger.GetWriter()?.Write($"Waiting...");
-        await Task.Delay(TimeSpan.FromSeconds(WaitIntervalInSeconds));
+        if (!await Task.TryDelay(TimeSpan.FromSeconds(WaitIntervalInSeconds), cancellationToken))
+        {// Canceled
+            return;
+        }
 
         if (options.IsValidContainerPort)
         {// Ping container
@@ -86,7 +89,12 @@ public class RestartRemoteContainerSubcommand : ISimpleCommand<RestartRemoteCont
                     return;
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(sec));
+                if (i == PingRetries - 1 ||
+                    !await Task.TryDelay(TimeSpan.FromSeconds(sec), cancellationToken))
+                {// No more retries, or canceled
+                    return;
+                }
+
                 sec *= 2;
             }
         }

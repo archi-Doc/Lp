@@ -42,8 +42,8 @@ internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
                 return;
             }
 
-            await sendStream.Send(new byte[1024 * 2024]);
-            var result = await sendStream.CompleteSendAndReceive();
+            await sendStream.Send(new byte[1024 * 1024], cancellationToken); // Must not exceed the length declared by Put().
+            var result = await sendStream.CompleteSendAndReceive(cancellationToken);
             this.logger.GetWriter()?.Write($"Put({result}) RemoteData.data {sendStream.SentLength} bytes");
 
             if (this.fileLogger is null)
@@ -58,7 +58,7 @@ internal class RemoteDataSubcommand : ISimpleCommand<RemoteDataOptions>
             sendStream = await r.Service.Put("RemoteData.txt", fileStream.Length);
             if (sendStream is not null)
             {
-                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream);
+                var r3 = await NetHelper.StreamToSendStream(fileStream, sendStream, cancellationToken);
             }
         }
         catch

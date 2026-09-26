@@ -8,7 +8,7 @@ namespace Lp.Services;
 
 [MachineObject(UseServiceProvider = true)]
 public partial class LpDogmaMachine : Machine
-{// Control: context.AddSingleton<Machines.RelayPeerMachine>();
+{// Control: context.AddTransient<Services.LpDogmaMachine>();
     private const int BasalServiceThreshold = 3;
 
     private readonly IUserInterfaceService userInterfaceService;
@@ -49,7 +49,14 @@ public partial class LpDogmaMachine : Machine
 
         if (await this.authorityControl.GetLpSeedKey(null) is not { } seedKey)
         {
-            return StateResult.Continue;
+            if (!this.authorityControl.Exists(LpConstants.DomainKeyAlias))
+            {
+                return StateResult.Continue;
+            }
+
+            // The authority exists, but the password prompt was canceled (or the key does not match): stop instead of prompting again every few seconds.
+            this.logger.GetWriter(LogLevel.Warning)?.Write(Hashed.Authority.NotAvailable, LpConstants.DomainKeyAlias);
+            return StateResult.Terminate;
         }
 
         this.lpSeedKey = seedKey;

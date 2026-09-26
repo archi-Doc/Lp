@@ -129,10 +129,9 @@ public static class IUserInterfaceServiceExtention
 
     public static async Task<InputResult> ReadPasswordAndConfirm(this IUserInterfaceService viewService, bool cancelOnEscape, ulong hash, ulong hash2)
     {
-        InputResult result;
         while (true)
         {
-            result = await viewService.ReadPassword(cancelOnEscape, hash).ConfigureAwait(false);
+            var result = await viewService.ReadPassword(cancelOnEscape, hash).ConfigureAwait(false);
             if (!result.IsSuccess)
             {// Canceled or Terminated
                 return result;
@@ -154,28 +153,20 @@ public static class IUserInterfaceServiceExtention
                     return new(resultKind);
                 }
             }
-            else
-            {
-                break;
-            }
-        }
 
-        while (true)
-        {
             var confirmResult = await viewService.ReadPassword(cancelOnEscape, hash2).ConfigureAwait(false);
             if (!confirmResult.IsSuccess)
             {// Canceled or Terminated
                 return confirmResult;
             }
 
-            if (result.Text != confirmResult.Text)
-            {// Does not match
-                viewService.WriteLine(Hashed.Dialog.Password.NotMatch);
-            }
-            else
+            if (result.Text == confirmResult.Text)
             {
                 return result;
             }
+
+            // Does not match: start over, since the first (masked) input may be the mistyped one.
+            viewService.WriteLine(Hashed.Dialog.Password.NotMatch);
         }
     }
 }

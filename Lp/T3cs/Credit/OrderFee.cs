@@ -55,4 +55,10 @@ public sealed partial class OrderFee : IEquatable<OrderFee>
 
         return true;
     }
+
+    public override bool Equals(object? obj)
+        => this.Equals(obj as OrderFee);
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Type, this.ConstantPerOrder, this.RatioPerOrder); // Consistent with Equals() (records such as CreditColor hash their members).
 }

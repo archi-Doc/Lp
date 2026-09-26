@@ -76,7 +76,14 @@ public class Command : ISimpleCommand<Command.Options>
         this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => NetsphereHelper.SetAuthenticationToken(x, this.nestedcommand.Authority));
         // this.nestedcommand.RobustConnection = this.robustConnectionFactory.Create(node, x => RobustConnection.SetAuthenticationToken(x, authority.UnsafeGetPrivateKey()));
         this.userInterfaceService.WriteLine(node.ToString());
-        await this.nestedcommand.MainAsync(cancellationToken);
+        try
+        {
+            await this.nestedcommand.MainAsync(cancellationToken);
+        }
+        finally
+        {// The connection is used only in this nested session.
+            this.nestedcommand.RobustConnection?.Dispose();
+        }
     }
 
     private readonly ILogger logger;

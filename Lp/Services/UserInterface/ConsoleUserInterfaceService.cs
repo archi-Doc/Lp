@@ -53,7 +53,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         message,
         logLevel switch
         {
-            LogLevel.Debug => this.lpSettings.Color.Information,
+            LogLevel.Debug => this.lpSettings.Color.Debug,
             LogLevel.Information => this.lpSettings.Color.Information,
             LogLevel.Warning => this.lpSettings.Color.Warning,
             LogLevel.Error => this.lpSettings.Color.Error,
@@ -66,7 +66,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         message,
         logLevel switch
         {
-            LogLevel.Debug => this.lpSettings.Color.Information,
+            LogLevel.Debug => this.lpSettings.Color.Debug,
             LogLevel.Information => this.lpSettings.Color.Information,
             LogLevel.Warning => this.lpSettings.Color.Warning,
             LogLevel.Error => this.lpSettings.Color.Error,

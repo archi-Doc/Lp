@@ -4,7 +4,7 @@ namespace Lp.Machines;
 
 [MachineObject(UseServiceProvider = true)]
 public partial class RelayPeerMachine : Machine
-{// Control: context.AddSingleton<Machines.RelayPeerMachine>(), Control.RunMachines()
+{// Control: context.AddTransient<Machines.RelayPeerMachine>(), Control.RunMachines()
     public RelayPeerMachine(ILogger<RelayPeerMachine> logger, NetUnit netUnit)
     {
         this.logger = logger;

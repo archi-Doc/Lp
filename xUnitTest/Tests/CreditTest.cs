@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc;
+using Lp;
 using Lp.T3cs;
 using Netsphere.Crypto;
 using Xunit;
@@ -77,5 +78,32 @@ public class CreditTest
         Value.TryParse(st, out var value2, out read).IsTrue();
         value.Equals(value2).IsTrue();
         read.Is(st.Length);
+    }
+
+    [Fact]
+    public void AValueIsParsedOnlyIfTheWholeOwnerIsValid()
+    {
+        var publicKey = SeedKey.NewSignature().GetSignaturePublicKey();
+        var credit = new Credit(default, [publicKey]);
+        Value.TryCreate(publicKey, 111, credit, out var value).IsTrue();
+
+        var st = value!.ToString();
+        Value.TryParse(st.Insert(st.IndexOf(LpConstants.PointSymbol), "x"), out _, out _).IsFalse();
+
+        // A value formatted with aliases is parsed with the same options.
+        var alias = "V" + Guid.NewGuid().ToString("N").Substring(0, 12);
+        Alias.Instance.Add(alias, publicKey);
+        try
+        {
+            st = value.ToString(Alias.Instance);
+            st.StartsWith(alias + LpConstants.PointSymbol).IsTrue();
+            Value.TryParse(st, out var value2, out var read, Alias.Instance).IsTrue();
+            value.Equals(value2).IsTrue();
+            read.Is(st.Length);
+        }
+        finally
+        {
+            Alias.Instance.Remove(publicKey);
+        }
     }
 }
